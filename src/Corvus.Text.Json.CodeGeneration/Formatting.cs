@@ -213,14 +213,14 @@ public static class Formatting
 #else
         if (value < 0)
         {
-            throw new ArgumentException("Value must be positive.", nameof(value));
+            throw new ArgumentException(SR.ValueMustBePositive, nameof(value));
         }
 
         // Calculate the length of the integer
         int length = value == 0 ? 1 : (int)Math.Floor(Math.Log10(value) + 1);
         if (buffer.Length < length)
         {
-            throw new ArgumentException("Destination array is too small.");
+            throw new ArgumentException(SR.DestinationArrayTooSmall);
         }
 
         int index = length;

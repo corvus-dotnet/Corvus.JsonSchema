@@ -1,0 +1,53 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFrameworks>net481;net9.0;net10.0</TargetFrameworks>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <NoWarn>$(NoWarn);CS1591;SA1615;CA1822</NoWarn>
+    <Platforms>AnyCPU</Platforms>
+    <LangVersion>Preview</LangVersion>
+    <PreserveCompilationContext>true</PreserveCompilationContext>
+    <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="BenchmarkDotNet" Version="0.15.8" />
+    <PackageReference Include="BenchmarkDotNet.Diagnostics.Windows" Version="0.15.8" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' != 'net481'">
+    <PackageReference Include="Jsonata.Net.Native" Version="3.0.0" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'net481'">
+    <PackageReference Include="System.Text.Json" Version="10.0.5" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Corvus.Text.Json.Jsonata\Corvus.Text.Json.Jsonata.csproj" />
+    <ProjectReference Include="..\..\src\Corvus.Text.Json\Corvus.Text.Json.csproj" />
+  </ItemGroup>
+
+  <!-- Source generator reference (analyzer-only, no runtime DLL) -->
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Corvus.Text.Json.Jsonata.SourceGenerator\Corvus.Text.Json.Jsonata.SourceGenerator.csproj"
+                      PrivateAssets="all"
+                      ReferenceOutputAssembly="false"
+                      OutputItemType="Analyzer" />
+  </ItemGroup>
+
+  <!-- JSONata expression files for source-generated evaluators -->
+  <ItemGroup>
+    <AdditionalFiles Include="Expressions\*.jsonata" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="*.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+</Project>

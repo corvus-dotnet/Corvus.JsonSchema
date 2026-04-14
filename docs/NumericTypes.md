@@ -54,8 +54,8 @@ This representation preserves full precision — no information is lost regardle
 ```csharp
 public readonly partial struct BigNumber :
     IEquatable<BigNumber>, IComparable<BigNumber>,
-    IFormattable, ISpanFormattable, IUtf8SpanFormattable,  // .NET 8+
-    INumber<BigNumber>, ISignedNumber<BigNumber>           // .NET 8+
+    IFormattable, ISpanFormattable, IUtf8SpanFormattable,  // .NET 9+
+    INumber<BigNumber>, ISignedNumber<BigNumber>           // .NET 9+
 ```
 
 Internally: **value = significand × 10^exponent** where:
@@ -184,5 +184,5 @@ Use `BigNumber` when you need arithmetic or formatting beyond the range of `deci
 | Typed accessors for decimals | `"double"` (fast) or `"decimal"` (precise to 28 digits) |
 | Financial/currency formatting | Use `BigNumber` with format string `"C"` |
 | Arbitrary-precision arithmetic | Use `BigNumber` directly |
-| Very large integers (.NET 8+) | `"int128"` / `"uint128"` format |
+| Very large integers (.NET 9+) | `"int128"` / `"uint128"` format |
 | Cross-platform (.NET + netstandard) | Avoid `"half"`, `"int128"`, `"uint128"` (or accept the fallback) |

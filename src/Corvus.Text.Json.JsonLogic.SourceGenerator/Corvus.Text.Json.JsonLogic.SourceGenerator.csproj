@@ -1,0 +1,119 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <Import Project="$(EndjinProjectPropsPath)" Condition="$(EndjinProjectPropsPath) != ''" />
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <LangVersion>preview</LangVersion>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <EnableDefaultEmbeddedResourceItems>false</EnableDefaultEmbeddedResourceItems>
+    <RootNamespace>Corvus.Text.Json.JsonLogic.SourceGenerator</RootNamespace>
+    <CorvusTextJsonPath>..\Corvus.Text.Json\</CorvusTextJsonPath>
+    <CorvusTextJsonJsonLogicCodeGenPath>..\Corvus.Text.Json.JsonLogic.CodeGeneration\</CorvusTextJsonJsonLogicCodeGenPath>
+    <CommonPath>..\..\Common\src\</CommonPath>
+    <CoreLibSharedDir>..\..\System.Private.CoreLib\src\</CoreLibSharedDir>
+  </PropertyGroup>
+
+  <PropertyGroup Label="SourceGenerator">
+    <IsRoslynComponent>true</IsRoslynComponent>
+    <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
+    <IncludeSymbols>false</IncludeSymbols>
+    <DefineConstants>$(DefineConstants);BUILDING_SOURCE_GENERATOR</DefineConstants>
+  </PropertyGroup>
+
+  <PropertyGroup Label="Standard">
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <WarningsNotAsErrors>$(WarningsNotAsErrors);NU1901;NU1902;NU1903;NU1904</WarningsNotAsErrors>
+    <NoWarn>$(NoWarn);nullable;CS1591;CS3021;NU5128;RS2008;SA0001;NU1504;CS8500;CS8969;IDE0065;IDE0290;IDE0079;IDE0130</NoWarn>
+    <NoWarn>$(NoWarn);CA1510;CA1511;CA1512;CA1513;CA1845;CA1846;CA1847;CS8600;CS8602</NoWarn>
+    <!-- XML doc warnings in linked files we cannot modify -->
+    <NoWarn>$(NoWarn);CS1570;CS1572;CS1573;CS1574;CS1584;CS1658</NoWarn>
+    <IsPackable>true</IsPackable>
+    <EndjinDisableCreateEditorConfig>true</EndjinDisableCreateEditorConfig>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <PropertyGroup Label="NuGet">
+    <DevelopmentDependency>true</DevelopmentDependency>
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+    <Description>Roslyn incremental source generator that produces optimized C# evaluation code from JsonLogic rule files at build time.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Using Include="System" />
+    <Using Include="System.IO" />
+    <Using Include="System.Linq" />
+    <Using Include="System.Text" />
+    <Using Include="System.Threading" />
+    <Using Include="System.Collections.Generic" />
+    <Using Include="Resources.Strings" Alias="SR" />
+  </ItemGroup>
+
+  <!-- Roslyn and polyfill packages -->
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.12.0" PrivateAssets="all" />
+    <PackageReference Include="PolySharp" Version="1.15.0" PrivateAssets="all" />
+    <PackageReference Include="Endjin.RecommendedPractices.GitHub" Version="2.1.18" PrivateAssets="All" />
+    <PackageReference Include="StyleCop.Analyzers" Version="1.2.0-beta.556" PrivateAssets="All" />
+    <PackageReference Include="Roslynator.Analyzers" Version="4.13.1" PrivateAssets="All" />
+    <PackageReference Include="System.Text.Json" Version="8.0.6" PrivateAssets="all" GeneratePathProperty="true" />
+    <PackageReference Include="Microsoft.Bcl.HashCode" Version="6.0.0" PrivateAssets="all" GeneratePathProperty="true" />
+    <PackageReference Include="System.Reflection.Emit.Lightweight" Version="4.7.0" PrivateAssets="All" />
+  </ItemGroup>
+
+  <!-- Generator's own source files -->
+  <ItemGroup>
+    <Compile Include="JsonLogicSourceGenerator.cs" />
+    <Compile Include="JsonElementHelpers.BigNumberFormatting.cs" />
+    <Compile Include="SR.cs" />
+    <Compile Include="Resources\Strings.Designer.cs" />
+    <EmbeddedResource Include="Resources\Strings.resx" />
+  </ItemGroup>
+
+  <!-- Link the JsonLogic code generation engine -->
+  <ItemGroup>
+    <Compile Include="$(CorvusTextJsonJsonLogicCodeGenPath)JsonLogicCodeGenerator.cs" LinkBase="CodeGeneration" />
+    <Compile Include="$(CorvusTextJsonJsonLogicCodeGenPath)CustomOperator.cs" LinkBase="CodeGeneration" />
+    <Compile Include="$(CorvusTextJsonJsonLogicCodeGenPath)JlopsParser.cs" LinkBase="CodeGeneration" />
+  </ItemGroup>
+
+  <!-- Link BigNumber and its dependencies from Corvus.Text.Json -->
+  <ItemGroup>
+    <Compile Include="$(CorvusTextJsonPath)Corvus\Numerics\BigNumber.cs" LinkBase="Numerics" />
+    <Compile Include="$(CorvusTextJsonPath)Corvus\Numerics\BigNumber.OptimizedFormatting.cs" LinkBase="Numerics" />
+    <Compile Include="$(CorvusTextJsonPath)Corvus\Numerics\ParsingPolyfills.cs" LinkBase="Numerics" />
+    <Compile Include="$(CorvusTextJsonPath)Corvus\Numerics\PolyfillExtensions.cs" LinkBase="Numerics" />
+  </ItemGroup>
+
+  <!-- Link JsonConstants (StackallocByteThreshold etc.) -->
+  <ItemGroup>
+    <Compile Include="..\Common\JsonConstants.cs" LinkBase="Common" />
+  </ItemGroup>
+
+  <!-- Stubs for BigNumber's downstream dependencies -->
+  <ItemGroup>
+    <Compile Include="ThrowHelper.cs" />
+  </ItemGroup>
+
+  <!-- Package the generator DLL and its dependencies into analyzers/dotnet/cs -->
+  <PropertyGroup>
+    <GetTargetPathDependsOn>$(GetTargetPathDependsOn);GetDependencyTargetPaths</GetTargetPathDependsOn>
+  </PropertyGroup>
+
+  <Target Name="GetDependencyTargetPaths">
+    <ItemGroup>
+      <TargetPathWithTargetPlatformMoniker Include="$(PKGSystem_Text_Json)\lib\netstandard2.0\System.Text.Json.dll" IncludeRuntimeDependency="false" />
+      <TargetPathWithTargetPlatformMoniker Include="$(PKGMicrosoft_Bcl_HashCode)\lib\netstandard2.0\Microsoft.Bcl.HashCode.dll" IncludeRuntimeDependency="false" />
+    </ItemGroup>
+  </Target>
+
+  <ItemGroup>
+    <None Include="$(OutputPath)\$(AssemblyName).dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
+    <None Include="$(PKGSystem_Text_Json)\lib\netstandard2.0\System.Text.Json.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
+    <None Include="$(PKGMicrosoft_Bcl_HashCode)\lib\netstandard2.0\Microsoft.Bcl.HashCode.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
+  </ItemGroup>
+
+</Project>

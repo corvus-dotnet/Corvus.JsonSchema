@@ -18,35 +18,17 @@ internal class Program
     private static void Main(string[] args)
     {
         ManualConfig config = ManualConfig.CreateEmpty()
-            .AddColumnProvider(DefaultColumnProviders.Instance) // empty config does not define any columns for the output table, we need to define it manually
+            .AddColumnProvider(DefaultColumnProviders.Instance)
             .AddLogger(ConsoleLogger.Default)
             .AddExporter(MarkdownExporter.Default)
-            .AddExporter(BenchmarkDotNet.Exporters.Json.JsonExporter.Full);
+            .AddExporter(BenchmarkDotNet.Exporters.Json.JsonExporter.Full)
+            .WithBuildTimeout(TimeSpan.FromMinutes(15));
 
         config.AddJob(
             Job.Default
                 .WithRuntime(CoreRuntime.Core10_0)
                 .WithOutlierMode(OutlierMode.RemoveAll)
                 .WithStrategy(RunStrategy.Throughput));
-
-        ////config.AddJob(
-        ////    Job.Default
-        ////        .AsBaseline()
-        ////        .WithRuntime(CoreRuntime.Core90)
-        ////        .WithOutlierMode(OutlierMode.RemoveAll)
-        ////        .WithStrategy(RunStrategy.Throughput));
-
-        ////config.AddJob(
-        ////    Job.Default
-        ////        .WithRuntime(CoreRuntime.Core80)
-        ////        .WithOutlierMode(OutlierMode.RemoveAll)
-        ////        .WithStrategy(RunStrategy.Throughput));
-
-        ////config.AddJob(
-        ////    Job.Default
-        ////        .WithRuntime(ClrRuntime.Net481)
-        ////        .WithOutlierMode(OutlierMode.RemoveAll)
-        ////        .WithStrategy(RunStrategy.Throughput));
 
         BenchmarkSwitcher.FromAssembly(typeof(Program).Assembly).Run(args, config: config);
     }

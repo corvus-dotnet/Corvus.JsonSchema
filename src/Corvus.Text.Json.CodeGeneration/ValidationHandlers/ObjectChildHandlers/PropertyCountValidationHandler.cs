@@ -86,7 +86,7 @@ public static class PropertyCountValidationExtensions
 
         if (!keyword.TryGetValidationConstants(typeDeclaration, out JsonElement[] constants))
         {
-            throw new InvalidOperationException("Unable to get validation constants for keyword.");
+            throw new InvalidOperationException(SR.UnableToGetValidationConstants);
         }
 
         Debug.Assert(constants.Length == 1, "Expected exactly one validation constant for keyword.");
@@ -102,7 +102,7 @@ public static class PropertyCountValidationExtensions
             Operator.LessThanOrEquals => "JsonSchemaEvaluation.MatchPropertyCountLessThanOrEquals",
             Operator.GreaterThan => "JsonSchemaEvaluation.MatchPropertyCountGreaterThan",
             Operator.GreaterThanOrEquals => "JsonSchemaEvaluation.MatchPropertyCountGreaterThanOrEquals",
-            _ => throw new InvalidOperationException($"Unsupported operator: {op}")
+            _ => throw new InvalidOperationException(SR.Format(SR.UnsupportedOperator, op))
         };
 
         return generator

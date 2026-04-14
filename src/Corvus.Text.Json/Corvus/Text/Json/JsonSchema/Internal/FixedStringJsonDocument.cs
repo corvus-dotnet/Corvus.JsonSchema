@@ -63,6 +63,8 @@ public sealed class FixedStringJsonDocument<T> : IJsonDocument
 
     void IJsonDocument.AppendElementToMetadataDb(int index, JsonWorkspace workspace, ref MetadataDb db) { throw new NotSupportedException(); }
 
+    int IJsonDocument.WriteElementToMetadataDb(int index, JsonWorkspace workspace, ref MetadataDb db, int writePosition) { throw new NotSupportedException(); }
+
     int IJsonDocument.BuildRentedMetadataDb(int parentDocumentIndex, JsonWorkspace workspace, out byte[] rentedBacking) { throw new NotSupportedException(); }
 
     JsonElement IJsonDocument.CloneElement(int index) => new(this, 0);
@@ -226,7 +228,10 @@ public sealed class FixedStringJsonDocument<T> : IJsonDocument
     string? IJsonDocument.GetString(int index, JsonTokenType expectedType)
     {
         Debug.Assert(index == 0 && expectedType == JsonTokenType.String);
-        return JsonReaderHelper.TranscodeHelper(_rawJsonStringValue.Span[1..^1]);
+        ReadOnlySpan<byte> content = _rawJsonStringValue.Span[1..^1];
+        return _requiresUnescaping
+            ? JsonReaderHelper.GetUnescapedString(content)
+            : JsonReaderHelper.TranscodeHelper(content);
     }
 
     /// <inheritdoc />
@@ -234,7 +239,10 @@ public sealed class FixedStringJsonDocument<T> : IJsonDocument
     bool IJsonDocument.TryGetString(int index, JsonTokenType expectedType, [NotNullWhen(true)] out string? result)
     {
         Debug.Assert(index == 0 && expectedType == JsonTokenType.String);
-        result = JsonReaderHelper.TranscodeHelper(_rawJsonStringValue.Span[1..^1]);
+        ReadOnlySpan<byte> content = _rawJsonStringValue.Span[1..^1];
+        result = _requiresUnescaping
+            ? JsonReaderHelper.GetUnescapedString(content)
+            : JsonReaderHelper.TranscodeHelper(content);
         return true;
     }
 

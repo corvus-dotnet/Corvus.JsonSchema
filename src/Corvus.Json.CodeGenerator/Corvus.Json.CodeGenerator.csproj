@@ -4,7 +4,7 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFrameworks>net8.0;net9.0;net10.0</TargetFrameworks>
+    <TargetFrameworks>net9.0;net10.0</TargetFrameworks>
     <AssemblyName>Corvus.Json.JsonSchema.TypeGeneratorTool</AssemblyName>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
@@ -50,6 +50,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Corvus.Text.Json.CodeGeneration\Corvus.Text.Json.CodeGeneration.csproj" />
+    <ProjectReference Include="..\Corvus.Text.Json.JsonLogic.CodeGeneration\Corvus.Text.Json.JsonLogic.CodeGeneration.csproj" />
+    <ProjectReference Include="..\Corvus.Text.Json.Jsonata.CodeGeneration\Corvus.Text.Json.Jsonata.CodeGeneration.csproj" />
     <ProjectReference Include="..\Corvus.Text.Json.Validator\Corvus.Text.Json.Validator.csproj" />
   </ItemGroup>
 

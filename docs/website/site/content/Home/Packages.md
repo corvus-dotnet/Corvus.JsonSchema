@@ -6,7 +6,7 @@ Title: "NuGet Packages"
 ---
 ### Corvus.Text.Json
 
-Core runtime library. Required by all generated types.
+Core runtime library. Required by all generated types. See the [Getting Started](/getting-started/index.html) guide.
 
 ```bash
 dotnet add package Corvus.Text.Json
@@ -14,7 +14,7 @@ dotnet add package Corvus.Text.Json
 
 ### Corvus.Text.Json.SourceGenerator
 
-Roslyn incremental source generator. Generates C# from JSON Schema at build time. Add as an analyzer reference.
+Roslyn incremental source generator. Generates C# from JSON Schema at build time. Add as an analyzer reference. See the [Source Generator](/docs/source-generator.html) guide.
 
 ```xml
 <PackageReference Include="Corvus.Text.Json.SourceGenerator" Version="5.0.0">

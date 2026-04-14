@@ -98,36 +98,8 @@ public abstract partial class JsonDocument
         /// </summary>
         /// <param name="key">The key to calculate the hash code for.</param>
         /// <returns>The calculated hash code.</returns>
-        internal static ulong GetHashCode(in ReadOnlySpan<byte> key)
-        {
-            int length = key.Length;
-
-            return length switch
-            {
-                7 => MemoryMarshal.Read<uint>(key.Slice(0, 4))
-                        + ((ulong)key[4] << 32)
-                        + ((ulong)key[5] << 40)
-                        + ((ulong)key[6] << 48),
-                6 => MemoryMarshal.Read<uint>(key.Slice(0, 4))
-                        + ((ulong)key[4] << 32)
-                        + ((ulong)key[5] << 40),
-                5 => MemoryMarshal.Read<uint>(key.Slice(0, 4))
-                        + ((ulong)key[4] << 32),
-                4 => MemoryMarshal.Read<uint>(key.Slice(0, 4)),
-                3 => ((ulong)key[2] << 16)
-                        + ((ulong)key[1] << 8)
-                        + key[0],
-                2 => ((ulong)key[1] << 8)
-                        + key[0],
-                1 => key[0],
-                0 => 0,
-                _ => ((ulong)((length + key[7] + key[key.Length - 1]) % 256) << 56)
-                        + MemoryMarshal.Read<uint>(key.Slice(0, 4))
-                        + ((ulong)key[4] << 32)
-                        + ((ulong)key[5] << 40)
-                        + ((ulong)key[6] << 48),
-            };
-        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal static ulong GetHashCode(in ReadOnlySpan<byte> key) => Utf8Hash.GetHashCode(key);
 
         /// <summary>
         /// Gets a reference to the bucket for the specified hash code and size.

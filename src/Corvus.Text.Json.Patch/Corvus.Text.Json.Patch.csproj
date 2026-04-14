@@ -1,0 +1,38 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <Import Project="$(EndjinProjectPropsPath)" Condition="$(EndjinProjectPropsPath) != ''" />
+
+  <PropertyGroup>
+    <TargetFrameworks>net9.0;net10.0;netstandard2.0;netstandard2.1</TargetFrameworks>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>preview</LangVersion>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <!-- Only upgrade NuGetAudit warnings to errors for official builds. -->
+    <WarningsNotAsErrors>$(WarningsNotAsErrors);NU1901;NU1902;NU1903;NU1904</WarningsNotAsErrors>
+    <NoWarn>$(NoWarn);CS1591;NU1504;CS8500;CS8969;IDE0065;IDE0290;IDE0079;IDE0130;CS1572;CS1573</NoWarn>
+    <NoWarn Condition="$(TargetFrameworks.Contains('netstandard'))">$(NoWarn);CA1510;CA1511;CA1512;CA1513;CA1845;CA1846;CA1847</NoWarn>
+    <EndjinDisableCreateEditorConfig>true</EndjinDisableCreateEditorConfig>
+    <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+    <IsPackable>true</IsPackable>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+    <Description>RFC 6902 JSON Patch support for Corvus.Text.Json, with single-pass patching of immutable documents and direct mutation of mutable documents.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <AdditionalFiles Include="json-patch.json" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Corvus.Text.Json.SourceGenerator\Corvus.Text.Json.SourceGenerator.csproj" PrivateAssets="all" ReferenceOutputAssembly="false" OutputItemType="Analyzer" />
+    <ProjectReference Include="..\Corvus.Text.Json\Corvus.Text.Json.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Endjin.RecommendedPractices.GitHub" Version="2.1.18" PrivateAssets="All" />
+    <PackageReference Include="StyleCop.Analyzers" Version="1.2.0-beta.556" PrivateAssets="All" />
+    <PackageReference Include="Roslynator.Analyzers" Version="4.13.1" PrivateAssets="All" />
+  </ItemGroup>
+
+</Project>

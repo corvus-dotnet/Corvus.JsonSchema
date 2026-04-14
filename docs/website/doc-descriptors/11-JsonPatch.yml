@@ -1,0 +1,3 @@
+source: JsonPatch.md
+navTitle: "JSON Patch (RFC 6902)"
+description: "Apply RFC 6902 JSON Patch operations to mutable documents. Build patches fluently with PatchBuilder or apply individual add, remove, replace, move, copy, and test operations via extension methods."

@@ -14,7 +14,7 @@ using Corvus.Text.Json.CodeGeneration.ValidationHandlers.NumberChildHandlers;
 namespace Corvus.Text.Json.CodeGeneration.ValidationHandlers;
 
 /// <summary>
-/// A validation handler for <see cref="IFormatValidationKeyword"/> capability.
+/// A validation handler for <see cref="INumberValidationKeyword"/> capability.
 /// </summary>
 internal sealed class NumberValidationHandler : TypeSensitiveKeywordValidationHandlerBase, INumberKeywordValidationHandler
 {
@@ -33,7 +33,7 @@ internal sealed class NumberValidationHandler : TypeSensitiveKeywordValidationHa
     /// <inheritdoc/>
     public override CodeGenerator AppendValidationSetup(CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
-        // If we require string value validation, then we need to run the type validation after all the string value validation handlers have run, so that we can ignore the type validation if any of those handlers are present.
+        // Prepend and append child validation setup around the number validation setup.
         return generator
              .PrependChildValidationSetup(typeDeclaration, ChildHandlers, ValidationHandlerPriority)
              .AppendNumberValidationSetup()

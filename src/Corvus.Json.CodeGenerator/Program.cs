@@ -24,6 +24,8 @@ class Program
                 c.AddCommand<ListNamingHeuristicsCommand>("listNameHeuristics");
                 c.AddCommand<ValidateDocumentCommand>("validateDocument");
                 c.AddCommand<VersionCommand>("version");
+                c.AddCommand<JsonLogicCommand>("jsonlogic");
+                c.AddCommand<JsonataCommand>("jsonata");
             });
         return app.RunAsync(args);
     }

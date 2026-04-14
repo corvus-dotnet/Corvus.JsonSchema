@@ -222,7 +222,7 @@ namespace Corvus.Text.Json.CodeGeneration
                 return className;
             }
 
-            throw new InvalidOperationException("The JSON Schema class name has not been created.");
+            throw new InvalidOperationException(SR.JsonSchemaClassNameNotCreated);
         }
 
         /// <summary>
@@ -238,7 +238,7 @@ namespace Corvus.Text.Json.CodeGeneration
                 return scope;
             }
 
-            throw new InvalidOperationException("The JSON Schema class scope  has not been created.");
+            throw new InvalidOperationException(SR.JsonSchemaClassScopeNotCreated);
         }
 
 
@@ -255,7 +255,7 @@ namespace Corvus.Text.Json.CodeGeneration
                 return className;
             }
 
-            throw new InvalidOperationException("The JsonPropertyNamesEscaped class name has not been created.");
+            throw new InvalidOperationException(SR.JsonPropertyNamesEscapedClassNameNotCreated);
         }
 
         /// <summary>
@@ -271,7 +271,7 @@ namespace Corvus.Text.Json.CodeGeneration
                 return scope;
             }
 
-            throw new InvalidOperationException("The JsonPropertyNamesEscaped class scope  has not been created.");
+            throw new InvalidOperationException(SR.JsonPropertyNamesEscapedClassScopeNotCreated);
         }
 
         /// <summary>
@@ -287,7 +287,7 @@ namespace Corvus.Text.Json.CodeGeneration
                 return className;
             }
 
-            throw new InvalidOperationException("The JsonPropertyNames class name has not been created.");
+            throw new InvalidOperationException(SR.JsonPropertyNamesClassNameNotCreated);
         }
 
         /// <summary>
@@ -303,7 +303,7 @@ namespace Corvus.Text.Json.CodeGeneration
                 return scope;
             }
 
-            throw new InvalidOperationException("The JsonPropertyNames class scope  has not been created.");
+            throw new InvalidOperationException(SR.JsonPropertyNamesClassScopeNotCreated);
         }
 
         /// <summary>
@@ -364,7 +364,7 @@ namespace Corvus.Text.Json.CodeGeneration
                 return className;
             }
 
-            throw new InvalidOperationException("The Builder class name has not been created.");
+            throw new InvalidOperationException(SR.BuilderClassNameNotCreated);
         }
 
         /// <summary>
@@ -380,7 +380,7 @@ namespace Corvus.Text.Json.CodeGeneration
                 return arrayClassName;
             }
 
-            throw new InvalidOperationException("The ArrayBuilder class name has not been created.");
+            throw new InvalidOperationException(SR.ArrayBuilderClassNameNotCreated);
         }
 
         /// <summary>
@@ -396,7 +396,7 @@ namespace Corvus.Text.Json.CodeGeneration
                 return objectClassName;
             }
 
-            throw new InvalidOperationException("The ObjectBuilder class name has not been created.");
+            throw new InvalidOperationException(SR.ObjectBuilderClassNameNotCreated);
         }
 
         /// <summary>
@@ -412,7 +412,7 @@ namespace Corvus.Text.Json.CodeGeneration
                 return scope;
             }
 
-            throw new InvalidOperationException("The Builder class scope  has not been created.");
+            throw new InvalidOperationException(SR.BuilderClassScopeNotCreated);
         }
 
         /// <summary>
@@ -439,7 +439,7 @@ namespace Corvus.Text.Json.CodeGeneration
                 return className;
             }
 
-            throw new InvalidOperationException("The Source class name has not been created.");
+            throw new InvalidOperationException(SR.SourceClassNameNotCreated);
         }
 
         /// <summary>
@@ -455,7 +455,7 @@ namespace Corvus.Text.Json.CodeGeneration
                 return scope;
             }
 
-            throw new InvalidOperationException("The Source class scope  has not been created.");
+            throw new InvalidOperationException(SR.SourceClassScopeNotCreated);
         }
 
         /// <summary>

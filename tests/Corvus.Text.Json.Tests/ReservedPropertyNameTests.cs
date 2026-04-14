@@ -14,7 +14,7 @@ namespace Corvus.Text.Json.Tests.ReservedPropertyNameValidation;
 /// Tests that object schemas with properties whose names collide with generated class names
 /// (e.g. "jsonSchema", "builder", "source", "mutable") generate valid code.
 /// </summary>
-[Trait("Category", "CodeGen")]
+[Trait("category", "CodeGen")]
 public class ReservedPropertyNameValues : IClassFixture<ReservedPropertyNameValues.Fixture>
 {
     private readonly Fixture fixture;

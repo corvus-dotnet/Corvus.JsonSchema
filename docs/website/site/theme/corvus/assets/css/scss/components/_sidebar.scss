@@ -210,6 +210,7 @@
     flex: 1 1 auto;
     min-height: 0; // allow flex child to shrink below content size
     overflow-y: auto;
+    overflow-x: hidden;
     padding: var(--space-sm) 0 0 var(--space-md);
     scrollbar-width: thin;
     scrollbar-color: var(--color-border) transparent;

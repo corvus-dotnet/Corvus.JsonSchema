@@ -600,6 +600,17 @@ public interface IJsonDocument : IDisposable
     void AppendElementToMetadataDb(int index, JsonWorkspace workspace, ref MetadataDb db);
 
     /// <summary>
+    /// Writes the element at the given index into the specified metadata database at a specific position,
+    /// creating external reference rows. This is the positional variant of <see cref="AppendElementToMetadataDb"/>.
+    /// </summary>
+    /// <param name="index">The index of the element in this document.</param>
+    /// <param name="workspace">The JSON workspace for resolving document indices.</param>
+    /// <param name="db">The target metadata database (must already have a gap at <paramref name="writePosition"/>).</param>
+    /// <param name="writePosition">The byte position in <paramref name="db"/> at which to start writing.</param>
+    /// <returns>The number of rows written.</returns>
+    int WriteElementToMetadataDb(int index, JsonWorkspace workspace, ref MetadataDb db, int writePosition);
+
+    /// <summary>
     /// Try to resolve the given JSON pointer.
     /// </summary>
     /// <typeparam name="TValue">The type of the target value.</typeparam>

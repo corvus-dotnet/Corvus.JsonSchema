@@ -45,7 +45,7 @@ V5 is a ground-up rewrite. The generated types are still readonly structs backed
 | **Parsing** | `MyType.Parse(json)` or `ParsedValue<MyType>.Parse(json)` | `ParsedJsonDocument<MyType>.Parse(json)` returning a disposable document, **or** `MyType.ParseValue(json)` for a self-owned copy |
 | **Validation** | `entity.Validate(ValidationContext, ValidationLevel)` | `entity.EvaluateSchema()` returning `bool`, or `entity.EvaluateSchema(collector)` for detailed results |
 | **Code generation** | `Corvus.Json.CodeGeneration` / `generatejsonschematypes` | `Corvus.Text.Json.CodeGeneration` / `generatejsonschematypes --engine V5` |
-| **Target frameworks** | net8.0, netstandard2.0 | net8.0, net9.0, net10.0, netstandard2.0 |
+| **Target frameworks** | net8.0, netstandard2.0 | net9.0, net10.0, netstandard2.0, netstandard2.1 |
 
 ---
 
@@ -284,7 +284,7 @@ v5.WriteTo(corvusWriter);         // Corvus.Text.Json.Utf8JsonWriter (not System
 
 ## Formatting (`IFormattable`, `ISpanFormattable`, `IUtf8SpanFormattable`)
 
-V5 generated types implement `IFormattable`, `ISpanFormattable` (.NET 8+), and `IUtf8SpanFormattable` (.NET 8+). V4 types do not implement any of these interfaces.
+V5 generated types implement `IFormattable`, `ISpanFormattable` (.NET 9+), and `IUtf8SpanFormattable` (.NET 9+). V4 types do not implement any of these interfaces.
 
 This means V5 types can be used directly with `string.Format`, interpolated strings with custom format specifiers, and zero-allocation `TryFormat` to `Span<char>` or `Span<byte>` buffers:
 
@@ -299,14 +299,14 @@ string grouped = v5.Age.ToString("N0", CultureInfo.InvariantCulture);          /
 ```
 
 ```csharp
-// V5 — ISpanFormattable: zero-allocation formatting to char buffer (.NET 8+)
+// V5 — ISpanFormattable: zero-allocation formatting to char buffer (.NET 9+)
 Span<char> charBuffer = stackalloc char[64];
 if (v5.Age.TryFormat(charBuffer, out int charsWritten, "N0", CultureInfo.InvariantCulture))
 {
     ReadOnlySpan<char> result = charBuffer[..charsWritten];
 }
 
-// V5 — IUtf8SpanFormattable: zero-allocation formatting to UTF-8 byte buffer (.NET 8+)
+// V5 — IUtf8SpanFormattable: zero-allocation formatting to UTF-8 byte buffer (.NET 9+)
 Span<byte> utf8Buffer = stackalloc byte[64];
 if (v5.Age.TryFormat(utf8Buffer, out int bytesWritten, "N0", CultureInfo.InvariantCulture))
 {

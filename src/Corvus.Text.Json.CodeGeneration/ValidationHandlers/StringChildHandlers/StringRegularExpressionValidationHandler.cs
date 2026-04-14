@@ -84,7 +84,7 @@ public static class StringRegularExpressionValidationExtensions
 
         if (!keyword.TryGetValidationRegularExpressions(typeDeclaration, out IReadOnlyList<string> expressions))
         {
-            throw new InvalidOperationException("Unable to get validation constants for keyword.");
+            throw new InvalidOperationException(SR.UnableToGetValidationConstants);
         }
 
         Debug.Assert(expressions.Count == 1, "Expected exactly one regular expression for keyword.");

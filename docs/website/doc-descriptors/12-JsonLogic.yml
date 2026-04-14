@@ -1,0 +1,3 @@
+source: JsonLogic.md
+navTitle: "JsonLogic Rule Engine"
+description: "Evaluate JSON-encoded logic rules against JSON data using the interpreted evaluator, Roslyn source generator, or CLI code generator. Supports all standard JsonLogic operators, extended numeric types, and zero-allocation evaluation."

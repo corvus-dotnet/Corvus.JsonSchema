@@ -177,7 +177,7 @@ internal static class PolyfillExtensions
 
         if (encoded.Length > bytes.Length)
         {
-            throw new ArgumentException("Destination buffer is too small.", nameof(bytes));
+            throw new ArgumentException(SR.Argument_DestinationTooShort, nameof(bytes));
         }
 
         encoded.AsSpan().CopyTo(bytes);
@@ -203,7 +203,7 @@ internal static class PolyfillExtensions
 
         if (charArray.Length > chars.Length)
         {
-            throw new ArgumentException("Destination buffer is too small.", nameof(chars));
+            throw new ArgumentException(SR.Argument_DestinationTooShort, nameof(chars));
         }
 
         charArray.AsSpan().CopyTo(chars);

@@ -254,7 +254,7 @@ public interface IJsonSchemaResultsCollector : IDisposable
     /// Updates the match state for the given evaluated keyword.
     /// </summary>
     /// <param name="isMatch">If <see langword="true"/> then this indicates that the current context produced a successful match.</param>
-    /// <param name="providerContext">The context to provider to the providers.</param>
+    /// <param name="providerContext">The context to provide to the providers.</param>
     /// <param name="messageProvider">The (optional) provider for a JSON schema evaluation message.</param>
     /// <param name="encodedKeyword">The keyword that was evaluated.</param>
     void EvaluatedKeyword<TProviderContext>(
@@ -280,7 +280,7 @@ public interface IJsonSchemaResultsCollector : IDisposable
     /// Updates the match state for the given keyword evaluated against the given property.
     /// </summary>
     /// <param name="isMatch">If <see langword="true"/> then this indicates that the current context produced a successful match.</param>
-    /// <param name="providerContext">The context to provider to the providers.</param>
+    /// <param name="providerContext">The context to provide to the providers.</param>
     /// <param name="messageProvider">The (optional) provider for a JSON schema evaluation message.</param>
     /// <param name="propertyName">The name of the property for which to begin a child context.</param>
     /// <param name="encodedKeyword">The keyword that was evaluated.</param>
@@ -307,7 +307,7 @@ public interface IJsonSchemaResultsCollector : IDisposable
     /// Updates the match state for the given evaluated keyword.
     /// </summary>
     /// <param name="isMatch">If <see langword="true"/> then this indicates that the current context produced a successful match.</param>
-    /// <param name="providerContext">The context to provider to the providers.</param>
+    /// <param name="providerContext">The context to provide to the providers.</param>
     /// <param name="messageProvider">The (optional) provider for a JSON schema evaluation message.</param>
     /// <param name="encodedKeywordPath">The keyword and its sub-path that was evaluated.</param>
     /// <remarks>

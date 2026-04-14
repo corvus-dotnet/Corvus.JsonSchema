@@ -87,6 +87,7 @@ if (-not $canonicalRepoUrl) {
 $v5XmlPath = Join-Path $repoRoot "src\Corvus.Text.Json\bin\Release\net10.0\Corvus.Text.Json.xml"
 $v5AssemblyPath = Join-Path $repoRoot "src\Corvus.Text.Json\bin\Release\net10.0\Corvus.Text.Json.dll"
 $v5Ns20AssemblyPath = Join-Path $repoRoot "src\Corvus.Text.Json\bin\Release\netstandard2.0\Corvus.Text.Json.dll"
+$v5Ns21AssemblyPath = Join-Path $repoRoot "src\Corvus.Text.Json\bin\Release\netstandard2.1\Corvus.Text.Json.dll"
 $v5ApiContentDir = Join-Path $siteDir "content\Api-v5"
 $v5ApiTaxonomyDir = Join-Path $siteDir "taxonomy\api-v5"
 $v5ApiViewsDir = Join-Path $siteDir "theme\corvus\views\api\v5"
@@ -205,6 +206,8 @@ if ($SkipDotNetBuild) {
     if ($LASTEXITCODE -ne 0) { throw "Failed to build Corvus.Text.Json (net10.0)" }
     & dotnet build $mainProject -c Release -f netstandard2.0 --no-incremental -v q
     if ($LASTEXITCODE -ne 0) { throw "Failed to build Corvus.Text.Json (netstandard2.0)" }
+    & dotnet build $mainProject -c Release -f netstandard2.1 --no-incremental -v q
+    if ($LASTEXITCODE -ne 0) { throw "Failed to build Corvus.Text.Json (netstandard2.1)" }
     Write-StepDuration "V5 build" $sw
 
     # -- Step 1b: Build V4 libraries ---------------------------------------------
@@ -234,6 +237,7 @@ $sw = [System.Diagnostics.Stopwatch]::StartNew()
     --xml $v5XmlPath `
     --assembly $v5AssemblyPath `
     --ns20-assembly $v5Ns20AssemblyPath `
+    --ns21-assembly $v5Ns21AssemblyPath `
     --output $v5ApiContentDir `
     --taxonomy-output $v5ApiTaxonomyDir `
     --api-views-dir $v5ApiViewsDir `
@@ -666,8 +670,8 @@ $cssOutputPath = Join-Path $outputDir "main.css"
 if ($LASTEXITCODE -ne 0) { throw "SCSS compilation failed" }
 Write-StepDuration "SCSS compilation" $sw
 
-# -- Step 7b: Copy per-version API search indices ----------------------------
-Write-Host "`n[7b/10] Copying API search indices..." -ForegroundColor Cyan
+# -- Step 7b: Copy per-version API search indices and sidebar fragments -------
+Write-Host "`n[7b/10] Copying API search indices and sidebar fragments..." -ForegroundColor Cyan
 $v5SearchSrc = Join-Path $v5ApiContentDir "search-index.json"
 $v4SearchSrc = Join-Path $v4ApiContentDir "search-index.json"
 $v5SearchDst = Join-Path $outputDir "api\v5\search-index.json"
@@ -680,6 +684,20 @@ if (Test-Path $v4SearchSrc) {
     Copy-Item $v4SearchSrc $v4SearchDst -Force
     Write-Host "  V4: $([math]::Round((Get-Item $v4SearchDst).Length/1024,1)) KB"
 } else { Write-Warning "  V4 search index not found at $v4SearchSrc" }
+
+# Copy sidebar fragments (loaded dynamically by JS to avoid duplicating ~1.5 MB per page)
+$v5SidebarSrc = Join-Path $v5ApiContentDir "sidebar.html"
+$v4SidebarSrc = Join-Path $v4ApiContentDir "sidebar.html"
+$v5SidebarDst = Join-Path $outputDir "api\v5\sidebar.html"
+$v4SidebarDst = Join-Path $outputDir "api\v4\sidebar.html"
+if (Test-Path $v5SidebarSrc) {
+    Copy-Item $v5SidebarSrc $v5SidebarDst -Force
+    Write-Host "  V5 sidebar: $([math]::Round((Get-Item $v5SidebarDst).Length/1024,1)) KB"
+} else { Write-Warning "  V5 sidebar fragment not found at $v5SidebarSrc" }
+if (Test-Path $v4SidebarSrc) {
+    Copy-Item $v4SidebarSrc $v4SidebarDst -Force
+    Write-Host "  V4 sidebar: $([math]::Round((Get-Item $v4SidebarDst).Length/1024,1)) KB"
+} else { Write-Warning "  V4 sidebar fragment not found at $v4SidebarSrc" }
 
 # -- Step 8: Build search index ----------------------------------------------
 Write-Host "`n[8/10] Building search index..." -ForegroundColor Cyan
@@ -725,6 +743,48 @@ Remove-Item $playgroundPublishDir -Recurse -Force -ErrorAction SilentlyContinue
 $playgroundSize = (Get-ChildItem $playgroundOutputDir -Recurse -File | Measure-Object -Property Length -Sum).Sum
 Write-Host "  Playground: $([math]::Round($playgroundSize/1MB, 1)) MB" -ForegroundColor Gray
 Write-StepDuration "Playground build" $sw
+
+# -- Step 9b: Build JSONata Playground (Blazor WASM) ---------------------------
+Write-Host "`n[9b/10] Building JSONata Playground..." -ForegroundColor Cyan
+$sw = [System.Diagnostics.Stopwatch]::StartNew()
+
+# Bundle monaco-jsonata (npm)
+$jsonataPlaygroundRoot = Join-Path $repoRoot "docs\playground-jsonata"
+Push-Location $jsonataPlaygroundRoot
+try {
+    & npm ci --ignore-scripts --no-audit --no-fund 2>&1 | Out-Null
+    & node esbuild.mjs
+    if ($LASTEXITCODE -ne 0) { throw "monaco-jsonata bundle failed" }
+} finally {
+    Pop-Location
+}
+
+$jsonataProject = Join-Path $repoRoot "docs\playground-jsonata\src\Corvus.Text.Json.Jsonata.Playground\Corvus.Text.Json.Jsonata.Playground.csproj"
+$jsonataPublishDir = Join-Path $here ".playground-jsonata-publish"
+$jsonataOutputDir = Join-Path $outputDir "playground-jsonata"
+
+& dotnet publish $jsonataProject -c Release -o $jsonataPublishDir --nologo
+if ($LASTEXITCODE -ne 0) { throw "JSONata Playground publish failed" }
+
+$jsonataWwwroot = Join-Path $jsonataPublishDir "wwwroot"
+if (!(Test-Path $jsonataWwwroot)) {
+    throw "JSONata Playground wwwroot not found at $jsonataWwwroot"
+}
+Copy-Item -Path $jsonataWwwroot -Destination $jsonataOutputDir -Recurse -Force
+
+$jsonataIndex = Join-Path $jsonataOutputDir "index.html"
+if (Test-Path $jsonataIndex) {
+    $indexContent = [System.IO.File]::ReadAllText($jsonataIndex)
+    $indexContent = $indexContent -replace '<base href="/" />', "<base href=`"$BasePathPrefix/playground-jsonata/`" />"
+    [System.IO.File]::WriteAllText($jsonataIndex, $indexContent)
+    Write-Host "  Updated base href to $BasePathPrefix/playground-jsonata/" -ForegroundColor Gray
+}
+
+Remove-Item $jsonataPublishDir -Recurse -Force -ErrorAction SilentlyContinue
+
+$jsonataSize = (Get-ChildItem $jsonataOutputDir -Recurse -File | Measure-Object -Property Length -Sum).Sum
+Write-Host "  JSONata Playground: $([math]::Round($jsonataSize/1MB, 1)) MB" -ForegroundColor Gray
+Write-StepDuration "JSONata Playground build" $sw
 
 # Tell Jekyll to include _-prefixed directories needed by the Blazor playground.
 # We cannot use .nojekyll (which bypasses Jekyll entirely) because the resulting
@@ -778,6 +838,7 @@ $lycheeArgs = @(
     "--no-progress"
     "--exclude-path", "api[/\\]v4"
     "--exclude-path", "playground"
+    "--exclude-path", "playground-jsonata"
     "."
 )
 
@@ -799,9 +860,9 @@ if ($BasePathPrefix) {
     Write-Host "`n[11] Rewriting paths for base prefix '$BasePathPrefix'..." -ForegroundColor Cyan
     $sw = [System.Diagnostics.Stopwatch]::StartNew()
 
-    # Rewrite HTML files (excluding playground which uses <base href>)
+    # Rewrite HTML files (excluding playgrounds which use <base href>)
     $htmlFiles = Get-ChildItem $outputDir -Filter "*.html" -Recurse -File |
-        Where-Object { $_.FullName -notlike "*\playground\*" }
+        Where-Object { $_.FullName -notlike "*\playground\*" -and $_.FullName -notlike "*\playground-jsonata\*" }
     $rewriteCount = 0
     foreach ($htmlFile in $htmlFiles) {
         $content = [System.IO.File]::ReadAllText($htmlFile.FullName)
@@ -825,7 +886,7 @@ if ($BasePathPrefix) {
         $original = $content
 
         # Rewrite string literals containing root-relative paths: '/api/', '/search-index.json', etc.
-        $content = $content -replace "(['""])(/(?!/)(?:api|search|docs|examples|getting-started|assets|playground))", "`$1$BasePathPrefix`$2"
+        $content = $content -replace "(['""])(/(?!/)(?:api|search|docs|examples|getting-started|assets|playground|playground-jsonata))", "`$1$BasePathPrefix`$2"
 
         if ($content -ne $original) {
             [System.IO.File]::WriteAllText($jsFile.FullName, $content)
@@ -867,7 +928,7 @@ $defaultGitHubUrl = "https://github.com/corvus-dotnet/Corvus.JsonSchema"
 if ($canonicalRepoUrl -ne $defaultGitHubUrl) {
     Write-Host "`n  Rewriting GitHub URLs: $defaultGitHubUrl -> $canonicalRepoUrl" -ForegroundColor Cyan
     $htmlFiles = Get-ChildItem $outputDir -Filter "*.html" -Recurse -File |
-        Where-Object { $_.FullName -notlike "*\playground\*" }
+        Where-Object { $_.FullName -notlike "*\playground\*" -and $_.FullName -notlike "*\playground-jsonata\*" }
     $ghRewriteCount = 0
     foreach ($htmlFile in $htmlFiles) {
         $content = [System.IO.File]::ReadAllText($htmlFile.FullName)

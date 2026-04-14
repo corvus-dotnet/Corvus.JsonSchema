@@ -16,12 +16,22 @@ namespace Corvus.Text.Json.Internal;
 /// Represents a mutable JSON document that supports editing and value storage operations.
 /// </summary>
 [CLSCompliant(false)]
-public interface IMutableJsonDocument : IJsonDocument
+public interface IMutableJsonDocument : IWorkspaceManagedDocument
 {
     /// <summary>
     /// Gets the version of the document.
     /// </summary>
     ulong Version { get; }
+
+    /// <summary>
+    /// Creates a frozen (immutable) copy of the element at the specified index,
+    /// backed by a new document builder registered in the same workspace.
+    /// </summary>
+    /// <typeparam name="TElement">The immutable element type to return.</typeparam>
+    /// <param name="index">The index of the element to freeze.</param>
+    /// <returns>An immutable element that lives for the lifetime of its workspace and its associated documents.</returns>
+    TElement FreezeElement<TElement>(int index)
+        where TElement : struct, IJsonElement<TElement>;
 
     /// <summary>
     /// Gets the array element at the specified index as a mutable JSON element.
@@ -333,6 +343,13 @@ public interface IMutableJsonDocument : IJsonDocument
     void SetAndDispose(ref ComplexValueBuilder cvb);
 
     /// <summary>
+    /// Replaces the root value of an already-initialized document, disposing the old value
+    /// and the provided <see cref="ComplexValueBuilder"/>.
+    /// </summary>
+    /// <param name="cvb">The <see cref="ComplexValueBuilder"/> containing the replacement root value.</param>
+    void ReplaceRootAndDispose(ref ComplexValueBuilder cvb);
+
+    /// <summary>
     /// Inserts a value into the document and disposes the provided <see cref="ComplexValueBuilder"/>.
     /// </summary>
     /// <param name="complexObjectStartIndex">The start index of the complex object.</param>
@@ -349,4 +366,174 @@ public interface IMutableJsonDocument : IJsonDocument
     /// <param name="membersToOverwrite">The number of members to overwrite.</param>
     /// <param name="cvb">The <see cref="ComplexValueBuilder"/> to overwrite and dispose.</param>
     void OverwriteAndDispose(int complexObjectStartIndex, int startIndex, int endIndex, int membersToOverwrite, ref ComplexValueBuilder cvb);
+
+    /// <summary>
+    /// Inserts a single simple value row directly into a complex object, bypassing <see cref="ComplexValueBuilder"/>.
+    /// </summary>
+    /// <param name="complexObjectStartIndex">The start index of the complex object.</param>
+    /// <param name="targetIndex">The index at which to insert.</param>
+    /// <param name="memberCount">The number of members to insert.</param>
+    /// <param name="tokenType">The token type of the value.</param>
+    /// <param name="location">The value location in the document's backing store.</param>
+    /// <param name="sizeOrLength">The size/length/unescaping flag for the value row.</param>
+    void InsertSimpleValue(int complexObjectStartIndex, int targetIndex, int memberCount, JsonTokenType tokenType, int location, int sizeOrLength);
+
+    /// <summary>
+    /// Overwrites a range with a single simple value row directly, bypassing <see cref="ComplexValueBuilder"/>.
+    /// </summary>
+    /// <param name="complexObjectStartIndex">The start index of the complex object.</param>
+    /// <param name="startIndex">The start index of the range to overwrite.</param>
+    /// <param name="endIndex">The end index of the range to overwrite.</param>
+    /// <param name="memberCountToReplace">The number of members to replace.</param>
+    /// <param name="tokenType">The token type of the replacement value.</param>
+    /// <param name="location">The value location in the document's backing store.</param>
+    /// <param name="sizeOrLength">The size/length/unescaping flag for the value row.</param>
+    void OverwriteSimpleValue(int complexObjectStartIndex, int startIndex, int endIndex, int memberCountToReplace, JsonTokenType tokenType, int location, int sizeOrLength);
+
+    /// <summary>
+    /// Inserts a property name and a single simple value row directly, bypassing <see cref="ComplexValueBuilder"/>.
+    /// </summary>
+    /// <param name="complexObjectStartIndex">The start index of the complex object.</param>
+    /// <param name="targetIndex">The index at which to insert.</param>
+    /// <param name="memberCount">The number of members to insert.</param>
+    /// <param name="propertyName">The UTF-8 property name to escape and store.</param>
+    /// <param name="valueTokenType">The token type of the value.</param>
+    /// <param name="valueLocation">The value location in the document's backing store.</param>
+    /// <param name="valueSizeOrLength">The size/length/unescaping flag for the value row.</param>
+    void InsertSimpleProperty(int complexObjectStartIndex, int targetIndex, int memberCount, ReadOnlySpan<byte> propertyName, JsonTokenType valueTokenType, int valueLocation, int valueSizeOrLength);
+
+    /// <summary>
+    /// Inserts element rows from a source document directly, bypassing <see cref="ComplexValueBuilder"/>.
+    /// </summary>
+    /// <param name="complexObjectStartIndex">The start index of the complex object.</param>
+    /// <param name="targetIndex">The index at which to insert.</param>
+    /// <param name="memberCount">The number of members to insert.</param>
+    /// <param name="sourceDocument">The source document containing the element.</param>
+    /// <param name="sourceIndex">The index of the element in the source document.</param>
+    void InsertFromDocument(int complexObjectStartIndex, int targetIndex, int memberCount, IJsonDocument sourceDocument, int sourceIndex);
+
+    /// <summary>
+    /// Overwrites a range with element rows from a source document, bypassing <see cref="ComplexValueBuilder"/>.
+    /// </summary>
+    /// <param name="complexObjectStartIndex">The start index of the complex object.</param>
+    /// <param name="startIndex">The start index of the range to overwrite.</param>
+    /// <param name="endIndex">The end index of the range to overwrite.</param>
+    /// <param name="memberCountToReplace">The number of members to replace.</param>
+    /// <param name="sourceDocument">The source document containing the element.</param>
+    /// <param name="sourceIndex">The index of the element in the source document.</param>
+    void OverwriteFromDocument(int complexObjectStartIndex, int startIndex, int endIndex, int memberCountToReplace, IJsonDocument sourceDocument, int sourceIndex);
+
+    /// <summary>
+    /// Inserts a property name row followed by element rows from a source document, bypassing <see cref="ComplexValueBuilder"/>.
+    /// </summary>
+    /// <param name="complexObjectStartIndex">The start index of the complex object.</param>
+    /// <param name="targetIndex">The index at which to insert.</param>
+    /// <param name="memberCount">The number of members to insert.</param>
+    /// <param name="propertyName">The UTF-8 property name to escape and store.</param>
+    /// <param name="sourceDocument">The source document containing the value element.</param>
+    /// <param name="sourceIndex">The index of the value element in the source document.</param>
+    void InsertPropertyFromDocument(int complexObjectStartIndex, int targetIndex, int memberCount, ReadOnlySpan<byte> propertyName, IJsonDocument sourceDocument, int sourceIndex);
+
+    /// <summary>
+    /// Replaces an existing property value with a simple scalar value.
+    /// </summary>
+    /// <param name="objectIndex">The start index of the object.</param>
+    /// <param name="propertyName">The UTF-8 property name to find.</param>
+    /// <param name="tokenType">The token type of the replacement value.</param>
+    /// <param name="location">The value location in the document's backing store.</param>
+    /// <param name="sizeOrLength">The size/length/unescaping flag for the value row.</param>
+    /// <returns><see langword="true"/> if the property was found and replaced; otherwise, <see langword="false"/>.</returns>
+    bool TryReplacePropertyValue(int objectIndex, ReadOnlySpan<byte> propertyName, JsonTokenType tokenType, int location, int sizeOrLength);
+
+    /// <summary>
+    /// Replaces an existing property value with element rows from a source document.
+    /// </summary>
+    /// <param name="objectIndex">The start index of the object.</param>
+    /// <param name="propertyName">The UTF-8 property name to find.</param>
+    /// <param name="sourceDocument">The source document containing the element.</param>
+    /// <param name="sourceIndex">The index of the element in the source document.</param>
+    /// <returns><see langword="true"/> if the property was found and replaced; otherwise, <see langword="false"/>.</returns>
+    bool TryReplacePropertyFromDocument(int objectIndex, ReadOnlySpan<byte> propertyName, IJsonDocument sourceDocument, int sourceIndex);
+
+    /// <summary>
+    /// Copies a value and sets it as a property on a destination object.
+    /// If the property already exists, it is replaced.
+    /// </summary>
+    /// <param name="srcValueIndex">The byte index of the source value.</param>
+    /// <param name="dstObjectIndex">The start index of the destination object.</param>
+    /// <param name="propertyName">The UTF-8 property name for the destination property.</param>
+    void CopyValueToProperty(int srcValueIndex, int dstObjectIndex, ReadOnlySpan<byte> propertyName);
+
+    /// <summary>
+    /// Copies a value and inserts it as an array item at the specified index.
+    /// </summary>
+    /// <param name="srcValueIndex">The byte index of the source value.</param>
+    /// <param name="dstArrayIndex">The start index of the destination array.</param>
+    /// <param name="itemIndex">The zero-based index at which to insert the item.</param>
+    void CopyValueToArrayIndex(int srcValueIndex, int dstArrayIndex, int itemIndex);
+
+    /// <summary>
+    /// Copies a value and appends it at the end of a destination array.
+    /// </summary>
+    /// <param name="srcValueIndex">The byte index of the source value.</param>
+    /// <param name="dstArrayIndex">The start index of the destination array.</param>
+    void CopyValueToArrayEnd(int srcValueIndex, int dstArrayIndex);
+
+    /// <summary>
+    /// Moves a property from a source object to a destination object as a new property.
+    /// Handles removing existing destination properties and same-property no-ops.
+    /// </summary>
+    /// <param name="srcObjectIndex">The start index of the source object.</param>
+    /// <param name="srcPropertyName">The UTF-8 name of the source property.</param>
+    /// <param name="dstObjectIndex">The start index of the destination object.</param>
+    /// <param name="dstPropertyName">The UTF-8 name for the destination property.</param>
+    /// <returns><see langword="true"/> if the property was found and moved; otherwise, <see langword="false"/>.</returns>
+    bool MovePropertyToProperty(int srcObjectIndex, ReadOnlySpan<byte> srcPropertyName, int dstObjectIndex, ReadOnlySpan<byte> dstPropertyName);
+
+    /// <summary>
+    /// Moves a property from a source object into a destination array at the specified index.
+    /// </summary>
+    /// <param name="srcObjectIndex">The start index of the source object.</param>
+    /// <param name="srcPropertyName">The UTF-8 name of the source property.</param>
+    /// <param name="dstArrayIndex">The start index of the destination array.</param>
+    /// <param name="destIndex">The zero-based index at which to insert in the destination array.</param>
+    /// <returns><see langword="true"/> if the property was found and moved; otherwise, <see langword="false"/>.</returns>
+    bool MovePropertyToArray(int srcObjectIndex, ReadOnlySpan<byte> srcPropertyName, int dstArrayIndex, int destIndex);
+
+    /// <summary>
+    /// Moves a property from a source object to the end of a destination array.
+    /// </summary>
+    /// <param name="srcObjectIndex">The start index of the source object.</param>
+    /// <param name="srcPropertyName">The UTF-8 name of the source property.</param>
+    /// <param name="dstArrayIndex">The start index of the destination array.</param>
+    /// <returns><see langword="true"/> if the property was found and moved; otherwise, <see langword="false"/>.</returns>
+    bool MovePropertyToArrayEnd(int srcObjectIndex, ReadOnlySpan<byte> srcPropertyName, int dstArrayIndex);
+
+    /// <summary>
+    /// Moves an array item from a source array into a destination array at the specified index.
+    /// Handles same-array moves with post-removal index semantics.
+    /// </summary>
+    /// <param name="srcArrayIndex">The start index of the source array.</param>
+    /// <param name="srcIndex">The zero-based index of the source item.</param>
+    /// <param name="dstArrayIndex">The start index of the destination array.</param>
+    /// <param name="destIndex">The zero-based index at which to insert in the destination array (post-removal semantics for same-array moves).</param>
+    void MoveItemToArray(int srcArrayIndex, int srcIndex, int dstArrayIndex, int destIndex);
+
+    /// <summary>
+    /// Moves an array item from a source array to the end of a destination array.
+    /// </summary>
+    /// <param name="srcArrayIndex">The start index of the source array.</param>
+    /// <param name="srcIndex">The zero-based index of the source item.</param>
+    /// <param name="dstArrayIndex">The start index of the destination array.</param>
+    void MoveItemToArrayEnd(int srcArrayIndex, int srcIndex, int dstArrayIndex);
+
+    /// <summary>
+    /// Moves an array item from a source array to a destination object as a new property.
+    /// Handles removing existing destination properties.
+    /// </summary>
+    /// <param name="srcArrayIndex">The start index of the source array.</param>
+    /// <param name="srcIndex">The zero-based index of the source item.</param>
+    /// <param name="dstObjectIndex">The start index of the destination object.</param>
+    /// <param name="destPropertyName">The UTF-8 name for the destination property.</param>
+    void MoveItemToProperty(int srcArrayIndex, int srcIndex, int dstObjectIndex, ReadOnlySpan<byte> destPropertyName);
 }

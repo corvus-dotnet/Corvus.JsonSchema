@@ -133,6 +133,6 @@ public readonly struct MethodParameter
             return generator.GetOrAddMemberName(memberName);
         }
 
-        throw new InvalidOperationException("No parameter name was set.");
+        throw new InvalidOperationException(SR.NoParameterNameWasSet);
     }
 }

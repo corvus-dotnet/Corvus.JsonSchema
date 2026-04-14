@@ -120,7 +120,7 @@ public class AnyOfConstValidationHandler : IChildValidationHandler
                                 .AppendNumberConstantValidation(typeDeclaration, item.Value, shortCircuitSuccessLabel);
                             break;
                         default:
-                            throw new InvalidOperationException("Unexpected value kind.");
+                            throw new InvalidOperationException(SR.UnexpectedValueKind);
                     }
                 }
 

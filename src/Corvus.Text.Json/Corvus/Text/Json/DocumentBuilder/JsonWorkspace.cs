@@ -138,6 +138,42 @@ public class JsonWorkspace : IDisposable
 #pragma warning restore CA1816 // Dispose methods should call SuppressFinalize
 
     /// <summary>
+    /// Resets the workspace for reuse, disposing all workspace-managed documents
+    /// and clearing the document tracking state. The backing array is retained
+    /// so subsequent evaluations avoid re-allocation.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Any <see cref="JsonElement"/> instances that reference documents in this
+    /// workspace become invalid after this call. The caller must not use them.
+    /// </para>
+    /// </remarks>
+    public void Reset()
+    {
+        DisposeMutable();
+
+        if (_length > 0)
+        {
+            Array.Clear(_documents, 0, _length);
+        }
+
+        _documentIndices.Clear();
+        _length = 0;
+    }
+
+    /// <summary>
+    /// Registers a workspace-managed document so that it will be disposed when the workspace is
+    /// disposed or reset. Use this for pooled documents (e.g., <c>FixedJsonValueDocument</c>)
+    /// that are created outside of a builder but must participate in workspace lifecycle management.
+    /// </summary>
+    /// <param name="document">The document to register.</param>
+    [CLSCompliant(false)]
+    public void RegisterDocument(IWorkspaceManagedDocument document)
+    {
+        GetDocumentIndex(document);
+    }
+
+    /// <summary>
     /// Creates a document builder for building mutable JSON documents from an existing element.
     /// </summary>
     /// <typeparam name="TElement">The type of the source JSON element.</typeparam>
@@ -262,7 +298,7 @@ public class JsonWorkspace : IDisposable
     {
         foreach (IJsonDocument document in _documents.AsSpan(0, _length))
         {
-            if (document is IMutableJsonDocument)
+            if (document is IWorkspaceManagedDocument)
             {
                 document.Dispose();
             }

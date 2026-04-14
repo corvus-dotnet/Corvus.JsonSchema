@@ -97,4 +97,14 @@ public static partial class JsonSchemaEvaluation
     /// Message provider for validation errors when a value matches the corresponding then clause for a binary or ternary if.
     /// </summary>
     public static readonly JsonSchemaMessageProvider MatchedElse = static (buffer, out written) => JsonReaderHelper.TryGetUtf8FromText(SR.JsonSchema_MatchedElse.AsSpan(), buffer, out written);
+
+    /// <summary>
+    /// Message provider for an ignored then keyword when no if keyword is present.
+    /// </summary>
+    public static readonly JsonSchemaMessageProvider ThenWithoutIf = static (buffer, out written) => JsonReaderHelper.TryGetUtf8FromText(SR.JsonSchema_ThenWithoutIf.AsSpan(), buffer, out written);
+
+    /// <summary>
+    /// Message provider for an ignored else keyword when no if keyword is present.
+    /// </summary>
+    public static readonly JsonSchemaMessageProvider ElseWithoutIf = static (buffer, out written) => JsonReaderHelper.TryGetUtf8FromText(SR.JsonSchema_ElseWithoutIf.AsSpan(), buffer, out written);
 }

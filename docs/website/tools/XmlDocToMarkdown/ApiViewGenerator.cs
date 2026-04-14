@@ -1,4 +1,5 @@
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Web;
 
 namespace XmlDocToMarkdown;
@@ -82,7 +83,7 @@ internal static class ApiViewGenerator
 
             sb.AppendLine($"                <a class=\"card card--link\" href=\"{baseUrl}/{nsSlug}.html\">");
             sb.AppendLine($"                    <h3 class=\"card__title\">{HttpUtility.HtmlEncode(ns).Replace(".", ".&#8203;")}</h3>");
-            sb.AppendLine($"                    <p class=\"card__body\">{HttpUtility.HtmlEncode(description)}</p>");
+            sb.AppendLine($"                    <p class=\"card__body\">{InlineMarkdownToHtml(description, allowLinks: false)}</p>");
             sb.AppendLine($"                    <div class=\"card__meta\"><span class=\"card__tag\">{typeCount} type{(typeCount == 1 ? "" : "s")}</span></div>");
             sb.AppendLine("                </a>");
         }
@@ -113,19 +114,31 @@ internal static class ApiViewGenerator
     }
 
     /// <summary>
-    /// Generates the sidebar Razor partial containing the hierarchical API sidebar tree.
-    /// The output filename is controlled by <paramref name="sidebarPartialName"/>.
+    /// Generates both the sidebar Razor partial (a lightweight placeholder that
+    /// loads its content dynamically) and a static <c>sidebar.html</c> fragment
+    /// containing the full namespace tree. This avoids duplicating the ~1.5 MB+
+    /// sidebar HTML across thousands of per-type API pages.
     /// </summary>
     public static void GenerateApiSidebar(
         string sharedViewsDir,
         Dictionary<string, NamespaceInfo> namespaces,
         string baseUrl,
+        string? contentOutputDir = null,
         string sidebarPartialName = "_ApiSidebar")
     {
-        StringBuilder sb = new();
+        // Write the shared sidebar fragment (full namespace tree, no active state)
+        if (contentOutputDir is not null)
+        {
+            StringBuilder contentSb = new();
+            SidebarBuilder.AppendSidebarContent(contentSb, namespaces, baseUrl);
+            string fragmentPath = Path.Combine(contentOutputDir, "sidebar.html");
+            File.WriteAllText(fragmentPath, contentSb.ToString());
+            Console.WriteLine($"  Written: {fragmentPath}");
+        }
 
-        // Sidebar with no active state — JS sets active link based on URL
-        SidebarBuilder.AppendSidebar(sb, namespaces, currentNsSlug: null, currentTypeFileBase: null, baseUrl);
+        // Write a lightweight Razor partial with a data attribute for JS loading
+        StringBuilder sb = new();
+        SidebarBuilder.AppendSidebarPlaceholder(sb, "sidebar.html");
 
         string outputPath = Path.Combine(sharedViewsDir, sidebarPartialName + ".cshtml");
         File.WriteAllText(outputPath, sb.ToString());
@@ -158,5 +171,50 @@ internal static class ApiViewGenerator
 
         // Fallback for unknown namespaces
         return $"Types in the {ns} namespace";
+    }
+
+    /// <summary>
+    /// Converts inline markdown (links and backtick code) to HTML, encoding all other text.
+    /// </summary>
+    internal static string InlineMarkdownToHtml(string markdown)
+    {
+        return InlineMarkdownToHtml(markdown, allowLinks: true);
+    }
+
+    /// <summary>
+    /// Converts inline markdown (links and backtick code) to HTML, encoding all other text.
+    /// When <paramref name="allowLinks"/> is <see langword="false"/>, markdown links are
+    /// rendered as their text content only (no <c>&lt;a&gt;</c> tags), which is safe for use
+    /// inside an existing anchor element.
+    /// </summary>
+    internal static string InlineMarkdownToHtml(string markdown, bool allowLinks)
+    {
+        // First HTML-encode the whole string, then selectively convert markdown constructs.
+        string encoded = HttpUtility.HtmlEncode(markdown);
+
+        // Convert markdown links [text](url) — the brackets and parens are now HTML-encoded.
+        if (allowLinks)
+        {
+            encoded = Regex.Replace(
+                encoded,
+                @"\[(?<text>[^\]]+)\]\((?<url>[^)]+)\)",
+                m => $"<a href=\"{m.Groups["url"].Value}\">{m.Groups["text"].Value}</a>");
+        }
+        else
+        {
+            // Strip links to plain text (safe inside an outer <a> tag).
+            encoded = Regex.Replace(
+                encoded,
+                @"\[(?<text>[^\]]+)\]\((?<url>[^)]+)\)",
+                m => m.Groups["text"].Value);
+        }
+
+        // Convert inline code `text` to <code> elements.
+        encoded = Regex.Replace(
+            encoded,
+            @"`(?<code>[^`]+)`",
+            m => $"<code>{m.Groups["code"].Value}</code>");
+
+        return encoded;
     }
 }

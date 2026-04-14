@@ -296,8 +296,7 @@ public struct MetadataDb : IDisposable
             Enlarge();
         }
 
-        var row = new DbRow(tokenType, startLocation, length);
-        MemoryMarshal.Write(_data.AsSpan(Length), ref row);
+        Unsafe.WriteUnaligned(ref _data[Length], new DbRow(tokenType, startLocation, length));
         Length += DbRow.Size;
     }
 
@@ -317,8 +316,7 @@ public struct MetadataDb : IDisposable
             Enlarge();
         }
 
-        var row = new DbRow(tokenType, location, requiresUnescapingOrHasExponent ? -1 : 1);
-        MemoryMarshal.Write(_data.AsSpan(Length), ref row);
+        Unsafe.WriteUnaligned(ref _data[Length], new DbRow(tokenType, location, requiresUnescapingOrHasExponent ? -1 : 1));
         Length += DbRow.Size;
     }
 
@@ -473,7 +471,11 @@ public struct MetadataDb : IDisposable
             Debug.Assert(MaxArrayLength == Array.MaxLength);
 #endif
 
+            int requiredCapacity = Length + lengthToInsert;
             int newCapacity = toReturn.Length * 2;
+
+            // Ensure the new capacity is at least large enough for the required data
+            if (newCapacity < requiredCapacity) newCapacity = requiredCapacity;
 
             // Note that this check works even when newCapacity overflowed thanks to the (uint) cast
             if ((uint)newCapacity > MaxArrayLength) newCapacity = MaxArrayLength;
@@ -586,8 +588,7 @@ public struct MetadataDb : IDisposable
             Enlarge();
         }
 
-        var row = new DbRow(tokenType, externalIndex, sizeOrLength, workspaceDocumentIndexOrNumberOfRows);
-        MemoryMarshal.Write(_data.AsSpan(Length), ref row);
+        Unsafe.WriteUnaligned(ref _data[Length], new DbRow(tokenType, externalIndex, sizeOrLength, workspaceDocumentIndexOrNumberOfRows));
         Length += DbRow.Size;
     }
 
@@ -619,7 +620,7 @@ public struct MetadataDb : IDisposable
         if (newCapacity == toReturn.Length) newCapacity = int.MaxValue;
 
         _data = ArrayPool<byte>.Shared.Rent(newCapacity);
-        Buffer.BlockCopy(toReturn, 0, _data, 0, toReturn.Length);
+        Buffer.BlockCopy(toReturn, 0, _data, 0, Length);
 
         // The data in this rented buffer only conveys the positions and
         // lengths of tokens in a document, but no content; so it does not
@@ -862,6 +863,55 @@ public struct MetadataDb : IDisposable
     }
 
     /// <summary>
+    /// Copies a raw segment of the metadata database without adjusting location offsets.
+    /// This is used when freezing a mutable document builder, where the location offsets
+    /// point into a value backing array and must not be modified.
+    /// </summary>
+    /// <param name="startIndex">The starting index of the segment to copy.</param>
+    /// <param name="endIndex">The ending index of the segment to copy.</param>
+    /// <returns>A new MetadataDb containing the raw copied segment.</returns>
+    internal MetadataDb CopySegmentRaw(int startIndex, int endIndex)
+    {
+        Debug.Assert(
+            endIndex > startIndex,
+            $"endIndex={endIndex} was at or before startIndex={startIndex}");
+
+        AssertValidIndex(startIndex);
+        Debug.Assert(endIndex <= Length);
+
+#if DEBUG
+        DbRow start = Get(startIndex);
+        DbRow end = Get(endIndex - DbRow.Size);
+
+        if (start.TokenType == JsonTokenType.StartObject)
+        {
+            Debug.Assert(
+                end.TokenType == JsonTokenType.EndObject,
+                $"StartObject paired with {end.TokenType}");
+        }
+        else if (start.TokenType == JsonTokenType.StartArray)
+        {
+            Debug.Assert(
+                end.TokenType == JsonTokenType.EndArray,
+                $"StartArray paired with {end.TokenType}");
+        }
+        else
+        {
+            Debug.Assert(
+                startIndex + DbRow.Size == endIndex,
+                $"{start.TokenType} should have been one row");
+        }
+#endif
+
+        int length = endIndex - startIndex;
+
+        byte[] newDatabase = ArrayPool<byte>.Shared.Rent(length);
+        _data.AsSpan(startIndex, length).CopyTo(newDatabase);
+
+        return CreateRented(newDatabase, length, convertToAlloc: false);
+    }
+
+    /// <summary>
     /// Takes ownership of the internal rented backing array, clearing the current instance.
     /// </summary>
     /// <param name="rentedBacking">Returns the rented backing array that was taken ownership of.</param>
@@ -877,6 +927,29 @@ public struct MetadataDb : IDisposable
     }
 
     /// <summary>
+    /// Copies the metadata bytes into a rented destination array.
+    /// </summary>
+    /// <param name="destination">The destination array (must be at least <see cref="Length"/> bytes).</param>
+    internal void CopyDataTo(byte[] destination)
+    {
+        Debug.Assert(destination.Length >= Length);
+        Buffer.BlockCopy(_data, 0, destination, 0, Length);
+    }
+
+    /// <summary>
+    /// Restores the metadata from a source buffer. The existing backing array must be
+    /// at least <paramref name="length"/> bytes (it can only grow, never shrink).
+    /// </summary>
+    /// <param name="source">The source buffer to copy from.</param>
+    /// <param name="length">The number of bytes to copy.</param>
+    internal void RestoreFrom(byte[] source, int length)
+    {
+        Debug.Assert(_data != null && _data.Length >= length);
+        Buffer.BlockCopy(source, 0, _data, 0, length);
+        Length = length;
+    }
+
+    /// <summary>
     /// Overwrites data in the destination metadata database starting at the specified target index.
     /// </summary>
     /// <param name="destination">The destination metadata database to write to.</param>
@@ -885,5 +958,49 @@ public struct MetadataDb : IDisposable
     {
         Debug.Assert(Length <= destination.Length - targetIndex);
         Buffer.BlockCopy(_data, 0, destination._data, targetIndex, Length);
+    }
+
+    /// <summary>
+    /// Writes a <see cref="DbRow"/> at the specified byte index.
+    /// </summary>
+    /// <param name="byteIndex">The byte index at which to write the row.</param>
+    /// <param name="row">The row to write.</param>
+    /// <remarks>
+    /// The caller is responsible for ensuring that the space at <paramref name="byteIndex"/>
+    /// has already been allocated (e.g. via <see cref="InsertRowsInComplexObject"/>).
+    /// </remarks>
+    internal void WriteRowAt(int byteIndex, DbRow row)
+    {
+        Debug.Assert((uint)byteIndex <= (uint)(Length - DbRow.Size));
+        MemoryMarshal.Write(_data.AsSpan(byteIndex), ref row);
+    }
+
+    /// <summary>
+    /// Copies a range of rows within this metadata database.
+    /// </summary>
+    /// <param name="srcByteIndex">The source byte index to copy from.</param>
+    /// <param name="dstByteIndex">The destination byte index to copy to.</param>
+    /// <param name="byteCount">The number of bytes to copy.</param>
+    /// <remarks>
+    /// The caller must ensure that source and destination regions do not overlap.
+    /// Both regions must be within the allocated <see cref="Length"/>.
+    /// </remarks>
+    internal void CopyRowRange(int srcByteIndex, int dstByteIndex, int byteCount)
+    {
+        Debug.Assert((uint)(srcByteIndex + byteCount) <= (uint)Length);
+        Debug.Assert((uint)(dstByteIndex + byteCount) <= (uint)Length);
+        Buffer.BlockCopy(_data!, srcByteIndex, _data!, dstByteIndex, byteCount);
+    }
+
+    /// <summary>
+    /// Sets the location field of the row at the specified byte index.
+    /// </summary>
+    /// <param name="rowIndex">The byte index of the row.</param>
+    /// <param name="newLocation">The new location value to write.</param>
+    internal void SetRowLocation(int rowIndex, int newLocation)
+    {
+        Debug.Assert((uint)rowIndex < (uint)Length);
+        uint value = (uint)newLocation;
+        MemoryMarshal.Write(_data.AsSpan(rowIndex), ref value);
     }
 }

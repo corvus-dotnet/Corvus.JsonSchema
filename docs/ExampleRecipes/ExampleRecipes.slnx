@@ -53,4 +53,22 @@
   <Folder Name="/017-MappingInputAndOutputValues/">
     <Project Path="017-MappingInputAndOutputValues\MappingInputAndOutputValues.csproj" />
   </Folder>
+  <Folder Name="/018-CreatingAndMutatingObjects/">
+    <Project Path="018-CreatingAndMutatingObjects\CreatingAndMutatingObjects.csproj" />
+  </Folder>
+  <Folder Name="/019-CloneAndFreeze/">
+    <Project Path="019-CloneAndFreeze\CloneAndFreeze.csproj" />
+  </Folder>
+  <Folder Name="/020-ConditionalSchemas/">
+    <Project Path="020-ConditionalSchemas\ConditionalSchemas.csproj" />
+  </Folder>
+  <Folder Name="/021-DefaultValues/">
+    <Project Path="021-DefaultValues\DefaultValues.csproj" />
+  </Folder>
+  <Folder Name="/022-FormatValidation/">
+    <Project Path="022-FormatValidation\FormatValidation.csproj" />
+  </Folder>
+  <Folder Name="/023-JsonPatch/">
+    <Project Path="023-JsonPatch\JsonPatch.csproj" />
+  </Folder>
 </Solution>

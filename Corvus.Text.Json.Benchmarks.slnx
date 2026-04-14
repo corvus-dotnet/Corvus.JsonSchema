@@ -49,10 +49,14 @@
     <Project Path="benchmarks/Corvus.Numerics.Benchmarks/Corvus.Numerics.Benchmarks.csproj" />
     <Project Path="benchmarks/Corvus.Text.Json.BenchmarkModels/Corvus.Text.Json.BenchmarkModels.csproj" />
     <Project Path="benchmarks/Corvus.Text.Json.Benchmarks/Corvus.Text.Json.Benchmarks.csproj" />
+    <Project Path="benchmarks/Corvus.Text.Json.Benchmarks.Validation/Corvus.Text.Json.Benchmarks.Validation.csproj" />
     <Project Path="benchmarks/Corvus.Text.Json.ClassicBenchmarkModels/Corvus.Text.Json.ClassicBenchmarkModels.csproj" />
     <Project Path="benchmarks/Corvus.Text.Json.CodeGeneration.Benchmarks/Corvus.Text.Json.CodeGeneration.Benchmarks.csproj" />
     <Project Path="benchmarks/Corvus.Text.Json.Validator.Benchmarks/Corvus.Text.Json.Validator.Benchmarks.csproj" />
     <Project Path="BenchmarkSandbox/BenchmarkSandbox.csproj" />
+    <Project Path="benchmarks/Corvus.Text.Json.JsonLogic.Benchmarks/Corvus.Text.Json.JsonLogic.Benchmarks.csproj" />
+    <Project Path="benchmarks/Corvus.Text.Json.Jsonata.Benchmarks/Corvus.Text.Json.Jsonata.Benchmarks.csproj" />
+    <Project Path="src/Corvus.Text.Json.JsonLogic.CodeGeneration/Corvus.Text.Json.JsonLogic.CodeGeneration.csproj" />
   </Folder>
 
   <Folder Name="/.sandbox/">

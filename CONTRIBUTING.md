@@ -7,7 +7,7 @@ Thank you for your interest in contributing! This guide covers the practical det
 ### Prerequisites
 
 - .NET 10.0 SDK (primary target)
-- .NET 8.0 SDK (multi-targeting)
+- .NET 9.0 SDK (multi-targeting)
 - Git (with submodule support)
 - PowerShell 7+
 

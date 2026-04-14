@@ -363,7 +363,7 @@ public readonly struct ConditionalCodeSpecification
             FrameworkType.Net80OrGreater => "NET8_0_OR_GREATER",
             FrameworkType.Net80 => "NET8_0",
             FrameworkType.PreNet80 => "!NET8_0_OR_GREATER",
-            _ => throw new InvalidOperationException($"Unsupported framework type: {condition}"),
+            _ => throw new InvalidOperationException(SR.Format(SR.UnsupportedFrameworkType, condition)),
         };
     }
 
@@ -398,7 +398,7 @@ public readonly struct ConditionalCodeSpecification
                     break;
 
                 default:
-                    throw new NotSupportedException($"Unsupported framework type: {spec.condition}");
+                    throw new NotSupportedException(SR.Format(SR.UnsupportedFrameworkType, spec.condition));
             }
         }
     }

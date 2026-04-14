@@ -3,7 +3,7 @@
   <Import Project="$(EndjinProjectPropsPath)" Condition="$(EndjinProjectPropsPath) != ''" />
 
   <PropertyGroup>
-    <TargetFrameworks>net8.0;net9.0;net10.0;netstandard2.0</TargetFrameworks>
+    <TargetFrameworks>net9.0;net10.0;netstandard2.0;netstandard2.1</TargetFrameworks>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <LangVersion>preview</LangVersion>
@@ -12,11 +12,12 @@
     <!-- Only upgrade NuGetAudit warnings to errors for official builds. -->
     <WarningsNotAsErrors>$(WarningsNotAsErrors);NU1901;NU1902;NU1903;NU1904</WarningsNotAsErrors>
     <NoWarn>$(NoWarn);CS1591;NU1504</NoWarn>
+    <EnableDefaultEmbeddedResourceItems>false</EnableDefaultEmbeddedResourceItems>
     <IsPackable>true</IsPackable>
     <EndjinDisableCreateEditorConfig>true</EndjinDisableCreateEditorConfig>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
+  <PropertyGroup Condition="'$(TargetFramework)' == 'netstandard2.0' OR '$(TargetFramework)' == 'netstandard2.1'">
     <NoWarn>$(NoWarn);nullable</NoWarn>
   </PropertyGroup>
 
@@ -25,6 +26,14 @@
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <Description>Dynamically load, compile, and validate JSON documents against JSON Schema at runtime using Roslyn and Corvus.Text.Json. Ideal for schema registries, configuration validation, and user-supplied schemas.</Description>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Using Include="SR = Resources.Strings" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\Strings.resx" Visible="true" IncludeDefaultValues="true" EmitFormatMethods="false" GenerateSource="true" OmitGetResourceString="true" />
+  </ItemGroup>
 
   <ItemGroup>
     <None Include="README.md" Pack="true" PackagePath="\" />
@@ -81,6 +90,10 @@
 
   <ItemGroup>
     <PackageReference Include="Endjin.RecommendedPractices.GitHub" Version="2.1.18" PrivateAssets="All" />
+    <PackageReference Include="Microsoft.CodeAnalysis.ResxSourceGenerator" Version="5.0.0-1.25277.114">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
     <PackageReference Include="StyleCop.Analyzers" Version="1.2.0-beta.556" PrivateAssets="All" />
     <PackageReference Include="Roslynator.Analyzers" Version="4.13.1" PrivateAssets="All" />
   </ItemGroup>

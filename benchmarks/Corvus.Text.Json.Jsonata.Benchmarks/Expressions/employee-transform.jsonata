@@ -1,0 +1,4 @@
+{
+  'name': Employee.FirstName & ' ' & Employee.Surname,
+  'mobile': Contact.Phone[type = 'mobile'].number
+}

@@ -1,0 +1,1 @@
+$sort(Account.Order.Product, function($a, $b) { $a.Price > $b.Price })

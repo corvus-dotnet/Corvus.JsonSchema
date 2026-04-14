@@ -70,7 +70,7 @@ jobs:
       testPhaseMatrixJson: |
           {
             "os": ["ubuntu-latest", "windows-latest"],
-            "dotnetFramework": ["net10.0", "net8.0", "net481"],
+            "dotnetFramework": ["net10.0", "net481"],
             "exclude": [
               {
                 "os": "ubuntu-latest",
@@ -91,6 +91,8 @@ jobs:
       publishPhaseEnv: ${{ needs.prepareConfig.outputs.RESOLVED_ENV_VARS }}
       additionalCachePaths: |
         JSON-Schema-Test-Suite
+        Jsonata-Test-Suite
+        tests/json-patch-tests
         docs/website/.endjin
         docs/website/.output
         **/bin
@@ -113,7 +115,7 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: github-pages
-      url: https://corvus-oss.org/corvus-json-schema/
+      url: https://corvus-oss.org/Corvus.JsonSchema/
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -126,6 +128,8 @@ jobs:
             Solutions
             solutions
             JSON-Schema-Test-Suite
+            Jsonata-Test-Suite
+            tests/json-patch-tests
             docs/website/.endjin
             docs/website/.output
             **/bin
@@ -158,6 +162,8 @@ jobs:
             Solutions
             solutions
             JSON-Schema-Test-Suite
+            Jsonata-Test-Suite
+            tests/json-patch-tests
             docs/website/.endjin
             docs/website/.output
             **/bin
@@ -167,19 +173,20 @@ jobs:
 
       - name: Ensure Jekyll config on gh-pages
         run: |
-          git fetch origin gh-pages:gh-pages 2>/dev/null || true
-          git worktree add /tmp/gh-pages gh-pages
-          cd /tmp/gh-pages
-          rm -f .nojekyll
-          echo -n 'include: [_framework, _content]' > _config.yml
-          git add -A
-          if ! git diff --cached --quiet; then
+          if ! git fetch origin gh-pages 2>/dev/null || \
+             ! git show origin/gh-pages:_config.yml >/dev/null 2>&1; then
+            git fetch origin gh-pages:gh-pages 2>/dev/null || git checkout --orphan gh-pages
+            git worktree add /tmp/gh-pages gh-pages
+            cd /tmp/gh-pages
+            rm -f .nojekyll
+            echo -n 'include: [_framework, _content]' > _config.yml
+            git add -A
             git -c user.name="github-actions[bot]" -c user.email="github-actions[bot]@users.noreply.github.com" \
-              commit -m "Replace .nojekyll with _config.yml for _framework/_content"
-            git push origin gh-pages
+              commit --amend --no-edit
+            git push origin gh-pages --force-with-lease
+            cd -
+            git worktree remove /tmp/gh-pages
           fi
-          cd -
-          git worktree remove /tmp/gh-pages
 
       - name: Deploy PR preview
         uses: rossjrw/pr-preview-action@v1

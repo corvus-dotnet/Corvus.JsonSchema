@@ -15,7 +15,7 @@ namespace Corvus.Text.Json.Tests.StringMaxLengthEnumValidation;
 /// Regression test for a bug where unescapedUtf8JsonString was declared in the type-check
 /// else clause scope but referenced by the enum handler after that scope closed.
 /// </summary>
-[Trait("Category", "CodeGen")]
+[Trait("category", "CodeGen")]
 public class StringMaxLengthEnumValues : IClassFixture<StringMaxLengthEnumValues.Fixture>
 {
     private readonly Fixture fixture;

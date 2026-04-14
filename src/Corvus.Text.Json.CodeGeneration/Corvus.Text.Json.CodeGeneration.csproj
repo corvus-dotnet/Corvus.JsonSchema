@@ -3,7 +3,7 @@
   <Import Project="$(EndjinProjectPropsPath)" Condition="$(EndjinProjectPropsPath) != ''" />
 
   <PropertyGroup>
-    <TargetFrameworks>net8.0;net9.0;net10.0;netstandard2.0</TargetFrameworks>
+    <TargetFrameworks>net9.0;net10.0;netstandard2.0;netstandard2.1</TargetFrameworks>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <!-- For this project, we want warnings if there are public APIs/types without properly formatted XML comments. -->
     <SkipIntellisenseNoWarnCS1591>true</SkipIntellisenseNoWarnCS1591>
@@ -42,6 +42,7 @@
     <Compile Include="CodeGeneratorExtensions.Number.cs" />
     <Compile Include="CodeGeneratorExtensions.JsonSchema.cs" />
     <Compile Include="CodeGeneratorExtensions.Array.cs" />
+    <Compile Include="CodeGeneratorExtensions.CloneAndFreeze.cs" />
     <Compile Include="CodeGeneratorExtensions.Object.cs" />
     <Compile Include="CodeGeneratorExtensions.Builder.cs" />
     <Compile Include="CodeGeneratorExtensions.Operators.cs" />
@@ -140,6 +141,10 @@
 
   <ItemGroup>
     <PackageReference Include="Endjin.RecommendedPractices.GitHub" Version="2.1.18" PrivateAssets="All" />
+    <PackageReference Include="Microsoft.CodeAnalysis.ResxSourceGenerator" Version="5.0.0-1.25277.114">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
     <PackageReference Include="StyleCop.Analyzers" Version="1.2.0-beta.556" PrivateAssets="All" />
     <PackageReference Include="Roslynator.Analyzers" Version="4.13.1" PrivateAssets="All" />
     <PackageReference Include="Microsoft.Bcl.Memory" Version="10.0.4" />
@@ -149,5 +154,11 @@
   <ItemGroup>
     <Using Include="System" />
     <Using Include="System.Text" />
+    <Using Include="SR = Resources.Strings" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\Strings.resx" Visible="true" IncludeDefaultValues="true" EmitFormatMethods="false" GenerateSource="true" OmitGetResourceString="true" />
+    <Compile Include="SR.cs" Visible="true" Link="Resources/Common/SR.cs" />
   </ItemGroup>
 </Project>

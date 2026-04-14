@@ -3344,6 +3344,7 @@ public ref struct ComplexValueBuilder
     {
         targetData.InsertRowsInComplexObject(_parentDocument, complexObjectStartIndex, targetIndex, _rowCount, _memberCount);
         _parsedData.Overwrite(ref targetData, targetIndex);
+        _parsedData.Dispose();
     }
 
     /// <summary>
@@ -3458,6 +3459,7 @@ public ref struct ComplexValueBuilder
     {
         targetData.ReplaceRowsInComplexObject(_parentDocument, complexObjectStartIndex, startIndex, endIndex, memberCountToReplace, _rowCount, _memberCount);
         _parsedData.Overwrite(ref targetData, startIndex);
+        _parsedData.Dispose();
     }
 
     private void AddStringValue(JsonTokenType tokenType, ReadOnlySpan<byte> stringValue, bool escape, bool ifNotEscapeRequiresUenscaping)

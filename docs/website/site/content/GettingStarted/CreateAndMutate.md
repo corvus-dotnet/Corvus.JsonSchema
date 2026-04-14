@@ -93,6 +93,14 @@ Console.WriteLine(root.ToString());
 // {"name":{"familyName":"Oldroyd","givenName":"Michael"},"age":31,"email":"michael@example.com"}
 ```
 
+> **Tip:** If you don't need to retain an immutable copy of the original document (e.g., for comparison or auditing), you can parse directly into the builder for better performance:
+>
+> ```csharp
+> using var builder = JsonDocumentBuilder<Person.Mutable>.Parse(workspace, json);
+> ```
+>
+> This avoids the intermediate document allocation and second pass over the data. See [Building & Mutating JSON](/docs/json-document-builder.html#direct-parse-to-builder-recommended) for details.
+
 ### Version tracking
 
 The builder tracks a version number, and every `Mutable` element reference records the version at which it was obtained. If the document structure changes after you captured a reference, attempting to use that stale reference throws an `InvalidOperationException`.
@@ -262,7 +270,62 @@ The standard mutation workflow is:
 2. Create a `JsonDocumentBuilder<T.Mutable>` via `.CreateBuilder(workspace)`
 3. Get the `Mutable` root element from the builder
 4. Call `Set*()` / `Remove*()` methods on the mutable element
-5. Serialize via `root.WriteTo(writer)`, `root.ToString()`, or convert to immutable via `.Clone()`
+5. Convert to immutable via `.Clone()` or `.Freeze()`, or serialize via `root.WriteTo(writer)` or `root.ToString()`
+
+## Converting to immutable: Clone() and Freeze()
+
+After building or mutating a document, you may need an immutable snapshot. There are two ways to do this, each with different trade-offs. Both can be called on any element — root or nested — and both return the strongly-typed immutable form (e.g., `Person` from `Person.Mutable`), not `JsonElement`.
+
+### Clone()
+
+`Clone()` allocates new backing storage on the heap. The result is completely independent — it outlives the workspace and the source document, and will be cleaned up by garbage collection when it goes out of scope:
+
+```csharp
+using JsonWorkspace workspace = JsonWorkspace.Create();
+using var doc = ParsedJsonDocument<Person>.Parse(json);
+using var builder = doc.RootElement.CreateBuilder(workspace);
+
+builder.RootElement.SetAge(31);
+
+// Clone produces a standalone immutable value
+Person snapshot = builder.RootElement.Clone();
+
+// snapshot is valid even after the workspace is disposed
+```
+
+Use `Clone()` when you need a value to escape the scope of the workspace — for example, returning a result from a method, storing it in a cache, or passing it to another thread.
+
+### Freeze()
+
+`Freeze()` creates a cheap immutable copy within the same workspace. It copies only the metadata and value backing arrays — no JSON serialization or re-parsing occurs. You can freeze any element, not just the root:
+
+```csharp
+using JsonWorkspace workspace = JsonWorkspace.Create();
+using var doc = ParsedJsonDocument<Person>.Parse(json);
+using var builder = doc.RootElement.CreateBuilder(workspace);
+
+builder.RootElement.SetAge(31);
+
+// Freeze the root element
+Person frozen = builder.RootElement.Freeze();
+
+// Or freeze a nested element to get a standalone immutable snapshot of just that subtree
+Person.PersonNameEntity frozenName = builder.RootElement.Name.Freeze();
+
+// Both are valid for the lifetime of the workspace
+```
+
+Use `Freeze()` when you need an immutable reference that stays within the workspace lifetime — for example, caching intermediate results while building a complex document, or taking a snapshot before further mutations.
+
+`Freeze()` also works on immutable elements: if the element is already backed by an immutable document, it returns the same instance without any copying.
+
+### Choosing between Clone() and Freeze()
+
+| | Clone() | Freeze() |
+|---|---|---|
+| **Cost** | O(JSON size) — heap allocation | O(metadata size) — cheap blit |
+| **Lifetime** | Standalone — outlives the workspace | Workspace-scoped |
+| **Use when** | Value must escape the workspace | Value stays within the workspace |
 
 ## Serialization
 

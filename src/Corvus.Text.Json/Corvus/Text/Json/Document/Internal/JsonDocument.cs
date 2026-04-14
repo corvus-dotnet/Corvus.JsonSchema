@@ -37,12 +37,13 @@ public abstract partial class JsonDocument
     /// Mask used for extracting hash values from stored metadata.
     /// </summary>
     [CLSCompliant(false)]
-    protected const ulong HashMask = 0xFFUL << 56;
+    protected const ulong HashMask = Utf8Hash.HashMask;
 
     /// <summary>
     /// Length in bytes of hash values stored in metadata.
+    /// Keys shorter than this threshold are perfectly encoded in the hash.
     /// </summary>
-    protected const int HashLength = 8;
+    protected const int HashLength = Utf8Hash.PerfectHashLength + 1;
 
     /// <summary>
     /// Backing array for the property map data.
@@ -445,6 +446,12 @@ public abstract partial class JsonDocument
     /// <param name="intArray">The integer array to enlarge (passed by reference).</param>
     protected static void Enlarge(int v, ref int[] intArray)
     {
+        // Use unsigned comparison to optimize length check
+        if ((uint)intArray.Length > (uint)v)
+        {
+            return;
+        }
+
         int[] toReturn = intArray;
 
         // Allow the data to grow up to maximum possible capacity (~2G bytes) before encountering overflow.
@@ -1285,8 +1292,10 @@ public abstract partial class JsonDocument
         }
 
         // Shift it and OR in the value type.
+        // The result is always normalized for JavaScriptEncoder.Default because
+        // we either verified no escaping was needed, or we applied the escaping.
         length <<= 4;
-        length |= (uint)DynamicValueType.QuotedUtf8String;
+        length |= (uint)DynamicValueType.NormalizedQuotedUtf8String;
 
         BitConverter.TryWriteBytes(_valueBacking.AsSpan(offset), length);
         _valueOffset = index;
@@ -1348,8 +1357,10 @@ public abstract partial class JsonDocument
         }
 
         // Shift it and OR in the value type.
+        // The result is always normalized for JavaScriptEncoder.Default because
+        // we either verified no escaping was needed, or we applied the escaping.
         length <<= 4;
-        length |= (uint)DynamicValueType.QuotedUtf8String;
+        length |= (uint)DynamicValueType.NormalizedQuotedUtf8String;
 
         BitConverter.TryWriteBytes(_valueBacking.AsSpan(offset), length);
         _valueOffset = index;
@@ -1358,8 +1369,9 @@ public abstract partial class JsonDocument
 
     /// <summary>
     /// Stores a raw escaped string value in the dynamic value buffer and returns its offset.
+    /// The string is assumed to be normalized for <see cref="System.Text.Encodings.Web.JavaScriptEncoder.Default"/>.
     /// </summary>
-    /// <param name="escapedString">The already-escaped string to store.</param>
+    /// <param name="escapedString">The already-escaped string to store. Must be normalized for <see cref="System.Text.Encodings.Web.JavaScriptEncoder.Default"/>.</param>
     /// <returns>The offset of the stored value in the value buffer.</returns>
     protected int StoreRawStringValue(ReadOnlySpan<byte> escapedString)
     {
@@ -1380,7 +1392,7 @@ public abstract partial class JsonDocument
 
         // Shift it and OR in the value type.
         length <<= 4;
-        length |= (uint)DynamicValueType.QuotedUtf8String;
+        length |= (uint)DynamicValueType.NormalizedQuotedUtf8String;
 
         BitConverter.TryWriteBytes(_valueBacking.AsSpan(offset), length);
         int index = offset + 4;
@@ -1453,13 +1465,13 @@ public abstract partial class JsonDocument
         uint length = BitConverter.ToUInt32(_valueBacking!, offset);
 
         var valueType = (DynamicValueType)(length & 0xF);
-        Debug.Assert(valueType is DynamicValueType.QuotedUtf8String or DynamicValueType.Number or DynamicValueType.Boolean or DynamicValueType.Null, $"Expected simple value at {offset}");
+        Debug.Assert(valueType is DynamicValueType.QuotedUtf8String or DynamicValueType.NormalizedQuotedUtf8String or DynamicValueType.Number or DynamicValueType.Boolean or DynamicValueType.Null, $"Expected simple value at {offset}");
 
         length >>= 4;
 
         int start;
 
-        if (!includeQuotes && valueType == DynamicValueType.QuotedUtf8String)
+        if (!includeQuotes && valueType is DynamicValueType.QuotedUtf8String or DynamicValueType.NormalizedQuotedUtf8String)
         {
             start = offset + 5;
             length -= 2;
@@ -1483,13 +1495,13 @@ public abstract partial class JsonDocument
         uint length = BitConverter.ToUInt32(_valueBacking!, offset);
 
         var valueType = (DynamicValueType)(length & 0xF);
-        Debug.Assert(valueType is DynamicValueType.QuotedUtf8String or DynamicValueType.Number or DynamicValueType.Boolean or DynamicValueType.Null, $"Expected simple value at {offset}");
+        Debug.Assert(valueType is DynamicValueType.QuotedUtf8String or DynamicValueType.NormalizedQuotedUtf8String or DynamicValueType.Number or DynamicValueType.Boolean or DynamicValueType.Null, $"Expected simple value at {offset}");
 
         length >>= 4;
 
         int start;
 
-        if (valueType == DynamicValueType.QuotedUtf8String)
+        if (valueType is DynamicValueType.QuotedUtf8String or DynamicValueType.NormalizedQuotedUtf8String)
         {
             start = offset + 5;
             length -= 2;
@@ -1626,11 +1638,6 @@ public abstract partial class JsonDocument
 
                 startRun = index;
 
-                if (index >= jsonPointerUtf8.Length)
-                {
-                    break;
-                }
-
                 while (index < jsonPointerUtf8.Length && jsonPointerUtf8[index] != (byte)'/')
                 {
                     ++index;
@@ -1658,22 +1665,19 @@ public abstract partial class JsonDocument
                 }
                 else if (currentTokenType == JsonTokenType.StartArray)
                 {
-                    if (Utf8Parser.TryParse(component, out int targetArrayIndex, out int bytesConsumed))
-                    {
-                        index += bytesConsumed;
-                        if (targetArrayIndex >= GetArrayLengthUnsafe(currentRowIndex))
-                        {
-                            resultIndex = -1;
-                            return false;
-                        }
-
-                        currentRowIndex = GetArrayIndexElementUnsafe(currentRowIndex, targetArrayIndex);
-                    }
-                    else
+                    if (!IsValidRfc6901ArrayIndex(component, out int targetArrayIndex))
                     {
                         resultIndex = -1;
                         return false;
                     }
+
+                    if (targetArrayIndex >= GetArrayLengthUnsafe(currentRowIndex))
+                    {
+                        resultIndex = -1;
+                        return false;
+                    }
+
+                    currentRowIndex = GetArrayIndexElementUnsafe(currentRowIndex, targetArrayIndex);
                 }
             }
 
@@ -1687,6 +1691,35 @@ public abstract partial class JsonDocument
                 ArrayPool<byte>.Shared.Return(dcb);
             }
         }
+    }
+
+    /// <summary>
+    /// Validates that a decoded JSON Pointer segment is a valid RFC 6901 array index
+    /// and parses it.
+    /// </summary>
+    /// <param name="segment">The decoded pointer segment.</param>
+    /// <param name="arrayIndex">The parsed array index when valid.</param>
+    /// <returns><see langword="true"/> if the segment is a valid non-negative integer
+    /// with no leading zeros and all bytes consumed; otherwise, <see langword="false"/>.</returns>
+    private static bool IsValidRfc6901ArrayIndex(ReadOnlySpan<byte> segment, out int arrayIndex)
+    {
+        arrayIndex = -1;
+
+        if (segment.Length == 0)
+        {
+            return false;
+        }
+
+        // Leading zeros are invalid per RFC 6901 (except "0" itself).
+        if (segment.Length > 1 && segment[0] == (byte)'0')
+        {
+            return false;
+        }
+
+        // All bytes must be consumed to reject inputs like "1e0".
+        return Utf8Parser.TryParse(segment, out arrayIndex, out int bytesConsumed)
+            && bytesConsumed == segment.Length
+            && arrayIndex >= 0;
     }
 
     /// <summary>
@@ -1798,6 +1831,56 @@ public abstract partial class JsonDocument
 
         valueIndex = -1;
         return false;
+    }
+
+    /// <summary>
+    /// Copies the metadb segment and only the referenced value backing from this document
+    /// into a target document for a freeze operation. Uses a single forward pass to copy
+    /// each local value row's backing data and adjust its offset.
+    /// </summary>
+    /// <param name="target">The target document to initialize.</param>
+    /// <param name="index">The starting metadb byte index of the element to freeze.</param>
+    /// <param name="byteSize">The byte size of the metadb segment.</param>
+    internal void CopyFreezeState(JsonDocument target, int index, int byteSize)
+    {
+        target._parsedData = _parsedData.CopySegmentRaw(index, index + byteSize);
+
+        if (_valueBacking == null || _valueOffset <= 0)
+        {
+            return;
+        }
+
+        // Single forward pass: for each local String/Number/PropertyName row,
+        // copy its backing bytes and rewrite its offset.
+        byte[]? targetBacking = null;
+        int writeOffset = 0;
+
+        for (int i = 0; i < byteSize; i += DbRow.Size)
+        {
+            DbRow row = target._parsedData.Get(i);
+            if (!row.FromExternalDocument && row.TokenType is JsonTokenType.String or JsonTokenType.Number or JsonTokenType.PropertyName)
+            {
+                int loc = row.LocationOrIndex;
+
+                // Read the stored size from the 4-byte header in _valueBacking.
+                // Format: [4-byte header: length<<4 | type][value data of 'length' bytes]
+                uint header = BitConverter.ToUInt32(_valueBacking, loc);
+                int storedSize = 4 + (int)(header >> 4);
+
+                targetBacking ??= ArrayPool<byte>.Shared.Rent(_valueOffset);
+
+                Buffer.BlockCopy(_valueBacking, loc, targetBacking, writeOffset, storedSize);
+                target._parsedData.SetRowLocation(i, writeOffset);
+
+                writeOffset += storedSize;
+            }
+        }
+
+        if (targetBacking != null)
+        {
+            target._valueBacking = targetBacking;
+            target._valueOffset = writeOffset;
+        }
     }
 
     /// <summary>

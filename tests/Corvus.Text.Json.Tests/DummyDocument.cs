@@ -285,6 +285,7 @@ internal class DummyDocument : IJsonDocument
     int IJsonDocument.GetStartIndex(int endIndex) => throw new NotImplementedException();
     int IJsonDocument.BuildRentedMetadataDb(int parentDocumentIndex, JsonWorkspace workspace, out byte[] rentedBacking) => throw new NotImplementedException();
     void IJsonDocument.AppendElementToMetadataDb(int index, JsonWorkspace workspace, ref MetadataDb db) => throw new NotImplementedException();
+    int IJsonDocument.WriteElementToMetadataDb(int index, JsonWorkspace workspace, ref MetadataDb db, int writePosition) => throw new NotImplementedException();
 
     bool IJsonDocument.TryResolveJsonPointer<TValue>(ReadOnlySpan<byte> jsonPointer, int index, out TValue value)
     {

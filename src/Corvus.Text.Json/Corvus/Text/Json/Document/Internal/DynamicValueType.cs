@@ -36,5 +36,13 @@ internal enum DynamicValueType : uint
     /// <summary>
     /// A null value.
     /// </summary>
-    Null
+    Null,
+
+    /// <summary>
+    /// A quoted UTF-8 string value that is normalized for <see cref="System.Text.Encodings.Web.JavaScriptEncoder.Default"/>.
+    /// This means all characters that the default encoder would escape are already escaped,
+    /// so the value can be written directly to a <see cref="System.Text.Json.Utf8JsonWriter"/>
+    /// without re-escaping.
+    /// </summary>
+    NormalizedQuotedUtf8String,
 }

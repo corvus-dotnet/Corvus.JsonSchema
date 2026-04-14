@@ -3,7 +3,7 @@
   <Import Project="$(EndjinProjectPropsPath)" Condition="$(EndjinProjectPropsPath) != ''" />
 
   <PropertyGroup>
-    <TargetFrameworks>net8.0;net9.0;net10.0;netstandard2.0</TargetFrameworks>
+    <TargetFrameworks>net9.0;net10.0;netstandard2.0;netstandard2.1</TargetFrameworks>
     <RootNamespace>Corvus.Text.Json.Compatibility</RootNamespace>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <!-- For this project, we want warnings if there are public APIs/types without properly formatted XML comments. -->
@@ -39,7 +39,7 @@
     <Using Include="System.Text" />
   </ItemGroup>
 
-  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
+  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0' OR '$(TargetFramework)' == 'netstandard2.1'">
     <Using Include="SR = Corvus.Text.Json.Compatibility.Resources.Strings" />
   </ItemGroup>
   
@@ -60,20 +60,24 @@
     <Compile Include="CorvusTextJsonPolyfills.cs" />
   </ItemGroup>
 
-  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
-    <Compile Include="$(CommonPath)System\Buffers\ArrayBufferWriter.cs" Link="Common\System\Buffers\ArrayBufferWriter.cs" />
+  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0' OR '$(TargetFramework)' == 'netstandard2.1'">
     <Compile Include="$(CoreLibSharedDir)System\Diagnostics\CodeAnalysis\StringSyntaxAttribute.cs" />
     <Compile Include="$(CoreLibSharedDir)System\Diagnostics\CodeAnalysis\RequiresDynamicCodeAttribute.cs" />
   </ItemGroup>
 
-  <!-- Include files under StringResourcesPath by convention unless OmitResources is set. -->
+  <!-- ArrayBufferWriter polyfill: only needed for netstandard2.0 (native in netstandard2.1+) -->
   <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
+    <Compile Include="$(CommonPath)System\Buffers\ArrayBufferWriter.cs" Link="Common\System\Buffers\ArrayBufferWriter.cs" />
+  </ItemGroup>
+
+  <!-- Include files under StringResourcesPath by convention unless OmitResources is set. -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0' OR '$(TargetFramework)' == 'netstandard2.1'">
     <EmbeddedResource Include="Resources\Strings.resx" Visible="true" IncludeDefaultValues="true" EmitFormatMethods="false" GenerateSource="true" OmitGetResourceString="true" />
     <!-- Include common SR helper when resources are included. -->
     <Compile Include="SR.cs" Visible="true" Link="Resources/Common/SR$(DefaultLanguageSourceExtension)" />
   </ItemGroup>
 
-  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
+  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0' OR '$(TargetFramework)' == 'netstandard2.1'">
     <PackageReference Include="Microsoft.CodeAnalysis.ResxSourceGenerator" Version="5.0.0-1.25277.114">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>

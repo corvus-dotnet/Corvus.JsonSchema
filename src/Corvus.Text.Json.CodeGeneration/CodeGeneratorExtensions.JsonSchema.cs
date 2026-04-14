@@ -641,7 +641,7 @@ internal static partial class CodeGenerationExtensions
             return arrayClassName;
         }
 
-        throw new InvalidOperationException("The ArrayBuilder class name has not been created.");
+        throw new InvalidOperationException(SR.ArrayBuilderClassNameNotCreated);
     }
 
     /// <summary>
@@ -668,7 +668,7 @@ internal static partial class CodeGenerationExtensions
             return className;
         }
 
-        throw new InvalidOperationException("The Builder class name has not been created.");
+        throw new InvalidOperationException(SR.BuilderClassNameNotCreated);
     }
 
     /// <summary>
@@ -684,7 +684,7 @@ internal static partial class CodeGenerationExtensions
             return scope;
         }
 
-        throw new InvalidOperationException("The Builder class scope  has not been created.");
+        throw new InvalidOperationException(SR.BuilderClassScopeNotCreated);
     }
 
     /// <summary>
@@ -700,7 +700,7 @@ internal static partial class CodeGenerationExtensions
             return className;
         }
 
-        throw new InvalidOperationException("The JsonPropertyNames class name has not been created.");
+        throw new InvalidOperationException(SR.JsonPropertyNamesClassNameNotCreated);
     }
 
     /// <summary>
@@ -716,7 +716,7 @@ internal static partial class CodeGenerationExtensions
             return className;
         }
 
-        throw new InvalidOperationException("The JsonPropertyNamesEscaped class name has not been created.");
+        throw new InvalidOperationException(SR.JsonPropertyNamesEscapedClassNameNotCreated);
     }
 
     /// <summary>
@@ -732,7 +732,7 @@ internal static partial class CodeGenerationExtensions
             return scope;
         }
 
-        throw new InvalidOperationException("The JsonPropertyNamesEscaped class scope  has not been created.");
+        throw new InvalidOperationException(SR.JsonPropertyNamesEscapedClassScopeNotCreated);
     }
 
     /// <summary>
@@ -748,7 +748,7 @@ internal static partial class CodeGenerationExtensions
             return scope;
         }
 
-        throw new InvalidOperationException("The JsonPropertyNames class scope  has not been created.");
+        throw new InvalidOperationException(SR.JsonPropertyNamesClassScopeNotCreated);
     }
 
     /// <summary>
@@ -764,7 +764,7 @@ internal static partial class CodeGenerationExtensions
             return className;
         }
 
-        throw new InvalidOperationException("The JSON Schema class name has not been created.");
+        throw new InvalidOperationException(SR.JsonSchemaClassNameNotCreated);
     }
 
     /// <summary>
@@ -791,7 +791,7 @@ internal static partial class CodeGenerationExtensions
             return scope;
         }
 
-        throw new InvalidOperationException("The JSON Schema class scope  has not been created.");
+        throw new InvalidOperationException(SR.JsonSchemaClassScopeNotCreated);
     }
 
     /// <summary>
@@ -818,7 +818,7 @@ internal static partial class CodeGenerationExtensions
             return objectClassName;
         }
 
-        throw new InvalidOperationException("The ObjectBuilder class name has not been created.");
+        throw new InvalidOperationException(SR.ObjectBuilderClassNameNotCreated);
     }
 
     /// <summary>
@@ -1132,7 +1132,7 @@ internal static partial class CodeGenerationExtensions
             return className;
         }
 
-        throw new InvalidOperationException("The Source class name has not been created.");
+        throw new InvalidOperationException(SR.SourceClassNameNotCreated);
     }
 
     /// <summary>
@@ -1148,7 +1148,7 @@ internal static partial class CodeGenerationExtensions
             return scope;
         }
 
-        throw new InvalidOperationException("The Source class scope  has not been created.");
+        throw new InvalidOperationException(SR.SourceClassScopeNotCreated);
     }
 
     /// <summary>
@@ -1175,7 +1175,7 @@ internal static partial class CodeGenerationExtensions
             return className;
         }
 
-        throw new InvalidOperationException("The Mutable class name has not been created.");
+        throw new InvalidOperationException(SR.MutableClassNameNotCreated);
     }
 
     /// <summary>
@@ -1191,7 +1191,7 @@ internal static partial class CodeGenerationExtensions
             return scope;
         }
 
-        throw new InvalidOperationException("The Mutable class scope  has not been created.");
+        throw new InvalidOperationException(SR.MutableClassScopeNotCreated);
     }
 
     /// <summary>
@@ -1207,7 +1207,7 @@ internal static partial class CodeGenerationExtensions
             return className;
         }
 
-        throw new InvalidOperationException("The Constants class name has not been created.");
+        throw new InvalidOperationException(SR.ConstantsClassNameNotCreated);
     }
 
     /// <summary>
@@ -1223,7 +1223,7 @@ internal static partial class CodeGenerationExtensions
             return scope;
         }
 
-        throw new InvalidOperationException("The Constants class scope  has not been created.");
+        throw new InvalidOperationException(SR.ConstantsClassScopeNotCreated);
     }
 
     /// <summary>
@@ -1239,7 +1239,7 @@ internal static partial class CodeGenerationExtensions
             return className;
         }
 
-        throw new InvalidOperationException("The EnumValues class name has not been created.");
+        throw new InvalidOperationException(SR.EnumValuesClassNameNotCreated);
     }
 
     /// <summary>
@@ -1255,6 +1255,6 @@ internal static partial class CodeGenerationExtensions
             return scope;
         }
 
-        throw new InvalidOperationException("The EnumValues class scope has not been created.");
+        throw new InvalidOperationException(SR.EnumValuesClassScopeNotCreated);
     }
 }

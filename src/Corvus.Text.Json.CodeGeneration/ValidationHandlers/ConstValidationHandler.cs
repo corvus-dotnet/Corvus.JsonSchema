@@ -38,7 +38,7 @@ internal sealed class ConstValidationHandler : KeywordValidationHandlerBase
     /// <inheritdoc/>
     public override CodeGenerator AppendValidationSetup(CodeGenerator generator, TypeDeclaration typeDeclaration)
     {
-        // If we require string value validation, then we need to run the type validation after all the string value validation handlers have run, so that we can ignore the type validation if any of those handlers are present.
+        // Prepend and append child validation setup around the const validation setup.
         return generator
              .PrependChildValidationSetup(typeDeclaration, ChildHandlers, ValidationHandlerPriority)
              .AppendConstValidationSetup()
@@ -130,7 +130,7 @@ file static class ConstValidationHandlerExtensions
                     .AppendComplexValueConstantValidation(typeDeclaration, keyword, constantValue);
                 break;
             default:
-                throw new InvalidOperationException("Usupported constant value.");
+                throw new InvalidOperationException(SR.UnsupportedConstantValue);
         }
 
         generator

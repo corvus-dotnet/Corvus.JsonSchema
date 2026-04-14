@@ -1,4 +1,4 @@
-﻿// <copyright file="CodeGeneratorExtensions.Builder.cs" company="Endjin Limited">
+// <copyright file="CodeGeneratorExtensions.Builder.cs" company="Endjin Limited">
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 // <licensing>
@@ -251,7 +251,7 @@ internal static partial class CodeGeneratorExtensions
 
             if (!forContext && typeDeclaration.IsNumericArray() && !typeDeclaration.IsTuple() && !typeDeclaration.IsFixedSizeNumericArray())
             {
-                NumericTypeName numericTypeName = typeDeclaration.PreferredDotnetNumericTypeName() ?? throw new InvalidOperationException("Expected numeric type name");
+                NumericTypeName numericTypeName = typeDeclaration.PreferredDotnetNumericTypeName() ?? throw new InvalidOperationException(SR.ExpectedNumericTypeName);
                 string numericArrayKindName = GetNumericArrayKind(generator, numericTypeName);
                 if (numericArrayKinds.Add(numericArrayKindName))
                 {
@@ -279,7 +279,7 @@ internal static partial class CodeGeneratorExtensions
             // Handle tensor kind for fixed-size numeric arrays
             if (!forContext && typeDeclaration.IsFixedSizeNumericArray())
             {
-                NumericTypeName numericTypeName = typeDeclaration.PreferredDotnetNumericTypeName() ?? throw new InvalidOperationException("Expected numeric type name");
+                NumericTypeName numericTypeName = typeDeclaration.PreferredDotnetNumericTypeName() ?? throw new InvalidOperationException(SR.ExpectedNumericTypeName);
                 string tensorBuilderClassName = isObject ? generator.ArrayBuilderClassName() : generator.BuilderClassName();
 
                 if (numericTypeName.IsNetOnly)
@@ -667,7 +667,7 @@ internal static partial class CodeGeneratorExtensions
 
             if (!forContext && typeDeclaration.IsNumericArray() && !typeDeclaration.IsTuple() && !typeDeclaration.IsFixedSizeNumericArray())
             {
-                NumericTypeName numericTypeName = typeDeclaration.PreferredDotnetNumericTypeName() ?? throw new InvalidOperationException("Expected numeric type name");
+                NumericTypeName numericTypeName = typeDeclaration.PreferredDotnetNumericTypeName() ?? throw new InvalidOperationException(SR.ExpectedNumericTypeName);
                 string numericArrayKindName = GetNumericArrayKind(generator, numericTypeName);
                 if (numericArrayKinds.Add(numericArrayKindName))
                 {
@@ -695,7 +695,7 @@ internal static partial class CodeGeneratorExtensions
             // Handle tensor kind for fixed-size numeric arrays
             if (!forContext && typeDeclaration.IsFixedSizeNumericArray())
             {
-                NumericTypeName numericTypeName = typeDeclaration.PreferredDotnetNumericTypeName() ?? throw new InvalidOperationException("Expected numeric type name");
+                NumericTypeName numericTypeName = typeDeclaration.PreferredDotnetNumericTypeName() ?? throw new InvalidOperationException(SR.ExpectedNumericTypeName);
                 string tensorBuilderClassName = isObject ? generator.ArrayBuilderClassName() : generator.BuilderClassName();
 
                 if (numericTypeName.IsNetOnly)
@@ -1540,7 +1540,7 @@ internal static partial class CodeGeneratorExtensions
         // Add CreateBuilder(workspace, ReadOnlySpan<T>) overload for numeric arrays (non-tuple)
         if (typeDeclaration.IsNumericArray() && !typeDeclaration.IsTuple())
         {
-            NumericTypeName numericTypeName = typeDeclaration.PreferredDotnetNumericTypeName() ?? throw new InvalidOperationException("Expected numeric type name");
+            NumericTypeName numericTypeName = typeDeclaration.PreferredDotnetNumericTypeName() ?? throw new InvalidOperationException(SR.ExpectedNumericTypeName);
             bool isFixedSize = typeDeclaration.IsFixedSizeNumericArray();
 
             if (numericTypeName.IsNetOnly)
@@ -2036,7 +2036,7 @@ internal static partial class CodeGeneratorExtensions
         // Add Build(ReadOnlySpan<T>) factory method for numeric arrays (non-tuple)
         if (typeDeclaration.IsNumericArray() && !typeDeclaration.IsTuple())
         {
-            NumericTypeName numericTypeName = typeDeclaration.PreferredDotnetNumericTypeName() ?? throw new InvalidOperationException("Expected numeric type name");
+            NumericTypeName numericTypeName = typeDeclaration.PreferredDotnetNumericTypeName() ?? throw new InvalidOperationException(SR.ExpectedNumericTypeName);
             string sourceClassName = generator.SourceClassName();
             bool isFixedSize = typeDeclaration.IsFixedSizeNumericArray();
 
@@ -2305,7 +2305,7 @@ internal static partial class CodeGeneratorExtensions
     {
         if (typeDeclaration.IsFixedSizeNumericArray())
         {
-            NumericTypeName numericTypeName = typeDeclaration.PreferredDotnetNumericTypeName() ?? throw new InvalidOperationException("Expected numeric type name");
+            NumericTypeName numericTypeName = typeDeclaration.PreferredDotnetNumericTypeName() ?? throw new InvalidOperationException(SR.ExpectedNumericTypeName);
 
             if (numericTypeName.IsNetOnly)
             {
@@ -2333,7 +2333,7 @@ internal static partial class CodeGeneratorExtensions
                 TypeDeclaration arrayItemsType = typeDeclaration.ArrayItemsType()!.ReducedType;
                 bool isAlsoObject = (arrayItemsType.ImpliedCoreTypesOrAny() & CoreTypes.Object) != 0;
 
-                string arrayItemsTypeName = arrayItemsType.FullyQualifiedDotnetTypeName() ?? throw new InvalidOperationException("Expected an array items type name.");
+                string arrayItemsTypeName = arrayItemsType.FullyQualifiedDotnetTypeName() ?? throw new InvalidOperationException(SR.ExpectedArrayItemsTypeName);
                 string builderClassName = isAlsoObject ? generator.ArrayBuilderClassName(arrayItemsTypeName) : generator.BuilderClassName(arrayItemsTypeName);
                 generator
                     .AppendSeparatorLine()
@@ -2927,7 +2927,7 @@ internal static partial class CodeGeneratorExtensions
             // Add tensor constructor for fixed-size numeric arrays
             if (typeDeclaration.IsFixedSizeNumericArray())
             {
-                NumericTypeName numericTypeName = typeDeclaration.PreferredDotnetNumericTypeName() ?? throw new InvalidOperationException("Expected numeric type name");
+                NumericTypeName numericTypeName = typeDeclaration.PreferredDotnetNumericTypeName() ?? throw new InvalidOperationException(SR.ExpectedNumericTypeName);
                 if (numericTypeName.IsNetOnly)
                 {
                     generator
@@ -3429,7 +3429,7 @@ internal static partial class CodeGeneratorExtensions
                 // Add tensor span field for fixed-size numeric arrays
                 if (typeDeclaration.IsFixedSizeNumericArray())
                 {
-                    NumericTypeName numericTypeName = typeDeclaration.PreferredDotnetNumericTypeName() ?? throw new InvalidOperationException("Expected numeric type name");
+                    NumericTypeName numericTypeName = typeDeclaration.PreferredDotnetNumericTypeName() ?? throw new InvalidOperationException(SR.ExpectedNumericTypeName);
                     if (numericTypeName.IsNetOnly)
                     {
                         generator
@@ -3670,7 +3670,7 @@ internal static partial class CodeGeneratorExtensions
                         .AppendLineIndent(arrayKindName, ",");
                     if (t.IsNumericArray() && !t.IsTuple() && !t.IsFixedSizeNumericArray())
                     {
-                        NumericTypeName numericTypeName = t.PreferredDotnetNumericTypeName() ?? throw new InvalidOperationException("Expected numeric type name");
+                        NumericTypeName numericTypeName = t.PreferredDotnetNumericTypeName() ?? throw new InvalidOperationException(SR.ExpectedNumericTypeName);
                         numericArrayKindName = GetNumericArrayKind(generator, numericTypeName, reserve: true);
                         numericArrayTypeName = numericTypeName;
                         if (numericArrayKinds.Add(numericArrayKindName))
@@ -3725,7 +3725,7 @@ internal static partial class CodeGeneratorExtensions
         // Now add the numeric array kind for the base type
         if (typeDeclaration.IsNumericArray() && !typeDeclaration.IsTuple() && !typeDeclaration.IsFixedSizeNumericArray())
         {
-            NumericTypeName numericTypeName = typeDeclaration.PreferredDotnetNumericTypeName() ?? throw new InvalidOperationException("Expected numeric type name");
+            NumericTypeName numericTypeName = typeDeclaration.PreferredDotnetNumericTypeName() ?? throw new InvalidOperationException(SR.ExpectedNumericTypeName);
             string numericArrayKindName = GetNumericArrayKind(generator, numericTypeName, reserve: true);
             if (numericArrayKinds.Add(numericArrayKindName))
             {
@@ -3749,7 +3749,7 @@ internal static partial class CodeGeneratorExtensions
         // Add tensor kind for fixed-size numeric arrays
         if (typeDeclaration.IsFixedSizeNumericArray())
         {
-            NumericTypeName numericTypeName = typeDeclaration.PreferredDotnetNumericTypeName() ?? throw new InvalidOperationException("Expected numeric type name");
+            NumericTypeName numericTypeName = typeDeclaration.PreferredDotnetNumericTypeName() ?? throw new InvalidOperationException(SR.ExpectedNumericTypeName);
             if (numericTypeName.IsNetOnly)
             {
                 generator

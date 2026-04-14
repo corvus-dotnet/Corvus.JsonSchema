@@ -329,9 +329,9 @@ public static partial class JsonSchemaEvaluation
     }
 
     /// <summary>
-    /// Tries to write a message indicating that a value was expected to match a schema becaused it contained a specific named property.
+    /// Tries to write a message indicating that a value was expected to match a schema because it contained a specific named property.
     /// </summary>
-    /// <param name="propertyName">The name of the property that caused the schema to mat.</param>
+    /// <param name="propertyName">The name of the property that caused the schema to match.</param>
     /// <param name="buffer">The buffer to write the message to.</param>
     /// <param name="written">The number of bytes written to the buffer.</param>
     /// <returns><see langword="true"/> if the operation succeeded; otherwise, <see langword="false"/>.</returns>

@@ -3,12 +3,20 @@ A `JsonWorkspace` manages pooled memory for mutable JSON operations. Always use 
 ```csharp
 using JsonWorkspace workspace = JsonWorkspace.Create();
 
-using ParsedJsonDocument<Person> doc =
-    ParsedJsonDocument<Person>.Parse(personJson);
-using var builder = doc.RootElement.CreateBuilder(workspace);
+// Parse directly into a mutable builder (recommended when mutating)
+using var builder = JsonDocumentBuilder<Person.Mutable>.Parse(
+    workspace, personJson);
 
 Person.Mutable root = builder.RootElement;
 root.SetAge(31);
+```
+
+You can also create a builder from an existing `ParsedJsonDocument` if you want to retain an immutable copy of the original (e.g., for comparison or auditing):
+
+```csharp
+using ParsedJsonDocument<Person> doc =
+    ParsedJsonDocument<Person>.Parse(personJson);
+using var builder = doc.RootElement.CreateBuilder(workspace);
 ```
 
 ### Multiple builders sharing a workspace

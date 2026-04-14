@@ -1145,7 +1145,7 @@ public readonly partial struct BigNumber :
         // Validate NumberStyles - HexNumber (specifically AllowHexSpecifier) is not supported
         if ((style & NumberStyles.AllowHexSpecifier) != 0)
         {
-            throw new ArgumentException("NumberStyles.AllowHexSpecifier is not supported for BigNumber.", nameof(style));
+            throw new ArgumentException(SR.BigNumber_HexSpecifierNotSupported, nameof(style));
         }
 
         // Protect against DoS with very long inputs
@@ -1481,7 +1481,7 @@ public readonly partial struct BigNumber :
             return result;
         }
 
-        throw new FormatException("Unable to parse UTF-8 text as a BigNumber.");
+        throw new FormatException(SR.BigNumber_UnableToParseUtf8);
     }
 
     /// <summary>
@@ -1912,7 +1912,7 @@ public readonly partial struct BigNumber :
     {
         if (double.IsNaN(value) || double.IsInfinity(value))
         {
-            throw new ArgumentException("Cannot convert NaN or Infinity to BigNumber.", nameof(value));
+            throw new ArgumentException(SR.BigNumber_CannotConvertNaNOrInfinity, nameof(value));
         }
 
         string str = value.ToString("G17", CultureInfo.InvariantCulture);
@@ -2108,7 +2108,7 @@ public readonly partial struct BigNumber :
 
         if (value.Significand < 0)
         {
-            throw new ArgumentException("Cannot compute square root of negative number.", nameof(value));
+            throw new ArgumentException(SR.BigNumber_CannotComputeSqrtOfNegative, nameof(value));
         }
 
         if (value.Significand.IsZero)

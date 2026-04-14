@@ -1232,6 +1232,165 @@ public readonly partial struct JsonElement
                     break;
             }
         }
+
+        /// <summary>
+        /// Tries to get the components for a single simple value row,
+        /// storing the value bytes in the target document. Returns <see langword="false"/>
+        /// for <see cref="Kind.JsonElement"/>, <see cref="Kind.JsonArrayBuilderInstance"/>,
+        /// and <see cref="Kind.JsonObjectBuilderInstance"/> which require different handling.
+        /// </summary>
+        internal readonly bool TryGetSimpleValueComponents(IMutableJsonDocument targetDocument, out JsonTokenType tokenType, out int location, out int sizeOrLength)
+        {
+            switch (_kind)
+            {
+                case Kind.Null:
+                    tokenType = JsonTokenType.Null;
+                    location = targetDocument.StoreNullValue();
+                    sizeOrLength = 1;
+                    return true;
+
+                case Kind.True:
+                    tokenType = JsonTokenType.True;
+                    location = targetDocument.StoreBooleanValue(true);
+                    sizeOrLength = 1;
+                    return true;
+
+                case Kind.False:
+                    tokenType = JsonTokenType.False;
+                    location = targetDocument.StoreBooleanValue(false);
+                    sizeOrLength = 1;
+                    return true;
+
+                case Kind.NumericSimpleType:
+                    {
+                        ReadOnlySpan<byte> value = _simpleTypeBacking.Span();
+                        tokenType = JsonTokenType.Number;
+                        location = targetDocument.StoreRawNumberValue(value);
+                        sizeOrLength = 1;
+                        return true;
+                    }
+
+                case Kind.FormattedNumber:
+                    tokenType = JsonTokenType.Number;
+                    location = targetDocument.StoreRawNumberValue(_utf8Backing);
+                    sizeOrLength = 1;
+                    return true;
+
+                case Kind.StringSimpleType:
+                    tokenType = JsonTokenType.String;
+                    location = targetDocument.StoreRawStringValue(_simpleTypeBacking.Span());
+                    sizeOrLength = 1;
+                    return true;
+
+                case Kind.RawUtf8StringRequiresUnescaping:
+                    tokenType = JsonTokenType.String;
+                    location = targetDocument.StoreRawStringValue(_utf8Backing);
+                    sizeOrLength = -1;
+                    return true;
+
+                case Kind.RawUtf8StringNotRequiresUnescaping:
+                    tokenType = JsonTokenType.String;
+                    location = targetDocument.StoreRawStringValue(_utf8Backing);
+                    sizeOrLength = 1;
+                    return true;
+
+                case Kind.Utf8String:
+                    {
+                        tokenType = JsonTokenType.String;
+                        location = targetDocument.EscapeAndStoreRawStringValue(_utf8Backing, out bool requiredEscaping);
+                        sizeOrLength = requiredEscaping ? -1 : 1;
+                        return true;
+                    }
+
+                case Kind.Utf16String:
+                    {
+                        tokenType = JsonTokenType.String;
+                        location = targetDocument.EscapeAndStoreRawStringValue(_utf16Backing, out bool requiredEscaping);
+                        sizeOrLength = requiredEscaping ? -1 : 1;
+                        return true;
+                    }
+
+                default:
+                    tokenType = default;
+                    location = default;
+                    sizeOrLength = default;
+                    return false;
+            }
+        }
+
+        /// <summary>
+        /// Tries to get the source document and element index for <see cref="Kind.JsonElement"/> sources.
+        /// </summary>
+        internal readonly bool TryGetSourceDocument(out IJsonDocument sourceDocument, out int sourceIndex)
+        {
+            if (_kind == Kind.JsonElement)
+            {
+                sourceDocument = _jsonElement._parent;
+                sourceIndex = _jsonElement._idx;
+                return true;
+            }
+
+            sourceDocument = default!;
+            sourceIndex = default;
+            return false;
+        }
+
+        /// <summary>
+        /// Writes the source value to a <see cref="Utf8JsonWriter"/>.
+        /// </summary>
+        /// <param name="writer">The writer to write the value to.</param>
+        public void WriteTo(Utf8JsonWriter writer)
+        {
+            switch (_kind)
+            {
+                case Kind.JsonElement:
+                    _jsonElement.WriteTo(writer);
+                    break;
+
+                case Kind.Null:
+                    writer.WriteNullValue();
+                    break;
+
+                case Kind.True:
+                    writer.WriteBooleanValue(true);
+                    break;
+
+                case Kind.False:
+                    writer.WriteBooleanValue(false);
+                    break;
+
+                case Kind.NumericSimpleType:
+                    writer.WriteRawValue(_simpleTypeBacking.Span(), skipInputValidation: true);
+                    break;
+
+                case Kind.FormattedNumber:
+                    writer.WriteRawValue(_utf8Backing, skipInputValidation: true);
+                    break;
+
+                case Kind.StringSimpleType:
+                    writer.WriteStringValue(_simpleTypeBacking.Span());
+                    break;
+
+                case Kind.RawUtf8StringRequiresUnescaping:
+                case Kind.RawUtf8StringNotRequiresUnescaping:
+                case Kind.Utf8String:
+                    writer.WriteStringValue(_utf8Backing);
+                    break;
+
+                case Kind.Utf16String:
+                    writer.WriteStringValue(_utf16Backing);
+                    break;
+
+                case Kind.JsonArrayBuilderInstance:
+                case Kind.JsonObjectBuilderInstance:
+                    ThrowHelper.ThrowInvalidOperationException(SR.CannotWriteBuilderToWriter);
+                    break;
+
+                default:
+                    Debug.Fail("Unrecognized kind.");
+                    break;
+            }
+        }
     }
 
     public readonly ref struct Source<TContext>
@@ -4256,7 +4415,7 @@ public readonly partial struct JsonElement
         /// </exception>
         public override readonly string ToString()
         {
-            if (_parent == null || _documentVersion != _parent.Version)
+            if (_parent == null || (_idx != 0 && _documentVersion != _parent.Version))
             {
                 return string.Empty;
             }
@@ -4312,6 +4471,29 @@ public readonly partial struct JsonElement
             CheckValidInstance();
 
             return _parent.CloneElement(_idx);
+        }
+
+        /// <summary>
+        /// Creates a frozen (immutable) copy of this element, backed by a new
+        /// document builder registered in the same workspace.
+        /// </summary>
+        /// <returns>
+        /// An immutable <see cref="JsonElement"/> that lives for the lifetime of its
+        /// workspace and its associated documents.
+        /// </returns>
+        /// <remarks>
+        /// <para>
+        /// Unlike <see cref="Clone()"/>, which serializes the element and re-parses it
+        /// into a standalone heap-allocated document, <c>Freeze()</c> performs a cheap
+        /// blit of the metadata and value backing arrays. The resulting element is
+        /// immutable but is only valid for the lifetime of the workspace.
+        /// </para>
+        /// </remarks>
+        public readonly JsonElement Freeze()
+        {
+            CheckValidInstance();
+
+            return _parent.FreezeElement<JsonElement>(_idx);
         }
 
         /// <summary>
@@ -4412,20 +4594,93 @@ public readonly partial struct JsonElement
                 return;
             }
 
-            var cvb = ComplexValueBuilder.Create(_parent, estimatedMemberCount);
-            if (_parent.TryGetNamedPropertyValue(_idx, propertyName, out JsonElement value))
+            if (source.TryGetSimpleValueComponents(_parent, out JsonTokenType tokenType, out int location, out int sizeOrLength))
             {
-                source.AddAsItem(ref cvb);
-                _parent.OverwriteAndDispose(_idx, value._idx, value._idx + value._parent.GetDbSize(value._idx, true), 1, ref cvb);
+                // Fast path for simple scalar values: write directly to MetadataDb.
+                if (_parent.TryGetNamedPropertyValue(_idx, propertyName, out JsonElement value))
+                {
+                    _parent.OverwriteSimpleValue(_idx, value._idx, value._idx + value._parent.GetDbSize(value._idx, true), 1, tokenType, location, sizeOrLength);
+                }
+                else
+                {
+                    int endIndex = _idx + _parent.GetDbSize(_idx, false);
+                    _parent.InsertSimpleProperty(_idx, endIndex, 1, propertyName, tokenType, location, sizeOrLength);
+                }
+            }
+            else if (source.TryGetSourceDocument(out IJsonDocument sourceDocument, out int sourceIndex))
+            {
+                // Fast path for JsonElement values: write external reference rows directly.
+                if (_parent.TryGetNamedPropertyValue(_idx, propertyName, out JsonElement value))
+                {
+                    _parent.OverwriteFromDocument(_idx, value._idx, value._idx + value._parent.GetDbSize(value._idx, true), 1, sourceDocument, sourceIndex);
+                }
+                else
+                {
+                    int endIndex = _idx + _parent.GetDbSize(_idx, false);
+                    _parent.InsertPropertyFromDocument(_idx, endIndex, 1, propertyName, sourceDocument, sourceIndex);
+                }
             }
             else
             {
-                source.AddAsProperty(propertyName, ref cvb);
-                int endIndex = _idx + _parent.GetDbSize(_idx, false);
-                _parent.InsertAndDispose(_idx, endIndex, ref cvb);
+                // Slow path for builder delegates: use ComplexValueBuilder.
+                var cvb = ComplexValueBuilder.Create(_parent, estimatedMemberCount);
+                if (_parent.TryGetNamedPropertyValue(_idx, propertyName, out JsonElement value))
+                {
+                    source.AddAsItem(ref cvb);
+                    _parent.OverwriteAndDispose(_idx, value._idx, value._idx + value._parent.GetDbSize(value._idx, true), 1, ref cvb);
+                }
+                else
+                {
+                    source.AddAsProperty(propertyName, ref cvb);
+                    int endIndex = _idx + _parent.GetDbSize(_idx, false);
+                    _parent.InsertAndDispose(_idx, endIndex, ref cvb);
+                }
             }
 
             _documentVersion = _parent.Version;
+        }
+
+        /// <summary>
+        /// Replaces the value of an existing property on this JSON object.
+        /// </summary>
+        /// <param name="propertyName">The UTF-8 encoded name of the property to replace.</param>
+        /// <param name="source">The new value for the property.</param>
+        /// <param name="estimatedMemberCount">An estimate of the number of members for the CVB fallback path.</param>
+        /// <returns><see langword="true"/> if the property was found and replaced; otherwise, <see langword="false"/>.</returns>
+        /// <remarks>
+        /// Unlike <see cref="SetProperty(ReadOnlySpan{byte}, in Source, int)"/>, this method does not
+        /// insert a new property if the named property does not already exist.
+        /// </remarks>
+        public bool TryReplaceProperty(ReadOnlySpan<byte> propertyName, in Source source, int estimatedMemberCount = 30)
+        {
+            CheckValidInstance();
+
+            bool result;
+
+            if (source.TryGetSimpleValueComponents(_parent, out JsonTokenType tokenType, out int location, out int sizeOrLength))
+            {
+                result = _parent.TryReplacePropertyValue(_idx, propertyName, tokenType, location, sizeOrLength);
+            }
+            else if (source.TryGetSourceDocument(out IJsonDocument sourceDocument, out int sourceIndex))
+            {
+                result = _parent.TryReplacePropertyFromDocument(_idx, propertyName, sourceDocument, sourceIndex);
+            }
+            else
+            {
+                // CVB fallback: single lookup, then overwrite.
+                if (!_parent.TryGetNamedPropertyValue(_idx, propertyName, out JsonElement existing))
+                {
+                    return false;
+                }
+
+                var cvb = ComplexValueBuilder.Create(_parent, estimatedMemberCount);
+                source.AddAsItem(ref cvb);
+                _parent.OverwriteAndDispose(_idx, existing._idx, existing._idx + existing._parent.GetDbSize(existing._idx, true), 1, ref cvb);
+                result = true;
+            }
+
+            _documentVersion = _parent.Version;
+            return result;
         }
 
         /// <summary>
@@ -5156,15 +5411,30 @@ public readonly partial struct JsonElement
                 return;
             }
 
-            var cvb = ComplexValueBuilder.Create(_parent, estimatedMemberCount);
-            source.AddAsItem(ref cvb);
             int arrayLength = GetArrayLength();
+
             if (itemIndex == arrayLength)
             {
-                _parent.InsertAndDispose(_idx, _idx + _parent.GetDbSize(_idx, false), ref cvb);
+                // Append at end — delegate to InsertItem which already has 3-tier dispatch.
+                InsertItem(itemIndex, in source, estimatedMemberCount);
+                return;
+            }
+
+            // Replace existing element.
+            if (source.TryGetSimpleValueComponents(_parent, out JsonTokenType tokenType, out int location, out int sizeOrLength))
+            {
+                Mutable element = _parent.GetArrayIndexElement(_idx, itemIndex);
+                _parent.OverwriteSimpleValue(_idx, element._idx, element._idx + element._parent.GetDbSize(element._idx, true), 1, tokenType, location, sizeOrLength);
+            }
+            else if (source.TryGetSourceDocument(out IJsonDocument sourceDocument, out int sourceIndex))
+            {
+                Mutable element = _parent.GetArrayIndexElement(_idx, itemIndex);
+                _parent.OverwriteFromDocument(_idx, element._idx, element._idx + element._parent.GetDbSize(element._idx, true), 1, sourceDocument, sourceIndex);
             }
             else
             {
+                var cvb = ComplexValueBuilder.Create(_parent, estimatedMemberCount);
+                source.AddAsItem(ref cvb);
                 Mutable element = _parent.GetArrayIndexElement(_idx, itemIndex);
                 _parent.OverwriteAndDispose(_idx, element._idx, element._idx + element._parent.GetDbSize(element._idx, true), 1, ref cvb);
             }
@@ -5409,9 +5679,23 @@ public readonly partial struct JsonElement
                 return;
             }
 
-            var cvb = ComplexValueBuilder.Create(_parent, estimatedMemberCount);
-            source.AddAsItem(ref cvb);
-            _parent.InsertAndDispose(_idx, _parent.GetArrayInsertionIndex(_idx, itemIndex), ref cvb);
+            int targetIndex = _parent.GetArrayInsertionIndex(_idx, itemIndex);
+
+            if (source.TryGetSimpleValueComponents(_parent, out JsonTokenType tokenType, out int location, out int sizeOrLength))
+            {
+                _parent.InsertSimpleValue(_idx, targetIndex, 1, tokenType, location, sizeOrLength);
+            }
+            else if (source.TryGetSourceDocument(out IJsonDocument sourceDocument, out int sourceIndex))
+            {
+                _parent.InsertFromDocument(_idx, targetIndex, 1, sourceDocument, sourceIndex);
+            }
+            else
+            {
+                var cvb = ComplexValueBuilder.Create(_parent, estimatedMemberCount);
+                source.AddAsItem(ref cvb);
+                _parent.InsertAndDispose(_idx, targetIndex, ref cvb);
+            }
+
             _documentVersion = _parent.Version;
         }
 

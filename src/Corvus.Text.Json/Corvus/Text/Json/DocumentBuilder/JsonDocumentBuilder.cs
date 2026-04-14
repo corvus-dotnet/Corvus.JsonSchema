@@ -30,6 +30,11 @@ public sealed partial class JsonDocumentBuilder<T> : JsonDocument, IMutableJsonD
 
     private int _parentWorkspaceIndex = -1;
 
+    // When > 0, _valueBacking[0.._rawJsonLength) contains the raw UTF-8 JSON input bytes.
+    // MetadataDb rows created by ParseTokens store offsets into this region (ParsedJsonDocument-style).
+    // Mutated values go into _valueBacking at _valueOffset (>= _rawJsonLength) using DynamicValue headers.
+    private int _rawJsonLength;
+
     private ulong _version = 0;
 
     internal JsonDocumentBuilder(JsonWorkspace workspace)
@@ -115,6 +120,117 @@ public sealed partial class JsonDocumentBuilder<T> : JsonDocument, IMutableJsonD
         {
             _valueBacking = ArrayPool<byte>.Shared.Rent(initialValueBufferSize);
         }
+    }
+
+    /// <summary>
+    /// Creates a snapshot of this builder's current state. The snapshot can be used to
+    /// cheaply restore the builder to this state via <see cref="Restore"/>
+    /// without re-traversing the source document.
+    /// </summary>
+    /// <returns>
+    /// A <see cref="JsonDocumentBuilderSnapshot{T}"/> that holds rented copies of this
+    /// builder's backing data. The caller must dispose the snapshot when it is no longer needed.
+    /// </returns>
+    public JsonDocumentBuilderSnapshot<T> CreateSnapshot()
+    {
+        CheckNotDisposed();
+
+        // Snapshot the metadata
+        int metadataLength = _parsedData.Length;
+        byte[] metadataBytes = ArrayPool<byte>.Shared.Rent(metadataLength);
+        _parsedData.CopyDataTo(metadataBytes);
+
+        // Snapshot the value backing
+        byte[]? valueBacking = null;
+        if (_valueBacking is not null && _valueOffset > 0)
+        {
+            valueBacking = ArrayPool<byte>.Shared.Rent(_valueOffset);
+            Buffer.BlockCopy(_valueBacking, 0, valueBacking, 0, _valueOffset);
+        }
+
+        // Snapshot the property map
+        byte[]? propertyMapBacking = null;
+        if (_propertyMapBacking is not null && _propertyMapOffset > 0)
+        {
+            propertyMapBacking = ArrayPool<byte>.Shared.Rent(_propertyMapOffset);
+            Buffer.BlockCopy(_propertyMapBacking, 0, propertyMapBacking, 0, _propertyMapOffset);
+        }
+
+        // Snapshot the buckets
+        int[]? bucketsBacking = null;
+        if (_bucketsBacking is not null && _bucketOffset > 0)
+        {
+            bucketsBacking = ArrayPool<int>.Shared.Rent(_bucketOffset);
+            Buffer.BlockCopy(_bucketsBacking, 0, bucketsBacking, 0, _bucketOffset * sizeof(int));
+        }
+
+        // Snapshot the entries
+        byte[]? entriesBacking = null;
+        if (_entriesBacking is not null && _entryOffset > 0)
+        {
+            entriesBacking = ArrayPool<byte>.Shared.Rent(_entryOffset);
+            Buffer.BlockCopy(_entriesBacking, 0, entriesBacking, 0, _entryOffset);
+        }
+
+        return new JsonDocumentBuilderSnapshot<T>(
+            metadataBytes,
+            metadataLength,
+            valueBacking,
+            _valueOffset,
+            propertyMapBacking,
+            _propertyMapOffset,
+            bucketsBacking,
+            _bucketOffset,
+            entriesBacking,
+            _entryOffset);
+    }
+
+    /// <summary>
+    /// Restores this builder to the state captured in <paramref name="snapshot"/>.
+    /// The existing backing buffers are reused (they can only grow, never shrink),
+    /// so this is a pure memcpy with no allocations.
+    /// </summary>
+    /// <param name="snapshot">The snapshot to restore from.</param>
+    /// <returns>This builder instance.</returns>
+    public JsonDocumentBuilder<T> Restore(JsonDocumentBuilderSnapshot<T> snapshot)
+    {
+        CheckNotDisposed();
+
+        // Restore metadata into the existing buffer
+        _parsedData.RestoreFrom(snapshot.MetadataBytes, snapshot.MetadataLength);
+
+        // Restore value backing
+        _valueOffset = snapshot.ValueOffset;
+        if (snapshot.ValueBacking is not null && snapshot.ValueOffset > 0)
+        {
+            Buffer.BlockCopy(snapshot.ValueBacking, 0, _valueBacking!, 0, snapshot.ValueOffset);
+        }
+
+        // Restore property map
+        _propertyMapOffset = snapshot.PropertyMapOffset;
+        if (snapshot.PropertyMapBacking is not null && snapshot.PropertyMapOffset > 0)
+        {
+            Buffer.BlockCopy(snapshot.PropertyMapBacking, 0, _propertyMapBacking!, 0, snapshot.PropertyMapOffset);
+        }
+
+        // Restore buckets
+        _bucketOffset = snapshot.BucketOffset;
+        if (snapshot.BucketsBacking is not null && snapshot.BucketOffset > 0)
+        {
+            Buffer.BlockCopy(snapshot.BucketsBacking, 0, _bucketsBacking!, 0, snapshot.BucketOffset * sizeof(int));
+        }
+
+        // Restore entries
+        _entryOffset = snapshot.EntryOffset;
+        if (snapshot.EntriesBacking is not null && snapshot.EntryOffset > 0)
+        {
+            Buffer.BlockCopy(snapshot.EntriesBacking, 0, _entriesBacking!, 0, snapshot.EntryOffset);
+        }
+
+        // Invalidate any stale element references
+        _version++;
+
+        return this;
     }
 
     /// <inheritdoc />
@@ -309,11 +425,120 @@ public sealed partial class JsonDocumentBuilder<T> : JsonDocument, IMutableJsonD
 
     /// <inheritdoc />
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    void IMutableJsonDocument.ReplaceRootAndDispose(ref ComplexValueBuilder cvb)
+    {
+        CheckNotImmutable();
+        _version++;
+        _parsedData.Dispose();
+        _parsedData = default;
+        cvb.SetAndDispose(ref _parsedData);
+    }
+
+    /// <inheritdoc />
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     void IMutableJsonDocument.OverwriteAndDispose(int complexObjectStartIndex, int startIndex, int endIndex, int memberCountToReplace, ref ComplexValueBuilder cvb)
     {
         CheckNotImmutable();
         _version++;
         cvb.OverwriteAndDispose(complexObjectStartIndex, startIndex, endIndex, memberCountToReplace, ref _parsedData);
+    }
+
+    /// <inheritdoc />
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    void IMutableJsonDocument.InsertSimpleValue(int complexObjectStartIndex, int targetIndex, int memberCount, JsonTokenType tokenType, int location, int sizeOrLength)
+    {
+        CheckNotImmutable();
+        _version++;
+        _parsedData.InsertRowsInComplexObject(this, complexObjectStartIndex, targetIndex, 1, memberCount);
+        _parsedData.WriteRowAt(targetIndex, new DbRow(tokenType, location, sizeOrLength));
+    }
+
+    /// <inheritdoc />
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    void IMutableJsonDocument.OverwriteSimpleValue(int complexObjectStartIndex, int startIndex, int endIndex, int memberCountToReplace, JsonTokenType tokenType, int location, int sizeOrLength)
+    {
+        CheckNotImmutable();
+        _version++;
+        _parsedData.ReplaceRowsInComplexObject(this, complexObjectStartIndex, startIndex, endIndex, memberCountToReplace, 1, 1);
+        _parsedData.WriteRowAt(startIndex, new DbRow(tokenType, location, sizeOrLength));
+    }
+
+    /// <inheritdoc />
+    void IMutableJsonDocument.InsertSimpleProperty(int complexObjectStartIndex, int targetIndex, int memberCount, ReadOnlySpan<byte> propertyName, JsonTokenType valueTokenType, int valueLocation, int valueSizeOrLength)
+    {
+        CheckNotImmutable();
+        _version++;
+        _parsedData.InsertRowsInComplexObject(this, complexObjectStartIndex, targetIndex, 2, memberCount);
+        int nameLoc = ((IMutableJsonDocument)this).EscapeAndStoreRawStringValue(propertyName, out bool nameReqEscaping);
+        _parsedData.WriteRowAt(targetIndex, new DbRow(JsonTokenType.PropertyName, nameLoc, nameReqEscaping ? -1 : 1));
+        _parsedData.WriteRowAt(targetIndex + DbRow.Size, new DbRow(valueTokenType, valueLocation, valueSizeOrLength));
+    }
+
+    /// <inheritdoc />
+    void IMutableJsonDocument.InsertFromDocument(int complexObjectStartIndex, int targetIndex, int memberCount, IJsonDocument sourceDocument, int sourceIndex)
+    {
+        CheckNotImmutable();
+        _version++;
+        int rowCount = sourceDocument.GetDbSize(sourceIndex, true) / DbRow.Size;
+        _parsedData.InsertRowsInComplexObject(this, complexObjectStartIndex, targetIndex, rowCount, memberCount);
+        sourceDocument.WriteElementToMetadataDb(sourceIndex, _workspace, ref _parsedData, targetIndex);
+    }
+
+    /// <inheritdoc />
+    void IMutableJsonDocument.OverwriteFromDocument(int complexObjectStartIndex, int startIndex, int endIndex, int memberCountToReplace, IJsonDocument sourceDocument, int sourceIndex)
+    {
+        CheckNotImmutable();
+        _version++;
+        int rowCount = sourceDocument.GetDbSize(sourceIndex, true) / DbRow.Size;
+        _parsedData.ReplaceRowsInComplexObject(this, complexObjectStartIndex, startIndex, endIndex, memberCountToReplace, rowCount, 1);
+        sourceDocument.WriteElementToMetadataDb(sourceIndex, _workspace, ref _parsedData, startIndex);
+    }
+
+    /// <inheritdoc />
+    void IMutableJsonDocument.InsertPropertyFromDocument(int complexObjectStartIndex, int targetIndex, int memberCount, ReadOnlySpan<byte> propertyName, IJsonDocument sourceDocument, int sourceIndex)
+    {
+        CheckNotImmutable();
+        _version++;
+        int valueRowCount = sourceDocument.GetDbSize(sourceIndex, true) / DbRow.Size;
+        _parsedData.InsertRowsInComplexObject(this, complexObjectStartIndex, targetIndex, valueRowCount + 1, memberCount);
+        int nameLoc = ((IMutableJsonDocument)this).EscapeAndStoreRawStringValue(propertyName, out bool nameReqEscaping);
+        _parsedData.WriteRowAt(targetIndex, new DbRow(JsonTokenType.PropertyName, nameLoc, nameReqEscaping ? -1 : 1));
+        sourceDocument.WriteElementToMetadataDb(sourceIndex, _workspace, ref _parsedData, targetIndex + DbRow.Size);
+    }
+
+    /// <inheritdoc />
+    bool IMutableJsonDocument.TryReplacePropertyValue(int objectIndex, ReadOnlySpan<byte> propertyName, JsonTokenType tokenType, int location, int sizeOrLength)
+    {
+        CheckNotImmutable();
+
+        if (!TryGetNamedPropertyValueIndexUnsafe(objectIndex, propertyName, out int existingValueIndex))
+        {
+            return false;
+        }
+
+        int existingDbSize = GetDbSizeUnsafe(existingValueIndex, true);
+        _version++;
+        _parsedData.ReplaceRowsInComplexObject(this, objectIndex, existingValueIndex, existingValueIndex + existingDbSize, 1, 1, 1);
+        _parsedData.WriteRowAt(existingValueIndex, new DbRow(tokenType, location, sizeOrLength));
+        return true;
+    }
+
+    /// <inheritdoc />
+    bool IMutableJsonDocument.TryReplacePropertyFromDocument(int objectIndex, ReadOnlySpan<byte> propertyName, IJsonDocument sourceDocument, int sourceIndex)
+    {
+        CheckNotImmutable();
+
+        if (!TryGetNamedPropertyValueIndexUnsafe(objectIndex, propertyName, out int existingValueIndex))
+        {
+            return false;
+        }
+
+        int existingDbSize = GetDbSizeUnsafe(existingValueIndex, true);
+        int srcRowCount = sourceDocument.GetDbSize(sourceIndex, true) / DbRow.Size;
+        _version++;
+        _parsedData.ReplaceRowsInComplexObject(this, objectIndex, existingValueIndex, existingValueIndex + existingDbSize, 1, srcRowCount, 1);
+        sourceDocument.WriteElementToMetadataDb(sourceIndex, _workspace, ref _parsedData, existingValueIndex);
+        return true;
     }
 
     /// <summary>
@@ -339,6 +564,408 @@ public sealed partial class JsonDocumentBuilder<T> : JsonDocument, IMutableJsonD
         _parsedData.ReplaceRowsInComplexObject(this, complexObjectStartIndex, startIndex, endIndex, membersToRemove, 0, 0);
     }
 
+    /// <inheritdoc />
+    void IMutableJsonDocument.CopyValueToProperty(int srcValueIndex, int dstObjectIndex, ReadOnlySpan<byte> propertyName)
+    {
+        CheckNotImmutable();
+
+        int srcDbSize = GetDbSizeUnsafe(srcValueIndex, true);
+
+        if (TryGetNamedPropertyValueIndexUnsafe(dstObjectIndex, propertyName, out int existingValueIndex))
+        {
+            // Replace existing property value.
+            int existingDbSize = GetDbSizeUnsafe(existingValueIndex, true);
+
+            // Check for overlap between source and existing value region.
+            if (srcValueIndex < existingValueIndex + existingDbSize && srcValueIndex + srcDbSize > existingValueIndex)
+            {
+                // Source overlaps with the region being replaced — fall back to CVB.
+                var cvb = ComplexValueBuilder.Create(this, 1);
+                cvb.AddItem(new JsonElement(this, srcValueIndex));
+                _version++;
+                cvb.OverwriteAndDispose(dstObjectIndex, existingValueIndex, existingValueIndex + existingDbSize, 1, ref _parsedData);
+            }
+            else
+            {
+                int srcRowCount = srcDbSize / DbRow.Size;
+                int delta = srcDbSize - existingDbSize;
+                _version++;
+                _parsedData.ReplaceRowsInComplexObject(this, dstObjectIndex, existingValueIndex, existingValueIndex + existingDbSize, 1, srcRowCount, 1);
+
+                // Adjust source index if it was shifted by the replacement.
+                int adjustedSrc = srcValueIndex >= existingValueIndex + existingDbSize ? srcValueIndex + delta : srcValueIndex;
+                _parsedData.CopyRowRange(adjustedSrc, existingValueIndex, srcDbSize);
+            }
+        }
+        else
+        {
+            // Insert new property at object end.
+            int endIndex = dstObjectIndex + GetDbSizeUnsafe(dstObjectIndex, false);
+            int valueRowCount = srcDbSize / DbRow.Size;
+
+            // Check for overlap: source straddles insertion point.
+            if (srcValueIndex < endIndex && srcValueIndex + srcDbSize > endIndex)
+            {
+                var cvb = ComplexValueBuilder.Create(this, 1);
+                cvb.AddProperty(propertyName, new JsonElement(this, srcValueIndex));
+                _version++;
+                cvb.InsertAndDispose(dstObjectIndex, endIndex, ref _parsedData);
+            }
+            else
+            {
+                int totalRowCount = valueRowCount + 1; // +1 for property name row
+                int totalByteSize = totalRowCount * DbRow.Size;
+                _version++;
+                _parsedData.InsertRowsInComplexObject(this, dstObjectIndex, endIndex, totalRowCount, 1);
+
+                // Write property name row.
+                int nameLoc = ((IMutableJsonDocument)this).EscapeAndStoreRawStringValue(propertyName, out bool nameReqEscaping);
+                _parsedData.WriteRowAt(endIndex, new DbRow(JsonTokenType.PropertyName, nameLoc, nameReqEscaping ? -1 : 1));
+
+                // Adjust source index if it was shifted by the insertion.
+                int adjustedSrc = srcValueIndex >= endIndex ? srcValueIndex + totalByteSize : srcValueIndex;
+                _parsedData.CopyRowRange(adjustedSrc, endIndex + DbRow.Size, srcDbSize);
+            }
+        }
+    }
+
+    /// <inheritdoc />
+    void IMutableJsonDocument.CopyValueToArrayIndex(int srcValueIndex, int dstArrayIndex, int itemIndex)
+    {
+        CheckNotImmutable();
+
+        int srcDbSize = GetDbSizeUnsafe(srcValueIndex, true);
+        int rowCount = srcDbSize / DbRow.Size;
+
+        int insertionIndex;
+        if (itemIndex == GetArrayLengthUnsafe(dstArrayIndex))
+        {
+            insertionIndex = dstArrayIndex + GetDbSizeUnsafe(dstArrayIndex, false);
+        }
+        else
+        {
+            insertionIndex = GetArrayIndexElementUnsafe(dstArrayIndex, itemIndex);
+        }
+
+        // Check for overlap: source straddles insertion point.
+        if (srcValueIndex < insertionIndex && srcValueIndex + srcDbSize > insertionIndex)
+        {
+            var cvb = ComplexValueBuilder.Create(this, 1);
+            cvb.AddItem(new JsonElement(this, srcValueIndex));
+            _version++;
+            cvb.InsertAndDispose(dstArrayIndex, insertionIndex, ref _parsedData);
+        }
+        else
+        {
+            _version++;
+            _parsedData.InsertRowsInComplexObject(this, dstArrayIndex, insertionIndex, rowCount, 1);
+
+            // Adjust source index if it was shifted by the insertion.
+            int adjustedSrc = srcValueIndex >= insertionIndex ? srcValueIndex + srcDbSize : srcValueIndex;
+            _parsedData.CopyRowRange(adjustedSrc, insertionIndex, srcDbSize);
+        }
+    }
+
+    /// <inheritdoc />
+    void IMutableJsonDocument.CopyValueToArrayEnd(int srcValueIndex, int dstArrayIndex)
+    {
+        CheckNotImmutable();
+
+        int srcDbSize = GetDbSizeUnsafe(srcValueIndex, true);
+        int rowCount = srcDbSize / DbRow.Size;
+        int endIndex = dstArrayIndex + GetDbSizeUnsafe(dstArrayIndex, false);
+
+        // Check for overlap: source straddles insertion point.
+        if (srcValueIndex < endIndex && srcValueIndex + srcDbSize > endIndex)
+        {
+            var cvb = ComplexValueBuilder.Create(this, 1);
+            cvb.AddItem(new JsonElement(this, srcValueIndex));
+            _version++;
+            cvb.InsertAndDispose(dstArrayIndex, endIndex, ref _parsedData);
+        }
+        else
+        {
+            _version++;
+            _parsedData.InsertRowsInComplexObject(this, dstArrayIndex, endIndex, rowCount, 1);
+
+            // Adjust source index if it was shifted by the insertion.
+            int adjustedSrc = srcValueIndex >= endIndex ? srcValueIndex + srcDbSize : srcValueIndex;
+            _parsedData.CopyRowRange(adjustedSrc, endIndex, srcDbSize);
+        }
+    }
+
+    /// <inheritdoc />
+    bool IMutableJsonDocument.MovePropertyToProperty(int srcObjectIndex, ReadOnlySpan<byte> srcPropertyName, int dstObjectIndex, ReadOnlySpan<byte> dstPropertyName)
+    {
+        CheckNotImmutable();
+
+        if (!TryGetNamedPropertyValueIndexUnsafe(srcObjectIndex, srcPropertyName, out int srcValueIndex))
+        {
+            return false;
+        }
+
+        // Same object, same property name is a no-op.
+        if (srcObjectIndex == dstObjectIndex && srcPropertyName.SequenceEqual(dstPropertyName))
+        {
+            return true;
+        }
+
+        // Capture source value into CVB before any mutations.
+        var srcElement = new JsonElement(this, srcValueIndex);
+        int srcValueByteLength = GetDbSizeUnsafe(srcValueIndex, true);
+        int srcRemoveStart = srcValueIndex - DbRow.Size; // Include PropertyName row
+        int srcRemoveEnd = srcValueIndex + srcValueByteLength;
+        int removeByteLength = srcRemoveEnd - srcRemoveStart;
+
+        // Check destination before mutating, so we know whether to replace or insert.
+        bool destExists = TryGetNamedPropertyValueIndexUnsafe(dstObjectIndex, dstPropertyName, out _);
+
+        var cvb = ComplexValueBuilder.Create(this, 1);
+        if (destExists)
+        {
+            cvb.AddItem(srcElement);
+        }
+        else
+        {
+            cvb.AddProperty(dstPropertyName, srcElement);
+        }
+
+        _version++;
+
+        // Remove source property.
+        _parsedData.ReplaceRowsInComplexObject(this, srcObjectIndex, srcRemoveStart, srcRemoveEnd, 1, 0, 0);
+
+        // Adjust destination object index for the removal.
+        int adjustedDstObjectIndex = dstObjectIndex;
+        if (srcRemoveStart < dstObjectIndex)
+        {
+            adjustedDstObjectIndex -= removeByteLength;
+        }
+
+        if (destExists)
+        {
+            // Re-resolve existing property at adjusted position.
+            TryGetNamedPropertyValueIndexUnsafe(adjustedDstObjectIndex, dstPropertyName, out int existingValueIndex);
+            int existingByteLength = GetDbSizeUnsafe(existingValueIndex, true);
+            cvb.OverwriteAndDispose(adjustedDstObjectIndex, existingValueIndex, existingValueIndex + existingByteLength, 1, ref _parsedData);
+        }
+        else
+        {
+            int endIndex = adjustedDstObjectIndex + GetDbSizeUnsafe(adjustedDstObjectIndex, false);
+            cvb.InsertAndDispose(adjustedDstObjectIndex, endIndex, ref _parsedData);
+        }
+
+        return true;
+    }
+
+    /// <inheritdoc />
+    bool IMutableJsonDocument.MovePropertyToArray(int srcObjectIndex, ReadOnlySpan<byte> srcPropertyName, int dstArrayIndex, int destIndex)
+    {
+        CheckNotImmutable();
+
+        if (!TryGetNamedPropertyValueIndexUnsafe(srcObjectIndex, srcPropertyName, out int srcValueIndex))
+        {
+            return false;
+        }
+
+        // Capture source value into CVB before any mutations.
+        var srcElement = new JsonElement(this, srcValueIndex);
+        var cvb = ComplexValueBuilder.Create(this, 1);
+        cvb.AddItem(srcElement);
+
+        int srcValueByteLength = GetDbSizeUnsafe(srcValueIndex, true);
+        int srcRemoveStart = srcValueIndex - DbRow.Size;
+        int srcRemoveEnd = srcValueIndex + srcValueByteLength;
+        int removeByteLength = srcRemoveEnd - srcRemoveStart;
+
+        _version++;
+
+        // Remove source property.
+        _parsedData.ReplaceRowsInComplexObject(this, srcObjectIndex, srcRemoveStart, srcRemoveEnd, 1, 0, 0);
+
+        // Adjust destination array index for the removal.
+        int adjustedDstArrayIndex = dstArrayIndex;
+        if (srcRemoveStart < dstArrayIndex)
+        {
+            adjustedDstArrayIndex -= removeByteLength;
+        }
+
+        // Find insertion point in the post-removal array.
+        int insertionIndex;
+        if (destIndex == GetArrayLengthUnsafe(adjustedDstArrayIndex))
+        {
+            insertionIndex = adjustedDstArrayIndex + GetDbSizeUnsafe(adjustedDstArrayIndex, false);
+        }
+        else
+        {
+            insertionIndex = GetArrayIndexElementUnsafe(adjustedDstArrayIndex, destIndex);
+        }
+
+        cvb.InsertAndDispose(adjustedDstArrayIndex, insertionIndex, ref _parsedData);
+        return true;
+    }
+
+    /// <inheritdoc />
+    bool IMutableJsonDocument.MovePropertyToArrayEnd(int srcObjectIndex, ReadOnlySpan<byte> srcPropertyName, int dstArrayIndex)
+    {
+        CheckNotImmutable();
+
+        if (!TryGetNamedPropertyValueIndexUnsafe(srcObjectIndex, srcPropertyName, out int srcValueIndex))
+        {
+            return false;
+        }
+
+        // Capture source value into CVB before any mutations.
+        var srcElement = new JsonElement(this, srcValueIndex);
+        var cvb = ComplexValueBuilder.Create(this, 1);
+        cvb.AddItem(srcElement);
+
+        int srcValueByteLength = GetDbSizeUnsafe(srcValueIndex, true);
+        int srcRemoveStart = srcValueIndex - DbRow.Size;
+        int srcRemoveEnd = srcValueIndex + srcValueByteLength;
+        int removeByteLength = srcRemoveEnd - srcRemoveStart;
+
+        _version++;
+
+        // Remove source property.
+        _parsedData.ReplaceRowsInComplexObject(this, srcObjectIndex, srcRemoveStart, srcRemoveEnd, 1, 0, 0);
+
+        // Adjust destination array index for the removal.
+        int adjustedDstArrayIndex = dstArrayIndex;
+        if (srcRemoveStart < dstArrayIndex)
+        {
+            adjustedDstArrayIndex -= removeByteLength;
+        }
+
+        int endIndex = adjustedDstArrayIndex + GetDbSizeUnsafe(adjustedDstArrayIndex, false);
+        cvb.InsertAndDispose(adjustedDstArrayIndex, endIndex, ref _parsedData);
+        return true;
+    }
+
+    /// <inheritdoc />
+    void IMutableJsonDocument.MoveItemToArray(int srcArrayIndex, int srcIndex, int dstArrayIndex, int destIndex)
+    {
+        CheckNotImmutable();
+
+        // Resolve source item position.
+        int srcValueIndex = GetArrayIndexElementUnsafe(srcArrayIndex, srcIndex);
+
+        // Capture source value into CVB before any mutations.
+        var srcElement = new JsonElement(this, srcValueIndex);
+        var cvb = ComplexValueBuilder.Create(this, 1);
+        cvb.AddItem(srcElement);
+
+        int srcValueByteLength = GetDbSizeUnsafe(srcValueIndex, true);
+
+        _version++;
+
+        // Remove source item (no PropertyName row for array items).
+        _parsedData.ReplaceRowsInComplexObject(this, srcArrayIndex, srcValueIndex, srcValueIndex + srcValueByteLength, 1, 0, 0);
+
+        // Adjust destination array index for the removal.
+        int adjustedDstArrayIndex = dstArrayIndex;
+        if (srcValueIndex < dstArrayIndex)
+        {
+            adjustedDstArrayIndex -= srcValueByteLength;
+        }
+
+        // destIndex uses post-removal semantics, which is naturally correct
+        // since we already removed the source.
+        int insertionIndex;
+        if (destIndex == GetArrayLengthUnsafe(adjustedDstArrayIndex))
+        {
+            insertionIndex = adjustedDstArrayIndex + GetDbSizeUnsafe(adjustedDstArrayIndex, false);
+        }
+        else
+        {
+            insertionIndex = GetArrayIndexElementUnsafe(adjustedDstArrayIndex, destIndex);
+        }
+
+        cvb.InsertAndDispose(adjustedDstArrayIndex, insertionIndex, ref _parsedData);
+    }
+
+    /// <inheritdoc />
+    void IMutableJsonDocument.MoveItemToArrayEnd(int srcArrayIndex, int srcIndex, int dstArrayIndex)
+    {
+        CheckNotImmutable();
+
+        // Resolve source item position.
+        int srcValueIndex = GetArrayIndexElementUnsafe(srcArrayIndex, srcIndex);
+
+        // Capture source value into CVB before any mutations.
+        var srcElement = new JsonElement(this, srcValueIndex);
+        var cvb = ComplexValueBuilder.Create(this, 1);
+        cvb.AddItem(srcElement);
+
+        int srcValueByteLength = GetDbSizeUnsafe(srcValueIndex, true);
+
+        _version++;
+
+        // Remove source item.
+        _parsedData.ReplaceRowsInComplexObject(this, srcArrayIndex, srcValueIndex, srcValueIndex + srcValueByteLength, 1, 0, 0);
+
+        // Adjust destination array index for the removal.
+        int adjustedDstArrayIndex = dstArrayIndex;
+        if (srcValueIndex < dstArrayIndex)
+        {
+            adjustedDstArrayIndex -= srcValueByteLength;
+        }
+
+        int endIndex = adjustedDstArrayIndex + GetDbSizeUnsafe(adjustedDstArrayIndex, false);
+        cvb.InsertAndDispose(adjustedDstArrayIndex, endIndex, ref _parsedData);
+    }
+
+    /// <inheritdoc />
+    void IMutableJsonDocument.MoveItemToProperty(int srcArrayIndex, int srcIndex, int dstObjectIndex, ReadOnlySpan<byte> destPropertyName)
+    {
+        CheckNotImmutable();
+
+        // Resolve source item position.
+        int srcValueIndex = GetArrayIndexElementUnsafe(srcArrayIndex, srcIndex);
+
+        // Capture source value into CVB before any mutations.
+        var srcElement = new JsonElement(this, srcValueIndex);
+        int srcValueByteLength = GetDbSizeUnsafe(srcValueIndex, true);
+
+        // Check destination before mutating.
+        bool destExists = TryGetNamedPropertyValueIndexUnsafe(dstObjectIndex, destPropertyName, out _);
+
+        var cvb = ComplexValueBuilder.Create(this, 1);
+        if (destExists)
+        {
+            cvb.AddItem(srcElement);
+        }
+        else
+        {
+            cvb.AddProperty(destPropertyName, srcElement);
+        }
+
+        _version++;
+
+        // Remove source item.
+        _parsedData.ReplaceRowsInComplexObject(this, srcArrayIndex, srcValueIndex, srcValueIndex + srcValueByteLength, 1, 0, 0);
+
+        // Adjust destination object index for the removal.
+        int adjustedDstObjectIndex = dstObjectIndex;
+        if (srcValueIndex < dstObjectIndex)
+        {
+            adjustedDstObjectIndex -= srcValueByteLength;
+        }
+
+        if (destExists)
+        {
+            // Re-resolve existing property at adjusted position.
+            TryGetNamedPropertyValueIndexUnsafe(adjustedDstObjectIndex, destPropertyName, out int existingValueIndex);
+            int existingByteLength = GetDbSizeUnsafe(existingValueIndex, true);
+            cvb.OverwriteAndDispose(adjustedDstObjectIndex, existingValueIndex, existingValueIndex + existingByteLength, 1, ref _parsedData);
+        }
+        else
+        {
+            int endIndex = adjustedDstObjectIndex + GetDbSizeUnsafe(adjustedDstObjectIndex, false);
+            cvb.InsertAndDispose(adjustedDstObjectIndex, endIndex, ref _parsedData);
+        }
+    }
+
     private RawUtf8JsonString GetRawValueUnsafe(int index, bool includeQuotes)
     {
         DbRow row = _parsedData.Get(index);
@@ -354,7 +981,13 @@ public sealed partial class JsonDocumentBuilder<T> : JsonDocument, IMutableJsonD
         // a local dynamic value.
         if (row.IsSimpleValue)
         {
-            return new(ReadRawSimpleDynamicValue(row.LocationOrIndex, includeQuotes));
+            int offset = row.LocationOrIndex;
+            if (offset < _rawJsonLength)
+            {
+                return new(ReadRawJsonBackingValue(offset, row.SizeOrLengthOrPropertyMapIndex, row.TokenType, includeQuotes));
+            }
+
+            return new(ReadRawSimpleDynamicValue(offset, includeQuotes));
         }
 
         // We have a complex value and it is not a simple slice of a parent
@@ -440,7 +1073,13 @@ public sealed partial class JsonDocumentBuilder<T> : JsonDocument, IMutableJsonD
             return document.GetRawSimpleValue(row.LocationOrIndex, includeQuotes);
         }
 
-        return ReadRawSimpleDynamicValue(row.LocationOrIndex, includeQuotes);
+        int offset = row.LocationOrIndex;
+        if (offset < _rawJsonLength)
+        {
+            return ReadRawJsonBackingValue(offset, row.SizeOrLengthOrPropertyMapIndex, row.TokenType, includeQuotes);
+        }
+
+        return ReadRawSimpleDynamicValue(offset, includeQuotes);
     }
 
     /// <summary>
@@ -461,7 +1100,38 @@ public sealed partial class JsonDocumentBuilder<T> : JsonDocument, IMutableJsonD
             return document.GetRawSimpleValue(row.LocationOrIndex);
         }
 
-        return ReadRawSimpleDynamicValue(row.LocationOrIndex);
+        int offset = row.LocationOrIndex;
+        if (offset < _rawJsonLength)
+        {
+            // No-includeQuotes overload: return content without quotes (same as ParsedJsonDocument convention).
+            return _valueBacking.AsMemory(offset, row.SizeOrLengthOrPropertyMapIndex);
+        }
+
+        return ReadRawSimpleDynamicValue(offset);
+    }
+
+    /// <summary>
+    /// Reads a simple value directly from the raw JSON backing region of <c>_valueBacking</c>.
+    /// </summary>
+    /// <remarks>
+    /// When a builder is created via <see cref="Parse(JsonWorkspace, ReadOnlyMemory{byte}, JsonDocumentOptions)"/>,
+    /// the raw UTF-8 JSON bytes occupy <c>_valueBacking[0.._rawJsonLength)</c> and MetadataDb rows store
+    /// offsets into that region (ParsedJsonDocument-style). This method reads values directly from those
+    /// raw bytes, avoiding the DynamicValue header overhead.
+    /// </remarks>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private ReadOnlyMemory<byte> ReadRawJsonBackingValue(int offset, int length, JsonTokenType tokenType, bool includeQuotes)
+    {
+        // length must have the HasComplexChildren sign bit masked off.
+        Debug.Assert(length >= 0);
+
+        if (includeQuotes && (tokenType == JsonTokenType.String || tokenType == JsonTokenType.PropertyName))
+        {
+            // offset points past the opening quote; step back 1 byte to include both quotes.
+            return _valueBacking.AsMemory(offset - 1, length + 2);
+        }
+
+        return _valueBacking.AsMemory(offset, length);
     }
 
     /// <inheritdoc />
@@ -1371,6 +2041,58 @@ public sealed partial class JsonDocumentBuilder<T> : JsonDocument, IMutableJsonD
         return CloneElement<TElement>(index);
     }
 
+    /// <inheritdoc />
+    TElement IMutableJsonDocument.FreezeElement<TElement>(int index)
+    {
+        CheckNotDisposed();
+
+        DbRow row = _parsedData.Get(index);
+
+        // If the row is from an external mutable document, we must recursively
+        // freeze to preserve immutability. External references to immutable
+        // documents are safe to copy as-is — they will continue to defer to
+        // the immutable document via the workspace.
+        if (row.FromExternalDocument)
+        {
+            IJsonDocument document = _workspace.GetDocument(row.WorkspaceDocumentId);
+
+            if (document is IMutableJsonDocument mutableDocument)
+            {
+                return mutableDocument.FreezeElement<TElement>(row.LocationOrIndex);
+            }
+        }
+
+        int byteSize = GetDbSizeUnsafe(index, true);
+
+        // Create a frozen builder in the same workspace, using the same
+        // mutable type parameter T to satisfy the builder's constraint.
+        JsonDocumentBuilder<T> frozen = new(_workspace);
+        int parentWorkspaceIndex = _workspace.GetDocumentIndex(frozen);
+        frozen.InitializeFrozen(this, index, byteSize, parentWorkspaceIndex);
+
+        // Construct an immutable TElement pointing to the frozen builder.
+#if NET
+        return TElement.CreateInstance(frozen, 0);
+#else
+        return JsonElementHelpers.CreateInstance<TElement>(frozen, 0);
+#endif
+    }
+
+    /// <summary>
+    /// Initializes this builder as a frozen (immutable) copy of a segment of the
+    /// source builder's metadb and value backing.
+    /// </summary>
+    /// <param name="source">The source document to freeze from.</param>
+    /// <param name="index">The starting metadb byte index in the source.</param>
+    /// <param name="byteSize">The byte size of the metadb segment to copy.</param>
+    /// <param name="parentWorkspaceIndex">The workspace index for this builder.</param>
+    internal void InitializeFrozen(JsonDocument source, int index, int byteSize, int parentWorkspaceIndex)
+    {
+        _parentWorkspaceIndex = parentWorkspaceIndex;
+        source.CopyFreezeState(this, index, byteSize);
+        _isImmutable = true;
+    }
+
     private TElement CloneElement<TElement>(int index)
         where TElement : struct, IJsonElement<TElement>
     {
@@ -1511,6 +2233,23 @@ public sealed partial class JsonDocumentBuilder<T> : JsonDocument, IMutableJsonD
                     {
                         using UnescapedUtf8JsonString unescaped = GetUtf8JsonStringUnsafe(i, JsonTokenType.PropertyName);
                         writer.WritePropertyName(unescaped.Span);
+                    }
+                    else if (!row.FromExternalDocument && row.LocationOrIndex >= _rawJsonLength)
+                    {
+                        // DynamicValue — read header once to check type and extract value.
+                        int offset = row.LocationOrIndex;
+                        uint header = BitConverter.ToUInt32(_valueBacking!, offset);
+                        int length = (int)(header >> 4) - 2; // exclude quotes
+                        ReadOnlySpan<byte> name = _valueBacking.AsSpan(offset + 5, length);
+
+                        if ((DynamicValueType)(header & 0xF) == DynamicValueType.NormalizedQuotedUtf8String)
+                        {
+                            writer.WriteRawPropertyName(name);
+                        }
+                        else
+                        {
+                            writer.WritePropertyName(name);
+                        }
                     }
                     else
                     {
@@ -1785,6 +2524,16 @@ public sealed partial class JsonDocumentBuilder<T> : JsonDocument, IMutableJsonD
         AppendElement(index, workspace, ref db, workspaceDocumentIndex);
     }
 
+    /// <inheritdoc />
+    int IJsonDocument.WriteElementToMetadataDb(int index, JsonWorkspace workspace, ref MetadataDb db, int writePosition)
+    {
+        CheckNotDisposed();
+        CheckNotImmutable();
+
+        int workspaceDocumentIndex = workspace.GetDocumentIndex(this);
+        return WriteElementAt(index, workspace, ref db, workspaceDocumentIndex, writePosition);
+    }
+
     private void AppendElement(int index, JsonWorkspace workspace, ref MetadataDb db, int workspaceDocumentIndex)
     {
         DbRow row = _parsedData.Get(index);
@@ -1819,6 +2568,7 @@ public sealed partial class JsonDocumentBuilder<T> : JsonDocument, IMutableJsonD
     private void ProcessComplexObject(int index, JsonWorkspace workspace, ref MetadataDb db, int workspaceDocumentIndex)
     {
         DbRow complexObjectRow = _parsedData.Get(index);
+        int startLength = db.Length;
         db.AppendExternal(complexObjectRow.TokenType, index, complexObjectRow.RawSizeOrLength, workspaceDocumentIndex);
 
         int endIndex = index + GetDbSizeUnsafe(index, false);
@@ -1833,7 +2583,68 @@ public sealed partial class JsonDocumentBuilder<T> : JsonDocument, IMutableJsonD
 
         complexObjectRow = _parsedData.Get(endIndex);
         int entityLength = complexObjectRow.HasPropertyMap ? GetLengthOfEndToken(complexObjectRow.SizeOrLengthOrPropertyMapIndex) : complexObjectRow.RawSizeOrLength;
-        db.AppendExternal(complexObjectRow.TokenType, index, entityLength, workspaceDocumentIndex);
+
+        // The End row must store the actual NumberOfRows (not workspaceDocumentIndex).
+        // The backward property search and GetStartIndex rely on NumberOfRows being correct
+        // on End rows. Only Start rows need the WorkspaceDocumentId for external lookups.
+        int numberOfRows = (db.Length - startLength) / DbRow.Size;
+        db.AppendExternal(complexObjectRow.TokenType, index, entityLength, numberOfRows);
+    }
+
+    private int WriteElementAt(int index, JsonWorkspace workspace, ref MetadataDb db, int workspaceDocumentIndex, int writePosition)
+    {
+        DbRow row = _parsedData.Get(index);
+
+        if (row.FromExternalDocument)
+        {
+            IJsonDocument document = _workspace.GetDocument(row.WorkspaceDocumentId);
+            return document.WriteElementToMetadataDb(row.LocationOrIndex, workspace, ref db, writePosition);
+        }
+
+        switch (row.TokenType)
+        {
+            case JsonTokenType.True:
+            case JsonTokenType.False:
+            case JsonTokenType.Null:
+            case JsonTokenType.Number:
+            case JsonTokenType.String:
+            case JsonTokenType.PropertyName:
+                db.WriteRowAt(writePosition, new DbRow(row.TokenType, index, row.RawSizeOrLength, workspaceDocumentIndex));
+                return 1;
+
+            case JsonTokenType.StartObject:
+            case JsonTokenType.StartArray:
+                return WriteComplexObjectAt(index, workspace, ref db, workspaceDocumentIndex, writePosition);
+        }
+
+        Debug.Fail($"Unexpected encounter with JsonTokenType {_parsedData.GetJsonTokenType(index)}");
+        return -1;
+    }
+
+    private int WriteComplexObjectAt(int index, JsonWorkspace workspace, ref MetadataDb db, int workspaceDocumentIndex, int writePosition)
+    {
+        int count = 2;
+        DbRow complexObjectRow = _parsedData.Get(index);
+        db.WriteRowAt(writePosition, new DbRow(complexObjectRow.TokenType, index, complexObjectRow.RawSizeOrLength, workspaceDocumentIndex));
+
+        int endIndex = index + GetDbSizeUnsafe(index, false);
+        int currentWritePos = writePosition + DbRow.Size;
+
+        for (int i = index + DbRow.Size; (uint)i < (uint)endIndex; i += DbRow.Size)
+        {
+            int rowsWritten = WriteElementAt(i, workspace, ref db, workspaceDocumentIndex, currentWritePos);
+            count += rowsWritten;
+            currentWritePos += rowsWritten * DbRow.Size;
+            i += (rowsWritten - 1) * DbRow.Size;
+        }
+
+        complexObjectRow = _parsedData.Get(endIndex);
+        int entityLength = complexObjectRow.HasPropertyMap ? GetLengthOfEndToken(complexObjectRow.SizeOrLengthOrPropertyMapIndex) : complexObjectRow.RawSizeOrLength;
+
+        // The End row must store the actual NumberOfRows (count - 1 = children + End,
+        // excluding Start), not workspaceDocumentIndex.
+        db.WriteRowAt(currentWritePos, new DbRow(complexObjectRow.TokenType, index, entityLength, count - 1));
+        return count;
     }
 
     private void AppendLocalElement(int index, JsonWorkspace workspace, ref MetadataDb db, int workspaceDocumentIndex)

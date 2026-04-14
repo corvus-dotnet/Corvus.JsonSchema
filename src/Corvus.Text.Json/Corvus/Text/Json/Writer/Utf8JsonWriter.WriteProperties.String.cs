@@ -118,6 +118,32 @@ public sealed partial class Utf8JsonWriter
     }
 
     /// <summary>
+    /// Writes the property name (as a JSON string) as the first part of a name/value pair of a JSON object.
+    /// The caller guarantees the property name is already properly escaped for the default encoder.
+    /// </summary>
+    /// <param name="utf8PropertyName">The pre-escaped UTF-8 encoded property name to write.</param>
+    /// <exception cref="ArgumentException">
+    /// Thrown when the specified property name is too large.
+    /// </exception>
+    /// <exception cref="InvalidOperationException">
+    /// Thrown if this would result in invalid JSON being written (while validation is enabled).
+    /// </exception>
+    /// <remarks>
+    /// The property name is NOT escaped before writing. The caller must ensure the value
+    /// has been properly escaped using <see cref="System.Text.Encodings.Web.JavaScriptEncoder.Default"/>.
+    /// </remarks>
+    public void WriteRawPropertyName(ReadOnlySpan<byte> utf8PropertyName)
+    {
+        JsonWriterHelper.ValidateProperty(utf8PropertyName);
+
+        WriteStringByOptionsPropertyName(utf8PropertyName);
+
+        _currentDepth &= JsonConstants.RemoveFlagsBitMask;
+        _tokenType = JsonTokenType.PropertyName;
+        _commentAfterNoneOrPropertyName = false;
+    }
+
+    /// <summary>
     /// Writes the pre-encoded property name and pre-encoded value (as a JSON string) as part of a name/value pair of a JSON object.
     /// </summary>
     /// <param name="propertyName">The JSON-encoded name of the property to write.</param>

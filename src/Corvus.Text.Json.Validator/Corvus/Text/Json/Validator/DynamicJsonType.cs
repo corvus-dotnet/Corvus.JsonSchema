@@ -124,7 +124,7 @@ public readonly struct DynamicJsonType
     public DynamicJsonElement FromElement(in JsonElement element)
     {
         object result = this.fromJsonElement.Invoke(null, [element])
-            ?? throw new InvalidOperationException("From<JsonElement> returned null.");
+            ?? throw new InvalidOperationException(SR.FromJsonElementReturnedNull);
         return new DynamicJsonElement(this.Type, (IJsonElement)result);
     }
 
@@ -137,16 +137,16 @@ public readonly struct DynamicJsonType
             [inputType, typeof(JsonDocumentOptions)],
             null)
             ?? throw new InvalidOperationException(
-                $"Cannot find Parse({inputType.Name}, JsonDocumentOptions) on {documentType.FullName}");
+                SR.Format(SR.CannotFindParseMethod, inputType.Name, documentType.FullName));
     }
 
     private DynamicJsonElement ParseCore(MethodInfo parseMethod, object data, JsonDocumentOptions options)
     {
         object document = parseMethod.Invoke(null, [data, options])
-            ?? throw new InvalidOperationException("Parse returned null.");
+            ?? throw new InvalidOperationException(SR.ParseReturnedNull);
 
         object rootElement = this.rootElementProperty.GetValue(document)
-            ?? throw new InvalidOperationException("RootElement returned null.");
+            ?? throw new InvalidOperationException(SR.RootElementReturnedNull);
 
         return new DynamicJsonElement(this.Type, (IJsonElement)rootElement);
     }

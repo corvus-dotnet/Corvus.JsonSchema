@@ -37,3 +37,11 @@ Roslyn analyzers that detect V4 `Corvus.Json` API patterns in your code and guid
 ## [Using Copilot for Migration](/docs/using-copilot-for-migration.html)
 
 Step-by-step workflow for using GitHub Copilot to assist with V4 → V5 migration. Covers attaching context documents, writing effective prompts, and a reliability matrix showing which transformations Copilot handles well and which need human review.
+
+## [JsonLogic Rule Engine](/docs/json-logic.html)
+
+Evaluate JSON-encoded logic rules against JSON data using the interpreted evaluator, Roslyn source generator, or CLI code generator. `Corvus.Text.Json.JsonLogic` implements the full [JsonLogic](https://jsonlogic.com/) specification with support for extended numeric types (`BigNumber`), zero-allocation evaluation via pooled `JsonWorkspace`, custom operators (`IOperatorCompiler`), and file-based operator templates (`.jlops`). Benchmarks show code-generated evaluators are **60–95% faster** than JsonEverything across all scenarios.
+
+## [JSONata Query Language](/docs/jsonata.html)
+
+Query and transform JSON data using the [JSONata](https://jsonata.org/) functional language. `Corvus.Text.Json.Jsonata` provides interpreted evaluation, a Roslyn source generator, and a CLI code generator — all with zero-allocation pooled-memory evaluation. Passes 1,845 of 1,847 official test suite cases (99.89% conformance). Benchmarks show the interpreted evaluator is **up to 3.5× faster** than [Jsonata.Net.Native](https://github.com/mikhail-barg/jsonata.net.native) with 90–100% less memory allocation.

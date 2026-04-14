@@ -62,6 +62,18 @@ public readonly ref struct Utf8JsonPointer
     }
 
     /// <summary>
+    /// Decodes a single JSON Pointer segment, unescaping <c>~1</c> to <c>/</c> and <c>~0</c> to <c>~</c>
+    /// as specified by RFC 6901.
+    /// </summary>
+    /// <param name="encodedSegment">The encoded pointer segment (without the leading <c>/</c>).</param>
+    /// <param name="decodedSegment">The destination span to receive the decoded segment. Must be at least as long as <paramref name="encodedSegment"/>.</param>
+    /// <returns>The number of bytes written to <paramref name="decodedSegment"/>.</returns>
+    public static int DecodeSegment(ReadOnlySpan<byte> encodedSegment, Span<byte> decodedSegment)
+    {
+        return Utf8JsonPointerTools.DecodePointer(encodedSegment, decodedSegment);
+    }
+
+    /// <summary>
     /// Try to resolve the path specified by this JSON Pointer against the provided JSON element,
     /// returning the 1-based line number and character offset of the target element in the original source document.
     /// </summary>

@@ -32,7 +32,7 @@ public static class PropertyDeclarationExtensions
             name = BuildDotnetPropertyName(that);
         }
 
-        return name ?? throw new InvalidOperationException("Null names are not permitted.");
+        return name ?? throw new InvalidOperationException(SR.NullNamesNotPermitted);
     }
 
     private static string BuildDotnetPropertyName(PropertyDeclaration that)

@@ -1,3 +1,9 @@
 [submodule "JSON-Schema-Test-Suite"]
 	path = JSON-Schema-Test-Suite
 	url = https://github.com/json-schema-org/JSON-Schema-Test-Suite
+[submodule "tests/json-patch-tests"]
+	path = tests/json-patch-tests
+	url = https://github.com/json-patch/json-patch-tests.git
+[submodule "Jsonata-Test-Suite"]
+	path = Jsonata-Test-Suite
+	url = https://github.com/jsonata-js/jsonata.git
