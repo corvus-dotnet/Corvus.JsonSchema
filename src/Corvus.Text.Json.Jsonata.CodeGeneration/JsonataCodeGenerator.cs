@@ -5238,26 +5238,45 @@ public static class JsonataCodeGenerator
                 return v;
             }
 
-            // String separator: emit H.Split(...)
+            // String separator: emit H.Split(...) or H.SplitByConstantString(...)
             string strVar = strArgIdx >= 0
                 ? EmitExpression(sb, func.Arguments[strArgIdx], indent, dataVar, wsVar)
                 : dataVar;
+
+            // When separator is a constant string and there's no limit,
+            // use the optimized path with pre-computed UTF-8 separator bytes.
+            if (limitArgIdx < 0 && func.Arguments[sepArgIdx] is StringNode sepStr)
+            {
+                string sepField = GetOrCreateNameField(sepStr.Value);
+                string result = NextVar();
+                if (contextImplied)
+                {
+                    L(sb, indent, $"var {result} = {H}.SplitByConstantString({strVar}, {sepField}, {wsVar});");
+                }
+                else
+                {
+                    L(sb, indent, $"var {result} = {strVar}.ValueKind == JsonValueKind.Undefined ? default : {H}.SplitByConstantString({strVar}, {sepField}, {wsVar});");
+                }
+
+                return result;
+            }
+
             string sepVar = EmitExpression(sb, func.Arguments[sepArgIdx], indent, dataVar, wsVar);
             string limitVar = limitArgIdx >= 0
                 ? EmitExpression(sb, func.Arguments[limitArgIdx], indent, dataVar, wsVar)
                 : "default";
 
-            string result = NextVar();
+            string result2 = NextVar();
             if (contextImplied)
             {
-                L(sb, indent, $"var {result} = {H}.Split({strVar}, {sepVar}, {limitVar}, {wsVar});");
+                L(sb, indent, $"var {result2} = {H}.Split({strVar}, {sepVar}, {limitVar}, {wsVar});");
             }
             else
             {
-                L(sb, indent, $"var {result} = {strVar}.ValueKind == JsonValueKind.Undefined ? default : {H}.Split({strVar}, {sepVar}, {limitVar}, {wsVar});");
+                L(sb, indent, $"var {result2} = {strVar}.ValueKind == JsonValueKind.Undefined ? default : {H}.Split({strVar}, {sepVar}, {limitVar}, {wsVar});");
             }
 
-            return result;
+            return result2;
         }
 
         // ── HOF: $map / $filter ──────────────────────────────
