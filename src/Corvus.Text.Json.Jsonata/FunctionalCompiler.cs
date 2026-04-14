@@ -5513,7 +5513,7 @@ internal static class FunctionalCompiler
                 {
                     // Raw double — already a number, fast path
                 }
-                else if (left.FirstOrDefault.ValueKind != JsonValueKind.Number)
+                else if (left.Count > 1 || left.FirstOrDefault.ValueKind != JsonValueKind.Number)
                 {
                     throw new JsonataException("T2001", SR.T2001_TheLeftSideOfTheArithmeticExpressionIsNotANumber, 0);
                 }
@@ -5530,7 +5530,7 @@ internal static class FunctionalCompiler
                 {
                     // Raw double — already a number, fast path
                 }
-                else if (right.FirstOrDefault.ValueKind != JsonValueKind.Number)
+                else if (right.Count > 1 || right.FirstOrDefault.ValueKind != JsonValueKind.Number)
                 {
                     throw new JsonataException("T2002", SR.T2002_TheRightSideOfTheArithmeticExpressionIsNotANumber, 0);
                 }

@@ -276,6 +276,49 @@ public class EvaluatorTests
     }
 
     [Fact]
+    public void ArithmeticWithArrayLeftOperandThrowsT2001()
+    {
+        // Account.Order.Product.Price collects [34.45, 21.67] — an array, not a number.
+        // Arithmetic on an array operand must throw T2001.
+        var ex = Assert.Throws<JsonataException>(() =>
+            Evaluator.EvaluateToString(
+                "Account.Order.Product.Price + 1",
+                """{"Account": {"Order": [{"Product": {"Price": 34.45}}, {"Product": {"Price": 21.67}}]}}"""));
+        Assert.Equal("T2001", ex.Code);
+    }
+
+    [Fact]
+    public void ArithmeticWithArrayRightOperandThrowsT2002()
+    {
+        // Same pattern but array on the right side — must throw T2002.
+        var ex = Assert.Throws<JsonataException>(() =>
+            Evaluator.EvaluateToString(
+                "1 + Account.Order.Product.Price",
+                """{"Account": {"Order": [{"Product": {"Price": 34.45}}, {"Product": {"Price": 21.67}}]}}"""));
+        Assert.Equal("T2002", ex.Code);
+    }
+
+    [Fact]
+    public void ArithmeticWithObjectLeftOperandThrowsT2001()
+    {
+        var ex = Assert.Throws<JsonataException>(() =>
+            Evaluator.EvaluateToString(
+                "item + 1",
+                """{"item": {"price": 34.45}}"""));
+        Assert.Equal("T2001", ex.Code);
+    }
+
+    [Fact]
+    public void ArithmeticWithObjectRightOperandThrowsT2002()
+    {
+        var ex = Assert.Throws<JsonataException>(() =>
+            Evaluator.EvaluateToString(
+                "1 + item",
+                """{"item": {"price": 34.45}}"""));
+        Assert.Equal("T2002", ex.Code);
+    }
+
+    [Fact]
     public void EvaluateReturnsUndefinedForMissingField()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("""{"x": 1}"""u8.ToArray());
