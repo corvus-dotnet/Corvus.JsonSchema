@@ -63,7 +63,7 @@ $CreateGitHubRelease = $env:GITHUB_ACTIONS ? $true : $false
 $PublishNuGetPackagesAsGitHubReleaseArtefacts = $true
 
 # Allow build script parameters to be overridden via environment variables
-$BuildWebsite = [Convert]::ToBoolean((property BUILDVAR_BuildWebsite $Website))
+$BuildWebsite = [Convert]::ToBoolean((property BUILDVAR_BuildWebsite $Website.ToBool()))
 $IsPreviewDeployment = [Convert]::ToBoolean((property BUILDVAR_IsPreviewDeployment $false))
 $BasePathPrefix = property BUILDVAR_BasePathPrefix $BasePathPrefix
 
@@ -141,28 +141,37 @@ task BuildWebsite -If { $BuildWebsite } {
     exec { & pwsh -File (Join-Path $websiteDir "build.ps1") @websiteBuildArgs }
 }
 task ShrinkV4SpecsTrxFile {
-    # The V4 Specs TRX file (~105 MB, 19K tests) exceeds lxml's text-node size limit
-    # in the publish-unit-test-result-action (xmlSAX2Characters error).
-    # Strip per-test <Output> elements (captured Reqnroll step text) to shrink the
-    # file while keeping pass/fail results visible in the CI test report.
-    $v4Path = Join-Path $SourcesDir "src-v4"
-    Get-ChildItem -Path $v4Path -Filter "test-results_*.trx" -Recurse -ErrorAction SilentlyContinue |
+    # TRX files from large test suites (V4 Specs ~105 MB, V5 ~40K+ tests) can
+    # exceed lxml limits or become corrupted when the test host is killed mid-write.
+    # The publish-unit-test-result-action uses lxml which has a default text-node
+    # size limit; individual <Output> blocks with large StdOut, ErrorInfo, or
+    # StackTrace content trigger "huge text node" errors.
+    # Strip ALL <Output>...</Output> blocks (not just StdOut), then validate XML.
+    # Corrupted files are removed so publish-unit-test-result-action doesn't fail.
+    Get-ChildItem -Path $SourcesDir -Filter "test-results_*.trx" -Recurse -ErrorAction SilentlyContinue |
         ForEach-Object {
             $sizeMB = [math]::Round($_.Length / 1MB, 1)
-            Write-Build Yellow "PostTest: stripping test output from $($_.FullName) ($sizeMB MB)"
+            Write-Build Yellow "PostTest: processing $($_.FullName) ($sizeMB MB)"
             try {
                 $content = [System.IO.File]::ReadAllText($_.FullName)
-                $content = [regex]::Replace(
+                # Strip all <Output> blocks — covers StdOut, ErrorInfo, StackTrace.
+                # The publish action only needs pass/fail/skip status, not output text.
+                $stripped = [regex]::Replace(
                     $content,
-                    '<Output>\s*<StdOut>.*?</StdOut>\s*</Output>',
+                    '<Output>.*?</Output>',
                     '',
                     [System.Text.RegularExpressions.RegexOptions]::Singleline)
-                [System.IO.File]::WriteAllText($_.FullName, $content)
-                $newSizeMB = [math]::Round((Get-Item $_.FullName).Length / 1MB, 1)
-                Write-Build Yellow "  Reduced to $newSizeMB MB"
+                if ($stripped.Length -ne $content.Length) {
+                    [System.IO.File]::WriteAllText($_.FullName, $stripped)
+                    $newSizeMB = [math]::Round((Get-Item $_.FullName).Length / 1MB, 1)
+                    Write-Build Yellow "  Stripped output: $sizeMB MB -> $newSizeMB MB"
+                }
+                # Validate the TRX file is well-formed XML
+                $null = [xml]([System.IO.File]::ReadAllText($_.FullName))
+                Write-Build Yellow "  XML valid"
             }
             catch {
-                Write-Build Yellow "  Strip failed, removing file: $_"
+                Write-Build Yellow "  TRX file is invalid or unprocessable, removing: $_"
                 Remove-Item $_.FullName -Force -ErrorAction SilentlyContinue
             }
         }
