@@ -3283,7 +3283,10 @@ internal static class BuiltInFunctions
                     return new Sequence(customResult[0]);
                 }
 
-                return customResult;
+                // Wrap multi-element result in an array — consistent with all other array-returning functions
+                JsonElement array = JsonataHelpers.ArrayFromSequence(customResult, env.Workspace);
+                matcherResults.ReturnArray();
+                return new Sequence(array);
             }
 
             if (!patSeq.IsRegex)
@@ -3302,8 +3305,6 @@ internal static class BuiltInFunctions
             }
 
             Regex regex = patSeq.Regex!;
-            var results = default(SequenceBuilder);
-            int count = 0;
 
 #if NET
             if (strSeq.FirstOrDefault.ValueKind != JsonValueKind.String)
@@ -3315,36 +3316,76 @@ internal static class BuiltInFunctions
 
             if (!hasGroups)
             {
-                // Zero-alloc fast path: EnumerateMatches yields ValueMatch structs —
-                // no Match/Group objects. GetUtf16String avoids managed string allocation.
+                // Fused single-document: outer array with nested object builders per match
                 using UnescapedUtf16JsonString utf16Str = strSeq.FirstOrDefault.GetUtf16String();
                 ReadOnlyMemory<char> charMemory = utf16Str.Memory;
 
-                foreach (ValueMatch vm in regex.EnumerateMatches(charMemory.Span))
-                {
-                    if (count >= limit)
+                var doc = JsonElement.CreateBuilder(
+                    env.Workspace,
+                    (charMemory, regex, limit),
+                    static (in (ReadOnlyMemory<char> Chars, Regex Regex, int Limit) ctx, ref JsonElement.ArrayBuilder ab) =>
                     {
-                        break;
-                    }
+                        int count = 0;
+                        foreach (ValueMatch vm in ctx.Regex.EnumerateMatches(ctx.Chars.Span))
+                        {
+                            if (count >= ctx.Limit)
+                            {
+                                break;
+                            }
 
-                    results.Add(JsonataHelpers.CreateMatchObjectNoGroups(charMemory, vm.Index, vm.Length, env.Workspace));
-                    count++;
-                }
+                            ab.AddItem(
+                                (ctx.Chars, vm.Index, vm.Length),
+                                static (in (ReadOnlyMemory<char> C, int Index, int Length) mctx, ref JsonElement.ObjectBuilder ob) =>
+                                {
+                                    ob.AddProperty("match"u8, mctx.C.Span.Slice(mctx.Index, mctx.Length));
+                                    ob.AddProperty("index"u8, mctx.Index);
+                                    ob.AddProperty("groups"u8, static (ref JsonElement.ArrayBuilder _) => { });
+                                });
+                            count++;
+                        }
+                    },
+                    estimatedMemberCount: 30);
+
+                return UnwrapMatchArray((JsonElement)doc.RootElement);
             }
             else
             {
-                // Groups path: Regex.Match requires a string (unavoidable).
-                // Use Group.Index/Length to slice the original char memory — no Group.Value strings.
+                // Fused single-document: outer array with nested object+groups builders per match
                 string regexStr = strSeq.FirstOrDefault.GetString()!;
                 ReadOnlyMemory<char> charMemory = regexStr.AsMemory();
 
-                Match m = regex.Match(regexStr);
-                while (m.Success && count < limit)
-                {
-                    results.Add(JsonataHelpers.CreateMatchObjectFromMatch(charMemory, m, env.Workspace));
-                    count++;
-                    m = m.NextMatch();
-                }
+                var doc = JsonElement.CreateBuilder(
+                    env.Workspace,
+                    (charMemory, regex, regexStr, limit),
+                    static (in (ReadOnlyMemory<char> Chars, Regex Regex, string RegexStr, int Limit) ctx, ref JsonElement.ArrayBuilder ab) =>
+                    {
+                        int count = 0;
+                        Match m = ctx.Regex.Match(ctx.RegexStr);
+                        while (m.Success && count < ctx.Limit)
+                        {
+                            ab.AddItem(
+                                (ctx.Chars, m),
+                                static (in (ReadOnlyMemory<char> C, Match M) mctx, ref JsonElement.ObjectBuilder ob) =>
+                                {
+                                    ob.AddProperty("match"u8, mctx.C.Span.Slice(mctx.M.Index, mctx.M.Length));
+                                    ob.AddProperty("index"u8, mctx.M.Index);
+                                    ob.AddProperty("groups"u8, (mctx.C, mctx.M),
+                                        static (in (ReadOnlyMemory<char> C, Match M) gctx, ref JsonElement.ArrayBuilder gab) =>
+                                        {
+                                            for (int g = 1; g < gctx.M.Groups.Count; g++)
+                                            {
+                                                Group grp = gctx.M.Groups[g];
+                                                gab.AddItem(gctx.C.Span.Slice(grp.Index, grp.Length));
+                                            }
+                                        });
+                                });
+                            count++;
+                            m = m.NextMatch();
+                        }
+                    },
+                    estimatedMemberCount: 30);
+
+                return UnwrapMatchArray((JsonElement)doc.RootElement);
             }
 #else
             string? regexStr = strSeq.FirstOrDefault.GetString();
@@ -3356,33 +3397,43 @@ internal static class BuiltInFunctions
             ReadOnlyMemory<char> charMemory = regexStr.AsMemory();
             MatchCollection matches = regex.Matches(regexStr);
 
-            foreach (Match m in matches)
-            {
-                if (count >= limit)
+            // Fused single-document: outer array with nested object+groups builders per match
+            var doc = JsonElement.CreateBuilder(
+                env.Workspace,
+                (charMemory, matches, limit),
+                static (in (ReadOnlyMemory<char> Chars, MatchCollection Matches, int Limit) ctx, ref JsonElement.ArrayBuilder ab) =>
                 {
-                    break;
-                }
+                    int count = 0;
+                    foreach (Match m in ctx.Matches)
+                    {
+                        if (count >= ctx.Limit)
+                        {
+                            break;
+                        }
 
-                results.Add(JsonataHelpers.CreateMatchObjectFromMatch(charMemory, m, env.Workspace));
-                count++;
-            }
+                        ab.AddItem(
+                            (ctx.Chars, m),
+                            static (in (ReadOnlyMemory<char> C, Match M) mctx, ref JsonElement.ObjectBuilder ob) =>
+                            {
+                                ob.AddProperty("match"u8, mctx.C.Span.Slice(mctx.M.Index, mctx.M.Length));
+                                ob.AddProperty("index"u8, mctx.M.Index);
+                                ob.AddProperty("groups"u8, (mctx.C, mctx.M),
+                                    static (in (ReadOnlyMemory<char> C, Match M) gctx, ref JsonElement.ArrayBuilder gab) =>
+                                    {
+                                        for (int g = 1; g < gctx.M.Groups.Count; g++)
+                                        {
+                                            Group grp = gctx.M.Groups[g];
+                                            gab.AddItem(gctx.C.Span.Slice(grp.Index, grp.Length));
+                                        }
+                                    });
+                            });
+                        count++;
+                    }
+                },
+                estimatedMemberCount: 30);
+
+            return UnwrapMatchArray((JsonElement)doc.RootElement);
 #endif
-
-            Sequence resultSeq = results.ToSequence();
-            if (resultSeq.IsUndefined)
-            {
-                results.ReturnArray();
-                return Sequence.Undefined;
-            }
-
-            if (resultSeq.Count == 1)
-            {
-                results.ReturnArray();
-                return new Sequence(resultSeq[0]);
-            }
-
-            // For multi-match, the Sequence already holds the array — return it directly
-            return resultSeq;
         };
     }
 
@@ -5250,21 +5301,35 @@ internal static class BuiltInFunctions
                 minLen = 0;
             }
 
-            JsonDocumentBuilder<JsonElement.Mutable> outerDoc = JsonElement.CreateArrayBuilder(env.Workspace, minLen);
-            JsonElement.Mutable outerRoot = outerDoc.RootElement;
-            for (int i = 0; i < minLen; i++)
+            if (minLen == 0)
             {
-                JsonDocumentBuilder<JsonElement.Mutable> innerDoc = JsonElement.CreateArrayBuilder(env.Workspace, arrays.Count);
-                JsonElement.Mutable innerRoot = innerDoc.RootElement;
-                foreach (var a in arrays)
-                {
-                    innerRoot.AddItem(a[i]);
-                }
-
-                outerRoot.AddItem((JsonElement)innerRoot);
+                // Return empty array (not undefined) — matches JSONata spec
+                var emptyDoc = JsonElement.CreateArrayBuilder(env.Workspace, 0);
+                return new Sequence((JsonElement)emptyDoc.RootElement);
             }
 
-            return new Sequence((JsonElement)outerRoot);
+            // Fused single-document: outer array with nested inner arrays per row
+            var doc = JsonElement.CreateBuilder(
+                env.Workspace,
+                (arrays, minLen),
+                static (in (List<List<JsonElement>> Arrays, int MinLen) ctx, ref JsonElement.ArrayBuilder outer) =>
+                {
+                    for (int i = 0; i < ctx.MinLen; i++)
+                    {
+                        outer.AddItem(
+                            (ctx.Arrays, i),
+                            static (in (List<List<JsonElement>> Arrays, int I) ictx, ref JsonElement.ArrayBuilder inner) =>
+                            {
+                                foreach (var a in ictx.Arrays)
+                                {
+                                    inner.AddItem(a[ictx.I]);
+                                }
+                            });
+                    }
+                },
+                estimatedMemberCount: (minLen * (arrays.Count + 1)) + 2);
+
+            return new Sequence((JsonElement)doc.RootElement);
         };
     }
 
@@ -5685,6 +5750,27 @@ internal static class BuiltInFunctions
 
     // --- Helpers ---
     private delegate void NumericAccumulator(ref double accumulator, double value);
+
+    /// <summary>
+    /// Unwraps a match result array: 0 elements → Undefined, 1 element → singleton
+    /// Sequence wrapping the match object, N elements → singleton Sequence wrapping
+    /// the array (consistent with all other array-returning built-in functions).
+    /// </summary>
+    private static Sequence UnwrapMatchArray(JsonElement array)
+    {
+        int count = array.GetArrayLength();
+        if (count == 0)
+        {
+            return Sequence.Undefined;
+        }
+
+        if (count == 1)
+        {
+            return new Sequence(array[0]);
+        }
+
+        return new Sequence(array);
+    }
 
     private static void EnumerateNumericValues(Sequence seq, ref double accumulator, NumericAccumulator action)
     {

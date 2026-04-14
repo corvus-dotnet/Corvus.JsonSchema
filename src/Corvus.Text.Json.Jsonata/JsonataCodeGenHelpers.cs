@@ -5275,44 +5275,81 @@ public static class JsonataCodeGenHelpers
             }
         }
 
-        var results = default(SequenceBuilder);
-        int count = 0;
-
 #if NET
         bool hasGroups = regex.GetGroupNumbers().Length > 1;
 
         if (!hasGroups)
         {
-            // Zero-alloc fast path: EnumerateMatches yields ValueMatch structs —
-            // no Match/Group objects. GetUtf16String avoids managed string allocation.
             using UnescapedUtf16JsonString utf16Str = input.GetUtf16String();
             ReadOnlyMemory<char> charMemory = utf16Str.Memory;
 
-            foreach (ValueMatch vm in regex.EnumerateMatches(charMemory.Span))
-            {
-                if (count >= limit)
+            // Fused single-document: outer array with nested object builders per match
+            var doc = JsonElement.CreateBuilder(
+                workspace,
+                (charMemory, regex, limit),
+                static (in (ReadOnlyMemory<char> Chars, Regex Regex, int Limit) ctx, ref JsonElement.ArrayBuilder ab) =>
                 {
-                    break;
-                }
+                    int count = 0;
+                    foreach (ValueMatch vm in ctx.Regex.EnumerateMatches(ctx.Chars.Span))
+                    {
+                        if (count >= ctx.Limit)
+                        {
+                            break;
+                        }
 
-                results.Add(JsonataHelpers.CreateMatchObjectNoGroups(charMemory, vm.Index, vm.Length, workspace));
-                count++;
-            }
+                        ab.AddItem(
+                            (ctx.Chars, vm.Index, vm.Length),
+                            static (in (ReadOnlyMemory<char> C, int Index, int Length) mctx, ref JsonElement.ObjectBuilder ob) =>
+                            {
+                                ob.AddProperty("match"u8, mctx.C.Span.Slice(mctx.Index, mctx.Length));
+                                ob.AddProperty("index"u8, mctx.Index);
+                                ob.AddProperty("groups"u8, static (ref JsonElement.ArrayBuilder _) => { });
+                            });
+                        count++;
+                    }
+                },
+                estimatedMemberCount: 30);
+
+            return UnwrapMatchArray((JsonElement)doc.RootElement);
         }
         else
         {
-            // Groups path: Regex.Match requires a string (unavoidable).
-            // Use Group.Index/Length to slice the original char memory — no Group.Value strings.
             string regexStr = input.GetString()!;
             ReadOnlyMemory<char> charMemory = regexStr.AsMemory();
 
-            System.Text.RegularExpressions.Match m = regex.Match(regexStr);
-            while (m.Success && count < limit)
-            {
-                results.Add(JsonataHelpers.CreateMatchObjectFromMatch(charMemory, m, workspace));
-                count++;
-                m = m.NextMatch();
-            }
+            // Fused single-document: outer array with nested object+groups builders per match
+            var doc = JsonElement.CreateBuilder(
+                workspace,
+                (charMemory, regex, regexStr, limit),
+                static (in (ReadOnlyMemory<char> Chars, Regex Regex, string RegexStr, int Limit) ctx, ref JsonElement.ArrayBuilder ab) =>
+                {
+                    int count = 0;
+                    System.Text.RegularExpressions.Match m = ctx.Regex.Match(ctx.RegexStr);
+                    while (m.Success && count < ctx.Limit)
+                    {
+                        ab.AddItem(
+                            (ctx.Chars, m),
+                            static (in (ReadOnlyMemory<char> C, System.Text.RegularExpressions.Match M) mctx, ref JsonElement.ObjectBuilder ob) =>
+                            {
+                                ob.AddProperty("match"u8, mctx.C.Span.Slice(mctx.M.Index, mctx.M.Length));
+                                ob.AddProperty("index"u8, mctx.M.Index);
+                                ob.AddProperty("groups"u8, (mctx.C, mctx.M),
+                                    static (in (ReadOnlyMemory<char> C, System.Text.RegularExpressions.Match M) gctx, ref JsonElement.ArrayBuilder gab) =>
+                                    {
+                                        for (int g = 1; g < gctx.M.Groups.Count; g++)
+                                        {
+                                            Group grp = gctx.M.Groups[g];
+                                            gab.AddItem(gctx.C.Span.Slice(grp.Index, grp.Length));
+                                        }
+                                    });
+                            });
+                        count++;
+                        m = m.NextMatch();
+                    }
+                },
+                estimatedMemberCount: 30);
+
+            return UnwrapMatchArray((JsonElement)doc.RootElement);
         }
 #else
         string? regexStr = input.GetString();
@@ -5324,44 +5361,63 @@ public static class JsonataCodeGenHelpers
         ReadOnlyMemory<char> charMemory = regexStr.AsMemory();
         MatchCollection matches = regex.Matches(regexStr);
 
-        foreach (System.Text.RegularExpressions.Match m in matches)
-        {
-            if (count >= limit)
+        // Fused single-document: outer array with nested object+groups builders per match
+        var doc = JsonElement.CreateBuilder(
+            workspace,
+            (charMemory, matches, limit),
+            static (in (ReadOnlyMemory<char> Chars, MatchCollection Matches, int Limit) ctx, ref JsonElement.ArrayBuilder ab) =>
             {
-                break;
-            }
+                int count = 0;
+                foreach (System.Text.RegularExpressions.Match m in ctx.Matches)
+                {
+                    if (count >= ctx.Limit)
+                    {
+                        break;
+                    }
 
-            results.Add(JsonataHelpers.CreateMatchObjectFromMatch(charMemory, m, workspace));
-            count++;
-        }
+                    ab.AddItem(
+                        (ctx.Chars, m),
+                        static (in (ReadOnlyMemory<char> C, System.Text.RegularExpressions.Match M) mctx, ref JsonElement.ObjectBuilder ob) =>
+                        {
+                            ob.AddProperty("match"u8, mctx.C.Span.Slice(mctx.M.Index, mctx.M.Length));
+                            ob.AddProperty("index"u8, mctx.M.Index);
+                            ob.AddProperty("groups"u8, (mctx.C, mctx.M),
+                                static (in (ReadOnlyMemory<char> C, System.Text.RegularExpressions.Match M) gctx, ref JsonElement.ArrayBuilder gab) =>
+                                {
+                                    for (int g = 1; g < gctx.M.Groups.Count; g++)
+                                    {
+                                        Group grp = gctx.M.Groups[g];
+                                        gab.AddItem(gctx.C.Span.Slice(grp.Index, grp.Length));
+                                    }
+                                });
+                        });
+                    count++;
+                }
+            },
+            estimatedMemberCount: 30);
+
+        return UnwrapMatchArray((JsonElement)doc.RootElement);
 #endif
+    }
 
-        Sequence resultSeq = results.ToSequence();
-        if (resultSeq.IsUndefined)
+    /// <summary>
+    /// Unwraps a match result array: 0 elements → undefined, 1 element → the single
+    /// match object, N elements → the array itself.
+    /// </summary>
+    private static JsonElement UnwrapMatchArray(JsonElement array)
+    {
+        int count = array.GetArrayLength();
+        if (count == 0)
         {
-            results.ReturnArray();
             return default;
         }
 
-        if (resultSeq.Count == 1)
+        if (count == 1)
         {
-            results.ReturnArray();
-            return resultSeq[0];
+            return array[0];
         }
 
-        // Multi-match: build an array document from the results
-        var doc = JsonElement.CreateBuilder(
-            workspace,
-            (resultSeq, resultSeq.Count),
-            static (in (Sequence Seq, int Count) ctx, ref JsonElement.ArrayBuilder builder) =>
-            {
-                for (int i = 0; i < ctx.Count; i++)
-                {
-                    builder.AddItem(ctx.Seq[i]);
-                }
-            },
-            estimatedMemberCount: resultSeq.Count + 2);
-        return (JsonElement)doc.RootElement;
+        return array;
     }
 
     /// <summary>
@@ -5414,31 +5470,36 @@ public static class JsonataCodeGenHelpers
             return (JsonElement)emptyDoc.RootElement;
         }
 
-        var outerDoc = JsonElement.CreateArrayBuilder(workspace, minLen);
-        JsonElement.Mutable outerRoot = outerDoc.RootElement;
-
-        for (int i = 0; i < minLen; i++)
-        {
-            var innerDoc = JsonElement.CreateArrayBuilder(workspace, args.Length);
-            JsonElement.Mutable innerRoot = innerDoc.RootElement;
-
-            for (int a = 0; a < args.Length; a++)
+        // Fused single-document: outer array with nested inner arrays per row
+        var doc = JsonElement.CreateBuilder(
+            workspace,
+            (args, minLen),
+            static (in (JsonElement[] Args, int MinLen) ctx, ref JsonElement.ArrayBuilder outer) =>
             {
-                if (args[a].ValueKind == JsonValueKind.Array)
+                for (int i = 0; i < ctx.MinLen; i++)
                 {
-                    innerRoot.AddItem(args[a][i]);
+                    outer.AddItem(
+                        (ctx.Args, i),
+                        static (in (JsonElement[] Args, int I) ictx, ref JsonElement.ArrayBuilder inner) =>
+                        {
+                            for (int a = 0; a < ictx.Args.Length; a++)
+                            {
+                                if (ictx.Args[a].ValueKind == JsonValueKind.Array)
+                                {
+                                    inner.AddItem(ictx.Args[a][ictx.I]);
+                                }
+                                else if (!ictx.Args[a].IsUndefined())
+                                {
+                                    // Scalar value
+                                    inner.AddItem(ictx.Args[a]);
+                                }
+                            }
+                        });
                 }
-                else if (!args[a].IsUndefined())
-                {
-                    // Scalar value
-                    innerRoot.AddItem(args[a]);
-                }
-            }
+            },
+            estimatedMemberCount: (minLen * (args.Length + 1)) + 2);
 
-            outerRoot.AddItem((JsonElement)innerRoot);
-        }
-
-        return (JsonElement)outerRoot;
+        return (JsonElement)doc.RootElement;
     }
 
     /// <summary>
