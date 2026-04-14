@@ -290,6 +290,246 @@ internal static class FunctionalCompiler
         return false;
     }
 
+    /// <summary>
+    /// Determines whether a node is a constant expression that can be evaluated
+    /// at compile time (numbers, strings, booleans, null, and compound arrays/objects
+    /// composed entirely of constants).
+    /// </summary>
+    private static bool IsConstantExpression(JsonataNode node)
+    {
+        if (node.Annotations is not null)
+        {
+            return false;
+        }
+
+        switch (node)
+        {
+            case NumberNode:
+            case ValueNode:
+                return true;
+
+            case StringNode s:
+                return !HasUnpairedSurrogate(s.Value);
+
+            case UnaryNode { Operator: "-" } u:
+                return IsConstantExpression(u.Expression);
+
+            case ArrayConstructorNode arr:
+                if (arr.Expressions.Count == 0)
+                {
+                    return false;
+                }
+
+                for (int i = 0; i < arr.Expressions.Count; i++)
+                {
+                    if (!IsConstantExpression(arr.Expressions[i]))
+                    {
+                        return false;
+                    }
+                }
+
+                return true;
+
+            case ObjectConstructorNode obj:
+                if (obj.Pairs.Count == 0)
+                {
+                    return false;
+                }
+
+                for (int i = 0; i < obj.Pairs.Count; i++)
+                {
+                    if (obj.Pairs[i].Key is not StringNode
+                        || !IsConstantExpression(obj.Pairs[i].Value))
+                    {
+                        return false;
+                    }
+                }
+
+                return true;
+
+            default:
+                return false;
+        }
+    }
+
+    /// <summary>
+    /// Serializes a constant AST subtree to its JSON representation.
+    /// Only call after <see cref="IsConstantExpression"/> returns <see langword="true"/>.
+    /// </summary>
+    private static string SerializeConstantJson(JsonataNode node)
+    {
+        switch (node)
+        {
+            case NumberNode num:
+                return num.Value.ToString("R", CultureInfo.InvariantCulture);
+
+            case StringNode str:
+                return $"\"{EscapeJsonStringContent(str.Value)}\"";
+
+            case ValueNode val:
+                return val.Value; // "true", "false", "null"
+
+            case UnaryNode { Operator: "-" } u:
+                if (u.Expression is NumberNode inner)
+                {
+                    return (-inner.Value).ToString("R", CultureInfo.InvariantCulture);
+                }
+
+                return $"-{SerializeConstantJson(u.Expression)}";
+
+            case ArrayConstructorNode arr:
+            {
+                var sb = new System.Text.StringBuilder("[");
+                for (int i = 0; i < arr.Expressions.Count; i++)
+                {
+                    if (i > 0)
+                    {
+                        sb.Append(',');
+                    }
+
+                    sb.Append(SerializeConstantJson(arr.Expressions[i]));
+                }
+
+                sb.Append(']');
+                return sb.ToString();
+            }
+
+            case ObjectConstructorNode obj:
+            {
+                var sb = new System.Text.StringBuilder("{");
+                for (int i = 0; i < obj.Pairs.Count; i++)
+                {
+                    if (i > 0)
+                    {
+                        sb.Append(',');
+                    }
+
+                    sb.Append('"');
+                    sb.Append(EscapeJsonStringContent(((StringNode)obj.Pairs[i].Key).Value));
+                    sb.Append("\":");
+                    sb.Append(SerializeConstantJson(obj.Pairs[i].Value));
+                }
+
+                sb.Append('}');
+                return sb.ToString();
+            }
+
+            default:
+                throw new InvalidOperationException("Not a constant expression");
+        }
+    }
+
+    /// <summary>
+    /// Escapes a string value for embedding inside a JSON string.
+    /// </summary>
+    private static string EscapeJsonStringContent(string s)
+    {
+        var sb = new System.Text.StringBuilder(s.Length);
+        foreach (char c in s)
+        {
+            switch (c)
+            {
+                case '\\': sb.Append("\\\\"); break;
+                case '"': sb.Append("\\\""); break;
+                case '\n': sb.Append("\\n"); break;
+                case '\r': sb.Append("\\r"); break;
+                case '\t': sb.Append("\\t"); break;
+                case '\b': sb.Append("\\b"); break;
+                case '\f': sb.Append("\\f"); break;
+                default:
+                    if (c < ' ')
+                    {
+                        sb.AppendFormat("\\u{0:X4}", (int)c);
+                    }
+                    else
+                    {
+                        sb.Append(c);
+                    }
+
+                    break;
+            }
+        }
+
+        return sb.ToString();
+    }
+
+    /// <summary>
+    /// Compiles a constant compound expression (array or object) by pre-evaluating
+    /// it at compile time and returning a cached result. The parsed element is
+    /// backed by a <see cref="ParsedJsonDocument{T}"/> that owns its own memory
+    /// (independent of any workspace).
+    /// </summary>
+    private static ExpressionEvaluator CompileConstant(JsonataNode node)
+    {
+        string json = SerializeConstantJson(node);
+        byte[] utf8 = System.Text.Encoding.UTF8.GetBytes(json);
+        var element = JsonElement.ParseValue(utf8);
+        return (in JsonElement input, Environment env) => new Sequence(element);
+    }
+
+    /// <summary>
+    /// Evaluates a <c>$zip</c> call with all-constant array arguments at compile time.
+    /// Transposes the arrays and returns a cached result element.
+    /// </summary>
+    private static ExpressionEvaluator CompileConstantZip(FunctionCallNode func)
+    {
+        var arrays = new List<List<string>>();
+        foreach (var arg in func.Arguments)
+        {
+            var arr = (ArrayConstructorNode)arg;
+            var elements = new List<string>(arr.Expressions.Count);
+            for (int i = 0; i < arr.Expressions.Count; i++)
+            {
+                elements.Add(SerializeConstantJson(arr.Expressions[i]));
+            }
+
+            arrays.Add(elements);
+        }
+
+        int minLen = int.MaxValue;
+        for (int i = 0; i < arrays.Count; i++)
+        {
+            if (arrays[i].Count < minLen)
+            {
+                minLen = arrays[i].Count;
+            }
+        }
+
+        if (minLen == 0)
+        {
+            var emptyArr = JsonElement.ParseValue("[]"u8);
+            return (in JsonElement input, Environment env) => new Sequence(emptyArr);
+        }
+
+        var json = new System.Text.StringBuilder("[");
+        for (int i = 0; i < minLen; i++)
+        {
+            if (i > 0)
+            {
+                json.Append(',');
+            }
+
+            json.Append('[');
+            for (int a = 0; a < arrays.Count; a++)
+            {
+                if (a > 0)
+                {
+                    json.Append(',');
+                }
+
+                json.Append(arrays[a][i]);
+            }
+
+            json.Append(']');
+        }
+
+        json.Append(']');
+
+        byte[] utf8 = System.Text.Encoding.UTF8.GetBytes(json.ToString());
+        var element = JsonElement.ParseValue(utf8);
+        return (in JsonElement input, Environment env) => new Sequence(element);
+    }
+
     private static ExpressionEvaluator CompileValue(ValueNode val)
     {
         return val.Value switch
@@ -5689,6 +5929,12 @@ internal static class FunctionalCompiler
 
     private static ExpressionEvaluator CompileArrayConstructor(ArrayConstructorNode arr)
     {
+        // All-constant array: pre-evaluate at compile time, zero per-call cost.
+        if (IsConstantExpression(arr))
+        {
+            return CompileConstant(arr);
+        }
+
         // Fused array-of-objects: detect [path.to.{"const-key": value, ...}]
         // When the sole expression is a path ending in a constant-key object constructor
         // with no annotations on the last step, we can build each object directly into
@@ -6033,6 +6279,12 @@ internal static class FunctionalCompiler
 
     private static ExpressionEvaluator CompileObjectConstructor(ObjectConstructorNode obj)
     {
+        // All-constant object: pre-evaluate at compile time, zero per-call cost.
+        if (IsConstantExpression(obj))
+        {
+            return CompileConstant(obj);
+        }
+
         // Check if ALL keys are compile-time string constants.
         // When they are, we can skip runtime key evaluation, GetString(),
         // and the duplicate-detection dictionary entirely.
@@ -6291,6 +6543,15 @@ internal static class FunctionalCompiler
 
     private static ExpressionEvaluator CompileFunctionCall(FunctionCallNode func)
     {
+        // Fully-constant $zip: evaluate at compile time, zero per-call cost.
+        if (func.Procedure is VariableNode zipCheck
+            && zipCheck.Name == "zip"
+            && func.Arguments.Count > 0
+            && func.Arguments.All(a => a is ArrayConstructorNode && IsConstantExpression(a)))
+        {
+            return CompileConstantZip(func);
+        }
+
         var args = func.Arguments.Select(Compile).ToArray();
 
         // Check for built-in functions by name.
