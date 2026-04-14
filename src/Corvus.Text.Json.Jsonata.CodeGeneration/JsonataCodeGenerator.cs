@@ -5959,16 +5959,27 @@ public static class JsonataCodeGenerator
                 return undef;
             }
 
-            // Emit all args and build the array
+            // Emit all args
             var argVars = new List<string>();
             foreach (var arg in func.Arguments)
             {
                 argVars.Add(EmitExpression(sb, arg, indent, dataVar, wsVar));
             }
 
-            string argsArray = string.Join(", ", argVars);
             string v = NextVar();
-            L(sb, indent, $"var {v} = {H}.Zip(new JsonElement[] {{ {argsArray} }}, {wsVar});");
+
+            if (argVars.Count <= 3)
+            {
+                // Use specialized overload to avoid new JsonElement[] allocation
+                string argList = string.Join(", ", argVars);
+                L(sb, indent, $"var {v} = {H}.Zip({argList}, {wsVar});");
+            }
+            else
+            {
+                string argsArray = string.Join(", ", argVars);
+                L(sb, indent, $"var {v} = {H}.Zip(new JsonElement[] {{ {argsArray} }}, {wsVar});");
+            }
+
             return v;
         }
 

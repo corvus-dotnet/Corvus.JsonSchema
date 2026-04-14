@@ -5421,6 +5421,130 @@ public static class JsonataCodeGenHelpers
     }
 
     /// <summary>
+    /// JSONata <c>$zip</c> function — transposes a single array.
+    /// Each element becomes a single-element inner array.
+    /// </summary>
+    /// <param name="arg0">The input array element.</param>
+    /// <param name="workspace">The workspace for building the result.</param>
+    /// <returns>An array of single-element arrays, or <c>default</c> if no valid arrays.</returns>
+    public static JsonElement Zip(JsonElement arg0, JsonWorkspace workspace)
+    {
+        ResolveZipArg(arg0, out bool isArr0, out int len0);
+
+        if (len0 == 0)
+        {
+            var emptyDoc = JsonElement.CreateArrayBuilder(workspace, 0);
+            return (JsonElement)emptyDoc.RootElement;
+        }
+
+        var doc = JsonElement.CreateBuilder(
+            workspace,
+            (arg0, len0, isArr0),
+            static (in (JsonElement A0, int Len, bool IsArr0) ctx, ref JsonElement.ArrayBuilder outer) =>
+            {
+                for (int i = 0; i < ctx.Len; i++)
+                {
+                    outer.AddItem(
+                        (ctx.A0, i, ctx.IsArr0),
+                        static (in (JsonElement A0, int I, bool IsArr0) ictx, ref JsonElement.ArrayBuilder inner) =>
+                        {
+                            inner.AddItem(ictx.IsArr0 ? ictx.A0[ictx.I] : ictx.A0);
+                        });
+                }
+            },
+            estimatedMemberCount: (len0 * 2) + 2);
+
+        return (JsonElement)doc.RootElement;
+    }
+
+    /// <summary>
+    /// JSONata <c>$zip</c> function — transposes two arrays.
+    /// Specialized 2-argument overload that avoids intermediate array allocation.
+    /// </summary>
+    /// <param name="arg0">The first input array element.</param>
+    /// <param name="arg1">The second input array element.</param>
+    /// <param name="workspace">The workspace for building the result.</param>
+    /// <returns>An array of arrays, or <c>default</c> if no valid arrays.</returns>
+    public static JsonElement Zip(JsonElement arg0, JsonElement arg1, JsonWorkspace workspace)
+    {
+        ResolveZipArg(arg0, out bool isArr0, out int len0);
+        ResolveZipArg(arg1, out bool isArr1, out int len1);
+
+        int minLen = Math.Min(len0, len1);
+
+        if (minLen == 0)
+        {
+            var emptyDoc = JsonElement.CreateArrayBuilder(workspace, 0);
+            return (JsonElement)emptyDoc.RootElement;
+        }
+
+        var doc = JsonElement.CreateBuilder(
+            workspace,
+            (arg0, arg1, minLen, isArr0, isArr1),
+            static (in (JsonElement A0, JsonElement A1, int MinLen, bool IsArr0, bool IsArr1) ctx, ref JsonElement.ArrayBuilder outer) =>
+            {
+                for (int i = 0; i < ctx.MinLen; i++)
+                {
+                    outer.AddItem(
+                        (ctx.A0, ctx.A1, i, ctx.IsArr0, ctx.IsArr1),
+                        static (in (JsonElement A0, JsonElement A1, int I, bool IsArr0, bool IsArr1) ictx, ref JsonElement.ArrayBuilder inner) =>
+                        {
+                            inner.AddItem(ictx.IsArr0 ? ictx.A0[ictx.I] : ictx.A0);
+                            inner.AddItem(ictx.IsArr1 ? ictx.A1[ictx.I] : ictx.A1);
+                        });
+                }
+            },
+            estimatedMemberCount: (minLen * 3) + 2);
+
+        return (JsonElement)doc.RootElement;
+    }
+
+    /// <summary>
+    /// JSONata <c>$zip</c> function — transposes three arrays.
+    /// Specialized 3-argument overload that avoids intermediate array allocation.
+    /// </summary>
+    /// <param name="arg0">The first input array element.</param>
+    /// <param name="arg1">The second input array element.</param>
+    /// <param name="arg2">The third input array element.</param>
+    /// <param name="workspace">The workspace for building the result.</param>
+    /// <returns>An array of arrays, or <c>default</c> if no valid arrays.</returns>
+    public static JsonElement Zip(JsonElement arg0, JsonElement arg1, JsonElement arg2, JsonWorkspace workspace)
+    {
+        ResolveZipArg(arg0, out bool isArr0, out int len0);
+        ResolveZipArg(arg1, out bool isArr1, out int len1);
+        ResolveZipArg(arg2, out bool isArr2, out int len2);
+
+        int minLen = Math.Min(len0, Math.Min(len1, len2));
+
+        if (minLen == 0)
+        {
+            var emptyDoc = JsonElement.CreateArrayBuilder(workspace, 0);
+            return (JsonElement)emptyDoc.RootElement;
+        }
+
+        var doc = JsonElement.CreateBuilder(
+            workspace,
+            (arg0, arg1, arg2, minLen, isArr0, isArr1, isArr2),
+            static (in (JsonElement A0, JsonElement A1, JsonElement A2, int MinLen, bool IsArr0, bool IsArr1, bool IsArr2) ctx, ref JsonElement.ArrayBuilder outer) =>
+            {
+                for (int i = 0; i < ctx.MinLen; i++)
+                {
+                    outer.AddItem(
+                        (ctx.A0, ctx.A1, ctx.A2, i, ctx.IsArr0, ctx.IsArr1, ctx.IsArr2),
+                        static (in (JsonElement A0, JsonElement A1, JsonElement A2, int I, bool IsArr0, bool IsArr1, bool IsArr2) ictx, ref JsonElement.ArrayBuilder inner) =>
+                        {
+                            inner.AddItem(ictx.IsArr0 ? ictx.A0[ictx.I] : ictx.A0);
+                            inner.AddItem(ictx.IsArr1 ? ictx.A1[ictx.I] : ictx.A1);
+                            inner.AddItem(ictx.IsArr2 ? ictx.A2[ictx.I] : ictx.A2);
+                        });
+                }
+            },
+            estimatedMemberCount: (minLen * 4) + 2);
+
+        return (JsonElement)doc.RootElement;
+    }
+
+    /// <summary>
     /// JSONata <c>$zip</c> function — transposes arrays.
     /// Takes multiple arrays and returns an array of arrays where the i-th inner array
     /// contains the i-th element from each input array.
@@ -5435,42 +5559,23 @@ public static class JsonataCodeGenHelpers
             return default;
         }
 
-        // Collect arrays — scalars become single-element arrays, undefined is empty
         int minLen = int.MaxValue;
-        int validCount = 0;
         for (int a = 0; a < args.Length; a++)
         {
-            int len;
-            if (args[a].ValueKind == JsonValueKind.Array)
-            {
-                len = args[a].GetArrayLength();
-            }
-            else if (args[a].IsUndefined())
-            {
-                len = 0;
-            }
-            else
-            {
-                // Scalar → treat as single-element array
-                len = 1;
-            }
+            ResolveZipArg(args[a], out _, out int len);
 
             if (len < minLen)
             {
                 minLen = len;
             }
-
-            validCount++;
         }
 
         if (minLen == 0 || minLen == int.MaxValue)
         {
-            // Return empty array (not undefined) — matches runtime behavior
             var emptyDoc = JsonElement.CreateArrayBuilder(workspace, 0);
             return (JsonElement)emptyDoc.RootElement;
         }
 
-        // Fused single-document: outer array with nested inner arrays per row
         var doc = JsonElement.CreateBuilder(
             workspace,
             (args, minLen),
@@ -5490,7 +5595,6 @@ public static class JsonataCodeGenHelpers
                                 }
                                 else if (!ictx.Args[a].IsUndefined())
                                 {
-                                    // Scalar value
                                     inner.AddItem(ictx.Args[a]);
                                 }
                             }
@@ -5500,6 +5604,26 @@ public static class JsonataCodeGenHelpers
             estimatedMemberCount: (minLen * (args.Length + 1)) + 2);
 
         return (JsonElement)doc.RootElement;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static void ResolveZipArg(JsonElement arg, out bool isArray, out int length)
+    {
+        if (arg.ValueKind == JsonValueKind.Array)
+        {
+            isArray = true;
+            length = arg.GetArrayLength();
+        }
+        else if (arg.IsUndefined())
+        {
+            isArray = false;
+            length = 0;
+        }
+        else
+        {
+            isArray = false;
+            length = 1;
+        }
     }
 
     /// <summary>

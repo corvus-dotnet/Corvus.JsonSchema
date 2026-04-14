@@ -42,6 +42,7 @@ public class BenchmarkZipShuffle : JsonataBenchmarkBase
 
     private const string ExprShuffle = "$shuffle(Account.Order.Product.Price)";
     private const string ExprZip = "$zip([1,2,3,4], [5,6,7,8])";
+    private const string ExprZipData = "$zip(Account.Order.Product.Price, Account.Order.Product.Quantity)";
 
     private JsonataEvaluator evaluator = null!;
     private ParsedJsonDocument<JsonElement>? doc;
@@ -51,6 +52,7 @@ public class BenchmarkZipShuffle : JsonataBenchmarkBase
 #if !NETFRAMEWORK
     private JsonataQuery nativeShuffle = null!;
     private JsonataQuery nativeZip = null!;
+    private JsonataQuery nativeZipData = null!;
     private JToken nativeData = null!;
 #endif
 
@@ -67,14 +69,17 @@ public class BenchmarkZipShuffle : JsonataBenchmarkBase
 
         this.evaluator.Evaluate(ExprShuffle, this.data);
         this.evaluator.Evaluate(ExprZip, this.data);
+        this.evaluator.Evaluate(ExprZipData, this.data);
 
         ShuffleCodeGen.Evaluate(this.data, this.workspace); this.workspace.Reset();
         ZipCodeGen.Evaluate(this.data, this.workspace); this.workspace.Reset();
+        ZipDataCodeGen.Evaluate(this.data, this.workspace); this.workspace.Reset();
 
 #if !NETFRAMEWORK
         this.nativeData = JToken.Parse(DataJson);
         this.nativeShuffle = new JsonataQuery(ExprShuffle);
         this.nativeZip = new JsonataQuery(ExprZip);
+        this.nativeZipData = new JsonataQuery(ExprZipData);
 #endif
     }
 
@@ -140,5 +145,32 @@ public class BenchmarkZipShuffle : JsonataBenchmarkBase
     {
         this.workspace.Reset();
         return ZipCodeGen.Evaluate(this.data, this.workspace);
+    }
+
+    // ── $zip (data-driven) ──────────────────────────────────
+
+    /// <summary>Corvus RT: $zip with data-driven arrays.</summary>
+    [BenchmarkCategory("ZipData")]
+    [Benchmark]
+    public JsonElement Corvus_ZipData()
+    {
+        this.workspace.Reset();
+        return this.evaluator.Evaluate(ExprZipData, this.data, this.workspace);
+    }
+
+#if !NETFRAMEWORK
+    /// <summary>Native: $zip with data-driven arrays.</summary>
+    [BenchmarkCategory("ZipData")]
+    [Benchmark(Baseline = true)]
+    public JToken JsonataDotNet_ZipData() => this.nativeZipData.Eval(this.nativeData);
+#endif
+
+    /// <summary>CodeGen: $zip with data-driven arrays.</summary>
+    [BenchmarkCategory("ZipData")]
+    [Benchmark]
+    public JsonElement Corvus_CodeGen_ZipData()
+    {
+        this.workspace.Reset();
+        return ZipDataCodeGen.Evaluate(this.data, this.workspace);
     }
 }

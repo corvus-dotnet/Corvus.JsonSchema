@@ -5259,78 +5259,133 @@ internal static class BuiltInFunctions
 
     private static ExpressionEvaluator CompileZip(ExpressionEvaluator[] args)
     {
+        if (args.Length == 0)
+        {
+            return static (in JsonElement input, Environment env) => Sequence.Undefined;
+        }
+
+        if (args.Length == 2)
+        {
+            return CompileZip2(args[0], args[1]);
+        }
+
+        return CompileZipN(args);
+    }
+
+    private static ExpressionEvaluator CompileZip2(ExpressionEvaluator arg0Eval, ExpressionEvaluator arg1Eval)
+    {
         return (in JsonElement input, Environment env) =>
         {
-            var arrays = new List<List<JsonElement>>();
-            foreach (var arg in args)
-            {
-                var seq = arg(input, env);
-                var list = new List<JsonElement>();
-                if (seq.IsSingleton && seq.FirstOrDefault.ValueKind == JsonValueKind.Array)
-                {
-                    list.AddRange(seq.FirstOrDefault.EnumerateArray());
-                }
-                else if (!seq.IsUndefined)
-                {
-                    // Scalar values: treat as single-element array
-                    for (int i = 0; i < seq.Count; i++)
-                    {
-                        list.Add(seq[i]);
-                    }
-                }
+            var seq0 = arg0Eval(input, env);
+            var seq1 = arg1Eval(input, env);
 
-                arrays.Add(list);
-            }
-
-            if (arrays.Count == 0)
-            {
-                return Sequence.Undefined;
-            }
-
-            int minLen = int.MaxValue;
-            foreach (var a in arrays)
-            {
-                if (a.Count < minLen)
-                {
-                    minLen = a.Count;
-                }
-            }
-
-            if (minLen == int.MaxValue)
-            {
-                minLen = 0;
-            }
+            int len0 = GetZipArgLength(in seq0);
+            int len1 = GetZipArgLength(in seq1);
+            int minLen = Math.Min(len0, len1);
 
             if (minLen == 0)
             {
-                // Return empty array (not undefined) — matches JSONata spec
                 var emptyDoc = JsonElement.CreateArrayBuilder(env.Workspace, 0);
                 return new Sequence((JsonElement)emptyDoc.RootElement);
             }
 
-            // Fused single-document: outer array with nested inner arrays per row
             var doc = JsonElement.CreateBuilder(
                 env.Workspace,
-                (arrays, minLen),
-                static (in (List<List<JsonElement>> Arrays, int MinLen) ctx, ref JsonElement.ArrayBuilder outer) =>
+                (seq0, seq1, minLen),
+                static (in (Sequence S0, Sequence S1, int MinLen) ctx, ref JsonElement.ArrayBuilder outer) =>
                 {
                     for (int i = 0; i < ctx.MinLen; i++)
                     {
                         outer.AddItem(
-                            (ctx.Arrays, i),
-                            static (in (List<List<JsonElement>> Arrays, int I) ictx, ref JsonElement.ArrayBuilder inner) =>
+                            (ctx.S0, ctx.S1, i),
+                            static (in (Sequence S0, Sequence S1, int I) ictx, ref JsonElement.ArrayBuilder inner) =>
                             {
-                                foreach (var a in ictx.Arrays)
+                                inner.AddItem(GetZipElement(in ictx.S0, ictx.I));
+                                inner.AddItem(GetZipElement(in ictx.S1, ictx.I));
+                            });
+                    }
+                },
+                estimatedMemberCount: (minLen * 3) + 2);
+
+            return new Sequence((JsonElement)doc.RootElement);
+        };
+    }
+
+    private static ExpressionEvaluator CompileZipN(ExpressionEvaluator[] args)
+    {
+        return (in JsonElement input, Environment env) =>
+        {
+            // Evaluate args and keep the Sequences — no List copying.
+            var evaluated = new (Sequence Seq, int Length)[args.Length];
+            int minLen = int.MaxValue;
+
+            for (int a = 0; a < args.Length; a++)
+            {
+                evaluated[a].Seq = args[a](input, env);
+                evaluated[a].Length = GetZipArgLength(in evaluated[a].Seq);
+
+                if (evaluated[a].Length < minLen)
+                {
+                    minLen = evaluated[a].Length;
+                }
+            }
+
+            if (minLen == 0 || minLen == int.MaxValue)
+            {
+                var emptyDoc = JsonElement.CreateArrayBuilder(env.Workspace, 0);
+                return new Sequence((JsonElement)emptyDoc.RootElement);
+            }
+
+            var doc = JsonElement.CreateBuilder(
+                env.Workspace,
+                (evaluated, minLen),
+                static (in ((Sequence Seq, int Length)[] Evaluated, int MinLen) ctx, ref JsonElement.ArrayBuilder outer) =>
+                {
+                    for (int i = 0; i < ctx.MinLen; i++)
+                    {
+                        outer.AddItem(
+                            (ctx.Evaluated, i),
+                            static (in ((Sequence Seq, int Length)[] Evaluated, int I) ictx, ref JsonElement.ArrayBuilder inner) =>
+                            {
+                                for (int a = 0; a < ictx.Evaluated.Length; a++)
                                 {
-                                    inner.AddItem(a[ictx.I]);
+                                    inner.AddItem(GetZipElement(in ictx.Evaluated[a].Seq, ictx.I));
                                 }
                             });
                     }
                 },
-                estimatedMemberCount: (minLen * (arrays.Count + 1)) + 2);
+                estimatedMemberCount: (minLen * (evaluated.Length + 1)) + 2);
 
             return new Sequence((JsonElement)doc.RootElement);
         };
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static int GetZipArgLength(in Sequence seq)
+    {
+        if (seq.IsUndefined)
+        {
+            return 0;
+        }
+
+        if (seq.IsSingleton && seq.FirstOrDefault.ValueKind == JsonValueKind.Array)
+        {
+            return seq.FirstOrDefault.GetArrayLength();
+        }
+
+        // Multi-element sequence or scalar — treat elements as individual array entries
+        return seq.Count;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static JsonElement GetZipElement(in Sequence seq, int i)
+    {
+        if (seq.IsSingleton && seq.FirstOrDefault.ValueKind == JsonValueKind.Array)
+        {
+            return seq.FirstOrDefault[i];
+        }
+
+        return seq[i];
     }
 
     // --- Misc functions: error, assert, now, millis, fromMillis, toMillis, eval ---
