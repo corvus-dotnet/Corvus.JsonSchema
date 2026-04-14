@@ -2583,19 +2583,19 @@ catch (JsonataException ex)
 <tr>
 <td>$zip (constant)</td>
 <td><code>$zip([1,2,3],[4,5,6])</code></td>
-<td style="text-align: right;">30 ns</td>
-<td style="text-align: right;">0.5 ns</td>
-<td style="text-align: right;">1,013 ns</td>
+<td style="text-align: right;">18 ns</td>
+<td style="text-align: right;">0.6 ns</td>
+<td style="text-align: right;">714 ns</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">3,696 B</td>
 </tr>
 <tr>
 <td>$zip (data)</td>
-<td><code>$zip(Order[0].Product, Order[1].Product)</code></td>
-<td style="text-align: right;">671 ns</td>
-<td style="text-align: right;">656 ns</td>
-<td style="text-align: right;">1,163 ns</td>
+<td><code>$zip(Account.Order.Product.Price, Account.Order.Product.Quantity)</code></td>
+<td style="text-align: right;">661 ns</td>
+<td style="text-align: right;">640 ns</td>
+<td style="text-align: right;">1,059 ns</td>
 <td style="text-align: right;">120 B</td>
 <td style="text-align: right;">120 B</td>
 <td style="text-align: right;">4,784 B</td>
@@ -2603,9 +2603,9 @@ catch (JsonataException ex)
 <tr>
 <td>$zip (mixed)</td>
 <td><code>$zip(keys, Order[0].Product.Price)</code></td>
-<td style="text-align: right;">502 ns</td>
-<td style="text-align: right;">469 ns</td>
-<td style="text-align: right;">1,006 ns</td>
+<td style="text-align: right;">505 ns</td>
+<td style="text-align: right;">464 ns</td>
+<td style="text-align: right;">920 ns</td>
 <td style="text-align: right;">120 B</td>
 <td style="text-align: right;">120 B</td>
 <td style="text-align: right;">4,240 B</td>
@@ -2613,16 +2613,16 @@ catch (JsonataException ex)
 <tr>
 <td>$shuffle</td>
 <td><code>$shuffle(Account.Order[0].Product)</code></td>
-<td style="text-align: right;">766 ns</td>
-<td style="text-align: right;">704 ns</td>
-<td style="text-align: right;">1,310 ns</td>
+<td style="text-align: right;">444 ns</td>
+<td style="text-align: right;">415 ns</td>
+<td style="text-align: right;">763 ns</td>
 <td style="text-align: right;">120 B</td>
 <td style="text-align: right;">120 B</td>
 <td style="text-align: right;">2,824 B</td>
 </tr>
 </tbody>
 </table>
-<p><code>$zip</code> with constant arrays is <strong>constant-folded</strong> by the source generator (0.5 ns). Data-driven zip is <strong>1.7ÔÇô2.1├ù faster</strong> with <strong>97% less allocation</strong>. <code>$shuffle</code> is <strong>1.7ÔÇô1.9├ù faster</strong> using a FisherÔÇôYates in-place shuffle over the mutable document model.</p>
+<p><code>$zip</code> with constant arrays is <strong>constant-folded</strong> by the source generator (0.6 ns). Data-driven zip is <strong>1.6–1.7× faster</strong> with <strong>97% less allocation</strong>. <code>$shuffle</code> is <strong>1.7–1.8× faster</strong> using a Fisher–Yates in-place shuffle over the mutable document model.</p>
 <blockquote>
 <p><em>Benchmarks run with BenchmarkDotNet v0.15.8 on .NET 10.0.5, 13th Gen Intel Core i7-13800H, Windows 11. All Runtime benchmarks use <code>JsonWorkspace</code> for pooled evaluation. Jsonata.Net.Native v3.0.0 uses pre-compiled <code>JsonataQuery</code> with pre-parsed <code>JToken</code> data. OutlierMode=RemoveAll, WarmupCount=5, IterationCount=15, RunStrategy=Throughput.</em></p>
 </blockquote>
