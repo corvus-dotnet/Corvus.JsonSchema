@@ -888,9 +888,9 @@ Code-gen achieves **2–3× speedup** for object construction with **98–99% le
 | $append | `$append(Order[0].Product, Order[1].Product)` | 470 ns | 449 ns | 709 ns | 120 B | 120 B | 3,280 B |
 | $reverse | `$reverse(Account.Order[0].Product)` | 268 ns | 254 ns | 460 ns | 120 B | 120 B | 2,136 B |
 | $distinct | `$distinct(Account.Order.Product."Product Name")` | 645 ns | 577 ns | 655 ns | 400 B | 120 B | 2,848 B |
-| $single | `$single(Account.Order[0].Product, function($v) { $v.Price > 30 })` | 1,551 ns | 725 ns | 2,045 ns | 1,352 B | 0 B | 4,960 B |
+| $single | `$single(Account.Order[0].Product, function($v) { $v.Price > 30 })` | 1,211 ns | 1,175 ns | 3,171 ns | 80 B | 0 B | 4,960 B |
 
-Array functions are **1.5–3× faster** with zero or minimal allocation. `$distinct` uses a zero-copy `UniqueItemsHashSet` that deduplicates via document-internal element references — no intermediate strings are created. Code-gen `$single` achieves **zero allocation** and is **2.8× faster** than native by inlining the predicate as a direct comparison.
+Array functions are **1.5–3× faster** with zero or minimal allocation. `$distinct` uses a zero-copy `UniqueItemsHashSet` that deduplicates via document-internal element references — no intermediate strings are created. `$single` iterates the source array directly without copying into an intermediate buffer, and uses `InvokeReusing` to eliminate per-call environment allocation. Code-gen `$single` achieves **zero allocation** by inlining the predicate as a direct comparison.
 
 ##### Object functions
 
@@ -909,10 +909,10 @@ Object functions are **1.6–4× faster** for runtime, **2–4× faster** for co
 | Scenario | Expression | Runtime | CodeGen | Jsonata.Net.Native | Runtime Alloc | CodeGen Alloc | Native Alloc |
 |----------|-----------|-------:|--------:|-------------------:|-------------:|--------------:|-------------:|
 | Conditional | `Account.Order[0].Product[0].Price > 30 ? "expensive" : "cheap"` | 237 ns | 236 ns | 792 ns | 0 B | 0 B | 2,280 B |
-| Descendant | `**."Product Name"` | 1,655 ns | 786 ns | 1,376 ns | 656 B | 120 B | 2,432 B |
+| Descendant | `**."Product Name"` | 2,127 ns | 1,414 ns | 2,735 ns | 120 B | 120 B | 2,432 B |
 | Transform pipe | `Account.Order.Product.Price ~> $sum` | 930 ns | 1,003 ns | 1,328 ns | 776 B | 120 B | 2,792 B |
 
-Conditional expressions are **3.4× faster** than native with **zero allocation** — both runtime and code-gen emit a direct comparison and branch with no element construction overhead. The descendant operator (`**`) uses a fused single-pass traversal in code-gen that collects only matching properties during recursive descent, achieving **1.8× speedup** over native with 120 B allocation (vs 2,432 B). The transform pipe operator (`~>`) maps directly to a helper call for built-in functions; code-gen emits the pipe inline rather than falling back to the generic evaluator.
+Conditional expressions are **3.4× faster** than native with **zero allocation** — both runtime and code-gen emit a direct comparison and branch with no element construction overhead. The descendant operator (`**`) uses a fused single-pass traversal in both runtime and code-gen that collects only properties matching the target name during recursive descent, achieving **1.3–1.9× speedup** over native with 120 B allocation (vs 2,432 B). The transform pipe operator (`~>`) maps directly to a helper call for built-in functions; code-gen emits the pipe inline rather than falling back to the generic evaluator.
 
 ##### Variable bindings
 

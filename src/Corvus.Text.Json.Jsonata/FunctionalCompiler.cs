@@ -1240,6 +1240,26 @@ internal static class FunctionalCompiler
             }
         }
 
+        // Detect DescendantNode followed by NameNode (both with no annotations).
+        // At runtime, this pair is fused into a single-pass recursive traversal that
+        // collects only matching properties, avoiding the intermediate all-descendants
+        // Sequence that the two-step approach would build.
+        byte[]?[]? fusedDescendantNameUtf8 = null;
+        for (int i = 0; i < path.Steps.Count - 1; i++)
+        {
+            if (path.Steps[i] is DescendantNode
+                && stages[i] is null
+                && focusVars[i] is null
+                && indexVars[i] is null
+                && ancestorLabels[i] is null
+                && tupleLabels[i] is null
+                && inlineNameUtf8?[i + 1] is byte[] nextNameBytes)
+            {
+                fusedDescendantNameUtf8 ??= new byte[]?[path.Steps.Count];
+                fusedDescendantNameUtf8[i] = nextNameBytes;
+            }
+        }
+
         return (in JsonElement input, Environment env) =>
         {
             return EvalPathFrom(new Sequence(input), 0, env);
@@ -1265,6 +1285,27 @@ internal static class FunctionalCompiler
                     if (current.IsUndefined)
                     {
                         return Sequence.Undefined;
+                    }
+
+                    // Fused descendant+name fast path: single-pass recursive traversal
+                    // that collects only properties matching the name, skipping the
+                    // intermediate all-descendants Sequence. Handles the DescendantNode
+                    // at stepIdx AND the NameNode at stepIdx+1 in one operation.
+                    if (fusedDescendantNameUtf8?[stepIdx] is byte[] descNameBytes
+                        && tupleGroupIndices is null)
+                    {
+                        if (currentArrayOwned) { current.ReturnBackingArray(); currentArrayOwned = false; }
+
+                        var descBuilder = default(SequenceBuilder);
+                        for (int i = 0; i < current.Count; i++)
+                        {
+                            CollectDescendantProperty(current[i], descNameBytes, ref descBuilder);
+                        }
+
+                        current = descBuilder.ToSequence();
+                        currentArrayOwned = current.Count >= 2;
+                        stepIdx++; // skip the next step (NameNode) — already handled
+                        continue;
                     }
 
                     // Inline name step fast path: direct UTF-8 property lookup without
@@ -4748,6 +4789,45 @@ internal static class FunctionalCompiler
             else if (item.ValueKind == JsonValueKind.Array)
             {
                 InlineNameOverArray(item, nameUtf8, ref builder);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Fused descendant + property-name traversal. Recursively walks the element tree
+    /// and collects only values of properties matching <paramref name="nameUtf8"/>,
+    /// with JSONata array auto-flattening. This avoids building a Sequence of all
+    /// descendants only to filter most of them in a second pass.
+    /// </summary>
+    private static void CollectDescendantProperty(in JsonElement element, byte[] nameUtf8, ref SequenceBuilder builder)
+    {
+        if (element.ValueKind == JsonValueKind.Object)
+        {
+            if (element.TryGetProperty((ReadOnlySpan<byte>)nameUtf8, out JsonElement val))
+            {
+                if (val.ValueKind == JsonValueKind.Array)
+                {
+                    foreach (var item in val.EnumerateArray())
+                    {
+                        builder.Add(item);
+                    }
+                }
+                else
+                {
+                    builder.Add(val);
+                }
+            }
+
+            foreach (var prop in element.EnumerateObject())
+            {
+                CollectDescendantProperty(prop.Value, nameUtf8, ref builder);
+            }
+        }
+        else if (element.ValueKind == JsonValueKind.Array)
+        {
+            foreach (JsonElement item in element.EnumerateArray())
+            {
+                CollectDescendantProperty(item, nameUtf8, ref builder);
             }
         }
     }

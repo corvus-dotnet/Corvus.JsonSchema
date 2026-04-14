@@ -2903,92 +2903,118 @@ internal static class BuiltInFunctions
                 return Sequence.Undefined;
             }
 
-            var elements = default(SequenceBuilder);
-            if (seq.IsSingleton && seq.FirstOrDefault.ValueKind == JsonValueKind.Array)
-            {
-                foreach (var item in seq.FirstOrDefault.EnumerateArray())
-                {
-                    elements.Add(item);
-                }
-            }
-            else
-            {
-                for (int i = 0; i < seq.Count; i++)
-                {
-                    elements.Add(seq[i]);
-                }
-            }
-
+            // No predicate — just check that there is exactly one element
             if (funcArg is null)
             {
-                if (elements.Count == 0)
+                if (seq.IsSingleton && seq.FirstOrDefault.ValueKind == JsonValueKind.Array)
                 {
-                    elements.ReturnArray();
+                    var arr = seq.FirstOrDefault;
+                    int len = arr.GetArrayLength();
+                    if (len == 0)
+                    {
+                        throw new JsonataException("D3139", SR.D3139_TheSingleFunctionMatchedZeroResults, 0);
+                    }
+
+                    if (len != 1)
+                    {
+                        throw new JsonataException("D3138", SR.D3138_TheSingleFunctionExpectedExactlyOneMatchingResult, 0);
+                    }
+
+                    return new Sequence(arr[0]);
+                }
+
+                if (seq.Count == 0)
+                {
                     throw new JsonataException("D3139", SR.D3139_TheSingleFunctionMatchedZeroResults, 0);
                 }
 
-                if (elements.Count != 1)
+                if (seq.Count != 1)
                 {
-                    elements.ReturnArray();
                     throw new JsonataException("D3138", SR.D3138_TheSingleFunctionExpectedExactlyOneMatchingResult, 0);
                 }
 
-                var result = new Sequence(elements[0]);
-                elements.ReturnArray();
-                return result;
+                return new Sequence(seq.FirstOrDefault);
             }
 
+            // With predicate — iterate directly, no intermediate SequenceBuilder
             var funcSeq = funcArg(input, env);
             if (!funcSeq.IsLambda)
             {
-                elements.ReturnArray();
                 return Sequence.Undefined;
             }
 
             var lambda = funcSeq.Lambda!;
+            int arity = lambda.Arity;
+            var invokeEnv = lambda.CreateInvokeEnv(env);
+            Sequence arrSeq = arity >= 3 ? seq : default;
 
-            // Build array element for 3rd lambda arg
-            JsonElement arrElement;
+            try
             {
-                JsonDocumentBuilder<JsonElement.Mutable> arrDoc = JsonElement.CreateArrayBuilder(env.Workspace, elements.Count);
-                JsonElement.Mutable arrRoot = arrDoc.RootElement;
-                for (int i = 0; i < elements.Count; i++)
-                {
-                    arrRoot.AddItem(elements[i]);
-                }
+                JsonElement? match = null;
 
-                arrElement = (JsonElement)arrRoot;
-            }
-
-            var arrSeq = new Sequence(arrElement);
-            JsonElement? match = null;
-            for (int i = 0; i < elements.Count; i++)
-            {
-                var lambdaResult = lambda.Invoke(
-                    new[] { new Sequence(elements[i]), Sequence.FromDouble(i, env.Workspace), arrSeq },
-                    3,
-                    elements[i],
-                    env);
-                if (FunctionalCompiler.IsTruthy(lambdaResult))
+                if (seq.IsSingleton && seq.FirstOrDefault.ValueKind == JsonValueKind.Array)
                 {
-                    if (match.HasValue)
+                    var arr = seq.FirstOrDefault;
+                    int i = 0;
+                    foreach (var item in arr.EnumerateArray())
                     {
-                        elements.ReturnArray();
-                        throw new JsonataException("D3138", SR.D3138_TheSingleFunctionExpectedExactlyOneMatchingResult, 0);
+                        Sequence arg0 = new Sequence(item);
+                        Sequence arg1 = arity >= 2 ? Sequence.FromDouble(i, env.Workspace) : default;
+
+#if NET9_0_OR_GREATER
+                        var result = lambda.InvokeReusing([arg0, arg1, arrSeq], item, invokeEnv, env);
+#else
+                        var result = lambda.InvokeReusing(new Sequence[] { arg0, arg1, arrSeq }, item, invokeEnv, env);
+#endif
+                        if (FunctionalCompiler.IsTruthy(result))
+                        {
+                            if (match.HasValue)
+                            {
+                                throw new JsonataException("D3138", SR.D3138_TheSingleFunctionExpectedExactlyOneMatchingResult, 0);
+                            }
+
+                            match = item;
+                        }
+
+                        i++;
                     }
-
-                    match = elements[i];
                 }
+                else
+                {
+                    for (int i = 0; i < seq.Count; i++)
+                    {
+                        var item = seq[i];
+                        Sequence arg0 = new Sequence(item);
+                        Sequence arg1 = arity >= 2 ? Sequence.FromDouble(i, env.Workspace) : default;
+
+#if NET9_0_OR_GREATER
+                        var result = lambda.InvokeReusing([arg0, arg1, arrSeq], item, invokeEnv, env);
+#else
+                        var result = lambda.InvokeReusing(new Sequence[] { arg0, arg1, arrSeq }, item, invokeEnv, env);
+#endif
+                        if (FunctionalCompiler.IsTruthy(result))
+                        {
+                            if (match.HasValue)
+                            {
+                                throw new JsonataException("D3138", SR.D3138_TheSingleFunctionExpectedExactlyOneMatchingResult, 0);
+                            }
+
+                            match = item;
+                        }
+                    }
+                }
+
+                if (!match.HasValue)
+                {
+                    throw new JsonataException("D3139", SR.D3139_TheSingleFunctionMatchedZeroResults, 0);
+                }
+
+                return new Sequence(match.Value);
             }
-
-            elements.ReturnArray();
-
-            if (!match.HasValue)
+            finally
             {
-                throw new JsonataException("D3139", SR.D3139_TheSingleFunctionMatchedZeroResults, 0);
+                Environment.ReturnChild(invokeEnv);
             }
-
-            return new Sequence(match.Value);
         };
     }
 
