@@ -101,10 +101,10 @@
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
 <strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/heads/pull/734/merge/src/Corvus.Text.Json/Corvus/Text/Json/DocumentBuilder/Internal/IMutableJsonDocument.cs#L19">IMutableJsonDocument.cs</a></p>
 <p>Represents a mutable JSON document that supports editing and value storage operations.</p>
-<pre><code class="language-csharp">public interface IMutableJsonDocument : IJsonDocument, IDisposable
+<pre><code class="language-csharp">public interface IMutableJsonDocument : IWorkspaceManagedDocument, IJsonDocument, IDisposable
 </code></pre>
 <h2 id="implements">Implements</h2>
-<p><a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-internal-ijsondocument.html"><code>IJsonDocument</code></a>, <a href="https://learn.microsoft.com/dotnet/api/system.idisposable"><code>IDisposable</code></a></p>
+<p><a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-internal-iworkspacemanageddocument.html"><code>IWorkspaceManagedDocument</code></a>, <a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-internal-ijsondocument.html"><code>IJsonDocument</code></a>, <a href="https://learn.microsoft.com/dotnet/api/system.idisposable"><code>IDisposable</code></a></p>
 <h2 id="implemented-by">Implemented By</h2>
 <p><a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsondocumentbuilder-t.html"><code>JsonDocumentBuilder&lt;T&gt;</code></a></p>
 <h2 id="properties">Properties</h2>
@@ -144,6 +144,18 @@
 </thead>
 <tbody>
 <tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-internal-imutablejsondocument.copyvaluetoarrayend.html#copyvaluetoarrayend-int-int">CopyValueToArrayEnd(int, int)</a></td>
+<td>Copies a value and appends it at the end of a destination array.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-internal-imutablejsondocument.copyvaluetoarrayindex.html#copyvaluetoarrayindex-int-int-int">CopyValueToArrayIndex(int, int, int)</a></td>
+<td>Copies a value and inserts it as an array item at the specified index.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-internal-imutablejsondocument.copyvaluetoproperty.html#copyvaluetoproperty-int-int-readonlyspan-byte">CopyValueToProperty(int, int, ReadOnlySpan&lt;byte&gt;)</a></td>
+<td>Copies a value and sets it as a property on a destination object. If the property already exists, it is replaced.</td>
+</tr>
+<tr>
 <td><a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-internal-imutablejsondocument.escapeandstorerawstringvalue.html">EscapeAndStoreRawStringValue</a></td>
 <td>Escapes and stores a raw string value in the document.</td>
 </tr>
@@ -160,12 +172,64 @@
 <td>Inserts a value into the document and disposes the provided <a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-internal-complexvaluebuilder.html"><code>ComplexValueBuilder</code></a>.</td>
 </tr>
 <tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-internal-imutablejsondocument.insertfromdocument.html#insertfromdocument-int-int-int-ijsondocument-int">InsertFromDocument(int, int, int, IJsonDocument, int)</a></td>
+<td>Inserts element rows from a source document directly, bypassing <a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-internal-complexvaluebuilder.html"><code>ComplexValueBuilder</code></a>.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-internal-imutablejsondocument.insertpropertyfromdocument.html#insertpropertyfromdocument-int-int-int-readonlyspan-byte-ijsondocument-int">InsertPropertyFromDocument(int, int, int, ReadOnlySpan&lt;byte&gt;, IJsonDocument, int)</a></td>
+<td>Inserts a property name row followed by element rows from a source document, bypassing <a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-internal-complexvaluebuilder.html"><code>ComplexValueBuilder</code></a>.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-internal-imutablejsondocument.insertsimpleproperty.html#insertsimpleproperty-int-int-int-readonlyspan-byte-jsontokentype-int-int">InsertSimpleProperty(int, int, int, ReadOnlySpan&lt;byte&gt;, JsonTokenType, int, int)</a></td>
+<td>Inserts a property name and a single simple value row directly, bypassing <a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-internal-complexvaluebuilder.html"><code>ComplexValueBuilder</code></a>.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-internal-imutablejsondocument.insertsimplevalue.html#insertsimplevalue-int-int-int-jsontokentype-int-int">InsertSimpleValue(int, int, int, JsonTokenType, int, int)</a></td>
+<td>Inserts a single simple value row directly into a complex object, bypassing <a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-internal-complexvaluebuilder.html"><code>ComplexValueBuilder</code></a>.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-internal-imutablejsondocument.moveitemtoarray.html#moveitemtoarray-int-int-int-int">MoveItemToArray(int, int, int, int)</a></td>
+<td>Moves an array item from a source array into a destination array at the specified index. Handles same-array moves with post-removal index semantics.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-internal-imutablejsondocument.moveitemtoarrayend.html#moveitemtoarrayend-int-int-int">MoveItemToArrayEnd(int, int, int)</a></td>
+<td>Moves an array item from a source array to the end of a destination array.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-internal-imutablejsondocument.moveitemtoproperty.html#moveitemtoproperty-int-int-int-readonlyspan-byte">MoveItemToProperty(int, int, int, ReadOnlySpan&lt;byte&gt;)</a></td>
+<td>Moves an array item from a source array to a destination object as a new property. Handles removing existing destination properties.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-internal-imutablejsondocument.movepropertytoarray.html#movepropertytoarray-int-readonlyspan-byte-int-int">MovePropertyToArray(int, ReadOnlySpan&lt;byte&gt;, int, int)</a></td>
+<td>Moves a property from a source object into a destination array at the specified index.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-internal-imutablejsondocument.movepropertytoarrayend.html#movepropertytoarrayend-int-readonlyspan-byte-int">MovePropertyToArrayEnd(int, ReadOnlySpan&lt;byte&gt;, int)</a></td>
+<td>Moves a property from a source object to the end of a destination array.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-internal-imutablejsondocument.movepropertytoproperty.html#movepropertytoproperty-int-readonlyspan-byte-int-readonlyspan-byte">MovePropertyToProperty(int, ReadOnlySpan&lt;byte&gt;, int, ReadOnlySpan&lt;byte&gt;)</a></td>
+<td>Moves a property from a source object to a destination object as a new property. Handles removing existing destination properties and same-property no-ops.</td>
+</tr>
+<tr>
 <td><a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-internal-imutablejsondocument.overwriteanddispose.html#overwriteanddispose-int-int-int-int-ref-complexvaluebuilder">OverwriteAndDispose(int, int, int, int, ref ComplexValueBuilder)</a></td>
 <td>Overwrites values in the document and disposes the provided <a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-internal-complexvaluebuilder.html"><code>ComplexValueBuilder</code></a>.</td>
 </tr>
 <tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-internal-imutablejsondocument.overwritefromdocument.html#overwritefromdocument-int-int-int-int-ijsondocument-int">OverwriteFromDocument(int, int, int, int, IJsonDocument, int)</a></td>
+<td>Overwrites a range with element rows from a source document, bypassing <a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-internal-complexvaluebuilder.html"><code>ComplexValueBuilder</code></a>.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-internal-imutablejsondocument.overwritesimplevalue.html#overwritesimplevalue-int-int-int-int-jsontokentype-int-int">OverwriteSimpleValue(int, int, int, int, JsonTokenType, int, int)</a></td>
+<td>Overwrites a range with a single simple value row directly, bypassing <a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-internal-complexvaluebuilder.html"><code>ComplexValueBuilder</code></a>.</td>
+</tr>
+<tr>
 <td><a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-internal-imutablejsondocument.removerange.html#removerange-int-int-int-int">RemoveRange(int, int, int, int)</a></td>
 <td>Removes a range of values from the document.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-internal-imutablejsondocument.replacerootanddispose.html#replacerootanddispose-ref-complexvaluebuilder">ReplaceRootAndDispose(ref ComplexValueBuilder)</a></td>
+<td>Replaces the root value of an already-initialized document, disposing the old value and the provided <a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-internal-complexvaluebuilder.html"><code>ComplexValueBuilder</code></a>.</td>
 </tr>
 <tr>
 <td><a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-internal-imutablejsondocument.setanddispose.html#setanddispose-ref-complexvaluebuilder">SetAndDispose(ref ComplexValueBuilder)</a></td>
@@ -198,6 +262,14 @@
 <tr>
 <td><a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-internal-imutablejsondocument.trygetnamedpropertyvalueindex.html">TryGetNamedPropertyValueIndex</a></td>
 <td>Gets the named property value from a specific <a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-internal-metadatadb.html"><code>MetadataDb</code></a>.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-internal-imutablejsondocument.tryreplacepropertyfromdocument.html#tryreplacepropertyfromdocument-int-readonlyspan-byte-ijsondocument-int">TryReplacePropertyFromDocument(int, ReadOnlySpan&lt;byte&gt;, IJsonDocument, int)</a></td>
+<td>Replaces an existing property value with element rows from a source document.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-internal-imutablejsondocument.tryreplacepropertyvalue.html#tryreplacepropertyvalue-int-readonlyspan-byte-jsontokentype-int-int">TryReplacePropertyValue(int, ReadOnlySpan&lt;byte&gt;, JsonTokenType, int, int)</a></td>
+<td>Replaces an existing property value with a simple scalar value.</td>
 </tr>
 </tbody>
 </table>

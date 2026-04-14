@@ -106,7 +106,7 @@
 <h2 id="implements">Implements</h2>
 <p><a href="https://learn.microsoft.com/dotnet/api/system.idisposable"><code>IDisposable</code></a></p>
 <h2 id="implemented-by">Implemented By</h2>
-<p><a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-internal-fixedstringjsondocument-t.html"><code>FixedStringJsonDocument&lt;T&gt;</code></a>, <a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-internal-imutablejsondocument.html"><code>IMutableJsonDocument</code></a>, <a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsondocumentbuilder-t.html"><code>JsonDocumentBuilder&lt;T&gt;</code></a>, <a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-parsedjsondocument-t.html"><code>ParsedJsonDocument&lt;T&gt;</code></a></p>
+<p><a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-internal-fixedjsonvaluedocument-t.html"><code>FixedJsonValueDocument&lt;T&gt;</code></a>, <a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-internal-fixedstringjsondocument-t.html"><code>FixedStringJsonDocument&lt;T&gt;</code></a>, <a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-internal-imutablejsondocument.html"><code>IMutableJsonDocument</code></a>, <a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-internal-iworkspacemanageddocument.html"><code>IWorkspaceManagedDocument</code></a>, <a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsondocumentbuilder-t.html"><code>JsonDocumentBuilder&lt;T&gt;</code></a>, <a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-parsedjsondocument-t.html"><code>ParsedJsonDocument&lt;T&gt;</code></a></p>
 <h2 id="properties">Properties</h2>
 <table>
 <thead>
@@ -281,6 +281,10 @@
 <tr>
 <td><a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-internal-ijsondocument.writeelementto.html#writeelementto-int-utf8jsonwriter">WriteElementTo(int, Utf8JsonWriter)</a></td>
 <td>Writes the element at the specified index to the provided JSON writer.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-internal-ijsondocument.writeelementtometadatadb.html#writeelementtometadatadb-int-jsonworkspace-ref-metadatadb-int">WriteElementToMetadataDb(int, JsonWorkspace, ref MetadataDb, int)</a></td>
+<td>Writes the element at the given index into the specified metadata database at a specific position, creating external reference rows. This is the positional variant of...</td>
 </tr>
 <tr>
 <td><a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-internal-ijsondocument.writepropertyname.html#writepropertyname-int-utf8jsonwriter">WritePropertyName(int, Utf8JsonWriter)</a></td>

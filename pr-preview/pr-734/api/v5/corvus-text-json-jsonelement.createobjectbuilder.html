@@ -99,10 +99,10 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Text.Json<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
-<strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/heads/pull/734/merge/src/Corvus.Text.Json/Corvus/Text/Json/DocumentBuilder/JsonElement.Mutable.cs#L1602">JsonElement.Mutable.cs</a></p>
-<h2 id="createobjectbuilder-jsonworkspace-int">CreateObjectBuilder(JsonWorkspace, int)</h2>
+<strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/heads/pull/734/merge/src/Corvus.Text.Json/Corvus/Text/Json/DocumentBuilder/JsonElement.Mutable.cs#L1763">JsonElement.Mutable.cs</a></p>
+<h2 id="createobjectbuilder-jsonworkspace-int-int">CreateObjectBuilder(JsonWorkspace, int, int)</h2>
 <p>Creates an empty mutable object document builder.</p>
-<pre><code class="language-csharp">public static JsonDocumentBuilder&lt;JsonElement.Mutable&gt; CreateObjectBuilder(JsonWorkspace workspace, int estimatedMemberCount)
+<pre><code class="language-csharp">public static JsonDocumentBuilder&lt;JsonElement.Mutable&gt; CreateObjectBuilder(JsonWorkspace workspace, int estimatedMemberCount, int initialValueBufferSize)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -123,6 +123,11 @@
 <td><code>estimatedMemberCount</code></td>
 <td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>int</code></a></td>
 <td>The estimated number of members in the document. <em>(optional)</em></td>
+</tr>
+<tr>
+<td><code>initialValueBufferSize</code></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>int</code></a></td>
+<td><em>(optional)</em></td>
 </tr>
 </tbody>
 </table>

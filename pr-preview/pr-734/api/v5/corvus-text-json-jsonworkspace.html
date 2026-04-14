@@ -150,12 +150,20 @@
 <td>Disposes the workspace. If the workspace was rented from the cache, returns it; otherwise disposes all child documents and returns the backing array to the pool.</td>
 </tr>
 <tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonworkspace.registerdocument.html#registerdocument-iworkspacemanageddocument">RegisterDocument(IWorkspaceManagedDocument)</a></td>
+<td>Registers a workspace-managed document so that it will be disposed when the workspace is disposed or reset. Use this for pooled documents (e.g., <code>FixedJsonValueDocument</code>) that are created outside o...</td>
+</tr>
+<tr>
 <td><a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonworkspace.rentwriter.html#rentwriter-ibufferwriter-byte">RentWriter(IBufferWriter&lt;byte&gt;)</a></td>
 <td>Rents a UTF-8 JSON writer from the pool that writes to the specified buffer writer.</td>
 </tr>
 <tr>
 <td><a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonworkspace.rentwriterandbuffer.html#rentwriterandbuffer-int-ref-ibytebufferwriter">RentWriterAndBuffer(int, ref IByteBufferWriter)</a></td>
 <td>Rents a UTF-8 JSON writer and associated buffer writer from the pool.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonworkspace.reset.html#reset">Reset()</a></td>
+<td>Resets the workspace for reuse, disposing all workspace-managed documents and clearing the document tracking state. The backing array is retained so subsequent evaluations avoid re-allocation.</td>
 </tr>
 <tr>
 <td><a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonworkspace.returnwriter.html#returnwriter-utf8jsonwriter">ReturnWriter(Utf8JsonWriter)</a></td>
@@ -171,12 +179,17 @@
 <p>A <code>JsonWorkspace</code> manages pooled memory for mutable JSON operations. Always use a <code>using</code> statement to ensure resources are returned.</p>
 <pre><code class="language-csharp">using JsonWorkspace workspace = JsonWorkspace.Create();
 
-using ParsedJsonDocument&lt;Person&gt; doc =
-    ParsedJsonDocument&lt;Person&gt;.Parse(personJson);
-using var builder = doc.RootElement.CreateBuilder(workspace);
+// Parse directly into a mutable builder (recommended when mutating)
+using var builder = JsonDocumentBuilder&lt;Person.Mutable&gt;.Parse(
+    workspace, personJson);
 
 Person.Mutable root = builder.RootElement;
 root.SetAge(31);
+</code></pre>
+<p>You can also create a builder from an existing <code>ParsedJsonDocument</code> if you want to retain an immutable copy of the original (e.g., for comparison or auditing):</p>
+<pre><code class="language-csharp">using ParsedJsonDocument&lt;Person&gt; doc =
+    ParsedJsonDocument&lt;Person&gt;.Parse(personJson);
+using var builder = doc.RootElement.CreateBuilder(workspace);
 </code></pre>
 <h3 id="multiple-builders-sharing-a-workspace">Multiple builders sharing a workspace</h3>
 <p>Several <code>JsonDocumentBuilder&lt;T&gt;</code> instances can share a single workspace:</p>

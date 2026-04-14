@@ -40,6 +40,12 @@
     background: rgb(111 177 40 / 0.1);
     border-radius: var(--radius-md);
     color: var(--color-brand);
+
+    img {
+      width: 2rem;
+      height: 2rem;
+      object-fit: contain;
+    }
   }
 
   // ---- Title ----

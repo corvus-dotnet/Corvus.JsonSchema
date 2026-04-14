@@ -125,6 +125,15 @@
                             <li class="sidebar__item">
                                 <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/docs/schema-evaluator.html">Standalone Schema Evaluator</a>
                             </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/docs/json-patch.html">JSON Patch (RFC 6902)</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/docs/json-logic.html">JsonLogic Rule Engine</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/docs/jsonata.html">JSONata Query Language</a>
+                            </li>
                 </ul>
             </div>
         </div>
@@ -197,6 +206,9 @@
                             </li>
                             <li class="sidebar__item">
                                 <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/format-validation.html">Format Validation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/json-patch.html">JSON Patch (RFC 6902)</a>
                             </li>
                 </ul>
             </div>
@@ -451,11 +463,45 @@ using var usersDoc = JsonElement.CreateBuilder(
 Console.WriteLine(usersDoc.RootElement.ToString());
 </code></pre>
 <h2 id="working-with-existing-json">Working with Existing JSON</h2>
-<p>In many applications, you receive JSON from an API, file, or database, modify it, and send it on its way. The pattern is straightforward - parse, mutate, serialize.</p>
-<h3 id="from-parsedjsondocument">From ParsedJsonDocument</h3>
+<p>In many applications, you receive JSON from an API, file, or database, modify it, and send it on its way. The pattern is straightforward — parse, mutate, serialize.</p>
+<h3 id="direct-parse-to-builder-recommended">Direct Parse to Builder (Recommended)</h3>
+<p>If you know you'll be modifying the JSON, parse directly into a mutable builder. This is the fastest approach — a single pass over the input, no intermediate document, and no per-value copies. The raw UTF-8 bytes become the builder's backing store, and mutations append on top.</p>
 <pre><code class="language-csharp">using JsonWorkspace workspace = JsonWorkspace.Create();
 
-// JSON from wherever - API, file, database
+// Parse directly into a mutable builder — single pass, zero copy
+using JsonDocumentBuilder&lt;JsonElement.Mutable&gt; builder =
+    JsonDocumentBuilder&lt;JsonElement.Mutable&gt;.Parse(
+        workspace,
+        &quot;&quot;&quot;{&quot;status&quot;:&quot;pending&quot;,&quot;count&quot;:5}&quot;&quot;&quot;);
+
+JsonElement.Mutable root = builder.RootElement;
+root.SetProperty(&quot;status&quot;, &quot;completed&quot;u8);
+root.SetProperty(&quot;count&quot;, 10);
+
+Console.WriteLine(builder.RootElement.ToString());
+// Output: {&quot;status&quot;:&quot;completed&quot;,&quot;count&quot;:10}
+</code></pre>
+<p>All the same <code>Parse</code> overloads are available — from UTF-8 bytes, strings, streams, or a <code>Utf8JsonReader</code>:</p>
+<pre><code class="language-csharp">// From UTF-8 bytes (fastest — no transcoding)
+using var fromBytes = JsonDocumentBuilder&lt;JsonElement.Mutable&gt;.Parse(
+    workspace, utf8Data);
+
+// From a string
+using var fromString = JsonDocumentBuilder&lt;JsonElement.Mutable&gt;.Parse(
+    workspace, jsonString);
+
+// From a stream (handles BOM detection)
+using var fromStream = JsonDocumentBuilder&lt;JsonElement.Mutable&gt;.Parse(
+    workspace, httpResponseStream);
+
+// From a Utf8JsonReader (parse a single value)
+using var fromReader = JsonDocumentBuilder&lt;JsonElement.Mutable&gt;.ParseValue(
+    workspace, ref reader);
+</code></pre>
+<h3 id="from-parsedjsondocument">From ParsedJsonDocument</h3>
+<p>If you want to retain an immutable copy of the original document (e.g., for comparison, read-only queries, or auditing) alongside the mutable builder, use the two-step approach.</p>
+<pre><code class="language-csharp">using JsonWorkspace workspace = JsonWorkspace.Create();
+
 string json = &quot;&quot;&quot;
     {
         &quot;name&quot;: &quot;Original&quot;,
@@ -463,43 +509,45 @@ string json = &quot;&quot;&quot;
     }
     &quot;&quot;&quot;;
 
-// Parse it - gives you an immutable, read-only document
+// Parse into a read-only document first
 using ParsedJsonDocument&lt;JsonElement&gt; sourceDoc =
     ParsedJsonDocument&lt;JsonElement&gt;.Parse(json);
 
-// Make it mutable - copies data into the workspace
+// Then convert to a mutable builder
 using JsonDocumentBuilder&lt;JsonElement.Mutable&gt; builder =
     sourceDoc.RootElement.CreateBuilder(workspace);
 
-// Now you can modify it (more on that below)
 JsonElement.Mutable root = builder.RootElement;
 Console.WriteLine(root.ToString());
 </code></pre>
 <h3 id="cloning-and-modifying">Cloning and Modifying</h3>
-<p>You'll often receive JSON from an API, file, or database, modify parts of it, and send it on its way. This pattern appears frequently in middleware, API gateways, and data transformation pipelines.</p>
+<p>You can also parse-and-modify in a single flow. This pattern appears frequently in middleware, API gateways, and data transformation pipelines.</p>
 <pre><code class="language-csharp">using JsonWorkspace workspace = JsonWorkspace.Create();
 
-string originalJson = &quot;&quot;&quot;
-    {
-        &quot;status&quot;: &quot;pending&quot;,
-        &quot;count&quot;: 5
-    }
-    &quot;&quot;&quot;;
+using JsonDocumentBuilder&lt;JsonElement.Mutable&gt; builder =
+    JsonDocumentBuilder&lt;JsonElement.Mutable&gt;.Parse(
+        workspace,
+        &quot;&quot;&quot;
+        {
+            &quot;status&quot;: &quot;pending&quot;,
+            &quot;count&quot;: 5,
+            &quot;timestamp&quot;: &quot;2024-01-15T10:30:00Z&quot;
+        }
+        &quot;&quot;&quot;);
 
-using ParsedJsonDocument&lt;JsonElement&gt; original =
-    ParsedJsonDocument&lt;JsonElement&gt;.Parse(originalJson);
-
-using JsonDocumentBuilder&lt;JsonElement.Mutable&gt; modified =
-    original.RootElement.CreateBuilder(workspace);
-
-// Make your changes
-JsonElement.Mutable root = modified.RootElement;
+// Modify selected properties, leave the rest untouched
+JsonElement.Mutable root = builder.RootElement;
 root.SetProperty(&quot;status&quot;, &quot;completed&quot;u8);
 root.SetProperty(&quot;count&quot;, 10);
 
-Console.WriteLine(modified.RootElement.ToString());
-// Output: {&quot;status&quot;:&quot;completed&quot;,&quot;count&quot;:10}
+Console.WriteLine(builder.RootElement.ToString());
+// Output: {&quot;status&quot;:&quot;completed&quot;,&quot;count&quot;:10,&quot;timestamp&quot;:&quot;2024-01-15T10:30:00Z&quot;}
 </code></pre>
+<p><strong>When to use which approach:</strong></p>
+<ul>
+<li><strong><code>JsonDocumentBuilder&lt;T&gt;.Parse()</code></strong> — when you intend to mutate the document. Single pass, best performance.</li>
+<li><strong><code>ParsedJsonDocument&lt;T&gt;.Parse()</code> → <code>CreateBuilder()</code></strong> — when you want to retain an immutable copy of the original (e.g., for comparison or auditing).</li>
+</ul>
 <h2 id="building-dynamic-json">Building Dynamic JSON</h2>
 <p>Real-world JSON isn't all static strings. You've got collections from your database, computed values, user input. Here's how you mix static structure with runtime data.</p>
 <pre><code class="language-csharp">using JsonWorkspace workspace = JsonWorkspace.Create();

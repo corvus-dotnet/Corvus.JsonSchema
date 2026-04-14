@@ -27,3 +27,6 @@ https://dotnet\.microsoft\.com
 
 # endjin.com has flaky DNS that causes intermittent CI failures
 https://endjin\.com
+
+# learn.microsoft.com intermittently returns 429 (rate limiting) in CI
+https://learn\.microsoft\.com

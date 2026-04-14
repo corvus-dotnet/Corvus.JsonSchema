@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#1C1D21" />
+    <meta name="description" content="This recipe demonstrates how to apply [RFC 6902 JSON Patch](https://datatracker.ietf.org/doc/html/rfc6902) operations to mutable documents using the `Corvus.Text.Json.Patch` library." />
+    <meta name="keywords" content="recipe, JSON Schema, C#, json, patch, rfc, 6902, type, required, properties, format, items" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:description" content="This recipe demonstrates how to apply [RFC 6902 JSON Patch](https://datatracker.ietf.org/doc/html/rfc6902) operations to mutable documents using the `Corvus.Text.Json.Patch` library." />
+    <meta name="twitter:image" content="/Corvus.JsonSchema/pr-preview/pr-734/assets/images/og-corvus.png" />
+    <meta name="twitter:title" content="JSON Patch (RFC 6902) - Corvus.Text.Json Examples" />
+    <meta property="article:tag" content="recipe" />
+    <meta property="article:tag" content="JSON Schema" />
+    <meta property="article:tag" content="C#" />
+    <meta property="article:tag" content="json" />
+    <meta property="article:tag" content="patch" />
+    <meta property="article:tag" content="rfc" />
+    <meta property="article:tag" content="6902" />
+    <meta property="article:tag" content="type" />
+    <meta property="article:tag" content="required" />
+    <meta property="article:tag" content="properties" />
+    <meta property="article:tag" content="format" />
+    <meta property="article:tag" content="items" />
+    <meta property="og:description" content="This recipe demonstrates how to apply [RFC 6902 JSON Patch](https://datatracker.ietf.org/doc/html/rfc6902) operations to mutable documents using the `Corvus.Text.Json.Patch` library." />
+    <meta property="og:image" content="/Corvus.JsonSchema/pr-preview/pr-734/assets/images/og-corvus.png" />
+    <meta property="og:title" content="JSON Patch (RFC 6902) - Corvus.Text.Json Examples" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://corvus-oss.org/corvus-json-schema/examples/json-patch/" />
+    <title>JSON Patch (RFC 6902) - Corvus.Text.Json Examples</title>
+    <link itemprop="url" href="https://corvus-oss.org/corvus-json-schema/examples/json-patch/" />
+    <link rel="canonical" href="https://corvus-oss.org/corvus-json-schema/examples/json-patch/" />
+    <link rel="sitemap" href="https://corvus-oss.org/corvus-json-schema/sitemap.xml" />
+    <!-- Styles -->
+    <link rel="stylesheet" href="/Corvus.JsonSchema/pr-preview/pr-734/main.css" />
+    <link rel="icon" type="image/svg+xml" href="/Corvus.JsonSchema/pr-preview/pr-734/assets/images/favicon.svg" />
+    
+</head>
+<body>
+    <a class="sr-only" href="#main-content">Skip to content</a>
+<header class="site-header">
+    <div class="site-header__inner">
+        <a class="site-header__brand" href="/Corvus.JsonSchema/pr-preview/pr-734/index.html" aria-label="Corvus.JsonSchema home">
+            <img src="/Corvus.JsonSchema/pr-preview/pr-734/assets/images/logo-corvus.svg" alt="" width="28" height="28" aria-hidden="true" />
+            Corvus<span style="color:var(--color-brand)">.</span>Json<span style="color:var(--color-brand)">Schema</span>
+        </a>
+        <nav class="site-header__nav-desktop" aria-label="Main navigation">
+                    <a href="/Corvus.JsonSchema/pr-preview/pr-734/getting-started/index.html"
+                       class="site-header__link "
+                       >Getting Started</a>
+                    <a href="/Corvus.JsonSchema/pr-preview/pr-734/docs/index.html"
+                       class="site-header__link "
+                       >Documentation</a>
+                    <a href="/Corvus.JsonSchema/pr-preview/pr-734/examples/index.html"
+                       class="site-header__link is-active"
+                       aria-current=page>Examples</a>
+                    <a href="/Corvus.JsonSchema/pr-preview/pr-734/api/index.html"
+                       class="site-header__link "
+                       >API</a>
+            <a href="/Corvus.JsonSchema/pr-preview/pr-734/playground/"
+               class="site-header__link"
+               target="_blank" rel="noopener noreferrer"
+               title="Interactive JSON Schema playground">Playground</a>
+            <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema"
+               class="site-header__link" target="_blank" rel="noopener noreferrer"
+               aria-label="View on GitHub">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+            </a>
+        </nav>
+        <button class="site-header__menu-toggle js-toggle-menu"
+                aria-expanded="false" aria-label="Toggle menu">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+            </svg>
+        </button>
+    </div>
+</header>
+<nav class="site-header__nav-mobile js-mobile-nav" aria-label="Mobile navigation">
+            <a href="/Corvus.JsonSchema/pr-preview/pr-734/getting-started/index.html" class="site-header__link">Getting Started</a>
+            <a href="/Corvus.JsonSchema/pr-preview/pr-734/docs/index.html" class="site-header__link">Documentation</a>
+            <a href="/Corvus.JsonSchema/pr-preview/pr-734/examples/index.html" class="site-header__link">Examples</a>
+            <a href="/Corvus.JsonSchema/pr-preview/pr-734/api/index.html" class="site-header__link">API</a>
+    <a href="/Corvus.JsonSchema/pr-preview/pr-734/playground/" class="site-header__link" target="_blank" rel="noopener noreferrer">Playground</a>
+    <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema"
+       class="site-header__link" target="_blank" rel="noopener noreferrer">GitHub</a>
+</nav>
+
+    <div class="page-content">
+    <div class="layout-docs container">
+    <button class="sidebar-toggle" aria-label="Toggle navigation" aria-expanded="false"></button>
+<div class="sidebar-backdrop"></div>
+<aside class="sidebar">
+    <div class="sidebar__inner">
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Getting Started</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                    <li class="sidebar__item"><a class="sidebar__link" href="/Corvus.JsonSchema/pr-preview/pr-734/getting-started/index.html">Tutorial</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Documentation</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/docs/parsed-json-document.html">Parsing &amp; Reading JSON</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/docs/json-document-builder.html">Building &amp; Mutating JSON</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/docs/source-generator.html">Source Generator</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/docs/code-generator.html">CLI Code Generation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/docs/validator.html">Dynamic Schema Validation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/docs/migrating-from-v4-to-v5.html">Migrating from V4</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/docs/using-copilot-for-migration.html">Copilot Migration</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/docs/migration-analyzers.html">Migration Analyzers</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/docs/analyzers.html">Analyzers</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/docs/schema-evaluator.html">Standalone Schema Evaluator</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/docs/json-patch.html">JSON Patch (RFC 6902)</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/docs/json-logic.html">JsonLogic Rule Engine</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/docs/jsonata.html">JSONata Query Language</a>
+                            </li>
+                </ul>
+            </div>
+        </div>
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Examples</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/data-object.html">Simple Data Objects</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/data-object-validation.html">Data Object Validation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/reusing-common-types.html">Reusing Common Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/open-versus-closed-types.html">Open Versus Closed Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/extending-a-base-type.html">Extending a Base Type</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/constraining-a-base-type.html">Constraining a Base Type</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/creating-a-strongly-typed-array.html">Strongly Typed Arrays</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/creating-an-array-of-higher-rank.html">Multi-Dimensional Arrays</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/working-with-tensors.html">Working with Tensors</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/creating-tuples.html">Creating Tuples</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/interfaces-and-mix-in-types.html">Interfaces and Mix-In Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/pattern-matching.html">Pattern Matching and Discriminated Unions</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/polymorphism-with-discriminators.html">Polymorphism with Discriminator Properties</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/string-enumerations.html">String Enumerations and Pattern Matching</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/numeric-enumerations.html">Numeric Enumerations</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/maps.html">Maps of Strings to Strongly Typed Values</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/mapping-input-and-output-values.html">Mapping Input and Output Values</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/creating-and-mutating-objects.html">Creating and Mutating Objects</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/clone-and-freeze.html">Clone and Freeze</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/conditional-schemas.html">Conditional Schemas</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/default-values.html">Default Values</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/format-validation.html">Format Validation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link is-active" href="/Corvus.JsonSchema/pr-preview/pr-734/examples/json-patch.html">JSON Patch (RFC 6902)</a>
+                            </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</aside>
+
+    <main id="main-content" class="layout-docs__main">
+        <div class="doc__content">
+            <h1>JSON Patch (RFC 6902)</h1>
+                <div class="card__tags" style="margin-bottom:1.5rem">
+                        <span class="card__tag">recipe</span>
+                        <span class="card__tag">JSON Schema</span>
+                        <span class="card__tag">C#</span>
+                        <span class="card__tag">json</span>
+                        <span class="card__tag">patch</span>
+                        <span class="card__tag">rfc</span>
+                        <span class="card__tag">6902</span>
+                        <span class="card__tag">type</span>
+                        <span class="card__tag">required</span>
+                        <span class="card__tag">properties</span>
+                        <span class="card__tag">format</span>
+                        <span class="card__tag">items</span>
+                </div>
+<p>This recipe demonstrates how to apply <a href="https://datatracker.ietf.org/doc/html/rfc6902">RFC 6902 JSON Patch</a> operations to mutable documents using the <code>Corvus.Text.Json.Patch</code> library. It covers building patches fluently, applying individual operations, conditional patches with <code>test</code>, and parsing patches from raw JSON.</p>
+<h2 id="the-pattern">The Pattern</h2>
+<p>JSON Patch is a standard format for describing modifications to a JSON document. A patch is a JSON array of operation objects, each specifying an <code>op</code> (add, remove, replace, move, copy, or test), a <code>path</code> (a JSON Pointer per RFC 6901), and optionally a <code>value</code> or <code>from</code> field.</p>
+<p>In Corvus.Text.Json, patches are applied to mutable elements (<code>JsonElement.Mutable</code>) obtained from a <code>JsonDocumentBuilder</code>. You can construct patches programmatically with the fluent <code>PatchBuilder</code>, parse them from JSON, or apply individual operations directly.</p>
+<h2 id="the-schema">The Schema</h2>
+<p>File: <code>person.json</code></p>
+<pre><code class="language-json">{
+    &quot;title&quot;: &quot;Person&quot;,
+    &quot;type&quot;: &quot;object&quot;,
+    &quot;required&quot;: [&quot;name&quot;, &quot;age&quot;],
+    &quot;properties&quot;: {
+        &quot;name&quot;: { &quot;type&quot;: &quot;string&quot; },
+        &quot;age&quot;: { &quot;type&quot;: &quot;integer&quot;, &quot;format&quot;: &quot;int32&quot; },
+        &quot;email&quot;: { &quot;type&quot;: &quot;string&quot;, &quot;format&quot;: &quot;email&quot; },
+        &quot;tags&quot;: {
+            &quot;type&quot;: &quot;array&quot;,
+            &quot;items&quot;: { &quot;type&quot;: &quot;string&quot; }
+        }
+    }
+}
+</code></pre>
+<h2 id="generated-code-usage">Generated Code Usage</h2>
+<p><a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/v5/docs/ExampleRecipes/023-JsonPatch/Program.cs">Example code</a></p>
+<h3 id="setup-parse-and-create-a-mutable-builder">Setup: parse and create a mutable builder</h3>
+<pre><code class="language-csharp">string personJson =
+    &quot;&quot;&quot;
+    {
+        &quot;name&quot;: &quot;Alice&quot;,
+        &quot;age&quot;: 30,
+        &quot;email&quot;: &quot;alice@example.com&quot;,
+        &quot;tags&quot;: [&quot;user&quot;]
+    }
+    &quot;&quot;&quot;;
+
+using var parsedDoc = ParsedJsonDocument&lt;Person&gt;.Parse(personJson);
+using JsonWorkspace workspace = JsonWorkspace.Create();
+using var builder = parsedDoc.RootElement.CreateBuilder(workspace);
+Person.Mutable root = builder.RootElement;
+</code></pre>
+<h3 id="building-and-applying-a-patch-with-patchbuilder">Building and applying a patch with PatchBuilder</h3>
+<p>The <code>PatchBuilder</code> provides a fluent API for constructing patch documents. Call <code>BeginPatch()</code> to start, chain operations, and call <code>GetPatchAndDispose()</code> to finalize:</p>
+<pre><code class="language-csharp">JsonPatchDocument patch = root.BeginPatch()
+    .Replace(&quot;/name&quot;u8, &quot;Bob&quot;)
+    .Add(&quot;/tags/-&quot;u8, &quot;admin&quot;)
+    .Remove(&quot;/email&quot;u8)
+    .GetPatchAndDispose();
+
+bool success = root.TryApplyPatch(in patch);
+// Result: {&quot;name&quot;:&quot;Bob&quot;,&quot;age&quot;:30,&quot;tags&quot;:[&quot;user&quot;,&quot;admin&quot;]}
+</code></pre>
+<h3 id="applying-individual-operations">Applying individual operations</h3>
+<p>Each RFC 6902 operation is available as a standalone extension method:</p>
+<pre><code class="language-csharp">root.TryAdd(&quot;/email&quot;u8, &quot;bob@example.com&quot;);       // add a property
+root.TryReplace(&quot;/age&quot;u8, 31);                     // replace a value
+root.TryRemove(&quot;/email&quot;u8);                        // remove a property
+root.TryCopy(&quot;/name&quot;u8, &quot;/display_name&quot;u8);        // copy a value
+root.TryMove(&quot;/display_name&quot;u8, &quot;/nickname&quot;u8);     // move a value
+</code></pre>
+<h3 id="testing-values">Testing values</h3>
+<p>The <code>test</code> operation checks that a value at a path equals an expected value without mutating the document:</p>
+<pre><code class="language-csharp">bool matches = root.TryTest(&quot;/name&quot;u8, JsonElement.ParseValue(&quot;&quot;&quot;
+    &quot;Bob&quot;
+    &quot;&quot;&quot;u8));   // true
+bool fails   = root.TryTest(&quot;/name&quot;u8, JsonElement.ParseValue(&quot;&quot;&quot;
+    &quot;Alice&quot;
+    &quot;&quot;&quot;u8));   // false
+</code></pre>
+<h3 id="conditional-patches-with-test-guards">Conditional patches with Test guards</h3>
+<p>When <code>test</code> is used in a patch document, a failing test aborts the entire patch. This enables optimistic concurrency patterns:</p>
+<pre><code class="language-csharp">JsonPatchDocument guardedPatch = root.BeginPatch()
+    .Test(&quot;/name&quot;u8, &quot;Bob&quot;)           // guard: only apply if name is Bob
+    .Replace(&quot;/name&quot;u8, &quot;Charlie&quot;)    // update name
+    .GetPatchAndDispose();
+
+bool success = root.TryApplyPatch(in guardedPatch);
+// success is true only if /name was &quot;Bob&quot;
+</code></pre>
+<h3 id="parsing-patches-from-json">Parsing patches from JSON</h3>
+<p>You can also parse a patch document directly from raw JSON:</p>
+<pre><code class="language-csharp">JsonPatchDocument parsedPatch = JsonPatchDocument.Parse(
+    &quot;&quot;&quot;
+    [
+        { &quot;op&quot;: &quot;replace&quot;, &quot;path&quot;: &quot;/age&quot;, &quot;value&quot;: 32 },
+        { &quot;op&quot;: &quot;add&quot;, &quot;path&quot;: &quot;/tags/-&quot;, &quot;value&quot;: &quot;verified&quot; }
+    ]
+    &quot;&quot;&quot;u8);
+
+root.TryApplyPatch(in parsedPatch);
+</code></pre>
+<h2 id="faq">FAQ</h2>
+<h3 id="what-happens-if-a-patch-operation-fails">What happens if a patch operation fails?</h3>
+<p>All <code>Try*</code> methods return <code>false</code> on failure. When <code>TryApplyPatch</code> processes a multi-operation patch, operations that were applied before the failure are <strong>not</strong> rolled back — the document is left in a partially-patched state. Use <code>test</code> guards or snapshot/restore if you need atomic semantics.</p>
+<h3 id="what-path-format-do-the-operations-use">What path format do the operations use?</h3>
+<p>Paths follow <a href="https://datatracker.ietf.org/doc/html/rfc6901">RFC 6901 JSON Pointer</a> syntax. Segments are separated by <code>/</code>, with <code>~0</code> escaping <code>~</code> and <code>~1</code> escaping <code>/</code>. The empty string <code>&quot;&quot;</code> refers to the root document.</p>
+<h3 id="can-i-use-string-paths-instead-of-utf-8">Can I use string paths instead of UTF-8?</h3>
+<p>Yes. All path-accepting methods have <code>ReadOnlySpan&lt;byte&gt;</code>, <code>ReadOnlySpan&lt;char&gt;</code>, and <code>string</code> overloads. UTF-8 byte literals (<code>&quot;...&quot;u8</code>) are preferred for performance.</p>
+<h2 id="running-the-example">Running the Example</h2>
+<pre><code class="language-bash">cd docs/ExampleRecipes/023-JsonPatch
+dotnet run
+</code></pre>
+<h2 id="related-patterns">Related Patterns</h2>
+<ul>
+<li><a href="/Corvus.JsonSchema/pr-preview/pr-734/examples/creating-and-mutating-objects.html">018-CreatingAndMutatingObjects</a> — Mutable document lifecycle</li>
+<li><a href="/Corvus.JsonSchema/pr-preview/pr-734/examples/clone-and-freeze.html">019-CloneAndFreeze</a> — Cloning mutable elements into independent immutable documents</li>
+</ul>
+        </div>
+    </main>
+</div>
+
+    </div>
+    <footer class="site-footer">
+    <div class="site-footer__inner">
+        <div class="site-footer__sponsor">
+            Sponsored by
+            <a href="https://endjin.com" target="_blank" rel="noopener noreferrer">endjin</a>
+        </div>
+        <ul class="site-footer__links" role="list">
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/pr-preview/pr-734/getting-started/index.html">Getting Started</a></li>
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/pr-preview/pr-734/docs/index.html">Documentation</a></li>
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/pr-preview/pr-734/examples/index.html">Examples</a></li>
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/pr-preview/pr-734/api/index.html">API</a></li>
+            <li><a class="site-footer__link" href="https://github.com/corvus-dotnet/Corvus.JsonSchema" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+            <li><a class="site-footer__link" href="https://www.nuget.org/packages?q=Corvus.Json" target="_blank" rel="noopener noreferrer">NuGet</a></li>
+        </ul>
+        <p class="site-footer__copyright">&copy; 2026 endjin Ltd.</p>
+    </div>
+</footer>
+
+    <!-- highlight.js for syntax highlighting (CSS targets .hljs-* classes) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/csharp.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/json.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/bash.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/xml.min.js" defer></script>
+    <script>document.addEventListener('DOMContentLoaded',()=>hljs.highlightAll())</script>
+    <script src="/Corvus.JsonSchema/pr-preview/pr-734/assets/js/main.js" defer></script>
+    <script src="/Corvus.JsonSchema/pr-preview/pr-734/assets/js/sidebar-search.js" defer></script>
+    
+</body>
+</html>

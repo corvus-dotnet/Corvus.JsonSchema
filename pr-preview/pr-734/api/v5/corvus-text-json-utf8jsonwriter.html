@@ -238,6 +238,14 @@
 <td>Writes the pre-encoded property name (as a JSON string) as the first part of a name/value pair of a JSON object.</td>
 </tr>
 <tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-utf8jsonwriter.writerawpropertyname.html#writerawpropertyname-readonlyspan-byte">WriteRawPropertyName(ReadOnlySpan&lt;byte&gt;)</a></td>
+<td>Writes the property name (as a JSON string) as the first part of a name/value pair of a JSON object. The caller guarantees the property name is already properly escaped for the default encoder.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-utf8jsonwriter.writerawstringvalue.html#writerawstringvalue-readonlyspan-byte">WriteRawStringValue(ReadOnlySpan&lt;byte&gt;)</a></td>
+<td>Writes the pre-escaped UTF-8 text value (as a JSON string). The caller guarantees the value is already properly escaped for the default encoder.</td>
+</tr>
+<tr>
 <td><a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-utf8jsonwriter.writerawvalue.html">WriteRawValue</a></td>
 <td>Writes the input as JSON content. It is expected that the input content is a single complete JSON value.</td>
 </tr>

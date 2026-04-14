@@ -127,6 +127,15 @@
                             <li class="sidebar__item">
                                 <a class="sidebar__link" href="/Corvus.JsonSchema/pr-preview/pr-734/docs/schema-evaluator.html">Standalone Schema Evaluator</a>
                             </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link" href="/Corvus.JsonSchema/pr-preview/pr-734/docs/json-patch.html">JSON Patch (RFC 6902)</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link" href="/Corvus.JsonSchema/pr-preview/pr-734/docs/json-logic.html">JsonLogic Rule Engine</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link" href="/Corvus.JsonSchema/pr-preview/pr-734/docs/jsonata.html">JSONata Query Language</a>
+                            </li>
                 </ul>
             </div>
         </div>
@@ -782,6 +791,12 @@ root.SetEmail(&quot;michael@example.com&quot;u8);
 Console.WriteLine(root.ToString());
 // {&quot;name&quot;:{&quot;familyName&quot;:&quot;Oldroyd&quot;,&quot;givenName&quot;:&quot;Michael&quot;},&quot;age&quot;:31,&quot;email&quot;:&quot;michael@example.com&quot;}
 </code></pre>
+<blockquote>
+<p><strong>Tip:</strong> If you don't need to retain an immutable copy of the original document (e.g., for comparison or auditing), you can parse directly into the builder for better performance:</p>
+<pre><code class="language-csharp">using var builder = JsonDocumentBuilder&lt;Person.Mutable&gt;.Parse(workspace, json);
+</code></pre>
+<p>This avoids the intermediate document allocation and second pass over the data. See <a href="/Corvus.JsonSchema/pr-preview/pr-734/docs/json-document-builder.html#direct-parse-to-builder-recommended">Building &amp; Mutating JSON</a> for details.</p>
+</blockquote>
 <h3 id="version-tracking">Version tracking</h3>
 <p>The builder tracks a version number, and every <code>Mutable</code> element reference records the version at which it was obtained. If the document structure changes after you captured a reference, attempting to use that stale reference throws an <code>InvalidOperationException</code>.</p>
 <p>You can make multiple modifications to the <em>same</em> entity without re-obtaining it:</p>
