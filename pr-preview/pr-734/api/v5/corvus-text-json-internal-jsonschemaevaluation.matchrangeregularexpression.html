@@ -119,7 +119,7 @@
 </tbody>
 </table>
 <h2 id="matchrangeregularexpression-readonlyspan-byte-int-int-string-readonlyspan-byte-ref-jsonschemacontext">MatchRangeRegularExpression(ReadOnlySpan&lt;byte&gt;, int, int, string, ReadOnlySpan&lt;byte&gt;, ref JsonSchemaContext)</h2>
-<p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/heads/pull/734/merge/src/Corvus.Text.Json/Corvus/Text/Json/JsonSchema/Internal/JsonSchemaEvaluation.String.cs#L283">JsonSchemaEvaluation.String.cs</a></p>
+<p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/v5/src/Corvus.Text.Json/Corvus/Text/Json/JsonSchema/Internal/JsonSchemaEvaluation.String.cs#L283">JsonSchemaEvaluation.String.cs</a></p>
 <p>Validates that a string's Unicode codepoint length is within a range, as a replacement for patterns like <code>^.{n,m}$</code>.</p>
 <pre><code class="language-csharp">public static bool MatchRangeRegularExpression(ReadOnlySpan&lt;byte&gt; value, int min, int max, string originalExpressionString, ReadOnlySpan&lt;byte&gt; keyword, ref JsonSchemaContext context)
 </code></pre>
@@ -189,7 +189,7 @@
 </table>
 <hr />
 <h2 id="matchrangeregularexpression-readonlyspan-byte-int-int">MatchRangeRegularExpression(ReadOnlySpan&lt;byte&gt;, int, int)</h2>
-<p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/heads/pull/734/merge/src/Corvus.Text.Json/Corvus/Text/Json/JsonSchema/Internal/JsonSchemaEvaluation.String.cs#L305">JsonSchemaEvaluation.String.cs</a></p>
+<p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/v5/src/Corvus.Text.Json/Corvus/Text/Json/JsonSchema/Internal/JsonSchemaEvaluation.String.cs#L305">JsonSchemaEvaluation.String.cs</a></p>
 <p>Validates that a UTF-8 byte span's Unicode codepoint length is within a range. Used for <code>patternProperties</code> matching where no context reporting is needed.</p>
 <pre><code class="language-csharp">public static bool MatchRangeRegularExpression(ReadOnlySpan&lt;byte&gt; value, int min, int max)
 </code></pre>

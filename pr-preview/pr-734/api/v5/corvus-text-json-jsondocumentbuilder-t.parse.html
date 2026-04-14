@@ -127,7 +127,7 @@
 </tbody>
 </table>
 <h2 id="parse-jsonworkspace-readonlymemory-byte-jsondocumentoptions">Parse(JsonWorkspace, ReadOnlyMemory&lt;byte&gt;, JsonDocumentOptions)</h2>
-<p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/heads/pull/734/merge/src/Corvus.Text.Json/Corvus/Text/Json/DocumentBuilder/JsonDocumentBuilder.Parse.cs#L57">JsonDocumentBuilder.Parse.cs</a></p>
+<p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/v5/src/Corvus.Text.Json/Corvus/Text/Json/DocumentBuilder/JsonDocumentBuilder.Parse.cs#L57">JsonDocumentBuilder.Parse.cs</a></p>
 <p>Parses UTF-8 encoded JSON directly into a mutable document builder, avoiding the intermediate <a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-parsedjsondocument-t.html"><code>ParsedJsonDocument</code></a> allocation and tree walk.</p>
 <pre><code class="language-csharp">public static JsonDocumentBuilder&lt;T&gt; Parse(JsonWorkspace workspace, ReadOnlyMemory&lt;byte&gt; utf8Json, JsonDocumentOptions options)
 </code></pre>
@@ -203,7 +203,7 @@
 </table>
 <hr />
 <h2 id="parse-jsonworkspace-readonlymemory-char-jsondocumentoptions">Parse(JsonWorkspace, ReadOnlyMemory&lt;char&gt;, JsonDocumentOptions)</h2>
-<p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/heads/pull/734/merge/src/Corvus.Text.Json/Corvus/Text/Json/DocumentBuilder/JsonDocumentBuilder.Parse.cs#L88">JsonDocumentBuilder.Parse.cs</a></p>
+<p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/v5/src/Corvus.Text.Json/Corvus/Text/Json/DocumentBuilder/JsonDocumentBuilder.Parse.cs#L88">JsonDocumentBuilder.Parse.cs</a></p>
 <p>Parses text representing a single JSON value directly into a mutable document builder.</p>
 <pre><code class="language-csharp">public static JsonDocumentBuilder&lt;T&gt; Parse(JsonWorkspace workspace, ReadOnlyMemory&lt;char&gt; json, JsonDocumentOptions options)
 </code></pre>
@@ -279,7 +279,7 @@
 </table>
 <hr />
 <h2 id="parse-jsonworkspace-string-jsondocumentoptions">Parse(JsonWorkspace, string, JsonDocumentOptions)</h2>
-<p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/heads/pull/734/merge/src/Corvus.Text.Json/Corvus/Text/Json/DocumentBuilder/JsonDocumentBuilder.Parse.cs#L130">JsonDocumentBuilder.Parse.cs</a></p>
+<p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/v5/src/Corvus.Text.Json/Corvus/Text/Json/DocumentBuilder/JsonDocumentBuilder.Parse.cs#L130">JsonDocumentBuilder.Parse.cs</a></p>
 <p>Parses a string representing a single JSON value directly into a mutable document builder.</p>
 <pre><code class="language-csharp">public static JsonDocumentBuilder&lt;T&gt; Parse(JsonWorkspace workspace, string json, JsonDocumentOptions options)
 </code></pre>
@@ -357,7 +357,7 @@
 </table>
 <hr />
 <h2 id="parse-jsonworkspace-stream-jsondocumentoptions">Parse(JsonWorkspace, Stream, JsonDocumentOptions)</h2>
-<p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/heads/pull/734/merge/src/Corvus.Text.Json/Corvus/Text/Json/DocumentBuilder/JsonDocumentBuilder.Parse.cs#L157">JsonDocumentBuilder.Parse.cs</a></p>
+<p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/v5/src/Corvus.Text.Json/Corvus/Text/Json/DocumentBuilder/JsonDocumentBuilder.Parse.cs#L157">JsonDocumentBuilder.Parse.cs</a></p>
 <p>Parses a <a href="https://learn.microsoft.com/dotnet/api/system.io.stream"><code>Stream</code></a> of UTF-8 encoded data representing a single JSON value directly into a mutable document builder. The Stream will be read to completion.</p>
 <pre><code class="language-csharp">public static JsonDocumentBuilder&lt;T&gt; Parse(JsonWorkspace workspace, Stream utf8Json, JsonDocumentOptions options)
 </code></pre>

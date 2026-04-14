@@ -99,7 +99,7 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Text.Json<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
-<strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/heads/pull/734/merge/src/Corvus.Text.Json/Corvus/Text/Json/Reader/Utf8JsonReader.cs#L153">Utf8JsonReader.cs</a></p>
+<strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/v5/src/Corvus.Text.Json/Corvus/Text/Json/Reader/Utf8JsonReader.cs#L153">Utf8JsonReader.cs</a></p>
 <h2 id="hasvaluesequence">HasValueSequence()</h2>
 <p>Lets the caller know which of the two 'Value' properties to read to get the token value. For input data within a ReadOnlySpan<byte> this will always return false. For input data within a ReadOnlySequence<byte>, this will only return true if the token value straddles more than a single segment and hence couldn't be represented as a span.</p>
 <pre><code class="language-csharp">public bool HasValueSequence { get; set; }

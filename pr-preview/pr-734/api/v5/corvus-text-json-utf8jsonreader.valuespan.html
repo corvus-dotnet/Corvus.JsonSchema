@@ -99,7 +99,7 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Text.Json<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
-<strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/heads/pull/734/merge/src/Corvus.Text.Json/Corvus/Text/Json/Reader/Utf8JsonReader.cs#L90">Utf8JsonReader.cs</a></p>
+<strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/v5/src/Corvus.Text.Json/Corvus/Text/Json/Reader/Utf8JsonReader.cs#L90">Utf8JsonReader.cs</a></p>
 <h2 id="valuespan">ValueSpan()</h2>
 <p>Gets the value of the last processed token as a ReadOnlySpan<byte> slice of the input payload. If the JSON is provided within a ReadOnlySequence<byte> and the slice that represents the token value fits in a single segment, then <a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-utf8jsonreader.valuespan.html"><code>ValueSpan</code></a> will contain the sliced value since it can be represented as a span. Otherwise, the <a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-utf8jsonreader.valuesequence.html"><code>ValueSequence</code></a> will contain the token value.</p>
 <pre><code class="language-csharp">public ReadOnlySpan&lt;byte&gt; ValueSpan { get; set; }

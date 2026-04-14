@@ -99,7 +99,7 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Text.Json<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
-<strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/heads/pull/734/merge/src/Corvus.Text.Json/Corvus/Text/Json/Reader/JsonReaderState.cs#L21">JsonReaderState.cs</a></p>
+<strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/v5/src/Corvus.Text.Json/Corvus/Text/Json/Reader/JsonReaderState.cs#L21">JsonReaderState.cs</a></p>
 <p>Defines an opaque type that holds and saves all the relevant state information which must be provided to the <a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-utf8jsonreader.html"><code>Utf8JsonReader</code></a> to continue reading after processing incomplete data. This type is required to support reentrancy when reading incomplete data, and to continue reading once more data is available. Unlike the <a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-utf8jsonreader.html"><code>Utf8JsonReader</code></a>, which is a ref struct, this type can survive across async/await boundaries and hence this type is required to provide support for reading in more data asynchronously before continuing with a new instance of the <a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-utf8jsonreader.html"><code>Utf8JsonReader</code></a>.</p>
 <pre><code class="language-csharp">public readonly struct JsonReaderState
 </code></pre>
