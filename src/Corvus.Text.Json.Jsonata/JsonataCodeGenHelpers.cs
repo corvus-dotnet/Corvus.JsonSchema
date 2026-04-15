@@ -2753,6 +2753,96 @@ public static class JsonataCodeGenHelpers
     }
 
     /// <summary>
+    /// Fused <c>$exists(chain)</c> — walks the property chain and returns a boolean
+    /// indicating whether at least one value exists. Short-circuits on the first found
+    /// element — never allocates an <see cref="ElementBuffer"/> or builds intermediate arrays.
+    /// </summary>
+    public static JsonElement ExistsOverChain(in JsonElement data, byte[][] names, JsonWorkspace workspace)
+    {
+        return BooleanElement(AnyPropertyChain(data, names, 0));
+    }
+
+    /// <summary>
+    /// Fused <c>$exists(chain)</c> variant starting from <paramref name="startIndex"/>.
+    /// </summary>
+    public static JsonElement ExistsOverChain(in JsonElement data, byte[][] names, int startIndex, JsonWorkspace workspace)
+    {
+        return BooleanElement(AnyPropertyChain(data, names, startIndex));
+    }
+
+    /// <summary>
+    /// Returns <see langword="true"/> if the property chain starting at <paramref name="startIndex"/>
+    /// produces at least one value from <paramref name="data"/>. Short-circuits on the first match.
+    /// </summary>
+    private static bool AnyPropertyChain(in JsonElement data, byte[][] names, int startIndex)
+    {
+        JsonElement current = data;
+
+        for (int step = startIndex; step < names.Length; step++)
+        {
+            if (current.ValueKind == JsonValueKind.Object)
+            {
+                if (!current.TryGetProperty((ReadOnlySpan<byte>)names[step], out current))
+                {
+                    return false;
+                }
+            }
+            else if (current.ValueKind == JsonValueKind.Array)
+            {
+                return AnyPropertyOverArray(current, names, step);
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private static bool AnyPropertyOverArray(in JsonElement array, byte[][] names, int fromStep)
+    {
+        foreach (JsonElement item in array.EnumerateArray())
+        {
+            JsonElement current = item;
+            bool found = true;
+            for (int step = fromStep; step < names.Length; step++)
+            {
+                if (current.ValueKind == JsonValueKind.Object)
+                {
+                    if (!current.TryGetProperty((ReadOnlySpan<byte>)names[step], out current))
+                    {
+                        found = false;
+                        break;
+                    }
+                }
+                else if (current.ValueKind == JsonValueKind.Array)
+                {
+                    if (AnyPropertyOverArray(current, names, step))
+                    {
+                        return true;
+                    }
+
+                    found = false;
+                    break;
+                }
+                else
+                {
+                    found = false;
+                    break;
+                }
+            }
+
+            if (found)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>
     /// JSONata <c>$type</c> function — returns a string describing the input type.
     /// </summary>
     public static JsonElement Type(in JsonElement input, JsonWorkspace workspace)

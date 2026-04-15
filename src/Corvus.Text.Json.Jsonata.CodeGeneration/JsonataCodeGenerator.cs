@@ -4489,7 +4489,7 @@ public static class JsonataCodeGenerator
                 "sort" => EmitHofSort(sb, func, indent, dataVar, wsVar),
 
                 // Phase 1a: Simple functions
-                "exists" => EmitBuiltinUnary(sb, func, indent, dataVar, wsVar, "Exists"),
+                "exists" => EmitFusedExists(sb, func, indent, dataVar, wsVar),
                 "type" => EmitBuiltinUnary(sb, func, indent, dataVar, wsVar, "Type"),
                 "length" => EmitBuiltinUnary(sb, func, indent, dataVar, wsVar, "Length"),
                 "number" => EmitBuiltinContextOptional(sb, func, indent, dataVar, wsVar, "Number"),
@@ -4619,6 +4619,31 @@ public static class JsonataCodeGenerator
             string v = NextVar();
             L(sb, indent, $"var {v} = {H}.{helperName}({arg}, {wsVar});");
             return v;
+        }
+
+        /// <summary>
+        /// Emits <c>$exists</c>. When the argument is a simple property chain, emits a
+        /// fused <c>ExistsOverChain</c> call that short-circuits on the first found element —
+        /// zero heap allocation. Falls back to the standard unary emit for non-chain arguments.
+        /// </summary>
+        private string EmitFusedExists(
+            StringBuilder sb, FunctionCallNode func, string indent, string dataVar, string wsVar)
+        {
+            if (func.Arguments.Count != 1)
+            {
+                throw new FallbackException();
+            }
+
+            string? chainField = TryGetSimpleChainField(func.Arguments[0]);
+            if (chainField is not null)
+            {
+                string v = NextVar();
+                L(sb, indent, $"var {v} = {H}.ExistsOverChain({dataVar}, {chainField}, {wsVar});");
+                return v;
+            }
+
+            // Fallback: standard emit
+            return EmitBuiltinUnary(sb, func, indent, dataVar, wsVar, "Exists");
         }
 
         /// <summary>
