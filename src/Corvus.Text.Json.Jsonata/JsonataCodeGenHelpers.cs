@@ -5026,8 +5026,7 @@ public static class JsonataCodeGenHelpers
     /// </summary>
     public static JsonElement Now(JsonWorkspace workspace)
     {
-        return JsonataHelpers.StringFromString(
-            DateTimeOffset.UtcNow.ToString("yyyy-MM-ddTHH:mm:ss.fffZ", CultureInfo.InvariantCulture), workspace);
+        return BuiltInFunctions.FormatIso8601Utc(DateTimeOffset.UtcNow, workspace);
     }
 
     /// <summary>
@@ -6540,17 +6539,18 @@ public static class JsonataCodeGenHelpers
         {
             if (hasTz)
             {
-                return JsonataHelpers.StringFromString(
-                    BuiltInFunctions.FormatIso8601WithOffset(dt, offset), workspace);
+                return BuiltInFunctions.FormatIso8601WithOffset(dt, offset, workspace);
             }
 
-            return JsonataHelpers.StringFromString(
-                dt.ToString("yyyy-MM-ddTHH:mm:ss.fffZ", CultureInfo.InvariantCulture), workspace);
+            return BuiltInFunctions.FormatIso8601Utc(dt, workspace);
         }
 
         string picture = FunctionalCompiler.CoerceElementToString(pictureElement);
-        string result = XPathDateTimeFormatter.FormatDateTime(dt, picture);
-        return JsonataHelpers.StringFromString(result, workspace);
+        Utf8ValueStringBuilder sb = new(stackalloc byte[256]);
+        XPathDateTimeFormatter.FormatDateTime(dt, picture, ref sb);
+        JsonElement element = JsonataHelpers.StringFromUnescapedUtf8(sb.AsSpan(), workspace);
+        sb.Dispose();
+        return element;
     }
 
     /// <summary>
@@ -6702,14 +6702,10 @@ public static class JsonataCodeGenHelpers
         }
 
         long numLong = (long)Math.Round(num, MidpointRounding.ToEven);
-        bool negative = numLong < 0;
-        string result = BuiltInFunctions.ConvertToBase(Math.Abs(numLong), radixInt);
-        if (negative)
-        {
-            result = "-" + result;
-        }
 
-        return JsonataHelpers.StringFromString(result, workspace);
+        Span<byte> buffer = stackalloc byte[65];
+        int written = BuiltInFunctions.ConvertToBaseUtf8(numLong, radixInt, buffer);
+        return JsonataHelpers.StringFromUnescapedUtf8(buffer.Slice(0, written), workspace);
     }
 
     /// <summary>
@@ -6723,29 +6719,36 @@ public static class JsonataCodeGenHelpers
         }
 
         string picture = FunctionalCompiler.CoerceElementToString(pictureElement);
-        string result;
 
         if (input.ValueKind == JsonValueKind.Number && input.TryGetInt64(out long longVal))
         {
-            result = XPathDateTimeFormatter.FormatInteger(longVal, picture);
+            Utf8ValueStringBuilder sb = new(stackalloc byte[64]);
+            XPathDateTimeFormatter.FormatInteger(longVal, picture, ref sb);
+            JsonElement element = JsonataHelpers.StringFromUnescapedUtf8(sb.AsSpan(), workspace);
+            sb.Dispose();
+            return element;
         }
         else if (FunctionalCompiler.TryCoerceToNumber(input, out double numVal))
         {
             if (numVal >= long.MinValue && numVal <= long.MaxValue)
             {
-                result = XPathDateTimeFormatter.FormatInteger((long)numVal, picture);
+                Utf8ValueStringBuilder sb = new(stackalloc byte[64]);
+                XPathDateTimeFormatter.FormatInteger((long)numVal, picture, ref sb);
+                JsonElement element = JsonataHelpers.StringFromUnescapedUtf8(sb.AsSpan(), workspace);
+                sb.Dispose();
+                return element;
             }
             else
             {
-                result = XPathDateTimeFormatter.FormatInteger(numVal, picture);
+                // Large double: falls back to string path
+                string result = XPathDateTimeFormatter.FormatInteger(numVal, picture);
+                return JsonataHelpers.StringFromString(result, workspace);
             }
         }
         else
         {
             return default;
         }
-
-        return JsonataHelpers.StringFromString(result, workspace);
     }
 
     /// <summary>

@@ -3,9 +3,11 @@
 // </copyright>
 
 using System;
+using System.Buffers.Text;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
+using Corvus.Text;
 
 namespace Corvus.Text.Json.Jsonata;
 
@@ -91,10 +93,39 @@ internal static class XPathDateTimeFormatter
     /// <returns>The formatted string.</returns>
     public static string FormatDateTime(DateTimeOffset dt, string picture)
     {
-        // Pre-validate bracket matching before formatting any components
+        Utf8ValueStringBuilder sb = new(stackalloc byte[256]);
+        FormatDateTime(dt, picture, ref sb);
+#if NET
+        string result = Encoding.UTF8.GetString(sb.AsSpan());
+#else
+        string result = Encoding.UTF8.GetString(sb.AsSpan().ToArray());
+#endif
+        sb.Dispose();
+        return result;
+    }
+
+    /// <summary>
+    /// Formats the given <see cref="DateTimeOffset"/> using the XPath picture string,
+    /// writing the UTF-8 result directly to a caller-supplied buffer.
+    /// </summary>
+    /// <param name="dt">The date and time to format.</param>
+    /// <param name="picture">The XPath picture string.</param>
+    /// <param name="destination">The destination buffer for UTF-8 output.</param>
+    /// <param name="bytesWritten">The number of bytes written.</param>
+    /// <returns><see langword="true"/> if the destination was large enough; otherwise <see langword="false"/>.</returns>
+    internal static bool TryFormatDateTime(DateTimeOffset dt, string picture, Span<byte> destination, out int bytesWritten)
+    {
+        Utf8ValueStringBuilder sb = new(destination);
+        FormatDateTime(dt, picture, ref sb);
+        bool success = sb.TryCopyTo(destination, out bytesWritten);
+        sb.Dispose();
+        return success;
+    }
+
+    internal static void FormatDateTime(DateTimeOffset dt, string picture, ref Utf8ValueStringBuilder sb)
+    {
         ValidateBrackets(picture);
 
-        var sb = new StringBuilder();
         int i = 0;
 
         while (i < picture.Length)
@@ -103,7 +134,7 @@ internal static class XPathDateTimeFormatter
             {
                 if (i + 1 < picture.Length && picture[i + 1] == '[')
                 {
-                    sb.Append('[');
+                    sb.Append((byte)'[');
                     i += 2;
                     continue;
                 }
@@ -116,30 +147,28 @@ internal static class XPathDateTimeFormatter
 
                 string marker = picture.Substring(i + 1, end - i - 1);
                 string stripped = StripWhitespace(marker);
-                FormatComponent(dt, stripped, sb);
+                FormatComponent(dt, stripped, ref sb);
                 i = end + 1;
             }
             else if (picture[i] == ']')
             {
                 if (i + 1 < picture.Length && picture[i + 1] == ']')
                 {
-                    sb.Append(']');
+                    sb.Append((byte)']');
                     i += 2;
                 }
                 else
                 {
-                    sb.Append(']');
+                    sb.Append((byte)']');
                     i++;
                 }
             }
             else
             {
-                sb.Append(picture[i]);
+                sb.Append((byte)picture[i]);
                 i++;
             }
         }
-
-        return sb.ToString();
     }
 
     private static void ValidateBrackets(string picture)
@@ -444,6 +473,37 @@ internal static class XPathDateTimeFormatter
     /// <returns>The formatted string.</returns>
     public static string FormatInteger(long value, string picture)
     {
+        Utf8ValueStringBuilder sb = new(stackalloc byte[64]);
+        FormatInteger(value, picture, ref sb);
+#if NET
+        string result = Encoding.UTF8.GetString(sb.AsSpan());
+#else
+        string result = Encoding.UTF8.GetString(sb.AsSpan().ToArray());
+#endif
+        sb.Dispose();
+        return result;
+    }
+
+    /// <summary>
+    /// Formats an integer using the XPath picture string,
+    /// writing the UTF-8 result directly to a caller-supplied buffer.
+    /// </summary>
+    /// <param name="value">The integer value to format.</param>
+    /// <param name="picture">The XPath integer picture string.</param>
+    /// <param name="destination">The destination buffer for UTF-8 output.</param>
+    /// <param name="bytesWritten">The number of bytes written.</param>
+    /// <returns><see langword="true"/> if the destination was large enough; otherwise <see langword="false"/>.</returns>
+    internal static bool TryFormatInteger(long value, string picture, Span<byte> destination, out int bytesWritten)
+    {
+        Utf8ValueStringBuilder sb = new(destination);
+        FormatInteger(value, picture, ref sb);
+        bool success = sb.TryCopyTo(destination, out bytesWritten);
+        sb.Dispose();
+        return success;
+    }
+
+    internal static void FormatInteger(long value, string picture, ref Utf8ValueStringBuilder sb)
+    {
         // Split picture on ';' for ordinal modifier
         string primary;
         bool isOrdinal = false;
@@ -467,7 +527,7 @@ internal static class XPathDateTimeFormatter
             primary = "0";
         }
 
-        return FormatIntegerWithPresentation(value, primary, isOrdinal);
+        FormatIntegerWithPresentation(value, primary, isOrdinal, ref sb);
     }
 
     /// <summary>
@@ -613,32 +673,38 @@ internal static class XPathDateTimeFormatter
         return false;
     }
 
-    internal static string FormatIntegerWithPresentation(long value, string presentation, bool isOrdinal)
+    internal static void FormatIntegerWithPresentation(long value, string presentation, bool isOrdinal, ref Utf8ValueStringBuilder result)
     {
         // Detect the format type from the first meaningful character
         if (presentation == "I")
         {
-            return ToRomanNumerals(value, true);
+            ToRomanNumerals(value, true, ref result);
+            return;
         }
 
         if (presentation == "i")
         {
-            return ToRomanNumerals(value, false);
+            ToRomanNumerals(value, false, ref result);
+            return;
         }
 
         if (presentation == "W" || presentation == "w" || presentation == "Ww")
         {
-            return FormatAsWords(value, presentation, isOrdinal);
+            string words = FormatAsWords(value, presentation, isOrdinal);
+            AppendAsciiString(ref result, words);
+            return;
         }
 
         if (presentation == "A")
         {
-            return ToAlpha(value, true);
+            ToAlpha(value, true, ref result);
+            return;
         }
 
         if (presentation == "a")
         {
-            return ToAlpha(value, false);
+            ToAlpha(value, false, ref result);
+            return;
         }
 
         if (presentation == "N" || presentation == "n" || presentation == "Nn")
@@ -649,7 +715,8 @@ internal static class XPathDateTimeFormatter
         // Check if it's a decimal digit pattern
         if (IsDecimalDigitPattern(presentation))
         {
-            return FormatDecimalDigit(value, presentation, isOrdinal);
+            FormatDecimalDigit(value, presentation, isOrdinal, ref result);
+            return;
         }
 
         // Check for single '#' which is an error in formatInteger context
@@ -701,7 +768,7 @@ internal static class XPathDateTimeFormatter
         throw new JsonataException("D3130", SR.D3130_TheFormatPictureStringIsNotValid, 0);
     }
 
-    private static void FormatComponent(DateTimeOffset dt, string marker, StringBuilder sb)
+    private static void FormatComponent(DateTimeOffset dt, string marker, ref Utf8ValueStringBuilder sb)
     {
         if (marker.Length == 0)
         {
@@ -782,23 +849,23 @@ internal static class XPathDateTimeFormatter
         switch (comp)
         {
             case 'Y':
-                FormatDateValue(dt.Year, presentation, minWidth, maxWidth, hardMaxWidth, sb);
+                FormatDateValue(dt.Year, presentation, minWidth, maxWidth, hardMaxWidth, ref sb);
                 break;
             case 'M':
-                FormatDateValueOrName(dt.Month, presentation, minWidth, maxWidth, hardMaxWidth, MonthNames, sb);
+                FormatDateValueOrName(dt.Month, presentation, minWidth, maxWidth, hardMaxWidth, MonthNames, ref sb);
                 break;
             case 'D':
-                FormatDateValue(dt.Day, presentation, minWidth, maxWidth, hardMaxWidth, sb);
+                FormatDateValue(dt.Day, presentation, minWidth, maxWidth, hardMaxWidth, ref sb);
                 break;
             case 'd':
-                FormatDateValue(dt.DayOfYear, presentation, minWidth, maxWidth, hardMaxWidth, sb);
+                FormatDateValue(dt.DayOfYear, presentation, minWidth, maxWidth, hardMaxWidth, ref sb);
                 break;
             case 'F':
                 int isoDay = GetIsoDayOfWeek(dt.DayOfWeek);
-                FormatDateValueOrName(isoDay, presentation, minWidth, maxWidth, hardMaxWidth, DayNames, sb);
+                FormatDateValueOrName(isoDay, presentation, minWidth, maxWidth, hardMaxWidth, DayNames, ref sb);
                 break;
             case 'H':
-                FormatDateValue(dt.Hour, presentation, minWidth, maxWidth, hardMaxWidth, sb);
+                FormatDateValue(dt.Hour, presentation, minWidth, maxWidth, hardMaxWidth, ref sb);
                 break;
             case 'h':
                 int h12 = dt.Hour % 12;
@@ -807,63 +874,62 @@ internal static class XPathDateTimeFormatter
                     h12 = 12;
                 }
 
-                FormatDateValue(h12, presentation, minWidth, maxWidth, hardMaxWidth, sb);
+                FormatDateValue(h12, presentation, minWidth, maxWidth, hardMaxWidth, ref sb);
                 break;
             case 'P':
-                string ampm = dt.Hour < 12 ? "am" : "pm";
                 if (presentation.Length == 0 || presentation == "n")
                 {
-                    sb.Append(ampm);
+                    sb.Append(dt.Hour < 12 ? "am"u8 : "pm"u8);
                 }
                 else if (presentation == "N")
                 {
-                    sb.Append(ampm.ToUpperInvariant());
+                    sb.Append(dt.Hour < 12 ? "AM"u8 : "PM"u8);
                 }
                 else
                 {
-                    sb.Append(ampm);
+                    sb.Append(dt.Hour < 12 ? "am"u8 : "pm"u8);
                 }
 
                 break;
             case 'm':
-                FormatDateValue(dt.Minute, presentation, minWidth, maxWidth, hardMaxWidth, sb);
+                FormatDateValue(dt.Minute, presentation, minWidth, maxWidth, hardMaxWidth, ref sb);
                 break;
             case 's':
-                FormatDateValue(dt.Second, presentation, minWidth, maxWidth, hardMaxWidth, sb);
+                FormatDateValue(dt.Second, presentation, minWidth, maxWidth, hardMaxWidth, ref sb);
                 break;
             case 'f':
-                FormatFractionalSeconds(dt.Millisecond, presentation, sb);
+                FormatFractionalSeconds(dt.Millisecond, presentation, ref sb);
                 break;
             case 'Z':
-                FormatTimezoneOffset(dt.Offset, presentation, sb);
+                FormatTimezoneOffset(dt.Offset, presentation, ref sb);
                 break;
             case 'z':
-                FormatTimezoneGmt(dt.Offset, sb);
+                FormatTimezoneGmt(dt.Offset, ref sb);
                 break;
             case 'W':
-                FormatDateValue(GetIsoWeekOfYear(dt), presentation, minWidth, maxWidth, hardMaxWidth, sb);
+                FormatDateValue(GetIsoWeekOfYear(dt), presentation, minWidth, maxWidth, hardMaxWidth, ref sb);
                 break;
             case 'w':
-                FormatDateValue(GetWeekOfMonth(dt), presentation, minWidth, maxWidth, hardMaxWidth, sb);
+                FormatDateValue(GetWeekOfMonth(dt), presentation, minWidth, maxWidth, hardMaxWidth, ref sb);
                 break;
             case 'x':
-                FormatDateValueOrName(GetMonthOfWeek(dt), presentation, minWidth, maxWidth, hardMaxWidth, MonthNames, sb);
+                FormatDateValueOrName(GetMonthOfWeek(dt), presentation, minWidth, maxWidth, hardMaxWidth, MonthNames, ref sb);
                 break;
             case 'X':
-                FormatDateValue(GetIsoWeekYear(dt), presentation, minWidth, maxWidth, hardMaxWidth, sb);
+                FormatDateValue(GetIsoWeekYear(dt), presentation, minWidth, maxWidth, hardMaxWidth, ref sb);
                 break;
             case 'C':
-                sb.Append("ISO");
+                sb.Append("ISO"u8);
                 break;
             case 'E':
-                sb.Append("ISO");
+                sb.Append("ISO"u8);
                 break;
             default:
                 throw new JsonataException("D3132", SR.Format(SR.D3132_UnknownComponentSpecifier, comp), 0);
         }
     }
 
-    private static void FormatDateValue(int value, string presentation, int minWidth, int maxWidth, bool hardMaxWidth, StringBuilder sb)
+    private static void FormatDateValue(int value, string presentation, int minWidth, int maxWidth, bool hardMaxWidth, ref Utf8ValueStringBuilder sb)
     {
         bool isOrdinal = false;
         string pres = presentation;
@@ -880,13 +946,15 @@ internal static class XPathDateTimeFormatter
             pres = "1";
         }
 
-        string formatted = FormatIntegerWithPresentation(value, pres, isOrdinal);
+        Utf8ValueStringBuilder temp = new(stackalloc byte[64]);
+        FormatIntegerWithPresentation(value, pres, isOrdinal, ref temp);
+        ReadOnlySpan<byte> formatted = temp.AsSpan();
 
         if (maxWidth >= 0 && formatted.Length > maxWidth)
         {
             if (hardMaxWidth)
             {
-                formatted = formatted.Substring(formatted.Length - maxWidth);
+                formatted = formatted.Slice(formatted.Length - maxWidth);
             }
             else
             {
@@ -894,25 +962,26 @@ internal static class XPathDateTimeFormatter
                 int effectiveMax = Math.Max(maxWidth, mandatoryFromPres);
                 if (formatted.Length > effectiveMax)
                 {
-                    formatted = formatted.Substring(formatted.Length - effectiveMax);
+                    formatted = formatted.Slice(formatted.Length - effectiveMax);
                 }
             }
         }
 
         if (minWidth >= 0 && formatted.Length < minWidth)
         {
-            formatted = formatted.PadLeft(minWidth, '0');
+            sb.Append((byte)'0', minWidth - formatted.Length);
         }
 
         sb.Append(formatted);
+        temp.Dispose();
     }
 
-    private static void FormatDateValueOrName(int value, string presentation, int minWidth, int maxWidth, bool hardMaxWidth, string[] names, StringBuilder sb)
+    private static void FormatDateValueOrName(int value, string presentation, int minWidth, int maxWidth, bool hardMaxWidth, string[] names, ref Utf8ValueStringBuilder sb)
     {
         if (presentation.Length == 0)
         {
             // Default numeric
-            FormatDateValue(value, presentation, minWidth, maxWidth, hardMaxWidth, sb);
+            FormatDateValue(value, presentation, minWidth, maxWidth, hardMaxWidth, ref sb);
             return;
         }
 
@@ -920,7 +989,6 @@ internal static class XPathDateTimeFormatter
         bool isName = false;
         bool isUpper = false;
         bool isLower = false;
-        bool isTitleCase = false;
 
         if (presentation == "N")
         {
@@ -935,7 +1003,6 @@ internal static class XPathDateTimeFormatter
         else if (presentation == "Nn")
         {
             isName = true;
-            isTitleCase = true;
         }
 
         if (isName && names.Length > 0)
@@ -943,38 +1010,46 @@ internal static class XPathDateTimeFormatter
             int idx = value - 1;
             if (idx < 0 || idx >= names.Length)
             {
-                sb.Append(value.ToString(CultureInfo.InvariantCulture));
+                sb.Append(value);
                 return;
             }
 
             string name = names[idx];
-
-            if (maxWidth >= 0 && name.Length > maxWidth)
-            {
-                name = name.Substring(0, maxWidth);
-            }
+            int nameLen = maxWidth >= 0 && name.Length > maxWidth ? maxWidth : name.Length;
 
             if (isUpper)
             {
-                name = name.ToUpperInvariant();
+                Span<byte> dest = sb.AppendSpan(nameLen);
+                for (int j = 0; j < nameLen; j++)
+                {
+                    dest[j] = (byte)char.ToUpperInvariant(name[j]);
+                }
             }
             else if (isLower)
             {
-                name = name.ToLowerInvariant();
+                Span<byte> dest = sb.AppendSpan(nameLen);
+                for (int j = 0; j < nameLen; j++)
+                {
+                    dest[j] = (byte)char.ToLowerInvariant(name[j]);
+                }
             }
-            else if (isTitleCase)
+            else
             {
-                // Already title case
+                // Title case — already title case in the names array
+                Span<byte> dest = sb.AppendSpan(nameLen);
+                for (int j = 0; j < nameLen; j++)
+                {
+                    dest[j] = (byte)name[j];
+                }
             }
 
-            sb.Append(name);
             return;
         }
 
-        FormatDateValue(value, presentation, minWidth, maxWidth, hardMaxWidth, sb);
+        FormatDateValue(value, presentation, minWidth, maxWidth, hardMaxWidth, ref sb);
     }
 
-    private static void FormatFractionalSeconds(int milliseconds, string presentation, StringBuilder sb)
+    private static void FormatFractionalSeconds(int milliseconds, string presentation, ref Utf8ValueStringBuilder sb)
     {
         // Count digit characters in presentation for number of fractional digits
         int digits = 0;
@@ -991,23 +1066,24 @@ internal static class XPathDateTimeFormatter
             digits = 1;
         }
 
-        string ms = milliseconds.ToString(CultureInfo.InvariantCulture).PadLeft(3, '0');
+        // Format milliseconds as 3-digit zero-padded
+        Span<byte> msBuf = stackalloc byte[3];
+        msBuf[0] = (byte)('0' + (milliseconds / 100));
+        msBuf[1] = (byte)('0' + ((milliseconds / 10) % 10));
+        msBuf[2] = (byte)('0' + (milliseconds % 10));
 
         if (digits <= 3)
         {
-            sb.Append(ms.Substring(0, digits));
+            sb.Append(msBuf.Slice(0, digits));
         }
         else
         {
-            sb.Append(ms);
-            for (int i = 3; i < digits; i++)
-            {
-                sb.Append('0');
-            }
+            sb.Append(msBuf);
+            sb.Append((byte)'0', digits - 3);
         }
     }
 
-    private static void FormatTimezoneOffset(TimeSpan offset, string presentation, StringBuilder sb)
+    private static void FormatTimezoneOffset(TimeSpan offset, string presentation, ref Utf8ValueStringBuilder sb)
     {
         bool useColon = true;
         bool useZForUtc = false;
@@ -1029,7 +1105,7 @@ internal static class XPathDateTimeFormatter
 
         if (useZForUtc && offset == TimeSpan.Zero)
         {
-            sb.Append('Z');
+            sb.Append((byte)'Z');
             return;
         }
 
@@ -1069,8 +1145,7 @@ internal static class XPathDateTimeFormatter
             digits = 2;
         }
 
-        char sign = offset >= TimeSpan.Zero ? '+' : '-';
-        sb.Append(sign);
+        sb.Append(offset >= TimeSpan.Zero ? (byte)'+' : (byte)'-');
 
         int totalMinutes = (int)Math.Abs(offset.TotalMinutes);
         int hours = totalMinutes / 60;
@@ -1079,38 +1154,64 @@ internal static class XPathDateTimeFormatter
         if (digits == 0)
         {
             // Minimal format
-            sb.Append(hours.ToString(CultureInfo.InvariantCulture));
+            sb.Append(hours);
             if (minutes > 0)
             {
-                sb.Append(':');
-                sb.Append(minutes.ToString(CultureInfo.InvariantCulture).PadLeft(2, '0'));
+                sb.Append((byte)':');
+                if (minutes < 10)
+                {
+                    sb.Append((byte)'0');
+                }
+
+                sb.Append(minutes);
             }
         }
         else
         {
-            sb.Append(hours.ToString(CultureInfo.InvariantCulture).PadLeft(2, '0'));
-            if (useColon)
+            if (hours < 10)
             {
-                sb.Append(':');
+                sb.Append((byte)'0');
             }
 
-            sb.Append(minutes.ToString(CultureInfo.InvariantCulture).PadLeft(2, '0'));
+            sb.Append(hours);
+            if (useColon)
+            {
+                sb.Append((byte)':');
+            }
+
+            if (minutes < 10)
+            {
+                sb.Append((byte)'0');
+            }
+
+            sb.Append(minutes);
         }
     }
 
-    private static void FormatTimezoneGmt(TimeSpan offset, StringBuilder sb)
+    private static void FormatTimezoneGmt(TimeSpan offset, ref Utf8ValueStringBuilder sb)
     {
-        sb.Append("GMT");
+        sb.Append("GMT"u8);
         if (offset != TimeSpan.Zero)
         {
-            char sign = offset >= TimeSpan.Zero ? '+' : '-';
-            sb.Append(sign);
+            sb.Append(offset >= TimeSpan.Zero ? (byte)'+' : (byte)'-');
             int totalMinutes = (int)Math.Abs(offset.TotalMinutes);
             int hours = totalMinutes / 60;
             int minutes = totalMinutes % 60;
-            sb.Append(hours.ToString(CultureInfo.InvariantCulture).PadLeft(2, '0'));
-            sb.Append(':');
-            sb.Append(minutes.ToString(CultureInfo.InvariantCulture).PadLeft(2, '0'));
+
+            if (hours < 10)
+            {
+                sb.Append((byte)'0');
+            }
+
+            sb.Append(hours);
+            sb.Append((byte)':');
+
+            if (minutes < 10)
+            {
+                sb.Append((byte)'0');
+            }
+
+            sb.Append(minutes);
         }
     }
 
@@ -1399,7 +1500,7 @@ internal static class XPathDateTimeFormatter
         return -1;
     }
 
-    private static string FormatDecimalDigit(long value, string presentation, bool isOrdinal)
+    private static void FormatDecimalDigit(long value, string presentation, bool isOrdinal, ref Utf8ValueStringBuilder result)
     {
         bool isNegative = value < 0;
         long absValue = Math.Abs(value);
@@ -1424,7 +1525,10 @@ internal static class XPathDateTimeFormatter
 
         // Count mandatory digits (0s in pattern), find grouping separators
         int mandatoryDigits = 0;
-        var groupSeparators = new List<(int Position, char Separator)>();
+
+        // Max 20 group separators in a pattern is more than enough
+        Span<(int Position, char Separator)> groupSeparators = stackalloc (int, char)[20];
+        int groupSepCount = 0;
         int digitCount = 0;
 
         // Process pattern from right to left for grouping
@@ -1447,10 +1551,10 @@ internal static class XPathDateTimeFormatter
                     digitCount++;
                     mandatoryDigits = digitCount;
                 }
-                else
+                else if (groupSepCount < groupSeparators.Length)
                 {
                     // Grouping separator
-                    groupSeparators.Add((digitCount, c));
+                    groupSeparators[groupSepCount++] = (digitCount, c);
                 }
             }
         }
@@ -1460,51 +1564,86 @@ internal static class XPathDateTimeFormatter
             mandatoryDigits = 1;
         }
 
-        string digits = absValue.ToString(CultureInfo.InvariantCulture);
-        if (digits.Length < mandatoryDigits)
+        // Format digits into a byte buffer (max 20 digits for a long)
+        Span<byte> digitBuf = stackalloc byte[20];
+        int digitLen;
+        if (!Utf8Formatter.TryFormat(absValue, digitBuf, out digitLen))
         {
-            digits = digits.PadLeft(mandatoryDigits, '0');
+            // Should never happen for a long
+            digitLen = 0;
         }
 
-        // Convert to unicode if needed
-        if (unicodeBase != 0)
+        // Pad left with '0' if needed
+        if (digitLen < mandatoryDigits)
         {
-            var unicodeDigits = new char[digits.Length];
-            for (int i = 0; i < digits.Length; i++)
-            {
-                unicodeDigits[i] = (char)(unicodeBase + (digits[i] - '0'));
-            }
-
-            digits = new string(unicodeDigits);
+            int pad = mandatoryDigits - digitLen;
+            digitBuf.Slice(0, digitLen).CopyTo(digitBuf.Slice(pad));
+            digitBuf.Slice(0, pad).Fill((byte)'0');
+            digitLen = mandatoryDigits;
         }
 
-        // Insert grouping separators
-        if (groupSeparators.Count > 0)
-        {
-            digits = InsertGroupingSeparators(digits, groupSeparators);
-        }
+        ReadOnlySpan<byte> digits = digitBuf.Slice(0, digitLen);
 
-        var result = new StringBuilder();
         if (isNegative)
         {
-            result.Append('-');
+            result.Append((byte)'-');
         }
 
-        result.Append(digits);
+        if (unicodeBase != 0)
+        {
+            // Unicode digits: convert each ASCII digit to the Unicode digit and encode as UTF-8
+            if (groupSepCount > 0)
+            {
+                Utf8ValueStringBuilder temp = new(stackalloc byte[64]);
+                InsertGroupingSeparators(digits, groupSeparators.Slice(0, groupSepCount), ref temp);
+                ReadOnlySpan<byte> grouped = temp.AsSpan();
+                for (int i = 0; i < grouped.Length; i++)
+                {
+                    byte b = grouped[i];
+                    if (b >= (byte)'0' && b <= (byte)'9')
+                    {
+                        AppendChar(ref result, (char)(unicodeBase + (b - '0')));
+                    }
+                    else
+                    {
+                        result.Append(b);
+                    }
+                }
+
+                temp.Dispose();
+            }
+            else
+            {
+                for (int i = 0; i < digits.Length; i++)
+                {
+                    AppendChar(ref result, (char)(unicodeBase + (digits[i] - '0')));
+                }
+            }
+        }
+        else if (groupSepCount > 0)
+        {
+            InsertGroupingSeparators(digits, groupSeparators.Slice(0, groupSepCount), ref result);
+        }
+        else
+        {
+            result.Append(digits);
+        }
 
         if (isOrdinal)
         {
-            result.Append(GetOrdinalSuffix(absValue));
+            AppendOrdinalSuffix(ref result, absValue);
         }
-
-        return result.ToString();
     }
 
-    private static string InsertGroupingSeparators(string digits, List<(int Position, char Separator)> separators)
+    private static void InsertGroupingSeparators(
+        scoped ReadOnlySpan<byte> digits,
+        scoped ReadOnlySpan<(int Position, char Separator)> separators,
+        ref Utf8ValueStringBuilder result)
     {
-        if (separators.Count == 0)
+        if (separators.Length == 0)
         {
-            return digits;
+            result.Append(digits);
+            return;
         }
 
         // Check if all separators use the same character and are regularly spaced
@@ -1512,7 +1651,7 @@ internal static class XPathDateTimeFormatter
         char sepChar = separators[0].Separator;
         int groupSize = separators[0].Position;
 
-        for (int i = 1; i < separators.Count; i++)
+        for (int i = 1; i < separators.Length; i++)
         {
             if (separators[i].Separator != sepChar)
             {
@@ -1520,13 +1659,6 @@ internal static class XPathDateTimeFormatter
                 break;
             }
 
-            // Check regular spacing from the previous separator
-            int expectedPos = separators[0].Position + (i * groupSize);
-
-            // Actually, let's re-check: positions are cumulative digit counts
-            // separators[0].Position = digits from right to first separator
-            // separators[1].Position = digits from right to second separator
-            // Regular if separators[i].Position = groupSize * (i + 1)
             if (separators[i].Position != groupSize * (i + 1))
             {
                 isRegular = false;
@@ -1534,74 +1666,80 @@ internal static class XPathDateTimeFormatter
             }
         }
 
-        var result = new StringBuilder();
-
-        if (isRegular && separators.Count > 0)
+        if (isRegular)
         {
-            // Regular grouping - repeat for the entire number
-            for (int i = digits.Length - 1; i >= 0; i--)
+            // Regular grouping - build left-to-right with separator insertion
+            for (int i = 0; i < digits.Length; i++)
             {
-                result.Insert(0, digits[i]);
                 int posFromRight = digits.Length - i;
                 if (posFromRight % groupSize == 0 && i > 0)
                 {
-                    result.Insert(0, sepChar);
+                    AppendChar(ref result, sepChar);
                 }
+
+                result.Append(digits[i]);
             }
         }
         else
         {
-            // Non-regular grouping: use explicit positions from the pattern
-            // Sort separators by position ascending
-            var sortedSeps = new List<(int Position, char Separator)>(separators);
-            sortedSeps.Sort((a, b) => a.Position.CompareTo(b.Position));
+            // Non-regular grouping: sort separators by position descending, build left-to-right
+            Span<(int Position, char Separator)> sorted = stackalloc (int, char)[separators.Length];
+            separators.CopyTo(sorted);
 
-            // Build from right to left
-            int digitIdx = digits.Length - 1;
-            int currentPos = 0;
-            int sepIdx = 0;
-            var parts = new List<char>();
-
-            while (digitIdx >= 0)
+            // Sort descending by position so we encounter them left-to-right (insertion sort)
+            for (int si = 1; si < sorted.Length; si++)
             {
-                parts.Add(digits[digitIdx]);
-                currentPos++;
-                digitIdx--;
-
-                if (sepIdx < sortedSeps.Count && currentPos == sortedSeps[sepIdx].Position && digitIdx >= 0)
+                var key = sorted[si];
+                int sj = si - 1;
+                while (sj >= 0 && sorted[sj].Position < key.Position)
                 {
-                    parts.Add(sortedSeps[sepIdx].Separator);
+                    sorted[sj + 1] = sorted[sj];
+                    sj--;
+                }
+
+                sorted[sj + 1] = key;
+            }
+
+            int sepIdx = 0;
+            for (int i = 0; i < digits.Length; i++)
+            {
+                result.Append(digits[i]);
+                int posFromRight = digits.Length - i - 1;
+                if (sepIdx < sorted.Length && posFromRight == sorted[sepIdx].Position && i < digits.Length - 1)
+                {
+                    AppendChar(ref result, sorted[sepIdx].Separator);
                     sepIdx++;
                 }
             }
-
-            parts.Reverse();
-            foreach (char c in parts)
-            {
-                result.Append(c);
-            }
         }
-
-        return result.ToString();
     }
 
-    private static string GetOrdinalSuffix(long value)
+    private static void AppendOrdinalSuffix(ref Utf8ValueStringBuilder sb, long value)
     {
         long lastTwo = value % 100;
         long lastOne = value % 10;
 
         if (lastTwo >= 11 && lastTwo <= 13)
         {
-            return "th";
+            sb.Append("th"u8);
+            return;
         }
 
-        return lastOne switch
+        switch (lastOne)
         {
-            1 => "st",
-            2 => "nd",
-            3 => "rd",
-            _ => "th",
-        };
+            case 1:
+                sb.Append("st"u8);
+                break;
+            case 2:
+                sb.Append("nd"u8);
+                break;
+            case 3:
+                sb.Append("rd"u8);
+                break;
+            default:
+                sb.Append("th"u8);
+                break;
+        }
     }
 
     private static readonly (string Symbol, int Value)[] RomanValues =
@@ -1611,27 +1749,49 @@ internal static class XPathDateTimeFormatter
         ("X", 10), ("IX", 9), ("V", 5), ("IV", 4), ("I", 1),
     };
 
-    private static string ToRomanNumerals(long value, bool uppercase)
+    private static void ToRomanNumerals(long value, bool uppercase, ref Utf8ValueStringBuilder sb)
     {
         if (value <= 0)
         {
-            return string.Empty;
+            return;
         }
 
-        var sb = new StringBuilder();
         long remaining = value;
+        byte offset = uppercase ? (byte)0 : (byte)('a' - 'A');
 
-        foreach (var (symbol, val) in RomanValues)
+        // M=1000, CM=900, D=500, CD=400, C=100, XC=90, L=50, XL=40, X=10, IX=9, V=5, IV=4, I=1
+        AppendRomanGroup(ref sb, ref remaining, 1000, (byte)('M' + offset));
+        AppendRomanPair(ref sb, ref remaining, 900, (byte)('C' + offset), (byte)('M' + offset));
+        AppendRomanGroup(ref sb, ref remaining, 500, (byte)('D' + offset));
+        AppendRomanPair(ref sb, ref remaining, 400, (byte)('C' + offset), (byte)('D' + offset));
+        AppendRomanGroup(ref sb, ref remaining, 100, (byte)('C' + offset));
+        AppendRomanPair(ref sb, ref remaining, 90, (byte)('X' + offset), (byte)('C' + offset));
+        AppendRomanGroup(ref sb, ref remaining, 50, (byte)('L' + offset));
+        AppendRomanPair(ref sb, ref remaining, 40, (byte)('X' + offset), (byte)('L' + offset));
+        AppendRomanGroup(ref sb, ref remaining, 10, (byte)('X' + offset));
+        AppendRomanPair(ref sb, ref remaining, 9, (byte)('I' + offset), (byte)('X' + offset));
+        AppendRomanGroup(ref sb, ref remaining, 5, (byte)('V' + offset));
+        AppendRomanPair(ref sb, ref remaining, 4, (byte)('I' + offset), (byte)('V' + offset));
+        AppendRomanGroup(ref sb, ref remaining, 1, (byte)('I' + offset));
+    }
+
+    private static void AppendRomanGroup(ref Utf8ValueStringBuilder sb, ref long remaining, int value, byte symbol)
+    {
+        while (remaining >= value)
         {
-            while (remaining >= val)
-            {
-                sb.Append(symbol);
-                remaining -= val;
-            }
+            sb.Append(symbol);
+            remaining -= value;
         }
+    }
 
-        string result = sb.ToString();
-        return uppercase ? result : result.ToLowerInvariant();
+    private static void AppendRomanPair(ref Utf8ValueStringBuilder sb, ref long remaining, int value, byte first, byte second)
+    {
+        if (remaining >= value)
+        {
+            sb.Append(first);
+            sb.Append(second);
+            remaining -= value;
+        }
     }
 
     private static long FromRomanNumerals(string str)
@@ -1690,25 +1850,27 @@ internal static class XPathDateTimeFormatter
         return result;
     }
 
-    private static string ToAlpha(long value, bool uppercase)
+    private static void ToAlpha(long value, bool uppercase, ref Utf8ValueStringBuilder sb)
     {
         if (value <= 0)
         {
-            return string.Empty;
+            return;
         }
 
-        var sb = new StringBuilder();
+        // Build right-to-left into a small stack buffer (max 13 chars for long range)
+        Span<byte> buf = stackalloc byte[16];
+        int pos = buf.Length;
+        byte baseChar = uppercase ? (byte)'A' : (byte)'a';
         long remaining = value;
-        char baseChar = uppercase ? 'A' : 'a';
 
         while (remaining > 0)
         {
             remaining--;
-            sb.Insert(0, (char)(baseChar + (remaining % 26)));
+            buf[--pos] = (byte)(baseChar + (remaining % 26));
             remaining /= 26;
         }
 
-        return sb.ToString();
+        sb.Append(buf.Slice(pos));
     }
 
     private static long FromAlpha(string str, bool uppercase)
@@ -2971,5 +3133,40 @@ internal static class XPathDateTimeFormatter
 
         var ts = new TimeSpan(hours, minutes, 0);
         return sign == '-' ? ts.Negate() : ts;
+    }
+
+    /// <summary>
+    /// Appends an ASCII string to the UTF-8 builder, one byte per char.
+    /// Only valid for strings containing only ASCII characters.
+    /// </summary>
+    private static void AppendAsciiString(ref Utf8ValueStringBuilder sb, string s)
+    {
+        Span<byte> dest = sb.AppendSpan(s.Length);
+        for (int i = 0; i < s.Length; i++)
+        {
+            dest[i] = (byte)s[i];
+        }
+    }
+
+    /// <summary>
+    /// Appends a single char as UTF-8 bytes (handles BMP characters up to U+FFFF).
+    /// </summary>
+    private static void AppendChar(ref Utf8ValueStringBuilder sb, char c)
+    {
+        if (c < 0x80)
+        {
+            sb.Append((byte)c);
+        }
+        else if (c < 0x800)
+        {
+            sb.Append((byte)(0xC0 | (c >> 6)));
+            sb.Append((byte)(0x80 | (c & 0x3F)));
+        }
+        else
+        {
+            sb.Append((byte)(0xE0 | (c >> 12)));
+            sb.Append((byte)(0x80 | ((c >> 6) & 0x3F)));
+            sb.Append((byte)(0x80 | (c & 0x3F)));
+        }
     }
 }

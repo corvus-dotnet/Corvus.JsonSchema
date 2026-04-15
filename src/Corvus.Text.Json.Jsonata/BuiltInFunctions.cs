@@ -9,6 +9,7 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.RegularExpressions;
 using Corvus.Runtime.InteropServices;
+using Corvus.Text;
 using Corvus.Text.Json.Internal;
 
 namespace Corvus.Text.Json.Jsonata;
@@ -5390,41 +5391,56 @@ internal static class BuiltInFunctions
             }
 
             long numLong = (long)Math.Round(num, MidpointRounding.ToEven);
-            bool negative = numLong < 0;
-            string result = ConvertToBase(Math.Abs(numLong), radixInt);
-            if (negative)
-            {
-                result = "-" + result;
-            }
 
-            return new Sequence(JsonataHelpers.StringFromString(result, env.Workspace));
+            // Max 64 digits + sign = 65 bytes
+            Span<byte> buffer = stackalloc byte[65];
+            int written = ConvertToBaseUtf8(numLong, radixInt, buffer);
+            return new Sequence(JsonataHelpers.StringFromUnescapedUtf8(buffer.Slice(0, written), env.Workspace));
         };
     }
 
-    internal static string ConvertToBase(long value, int radix)
+    /// <summary>
+    /// Formats a long as a string in the specified radix, writing UTF-8 bytes to the destination.
+    /// Suitable for CVB/backing buffer scenarios.
+    /// </summary>
+    /// <param name="value">The value to format (may be negative).</param>
+    /// <param name="radix">The radix (2–36).</param>
+    /// <param name="destination">The destination buffer (must be at least 65 bytes).</param>
+    /// <returns>The number of bytes written.</returns>
+    internal static int ConvertToBaseUtf8(long value, int radix, Span<byte> destination)
     {
-        if (radix is 2 or 8 or 10 or 16)
+        bool negative = value < 0;
+        ulong absValue = negative ? (ulong)(-(value + 1)) + 1 : (ulong)value;
+
+        // Build digits right-to-left in a stack buffer, then copy with optional sign
+        Span<byte> digits = stackalloc byte[64];
+        int pos = digits.Length;
+
+        if (absValue == 0)
         {
-            return Convert.ToString(value, radix);
+            digits[--pos] = (byte)'0';
+        }
+        else
+        {
+            while (absValue > 0)
+            {
+                int digit = (int)(absValue % (ulong)radix);
+                digits[--pos] = digit < 10 ? (byte)('0' + digit) : (byte)('a' + digit - 10);
+                absValue /= (ulong)radix;
+            }
         }
 
-        if (value == 0)
+        int digitCount = digits.Length - pos;
+        int written = 0;
+
+        if (negative)
         {
-            return "0";
+            destination[written++] = (byte)'-';
         }
 
-        const string digits = "0123456789abcdefghijklmnopqrstuvwxyz";
-        var chars = new char[64];
-        int pos = chars.Length;
-
-        long remaining = value;
-        while (remaining > 0)
-        {
-            chars[--pos] = digits[(int)(remaining % radix)];
-            remaining /= radix;
-        }
-
-        return new string(chars, pos, chars.Length - pos);
+        digits.Slice(pos, digitCount).CopyTo(destination.Slice(written));
+        written += digitCount;
+        return written;
     }
 
     // --- Array functions: shuffle, zip ---
@@ -5713,8 +5729,7 @@ internal static class BuiltInFunctions
     {
         return static (in JsonElement input, Environment env) =>
         {
-            return new Sequence(JsonataHelpers.StringFromString(
-                DateTimeOffset.UtcNow.ToString("yyyy-MM-ddTHH:mm:ss.fffZ", CultureInfo.InvariantCulture), env.Workspace));
+            return new Sequence(FormatIso8601Utc(DateTimeOffset.UtcNow, env.Workspace));
         };
     }
 
@@ -5777,12 +5792,10 @@ internal static class BuiltInFunctions
             {
                 if (hasTz)
                 {
-                    return new Sequence(JsonataHelpers.StringFromString(
-                        FormatIso8601WithOffset(dt, offset), env.Workspace));
+                    return new Sequence(FormatIso8601WithOffset(dt, offset, env.Workspace));
                 }
 
-                return new Sequence(JsonataHelpers.StringFromString(
-                    dt.ToString("yyyy-MM-ddTHH:mm:ss.fffZ", CultureInfo.InvariantCulture), env.Workspace));
+                return new Sequence(FormatIso8601Utc(dt, env.Workspace));
             }
 
             var picSeq = pictureArg(input, env);
@@ -5791,34 +5804,119 @@ internal static class BuiltInFunctions
                 // Undefined picture -> use ISO 8601 default with timezone
                 if (hasTz)
                 {
-                    return new Sequence(JsonataHelpers.StringFromString(
-                        FormatIso8601WithOffset(dt, offset), env.Workspace));
+                    return new Sequence(FormatIso8601WithOffset(dt, offset, env.Workspace));
                 }
 
-                return new Sequence(JsonataHelpers.StringFromString(
-                    dt.ToString("yyyy-MM-ddTHH:mm:ss.fffZ", CultureInfo.InvariantCulture), env.Workspace));
+                return new Sequence(FormatIso8601Utc(dt, env.Workspace));
             }
 
             string picture = FunctionalCompiler.CoerceElementToString(picSeq.FirstOrDefault);
-            string result = XPathDateTimeFormatter.FormatDateTime(dt, picture);
-            return new Sequence(JsonataHelpers.StringFromString(result, env.Workspace));
+            Utf8ValueStringBuilder sb = new(stackalloc byte[256]);
+            XPathDateTimeFormatter.FormatDateTime(dt, picture, ref sb);
+            JsonElement element = JsonataHelpers.StringFromUnescapedUtf8(sb.AsSpan(), env.Workspace);
+            sb.Dispose();
+            return new Sequence(element);
         };
     }
 
-    internal static string FormatIso8601WithOffset(DateTimeOffset dt, TimeSpan offset)
+    // "yyyy-MM-ddTHH:mm:ss.fffZ" = 24 bytes, "+HH:MM" suffix = 30 bytes max
+    private const int Iso8601MaxBytes = 32;
+
+    private const string Iso8601UtcFormat = "yyyy-MM-ddTHH:mm:ss.fffZ";
+    private const string Iso8601BaseFormat = "yyyy-MM-ddTHH:mm:ss.fff";
+
+    internal static JsonElement FormatIso8601Utc(DateTimeOffset dt, JsonWorkspace workspace)
     {
+#if NET
+        Span<byte> buffer = stackalloc byte[Iso8601MaxBytes];
+        if (TryFormatIso8601Utc(dt, buffer, out int written))
+        {
+            return JsonataHelpers.StringFromUnescapedUtf8(buffer.Slice(0, written), workspace);
+        }
+#endif
+
+        return JsonataHelpers.StringFromString(
+            dt.ToString(Iso8601UtcFormat, CultureInfo.InvariantCulture), workspace);
+    }
+
+    internal static JsonElement FormatIso8601WithOffset(DateTimeOffset dt, TimeSpan offset, JsonWorkspace workspace)
+    {
+#if NET
+        Span<byte> buffer = stackalloc byte[Iso8601MaxBytes];
+        if (TryFormatIso8601WithOffset(dt, offset, buffer, out int written))
+        {
+            return JsonataHelpers.StringFromUnescapedUtf8(buffer.Slice(0, written), workspace);
+        }
+#endif
+
         string formatted = dt.ToString("yyyy-MM-ddTHH:mm:ss.fff", CultureInfo.InvariantCulture);
         if (offset == TimeSpan.Zero)
         {
-            return formatted + "Z";
+            return JsonataHelpers.StringFromString(formatted + "Z", workspace);
         }
 
         string sign = offset >= TimeSpan.Zero ? "+" : "-";
-        int totalMin = (int)Math.Abs(offset.TotalMinutes);
-        int h = totalMin / 60;
-        int m = totalMin % 60;
-        return formatted + sign + h.ToString(CultureInfo.InvariantCulture).PadLeft(2, '0') + ":" + m.ToString(CultureInfo.InvariantCulture).PadLeft(2, '0');
+        int totalMin2 = (int)Math.Abs(offset.TotalMinutes);
+        int h2 = totalMin2 / 60;
+        int m2 = totalMin2 % 60;
+        return JsonataHelpers.StringFromString(
+            formatted + sign + h2.ToString(CultureInfo.InvariantCulture).PadLeft(2, '0') + ":" + m2.ToString(CultureInfo.InvariantCulture).PadLeft(2, '0'), workspace);
     }
+
+#if NET
+    /// <summary>
+    /// Formats a <see cref="DateTimeOffset"/> as ISO 8601 UTC ("yyyy-MM-ddTHH:mm:ss.fffZ")
+    /// directly into a UTF-8 span. Suitable for CVB/backing buffer scenarios.
+    /// </summary>
+    /// <param name="dt">The date/time to format.</param>
+    /// <param name="destination">The destination buffer (must be at least <see cref="Iso8601MaxBytes"/> bytes).</param>
+    /// <param name="bytesWritten">The number of bytes written.</param>
+    /// <returns><see langword="true"/> if the formatting succeeded.</returns>
+    internal static bool TryFormatIso8601Utc(DateTimeOffset dt, Span<byte> destination, out int bytesWritten)
+    {
+        return ((IUtf8SpanFormattable)dt).TryFormat(destination, out bytesWritten, Iso8601UtcFormat, CultureInfo.InvariantCulture);
+    }
+
+    /// <summary>
+    /// Formats a <see cref="DateTimeOffset"/> as ISO 8601 with an explicit offset
+    /// ("yyyy-MM-ddTHH:mm:ss.fff±HH:mm", or "...Z" when offset is zero)
+    /// directly into a UTF-8 span. Suitable for CVB/backing buffer scenarios.
+    /// </summary>
+    /// <param name="dt">The date/time to format.</param>
+    /// <param name="offset">The timezone offset.</param>
+    /// <param name="destination">The destination buffer (must be at least <see cref="Iso8601MaxBytes"/> bytes).</param>
+    /// <param name="bytesWritten">The number of bytes written.</param>
+    /// <returns><see langword="true"/> if the formatting succeeded.</returns>
+    internal static bool TryFormatIso8601WithOffset(DateTimeOffset dt, TimeSpan offset, Span<byte> destination, out int bytesWritten)
+    {
+        if (offset == TimeSpan.Zero)
+        {
+            return ((IUtf8SpanFormattable)dt).TryFormat(destination, out bytesWritten, Iso8601UtcFormat, CultureInfo.InvariantCulture);
+        }
+
+        if (((IUtf8SpanFormattable)dt).TryFormat(destination, out bytesWritten, Iso8601BaseFormat, CultureInfo.InvariantCulture))
+        {
+            if (bytesWritten + 6 > destination.Length)
+            {
+                bytesWritten = 0;
+                return false;
+            }
+
+            destination[bytesWritten++] = offset >= TimeSpan.Zero ? (byte)'+' : (byte)'-';
+            int totalMin = (int)Math.Abs(offset.TotalMinutes);
+            int h = totalMin / 60;
+            int m = totalMin % 60;
+            destination[bytesWritten++] = (byte)('0' + (h / 10));
+            destination[bytesWritten++] = (byte)('0' + (h % 10));
+            destination[bytesWritten++] = (byte)':';
+            destination[bytesWritten++] = (byte)('0' + (m / 10));
+            destination[bytesWritten++] = (byte)('0' + (m % 10));
+            return true;
+        }
+
+        return false;
+    }
+#endif
 
     /// <summary>
     /// Parse a string as strict ISO 8601 date/time or throw D3110 for invalid format.
@@ -5919,31 +6017,37 @@ internal static class BuiltInFunctions
             var picSeq = picArg(input, env);
             string picture = FunctionalCompiler.CoerceElementToString(picSeq.FirstOrDefault);
 
-            string result;
-
             // Try to parse as long directly from the raw UTF-8 text to avoid
             // precision loss when converting large integers through double.
             if (numElement.ValueKind == JsonValueKind.Number && numElement.TryGetInt64(out long longVal))
             {
-                result = XPathDateTimeFormatter.FormatInteger(longVal, picture);
+                Utf8ValueStringBuilder sb = new(stackalloc byte[64]);
+                XPathDateTimeFormatter.FormatInteger(longVal, picture, ref sb);
+                JsonElement element = JsonataHelpers.StringFromUnescapedUtf8(sb.AsSpan(), env.Workspace);
+                sb.Dispose();
+                return new Sequence(element);
             }
             else if (FunctionalCompiler.TryCoerceToNumber(numElement, out double numVal))
             {
                 if (numVal >= long.MinValue && numVal <= long.MaxValue)
                 {
-                    result = XPathDateTimeFormatter.FormatInteger((long)numVal, picture);
+                    Utf8ValueStringBuilder sb = new(stackalloc byte[64]);
+                    XPathDateTimeFormatter.FormatInteger((long)numVal, picture, ref sb);
+                    JsonElement element = JsonataHelpers.StringFromUnescapedUtf8(sb.AsSpan(), env.Workspace);
+                    sb.Dispose();
+                    return new Sequence(element);
                 }
                 else
                 {
-                    result = XPathDateTimeFormatter.FormatInteger(numVal, picture);
+                    // Large double: falls back to string path
+                    string result = XPathDateTimeFormatter.FormatInteger(numVal, picture);
+                    return new Sequence(JsonataHelpers.StringFromString(result, env.Workspace));
                 }
             }
             else
             {
                 return Sequence.Undefined;
             }
-
-            return new Sequence(JsonataHelpers.StringFromString(result, env.Workspace));
         };
     }
 
