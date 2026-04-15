@@ -34,6 +34,14 @@ public static class JsonataCodeGenHelpers
 {
     private static readonly JsonataEvaluator SharedEvaluator = new();
 
+    private static readonly JsonElement TypeNullElement = ParsedJsonDocument<JsonElement>.StringConstant("\"null\""u8.ToArray());
+    private static readonly JsonElement TypeNumberElement = ParsedJsonDocument<JsonElement>.StringConstant("\"number\""u8.ToArray());
+    private static readonly JsonElement TypeStringElement = ParsedJsonDocument<JsonElement>.StringConstant("\"string\""u8.ToArray());
+    private static readonly JsonElement TypeBooleanElement = ParsedJsonDocument<JsonElement>.StringConstant("\"boolean\""u8.ToArray());
+    private static readonly JsonElement TypeArrayElement = ParsedJsonDocument<JsonElement>.StringConstant("\"array\""u8.ToArray());
+    private static readonly JsonElement TypeObjectElement = ParsedJsonDocument<JsonElement>.StringConstant("\"object\""u8.ToArray());
+    private static readonly JsonElement TypeUndefinedElement = ParsedJsonDocument<JsonElement>.StringConstant("\"undefined\""u8.ToArray());
+
     /// <summary>
     /// Gets a cached <see cref="JsonElement"/> representing JSON <c>true</c>.
     /// </summary>
@@ -2754,18 +2762,16 @@ public static class JsonataCodeGenHelpers
             return default;
         }
 
-        string typeName = input.ValueKind switch
+        return input.ValueKind switch
         {
-            JsonValueKind.Null => "null",
-            JsonValueKind.Number => "number",
-            JsonValueKind.String => "string",
-            JsonValueKind.True or JsonValueKind.False => "boolean",
-            JsonValueKind.Array => "array",
-            JsonValueKind.Object => "object",
-            _ => "undefined",
+            JsonValueKind.Null => TypeNullElement,
+            JsonValueKind.Number => TypeNumberElement,
+            JsonValueKind.String => TypeStringElement,
+            JsonValueKind.True or JsonValueKind.False => TypeBooleanElement,
+            JsonValueKind.Array => TypeArrayElement,
+            JsonValueKind.Object => TypeObjectElement,
+            _ => TypeUndefinedElement,
         };
-
-        return StringElement(typeName, workspace);
     }
 
     /// <summary>
@@ -3651,7 +3657,7 @@ public static class JsonataCodeGenHelpers
             {
                 byte b = str[pos];
                 int cpLen = b < 0x80 ? 1 : b < 0xE0 ? 2 : b < 0xF0 ? 3 : 4;
-                arrayRoot.AddItem(JsonataHelpers.StringFromUnescapedUtf8(str.Slice(pos, cpLen), workspace));
+                arrayRoot.AddItem(str.Slice(pos, cpLen));
                 pos += cpLen;
             }
 
@@ -3693,19 +3699,19 @@ public static class JsonataCodeGenHelpers
             for (int i = 0; i < resultCount - 1; i++)
             {
                 int idx = str.Slice(searchStart).IndexOf(sep);
-                arrayRoot.AddItem(JsonataHelpers.StringFromUnescapedUtf8(str.Slice(searchStart, idx), workspace));
+                arrayRoot.AddItem(str.Slice(searchStart, idx));
                 searchStart += idx + sep.Length;
             }
 
             if (exhausted)
             {
-                arrayRoot.AddItem(JsonataHelpers.StringFromUnescapedUtf8(str.Slice(searchStart), workspace));
+                arrayRoot.AddItem(str.Slice(searchStart));
             }
             else
             {
                 int idx = str.Slice(searchStart).IndexOf(sep);
                 int partLen = idx >= 0 ? idx : str.Length - searchStart;
-                arrayRoot.AddItem(JsonataHelpers.StringFromUnescapedUtf8(str.Slice(searchStart, partLen), workspace));
+                arrayRoot.AddItem(str.Slice(searchStart, partLen));
             }
 
             return (JsonElement)arrayRoot;
@@ -3746,7 +3752,7 @@ public static class JsonataCodeGenHelpers
             {
                 byte b = str[pos];
                 int cpLen = b < 0x80 ? 1 : b < 0xE0 ? 2 : b < 0xF0 ? 3 : 4;
-                arrayRoot.AddItem(JsonataHelpers.StringFromUnescapedUtf8(str.Slice(pos, cpLen), workspace));
+                arrayRoot.AddItem(str.Slice(pos, cpLen));
                 pos += cpLen;
             }
 
@@ -3777,12 +3783,12 @@ public static class JsonataCodeGenHelpers
             for (int i = 0; i < matchCount; i++)
             {
                 idx = str.Slice(searchStart).IndexOf(sep);
-                arrayRoot.AddItem(JsonataHelpers.StringFromUnescapedUtf8(str.Slice(searchStart, idx), workspace));
+                arrayRoot.AddItem(str.Slice(searchStart, idx));
                 searchStart += idx + sep.Length;
             }
 
             // Add remainder
-            arrayRoot.AddItem(JsonataHelpers.StringFromUnescapedUtf8(str.Slice(searchStart), workspace));
+            arrayRoot.AddItem(str.Slice(searchStart));
 
             return (JsonElement)arrayRoot;
         }

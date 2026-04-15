@@ -45,6 +45,15 @@ internal static class BuiltInFunctions
     /// </summary>
     private static readonly ExpressionEvaluator ContextArg = static (in JsonElement input, Environment env) => new Sequence(input);
 
+    private static readonly JsonElement TypeNullElement = ParsedJsonDocument<JsonElement>.StringConstant("\"null\""u8.ToArray());
+    private static readonly JsonElement TypeNumberElement = ParsedJsonDocument<JsonElement>.StringConstant("\"number\""u8.ToArray());
+    private static readonly JsonElement TypeStringElement = ParsedJsonDocument<JsonElement>.StringConstant("\"string\""u8.ToArray());
+    private static readonly JsonElement TypeBooleanElement = ParsedJsonDocument<JsonElement>.StringConstant("\"boolean\""u8.ToArray());
+    private static readonly JsonElement TypeArrayElement = ParsedJsonDocument<JsonElement>.StringConstant("\"array\""u8.ToArray());
+    private static readonly JsonElement TypeObjectElement = ParsedJsonDocument<JsonElement>.StringConstant("\"object\""u8.ToArray());
+    private static readonly JsonElement TypeFunctionElement = ParsedJsonDocument<JsonElement>.StringConstant("\"function\""u8.ToArray());
+    private static readonly JsonElement TypeUndefinedElement = ParsedJsonDocument<JsonElement>.StringConstant("\"undefined\""u8.ToArray());
+
     /// <summary>
     /// Tries to get a compile-time function compiler for the given built-in name.
     /// </summary>
@@ -791,7 +800,7 @@ internal static class BuiltInFunctions
 
             if (seq.IsLambda)
             {
-                return new Sequence(JsonataHelpers.StringFromString("function", env.Workspace));
+                return new Sequence(TypeFunctionElement);
             }
 
             if (seq.IsUndefined)
@@ -799,18 +808,18 @@ internal static class BuiltInFunctions
                 return Sequence.Undefined;
             }
 
-            string typeName = seq.FirstOrDefault.ValueKind switch
+            JsonElement typeElement = seq.FirstOrDefault.ValueKind switch
             {
-                JsonValueKind.Null => "null",
-                JsonValueKind.Number => "number",
-                JsonValueKind.String => "string",
-                JsonValueKind.True or JsonValueKind.False => "boolean",
-                JsonValueKind.Array => "array",
-                JsonValueKind.Object => "object",
-                _ => "undefined",
+                JsonValueKind.Null => TypeNullElement,
+                JsonValueKind.Number => TypeNumberElement,
+                JsonValueKind.String => TypeStringElement,
+                JsonValueKind.True or JsonValueKind.False => TypeBooleanElement,
+                JsonValueKind.Array => TypeArrayElement,
+                JsonValueKind.Object => TypeObjectElement,
+                _ => TypeUndefinedElement,
             };
 
-            return new Sequence(JsonataHelpers.StringFromString(typeName, env.Workspace));
+            return new Sequence(typeElement);
         };
     }
 
@@ -4064,7 +4073,7 @@ internal static class BuiltInFunctions
             {
                 byte b = str[pos];
                 int cpLen = b < 0x80 ? 1 : b < 0xE0 ? 2 : b < 0xF0 ? 3 : 4;
-                arrayRoot.AddItem(JsonataHelpers.StringFromUnescapedUtf8(str.Slice(pos, cpLen), workspace));
+                arrayRoot.AddItem(str.Slice(pos, cpLen));
                 pos += cpLen;
             }
 
@@ -4109,21 +4118,21 @@ internal static class BuiltInFunctions
             for (int i = 0; i < resultCount - 1; i++)
             {
                 int idx = str.Slice(searchStart).IndexOf(sep);
-                arrayRoot.AddItem(JsonataHelpers.StringFromUnescapedUtf8(str.Slice(searchStart, idx), workspace));
+                arrayRoot.AddItem(str.Slice(searchStart, idx));
                 searchStart += idx + sep.Length;
             }
 
             if (exhausted)
             {
                 // All parts fit — add remainder
-                arrayRoot.AddItem(JsonataHelpers.StringFromUnescapedUtf8(str.Slice(searchStart), workspace));
+                arrayRoot.AddItem(str.Slice(searchStart));
             }
             else
             {
                 // Hit limit: take text up to next separator (or end)
                 int idx = str.Slice(searchStart).IndexOf(sep);
                 int partLen = idx >= 0 ? idx : str.Length - searchStart;
-                arrayRoot.AddItem(JsonataHelpers.StringFromUnescapedUtf8(str.Slice(searchStart, partLen), workspace));
+                arrayRoot.AddItem(str.Slice(searchStart, partLen));
             }
 
             return (JsonElement)arrayRoot;
