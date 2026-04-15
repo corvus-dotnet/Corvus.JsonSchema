@@ -568,20 +568,15 @@ internal static class XPathDateTimeFormatter
 
         if (primary == "W" || primary == "w" || primary == "Ww")
         {
-            bool isNegative = value < 0;
-            double absValue = Math.Abs(value);
-            string words = NumberToWordsLarge(absValue);
-            if (isNegative)
-            {
-                words = "minus " + words;
-            }
-
-            if (isOrdinal)
-            {
-                words = MakeOrdinalWords(words);
-            }
-
-            return ApplyWordCasing(words, primary);
+            Utf8ValueStringBuilder sb = new(stackalloc byte[128]);
+            AppendAsWordsLarge(value, primary, isOrdinal, ref sb);
+#if NET
+            string result = Encoding.UTF8.GetString(sb.AsSpan());
+#else
+            string result = Encoding.UTF8.GetString(sb.AsSpan().ToArray());
+#endif
+            sb.Dispose();
+            return result;
         }
 
         // For non-word patterns, format using scientific notation
@@ -690,8 +685,7 @@ internal static class XPathDateTimeFormatter
 
         if (presentation == "W" || presentation == "w" || presentation == "Ww")
         {
-            string words = FormatAsWords(value, presentation, isOrdinal);
-            AppendAsciiString(ref result, words);
+            AppendAsWords(value, presentation, isOrdinal, ref result);
             return;
         }
 
@@ -1891,283 +1885,337 @@ internal static class XPathDateTimeFormatter
         return result;
     }
 
-    private static string FormatAsWords(long value, string casing, bool isOrdinal)
+    /// <summary>
+    /// Appends a number formatted as English words to the builder, with optional
+    /// ordinal form and casing.
+    /// </summary>
+    private static void AppendAsWords(long value, string casing, bool isOrdinal, ref Utf8ValueStringBuilder sb)
     {
         if (value == 0)
         {
-            string zeroWord = isOrdinal ? "zeroth" : "zero";
-            return ApplyWordCasing(zeroWord, casing);
+            int start = sb.Length;
+            sb.AppendAsciiString(isOrdinal ? "zeroth" : "zero");
+            ApplyWordCasingInPlace(ref sb, start, casing);
+            return;
         }
 
-        bool isNegative = value < 0;
-        long absValue = Math.Abs(value);
+        int wordsStart = sb.Length;
 
-        string words = NumberToWords(absValue);
-
-        if (isNegative)
+        if (value < 0)
         {
-            words = "minus " + words;
+            sb.AppendAsciiString("minus ");
+
+            // Use ulong to handle long.MinValue safely
+            ulong magnitude = value == long.MinValue
+                ? ((ulong)long.MaxValue) + 1
+                : (ulong)(-value);
+            AppendNumberWords(magnitude, ref sb);
+        }
+        else
+        {
+            AppendNumberWords((ulong)value, ref sb);
         }
 
         if (isOrdinal)
         {
-            words = MakeOrdinalWords(words);
+            OrdinalizeLastWord(ref sb, wordsStart);
         }
 
-        return ApplyWordCasing(words, casing);
+        ApplyWordCasingInPlace(ref sb, wordsStart, casing);
     }
 
-    private static string NumberToWords(long value)
+    /// <summary>
+    /// Appends a large number (as double, outside long range) formatted as English words.
+    /// </summary>
+    private static void AppendAsWordsLarge(double value, string casing, bool isOrdinal, ref Utf8ValueStringBuilder sb)
+    {
+        int wordsStart = sb.Length;
+
+        bool isNegative = value < 0;
+        double absValue = Math.Abs(value);
+
+        if (isNegative)
+        {
+            sb.AppendAsciiString("minus ");
+        }
+
+        AppendNumberWordsLarge(absValue, ref sb);
+
+        if (isOrdinal)
+        {
+            OrdinalizeLastWord(ref sb, wordsStart);
+        }
+
+        ApplyWordCasingInPlace(ref sb, wordsStart, casing);
+    }
+
+    /// <summary>
+    /// Appends the cardinal English word representation of a non-negative integer
+    /// directly to a <see cref="Utf8ValueStringBuilder"/>.
+    /// </summary>
+    private static void AppendNumberWords(ulong value, ref Utf8ValueStringBuilder sb)
     {
         if (value == 0)
         {
-            return "zero";
-        }
-
-        if (value < 0)
-        {
-            return "minus " + NumberToWords(-value);
+            sb.AppendAsciiString("zero");
+            return;
         }
 
         // Handle very large numbers by chaining "trillion"
-        if (value >= 1_000_000_000_000_000L)
+        if (value >= 1_000_000_000_000_000UL)
         {
-            // Express as X trillion(s)
-            long trillions = value / 1_000_000_000_000L;
-            long remainder = value % 1_000_000_000_000L;
+            ulong trillions = value / 1_000_000_000_000UL;
+            ulong remainder = value % 1_000_000_000_000UL;
 
-            string trillionPart = NumberToWords(trillions) + " trillion";
+            AppendNumberWords(trillions, ref sb);
+            sb.AppendAsciiString(" trillion");
             if (remainder == 0)
             {
-                return trillionPart;
+                return;
             }
 
-            string sep = remainder < 100 ? " and " : ", ";
-            return trillionPart + sep + NumberToWords(remainder);
+            sb.AppendAsciiString(remainder < 100 ? " and " : ", ");
+            AppendNumberWords(remainder, ref sb);
+            return;
         }
 
-        var parts = new List<string>();
+        bool needsSeparator = false;
 
         foreach (var (name, scale) in ScaleWords)
         {
-            if (scale > 1_000_000_000_000L)
+            if ((ulong)scale > 1_000_000_000_000UL)
             {
                 continue; // Skip trillion, handled above
             }
 
-            if (value >= scale)
+            if (value >= (ulong)scale)
             {
-                long count = value / scale;
-                value %= scale;
+                ulong count = value / (ulong)scale;
+                value %= (ulong)scale;
 
-                if (scale >= 1000)
+                if (needsSeparator)
                 {
-                    parts.Add(NumberToWords(count) + " " + name);
+                    sb.AppendAsciiString(", ");
+                }
+
+                if ((ulong)scale >= 1000)
+                {
+                    AppendNumberWords(count, ref sb);
+                    sb.Append((byte)' ');
                 }
                 else
                 {
                     // hundred
-                    parts.Add(Ones[count] + " " + name);
+                    sb.AppendAsciiString(Ones[count]);
+                    sb.Append((byte)' ');
                 }
+
+                sb.AppendAsciiString(name);
+                needsSeparator = true;
             }
         }
 
         if (value > 0)
         {
-            if (parts.Count > 0)
+            if (needsSeparator)
             {
-                parts.Add("and");
+                sb.AppendAsciiString(" and ");
             }
 
             if (value < 20)
             {
-                parts.Add(Ones[value]);
+                sb.AppendAsciiString(Ones[value]);
             }
             else
             {
-                string tens = Tens[value / 10];
-                long ones = value % 10;
+                sb.AppendAsciiString(Tens[value / 10]);
+                ulong ones = value % 10;
                 if (ones > 0)
                 {
-                    parts.Add(tens + "-" + Ones[ones]);
-                }
-                else
-                {
-                    parts.Add(tens);
+                    sb.Append((byte)'-');
+                    sb.AppendAsciiString(Ones[ones]);
                 }
             }
         }
-
-        // Join: use ", " between major groups but " and " before last small part
-        // Actually, the logic is: groups are joined by ", " except "and" tokens use " "
-        var result = new StringBuilder();
-        for (int i = 0; i < parts.Count; i++)
-        {
-            if (i > 0)
-            {
-                if (parts[i] == "and")
-                {
-                    result.Append(' ');
-                }
-                else if (i > 0 && parts[i - 1] == "and")
-                {
-                    result.Append(' ');
-                }
-                else
-                {
-                    result.Append(", ");
-                }
-            }
-
-            result.Append(parts[i]);
-        }
-
-        return result.ToString();
     }
 
-    private static string NumberToWordsLarge(double value)
+    /// <summary>
+    /// Appends the cardinal English word representation of a large number (double)
+    /// directly to a <see cref="Utf8ValueStringBuilder"/>.
+    /// </summary>
+    private static void AppendNumberWordsLarge(double value, ref Utf8ValueStringBuilder sb)
     {
         if (value < 1_000_000_000_000.0)
         {
-            return NumberToWords((long)value);
+            AppendNumberWords((ulong)value, ref sb);
+            return;
         }
 
         double trillions = Math.Floor(value / 1_000_000_000_000.0);
         double remainder = value - (trillions * 1_000_000_000_000.0);
 
-        string trillionPart;
         if (trillions >= 1_000_000_000_000.0)
         {
-            trillionPart = NumberToWordsLarge(trillions) + " trillion";
+            AppendNumberWordsLarge(trillions, ref sb);
         }
         else
         {
-            trillionPart = NumberToWords((long)trillions) + " trillion";
+            AppendNumberWords((ulong)trillions, ref sb);
         }
+
+        sb.AppendAsciiString(" trillion");
 
         if (remainder < 1.0)
         {
-            return trillionPart;
+            return;
         }
 
-        string sep = remainder < 100 ? " and " : ", ";
-        return trillionPart + sep + NumberToWords((long)remainder);
+        sb.AppendAsciiString(remainder < 100 ? " and " : ", ");
+        AppendNumberWords((ulong)remainder, ref sb);
     }
 
-    private static string MakeOrdinalWords(string words)
+    /// <summary>
+    /// Finds the last word in the builder (after <paramref name="regionStart"/>),
+    /// replaces it with its ordinal form.
+    /// </summary>
+    private static void OrdinalizeLastWord(ref Utf8ValueStringBuilder sb, int regionStart)
     {
-        // Find the last word and convert it to ordinal form
-        int lastSpace = -1;
-        int lastHyphen = -1;
+        Span<byte> raw = sb.RawBytes;
+        int end = sb.Length;
 
-        for (int i = words.Length - 1; i >= 0; i--)
+        // Scan backward to find last word boundary (space or hyphen)
+        int tokenStart = regionStart;
+        for (int i = end - 1; i >= regionStart; i--)
         {
-            if (words[i] == ' ' && lastSpace < 0)
+            if (raw[i] == (byte)' ' || raw[i] == (byte)'-')
             {
-                lastSpace = i;
-            }
-
-            if (words[i] == '-' && lastHyphen < 0)
-            {
-                lastHyphen = i;
-            }
-
-            if (lastSpace >= 0 && lastHyphen >= 0)
-            {
+                tokenStart = i + 1;
                 break;
             }
         }
 
-        int splitPos = Math.Max(lastSpace, lastHyphen);
-        if (splitPos < 0)
+        // Extract the last token as a string for lookup
+        int tokenLength = end - tokenStart;
+        Span<byte> tokenBytes = stackalloc byte[tokenLength];
+        raw.Slice(tokenStart, tokenLength).CopyTo(tokenBytes);
+
+        // Try OrdinalWordMap lookup (all entries are ASCII, case-insensitive)
+        string? ordinalReplacement = null;
+        foreach (var kvp in OrdinalWordMap)
         {
-            // Single word
-            return WordToOrdinal(words);
+            if (kvp.Key.Length == tokenLength)
+            {
+                bool match = true;
+                for (int i = 0; i < tokenLength; i++)
+                {
+                    // Case-insensitive ASCII comparison
+                    byte b = tokenBytes[i];
+                    char c = kvp.Key[i];
+                    if (b != (byte)c && b != (byte)char.ToLowerInvariant(c) && b != (byte)char.ToUpperInvariant(c))
+                    {
+                        match = false;
+                        break;
+                    }
+                }
+
+                if (match)
+                {
+                    ordinalReplacement = kvp.Value;
+                    break;
+                }
+            }
         }
 
-        string prefix = words.Substring(0, splitPos + 1);
-        string lastWord = words.Substring(splitPos + 1);
+        if (ordinalReplacement != null)
+        {
+            // Truncate to before the token, then append ordinal
+            sb.Length = tokenStart;
+            sb.AppendAsciiString(ordinalReplacement);
+            return;
+        }
 
-        return prefix + WordToOrdinal(lastWord);
+        // Check if it ends with "y" → change to "ieth"
+        if (tokenLength > 0 && tokenBytes[tokenLength - 1] == (byte)'y')
+        {
+            sb.Length = end - 1; // Remove the 'y'
+            sb.AppendAsciiString("ieth");
+            return;
+        }
+
+        // Default: just append "th"
+        sb.AppendAsciiString("th");
     }
 
-    private static string WordToOrdinal(string word)
+    /// <summary>
+    /// Applies word casing (W = UPPER, w = lower, Ww = Title Case) in-place
+    /// over the region <c>[start..sb.Length)</c> of the builder.
+    /// </summary>
+    private static void ApplyWordCasingInPlace(ref Utf8ValueStringBuilder sb, int start, string casing)
     {
-        if (OrdinalWordMap.TryGetValue(word, out string? ordinal))
-        {
-            return ordinal;
-        }
-
-        // Check if it ends with "y" - change to "ieth"
-        if (word.EndsWith("y", StringComparison.Ordinal))
-        {
-            return word.Substring(0, word.Length - 1) + "ieth";
-        }
-
-        return word + "th";
-    }
-
-    private static string ApplyWordCasing(string words, string casing)
-    {
-        if (casing == "W")
-        {
-            return words.ToUpperInvariant();
-        }
-
         if (casing == "w")
         {
-            return words.ToLowerInvariant();
+            // Already lowercase — nothing to do
+            return;
+        }
+
+        Span<byte> raw = sb.RawBytes;
+        int end = sb.Length;
+
+        if (casing == "W")
+        {
+            // Convert all lowercase ASCII to uppercase
+            for (int i = start; i < end; i++)
+            {
+                byte b = raw[i];
+                if (b >= (byte)'a' && b <= (byte)'z')
+                {
+                    raw[i] = (byte)(b - 32);
+                }
+            }
+
+            return;
         }
 
         if (casing == "Ww")
         {
-            return TitleCase(words);
-        }
-
-        return words;
-    }
-
-    private static string TitleCase(string text)
-    {
-        var sb = new StringBuilder(text.Length);
-        bool capitalizeNext = true;
-
-        // Split into words and capitalize each, except "and" which stays lowercase
-        int i = 0;
-        while (i < text.Length)
-        {
-            if (text[i] == ' ' || text[i] == '-' || text[i] == ',')
+            // Title case: capitalize first letter of each word, except "and"
+            bool capitalizeNext = true;
+            int i = start;
+            while (i < end)
             {
-                sb.Append(text[i]);
-                capitalizeNext = true;
-                i++;
-            }
-            else if (capitalizeNext)
-            {
-                // Check if this word is "and"
-                if (i + 3 < text.Length &&
-                    text[i] == 'a' && text[i + 1] == 'n' && text[i + 2] == 'd' &&
-                    (text[i + 3] == ' ' || text[i + 3] == '-' || text[i + 3] == ','))
+                byte b = raw[i];
+                if (b == (byte)' ' || b == (byte)'-' || b == (byte)',')
                 {
-                    sb.Append("and");
-                    i += 3;
-                    capitalizeNext = false;
+                    capitalizeNext = true;
+                    i++;
+                }
+                else if (capitalizeNext)
+                {
+                    // Check if this word is "and"
+                    if (i + 3 < end &&
+                        raw[i] == (byte)'a' && raw[i + 1] == (byte)'n' && raw[i + 2] == (byte)'d' &&
+                        (raw[i + 3] == (byte)' ' || raw[i + 3] == (byte)'-' || raw[i + 3] == (byte)','))
+                    {
+                        i += 3;
+                        capitalizeNext = false;
+                    }
+                    else
+                    {
+                        if (b >= (byte)'a' && b <= (byte)'z')
+                        {
+                            raw[i] = (byte)(b - 32);
+                        }
+
+                        capitalizeNext = false;
+                        i++;
+                    }
                 }
                 else
                 {
-                    sb.Append(char.ToUpperInvariant(text[i]));
-                    capitalizeNext = false;
                     i++;
                 }
             }
-            else
-            {
-                sb.Append(text[i]);
-                i++;
-            }
         }
-
-        return sb.ToString();
     }
 
     private static bool TryParseWordsToNumber(string str, bool isOrdinal, out long value)
