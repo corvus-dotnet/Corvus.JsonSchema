@@ -7575,6 +7575,26 @@ internal static class FunctionalCompiler
             };
         }
 
+        // Bare built-in variable: LHS ~> $sum  (no parens)
+        // When LHS is guaranteed to produce a value (not a lambda), we can
+        // compile the built-in directly with LHS as the sole argument —
+        // eliminating runtime lambda lookup, env binding, and array allocation.
+        // Skip when LHS could be a lambda (VariableNode, LambdaNode, BlockNode,
+        // FunctionCallNode, ConditionNode, ApplyNode, BindNode, PartialNode)
+        // because those cases need function composition at runtime.
+        if (apply.Rhs is VariableNode bareVar
+            && apply.Lhs is PathNode or NumberNode or StringNode or ValueNode
+                or NameNode or WildcardNode or DescendantNode or ParentNode
+                or ArrayConstructorNode or ObjectConstructorNode
+                or UnaryNode or BinaryNode or FilterNode or SortNode)
+        {
+            var builtIn = BuiltInFunctions.TryGetCompiler(bareVar.Name);
+            if (builtIn is not null)
+            {
+                return builtIn([lhsEval]);
+            }
+        }
+
         var rhsEval = Compile(apply.Rhs);
 
         // Function composition / pipe: LHS ~> RHS where RHS is a variable/lambda
