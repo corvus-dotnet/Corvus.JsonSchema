@@ -2633,10 +2633,20 @@ public static class JsonataCodeGenerator
             // e.g. expr ~> $sum → H.Sum(lhs, workspace)
             if (apply.Rhs is VariableNode varNode && TryGetUnaryBuiltinHelperName(varNode.Name) is string helperName)
             {
+                // Fused chain+aggregation: path ~> $sum → H.SumOverChain(data, chain, ws)
+                // Eliminates the intermediate builder document from NavigatePropertyChain.
+                if (TryGetFusedChainAggregateHelper(varNode.Name) is string fusedName
+                    && TryGetSimpleChainField(apply.Lhs) is string chainField)
+                {
+                    string v = NextVar();
+                    L(sb, indent, $"var {v} = {H}.{fusedName}({dataVar}, {chainField}, {wsVar});");
+                    return v;
+                }
+
                 string lhs = EmitExpression(sb, apply.Lhs, indent, dataVar, wsVar);
-                string v = NextVar();
-                L(sb, indent, $"var {v} = {H}.{helperName}({lhs}, {wsVar});");
-                return v;
+                string v2 = NextVar();
+                L(sb, indent, $"var {v2} = {H}.{helperName}({lhs}, {wsVar});");
+                return v2;
             }
 
             throw new FallbackException();
@@ -2672,6 +2682,24 @@ public static class JsonataCodeGenerator
                 "shuffle" => "Shuffle",
                 "exists" => "Exists",
                 "type" => "Type",
+                _ => null,
+            };
+        }
+
+        /// <summary>
+        /// Returns the fused chain+aggregation helper name for a built-in function that
+        /// can be applied directly to a property chain (eliminating the intermediate builder
+        /// document), or <c>null</c> if not a fusible aggregation.
+        /// </summary>
+        private static string? TryGetFusedChainAggregateHelper(string name)
+        {
+            return name switch
+            {
+                "sum" => "SumOverChain",
+                "count" => "CountOverChain",
+                "max" => "MaxOverChain",
+                "min" => "MinOverChain",
+                "average" => "AverageOverChain",
                 _ => null,
             };
         }

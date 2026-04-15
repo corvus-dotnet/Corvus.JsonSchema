@@ -2078,6 +2078,188 @@ public static class JsonataCodeGenHelpers
     }
 
     /// <summary>
+    /// Fused <c>$sum</c> over a property chain. Navigates the chain into an
+    /// <see cref="ElementBuffer"/> (no builder document) and sums the numeric elements
+    /// directly, eliminating the intermediate array allocation.
+    /// </summary>
+    /// <param name="data">The input data element.</param>
+    /// <param name="chainNames">The UTF-8 encoded property names for each step.</param>
+    /// <param name="workspace">The workspace for the final result document.</param>
+    /// <returns>The sum as a <see cref="JsonElement"/> number, or <c>default</c> if undefined.</returns>
+    public static JsonElement SumOverChain(
+        in JsonElement data,
+        byte[][] chainNames,
+        JsonWorkspace workspace)
+    {
+        var buffer = default(ElementBuffer);
+        try
+        {
+            NavigatePropertyChainInto(data, chainNames, ref buffer);
+            return SumBuffer(ref buffer, workspace);
+        }
+        finally
+        {
+            buffer.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Fused <c>$count</c> over a property chain. Navigates the chain into an
+    /// <see cref="ElementBuffer"/> and counts the elements directly.
+    /// </summary>
+    public static JsonElement CountOverChain(
+        in JsonElement data,
+        byte[][] chainNames,
+        JsonWorkspace workspace)
+    {
+        var buffer = default(ElementBuffer);
+        try
+        {
+            NavigatePropertyChainInto(data, chainNames, ref buffer);
+            return buffer.Count == 0 ? default : JsonataHelpers.NumberFromDouble(buffer.Count, workspace);
+        }
+        finally
+        {
+            buffer.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Fused <c>$max</c> over a property chain.
+    /// </summary>
+    public static JsonElement MaxOverChain(
+        in JsonElement data,
+        byte[][] chainNames,
+        JsonWorkspace workspace)
+    {
+        var buffer = default(ElementBuffer);
+        try
+        {
+            NavigatePropertyChainInto(data, chainNames, ref buffer);
+            return AggregateBuffer(ref buffer, double.MinValue, static (acc, val) => val > acc ? val : acc, workspace);
+        }
+        finally
+        {
+            buffer.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Fused <c>$min</c> over a property chain.
+    /// </summary>
+    public static JsonElement MinOverChain(
+        in JsonElement data,
+        byte[][] chainNames,
+        JsonWorkspace workspace)
+    {
+        var buffer = default(ElementBuffer);
+        try
+        {
+            NavigatePropertyChainInto(data, chainNames, ref buffer);
+            return AggregateBuffer(ref buffer, double.MaxValue, static (acc, val) => val < acc ? val : acc, workspace);
+        }
+        finally
+        {
+            buffer.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Fused <c>$average</c> over a property chain.
+    /// </summary>
+    public static JsonElement AverageOverChain(
+        in JsonElement data,
+        byte[][] chainNames,
+        JsonWorkspace workspace)
+    {
+        var buffer = default(ElementBuffer);
+        try
+        {
+            NavigatePropertyChainInto(data, chainNames, ref buffer);
+            if (buffer.Count == 0)
+            {
+                return default;
+            }
+
+            double sum = 0;
+            int count = 0;
+            for (int i = 0; i < buffer.Count; i++)
+            {
+                JsonElement item = buffer[i];
+                if (item.ValueKind == JsonValueKind.Number)
+                {
+                    sum += item.GetDouble();
+                    count++;
+                }
+                else if (!item.IsNullOrUndefined())
+                {
+                    throw new JsonataException("T0412", SR.T0412_Argument1OfFunctionAverageMustBeAnArrayOfNumbers, 0);
+                }
+            }
+
+            return count == 0 ? default : JsonataHelpers.NumberFromDouble(sum / count, workspace);
+        }
+        finally
+        {
+            buffer.Dispose();
+        }
+    }
+
+    private static JsonElement SumBuffer(ref ElementBuffer buffer, JsonWorkspace workspace)
+    {
+        if (buffer.Count == 0)
+        {
+            return default;
+        }
+
+        double sum = 0;
+        for (int i = 0; i < buffer.Count; i++)
+        {
+            JsonElement item = buffer[i];
+            if (item.ValueKind == JsonValueKind.Number)
+            {
+                sum += item.GetDouble();
+            }
+            else if (!item.IsNullOrUndefined())
+            {
+                throw new JsonataException("T0412", SR.T0412_Argument1OfFunctionSumMustBeAnArrayOfNumbers, 0);
+            }
+        }
+
+        return JsonataHelpers.NumberFromDouble(sum, workspace);
+    }
+
+    private static JsonElement AggregateBuffer(
+        ref ElementBuffer buffer,
+        double seed,
+        Func<double, double, double> accumulate,
+        JsonWorkspace workspace)
+    {
+        if (buffer.Count == 0)
+        {
+            return default;
+        }
+
+        double result = seed;
+        bool found = false;
+        for (int i = 0; i < buffer.Count; i++)
+        {
+            JsonElement item = buffer[i];
+            if (item.ValueKind == JsonValueKind.Number)
+            {
+                result = accumulate(result, item.GetDouble());
+                found = true;
+            }
+            else if (!item.IsNullOrUndefined())
+            {
+                throw new JsonataException("T0412", SR.T0412_Argument1OfFunctionMaxMustBeAnArrayOfNumbers, 0);
+            }
+        }
+
+        return found ? JsonataHelpers.NumberFromDouble(result, workspace) : default;
+    }
+
+    /// <summary>
     /// Fused <c>$sum</c> over per-element double-producing step. Evaluates the step function
     /// per element and sums the raw doubles directly, avoiding the intermediate
     /// <see cref="JsonElement"/> array and per-element <c>NumberFromDouble</c> materialisation.
