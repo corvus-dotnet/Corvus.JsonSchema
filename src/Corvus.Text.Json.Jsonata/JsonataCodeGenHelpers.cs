@@ -3,6 +3,7 @@
 // </copyright>
 
 using System.Buffers;
+using System.Buffers.Text;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -5049,9 +5050,33 @@ public static class JsonataCodeGenHelpers
             return default;
         }
 
+        if (input.ValueKind == JsonValueKind.String)
+        {
+            using UnescapedUtf8JsonString utf8 = input.GetUtf8String();
+            ReadOnlySpan<byte> source = utf8.Span;
+            int maxLen = Base64.GetMaxEncodedToUtf8Length(source.Length);
+            byte[]? rented = null;
+            Span<byte> dest = maxLen <= JsonConstants.StackallocByteThreshold
+                ? stackalloc byte[JsonConstants.StackallocByteThreshold]
+                : (rented = ArrayPool<byte>.Shared.Rent(maxLen));
+
+            try
+            {
+                Base64.EncodeToUtf8(source, dest, out _, out int written);
+                return JsonataHelpers.StringFromUnescapedUtf8(dest.Slice(0, written), workspace);
+            }
+            finally
+            {
+                if (rented != null)
+                {
+                    ArrayPool<byte>.Shared.Return(rented);
+                }
+            }
+        }
+
         string str = FunctionalCompiler.CoerceElementToString(input);
         return JsonataHelpers.StringFromString(
-            Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(str)), workspace);
+            Convert.ToBase64String(Encoding.UTF8.GetBytes(str)), workspace);
     }
 
     /// <summary>
@@ -5064,9 +5089,33 @@ public static class JsonataCodeGenHelpers
             return default;
         }
 
+        if (input.ValueKind == JsonValueKind.String)
+        {
+            using UnescapedUtf8JsonString utf8 = input.GetUtf8String();
+            ReadOnlySpan<byte> source = utf8.Span;
+            int maxLen = Base64.GetMaxDecodedFromUtf8Length(source.Length);
+            byte[]? rented = null;
+            Span<byte> dest = maxLen <= JsonConstants.StackallocByteThreshold
+                ? stackalloc byte[JsonConstants.StackallocByteThreshold]
+                : (rented = ArrayPool<byte>.Shared.Rent(maxLen));
+
+            try
+            {
+                Base64.DecodeFromUtf8(source, dest, out _, out int written);
+                return JsonataHelpers.StringFromUnescapedUtf8(dest.Slice(0, written), workspace);
+            }
+            finally
+            {
+                if (rented != null)
+                {
+                    ArrayPool<byte>.Shared.Return(rented);
+                }
+            }
+        }
+
         string str = FunctionalCompiler.CoerceElementToString(input);
         return JsonataHelpers.StringFromString(
-            System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(str)), workspace);
+            Encoding.UTF8.GetString(Convert.FromBase64String(str)), workspace);
     }
 
     /// <summary>
@@ -5077,6 +5126,12 @@ public static class JsonataCodeGenHelpers
         if (input.IsNullOrUndefined())
         {
             return default;
+        }
+
+        if (input.ValueKind == JsonValueKind.String)
+        {
+            using UnescapedUtf8JsonString utf8 = input.GetUtf8String();
+            return EscapeDataStringToElement(utf8.Span, workspace);
         }
 
         string str;
@@ -5103,6 +5158,19 @@ public static class JsonataCodeGenHelpers
             return default;
         }
 
+        if (input.ValueKind == JsonValueKind.String)
+        {
+            using UnescapedUtf8JsonString utf8 = input.GetUtf8String();
+            ReadOnlySpan<byte> source = utf8.Span;
+
+            if (BuiltInFunctions.HasInvalidPercentEncoding(source))
+            {
+                throw new JsonataException("D3140", SR.Format(SR.D3140_MalformedUrlPassedToDecodeUrlComponent, input.GetString()!), 0);
+            }
+
+            return UnescapeDataStringToElement(source, workspace);
+        }
+
         string str = FunctionalCompiler.CoerceElementToString(input);
 
         if (BuiltInFunctions.HasInvalidPercentEncoding(str))
@@ -5120,7 +5188,6 @@ public static class JsonataCodeGenHelpers
         }
     }
 
-#pragma warning disable SYSLIB0013 // Uri.EscapeUriString is obsolete
     /// <summary>
     /// JSONata <c>$encodeUrl</c> function.
     /// </summary>
@@ -5129,6 +5196,12 @@ public static class JsonataCodeGenHelpers
         if (input.IsNullOrUndefined())
         {
             return default;
+        }
+
+        if (input.ValueKind == JsonValueKind.String)
+        {
+            using UnescapedUtf8JsonString utf8 = input.GetUtf8String();
+            return EscapeUriToElement(utf8.Span, workspace);
         }
 
         string str;
@@ -5142,9 +5215,10 @@ public static class JsonataCodeGenHelpers
         }
 
         BuiltInFunctions.ValidateNoUnpairedSurrogates(str, "$encodeUrl");
-        return JsonataHelpers.StringFromString(Uri.EscapeUriString(str), workspace);
+
+        byte[] sourceBytes = Encoding.UTF8.GetBytes(str);
+        return EscapeUriToElement(sourceBytes, workspace);
     }
-#pragma warning restore SYSLIB0013
 
     /// <summary>
     /// JSONata <c>$decodeUrl</c> function.
@@ -5154,6 +5228,19 @@ public static class JsonataCodeGenHelpers
         if (input.IsNullOrUndefined())
         {
             return default;
+        }
+
+        if (input.ValueKind == JsonValueKind.String)
+        {
+            using UnescapedUtf8JsonString utf8 = input.GetUtf8String();
+            ReadOnlySpan<byte> source = utf8.Span;
+
+            if (BuiltInFunctions.HasInvalidPercentEncoding(source))
+            {
+                throw new JsonataException("D3140", SR.Format(SR.D3140_MalformedUrlPassedToDecodeUrl, input.GetString()!), 0);
+            }
+
+            return UnescapeDataStringToElement(source, workspace);
         }
 
         string str = FunctionalCompiler.CoerceElementToString(input);
@@ -5170,6 +5257,71 @@ public static class JsonataCodeGenHelpers
         catch (Exception ex) when (ex is UriFormatException or ArgumentException or FormatException)
         {
             throw new JsonataException("D3140", SR.Format(SR.D3140_MalformedUrlPassedToDecodeUrl, str), 0);
+        }
+    }
+
+    private static JsonElement EscapeDataStringToElement(ReadOnlySpan<byte> source, JsonWorkspace workspace)
+    {
+        int maxLen = source.Length * 3;
+        byte[]? rented = null;
+        Span<byte> dest = maxLen <= JsonConstants.StackallocByteThreshold
+            ? stackalloc byte[JsonConstants.StackallocByteThreshold]
+            : (rented = ArrayPool<byte>.Shared.Rent(maxLen));
+
+        try
+        {
+            Utf8Uri.TryEscapeDataString(source, dest, out int written);
+            return JsonataHelpers.StringFromUnescapedUtf8(dest.Slice(0, written), workspace);
+        }
+        finally
+        {
+            if (rented != null)
+            {
+                ArrayPool<byte>.Shared.Return(rented);
+            }
+        }
+    }
+
+    private static JsonElement UnescapeDataStringToElement(ReadOnlySpan<byte> source, JsonWorkspace workspace)
+    {
+        byte[]? rented = null;
+        Span<byte> dest = source.Length <= JsonConstants.StackallocByteThreshold
+            ? stackalloc byte[JsonConstants.StackallocByteThreshold]
+            : (rented = ArrayPool<byte>.Shared.Rent(source.Length));
+
+        try
+        {
+            Utf8Uri.TryUnescapeDataString(source, dest, out int written);
+            return JsonataHelpers.StringFromUnescapedUtf8(dest.Slice(0, written), workspace);
+        }
+        finally
+        {
+            if (rented != null)
+            {
+                ArrayPool<byte>.Shared.Return(rented);
+            }
+        }
+    }
+
+    private static JsonElement EscapeUriToElement(ReadOnlySpan<byte> source, JsonWorkspace workspace)
+    {
+        int maxLen = source.Length * 3;
+        byte[]? rented = null;
+        Span<byte> dest = maxLen <= JsonConstants.StackallocByteThreshold
+            ? stackalloc byte[JsonConstants.StackallocByteThreshold]
+            : (rented = ArrayPool<byte>.Shared.Rent(maxLen));
+
+        try
+        {
+            Utf8Uri.TryEscapeUri(source, dest, out int written);
+            return JsonataHelpers.StringFromUnescapedUtf8(dest.Slice(0, written), workspace);
+        }
+        finally
+        {
+            if (rented != null)
+            {
+                ArrayPool<byte>.Shared.Return(rented);
+            }
         }
     }
 

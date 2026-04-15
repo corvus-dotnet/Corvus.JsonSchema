@@ -26,7 +26,7 @@ namespace Corvus.Text.Json;
 /// ]]>
 /// </code>
 /// </remarks>
-public readonly ref struct Utf8Uri
+public readonly ref partial struct Utf8Uri
 {
     internal readonly Utf8UriTools.Flags _flags;
 

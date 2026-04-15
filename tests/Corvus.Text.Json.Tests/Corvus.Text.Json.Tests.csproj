@@ -81,6 +81,7 @@
     <Compile Include="MigrationEquivalenceTests\FormattingEquivalenceTests.cs" />
     <Compile Include="MigrationEquivalenceTests\MutationEquivalenceTests.cs" />
     <Compile Include="VersionTrackingTests.cs" />
+    <Compile Include="Utf8UriEscapeTests.cs" />
     <Compile Include="MigrationEquivalenceTests\NumericArrayEquivalenceTests.cs" />
     <Compile Include="MigrationEquivalenceTests\ParsingEquivalenceTests.cs" />
     <Compile Include="MigrationEquivalenceTests\PropertyAccessEquivalenceTests.cs" />

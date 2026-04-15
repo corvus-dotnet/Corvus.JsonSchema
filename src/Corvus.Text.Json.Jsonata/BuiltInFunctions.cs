@@ -3,6 +3,7 @@
 // </copyright>
 
 using System.Buffers;
+using System.Buffers.Text;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -4239,7 +4240,33 @@ internal static class BuiltInFunctions
                 return Sequence.Undefined;
             }
 
-            string str = FunctionalCompiler.CoerceElementToString(seq.FirstOrDefault);
+            JsonElement element = seq.FirstOrDefault;
+
+            if (element.ValueKind == JsonValueKind.String)
+            {
+                using UnescapedUtf8JsonString utf8 = element.GetUtf8String();
+                ReadOnlySpan<byte> source = utf8.Span;
+                int maxLen = Base64.GetMaxEncodedToUtf8Length(source.Length);
+                byte[]? rented = null;
+                Span<byte> dest = maxLen <= JsonConstants.StackallocByteThreshold
+                    ? stackalloc byte[JsonConstants.StackallocByteThreshold]
+                    : (rented = ArrayPool<byte>.Shared.Rent(maxLen));
+
+                try
+                {
+                    Base64.EncodeToUtf8(source, dest, out _, out int written);
+                    return new Sequence(JsonataHelpers.StringFromUnescapedUtf8(dest.Slice(0, written), env.Workspace));
+                }
+                finally
+                {
+                    if (rented != null)
+                    {
+                        ArrayPool<byte>.Shared.Return(rented);
+                    }
+                }
+            }
+
+            string str = FunctionalCompiler.CoerceElementToString(element);
             return new Sequence(JsonataHelpers.StringFromString(
                 Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(str)), env.Workspace));
         };
@@ -4266,7 +4293,33 @@ internal static class BuiltInFunctions
                 return Sequence.Undefined;
             }
 
-            string str = FunctionalCompiler.CoerceElementToString(seq.FirstOrDefault);
+            JsonElement element = seq.FirstOrDefault;
+
+            if (element.ValueKind == JsonValueKind.String)
+            {
+                using UnescapedUtf8JsonString utf8 = element.GetUtf8String();
+                ReadOnlySpan<byte> source = utf8.Span;
+                int maxLen = Base64.GetMaxDecodedFromUtf8Length(source.Length);
+                byte[]? rented = null;
+                Span<byte> dest = maxLen <= JsonConstants.StackallocByteThreshold
+                    ? stackalloc byte[JsonConstants.StackallocByteThreshold]
+                    : (rented = ArrayPool<byte>.Shared.Rent(maxLen));
+
+                try
+                {
+                    Base64.DecodeFromUtf8(source, dest, out _, out int written);
+                    return new Sequence(JsonataHelpers.StringFromUnescapedUtf8(dest.Slice(0, written), env.Workspace));
+                }
+                finally
+                {
+                    if (rented != null)
+                    {
+                        ArrayPool<byte>.Shared.Return(rented);
+                    }
+                }
+            }
+
+            string str = FunctionalCompiler.CoerceElementToString(element);
             return new Sequence(JsonataHelpers.StringFromString(
                 System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(str)), env.Workspace));
         };
@@ -4288,10 +4341,36 @@ internal static class BuiltInFunctions
                 return Sequence.Undefined;
             }
 
+            JsonElement element = seq.FirstOrDefault;
+
+            if (element.ValueKind == JsonValueKind.String)
+            {
+                using UnescapedUtf8JsonString utf8 = element.GetUtf8String();
+                ReadOnlySpan<byte> source = utf8.Span;
+                int maxLen = source.Length * 3;
+                byte[]? rented = null;
+                Span<byte> dest = maxLen <= JsonConstants.StackallocByteThreshold
+                    ? stackalloc byte[JsonConstants.StackallocByteThreshold]
+                    : (rented = ArrayPool<byte>.Shared.Rent(maxLen));
+
+                try
+                {
+                    Utf8Uri.TryEscapeDataString(source, dest, out int written);
+                    return new Sequence(JsonataHelpers.StringFromUnescapedUtf8(dest.Slice(0, written), env.Workspace));
+                }
+                finally
+                {
+                    if (rented != null)
+                    {
+                        ArrayPool<byte>.Shared.Return(rented);
+                    }
+                }
+            }
+
             string str;
             try
             {
-                str = FunctionalCompiler.CoerceElementToString(seq.FirstOrDefault);
+                str = FunctionalCompiler.CoerceElementToString(element);
             }
             catch (InvalidOperationException)
             {
@@ -4319,7 +4398,38 @@ internal static class BuiltInFunctions
                 return Sequence.Undefined;
             }
 
-            string str = FunctionalCompiler.CoerceElementToString(seq.FirstOrDefault);
+            JsonElement element = seq.FirstOrDefault;
+
+            if (element.ValueKind == JsonValueKind.String)
+            {
+                using UnescapedUtf8JsonString utf8 = element.GetUtf8String();
+                ReadOnlySpan<byte> source = utf8.Span;
+
+                if (HasInvalidPercentEncoding(source))
+                {
+                    throw new JsonataException("D3140", SR.Format(SR.D3140_MalformedUrlPassedToDecodeUrlComponent, element.GetString()!), 0);
+                }
+
+                byte[]? rented = null;
+                Span<byte> dest = source.Length <= JsonConstants.StackallocByteThreshold
+                    ? stackalloc byte[JsonConstants.StackallocByteThreshold]
+                    : (rented = ArrayPool<byte>.Shared.Rent(source.Length));
+
+                try
+                {
+                    Utf8Uri.TryUnescapeDataString(source, dest, out int written);
+                    return new Sequence(JsonataHelpers.StringFromUnescapedUtf8(dest.Slice(0, written), env.Workspace));
+                }
+                finally
+                {
+                    if (rented != null)
+                    {
+                        ArrayPool<byte>.Shared.Return(rented);
+                    }
+                }
+            }
+
+            string str = FunctionalCompiler.CoerceElementToString(element);
 
             if (HasInvalidPercentEncoding(str))
             {
@@ -4337,7 +4447,6 @@ internal static class BuiltInFunctions
         };
     }
 
-#pragma warning disable SYSLIB0013 // Uri.EscapeUriString is obsolete
     private static ExpressionEvaluator CompileEncodeUrl(ExpressionEvaluator[] args)
     {
         if (args.Length != 1)
@@ -4354,10 +4463,36 @@ internal static class BuiltInFunctions
                 return Sequence.Undefined;
             }
 
+            JsonElement element = seq.FirstOrDefault;
+
+            if (element.ValueKind == JsonValueKind.String)
+            {
+                using UnescapedUtf8JsonString utf8 = element.GetUtf8String();
+                ReadOnlySpan<byte> source = utf8.Span;
+                int maxLen = source.Length * 3;
+                byte[]? rented = null;
+                Span<byte> dest = maxLen <= JsonConstants.StackallocByteThreshold
+                    ? stackalloc byte[JsonConstants.StackallocByteThreshold]
+                    : (rented = ArrayPool<byte>.Shared.Rent(maxLen));
+
+                try
+                {
+                    Utf8Uri.TryEscapeUri(source, dest, out int written);
+                    return new Sequence(JsonataHelpers.StringFromUnescapedUtf8(dest.Slice(0, written), env.Workspace));
+                }
+                finally
+                {
+                    if (rented != null)
+                    {
+                        ArrayPool<byte>.Shared.Return(rented);
+                    }
+                }
+            }
+
             string str;
             try
             {
-                str = FunctionalCompiler.CoerceElementToString(seq.FirstOrDefault);
+                str = FunctionalCompiler.CoerceElementToString(element);
             }
             catch (InvalidOperationException)
             {
@@ -4365,10 +4500,28 @@ internal static class BuiltInFunctions
             }
 
             ValidateNoUnpairedSurrogates(str, "$encodeUrl");
-            return new Sequence(JsonataHelpers.StringFromString(Uri.EscapeUriString(str), env.Workspace));
+
+            byte[] sourceBytes = System.Text.Encoding.UTF8.GetBytes(str);
+            int maxLen2 = sourceBytes.Length * 3;
+            byte[]? rented2 = null;
+            Span<byte> dest2 = maxLen2 <= JsonConstants.StackallocByteThreshold
+                ? stackalloc byte[JsonConstants.StackallocByteThreshold]
+                : (rented2 = ArrayPool<byte>.Shared.Rent(maxLen2));
+
+            try
+            {
+                Utf8Uri.TryEscapeUri(sourceBytes, dest2, out int written);
+                return new Sequence(JsonataHelpers.StringFromUnescapedUtf8(dest2.Slice(0, written), env.Workspace));
+            }
+            finally
+            {
+                if (rented2 != null)
+                {
+                    ArrayPool<byte>.Shared.Return(rented2);
+                }
+            }
         };
     }
-#pragma warning restore SYSLIB0013
 
     private static ExpressionEvaluator CompileDecodeUrl(ExpressionEvaluator[] args)
     {
@@ -4386,7 +4539,38 @@ internal static class BuiltInFunctions
                 return Sequence.Undefined;
             }
 
-            string str = FunctionalCompiler.CoerceElementToString(seq.FirstOrDefault);
+            JsonElement element = seq.FirstOrDefault;
+
+            if (element.ValueKind == JsonValueKind.String)
+            {
+                using UnescapedUtf8JsonString utf8 = element.GetUtf8String();
+                ReadOnlySpan<byte> source = utf8.Span;
+
+                if (HasInvalidPercentEncoding(source))
+                {
+                    throw new JsonataException("D3140", SR.Format(SR.D3140_MalformedUrlPassedToDecodeUrl, element.GetString()!), 0);
+                }
+
+                byte[]? rented = null;
+                Span<byte> dest = source.Length <= JsonConstants.StackallocByteThreshold
+                    ? stackalloc byte[JsonConstants.StackallocByteThreshold]
+                    : (rented = ArrayPool<byte>.Shared.Rent(source.Length));
+
+                try
+                {
+                    Utf8Uri.TryUnescapeDataString(source, dest, out int written);
+                    return new Sequence(JsonataHelpers.StringFromUnescapedUtf8(dest.Slice(0, written), env.Workspace));
+                }
+                finally
+                {
+                    if (rented != null)
+                    {
+                        ArrayPool<byte>.Shared.Return(rented);
+                    }
+                }
+            }
+
+            string str = FunctionalCompiler.CoerceElementToString(element);
 
             if (HasInvalidPercentEncoding(str))
             {
@@ -4414,6 +4598,24 @@ internal static class BuiltInFunctions
                 if (i + 2 >= input.Length ||
                     !IsHexDigit(input[i + 1]) ||
                     !IsHexDigit(input[i + 2]))
+                {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    internal static bool HasInvalidPercentEncoding(ReadOnlySpan<byte> input)
+    {
+        for (int i = 0; i < input.Length; i++)
+        {
+            if (input[i] == (byte)'%')
+            {
+                if (i + 2 >= input.Length ||
+                    !IsHexDigit((char)input[i + 1]) ||
+                    !IsHexDigit((char)input[i + 2]))
                 {
                     return true;
                 }
