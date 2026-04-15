@@ -6551,12 +6551,25 @@ public static class JsonataCodeGenHelpers
             return BuiltInFunctions.FormatIso8601Utc(dt, workspace);
         }
 
-        string picture = FunctionalCompiler.CoerceElementToString(pictureElement);
-        Utf8ValueStringBuilder sb = new(stackalloc byte[256]);
-        XPathDateTimeFormatter.FormatDateTime(dt, picture, ref sb);
-        JsonElement element = JsonataHelpers.StringFromUnescapedUtf8(sb.AsSpan(), workspace);
-        sb.Dispose();
-        return element;
+        if (pictureElement.ValueKind == JsonValueKind.String)
+        {
+            using UnescapedUtf8JsonString picUtf8 = pictureElement.GetUtf8String();
+            Utf8ValueStringBuilder sb = new(stackalloc byte[256]);
+            XPathDateTimeFormatter.FormatDateTime(dt, picUtf8.Span, ref sb);
+            JsonElement element = JsonataHelpers.StringFromUnescapedUtf8(sb.AsSpan(), workspace);
+            sb.Dispose();
+            return element;
+        }
+        else
+        {
+            string picture = FunctionalCompiler.CoerceElementToString(pictureElement);
+            byte[] pictureBytes = Encoding.UTF8.GetBytes(picture);
+            Utf8ValueStringBuilder sb = new(stackalloc byte[256]);
+            XPathDateTimeFormatter.FormatDateTime(dt, pictureBytes, ref sb);
+            JsonElement element = JsonataHelpers.StringFromUnescapedUtf8(sb.AsSpan(), workspace);
+            sb.Dispose();
+            return element;
+        }
     }
 
     /// <summary>
@@ -6582,19 +6595,29 @@ public static class JsonataCodeGenHelpers
             return result.IsUndefined ? default : result.FirstOrDefault;
         }
 
-        string strVal = FunctionalCompiler.CoerceElementToString(input);
-        string picture = FunctionalCompiler.CoerceElementToString(pictureElement);
-
-        try
+        if (input.ValueKind != JsonValueKind.String)
         {
-            if (XPathDateTimeFormatter.TryParseDateTime(strVal, picture, out long millis))
+            return default;
+        }
+
+        if (pictureElement.ValueKind == JsonValueKind.String)
+        {
+            using UnescapedUtf8JsonString picUtf8 = pictureElement.GetUtf8String();
+            using UnescapedUtf8JsonString utf8 = input.GetUtf8String();
+            if (XPathDateTimeFormatter.TryParseDateTime(utf8.Span, picUtf8.Span, out long millis))
             {
                 return JsonataHelpers.NumberFromDouble(millis, workspace);
             }
         }
-        catch (JsonataException)
+        else
         {
-            throw;
+            string pictureStr = FunctionalCompiler.CoerceElementToString(pictureElement);
+            byte[] pictureBytes = Encoding.UTF8.GetBytes(pictureStr);
+            using UnescapedUtf8JsonString utf8 = input.GetUtf8String();
+            if (XPathDateTimeFormatter.TryParseDateTime(utf8.Span, pictureBytes, out long millis))
+            {
+                return JsonataHelpers.NumberFromDouble(millis, workspace);
+            }
         }
 
         return default;
@@ -6724,36 +6747,51 @@ public static class JsonataCodeGenHelpers
             return default;
         }
 
-        string picture = FunctionalCompiler.CoerceElementToString(pictureElement);
-
-        if (input.ValueKind == JsonValueKind.Number && input.TryGetInt64(out long longVal))
+        static JsonElement FormatWithPicture(in JsonElement input, ReadOnlySpan<byte> picture, JsonWorkspace workspace)
         {
-            Utf8ValueStringBuilder sb = new(stackalloc byte[64]);
-            XPathDateTimeFormatter.FormatInteger(longVal, picture, ref sb);
-            JsonElement element = JsonataHelpers.StringFromUnescapedUtf8(sb.AsSpan(), workspace);
-            sb.Dispose();
-            return element;
-        }
-        else if (FunctionalCompiler.TryCoerceToNumber(input, out double numVal))
-        {
-            if (numVal >= long.MinValue && numVal <= long.MaxValue)
+            if (input.ValueKind == JsonValueKind.Number && input.TryGetInt64(out long longVal))
             {
                 Utf8ValueStringBuilder sb = new(stackalloc byte[64]);
-                XPathDateTimeFormatter.FormatInteger((long)numVal, picture, ref sb);
+                XPathDateTimeFormatter.FormatInteger(longVal, picture, ref sb);
                 JsonElement element = JsonataHelpers.StringFromUnescapedUtf8(sb.AsSpan(), workspace);
                 sb.Dispose();
                 return element;
             }
+            else if (FunctionalCompiler.TryCoerceToNumber(input, out double numVal))
+            {
+                if (numVal >= long.MinValue && numVal <= long.MaxValue)
+                {
+                    Utf8ValueStringBuilder sb = new(stackalloc byte[64]);
+                    XPathDateTimeFormatter.FormatInteger((long)numVal, picture, ref sb);
+                    JsonElement element = JsonataHelpers.StringFromUnescapedUtf8(sb.AsSpan(), workspace);
+                    sb.Dispose();
+                    return element;
+                }
+                else
+                {
+                    Utf8ValueStringBuilder sb = new(stackalloc byte[128]);
+                    XPathDateTimeFormatter.FormatInteger(numVal, picture, ref sb);
+                    JsonElement element = JsonataHelpers.StringFromUnescapedUtf8(sb.AsSpan(), workspace);
+                    sb.Dispose();
+                    return element;
+                }
+            }
             else
             {
-                // Large double: falls back to string path
-                string result = XPathDateTimeFormatter.FormatInteger(numVal, picture);
-                return JsonataHelpers.StringFromString(result, workspace);
+                return default;
             }
+        }
+
+        if (pictureElement.ValueKind == JsonValueKind.String)
+        {
+            using UnescapedUtf8JsonString picUtf8 = pictureElement.GetUtf8String();
+            return FormatWithPicture(in input, picUtf8.Span, workspace);
         }
         else
         {
-            return default;
+            string s = FunctionalCompiler.CoerceElementToString(pictureElement);
+            byte[] pictureBytes = Encoding.UTF8.GetBytes(s);
+            return FormatWithPicture(in input, pictureBytes, workspace);
         }
     }
 
@@ -6767,12 +6805,29 @@ public static class JsonataCodeGenHelpers
             return default;
         }
 
-        string str = FunctionalCompiler.CoerceElementToString(input);
-        string picture = FunctionalCompiler.CoerceElementToString(pictureElement);
-
-        if (XPathDateTimeFormatter.TryParseInteger(str, picture, out double dblValue))
+        if (input.ValueKind != JsonValueKind.String)
         {
-            return JsonataHelpers.NumberFromDouble(dblValue, workspace);
+            return default;
+        }
+
+        if (pictureElement.ValueKind == JsonValueKind.String)
+        {
+            using UnescapedUtf8JsonString picUtf8 = pictureElement.GetUtf8String();
+            using UnescapedUtf8JsonString utf8 = input.GetUtf8String();
+            if (XPathDateTimeFormatter.TryParseInteger(utf8.Span, picUtf8.Span, out double dblValue))
+            {
+                return JsonataHelpers.NumberFromDouble(dblValue, workspace);
+            }
+        }
+        else
+        {
+            string pictureStr = FunctionalCompiler.CoerceElementToString(pictureElement);
+            byte[] pictureBytes = Encoding.UTF8.GetBytes(pictureStr);
+            using UnescapedUtf8JsonString utf8 = input.GetUtf8String();
+            if (XPathDateTimeFormatter.TryParseInteger(utf8.Span, pictureBytes, out double dblValue))
+            {
+                return JsonataHelpers.NumberFromDouble(dblValue, workspace);
+            }
         }
 
         return default;
