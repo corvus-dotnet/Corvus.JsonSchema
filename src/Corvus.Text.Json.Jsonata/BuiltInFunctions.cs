@@ -1896,6 +1896,8 @@ internal static class BuiltInFunctions
             }
         }
 
+        seq.ReturnBackingArray();
+
         // If only one non-array item, return as-is
         if (items.Count <= 1 && seq.Count == 1 && seq.FirstOrDefault.ValueKind != JsonValueKind.Array)
         {
@@ -2593,6 +2595,7 @@ internal static class BuiltInFunctions
                     },
                     estimatedMemberCount: 16);
 
+                seq.ReturnBackingArray();
                 return new Sequence((JsonElement)doc.RootElement);
             }
 
@@ -2620,6 +2623,7 @@ internal static class BuiltInFunctions
                     },
                     estimatedMemberCount: 16);
 
+                seq.ReturnBackingArray();
                 return new Sequence((JsonElement)doc.RootElement);
             }
 
