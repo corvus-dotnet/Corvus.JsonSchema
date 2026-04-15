@@ -734,6 +734,147 @@ internal static class FunctionalCompiler
     }
 
     /// <summary>
+    /// Compiles a fused <c>$sort</c> where the first argument is a simple property chain.
+    /// Collects elements directly into the sort's <see cref="SequenceBuilder"/> via
+    /// <see cref="CollectFlattenedChainInto"/>, avoiding the intermediate <see cref="Sequence"/>
+    /// and the pool array leak that the non-fused path had.
+    /// </summary>
+    private static ExpressionEvaluator CompileFusedSort(byte[][] chainNames, ExpressionEvaluator? funcArg)
+    {
+        return (in JsonElement input, Environment env) =>
+        {
+            var elements = default(SequenceBuilder);
+            CollectFlattenedChainInto(input, chainNames, ref elements);
+
+            if (elements.Count == 0)
+            {
+                return Sequence.Undefined;
+            }
+
+            if (funcArg is not null)
+            {
+                var funcSeq = funcArg(input, env);
+                if (funcSeq.IsLambda)
+                {
+                    var lambda = funcSeq.Lambda!;
+                    var invokeEnv = lambda.CreateInvokeEnv(env);
+                    try
+                    {
+                        BuiltInFunctions.StableSortLambda(ref elements, lambda, input, invokeEnv, env);
+                    }
+                    finally
+                    {
+                        Environment.ReturnChild(invokeEnv);
+                    }
+                }
+            }
+            else
+            {
+                BuiltInFunctions.StableSortDefault(ref elements);
+            }
+
+            return new Sequence(JsonataHelpers.ArrayFromBuilder(ref elements, env.Workspace));
+        };
+    }
+
+    /// <summary>
+    /// Evaluates a simple property chain and collects results into a <see cref="SequenceBuilder"/>,
+    /// flattening any final array values. Used by fused <c>$sort</c> to avoid intermediate
+    /// <see cref="Sequence"/> allocation.
+    /// </summary>
+    private static void CollectFlattenedChainInto(in JsonElement input, byte[][] utf8Names, ref SequenceBuilder builder)
+    {
+        JsonElement current = input;
+
+        for (int step = 0; step < utf8Names.Length; step++)
+        {
+            if (current.ValueKind == JsonValueKind.Object)
+            {
+                if (!current.TryGetProperty(utf8Names[step], out current))
+                {
+                    return;
+                }
+            }
+            else if (current.ValueKind == JsonValueKind.Array)
+            {
+                CollectFlattenedChainOverArray(current, utf8Names, step, ref builder);
+                return;
+            }
+            else
+            {
+                return;
+            }
+        }
+
+        // Final value — flatten one level if it's an array (sort needs individual elements)
+        if (current.ValueKind == JsonValueKind.Array)
+        {
+            foreach (var item in current.EnumerateArray())
+            {
+                builder.Add(item);
+            }
+        }
+        else
+        {
+            builder.Add(current);
+        }
+    }
+
+    /// <summary>
+    /// Recursively collects chain results from an array, flattening final array values.
+    /// </summary>
+    private static void CollectFlattenedChainOverArray(
+        in JsonElement array,
+        byte[][] utf8Names,
+        int fromStep,
+        ref SequenceBuilder builder)
+    {
+        foreach (var item in array.EnumerateArray())
+        {
+            JsonElement current = item;
+            bool found = true;
+            for (int step = fromStep; step < utf8Names.Length; step++)
+            {
+                if (current.ValueKind == JsonValueKind.Object)
+                {
+                    if (!current.TryGetProperty(utf8Names[step], out current))
+                    {
+                        found = false;
+                        break;
+                    }
+                }
+                else if (current.ValueKind == JsonValueKind.Array)
+                {
+                    CollectFlattenedChainOverArray(current, utf8Names, step, ref builder);
+                    found = false;
+                    break;
+                }
+                else
+                {
+                    found = false;
+                    break;
+                }
+            }
+
+            if (found)
+            {
+                // Flatten final arrays — sort needs individual elements, not nested arrays
+                if (current.ValueKind == JsonValueKind.Array)
+                {
+                    foreach (var child in current.EnumerateArray())
+                    {
+                        builder.Add(child);
+                    }
+                }
+                else
+                {
+                    builder.Add(current);
+                }
+            }
+        }
+    }
+
+    /// <summary>
     /// Compiles a $formatNumber call with a pre-parsed picture. Zero managed allocations
     /// per evaluation: the mantissa is formatted directly into a stackalloc-seeded
     /// <see cref="Utf8ValueStringBuilder"/> and the result element is created from the
@@ -7110,6 +7251,18 @@ internal static class FunctionalCompiler
             && TryExtractSimpleChainNames(func.Arguments[0], out var existsChainNames))
         {
             return CompileFusedExists(existsChainNames);
+        }
+
+        // Fused $sort: when the first argument is a simple property chain,
+        // collect elements directly into the sort's SequenceBuilder — no intermediate
+        // Sequence allocation and no pool array leak.
+        if (func.Procedure is VariableNode sortCheck
+            && sortCheck.Name == "sort"
+            && func.Arguments.Count >= 1 && func.Arguments.Count <= 2
+            && TryExtractSimpleChainNames(func.Arguments[0], out var sortChainNames))
+        {
+            var sortFuncArg = func.Arguments.Count > 1 ? Compile(func.Arguments[1]) : null;
+            return CompileFusedSort(sortChainNames, sortFuncArg);
         }
 
         var args = func.Arguments.Select(Compile).ToArray();

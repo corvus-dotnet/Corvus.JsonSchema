@@ -1791,62 +1791,19 @@ internal static class BuiltInFunctions
                 }
             }
 
+            // Return the backing array from the chain evaluation — previously leaked.
+            seq.ReturnBackingArray();
+
             if (funcArg is not null)
             {
                 var funcSeq = funcArg(input, env);
                 if (funcSeq.IsLambda)
                 {
                     var lambda = funcSeq.Lambda!;
-                    var sortInput = input;
                     var invokeEnv = lambda.CreateInvokeEnv(env);
                     try
                     {
-                        StableSort(ref elements, (a, b) =>
-                        {
-                            Sequence sa = new Sequence(a);
-                            Sequence sb = new Sequence(b);
-#if NET9_0_OR_GREATER
-                            var result = lambda.InvokeReusing([sa, sb], sortInput, invokeEnv, env);
-#else
-                            var result = lambda.InvokeReusing(new Sequence[] { sa, sb }, sortInput, invokeEnv, env);
-#endif
-                            if (result.IsUndefined)
-                            {
-                                return 0;
-                            }
-
-                            var el = result.FirstOrDefault;
-
-                            // Boolean comparator: true means a > b (a should come after b).
-                            // false could mean a < b OR a == b, so check the reverse.
-                            if (el.ValueKind == JsonValueKind.True)
-                            {
-                                return 1;
-                            }
-
-                            if (el.ValueKind == JsonValueKind.False)
-                            {
-#if NET9_0_OR_GREATER
-                                var reverseResult = lambda.InvokeReusing([sb, sa], sortInput, invokeEnv, env);
-#else
-                                var reverseResult = lambda.InvokeReusing(new Sequence[] { sb, sa }, sortInput, invokeEnv, env);
-#endif
-                                if (!reverseResult.IsUndefined
-                                    && reverseResult.FirstOrDefault.ValueKind == JsonValueKind.True)
-                                {
-                                    return -1;
-                                }
-
-                                return 0;
-                            }
-
-                            if (FunctionalCompiler.TryCoerceToNumber(el, out double num))
-                            {
-                                return num < 0 ? -1 : (num > 0 ? 1 : 0);
-                            }
-
-                            return 0;
-                        });
+                        StableSortLambda(ref elements, lambda, input, invokeEnv, env);
                     }
                     finally
                     {
@@ -1856,33 +1813,7 @@ internal static class BuiltInFunctions
             }
             else
             {
-                // Default sort: check types are homogeneous
-                bool hasObjects = false;
-                for (int i = 0; i < elements.Count; i++)
-                {
-                    if (elements[i].ValueKind is JsonValueKind.Object or JsonValueKind.Array)
-                    {
-                        hasObjects = true;
-                        break;
-                    }
-                }
-
-                if (hasObjects)
-                {
-                    throw new JsonataException("D3070", SR.D3070_SortSingleArgRequiresStringsOrNumbers, 0);
-                }
-
-                StableSort(ref elements, (a, b) =>
-                {
-                    if (a.ValueKind == JsonValueKind.Number && b.ValueKind == JsonValueKind.Number)
-                    {
-                        return a.GetDouble().CompareTo(b.GetDouble());
-                    }
-
-                    return string.CompareOrdinal(
-                        FunctionalCompiler.CoerceElementToString(a),
-                        FunctionalCompiler.CoerceElementToString(b));
-                });
+                StableSortDefault(ref elements);
             }
 
             return new Sequence(JsonataHelpers.ArrayFromBuilder(ref elements, env.Workspace));
@@ -6477,5 +6408,113 @@ internal static class BuiltInFunctions
 
             builder[j + 1] = key;
         }
+    }
+
+    /// <summary>
+    /// Performs a stable insertion sort using a user-supplied lambda comparator,
+    /// without allocating a closure or delegate. Called by both the non-fused and
+    /// fused sort paths.
+    /// </summary>
+    internal static void StableSortLambda(
+        ref SequenceBuilder builder,
+        LambdaValue lambda,
+        in JsonElement input,
+        Environment invokeEnv,
+        Environment callerEnv)
+    {
+        int count = builder.Count;
+        for (int i = 1; i < count; i++)
+        {
+            JsonElement key = builder[i];
+            int j = i - 1;
+            while (j >= 0 && CompareLambda(builder[j], key, lambda, input, invokeEnv, callerEnv) > 0)
+            {
+                builder[j + 1] = builder[j];
+                j--;
+            }
+
+            builder[j + 1] = key;
+        }
+    }
+
+    /// <summary>
+    /// Validates that all elements are numbers or strings (no objects/arrays),
+    /// then performs a stable default sort. Called by both the non-fused and fused
+    /// sort paths.
+    /// </summary>
+    internal static void StableSortDefault(ref SequenceBuilder builder)
+    {
+        for (int i = 0; i < builder.Count; i++)
+        {
+            if (builder[i].ValueKind is JsonValueKind.Object or JsonValueKind.Array)
+            {
+                throw new JsonataException("D3070", SR.D3070_SortSingleArgRequiresStringsOrNumbers, 0);
+            }
+        }
+
+        StableSort(ref builder, DefaultComparator);
+    }
+
+    private static int DefaultComparator(JsonElement a, JsonElement b)
+    {
+        if (a.ValueKind == JsonValueKind.Number && b.ValueKind == JsonValueKind.Number)
+        {
+            return a.GetDouble().CompareTo(b.GetDouble());
+        }
+
+        return string.CompareOrdinal(
+            FunctionalCompiler.CoerceElementToString(a),
+            FunctionalCompiler.CoerceElementToString(b));
+    }
+
+    private static int CompareLambda(
+        in JsonElement a,
+        in JsonElement b,
+        LambdaValue lambda,
+        in JsonElement input,
+        Environment invokeEnv,
+        Environment callerEnv)
+    {
+        Sequence sa = new(a);
+        Sequence sb = new(b);
+#if NET9_0_OR_GREATER
+        var result = lambda.InvokeReusing([sa, sb], input, invokeEnv, callerEnv);
+#else
+        var result = lambda.InvokeReusing(new Sequence[] { sa, sb }, input, invokeEnv, callerEnv);
+#endif
+        if (result.IsUndefined)
+        {
+            return 0;
+        }
+
+        var el = result.FirstOrDefault;
+
+        if (el.ValueKind == JsonValueKind.True)
+        {
+            return 1;
+        }
+
+        if (el.ValueKind == JsonValueKind.False)
+        {
+#if NET9_0_OR_GREATER
+            var reverseResult = lambda.InvokeReusing([sb, sa], input, invokeEnv, callerEnv);
+#else
+            var reverseResult = lambda.InvokeReusing(new Sequence[] { sb, sa }, input, invokeEnv, callerEnv);
+#endif
+            if (!reverseResult.IsUndefined
+                && reverseResult.FirstOrDefault.ValueKind == JsonValueKind.True)
+            {
+                return -1;
+            }
+
+            return 0;
+        }
+
+        if (FunctionalCompiler.TryCoerceToNumber(el, out double num))
+        {
+            return num < 0 ? -1 : (num > 0 ? 1 : 0);
+        }
+
+        return 0;
     }
 }
