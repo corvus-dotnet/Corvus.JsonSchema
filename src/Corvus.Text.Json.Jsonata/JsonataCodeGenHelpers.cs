@@ -8461,7 +8461,7 @@ public static class JsonataCodeGenHelpers
     /// Non-integer values use G15 formatting directly to UTF-8 (zero alloc on .NET 8+
     /// for the common non-exponent case; falls back to string allocation for exponent forms).
     /// </summary>
-    private static void AppendFormattedNumber(in JsonElement element, ref Utf8ValueStringBuilder sb)
+    internal static void AppendFormattedNumber(in JsonElement element, ref Utf8ValueStringBuilder sb)
     {
         double value = element.GetDouble();
         if (double.IsNaN(value) || double.IsInfinity(value))

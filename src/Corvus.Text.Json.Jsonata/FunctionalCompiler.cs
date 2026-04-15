@@ -721,6 +721,19 @@ internal static class FunctionalCompiler
     }
 
     /// <summary>
+    /// Compiles a fused <c>$exists(path)</c> for simple property chains.
+    /// Short-circuits on the first found element — zero heap allocation.
+    /// </summary>
+    private static ExpressionEvaluator CompileFusedExists(byte[][] chainNames)
+    {
+        return (in JsonElement input, Environment env) =>
+        {
+            bool exists = AnySimplePropertyChain(input, chainNames);
+            return new Sequence(JsonataHelpers.BooleanElement(exists));
+        };
+    }
+
+    /// <summary>
     /// Compiles a $formatNumber call with a pre-parsed picture. Zero managed allocations
     /// per evaluation: the mantissa is formatted directly into a stackalloc-seeded
     /// <see cref="Utf8ValueStringBuilder"/> and the result element is created from the
@@ -1523,6 +1536,163 @@ internal static class FunctionalCompiler
             }
 
             return builder.ToSequence();
+        }
+    }
+
+    /// <summary>
+    /// Returns <see langword="true"/> if the simple property chain (all-NameNode, no predicates)
+    /// produces at least one value. Short-circuits on the first match — never allocates
+    /// a <see cref="SequenceBuilder"/> or rents from <see cref="System.Buffers.ArrayPool{T}"/>.
+    /// </summary>
+    private static bool AnySimplePropertyChain(in JsonElement input, byte[][] utf8Names)
+    {
+        JsonElement current = input;
+
+        for (int step = 0; step < utf8Names.Length; step++)
+        {
+            if (current.ValueKind == JsonValueKind.Object)
+            {
+                if (!current.TryGetProperty(utf8Names[step], out current))
+                {
+                    return false;
+                }
+            }
+            else if (current.ValueKind == JsonValueKind.Array)
+            {
+                return AnyChainOverArray(current, utf8Names, step);
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private static bool AnyChainOverArray(in JsonElement array, byte[][] utf8Names, int fromStep)
+    {
+        foreach (var item in array.EnumerateArray())
+        {
+            JsonElement current = item;
+            bool found = true;
+            for (int step = fromStep; step < utf8Names.Length; step++)
+            {
+                if (current.ValueKind == JsonValueKind.Object)
+                {
+                    if (!current.TryGetProperty(utf8Names[step], out current))
+                    {
+                        found = false;
+                        break;
+                    }
+                }
+                else if (current.ValueKind == JsonValueKind.Array)
+                {
+                    if (AnyChainOverArray(current, utf8Names, step))
+                    {
+                        return true;
+                    }
+
+                    found = false;
+                    break;
+                }
+                else
+                {
+                    found = false;
+                    break;
+                }
+            }
+
+            if (found)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Evaluates a simple property chain (all-NameNode, no predicates) and returns the result.
+    /// Class-level equivalent of the local function inside <see cref="TryCompileSimplePropertyChain"/>
+    /// so it can be used from <see cref="CompileCondition"/> for coalesce fusion.
+    /// </summary>
+    private static Sequence EvalSimplePropertyChainStatic(in JsonElement input, byte[][] utf8Names)
+    {
+        JsonElement current = input;
+
+        for (int step = 0; step < utf8Names.Length; step++)
+        {
+            if (current.ValueKind == JsonValueKind.Object)
+            {
+                if (!current.TryGetProperty(utf8Names[step], out current))
+                {
+                    return Sequence.Undefined;
+                }
+            }
+            else if (current.ValueKind == JsonValueKind.Array)
+            {
+                return EvalChainOverArrayStatic(current, utf8Names, step);
+            }
+            else
+            {
+                return Sequence.Undefined;
+            }
+        }
+
+        return new Sequence(current);
+    }
+
+    private static Sequence EvalChainOverArrayStatic(in JsonElement array, byte[][] utf8Names, int fromStep)
+    {
+        var builder = default(SequenceBuilder);
+        EvalChainOverArrayIntoStatic(array, utf8Names, fromStep, ref builder);
+        return builder.ToSequence();
+    }
+
+    private static void EvalChainOverArrayIntoStatic(in JsonElement array, byte[][] utf8Names, int fromStep, ref SequenceBuilder builder)
+    {
+        foreach (var item in array.EnumerateArray())
+        {
+            JsonElement current = item;
+            bool found = true;
+            for (int step = fromStep; step < utf8Names.Length; step++)
+            {
+                if (current.ValueKind == JsonValueKind.Object)
+                {
+                    if (!current.TryGetProperty(utf8Names[step], out current))
+                    {
+                        found = false;
+                        break;
+                    }
+                }
+                else if (current.ValueKind == JsonValueKind.Array)
+                {
+                    EvalChainOverArrayIntoStatic(current, utf8Names, step, ref builder);
+                    found = false;
+                    break;
+                }
+                else
+                {
+                    found = false;
+                    break;
+                }
+            }
+
+            if (found)
+            {
+                if (current.ValueKind == JsonValueKind.Array)
+                {
+                    foreach (var child in current.EnumerateArray())
+                    {
+                        builder.Add(child);
+                    }
+                }
+                else
+                {
+                    builder.Add(current);
+                }
+            }
         }
     }
 
@@ -6162,6 +6332,28 @@ internal static class FunctionalCompiler
 
     private static ExpressionEvaluator CompileCondition(ConditionNode cond)
     {
+        // Detect desugared coalesce: $exists(lhs) ? lhs : rhs
+        // When lhs is a simple property chain, evaluate it once — avoids double evaluation.
+        if (cond.Condition is FunctionCallNode existsCall
+            && existsCall.Procedure is VariableNode existsVar
+            && existsVar.Name == "exists"
+            && existsCall.Arguments.Count == 1
+            && ReferenceEquals(existsCall.Arguments[0], cond.Then)
+            && TryExtractSimpleChainNames(existsCall.Arguments[0], out var coalesceChainNames))
+        {
+            var @elseCoalesce = cond.Else is not null ? Compile(cond.Else) : null;
+            return (in JsonElement input, Environment env) =>
+            {
+                Sequence result = EvalSimplePropertyChainStatic(input, coalesceChainNames);
+                if (!result.IsUndefined)
+                {
+                    return result;
+                }
+
+                return @elseCoalesce is not null ? @elseCoalesce(input, env) : Sequence.Undefined;
+            };
+        }
+
         var condition = Compile(cond.Condition);
         var then = Compile(cond.Then);
         var @else = cond.Else is not null ? Compile(cond.Else) : null;
@@ -6908,6 +7100,16 @@ internal static class FunctionalCompiler
                 var numArg = Compile(func.Arguments[0]);
                 return CompilePreParsedFormatNumber(numArg, parsedPic);
             }
+        }
+
+        // Fused $exists: when the single argument is a simple property chain,
+        // short-circuit on the first found element — never allocates a SequenceBuilder.
+        if (func.Procedure is VariableNode existsCheck
+            && existsCheck.Name == "exists"
+            && func.Arguments.Count == 1
+            && TryExtractSimpleChainNames(func.Arguments[0], out var existsChainNames))
+        {
+            return CompileFusedExists(existsChainNames);
         }
 
         var args = func.Arguments.Select(Compile).ToArray();

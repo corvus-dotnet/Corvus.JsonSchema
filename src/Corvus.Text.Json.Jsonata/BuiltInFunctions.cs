@@ -367,6 +367,21 @@ internal static class BuiltInFunctions
                 return new Sequence(JsonataHelpers.StringFromString(json, env.Workspace));
             }
 
+            // Numbers: format directly to UTF-8, zero managed string allocation.
+            if (element.ValueKind == JsonValueKind.Number)
+            {
+                Utf8ValueStringBuilder sb = new(stackalloc byte[64]);
+                try
+                {
+                    JsonataCodeGenHelpers.AppendFormattedNumber(element, ref sb);
+                    return new Sequence(JsonataHelpers.StringFromUnescapedUtf8(sb.AsSpan(), env.Workspace));
+                }
+                finally
+                {
+                    sb.Dispose();
+                }
+            }
+
             string result = FunctionalCompiler.CoerceElementToString(element);
             return new Sequence(JsonataHelpers.StringFromString(result, env.Workspace));
         };
