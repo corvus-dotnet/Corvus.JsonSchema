@@ -5730,10 +5730,18 @@ public static class JsonataCodeGenerator
             if (func.Arguments.Count == 1)
             {
                 // $sort(array) — default sort, no comparator
+                string? defaultChainField = TryGetSimpleChainField(func.Arguments[0]);
+                if (defaultChainField is not null)
+                {
+                    string sortResult = NextVar();
+                    L(sb, indent, $"var {sortResult} = {H}.SortDefaultChain({dataVar}, {defaultChainField}, {wsVar});");
+                    return sortResult;
+                }
+
                 string sortInput = EmitExpression(sb, func.Arguments[0], indent, dataVar, wsVar);
-                string sortResult = NextVar();
-                L(sb, indent, $"var {sortResult} = {H}.SortDefault({sortInput}, {wsVar});");
-                return sortResult;
+                string sortResult2 = NextVar();
+                L(sb, indent, $"var {sortResult2} = {H}.SortDefault({sortInput}, {wsVar});");
+                return sortResult2;
             }
 
             if (func.Arguments.Count < 2 || func.Arguments[1] is not LambdaNode lambda)
@@ -5746,9 +5754,7 @@ public static class JsonataCodeGenerator
                 throw new FallbackException();
             }
 
-            string inputVar = EmitExpression(sb, func.Arguments[0], indent, dataVar, wsVar);
-
-            // Indentation levels: if > try > for > while > body
+            // Indentation levels: try/if > for > while > body (5 deep for comparator)
             string ind1 = indent + "    ";
             string ind2 = ind1 + "    ";
             string ind3 = ind2 + "    ";
@@ -5774,19 +5780,90 @@ public static class JsonataCodeGenerator
             RestoreVariable(lambda.Parameters[1], savedB);
             RestoreVariable(lambda.Parameters[0], savedA);
 
+            // Check for chain fusion — navigates into ElementBuffer, avoiding
+            // an intermediate builder document (240B → 120B).
+            string? chainField = TryGetSimpleChainField(func.Arguments[0]);
+            if (chainField is not null)
+            {
+                return EmitChainFusedSort(
+                    sb, chainField, lambdaBody, bodyResult, aParam, bParam,
+                    indent, ind1, ind2, ind3, ind4, dataVar, wsVar);
+            }
+
+            // Fallback: materialize input, then sort
+            return EmitMaterializedSort(
+                sb, func.Arguments[0], lambdaBody, bodyResult, aParam, bParam,
+                indent, ind1, ind2, ind3, ind4, dataVar, wsVar);
+        }
+
+        /// <summary>
+        /// Emits a buffer-fused sort: navigates a property chain into an
+        /// <see cref="Corvus.Text.Json.Jsonata.ElementBuffer"/> (zero builder allocation),
+        /// sorts the backing array in-place, then builds one result array.
+        /// </summary>
+        private string EmitChainFusedSort(
+            StringBuilder sb, string chainField,
+            StringBuilder lambdaBody, string bodyResult, string aParam, string bParam,
+            string indent, string ind1, string ind2, string ind3, string ind4,
+            string dataVar, string wsVar)
+        {
+            string v = NextVar();
+            string bufVar = NextVar();
+            string arrVar = NextVar();
+            string countVar = NextVar();
+
+            L(sb, indent, $"JsonElement {v};");
+            L(sb, indent, $"var {bufVar} = default(Corvus.Text.Json.Jsonata.ElementBuffer);");
+            L(sb, indent, "try");
+            L(sb, indent, "{");
+
+            L(sb, ind1, $"{H}.NavigatePropertyChainInto({dataVar}, {chainField}, ref {bufVar});");
+            L(sb, ind1, $"{bufVar}.GetContents(out var {arrVar}, out var {countVar});");
+            L(sb, ind1, "");
+            L(sb, ind1, $"if ({arrVar} is not null && {countVar} > 1)");
+            L(sb, ind1, "{");
+
+            EmitInsertionSortBody(sb, arrVar, countVar, lambdaBody, bodyResult, aParam, bParam, ind2, ind3, ind4);
+            EmitSortResultBuild(sb, arrVar, countVar, v, ind2, wsVar);
+
+            L(sb, ind1, "}");
+            L(sb, ind1, $"else if ({arrVar} is not null && {countVar} == 1)");
+            L(sb, ind1, "{");
+            L(sb, ind2, $"{v} = {arrVar}[0];");
+            L(sb, ind1, "}");
+            L(sb, ind1, "else");
+            L(sb, ind1, "{");
+            L(sb, ind2, $"{v} = default;");
+            L(sb, ind1, "}");
+
+            L(sb, indent, "}");
+            L(sb, indent, "finally");
+            L(sb, indent, "{");
+            L(sb, ind1, $"{bufVar}.Dispose();");
+            L(sb, indent, "}");
+
+            return v;
+        }
+
+        /// <summary>
+        /// Emits the non-fused sort path: evaluates the input expression (which may
+        /// materialize a builder document), copies elements into a rented array,
+        /// sorts, and builds the result.
+        /// </summary>
+        private string EmitMaterializedSort(
+            StringBuilder sb, JsonataNode inputNode,
+            StringBuilder lambdaBody, string bodyResult, string aParam, string bParam,
+            string indent, string ind1, string ind2, string ind3, string ind4,
+            string dataVar, string wsVar)
+        {
+            string inputVar = EmitExpression(sb, inputNode, indent, dataVar, wsVar);
+
             string v = NextVar();
             string countVar = NextVar();
             string arrVar = NextVar();
             string idxVar = NextVar();
-            string iVar = NextVar();
-            string jVar = NextVar();
-            string keyVar = NextVar();
             string elVar = NextVar();
-            string docVar = NextVar();
-            string rootVar = NextVar();
-            string riVar = NextVar();
 
-            // Short-circuit: null/undefined, non-array, or single element
             L(sb, indent, $"JsonElement {v};");
             L(sb, indent, $"if ({inputVar}.ValueKind == JsonValueKind.Array && {inputVar}.GetArrayLength() > 1)");
             L(sb, indent, "{");
@@ -5804,35 +5881,8 @@ public static class JsonataCodeGenerator
             L(sb, ind2, "}");
             L(sb, ind2, "");
 
-            // Insertion sort — stable, no closure, no delegate
-            L(sb, ind2, $"for (int {iVar} = 1; {iVar} < {countVar}; {iVar}++)");
-            L(sb, ind2, "{");
-            L(sb, ind3, $"var {keyVar} = {arrVar}[{iVar}];");
-            L(sb, ind3, $"int {jVar} = {iVar} - 1;");
-            L(sb, ind3, $"while ({jVar} >= 0)");
-            L(sb, ind3, "{");
-
-            // Bind comparator params and inline body
-            L(sb, ind4, $"var {aParam} = {arrVar}[{jVar}];");
-            L(sb, ind4, $"var {bParam} = {keyVar};");
-            sb.Append(lambdaBody);
-            L(sb, ind4, $"if (!{H}.IsTruthy({bodyResult})) break;");
-            L(sb, ind4, $"{arrVar}[{jVar} + 1] = {arrVar}[{jVar}];");
-            L(sb, ind4, $"{jVar}--;");
-
-            L(sb, ind3, "}");
-            L(sb, ind3, $"{arrVar}[{jVar} + 1] = {keyVar};");
-            L(sb, ind2, "}");
-            L(sb, ind2, "");
-
-            // Build result array
-            L(sb, ind2, $"var {docVar} = JsonElement.CreateArrayBuilder({wsVar}, {countVar});");
-            L(sb, ind2, $"var {rootVar} = {docVar}.RootElement;");
-            L(sb, ind2, $"for (int {riVar} = 0; {riVar} < {countVar}; {riVar}++)");
-            L(sb, ind2, "{");
-            L(sb, ind2, $"    {rootVar}.AddItem({arrVar}[{riVar}]);");
-            L(sb, ind2, "}");
-            L(sb, ind2, $"{v} = (JsonElement){rootVar};");
+            EmitInsertionSortBody(sb, arrVar, countVar, lambdaBody, bodyResult, aParam, bParam, ind2, ind3, ind4);
+            EmitSortResultBuild(sb, arrVar, countVar, v, ind2, wsVar);
 
             L(sb, ind1, "}");
             L(sb, ind1, "finally");
@@ -5847,6 +5897,59 @@ public static class JsonataCodeGenerator
             L(sb, indent, "}");
 
             return v;
+        }
+
+        /// <summary>
+        /// Emits the insertion sort loop body — stable, no closure, no delegate.
+        /// Shared between fused and materialized sort paths.
+        /// </summary>
+        private void EmitInsertionSortBody(
+            StringBuilder sb, string arrVar, string countVar,
+            StringBuilder lambdaBody, string bodyResult, string aParam, string bParam,
+            string ind2, string ind3, string ind4)
+        {
+            string iVar = NextVar();
+            string keyVar = NextVar();
+            string jVar = NextVar();
+
+            L(sb, ind2, $"for (int {iVar} = 1; {iVar} < {countVar}; {iVar}++)");
+            L(sb, ind2, "{");
+            L(sb, ind3, $"var {keyVar} = {arrVar}[{iVar}];");
+            L(sb, ind3, $"int {jVar} = {iVar} - 1;");
+            L(sb, ind3, $"while ({jVar} >= 0)");
+            L(sb, ind3, "{");
+
+            L(sb, ind4, $"var {aParam} = {arrVar}[{jVar}];");
+            L(sb, ind4, $"var {bParam} = {keyVar};");
+            sb.Append(lambdaBody);
+            L(sb, ind4, $"if (!{H}.IsTruthy({bodyResult})) break;");
+            L(sb, ind4, $"{arrVar}[{jVar} + 1] = {arrVar}[{jVar}];");
+            L(sb, ind4, $"{jVar}--;");
+
+            L(sb, ind3, "}");
+            L(sb, ind3, $"{arrVar}[{jVar} + 1] = {keyVar};");
+            L(sb, ind2, "}");
+            L(sb, ind2, "");
+        }
+
+        /// <summary>
+        /// Emits the result array construction from a sorted element array.
+        /// </summary>
+        private void EmitSortResultBuild(
+            StringBuilder sb, string arrVar, string countVar, string resultVar,
+            string ind2, string wsVar)
+        {
+            string docVar = NextVar();
+            string rootVar = NextVar();
+            string riVar = NextVar();
+
+            L(sb, ind2, $"var {docVar} = JsonElement.CreateArrayBuilder({wsVar}, {countVar});");
+            L(sb, ind2, $"var {rootVar} = {docVar}.RootElement;");
+            L(sb, ind2, $"for (int {riVar} = 0; {riVar} < {countVar}; {riVar}++)");
+            L(sb, ind2, "{");
+            L(sb, ind2, $"    {rootVar}.AddItem({arrVar}[{riVar}]);");
+            L(sb, ind2, "}");
+            L(sb, ind2, $"{resultVar} = (JsonElement){rootVar};");
         }
 
         // ── HOF: $each ──────────────────────────────────────

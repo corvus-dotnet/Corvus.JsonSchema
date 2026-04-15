@@ -6602,6 +6602,84 @@ public static class JsonataCodeGenHelpers
         }
     }
 
+    /// <summary>
+    /// Default sort fused with chain navigation — collects elements into an
+    /// <see cref="ElementBuffer"/> instead of materializing an intermediate builder document.
+    /// </summary>
+    public static JsonElement SortDefaultChain(in JsonElement data, byte[][] names, JsonWorkspace workspace)
+    {
+        var buffer = default(ElementBuffer);
+        try
+        {
+            NavigatePropertyChainInto(data, names, ref buffer);
+            buffer.GetContents(out JsonElement[]? elements, out int count);
+
+            if (elements is null || count == 0)
+            {
+                return default;
+            }
+
+            if (count == 1)
+            {
+                // Single element — wrap in array
+                var singleDoc = JsonElement.CreateArrayBuilder(workspace, 1);
+                singleDoc.RootElement.AddItem(elements[0]);
+                return (JsonElement)singleDoc.RootElement;
+            }
+
+            // Check for objects/arrays — D3070
+            for (int i = 0; i < count; i++)
+            {
+                if (elements[i].ValueKind is JsonValueKind.Object or JsonValueKind.Array)
+                {
+                    throw new JsonataException("D3070", SR.D3070_SortSingleArgRequiresStringsOrNumbers, 0);
+                }
+            }
+
+            // Build index array for stable sort
+            int[] indices = ArrayPool<int>.Shared.Rent(count);
+            for (int i = 0; i < count; i++)
+            {
+                indices[i] = i;
+            }
+
+            try
+            {
+                Array.Sort(indices, 0, count, Comparer<int>.Create((a, b) =>
+                {
+                    JsonElement aEl = elements[a];
+                    JsonElement bEl = elements[b];
+
+                    if (aEl.ValueKind == JsonValueKind.Number && bEl.ValueKind == JsonValueKind.Number)
+                    {
+                        int cmp = aEl.GetDouble().CompareTo(bEl.GetDouble());
+                        return cmp != 0 ? cmp : a.CompareTo(b);
+                    }
+
+                    int strCmp = FunctionalCompiler.Utf8CompareOrdinal(aEl, bEl);
+                    return strCmp != 0 ? strCmp : a.CompareTo(b);
+                }));
+
+                var doc = JsonElement.CreateArrayBuilder(workspace, count);
+                JsonElement.Mutable root = doc.RootElement;
+                for (int i = 0; i < count; i++)
+                {
+                    root.AddItem(elements[indices[i]]);
+                }
+
+                return (JsonElement)root;
+            }
+            finally
+            {
+                ArrayPool<int>.Shared.Return(indices);
+            }
+        }
+        finally
+        {
+            buffer.Dispose();
+        }
+    }
+
     // ===== Phase 1g: Date/Time Formatting =====
 
     /// <summary>
