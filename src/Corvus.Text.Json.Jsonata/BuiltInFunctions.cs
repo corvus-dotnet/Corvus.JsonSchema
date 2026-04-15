@@ -159,6 +159,7 @@ internal static class BuiltInFunctions
                 count = seq.Count;
             }
 
+            seq.ReturnBackingArray();
             return Sequence.FromDouble(count, env.Workspace);
         };
     }
@@ -181,6 +182,7 @@ internal static class BuiltInFunctions
 
             double total = 0;
             EnumerateNumericValues(seq, ref total, static (ref double acc, double val) => acc += val);
+            seq.ReturnBackingArray();
             return Sequence.FromDouble(total, env.Workspace);
         };
     }
@@ -202,18 +204,17 @@ internal static class BuiltInFunctions
             }
 
             double max = double.NegativeInfinity;
-            bool found = false;
-            EnumerateNumericValues(seq, ref max, (ref double acc, double val) =>
+            int found = EnumerateNumericValues(seq, ref max, static (ref double acc, double val) =>
             {
                 if (val > acc)
                 {
                     acc = val;
                 }
-
-                found = true;
             });
 
-            if (!found)
+            seq.ReturnBackingArray();
+
+            if (found == 0)
             {
                 return Sequence.Undefined;
             }
@@ -239,18 +240,17 @@ internal static class BuiltInFunctions
             }
 
             double min = double.PositiveInfinity;
-            bool found = false;
-            EnumerateNumericValues(seq, ref min, (ref double acc, double val) =>
+            int found = EnumerateNumericValues(seq, ref min, static (ref double acc, double val) =>
             {
                 if (val < acc)
                 {
                     acc = val;
                 }
-
-                found = true;
             });
 
-            if (!found)
+            seq.ReturnBackingArray();
+
+            if (found == 0)
             {
                 return Sequence.Undefined;
             }
@@ -276,12 +276,9 @@ internal static class BuiltInFunctions
             }
 
             double total = 0;
-            int count = 0;
-            EnumerateNumericValues(seq, ref total, (ref double acc, double val) =>
-            {
-                acc += val;
-                count++;
-            });
+            int count = EnumerateNumericValues(seq, ref total, static (ref double acc, double val) => acc += val);
+
+            seq.ReturnBackingArray();
 
             if (count == 0)
             {
@@ -2043,6 +2040,8 @@ internal static class BuiltInFunctions
                 }
             }
 
+            seq.ReturnBackingArray();
+
             // Build the flattened array as a Sequence for the 3rd lambda arg,
             // but only if the lambda actually uses it (arity >= 3)
             Sequence flatArrSeq = default;
@@ -2249,6 +2248,7 @@ internal static class BuiltInFunctions
                         }
                     }
 
+                    seq.ReturnBackingArray();
                     seq = new Sequence((JsonElement)flatRoot);
                     inputWasArray = true;
                 }
@@ -2308,6 +2308,8 @@ internal static class BuiltInFunctions
                         }
                     }
                 }
+
+                seq.ReturnBackingArray();
 
                 // If input was not an array, unwrap single results
                 if (!inputWasArray)
@@ -6192,8 +6194,9 @@ internal static class BuiltInFunctions
         return new Sequence(array);
     }
 
-    private static void EnumerateNumericValues(Sequence seq, ref double accumulator, NumericAccumulator action)
+    private static int EnumerateNumericValues(Sequence seq, ref double accumulator, NumericAccumulator action)
     {
+        int count = 0;
         if (seq.IsSingleton)
         {
             var el = seq.FirstOrDefault;
@@ -6202,11 +6205,13 @@ internal static class BuiltInFunctions
                 foreach (var item in el.EnumerateArray())
                 {
                     ValidateAndAccumulate(item, ref accumulator, action);
+                    count++;
                 }
             }
             else
             {
                 ValidateAndAccumulate(el, ref accumulator, action);
+                count++;
             }
         }
         else
@@ -6214,8 +6219,11 @@ internal static class BuiltInFunctions
             for (int i = 0; i < seq.Count; i++)
             {
                 ValidateAndAccumulate(seq[i], ref accumulator, action);
+                count++;
             }
         }
+
+        return count;
     }
 
     private static void ValidateAndAccumulate(JsonElement el, ref double accumulator, NumericAccumulator action)
