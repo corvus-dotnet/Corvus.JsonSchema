@@ -52,6 +52,7 @@
     <ProjectReference Include="..\Corvus.Text.Json.CodeGeneration\Corvus.Text.Json.CodeGeneration.csproj" />
     <ProjectReference Include="..\Corvus.Text.Json.JsonLogic.CodeGeneration\Corvus.Text.Json.JsonLogic.CodeGeneration.csproj" />
     <ProjectReference Include="..\Corvus.Text.Json.Jsonata.CodeGeneration\Corvus.Text.Json.Jsonata.CodeGeneration.csproj" />
+    <ProjectReference Include="..\Corvus.Text.Json.JMESPath.CodeGeneration\Corvus.Text.Json.JMESPath.CodeGeneration.csproj" />
     <ProjectReference Include="..\Corvus.Text.Json.Validator\Corvus.Text.Json.Validator.csproj" />
   </ItemGroup>
 

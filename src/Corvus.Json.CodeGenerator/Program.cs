@@ -26,6 +26,7 @@ class Program
                 c.AddCommand<VersionCommand>("version");
                 c.AddCommand<JsonLogicCommand>("jsonlogic");
                 c.AddCommand<JsonataCommand>("jsonata");
+                c.AddCommand<JMESPathCommand>("jmespath");
             });
         return app.RunAsync(args);
     }

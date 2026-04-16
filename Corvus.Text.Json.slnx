@@ -49,12 +49,16 @@
   </Folder>
   <Folder Name="/src/">
     <Project Path="src/Corvus.Text.Json.JMESPath/Corvus.Text.Json.JMESPath.csproj" />
+    <Project Path="src/Corvus.Text.Json.JMESPath.CodeGeneration/Corvus.Text.Json.JMESPath.CodeGeneration.csproj" />
+    <Project Path="src/Corvus.Text.Json.JMESPath.SourceGenerator/Corvus.Text.Json.JMESPath.SourceGenerator.csproj" />
     <Project Path="src/Corvus.Text.Json.Jsonata/Corvus.Text.Json.Jsonata.csproj" />
     <Project Path="src/Corvus.Text.Json.Jsonata.CodeGeneration/Corvus.Text.Json.Jsonata.CodeGeneration.csproj" />
     <Project Path="src/Corvus.Text.Json.Jsonata.SourceGenerator/Corvus.Text.Json.Jsonata.SourceGenerator.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Corvus.Text.Json.JMESPath.Tests/Corvus.Text.Json.JMESPath.Tests.csproj" />
+    <Project Path="tests/Corvus.Text.Json.JMESPath.CodeGeneration.Tests/Corvus.Text.Json.JMESPath.CodeGeneration.Tests.csproj" />
+    <Project Path="tests/Corvus.Text.Json.JMESPath.SourceGenerator.Tests/Corvus.Text.Json.JMESPath.SourceGenerator.Tests.csproj" />
     <Project Path="tests/Corvus.Text.Json.Jsonata.Tests/Corvus.Text.Json.Jsonata.Tests.csproj" />
     <Project Path="tests/Corvus.Text.Json.JsonLogic.CodeGeneration.Tests/Corvus.Text.Json.JsonLogic.CodeGeneration.Tests.csproj" />
     <Project Path="tests/Corvus.Text.Json.JsonLogic.SourceGenerator.Tests/Corvus.Text.Json.JsonLogic.SourceGenerator.Tests.csproj" />
