@@ -117,7 +117,7 @@ public sealed class EvaluationService
                 return new EvaluationResult
                 {
                     Success = false,
-                    ErrorMessage = jex.Message,
+                    ErrorMessage = FixBrokenSRFormat(jex.Message),
                     ErrorSource = ErrorSource.Expression,
                     ErrorPosition = jex.Position,
                     ErrorToken = jex.Token,
