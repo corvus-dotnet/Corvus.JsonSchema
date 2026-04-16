@@ -3,6 +3,7 @@
 // </copyright>
 
 using System.Collections.Concurrent;
+using System.Text;
 
 namespace Corvus.Text.Json.Jsonata;
 
@@ -136,6 +137,220 @@ public sealed class JsonataEvaluator
         }
 
         return result.GetRawText();
+    }
+
+    /// <summary>
+    /// Evaluates a JSONata expression and writes the JSON result as UTF-8 bytes
+    /// into the caller-provided buffer.
+    /// </summary>
+    /// <param name="expression">The JSONata expression string.</param>
+    /// <param name="data">The input JSON data element.</param>
+    /// <param name="workspace">The workspace for intermediate document allocation.</param>
+    /// <param name="utf8Destination">The buffer to write the UTF-8 JSON result into.</param>
+    /// <param name="bytesWritten">
+    /// When this method returns <see langword="true"/>, the number of bytes written.
+    /// Zero when the expression produces an undefined result.
+    /// </param>
+    /// <param name="maxDepth">Maximum recursion depth (default 500).</param>
+    /// <param name="timeLimitMs">Maximum evaluation time in milliseconds (0 = no limit).</param>
+    /// <returns>
+    /// <see langword="true"/> if the result was successfully written to the buffer;
+    /// <see langword="false"/> if the buffer was too small.
+    /// </returns>
+    /// <remarks>
+    /// <para>
+    /// This method evaluates the expression, serializes the result to compact JSON, and copies
+    /// the bytes into <paramref name="utf8Destination"/>. If the expression produces an undefined
+    /// result, <paramref name="bytesWritten"/> is set to zero and the method returns <see langword="true"/>
+    /// (a valid JSON value always produces at least one byte, so zero length unambiguously indicates undefined).
+    /// </para>
+    /// <para>
+    /// The return value indicates only whether the final write to the destination buffer
+    /// succeeded. The evaluation itself may throw exceptions (e.g. <see cref="JsonataException"/>
+    /// for expression errors, <see cref="InvalidOperationException"/> for disposed documents).
+    /// This is not a <c>TryEvaluateToString</c> method — it is not inexpensive when it
+    /// &quot;fails&quot;, because the full evaluation runs before the buffer-size check.
+    /// </para>
+    /// <para>
+    /// The output is produced via <see cref="JsonElement.WriteTo(Utf8JsonWriter)"/>,
+    /// which may normalize whitespace, property ordering within individual values, and escape
+    /// sequences compared to the original source JSON.
+    /// </para>
+    /// </remarks>
+    public bool EvaluateToString(
+        string expression,
+        JsonElement data,
+        JsonWorkspace workspace,
+        Span<byte> utf8Destination,
+        out int bytesWritten,
+        int maxDepth = Environment.DefaultMaxDepth,
+        int timeLimitMs = 0)
+    {
+        JsonElement result = this.Evaluate(expression, data, workspace, (IReadOnlyDictionary<string, JsonElement>?)null, maxDepth, timeLimitMs);
+        return TrySerializeToUtf8(result, workspace, utf8Destination, out bytesWritten);
+    }
+
+    /// <summary>
+    /// Evaluates a JSONata expression and writes the JSON result as UTF-16 characters
+    /// into the caller-provided buffer.
+    /// </summary>
+    /// <param name="expression">The JSONata expression string.</param>
+    /// <param name="data">The input JSON data element.</param>
+    /// <param name="workspace">The workspace for intermediate document allocation.</param>
+    /// <param name="destination">The buffer to write the UTF-16 JSON result into.</param>
+    /// <param name="charsWritten">
+    /// When this method returns <see langword="true"/>, the number of characters written.
+    /// Zero when the expression produces an undefined result.
+    /// </param>
+    /// <param name="maxDepth">Maximum recursion depth (default 500).</param>
+    /// <param name="timeLimitMs">Maximum evaluation time in milliseconds (0 = no limit).</param>
+    /// <returns>
+    /// <see langword="true"/> if the result was successfully written to the buffer;
+    /// <see langword="false"/> if the buffer was too small.
+    /// </returns>
+    /// <remarks>
+    /// <para>
+    /// This method evaluates the expression, serializes the result to compact JSON as UTF-8,
+    /// then transcodes to UTF-16 into <paramref name="destination"/>. If the expression produces
+    /// an undefined result, <paramref name="charsWritten"/> is set to zero and the method returns
+    /// <see langword="true"/>.
+    /// </para>
+    /// <para>
+    /// The return value indicates only whether the final write to the destination buffer
+    /// succeeded. The evaluation itself may throw exceptions (e.g. <see cref="JsonataException"/>
+    /// for expression errors, <see cref="InvalidOperationException"/> for disposed documents).
+    /// This is not a <c>TryEvaluateToString</c> method — it is not inexpensive when it
+    /// &quot;fails&quot;, because the full evaluation runs before the buffer-size check.
+    /// </para>
+    /// <para>
+    /// The output is produced via <see cref="JsonElement.WriteTo(Utf8JsonWriter)"/>,
+    /// which may normalize whitespace, property ordering within individual values, and escape
+    /// sequences compared to the original source JSON.
+    /// </para>
+    /// </remarks>
+    public bool EvaluateToString(
+        string expression,
+        JsonElement data,
+        JsonWorkspace workspace,
+        Span<char> destination,
+        out int charsWritten,
+        int maxDepth = Environment.DefaultMaxDepth,
+        int timeLimitMs = 0)
+    {
+        JsonElement result = this.Evaluate(expression, data, workspace, (IReadOnlyDictionary<string, JsonElement>?)null, maxDepth, timeLimitMs);
+        return TrySerializeToUtf16(result, workspace, destination, out charsWritten);
+    }
+
+    /// <summary>
+    /// Evaluates a JSONata expression provided as UTF-8 bytes and writes the JSON result
+    /// as UTF-8 bytes into the caller-provided buffer.
+    /// </summary>
+    /// <param name="utf8Expression">The JSONata expression as UTF-8 bytes.</param>
+    /// <param name="data">The input JSON data element.</param>
+    /// <param name="workspace">The workspace for intermediate document allocation.</param>
+    /// <param name="utf8Destination">The buffer to write the UTF-8 JSON result into.</param>
+    /// <param name="bytesWritten">
+    /// When this method returns <see langword="true"/>, the number of bytes written.
+    /// Zero when the expression produces an undefined result.
+    /// </param>
+    /// <param name="cacheKey">
+    /// Optional cache key for the compiled expression. When non-null, the compiled expression
+    /// is cached (and retrieved on subsequent calls) using this key.
+    /// </param>
+    /// <param name="maxDepth">Maximum recursion depth (default 500).</param>
+    /// <param name="timeLimitMs">Maximum evaluation time in milliseconds (0 = no limit).</param>
+    /// <returns>
+    /// <see langword="true"/> if the result was successfully written to the buffer;
+    /// <see langword="false"/> if the buffer was too small.
+    /// </returns>
+    /// <remarks>
+    /// <para>
+    /// This method evaluates the expression, serializes the result to compact JSON, and copies
+    /// the bytes into <paramref name="utf8Destination"/>. If the expression produces an undefined
+    /// result, <paramref name="bytesWritten"/> is set to zero and the method returns <see langword="true"/>
+    /// (a valid JSON value always produces at least one byte, so zero length unambiguously indicates undefined).
+    /// </para>
+    /// <para>
+    /// The return value indicates only whether the final write to the destination buffer
+    /// succeeded. The evaluation itself may throw exceptions (e.g. <see cref="JsonataException"/>
+    /// for expression errors, <see cref="InvalidOperationException"/> for disposed documents).
+    /// This is not a <c>TryEvaluateToString</c> method — it is not inexpensive when it
+    /// &quot;fails&quot;, because the full evaluation runs before the buffer-size check.
+    /// </para>
+    /// <para>
+    /// The output is produced via <see cref="JsonElement.WriteTo(Utf8JsonWriter)"/>,
+    /// which may normalize whitespace, property ordering within individual values, and escape
+    /// sequences compared to the original source JSON.
+    /// </para>
+    /// </remarks>
+    public bool EvaluateToString(
+        byte[] utf8Expression,
+        JsonElement data,
+        JsonWorkspace workspace,
+        Span<byte> utf8Destination,
+        out int bytesWritten,
+        string? cacheKey = null,
+        int maxDepth = Environment.DefaultMaxDepth,
+        int timeLimitMs = 0)
+    {
+        JsonElement result = this.Evaluate(utf8Expression, data, workspace, cacheKey, maxDepth, timeLimitMs);
+        return TrySerializeToUtf8(result, workspace, utf8Destination, out bytesWritten);
+    }
+
+    /// <summary>
+    /// Evaluates a JSONata expression provided as UTF-8 bytes and writes the JSON result
+    /// as UTF-16 characters into the caller-provided buffer.
+    /// </summary>
+    /// <param name="utf8Expression">The JSONata expression as UTF-8 bytes.</param>
+    /// <param name="data">The input JSON data element.</param>
+    /// <param name="workspace">The workspace for intermediate document allocation.</param>
+    /// <param name="destination">The buffer to write the UTF-16 JSON result into.</param>
+    /// <param name="charsWritten">
+    /// When this method returns <see langword="true"/>, the number of characters written.
+    /// Zero when the expression produces an undefined result.
+    /// </param>
+    /// <param name="cacheKey">
+    /// Optional cache key for the compiled expression. When non-null, the compiled expression
+    /// is cached (and retrieved on subsequent calls) using this key.
+    /// </param>
+    /// <param name="maxDepth">Maximum recursion depth (default 500).</param>
+    /// <param name="timeLimitMs">Maximum evaluation time in milliseconds (0 = no limit).</param>
+    /// <returns>
+    /// <see langword="true"/> if the result was successfully written to the buffer;
+    /// <see langword="false"/> if the buffer was too small.
+    /// </returns>
+    /// <remarks>
+    /// <para>
+    /// This method evaluates the expression, serializes the result to compact JSON as UTF-8,
+    /// then transcodes to UTF-16 into <paramref name="destination"/>. If the expression produces
+    /// an undefined result, <paramref name="charsWritten"/> is set to zero and the method returns
+    /// <see langword="true"/>.
+    /// </para>
+    /// <para>
+    /// The return value indicates only whether the final write to the destination buffer
+    /// succeeded. The evaluation itself may throw exceptions (e.g. <see cref="JsonataException"/>
+    /// for expression errors, <see cref="InvalidOperationException"/> for disposed documents).
+    /// This is not a <c>TryEvaluateToString</c> method — it is not inexpensive when it
+    /// &quot;fails&quot;, because the full evaluation runs before the buffer-size check.
+    /// </para>
+    /// <para>
+    /// The output is produced via <see cref="JsonElement.WriteTo(Utf8JsonWriter)"/>,
+    /// which may normalize whitespace, property ordering within individual values, and escape
+    /// sequences compared to the original source JSON.
+    /// </para>
+    /// </remarks>
+    public bool EvaluateToString(
+        byte[] utf8Expression,
+        JsonElement data,
+        JsonWorkspace workspace,
+        Span<char> destination,
+        out int charsWritten,
+        string? cacheKey = null,
+        int maxDepth = Environment.DefaultMaxDepth,
+        int timeLimitMs = 0)
+    {
+        JsonElement result = this.Evaluate(utf8Expression, data, workspace, cacheKey, maxDepth, timeLimitMs);
+        return TrySerializeToUtf16(result, workspace, destination, out charsWritten);
     }
 
     /// <summary>
@@ -547,6 +762,86 @@ public sealed class JsonataEvaluator
         finally
         {
             Environment.ReturnRoot(env);
+        }
+    }
+
+    private static bool TrySerializeToUtf8(JsonElement result, JsonWorkspace workspace, Span<byte> utf8Destination, out int bytesWritten)
+    {
+        if (result.ValueKind == JsonValueKind.Undefined)
+        {
+            bytesWritten = 0;
+            return true;
+        }
+
+        Utf8JsonWriter writer = workspace.RentWriterAndBuffer(256, out IByteBufferWriter bufferWriter);
+        try
+        {
+            result.WriteTo(writer);
+            writer.Flush();
+
+            ReadOnlySpan<byte> written = bufferWriter.WrittenSpan;
+            if (written.Length <= utf8Destination.Length)
+            {
+                written.CopyTo(utf8Destination);
+                bytesWritten = written.Length;
+                return true;
+            }
+
+            bytesWritten = 0;
+            return false;
+        }
+        finally
+        {
+            workspace.ReturnWriterAndBuffer(writer, bufferWriter);
+        }
+    }
+
+    private static bool TrySerializeToUtf16(JsonElement result, JsonWorkspace workspace, Span<char> destination, out int charsWritten)
+    {
+        if (result.ValueKind == JsonValueKind.Undefined)
+        {
+            charsWritten = 0;
+            return true;
+        }
+
+        Utf8JsonWriter writer = workspace.RentWriterAndBuffer(256, out IByteBufferWriter bufferWriter);
+        try
+        {
+            result.WriteTo(writer);
+            writer.Flush();
+
+            ReadOnlySpan<byte> utf8 = bufferWriter.WrittenSpan;
+
+#if NETSTANDARD2_0
+            // netstandard2.0 lacks Encoding.GetCharCount(ReadOnlySpan<byte>).
+            byte[] utf8Array = utf8.ToArray();
+            int needed = Encoding.UTF8.GetCharCount(utf8Array, 0, utf8Array.Length);
+            if (needed > destination.Length)
+            {
+                charsWritten = 0;
+                return false;
+            }
+
+            char[] charArray = new char[needed];
+            Encoding.UTF8.GetChars(utf8Array, 0, utf8Array.Length, charArray, 0);
+            charArray.AsSpan(0, needed).CopyTo(destination);
+            charsWritten = needed;
+            return true;
+#else
+            int needed = Encoding.UTF8.GetCharCount(utf8);
+            if (needed > destination.Length)
+            {
+                charsWritten = 0;
+                return false;
+            }
+
+            charsWritten = Encoding.UTF8.GetChars(utf8, destination);
+            return true;
+#endif
+        }
+        finally
+        {
+            workspace.ReturnWriterAndBuffer(writer, bufferWriter);
         }
     }
 
