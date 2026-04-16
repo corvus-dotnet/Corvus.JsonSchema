@@ -785,19 +785,23 @@ public static class JMESPathCodeGenHelpers
             estimatedCount += val.GetPropertyCount();
         }
 
-        JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateObjectBuilder(workspace, estimatedCount);
-        JsonElement.Mutable root = doc.RootElement;
-
-        foreach (JsonElement val in objects)
-        {
-            foreach (JsonProperty<JsonElement> prop in val.EnumerateObject())
+        JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateBuilder(
+            workspace,
+            (objects, objects.Length),
+            static (in (JsonElement[] Vals, int Count) ctx, ref JsonElement.ObjectBuilder builder) =>
             {
-                using UnescapedUtf8JsonString name = prop.Utf8NameSpan;
-                root.SetProperty(name.Span, prop.Value);
-            }
-        }
+                for (int i = 0; i < ctx.Count; i++)
+                {
+                    foreach (JsonProperty<JsonElement> prop in ctx.Vals[i].EnumerateObject())
+                    {
+                        using UnescapedUtf8JsonString name = prop.Utf8NameSpan;
+                        builder.AddProperty(name.Span, prop.Value, escapeName: false, nameRequiresUnescaping: false);
+                    }
+                }
+            },
+            estimatedMemberCount: estimatedCount);
 
-        return (JsonElement)root;
+        return (JsonElement)doc.RootElement;
     }
 
     /// <summary>Computes <c>not_null(arg1, arg2, ...)</c>.</summary>

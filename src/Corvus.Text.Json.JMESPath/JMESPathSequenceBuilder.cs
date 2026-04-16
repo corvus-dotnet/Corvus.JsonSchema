@@ -61,7 +61,8 @@ internal ref struct JMESPathSequenceBuilder
 
     /// <summary>
     /// Materializes the collected elements into a single <see cref="JsonElement"/>
-    /// array using a <see cref="JsonDocumentBuilder{T}"/>.
+    /// array using the CVB (ComplexValueBuilder) pattern, which writes directly
+    /// to MetadataDb without per-item staleness checks.
     /// </summary>
     /// <param name="workspace">The workspace for the mutable document.</param>
     /// <returns>A <see cref="JsonElement"/> array containing all collected elements.</returns>
@@ -72,15 +73,19 @@ internal ref struct JMESPathSequenceBuilder
             return JMESPathCodeGenHelpers.EmptyArrayElement;
         }
 
-        JsonDocumentBuilder<JsonElement.Mutable> doc =
-            JsonElement.CreateArrayBuilder(workspace, this.count);
-        JsonElement.Mutable root = doc.RootElement;
-        for (int i = 0; i < this.count; i++)
-        {
-            root.AddItem(this.array![i]);
-        }
+        JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateBuilder(
+            workspace,
+            (this.array!, this.count),
+            static (in (JsonElement[] Arr, int Count) ctx, ref JsonElement.ArrayBuilder builder) =>
+            {
+                for (int i = 0; i < ctx.Count; i++)
+                {
+                    builder.AddItem(ctx.Arr[i]);
+                }
+            },
+            estimatedMemberCount: this.count + 2);
 
-        return (JsonElement)root;
+        return (JsonElement)doc.RootElement;
     }
 
     /// <summary>

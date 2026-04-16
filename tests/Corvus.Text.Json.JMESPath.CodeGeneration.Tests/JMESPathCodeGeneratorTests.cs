@@ -34,7 +34,8 @@ public class JMESPathCodeGeneratorTests
             "Test.Generated");
 
         Assert.Contains("class ProjectionExpr", result);
-        Assert.Contains("CreateArrayBuilder", result);
+        Assert.Contains("CreateBuilder", result);
+        Assert.Contains("ArrayBuilder", result);
         Assert.Contains("EnumerateArray", result);
     }
 
@@ -103,7 +104,8 @@ public class JMESPathCodeGeneratorTests
             "HashExpr",
             "Test.Generated");
 
-        Assert.Contains("CreateObjectBuilder", result);
-        Assert.Contains("SetProperty", result);
+        Assert.Contains("CreateBuilder", result);
+        Assert.Contains("ObjectBuilder", result);
+        Assert.Contains("AddProperty", result);
     }
 }

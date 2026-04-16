@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Buffers;
 using System.Text;
 
 namespace Corvus.Text.Json.JMESPath;
@@ -301,17 +302,36 @@ internal static partial class Compiler
                 return default;
             }
 
-            JsonDocumentBuilder<JsonElement.Mutable> doc =
-                JsonElement.CreateObjectBuilder(workspace, pairs.Length);
-            JsonElement.Mutable root = doc.RootElement;
-
-            for (int i = 0; i < pairs.Length; i++)
+            // Evaluate all values first
+            JsonElement[] vals = ArrayPool<JsonElement>.Shared.Rent(pairs.Length);
+            try
             {
-                JsonElement val = pairs[i].value(data, workspace);
-                root.SetProperty(pairs[i].key, val.IsNullOrUndefined() ? NullElement : val);
-            }
+                for (int i = 0; i < pairs.Length; i++)
+                {
+                    JsonElement val = pairs[i].value(data, workspace);
+                    vals[i] = val.IsNullOrUndefined() ? NullElement : val;
+                }
 
-            return (JsonElement)root;
+                JsonDocumentBuilder<JsonElement.Mutable> doc =
+                    JsonElement.CreateBuilder(
+                        workspace,
+                        (pairs, vals, pairs.Length),
+                        static (in ((byte[] key, JMESPathEval value)[] Pairs, JsonElement[] Vals, int Count) ctx, ref JsonElement.ObjectBuilder builder) =>
+                        {
+                            for (int i = 0; i < ctx.Count; i++)
+                            {
+                                builder.AddProperty(ctx.Pairs[i].key, ctx.Vals[i]);
+                            }
+                        },
+                        estimatedMemberCount: pairs.Length);
+
+                return (JsonElement)doc.RootElement;
+            }
+            finally
+            {
+                vals.AsSpan(0, pairs.Length).Clear();
+                ArrayPool<JsonElement>.Shared.Return(vals);
+            }
         };
     }
 

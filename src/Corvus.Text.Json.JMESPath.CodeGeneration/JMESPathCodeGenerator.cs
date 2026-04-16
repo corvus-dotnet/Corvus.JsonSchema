@@ -363,24 +363,25 @@ public static class JMESPathCodeGenerator
 
                 L(body, indent, "    }");
 
-                L(body, indent, $"    var doc_{resultVar} = JsonElement.CreateArrayBuilder(workspace, len_{resultVar});");
-                L(body, indent, $"    var root_{resultVar} = doc_{resultVar}.RootElement;");
-                L(body, indent, $"    if (step_{resultVar} > 0)");
+                L(body, indent, $"    var doc_{resultVar} = JsonElement.CreateBuilder(workspace, ({inputVar}, start_{resultVar}, stop_{resultVar}, step_{resultVar}), static (in (JsonElement __src, int __start, int __stop, int __step) __ctx, ref JsonElement.ArrayBuilder __b) =>");
                 L(body, indent, "    {");
-                L(body, indent, $"        for (int i_{resultVar} = start_{resultVar}; i_{resultVar} < stop_{resultVar}; i_{resultVar} += step_{resultVar})");
+                L(body, indent, $"        if (__ctx.__step > 0)");
                 L(body, indent, "        {");
-                L(body, indent, $"            root_{resultVar}.AddItem({inputVar}[i_{resultVar}]);");
+                L(body, indent, $"            for (int __i = __ctx.__start; __i < __ctx.__stop; __i += __ctx.__step)");
+                L(body, indent, "            {");
+                L(body, indent, $"                __b.AddItem(__ctx.__src[__i]);");
+                L(body, indent, "            }");
                 L(body, indent, "        }");
-                L(body, indent, "    }");
-                L(body, indent, "    else");
-                L(body, indent, "    {");
-                L(body, indent, $"        for (int i_{resultVar} = start_{resultVar}; i_{resultVar} > stop_{resultVar}; i_{resultVar} += step_{resultVar})");
+                L(body, indent, "        else");
                 L(body, indent, "        {");
-                L(body, indent, $"            root_{resultVar}.AddItem({inputVar}[i_{resultVar}]);");
+                L(body, indent, $"            for (int __i = __ctx.__start; __i > __ctx.__stop; __i += __ctx.__step)");
+                L(body, indent, "            {");
+                L(body, indent, $"                __b.AddItem(__ctx.__src[__i]);");
+                L(body, indent, "            }");
                 L(body, indent, "        }");
-                L(body, indent, "    }");
+                L(body, indent, $"    }}, len_{resultVar} + 2);");
 
-                L(body, indent, $"    {resultVar} = (JsonElement)root_{resultVar};");
+                L(body, indent, $"    {resultVar} = (JsonElement)doc_{resultVar}.RootElement;");
             }
 
             L(body, indent, "}");
@@ -478,20 +479,47 @@ public static class JMESPathCodeGenerator
         private string EmitMultiSelectList(StringBuilder body, MultiSelectListNode node, string indent, string inputVar)
         {
             string resultVar = NextVar();
+            int n = node.Expressions.Length;
             L(body, indent, $"JsonElement {resultVar} = default;");
             L(body, indent, $"if (!{inputVar}.IsNullOrUndefined())");
             L(body, indent, "{");
 
             string innerIndent = indent + "    ";
-            L(body, innerIndent, $"var doc_{resultVar} = JsonElement.CreateArrayBuilder(workspace, {node.Expressions.Length});");
-            L(body, innerIndent, $"var root_{resultVar} = doc_{resultVar}.RootElement;");
-            for (int i = 0; i < node.Expressions.Length; i++)
+
+            // Emit each sub-expression
+            string[] exprVars = new string[n];
+            for (int i = 0; i < n; i++)
             {
-                string exprVar = EmitExpression(body, node.Expressions[i], innerIndent, inputVar);
-                L(body, innerIndent, $"root_{resultVar}.AddItem({exprVar}.IsNullOrUndefined() ? {H}.NullElement : {exprVar});");
+                exprVars[i] = EmitExpression(body, node.Expressions[i], innerIndent, inputVar);
             }
 
-            L(body, innerIndent, $"{resultVar} = (JsonElement)root_{resultVar};");
+            // Coerce null/undefined to NullElement before passing to CVB context
+            string[] coercedVars = new string[n];
+            for (int i = 0; i < n; i++)
+            {
+                coercedVars[i] = NextVar();
+                L(body, innerIndent, $"JsonElement {coercedVars[i]} = {exprVars[i]}.IsNullOrUndefined() ? {H}.NullElement : {exprVars[i]};");
+            }
+
+            // Build context tuple
+            string ctxExpr = n == 1
+                ? $"ValueTuple.Create({coercedVars[0]})"
+                : $"({string.Join(", ", coercedVars)})";
+            string ctxType = n == 1
+                ? "ValueTuple<JsonElement>"
+                : $"({string.Join(", ", Enumerable.Range(0, n).Select(_ => "JsonElement"))})";
+
+            string docVar = $"doc_{resultVar}";
+            L(body, innerIndent, $"var {docVar} = JsonElement.CreateBuilder(workspace, {ctxExpr}, static (in {ctxType} __ctx, ref JsonElement.ArrayBuilder __b) =>");
+            L(body, innerIndent, "{");
+            for (int i = 0; i < n; i++)
+            {
+                string itemRef = n == 1 ? "__ctx.Item1" : $"__ctx.Item{i + 1}";
+                L(body, innerIndent, $"    __b.AddItem({itemRef});");
+            }
+
+            L(body, innerIndent, $"}}, {n});");
+            L(body, innerIndent, $"{resultVar} = (JsonElement){docVar}.RootElement;");
             L(body, indent, "}");
             Blank(body);
             return resultVar;
@@ -500,25 +528,51 @@ public static class JMESPathCodeGenerator
         private string EmitMultiSelectHash(StringBuilder body, MultiSelectHashNode node, string indent, string inputVar)
         {
             string resultVar = NextVar();
+            int n = node.Pairs.Length;
             L(body, indent, $"JsonElement {resultVar} = default;");
             L(body, indent, $"if (!{inputVar}.IsNullOrUndefined())");
             L(body, indent, "{");
 
             string innerIndent = indent + "    ";
-            L(body, innerIndent, $"var doc_{resultVar} = JsonElement.CreateObjectBuilder(workspace, {node.Pairs.Length});");
-            L(body, innerIndent, $"var root_{resultVar} = doc_{resultVar}.RootElement;");
 
-            for (int i = 0; i < node.Pairs.Length; i++)
+            // Emit each value expression
+            string[] valVars = new string[n];
+            string[] keyFields = new string[n];
+            for (int i = 0; i < n; i++)
             {
                 MultiSelectHashNode.KeyValuePair pair = node.Pairs[i];
-                string keyField = $"s_name{nameCounter++}";
-                NameFields.Add((keyField, $"private static readonly byte[] {keyField} = {Utf8Literal(pair.Key)};"));
-
-                string valVar = EmitExpression(body, pair.Value, innerIndent, inputVar);
-                L(body, innerIndent, $"root_{resultVar}.SetProperty({keyField}, {valVar}.IsNullOrUndefined() ? {H}.NullElement : {valVar});");
+                keyFields[i] = $"s_name{nameCounter++}";
+                NameFields.Add((keyFields[i], $"private static readonly byte[] {keyFields[i]} = {Utf8Literal(pair.Key)};"));
+                valVars[i] = EmitExpression(body, pair.Value, innerIndent, inputVar);
             }
 
-            L(body, innerIndent, $"{resultVar} = (JsonElement)root_{resultVar};");
+            // Coerce null/undefined values
+            string[] coercedVars = new string[n];
+            for (int i = 0; i < n; i++)
+            {
+                coercedVars[i] = NextVar();
+                L(body, innerIndent, $"JsonElement {coercedVars[i]} = {valVars[i]}.IsNullOrUndefined() ? {H}.NullElement : {valVars[i]};");
+            }
+
+            // Build context tuple of coerced values
+            string ctxExpr = n == 1
+                ? $"ValueTuple.Create({coercedVars[0]})"
+                : $"({string.Join(", ", coercedVars)})";
+            string ctxType = n == 1
+                ? "ValueTuple<JsonElement>"
+                : $"({string.Join(", ", Enumerable.Range(0, n).Select(_ => "JsonElement"))})";
+
+            string docVar = $"doc_{resultVar}";
+            L(body, innerIndent, $"var {docVar} = JsonElement.CreateBuilder(workspace, {ctxExpr}, static (in {ctxType} __ctx, ref JsonElement.ObjectBuilder __b) =>");
+            L(body, innerIndent, "{");
+            for (int i = 0; i < n; i++)
+            {
+                string itemRef = n == 1 ? "__ctx.Item1" : $"__ctx.Item{i + 1}";
+                L(body, innerIndent, $"    __b.AddProperty({keyFields[i]}, {itemRef});");
+            }
+
+            L(body, innerIndent, $"}}, {n});");
+            L(body, innerIndent, $"{resultVar} = (JsonElement){docVar}.RootElement;");
             L(body, indent, "}");
             Blank(body);
             return resultVar;
@@ -543,17 +597,21 @@ public static class JMESPathCodeGenerator
 
             string loopIndent = innerIndent + "    ";
             string itemVar = $"item_{resultVar}";
-            L(body, loopIndent, $"var doc_{resultVar} = JsonElement.CreateArrayBuilder(workspace, len_{resultVar});");
-            L(body, loopIndent, $"var root_{resultVar} = doc_{resultVar}.RootElement;");
-            L(body, loopIndent, $"foreach (JsonElement {itemVar} in {leftVar}.EnumerateArray())");
+            L(body, loopIndent, $"var doc_{resultVar} = JsonElement.CreateBuilder(workspace, ({leftVar}, workspace), static (in (JsonElement __src, JsonWorkspace workspace) __ctx, ref JsonElement.ArrayBuilder __b) =>");
             L(body, loopIndent, "{");
-            string projectedVar = EmitExpression(body, node.Right, loopIndent + "    ", itemVar);
-            L(body, loopIndent, $"    if (!{projectedVar}.IsNullOrUndefined())");
-            L(body, loopIndent, "    {");
-            L(body, loopIndent, $"        root_{resultVar}.AddItem({projectedVar});");
-            L(body, loopIndent, "    }");
-            L(body, loopIndent, "}");
-            L(body, loopIndent, $"{resultVar} = (JsonElement)root_{resultVar};");
+
+            string cbIndent = loopIndent + "    ";
+            L(body, cbIndent, "JsonWorkspace workspace = __ctx.workspace;");
+            L(body, cbIndent, $"foreach (JsonElement {itemVar} in __ctx.__src.EnumerateArray())");
+            L(body, cbIndent, "{");
+            string projectedVar = EmitExpression(body, node.Right, cbIndent + "    ", itemVar);
+            L(body, cbIndent, $"    if (!{projectedVar}.IsNullOrUndefined())");
+            L(body, cbIndent, "    {");
+            L(body, cbIndent, $"        __b.AddItem({projectedVar});");
+            L(body, cbIndent, "    }");
+            L(body, cbIndent, "}");
+            L(body, loopIndent, $"}}, len_{resultVar} + 2);");
+            L(body, loopIndent, $"{resultVar} = (JsonElement)doc_{resultVar}.RootElement;");
             L(body, innerIndent, "}");
 
             L(body, indent, "}");
@@ -571,18 +629,21 @@ public static class JMESPathCodeGenerator
 
             string innerIndent = indent + "    ";
             string propVar = $"prop_{resultVar}";
-            L(body, innerIndent, $"int count_{resultVar} = {leftVar}.GetPropertyCount();");
-            L(body, innerIndent, $"var doc_{resultVar} = JsonElement.CreateArrayBuilder(workspace, count_{resultVar});");
-            L(body, innerIndent, $"var root_{resultVar} = doc_{resultVar}.RootElement;");
-            L(body, innerIndent, $"foreach (JsonProperty<JsonElement> {propVar} in {leftVar}.EnumerateObject())");
+            L(body, innerIndent, $"var doc_{resultVar} = JsonElement.CreateBuilder(workspace, ({leftVar}, workspace), static (in (JsonElement __src, JsonWorkspace workspace) __ctx, ref JsonElement.ArrayBuilder __b) =>");
             L(body, innerIndent, "{");
-            string projectedVar = EmitExpression(body, node.Right, innerIndent + "    ", $"{propVar}.Value");
-            L(body, innerIndent, $"    if (!{projectedVar}.IsNullOrUndefined())");
-            L(body, innerIndent, "    {");
-            L(body, innerIndent, $"        root_{resultVar}.AddItem({projectedVar});");
-            L(body, innerIndent, "    }");
-            L(body, innerIndent, "}");
-            L(body, innerIndent, $"{resultVar} = (JsonElement)root_{resultVar};");
+
+            string cbIndent = innerIndent + "    ";
+            L(body, cbIndent, "JsonWorkspace workspace = __ctx.workspace;");
+            L(body, cbIndent, $"foreach (JsonProperty<JsonElement> {propVar} in __ctx.__src.EnumerateObject())");
+            L(body, cbIndent, "{");
+            string projectedVar = EmitExpression(body, node.Right, cbIndent + "    ", $"{propVar}.Value");
+            L(body, cbIndent, $"    if (!{projectedVar}.IsNullOrUndefined())");
+            L(body, cbIndent, "    {");
+            L(body, cbIndent, $"        __b.AddItem({projectedVar});");
+            L(body, cbIndent, "    }");
+            L(body, cbIndent, "}");
+            L(body, innerIndent, $"}}, {leftVar}.GetPropertyCount() + 2);");
+            L(body, innerIndent, $"{resultVar} = (JsonElement)doc_{resultVar}.RootElement;");
 
             L(body, indent, "}");
             Blank(body);
@@ -598,26 +659,30 @@ public static class JMESPathCodeGenerator
             L(body, indent, "{");
 
             string innerIndent = indent + "    ";
-            string flatVar = $"flat_{resultVar}";
-            L(body, innerIndent, $"var flatDoc_{resultVar} = JsonElement.CreateArrayBuilder(workspace, {leftVar}.GetArrayLength());");
-            L(body, innerIndent, $"var flatRoot_{resultVar} = flatDoc_{resultVar}.RootElement;");
-            L(body, innerIndent, $"foreach (JsonElement flatItem_{resultVar} in {leftVar}.EnumerateArray())");
-            L(body, innerIndent, "{");
-            L(body, innerIndent, $"    if (flatItem_{resultVar}.ValueKind == JsonValueKind.Array)");
-            L(body, innerIndent, "    {");
-            L(body, innerIndent, $"        foreach (JsonElement nested_{resultVar} in flatItem_{resultVar}.EnumerateArray())");
-            L(body, innerIndent, "        {");
-            L(body, innerIndent, $"            flatRoot_{resultVar}.AddItem(nested_{resultVar});");
-            L(body, innerIndent, "        }");
-            L(body, innerIndent, "    }");
-            L(body, innerIndent, "    else");
-            L(body, innerIndent, "    {");
-            L(body, innerIndent, $"        flatRoot_{resultVar}.AddItem(flatItem_{resultVar});");
-            L(body, innerIndent, "    }");
-            L(body, innerIndent, "}");
-            L(body, innerIndent, $"JsonElement {flatVar} = (JsonElement)flatRoot_{resultVar};");
 
-            // Now project onto the flattened array
+            // Flatten step via CVB
+            string flatVar = $"flat_{resultVar}";
+            L(body, innerIndent, $"var flatDoc_{resultVar} = JsonElement.CreateBuilder(workspace, {leftVar}, static (in JsonElement __src, ref JsonElement.ArrayBuilder __b) =>");
+            L(body, innerIndent, "{");
+            string flatCbIndent = innerIndent + "    ";
+            L(body, flatCbIndent, $"foreach (JsonElement flatItem in __src.EnumerateArray())");
+            L(body, flatCbIndent, "{");
+            L(body, flatCbIndent, "    if (flatItem.ValueKind == JsonValueKind.Array)");
+            L(body, flatCbIndent, "    {");
+            L(body, flatCbIndent, "        foreach (JsonElement nested in flatItem.EnumerateArray())");
+            L(body, flatCbIndent, "        {");
+            L(body, flatCbIndent, "            __b.AddItem(nested);");
+            L(body, flatCbIndent, "        }");
+            L(body, flatCbIndent, "    }");
+            L(body, flatCbIndent, "    else");
+            L(body, flatCbIndent, "    {");
+            L(body, flatCbIndent, "        __b.AddItem(flatItem);");
+            L(body, flatCbIndent, "    }");
+            L(body, flatCbIndent, "}");
+            L(body, innerIndent, $"}}, {leftVar}.GetArrayLength() + 2);");
+            L(body, innerIndent, $"JsonElement {flatVar} = (JsonElement)flatDoc_{resultVar}.RootElement;");
+
+            // Project step via CVB
             L(body, innerIndent, $"int len_{resultVar} = {flatVar}.GetArrayLength();");
             L(body, innerIndent, $"if (len_{resultVar} == 0)");
             L(body, innerIndent, "{");
@@ -628,17 +693,21 @@ public static class JMESPathCodeGenerator
 
             string loopIndent = innerIndent + "    ";
             string itemVar = $"item_{resultVar}";
-            L(body, loopIndent, $"var doc_{resultVar} = JsonElement.CreateArrayBuilder(workspace, len_{resultVar});");
-            L(body, loopIndent, $"var root_{resultVar} = doc_{resultVar}.RootElement;");
-            L(body, loopIndent, $"foreach (JsonElement {itemVar} in {flatVar}.EnumerateArray())");
+            L(body, loopIndent, $"var doc_{resultVar} = JsonElement.CreateBuilder(workspace, ({flatVar}, workspace), static (in (JsonElement __src, JsonWorkspace workspace) __ctx, ref JsonElement.ArrayBuilder __b) =>");
             L(body, loopIndent, "{");
-            string projectedVar = EmitExpression(body, node.Right, loopIndent + "    ", itemVar);
-            L(body, loopIndent, $"    if (!{projectedVar}.IsNullOrUndefined())");
-            L(body, loopIndent, "    {");
-            L(body, loopIndent, $"        root_{resultVar}.AddItem({projectedVar});");
-            L(body, loopIndent, "    }");
-            L(body, loopIndent, "}");
-            L(body, loopIndent, $"{resultVar} = (JsonElement)root_{resultVar};");
+
+            string cbIndent = loopIndent + "    ";
+            L(body, cbIndent, "JsonWorkspace workspace = __ctx.workspace;");
+            L(body, cbIndent, $"foreach (JsonElement {itemVar} in __ctx.__src.EnumerateArray())");
+            L(body, cbIndent, "{");
+            string projectedVar = EmitExpression(body, node.Right, cbIndent + "    ", itemVar);
+            L(body, cbIndent, $"    if (!{projectedVar}.IsNullOrUndefined())");
+            L(body, cbIndent, "    {");
+            L(body, cbIndent, $"        __b.AddItem({projectedVar});");
+            L(body, cbIndent, "    }");
+            L(body, cbIndent, "}");
+            L(body, loopIndent, $"}}, len_{resultVar} + 2);");
+            L(body, loopIndent, $"{resultVar} = (JsonElement)doc_{resultVar}.RootElement;");
             L(body, innerIndent, "}");
 
             L(body, indent, "}");
@@ -656,23 +725,27 @@ public static class JMESPathCodeGenerator
 
             string innerIndent = indent + "    ";
             string itemVar = $"item_{resultVar}";
-            L(body, innerIndent, $"var doc_{resultVar} = JsonElement.CreateArrayBuilder(workspace, {leftVar}.GetArrayLength());");
-            L(body, innerIndent, $"var root_{resultVar} = doc_{resultVar}.RootElement;");
-            L(body, innerIndent, $"foreach (JsonElement {itemVar} in {leftVar}.EnumerateArray())");
+            L(body, innerIndent, $"var doc_{resultVar} = JsonElement.CreateBuilder(workspace, ({leftVar}, workspace), static (in (JsonElement __src, JsonWorkspace workspace) __ctx, ref JsonElement.ArrayBuilder __b) =>");
             L(body, innerIndent, "{");
 
-            string condVar = EmitExpression(body, node.Condition, innerIndent + "    ", itemVar);
-            L(body, innerIndent, $"    if ({H}.IsTruthy({condVar}))");
-            L(body, innerIndent, "    {");
-            string projectedVar = EmitExpression(body, node.Right, innerIndent + "        ", itemVar);
-            L(body, innerIndent, $"        if (!{projectedVar}.IsNullOrUndefined())");
-            L(body, innerIndent, "        {");
-            L(body, innerIndent, $"            root_{resultVar}.AddItem({projectedVar});");
-            L(body, innerIndent, "        }");
-            L(body, innerIndent, "    }");
+            string cbIndent = innerIndent + "    ";
+            L(body, cbIndent, "JsonWorkspace workspace = __ctx.workspace;");
+            L(body, cbIndent, $"foreach (JsonElement {itemVar} in __ctx.__src.EnumerateArray())");
+            L(body, cbIndent, "{");
 
-            L(body, innerIndent, "}");
-            L(body, innerIndent, $"{resultVar} = (JsonElement)root_{resultVar};");
+            string condVar = EmitExpression(body, node.Condition, cbIndent + "    ", itemVar);
+            L(body, cbIndent, $"    if ({H}.IsTruthy({condVar}))");
+            L(body, cbIndent, "    {");
+            string projectedVar = EmitExpression(body, node.Right, cbIndent + "        ", itemVar);
+            L(body, cbIndent, $"        if (!{projectedVar}.IsNullOrUndefined())");
+            L(body, cbIndent, "        {");
+            L(body, cbIndent, $"            __b.AddItem({projectedVar});");
+            L(body, cbIndent, "        }");
+            L(body, cbIndent, "    }");
+
+            L(body, cbIndent, "}");
+            L(body, innerIndent, $"}}, {leftVar}.GetArrayLength() + 2);");
+            L(body, innerIndent, $"{resultVar} = (JsonElement)doc_{resultVar}.RootElement;");
 
             L(body, indent, "}");
             Blank(body);

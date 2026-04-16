@@ -643,30 +643,41 @@ internal static partial class Compiler
 
         return (in JsonElement data, JsonWorkspace ws) =>
         {
-            // Use object builder directly — SetProperty handles last-wins for duplicate keys
-            // Estimate capacity: total properties across all inputs
-            int estimatedCount = 0;
-            foreach (JMESPathEval evalArg in evalArgs)
+            // Evaluate all args first (also validates they're objects)
+            JsonElement[] vals = ArrayPool<JsonElement>.Shared.Rent(evalArgs.Length);
+            try
             {
-                JsonElement val = evalArg(data, ws);
-                RequireObject("merge", val);
-                estimatedCount += val.GetPropertyCount();
-            }
-
-            JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateObjectBuilder(ws, estimatedCount);
-            JsonElement.Mutable root = doc.RootElement;
-
-            foreach (JMESPathEval evalArg in evalArgs)
-            {
-                JsonElement val = evalArg(data, ws);
-                foreach (JsonProperty<JsonElement> prop in val.EnumerateObject())
+                int estimatedCount = 0;
+                for (int i = 0; i < evalArgs.Length; i++)
                 {
-                    using UnescapedUtf8JsonString name = prop.Utf8NameSpan;
-                    root.SetProperty(name.Span, prop.Value);
+                    vals[i] = evalArgs[i](data, ws);
+                    RequireObject("merge", vals[i]);
+                    estimatedCount += vals[i].GetPropertyCount();
                 }
-            }
 
-            return (JsonElement)root;
+                JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateBuilder(
+                    ws,
+                    (vals, evalArgs.Length),
+                    static (in (JsonElement[] Vals, int Count) ctx, ref JsonElement.ObjectBuilder builder) =>
+                    {
+                        for (int i = 0; i < ctx.Count; i++)
+                        {
+                            foreach (JsonProperty<JsonElement> prop in ctx.Vals[i].EnumerateObject())
+                            {
+                                using UnescapedUtf8JsonString name = prop.Utf8NameSpan;
+                                builder.AddProperty(name.Span, prop.Value, escapeName: false, nameRequiresUnescaping: false);
+                            }
+                        }
+                    },
+                    estimatedMemberCount: estimatedCount);
+
+                return (JsonElement)doc.RootElement;
+            }
+            finally
+            {
+                vals.AsSpan(0, evalArgs.Length).Clear();
+                ArrayPool<JsonElement>.Shared.Return(vals);
+            }
         };
     }
 
