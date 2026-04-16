@@ -202,12 +202,10 @@ internal static partial class Compiler
     private static JMESPathEval CompileNot(NotNode node)
     {
         JMESPathEval expr = CompileNode(node.Expression);
-        JsonElement trueElem = JsonElement.ParseValue("true"u8);
-        JsonElement falseElem = JsonElement.ParseValue("false"u8);
         return (in JsonElement data, JsonWorkspace workspace) =>
         {
             JsonElement val = expr(data, workspace);
-            return IsTruthy(val) ? falseElem : trueElem;
+            return IsTruthy(val) ? FalseElement : TrueElement;
         };
     }
 
@@ -216,8 +214,6 @@ internal static partial class Compiler
         JMESPathEval left = CompileNode(node.Left);
         JMESPathEval right = CompileNode(node.Right);
         CompareOp op = node.Operator;
-        JsonElement trueElem = JsonElement.ParseValue("true"u8);
-        JsonElement falseElem = JsonElement.ParseValue("false"u8);
 
         return (in JsonElement data, JsonWorkspace workspace) =>
         {
@@ -226,12 +222,12 @@ internal static partial class Compiler
 
             if (op == CompareOp.Equal)
             {
-                return DeepEquals(lhs, rhs) ? trueElem : falseElem;
+                return DeepEquals(lhs, rhs) ? TrueElement : FalseElement;
             }
 
             if (op == CompareOp.NotEqual)
             {
-                return !DeepEquals(lhs, rhs) ? trueElem : falseElem;
+                return !DeepEquals(lhs, rhs) ? TrueElement : FalseElement;
             }
 
             // Ordering comparisons require both operands to be numbers
@@ -252,7 +248,7 @@ internal static partial class Compiler
                 _ => false,
             };
 
-            return result ? trueElem : falseElem;
+            return result ? TrueElement : FalseElement;
         };
     }
 

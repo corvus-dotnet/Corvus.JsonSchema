@@ -13,6 +13,7 @@ namespace Corvus.Text.Json.JMESPath;
 public sealed class JMESPathEvaluator
 {
     private static readonly JMESPathEvaluator DefaultInstance = new();
+    private static readonly JsonElement NullElement = JsonElement.ParseValue("null"u8);
     private readonly ConcurrentDictionary<string, JMESPathEval> cache = new();
 
     /// <summary>
@@ -34,7 +35,7 @@ public sealed class JMESPathEvaluator
         JsonElement result = compiled(data, workspace);
         if (result.IsNullOrUndefined())
         {
-            return JsonElement.ParseValue("null"u8);
+            return NullElement;
         }
 
         return result.Clone();
