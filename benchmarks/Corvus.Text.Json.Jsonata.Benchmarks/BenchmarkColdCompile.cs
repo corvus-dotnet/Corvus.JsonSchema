@@ -46,7 +46,7 @@ public class BenchmarkColdCompile
     private const string ExprComplex =
         "$reduce($map($filter(Account.Order.Product, function($v) { $v.Price > 20 }), function($v) { $v.Price * $v.Quantity }), function($prev, $curr) { $prev + $curr }, 0)";
 
-    // Pre-encoded UTF-8 byte arrays for the Utf8 overloads
+    // Pre-encoded UTF-8 byte arrays
     private static readonly byte[] ExprSimpleUtf8 = "Account.`Account Name`"u8.ToArray();
     private static readonly byte[] ExprMediumUtf8 = "$map(Account.Order.Product, function($v) { $v.`Product Name` })"u8.ToArray();
     private static readonly byte[] ExprComplexUtf8 =
@@ -88,7 +88,7 @@ public class BenchmarkColdCompile
     }
 
     /// <summary>
-    /// Corvus: cold compile + evaluate a simple expression.
+    /// Corvus: cold compile + evaluate a simple expression via cached byte[] API.
     /// </summary>
     [BenchmarkCategory("Simple")]
     [Benchmark]
@@ -96,18 +96,7 @@ public class BenchmarkColdCompile
     {
         this.evaluator.ClearCache();
         this.workspace.Reset();
-        return this.evaluator.Evaluate(ExprSimple, this.data, this.workspace);
-    }
-
-    /// <summary>
-    /// Corvus UTF-8: cold compile + evaluate a simple expression via byte[] API (no transcode).
-    /// </summary>
-    [BenchmarkCategory("Simple")]
-    [Benchmark]
-    public JsonElement Corvus_Simple_Utf8()
-    {
-        this.workspace.Reset();
-        return this.evaluator.Evaluate(ExprSimpleUtf8, this.data, this.workspace);
+        return this.evaluator.Evaluate(ExprSimpleUtf8, this.data, this.workspace, cacheKey: ExprSimple);
     }
 
 #if !NETFRAMEWORK
@@ -124,7 +113,7 @@ public class BenchmarkColdCompile
 #endif
 
     /// <summary>
-    /// Corvus: cold compile + evaluate a medium expression (HOF with lambda).
+    /// Corvus: cold compile + evaluate a medium expression via cached byte[] API.
     /// </summary>
     [BenchmarkCategory("Medium")]
     [Benchmark]
@@ -132,18 +121,7 @@ public class BenchmarkColdCompile
     {
         this.evaluator.ClearCache();
         this.workspace.Reset();
-        return this.evaluator.Evaluate(ExprMedium, this.data, this.workspace);
-    }
-
-    /// <summary>
-    /// Corvus UTF-8: cold compile + evaluate a medium expression via byte[] API.
-    /// </summary>
-    [BenchmarkCategory("Medium")]
-    [Benchmark]
-    public JsonElement Corvus_Medium_Utf8()
-    {
-        this.workspace.Reset();
-        return this.evaluator.Evaluate(ExprMediumUtf8, this.data, this.workspace);
+        return this.evaluator.Evaluate(ExprMediumUtf8, this.data, this.workspace, cacheKey: ExprMedium);
     }
 
 #if !NETFRAMEWORK
@@ -160,7 +138,7 @@ public class BenchmarkColdCompile
 #endif
 
     /// <summary>
-    /// Corvus: cold compile + evaluate a complex expression (chained filter/map/reduce).
+    /// Corvus: cold compile + evaluate a complex expression via cached byte[] API.
     /// </summary>
     [BenchmarkCategory("Complex")]
     [Benchmark]
@@ -168,18 +146,7 @@ public class BenchmarkColdCompile
     {
         this.evaluator.ClearCache();
         this.workspace.Reset();
-        return this.evaluator.Evaluate(ExprComplex, this.data, this.workspace);
-    }
-
-    /// <summary>
-    /// Corvus UTF-8: cold compile + evaluate a complex expression via byte[] API.
-    /// </summary>
-    [BenchmarkCategory("Complex")]
-    [Benchmark]
-    public JsonElement Corvus_Complex_Utf8()
-    {
-        this.workspace.Reset();
-        return this.evaluator.Evaluate(ExprComplexUtf8, this.data, this.workspace);
+        return this.evaluator.Evaluate(ExprComplexUtf8, this.data, this.workspace, cacheKey: ExprComplex);
     }
 
 #if !NETFRAMEWORK

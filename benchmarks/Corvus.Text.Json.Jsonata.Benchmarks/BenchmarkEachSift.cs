@@ -43,6 +43,10 @@ public class BenchmarkEachSift : JsonataBenchmarkBase
     private const string ExprEach = """$each(Account.Order[0].Product[0], function($v, $k) { $k & ": " & $string($v) })""";
     private const string ExprSift = """$sift(Account.Order[0].Product[0], function($v) { $type($v) = "number" })""";
 
+    private static readonly byte[] ExprEachUtf8 = """$each(Account.Order[0].Product[0], function($v, $k) { $k & ": " & $string($v) })"""u8.ToArray();
+    private static readonly byte[] ExprSiftUtf8 = """$sift(Account.Order[0].Product[0], function($v) { $type($v) = "number" })"""u8.ToArray();
+
+
     private JsonataEvaluator evaluator = null!;
     private ParsedJsonDocument<JsonElement>? doc;
     private JsonElement data;
@@ -64,8 +68,8 @@ public class BenchmarkEachSift : JsonataBenchmarkBase
         this.data = this.doc.RootElement;
         this.evaluator = new JsonataEvaluator();
         this.workspace = JsonWorkspace.Create();
-        this.evaluator.Evaluate(ExprEach, this.data);
-        this.evaluator.Evaluate(ExprSift, this.data);
+        this.evaluator.Evaluate(ExprEachUtf8, this.data, this.workspace, cacheKey: ExprEach);
+        this.evaluator.Evaluate(ExprSiftUtf8, this.data, this.workspace, cacheKey: ExprSift);
 
         // Warm up source-generated evaluators
         EachHofCodeGen.Evaluate(this.data, this.workspace);
@@ -98,7 +102,7 @@ public class BenchmarkEachSift : JsonataBenchmarkBase
     public JsonElement Corvus_Each()
     {
         this.workspace.Reset();
-        return this.evaluator.Evaluate(ExprEach, this.data, this.workspace);
+        return this.evaluator.Evaluate(ExprEachUtf8, this.data, this.workspace, cacheKey: ExprEach);
     }
 
 #if !NETFRAMEWORK
@@ -130,7 +134,7 @@ public class BenchmarkEachSift : JsonataBenchmarkBase
     public JsonElement Corvus_Sift()
     {
         this.workspace.Reset();
-        return this.evaluator.Evaluate(ExprSift, this.data, this.workspace);
+        return this.evaluator.Evaluate(ExprSiftUtf8, this.data, this.workspace, cacheKey: ExprSift);
     }
 
 #if !NETFRAMEWORK

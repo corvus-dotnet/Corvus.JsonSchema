@@ -47,6 +47,11 @@ public class BenchmarkObjectConstruction : JsonataBenchmarkBase
     private const string ExprGroupByObject = "Account.Order.Product.{`Product Name`: Price}";
     private const string ExprArrayOfObjects = """[Account.Order.Product.{"name": `Product Name`, "total": Price * Quantity}]""";
 
+    private static readonly byte[] ExprSimpleObjectUtf8 = """{"name": Account.`Account Name`, "total": $sum(Account.Order.Product.(Price * Quantity))}"""u8.ToArray();
+    private static readonly byte[] ExprGroupByObjectUtf8 = "Account.Order.Product.{`Product Name`: Price}"u8.ToArray();
+    private static readonly byte[] ExprArrayOfObjectsUtf8 = """[Account.Order.Product.{"name": `Product Name`, "total": Price * Quantity}]"""u8.ToArray();
+
+
     private JsonataEvaluator evaluator = null!;
     private ParsedJsonDocument<JsonElement>? doc;
     private JsonElement data;
@@ -69,9 +74,9 @@ public class BenchmarkObjectConstruction : JsonataBenchmarkBase
         this.data = this.doc.RootElement;
         this.evaluator = new JsonataEvaluator();
         this.workspace = JsonWorkspace.Create();
-        this.evaluator.Evaluate(ExprSimpleObject, this.data);
-        this.evaluator.Evaluate(ExprGroupByObject, this.data);
-        this.evaluator.Evaluate(ExprArrayOfObjects, this.data);
+        this.evaluator.Evaluate(ExprSimpleObjectUtf8, this.data, this.workspace, cacheKey: ExprSimpleObject);
+        this.evaluator.Evaluate(ExprGroupByObjectUtf8, this.data, this.workspace, cacheKey: ExprGroupByObject);
+        this.evaluator.Evaluate(ExprArrayOfObjectsUtf8, this.data, this.workspace, cacheKey: ExprArrayOfObjects);
 
         // Warm up source-generated evaluators (first call compiles + caches)
         SimpleObjectCodeGen.Evaluate(this.data, this.workspace);
@@ -107,7 +112,7 @@ public class BenchmarkObjectConstruction : JsonataBenchmarkBase
     public JsonElement Corvus_SimpleObject()
     {
         this.workspace.Reset();
-        return this.evaluator.Evaluate(ExprSimpleObject, this.data, this.workspace);
+        return this.evaluator.Evaluate(ExprSimpleObjectUtf8, this.data, this.workspace, cacheKey: ExprSimpleObject);
     }
 
 #if !NETFRAMEWORK
@@ -128,7 +133,7 @@ public class BenchmarkObjectConstruction : JsonataBenchmarkBase
     public JsonElement Corvus_GroupByObject()
     {
         this.workspace.Reset();
-        return this.evaluator.Evaluate(ExprGroupByObject, this.data, this.workspace);
+        return this.evaluator.Evaluate(ExprGroupByObjectUtf8, this.data, this.workspace, cacheKey: ExprGroupByObject);
     }
 
 #if !NETFRAMEWORK
@@ -149,7 +154,7 @@ public class BenchmarkObjectConstruction : JsonataBenchmarkBase
     public JsonElement Corvus_ArrayOfObjects()
     {
         this.workspace.Reset();
-        return this.evaluator.Evaluate(ExprArrayOfObjects, this.data, this.workspace);
+        return this.evaluator.Evaluate(ExprArrayOfObjectsUtf8, this.data, this.workspace, cacheKey: ExprArrayOfObjects);
     }
 
 #if !NETFRAMEWORK

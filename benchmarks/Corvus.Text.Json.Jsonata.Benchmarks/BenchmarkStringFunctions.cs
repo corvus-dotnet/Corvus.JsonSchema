@@ -50,6 +50,16 @@ public class BenchmarkStringFunctions : JsonataBenchmarkBase
     private const string ExprContains = """$contains(Account.Order[0].Product[0]."Product Name", "Hat")""";
     private const string ExprLength = """$length(Account.Order[0].Product[0]."Product Name")""";
 
+    private static readonly byte[] ExprSubstringUtf8 = """$substring(Account.Order[0].Product[0]."Product Name", 0, 6)"""u8.ToArray();
+    private static readonly byte[] ExprSubstringBeforeUtf8 = """$substringBefore(Account.Order[0].Product[0]."Product Name", " ")"""u8.ToArray();
+    private static readonly byte[] ExprSubstringAfterUtf8 = """$substringAfter(Account.Order[0].Product[0]."Product Name", " ")"""u8.ToArray();
+    private static readonly byte[] ExprUppercaseUtf8 = """$uppercase(Account.Order[0].Product[0]."Product Name")"""u8.ToArray();
+    private static readonly byte[] ExprLowercaseUtf8 = """$lowercase(Account.Order[0].Product[0]."Product Name")"""u8.ToArray();
+    private static readonly byte[] ExprTrimUtf8 = """$trim(Account.Order[0].Product[0]."Product Name")"""u8.ToArray();
+    private static readonly byte[] ExprContainsUtf8 = """$contains(Account.Order[0].Product[0]."Product Name", "Hat")"""u8.ToArray();
+    private static readonly byte[] ExprLengthUtf8 = """$length(Account.Order[0].Product[0]."Product Name")"""u8.ToArray();
+
+
     private JsonataEvaluator evaluator = null!;
     private ParsedJsonDocument<JsonElement>? doc;
     private JsonElement data;
@@ -79,14 +89,14 @@ public class BenchmarkStringFunctions : JsonataBenchmarkBase
         this.workspace = JsonWorkspace.Create();
 
         // Warm up RT
-        this.evaluator.Evaluate(ExprSubstring, this.data);
-        this.evaluator.Evaluate(ExprSubstringBefore, this.data);
-        this.evaluator.Evaluate(ExprSubstringAfter, this.data);
-        this.evaluator.Evaluate(ExprUppercase, this.data);
-        this.evaluator.Evaluate(ExprLowercase, this.data);
-        this.evaluator.Evaluate(ExprTrim, this.data);
-        this.evaluator.Evaluate(ExprContains, this.data);
-        this.evaluator.Evaluate(ExprLength, this.data);
+        this.evaluator.Evaluate(ExprSubstringUtf8, this.data, this.workspace, cacheKey: ExprSubstring);
+        this.evaluator.Evaluate(ExprSubstringBeforeUtf8, this.data, this.workspace, cacheKey: ExprSubstringBefore);
+        this.evaluator.Evaluate(ExprSubstringAfterUtf8, this.data, this.workspace, cacheKey: ExprSubstringAfter);
+        this.evaluator.Evaluate(ExprUppercaseUtf8, this.data, this.workspace, cacheKey: ExprUppercase);
+        this.evaluator.Evaluate(ExprLowercaseUtf8, this.data, this.workspace, cacheKey: ExprLowercase);
+        this.evaluator.Evaluate(ExprTrimUtf8, this.data, this.workspace, cacheKey: ExprTrim);
+        this.evaluator.Evaluate(ExprContainsUtf8, this.data, this.workspace, cacheKey: ExprContains);
+        this.evaluator.Evaluate(ExprLengthUtf8, this.data, this.workspace, cacheKey: ExprLength);
 
         // Warm up CG
         SubstringCodeGen.Evaluate(this.data, this.workspace); this.workspace.Reset();
@@ -129,7 +139,7 @@ public class BenchmarkStringFunctions : JsonataBenchmarkBase
     public JsonElement Corvus_Substring()
     {
         this.workspace.Reset();
-        return this.evaluator.Evaluate(ExprSubstring, this.data, this.workspace);
+        return this.evaluator.Evaluate(ExprSubstringUtf8, this.data, this.workspace, cacheKey: ExprSubstring);
     }
 
 #if !NETFRAMEWORK
@@ -156,7 +166,7 @@ public class BenchmarkStringFunctions : JsonataBenchmarkBase
     public JsonElement Corvus_SubstringBefore()
     {
         this.workspace.Reset();
-        return this.evaluator.Evaluate(ExprSubstringBefore, this.data, this.workspace);
+        return this.evaluator.Evaluate(ExprSubstringBeforeUtf8, this.data, this.workspace, cacheKey: ExprSubstringBefore);
     }
 
 #if !NETFRAMEWORK
@@ -183,7 +193,7 @@ public class BenchmarkStringFunctions : JsonataBenchmarkBase
     public JsonElement Corvus_SubstringAfter()
     {
         this.workspace.Reset();
-        return this.evaluator.Evaluate(ExprSubstringAfter, this.data, this.workspace);
+        return this.evaluator.Evaluate(ExprSubstringAfterUtf8, this.data, this.workspace, cacheKey: ExprSubstringAfter);
     }
 
 #if !NETFRAMEWORK
@@ -210,7 +220,7 @@ public class BenchmarkStringFunctions : JsonataBenchmarkBase
     public JsonElement Corvus_Uppercase()
     {
         this.workspace.Reset();
-        return this.evaluator.Evaluate(ExprUppercase, this.data, this.workspace);
+        return this.evaluator.Evaluate(ExprUppercaseUtf8, this.data, this.workspace, cacheKey: ExprUppercase);
     }
 
 #if !NETFRAMEWORK
@@ -237,7 +247,7 @@ public class BenchmarkStringFunctions : JsonataBenchmarkBase
     public JsonElement Corvus_Lowercase()
     {
         this.workspace.Reset();
-        return this.evaluator.Evaluate(ExprLowercase, this.data, this.workspace);
+        return this.evaluator.Evaluate(ExprLowercaseUtf8, this.data, this.workspace, cacheKey: ExprLowercase);
     }
 
 #if !NETFRAMEWORK
@@ -264,7 +274,7 @@ public class BenchmarkStringFunctions : JsonataBenchmarkBase
     public JsonElement Corvus_Trim()
     {
         this.workspace.Reset();
-        return this.evaluator.Evaluate(ExprTrim, this.data, this.workspace);
+        return this.evaluator.Evaluate(ExprTrimUtf8, this.data, this.workspace, cacheKey: ExprTrim);
     }
 
 #if !NETFRAMEWORK
@@ -291,7 +301,7 @@ public class BenchmarkStringFunctions : JsonataBenchmarkBase
     public JsonElement Corvus_Contains()
     {
         this.workspace.Reset();
-        return this.evaluator.Evaluate(ExprContains, this.data, this.workspace);
+        return this.evaluator.Evaluate(ExprContainsUtf8, this.data, this.workspace, cacheKey: ExprContains);
     }
 
 #if !NETFRAMEWORK
@@ -318,7 +328,7 @@ public class BenchmarkStringFunctions : JsonataBenchmarkBase
     public JsonElement Corvus_Length()
     {
         this.workspace.Reset();
-        return this.evaluator.Evaluate(ExprLength, this.data, this.workspace);
+        return this.evaluator.Evaluate(ExprLengthUtf8, this.data, this.workspace, cacheKey: ExprLength);
     }
 
 #if !NETFRAMEWORK

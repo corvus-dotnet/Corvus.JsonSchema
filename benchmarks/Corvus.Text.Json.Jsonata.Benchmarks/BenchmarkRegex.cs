@@ -28,6 +28,10 @@ public class BenchmarkRegex
     private const string ExprMatch = "$match(text, /\\d{3}-\\d{3}-\\d{4}/)";
     private const string ExprReplace = "$replace(text, /\\d{3}-\\d{3}-\\d{4}/, \"***-***-****\")";
 
+    private static readonly byte[] ExprMatchUtf8 = "$match(text, /\\d{3}-\\d{3}-\\d{4}/)"u8.ToArray();
+    private static readonly byte[] ExprReplaceUtf8 = "$replace(text, /\\d{3}-\\d{3}-\\d{4}/, \"***-***-****\")"u8.ToArray();
+
+
     private JsonataEvaluator evaluator = null!;
     private ParsedJsonDocument<JsonElement>? doc;
     private JsonElement data;
@@ -50,8 +54,8 @@ public class BenchmarkRegex
         this.evaluator = new JsonataEvaluator();
         this.workspace = JsonWorkspace.Create();
 
-        this.evaluator.Evaluate(ExprMatch, this.data);
-        this.evaluator.Evaluate(ExprReplace, this.data);
+        this.evaluator.Evaluate(ExprMatchUtf8, this.data, this.workspace, cacheKey: ExprMatch);
+        this.evaluator.Evaluate(ExprReplaceUtf8, this.data, this.workspace, cacheKey: ExprReplace);
 
         RegexMatchCodeGen.Evaluate(this.data, this.workspace);
         this.workspace.Reset();
@@ -83,7 +87,7 @@ public class BenchmarkRegex
     public JsonElement Corvus_Match()
     {
         this.workspace.Reset();
-        return this.evaluator.Evaluate(ExprMatch, this.data, this.workspace);
+        return this.evaluator.Evaluate(ExprMatchUtf8, this.data, this.workspace, cacheKey: ExprMatch);
     }
 
 #if !NETFRAMEWORK
@@ -115,7 +119,7 @@ public class BenchmarkRegex
     public JsonElement Corvus_Replace()
     {
         this.workspace.Reset();
-        return this.evaluator.Evaluate(ExprReplace, this.data, this.workspace);
+        return this.evaluator.Evaluate(ExprReplaceUtf8, this.data, this.workspace, cacheKey: ExprReplace);
     }
 
 #if !NETFRAMEWORK

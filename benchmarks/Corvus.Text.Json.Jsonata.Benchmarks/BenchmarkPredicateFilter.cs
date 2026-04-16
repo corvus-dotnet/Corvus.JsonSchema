@@ -53,6 +53,11 @@ public class BenchmarkPredicateFilter : JsonataBenchmarkBase
     private const string ExprChainedPredicate = "Contact[ssn = '496913021'].Phone[0].number";
     private const string ExprCompoundPredicate = "Contact.Phone[type = 'office' or type = 'mobile'].number";
 
+    private static readonly byte[] ExprSinglePredicateUtf8 = "Contact.Phone[type = 'mobile'].number"u8.ToArray();
+    private static readonly byte[] ExprChainedPredicateUtf8 = "Contact[ssn = '496913021'].Phone[0].number"u8.ToArray();
+    private static readonly byte[] ExprCompoundPredicateUtf8 = "Contact.Phone[type = 'office' or type = 'mobile'].number"u8.ToArray();
+
+
     private JsonataEvaluator evaluator = null!;
     private ParsedJsonDocument<JsonElement>? doc;
     private JsonElement data;
@@ -75,9 +80,9 @@ public class BenchmarkPredicateFilter : JsonataBenchmarkBase
         this.data = this.doc.RootElement;
         this.evaluator = new JsonataEvaluator();
         this.workspace = JsonWorkspace.Create();
-        this.evaluator.Evaluate(ExprSinglePredicate, this.data);
-        this.evaluator.Evaluate(ExprChainedPredicate, this.data);
-        this.evaluator.Evaluate(ExprCompoundPredicate, this.data);
+        this.evaluator.Evaluate(ExprSinglePredicateUtf8, this.data, this.workspace, cacheKey: ExprSinglePredicate);
+        this.evaluator.Evaluate(ExprChainedPredicateUtf8, this.data, this.workspace, cacheKey: ExprChainedPredicate);
+        this.evaluator.Evaluate(ExprCompoundPredicateUtf8, this.data, this.workspace, cacheKey: ExprCompoundPredicate);
 
         // Warm up source-generated evaluators (first call compiles + caches)
         SinglePredicateCodeGen.Evaluate(this.data, this.workspace);
@@ -113,7 +118,7 @@ public class BenchmarkPredicateFilter : JsonataBenchmarkBase
     public JsonElement Corvus_SinglePredicate()
     {
         this.workspace.Reset();
-        return this.evaluator.Evaluate(ExprSinglePredicate, this.data, this.workspace);
+        return this.evaluator.Evaluate(ExprSinglePredicateUtf8, this.data, this.workspace, cacheKey: ExprSinglePredicate);
     }
 
 #if !NETFRAMEWORK
@@ -134,7 +139,7 @@ public class BenchmarkPredicateFilter : JsonataBenchmarkBase
     public JsonElement Corvus_ChainedPredicate()
     {
         this.workspace.Reset();
-        return this.evaluator.Evaluate(ExprChainedPredicate, this.data, this.workspace);
+        return this.evaluator.Evaluate(ExprChainedPredicateUtf8, this.data, this.workspace, cacheKey: ExprChainedPredicate);
     }
 
 #if !NETFRAMEWORK
@@ -155,7 +160,7 @@ public class BenchmarkPredicateFilter : JsonataBenchmarkBase
     public JsonElement Corvus_CompoundPredicate()
     {
         this.workspace.Reset();
-        return this.evaluator.Evaluate(ExprCompoundPredicate, this.data, this.workspace);
+        return this.evaluator.Evaluate(ExprCompoundPredicateUtf8, this.data, this.workspace, cacheKey: ExprCompoundPredicate);
     }
 
 #if !NETFRAMEWORK

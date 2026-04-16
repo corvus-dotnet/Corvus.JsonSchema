@@ -28,6 +28,11 @@ public abstract class JsonataBenchmarkBase
     protected string Expression { get; private set; } = null!;
 
     /// <summary>
+    /// Gets the pre-encoded UTF-8 expression bytes.
+    /// </summary>
+    protected byte[] Utf8Expression { get; private set; } = null!;
+
+    /// <summary>
     /// Gets the pre-warmed evaluator with the expression already cached.
     /// </summary>
     protected JsonataEvaluator Evaluator => this.evaluator;
@@ -39,14 +44,16 @@ public abstract class JsonataBenchmarkBase
     protected void Setup(string expression, string dataJson)
     {
         this.Expression = expression;
+        this.Utf8Expression = Encoding.UTF8.GetBytes(expression);
         this.parsedDocument = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes(dataJson));
         this.Data = this.parsedDocument.RootElement;
 
         this.evaluator = new JsonataEvaluator();
         this.workspace = JsonWorkspace.Create();
 
-        // Pre-warm: compiles and caches the expression
-        this.evaluator.Evaluate(expression, this.Data);
+        // Pre-warm: compiles and caches the expression via the byte[] path
+        this.evaluator.Evaluate(this.Utf8Expression, this.Data, this.workspace, cacheKey: expression);
+        this.workspace.Reset();
     }
 
     /// <summary>
@@ -65,7 +72,7 @@ public abstract class JsonataBenchmarkBase
     protected JsonElement EvaluateWithWorkspace(string expression, JsonElement data)
     {
         this.workspace.Reset();
-        return this.evaluator.Evaluate(expression, data, this.workspace);
+        return this.evaluator.Evaluate(this.Utf8Expression, data, this.workspace, cacheKey: expression);
     }
 
     /// <summary>

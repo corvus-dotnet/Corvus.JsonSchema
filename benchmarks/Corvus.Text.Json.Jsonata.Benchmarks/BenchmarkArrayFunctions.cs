@@ -47,6 +47,13 @@ public class BenchmarkArrayFunctions : JsonataBenchmarkBase
     private const string ExprAppend = "$append(Account.Order[0].Product, Account.Order[1].Product)";
     private const string ExprReverse = "$reverse(Account.Order[0].Product)";
 
+    private static readonly byte[] ExprCountUtf8 = "$count(Account.Order[0].Product)"u8.ToArray();
+    private static readonly byte[] ExprFlattenStdUtf8 = "Account.Order.Product[]"u8.ToArray();
+    private static readonly byte[] ExprDistinctUtf8 = """$distinct(Account.Order.Product."Product Name")"""u8.ToArray();
+    private static readonly byte[] ExprAppendUtf8 = "$append(Account.Order[0].Product, Account.Order[1].Product)"u8.ToArray();
+    private static readonly byte[] ExprReverseUtf8 = "$reverse(Account.Order[0].Product)"u8.ToArray();
+
+
     private JsonataEvaluator evaluator = null!;
     private ParsedJsonDocument<JsonElement>? doc;
     private JsonElement data;
@@ -73,11 +80,11 @@ public class BenchmarkArrayFunctions : JsonataBenchmarkBase
         this.workspace = JsonWorkspace.Create();
 
         // Warm up RT
-        this.evaluator.Evaluate(ExprCount, this.data);
-        this.evaluator.Evaluate(ExprFlattenStd, this.data);
-        this.evaluator.Evaluate(ExprDistinct, this.data);
-        this.evaluator.Evaluate(ExprAppend, this.data);
-        this.evaluator.Evaluate(ExprReverse, this.data);
+        this.evaluator.Evaluate(ExprCountUtf8, this.data, this.workspace, cacheKey: ExprCount);
+        this.evaluator.Evaluate(ExprFlattenStdUtf8, this.data, this.workspace, cacheKey: ExprFlattenStd);
+        this.evaluator.Evaluate(ExprDistinctUtf8, this.data, this.workspace, cacheKey: ExprDistinct);
+        this.evaluator.Evaluate(ExprAppendUtf8, this.data, this.workspace, cacheKey: ExprAppend);
+        this.evaluator.Evaluate(ExprReverseUtf8, this.data, this.workspace, cacheKey: ExprReverse);
 
         // Warm up CG
         CountCodeGen.Evaluate(this.data, this.workspace); this.workspace.Reset();
@@ -114,7 +121,7 @@ public class BenchmarkArrayFunctions : JsonataBenchmarkBase
     public JsonElement Corvus_Count()
     {
         this.workspace.Reset();
-        return this.evaluator.Evaluate(ExprCount, this.data, this.workspace);
+        return this.evaluator.Evaluate(ExprCountUtf8, this.data, this.workspace, cacheKey: ExprCount);
     }
 
 #if !NETFRAMEWORK
@@ -141,7 +148,7 @@ public class BenchmarkArrayFunctions : JsonataBenchmarkBase
     public JsonElement Corvus_FlattenStd()
     {
         this.workspace.Reset();
-        return this.evaluator.Evaluate(ExprFlattenStd, this.data, this.workspace);
+        return this.evaluator.Evaluate(ExprFlattenStdUtf8, this.data, this.workspace, cacheKey: ExprFlattenStd);
     }
 
 #if !NETFRAMEWORK
@@ -168,7 +175,7 @@ public class BenchmarkArrayFunctions : JsonataBenchmarkBase
     public JsonElement Corvus_Distinct()
     {
         this.workspace.Reset();
-        return this.evaluator.Evaluate(ExprDistinct, this.data, this.workspace);
+        return this.evaluator.Evaluate(ExprDistinctUtf8, this.data, this.workspace, cacheKey: ExprDistinct);
     }
 
 #if !NETFRAMEWORK
@@ -195,7 +202,7 @@ public class BenchmarkArrayFunctions : JsonataBenchmarkBase
     public JsonElement Corvus_Append()
     {
         this.workspace.Reset();
-        return this.evaluator.Evaluate(ExprAppend, this.data, this.workspace);
+        return this.evaluator.Evaluate(ExprAppendUtf8, this.data, this.workspace, cacheKey: ExprAppend);
     }
 
 #if !NETFRAMEWORK
@@ -222,7 +229,7 @@ public class BenchmarkArrayFunctions : JsonataBenchmarkBase
     public JsonElement Corvus_Reverse()
     {
         this.workspace.Reset();
-        return this.evaluator.Evaluate(ExprReverse, this.data, this.workspace);
+        return this.evaluator.Evaluate(ExprReverseUtf8, this.data, this.workspace, cacheKey: ExprReverse);
     }
 
 #if !NETFRAMEWORK

@@ -45,6 +45,11 @@ public class BenchmarkOperators : JsonataBenchmarkBase
     private const string ExprDescendant = """**."Product Name" """;
     private const string ExprConditional = """Account.Order[0].Product[0].Price > 30 ? "expensive" : "cheap" """;
 
+    private static readonly byte[] ExprTransformPipeUtf8 = """Account.Order.Product.Price ~> $sum"""u8.ToArray();
+    private static readonly byte[] ExprDescendantUtf8 = """**."Product Name" """u8.ToArray();
+    private static readonly byte[] ExprConditionalUtf8 = """Account.Order[0].Product[0].Price > 30 ? "expensive" : "cheap" """u8.ToArray();
+
+
     private JsonataEvaluator evaluator = null!;
     private ParsedJsonDocument<JsonElement>? doc;
     private JsonElement data;
@@ -69,9 +74,9 @@ public class BenchmarkOperators : JsonataBenchmarkBase
         this.workspace = JsonWorkspace.Create();
 
         // Warm up RT
-        this.evaluator.Evaluate(ExprTransformPipe, this.data);
-        this.evaluator.Evaluate(ExprDescendant, this.data);
-        this.evaluator.Evaluate(ExprConditional, this.data);
+        this.evaluator.Evaluate(ExprTransformPipeUtf8, this.data, this.workspace, cacheKey: ExprTransformPipe);
+        this.evaluator.Evaluate(ExprDescendantUtf8, this.data, this.workspace, cacheKey: ExprDescendant);
+        this.evaluator.Evaluate(ExprConditionalUtf8, this.data, this.workspace, cacheKey: ExprConditional);
 
         // Warm up CG
         TransformPipeCodeGen.Evaluate(this.data, this.workspace); this.workspace.Reset();
@@ -104,7 +109,7 @@ public class BenchmarkOperators : JsonataBenchmarkBase
     public JsonElement Corvus_TransformPipe()
     {
         this.workspace.Reset();
-        return this.evaluator.Evaluate(ExprTransformPipe, this.data, this.workspace);
+        return this.evaluator.Evaluate(ExprTransformPipeUtf8, this.data, this.workspace, cacheKey: ExprTransformPipe);
     }
 
 #if !NETFRAMEWORK
@@ -131,7 +136,7 @@ public class BenchmarkOperators : JsonataBenchmarkBase
     public JsonElement Corvus_Descendant()
     {
         this.workspace.Reset();
-        return this.evaluator.Evaluate(ExprDescendant, this.data, this.workspace);
+        return this.evaluator.Evaluate(ExprDescendantUtf8, this.data, this.workspace, cacheKey: ExprDescendant);
     }
 
 #if !NETFRAMEWORK
@@ -158,7 +163,7 @@ public class BenchmarkOperators : JsonataBenchmarkBase
     public JsonElement Corvus_Conditional()
     {
         this.workspace.Reset();
-        return this.evaluator.Evaluate(ExprConditional, this.data, this.workspace);
+        return this.evaluator.Evaluate(ExprConditionalUtf8, this.data, this.workspace, cacheKey: ExprConditional);
     }
 
 #if !NETFRAMEWORK

@@ -26,6 +26,12 @@ public class BenchmarkFormatting : JsonataBenchmarkBase
     private const string ExprFormatInteger = """$formatInteger(1234, "w")""";
     private const string ExprParseInteger = """$parseInteger("one thousand, two hundred and thirty-four", "w")""";
 
+    private static readonly byte[] ExprFormatNumberUtf8 = """$formatNumber(1234567.89, "#,##0.00")"""u8.ToArray();
+    private static readonly byte[] ExprFormatBaseUtf8 = "$formatBase(255, 16)"u8.ToArray();
+    private static readonly byte[] ExprFormatIntegerUtf8 = """$formatInteger(1234, "w")"""u8.ToArray();
+    private static readonly byte[] ExprParseIntegerUtf8 = """$parseInteger("one thousand, two hundred and thirty-four", "w")"""u8.ToArray();
+
+
     private JsonataEvaluator evaluator = null!;
     private ParsedJsonDocument<JsonElement>? doc;
     private JsonElement data;
@@ -50,10 +56,10 @@ public class BenchmarkFormatting : JsonataBenchmarkBase
         this.evaluator = new JsonataEvaluator();
         this.workspace = JsonWorkspace.Create();
 
-        this.evaluator.Evaluate(ExprFormatNumber, this.data);
-        this.evaluator.Evaluate(ExprFormatBase, this.data);
-        this.evaluator.Evaluate(ExprFormatInteger, this.data);
-        this.evaluator.Evaluate(ExprParseInteger, this.data);
+        this.evaluator.Evaluate(ExprFormatNumberUtf8, this.data, this.workspace, cacheKey: ExprFormatNumber);
+        this.evaluator.Evaluate(ExprFormatBaseUtf8, this.data, this.workspace, cacheKey: ExprFormatBase);
+        this.evaluator.Evaluate(ExprFormatIntegerUtf8, this.data, this.workspace, cacheKey: ExprFormatInteger);
+        this.evaluator.Evaluate(ExprParseIntegerUtf8, this.data, this.workspace, cacheKey: ExprParseInteger);
 
         FormatNumberCodeGen.Evaluate(this.data, this.workspace); this.workspace.Reset();
         FormatBaseCodeGen.Evaluate(this.data, this.workspace); this.workspace.Reset();
@@ -87,7 +93,7 @@ public class BenchmarkFormatting : JsonataBenchmarkBase
     public JsonElement Corvus_FormatNumber()
     {
         this.workspace.Reset();
-        return this.evaluator.Evaluate(ExprFormatNumber, this.data, this.workspace);
+        return this.evaluator.Evaluate(ExprFormatNumberUtf8, this.data, this.workspace, cacheKey: ExprFormatNumber);
     }
 
 #if !NETFRAMEWORK
@@ -114,7 +120,7 @@ public class BenchmarkFormatting : JsonataBenchmarkBase
     public JsonElement Corvus_FormatBase()
     {
         this.workspace.Reset();
-        return this.evaluator.Evaluate(ExprFormatBase, this.data, this.workspace);
+        return this.evaluator.Evaluate(ExprFormatBaseUtf8, this.data, this.workspace, cacheKey: ExprFormatBase);
     }
 
 #if !NETFRAMEWORK
@@ -141,7 +147,7 @@ public class BenchmarkFormatting : JsonataBenchmarkBase
     public JsonElement Corvus_FormatInteger()
     {
         this.workspace.Reset();
-        return this.evaluator.Evaluate(ExprFormatInteger, this.data, this.workspace);
+        return this.evaluator.Evaluate(ExprFormatIntegerUtf8, this.data, this.workspace, cacheKey: ExprFormatInteger);
     }
 
 #if !NETFRAMEWORK
@@ -168,7 +174,7 @@ public class BenchmarkFormatting : JsonataBenchmarkBase
     public JsonElement Corvus_ParseInteger()
     {
         this.workspace.Reset();
-        return this.evaluator.Evaluate(ExprParseInteger, this.data, this.workspace);
+        return this.evaluator.Evaluate(ExprParseIntegerUtf8, this.data, this.workspace, cacheKey: ExprParseInteger);
     }
 
 #if !NETFRAMEWORK

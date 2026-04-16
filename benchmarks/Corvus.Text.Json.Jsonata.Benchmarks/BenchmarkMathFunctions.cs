@@ -47,6 +47,14 @@ public class BenchmarkMathFunctions : JsonataBenchmarkBase
     private const string ExprSqrt = "$sqrt(Account.Order[0].Product[0].Price)";
     private const string ExprPower = "$power(Account.Order[0].Product[0].Price, 2)";
 
+    private static readonly byte[] ExprAbsUtf8 = "$abs(Account.Order[0].Product[0].Price - 50)"u8.ToArray();
+    private static readonly byte[] ExprFloorUtf8 = "$floor(Account.Order[0].Product[0].Price)"u8.ToArray();
+    private static readonly byte[] ExprCeilUtf8 = "$ceil(Account.Order[0].Product[0].Price)"u8.ToArray();
+    private static readonly byte[] ExprRoundUtf8 = "$round(Account.Order[0].Product[0].Price, 1)"u8.ToArray();
+    private static readonly byte[] ExprSqrtUtf8 = "$sqrt(Account.Order[0].Product[0].Price)"u8.ToArray();
+    private static readonly byte[] ExprPowerUtf8 = "$power(Account.Order[0].Product[0].Price, 2)"u8.ToArray();
+
+
     private JsonataEvaluator evaluator = null!;
     private ParsedJsonDocument<JsonElement>? doc;
     private JsonElement data;
@@ -73,12 +81,12 @@ public class BenchmarkMathFunctions : JsonataBenchmarkBase
         this.evaluator = new JsonataEvaluator();
         this.workspace = JsonWorkspace.Create();
 
-        this.evaluator.Evaluate(ExprAbs, this.data);
-        this.evaluator.Evaluate(ExprFloor, this.data);
-        this.evaluator.Evaluate(ExprCeil, this.data);
-        this.evaluator.Evaluate(ExprRound, this.data);
-        this.evaluator.Evaluate(ExprSqrt, this.data);
-        this.evaluator.Evaluate(ExprPower, this.data);
+        this.evaluator.Evaluate(ExprAbsUtf8, this.data, this.workspace, cacheKey: ExprAbs);
+        this.evaluator.Evaluate(ExprFloorUtf8, this.data, this.workspace, cacheKey: ExprFloor);
+        this.evaluator.Evaluate(ExprCeilUtf8, this.data, this.workspace, cacheKey: ExprCeil);
+        this.evaluator.Evaluate(ExprRoundUtf8, this.data, this.workspace, cacheKey: ExprRound);
+        this.evaluator.Evaluate(ExprSqrtUtf8, this.data, this.workspace, cacheKey: ExprSqrt);
+        this.evaluator.Evaluate(ExprPowerUtf8, this.data, this.workspace, cacheKey: ExprPower);
 
         AbsCodeGen.Evaluate(this.data, this.workspace); this.workspace.Reset();
         FloorCodeGen.Evaluate(this.data, this.workspace); this.workspace.Reset();
@@ -116,7 +124,7 @@ public class BenchmarkMathFunctions : JsonataBenchmarkBase
     public JsonElement Corvus_Abs()
     {
         this.workspace.Reset();
-        return this.evaluator.Evaluate(ExprAbs, this.data, this.workspace);
+        return this.evaluator.Evaluate(ExprAbsUtf8, this.data, this.workspace, cacheKey: ExprAbs);
     }
 
 #if !NETFRAMEWORK
@@ -143,7 +151,7 @@ public class BenchmarkMathFunctions : JsonataBenchmarkBase
     public JsonElement Corvus_Floor()
     {
         this.workspace.Reset();
-        return this.evaluator.Evaluate(ExprFloor, this.data, this.workspace);
+        return this.evaluator.Evaluate(ExprFloorUtf8, this.data, this.workspace, cacheKey: ExprFloor);
     }
 
 #if !NETFRAMEWORK
@@ -170,7 +178,7 @@ public class BenchmarkMathFunctions : JsonataBenchmarkBase
     public JsonElement Corvus_Ceil()
     {
         this.workspace.Reset();
-        return this.evaluator.Evaluate(ExprCeil, this.data, this.workspace);
+        return this.evaluator.Evaluate(ExprCeilUtf8, this.data, this.workspace, cacheKey: ExprCeil);
     }
 
 #if !NETFRAMEWORK
@@ -197,7 +205,7 @@ public class BenchmarkMathFunctions : JsonataBenchmarkBase
     public JsonElement Corvus_Round()
     {
         this.workspace.Reset();
-        return this.evaluator.Evaluate(ExprRound, this.data, this.workspace);
+        return this.evaluator.Evaluate(ExprRoundUtf8, this.data, this.workspace, cacheKey: ExprRound);
     }
 
 #if !NETFRAMEWORK
@@ -224,7 +232,7 @@ public class BenchmarkMathFunctions : JsonataBenchmarkBase
     public JsonElement Corvus_Sqrt()
     {
         this.workspace.Reset();
-        return this.evaluator.Evaluate(ExprSqrt, this.data, this.workspace);
+        return this.evaluator.Evaluate(ExprSqrtUtf8, this.data, this.workspace, cacheKey: ExprSqrt);
     }
 
 #if !NETFRAMEWORK
@@ -251,7 +259,7 @@ public class BenchmarkMathFunctions : JsonataBenchmarkBase
     public JsonElement Corvus_Power()
     {
         this.workspace.Reset();
-        return this.evaluator.Evaluate(ExprPower, this.data, this.workspace);
+        return this.evaluator.Evaluate(ExprPowerUtf8, this.data, this.workspace, cacheKey: ExprPower);
     }
 
 #if !NETFRAMEWORK

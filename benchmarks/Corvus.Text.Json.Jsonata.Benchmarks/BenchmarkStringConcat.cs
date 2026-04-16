@@ -36,6 +36,11 @@ public class BenchmarkStringConcat : JsonataBenchmarkBase
     private const string ExprConcatWithNumber = "FirstName & ' ' & Surname & ', age ' & $string(Age)";
     private const string ExprJoinArray = "$join([Address.Street, Address.City, Address.Postcode], ', ')";
 
+    private static readonly byte[] ExprSimpleConcatUtf8 = "FirstName & ' ' & Surname"u8.ToArray();
+    private static readonly byte[] ExprConcatWithNumberUtf8 = "FirstName & ' ' & Surname & ', age ' & $string(Age)"u8.ToArray();
+    private static readonly byte[] ExprJoinArrayUtf8 = "$join([Address.Street, Address.City, Address.Postcode], ', ')"u8.ToArray();
+
+
     private JsonataEvaluator evaluator = null!;
     private ParsedJsonDocument<JsonElement>? doc;
     private JsonElement data;
@@ -58,9 +63,9 @@ public class BenchmarkStringConcat : JsonataBenchmarkBase
         this.data = this.doc.RootElement;
         this.evaluator = new JsonataEvaluator();
         this.workspace = JsonWorkspace.Create();
-        this.evaluator.Evaluate(ExprSimpleConcat, this.data);
-        this.evaluator.Evaluate(ExprConcatWithNumber, this.data);
-        this.evaluator.Evaluate(ExprJoinArray, this.data);
+        this.evaluator.Evaluate(ExprSimpleConcatUtf8, this.data, this.workspace, cacheKey: ExprSimpleConcat);
+        this.evaluator.Evaluate(ExprConcatWithNumberUtf8, this.data, this.workspace, cacheKey: ExprConcatWithNumber);
+        this.evaluator.Evaluate(ExprJoinArrayUtf8, this.data, this.workspace, cacheKey: ExprJoinArray);
 
         // Warm up source-generated evaluators (first call compiles + caches)
         SimpleConcatCodeGen.Evaluate(this.data, this.workspace);
@@ -96,7 +101,7 @@ public class BenchmarkStringConcat : JsonataBenchmarkBase
     public JsonElement Corvus_SimpleConcat()
     {
         this.workspace.Reset();
-        return this.evaluator.Evaluate(ExprSimpleConcat, this.data, this.workspace);
+        return this.evaluator.Evaluate(ExprSimpleConcatUtf8, this.data, this.workspace, cacheKey: ExprSimpleConcat);
     }
 
 #if !NETFRAMEWORK
@@ -117,7 +122,7 @@ public class BenchmarkStringConcat : JsonataBenchmarkBase
     public JsonElement Corvus_ConcatWithNumber()
     {
         this.workspace.Reset();
-        return this.evaluator.Evaluate(ExprConcatWithNumber, this.data, this.workspace);
+        return this.evaluator.Evaluate(ExprConcatWithNumberUtf8, this.data, this.workspace, cacheKey: ExprConcatWithNumber);
     }
 
 #if !NETFRAMEWORK
@@ -138,7 +143,7 @@ public class BenchmarkStringConcat : JsonataBenchmarkBase
     public JsonElement Corvus_JoinArray()
     {
         this.workspace.Reset();
-        return this.evaluator.Evaluate(ExprJoinArray, this.data, this.workspace);
+        return this.evaluator.Evaluate(ExprJoinArrayUtf8, this.data, this.workspace, cacheKey: ExprJoinArray);
     }
 
 #if !NETFRAMEWORK

@@ -75,7 +75,7 @@ public class BenchmarkEmployeeTransform : JsonataBenchmarkBase
     public JsonElement Corvus_Evaluate()
     {
         this.workspace.Reset();
-        return this.Evaluator.Evaluate(this.Expression, this.Data, this.workspace);
+        return this.Evaluator.Evaluate(this.Utf8Expression, this.Data, this.workspace, cacheKey: this.Expression);
     }
 
 #if !NETFRAMEWORK
@@ -97,8 +97,9 @@ public class BenchmarkEmployeeTransform : JsonataBenchmarkBase
     [Benchmark]
     public JsonElement Corvus_ParseAndEvaluate()
     {
+        this.workspace.Reset();
         var freshEvaluator = new JsonataEvaluator();
-        return freshEvaluator.Evaluate(this.Expression, this.Data);
+        return freshEvaluator.Evaluate(this.Utf8Expression, this.Data, this.workspace);
     }
 
 #if !NETFRAMEWORK

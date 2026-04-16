@@ -45,6 +45,12 @@ public class BenchmarkZipShuffle : JsonataBenchmarkBase
     private const string ExprZipData = "$zip(Account.Order.Product.Price, Account.Order.Product.Quantity)";
     private const string ExprZipMixed = "$zip([1,2,3,4], Account.Order.Product.Price)";
 
+    private static readonly byte[] ExprShuffleUtf8 = "$shuffle(Account.Order.Product.Price)"u8.ToArray();
+    private static readonly byte[] ExprZipUtf8 = "$zip([1,2,3,4], [5,6,7,8])"u8.ToArray();
+    private static readonly byte[] ExprZipDataUtf8 = "$zip(Account.Order.Product.Price, Account.Order.Product.Quantity)"u8.ToArray();
+    private static readonly byte[] ExprZipMixedUtf8 = "$zip([1,2,3,4], Account.Order.Product.Price)"u8.ToArray();
+
+
     private JsonataEvaluator evaluator = null!;
     private ParsedJsonDocument<JsonElement>? doc;
     private JsonElement data;
@@ -69,10 +75,10 @@ public class BenchmarkZipShuffle : JsonataBenchmarkBase
         this.evaluator = new JsonataEvaluator();
         this.workspace = JsonWorkspace.Create();
 
-        this.evaluator.Evaluate(ExprShuffle, this.data);
-        this.evaluator.Evaluate(ExprZip, this.data);
-        this.evaluator.Evaluate(ExprZipData, this.data);
-        this.evaluator.Evaluate(ExprZipMixed, this.data);
+        this.evaluator.Evaluate(ExprShuffleUtf8, this.data, this.workspace, cacheKey: ExprShuffle);
+        this.evaluator.Evaluate(ExprZipUtf8, this.data, this.workspace, cacheKey: ExprZip);
+        this.evaluator.Evaluate(ExprZipDataUtf8, this.data, this.workspace, cacheKey: ExprZipData);
+        this.evaluator.Evaluate(ExprZipMixedUtf8, this.data, this.workspace, cacheKey: ExprZipMixed);
 
         ShuffleCodeGen.Evaluate(this.data, this.workspace); this.workspace.Reset();
         ZipCodeGen.Evaluate(this.data, this.workspace); this.workspace.Reset();
@@ -106,7 +112,7 @@ public class BenchmarkZipShuffle : JsonataBenchmarkBase
     public JsonElement Corvus_Shuffle()
     {
         this.workspace.Reset();
-        return this.evaluator.Evaluate(ExprShuffle, this.data, this.workspace);
+        return this.evaluator.Evaluate(ExprShuffleUtf8, this.data, this.workspace, cacheKey: ExprShuffle);
     }
 
 #if !NETFRAMEWORK
@@ -133,7 +139,7 @@ public class BenchmarkZipShuffle : JsonataBenchmarkBase
     public JsonElement Corvus_Zip()
     {
         this.workspace.Reset();
-        return this.evaluator.Evaluate(ExprZip, this.data, this.workspace);
+        return this.evaluator.Evaluate(ExprZipUtf8, this.data, this.workspace, cacheKey: ExprZip);
     }
 
 #if !NETFRAMEWORK
@@ -160,7 +166,7 @@ public class BenchmarkZipShuffle : JsonataBenchmarkBase
     public JsonElement Corvus_ZipData()
     {
         this.workspace.Reset();
-        return this.evaluator.Evaluate(ExprZipData, this.data, this.workspace);
+        return this.evaluator.Evaluate(ExprZipDataUtf8, this.data, this.workspace, cacheKey: ExprZipData);
     }
 
 #if !NETFRAMEWORK
@@ -187,7 +193,7 @@ public class BenchmarkZipShuffle : JsonataBenchmarkBase
     public JsonElement Corvus_ZipMixed()
     {
         this.workspace.Reset();
-        return this.evaluator.Evaluate(ExprZipMixed, this.data, this.workspace);
+        return this.evaluator.Evaluate(ExprZipMixedUtf8, this.data, this.workspace, cacheKey: ExprZipMixed);
     }
 
 #if !NETFRAMEWORK

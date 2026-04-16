@@ -45,6 +45,12 @@ public class BenchmarkObjectFunctions : JsonataBenchmarkBase
     private const string ExprValuesStd = """$each(Account.Order[0].Product[0], function($v){$v})""";
     private const string ExprMerge = "$merge(Account.Order.Product)";
 
+    private static readonly byte[] ExprKeysUtf8 = "$keys(Account.Order[0].Product[0])"u8.ToArray();
+    private static readonly byte[] ExprValuesUtf8 = "$values(Account.Order[0].Product[0])"u8.ToArray();
+    private static readonly byte[] ExprValuesStdUtf8 = """$each(Account.Order[0].Product[0], function($v){$v})"""u8.ToArray();
+    private static readonly byte[] ExprMergeUtf8 = "$merge(Account.Order.Product)"u8.ToArray();
+
+
     private JsonataEvaluator evaluator = null!;
     private ParsedJsonDocument<JsonElement>? doc;
     private JsonElement data;
@@ -70,10 +76,10 @@ public class BenchmarkObjectFunctions : JsonataBenchmarkBase
         this.workspace = JsonWorkspace.Create();
 
         // Warm up RT
-        this.evaluator.Evaluate(ExprKeys, this.data);
-        this.evaluator.Evaluate(ExprValues, this.data);
-        this.evaluator.Evaluate(ExprValuesStd, this.data);
-        this.evaluator.Evaluate(ExprMerge, this.data);
+        this.evaluator.Evaluate(ExprKeysUtf8, this.data, this.workspace, cacheKey: ExprKeys);
+        this.evaluator.Evaluate(ExprValuesUtf8, this.data, this.workspace, cacheKey: ExprValues);
+        this.evaluator.Evaluate(ExprValuesStdUtf8, this.data, this.workspace, cacheKey: ExprValuesStd);
+        this.evaluator.Evaluate(ExprMergeUtf8, this.data, this.workspace, cacheKey: ExprMerge);
 
         // Warm up CG
         KeysCodeGen.Evaluate(this.data, this.workspace); this.workspace.Reset();
@@ -108,7 +114,7 @@ public class BenchmarkObjectFunctions : JsonataBenchmarkBase
     public JsonElement Corvus_Keys()
     {
         this.workspace.Reset();
-        return this.evaluator.Evaluate(ExprKeys, this.data, this.workspace);
+        return this.evaluator.Evaluate(ExprKeysUtf8, this.data, this.workspace, cacheKey: ExprKeys);
     }
 
 #if !NETFRAMEWORK
@@ -135,7 +141,7 @@ public class BenchmarkObjectFunctions : JsonataBenchmarkBase
     public JsonElement Corvus_Values()
     {
         this.workspace.Reset();
-        return this.evaluator.Evaluate(ExprValues, this.data, this.workspace);
+        return this.evaluator.Evaluate(ExprValuesUtf8, this.data, this.workspace, cacheKey: ExprValues);
     }
 
 #if !NETFRAMEWORK
@@ -162,7 +168,7 @@ public class BenchmarkObjectFunctions : JsonataBenchmarkBase
     public JsonElement Corvus_ValuesStd()
     {
         this.workspace.Reset();
-        return this.evaluator.Evaluate(ExprValuesStd, this.data, this.workspace);
+        return this.evaluator.Evaluate(ExprValuesStdUtf8, this.data, this.workspace, cacheKey: ExprValuesStd);
     }
 
 #if !NETFRAMEWORK
@@ -189,7 +195,7 @@ public class BenchmarkObjectFunctions : JsonataBenchmarkBase
     public JsonElement Corvus_Merge()
     {
         this.workspace.Reset();
-        return this.evaluator.Evaluate(ExprMerge, this.data, this.workspace);
+        return this.evaluator.Evaluate(ExprMergeUtf8, this.data, this.workspace, cacheKey: ExprMerge);
     }
 
 #if !NETFRAMEWORK

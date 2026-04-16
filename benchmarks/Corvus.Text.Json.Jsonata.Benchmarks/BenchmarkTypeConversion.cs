@@ -48,6 +48,14 @@ public class BenchmarkTypeConversion : JsonataBenchmarkBase
     private const string ExprNumber = """$number("34.45")""";
     private const string ExprString = "$string(Account.Order[0].Product[0].Price)";
 
+    private static readonly byte[] ExprTypeUtf8 = "$type(Account.Order[0].Product[0].Price)"u8.ToArray();
+    private static readonly byte[] ExprExistsUtf8 = "$exists(Account.Order.Product)"u8.ToArray();
+    private static readonly byte[] ExprNotUtf8 = """$not(Account."Account Name" = "Firefly")"""u8.ToArray();
+    private static readonly byte[] ExprBooleanUtf8 = "$boolean(Account.Order[0].Product[0].Price)"u8.ToArray();
+    private static readonly byte[] ExprNumberUtf8 = """$number("34.45")"""u8.ToArray();
+    private static readonly byte[] ExprStringUtf8 = "$string(Account.Order[0].Product[0].Price)"u8.ToArray();
+
+
     private JsonataEvaluator evaluator = null!;
     private ParsedJsonDocument<JsonElement>? doc;
     private JsonElement data;
@@ -74,12 +82,12 @@ public class BenchmarkTypeConversion : JsonataBenchmarkBase
         this.evaluator = new JsonataEvaluator();
         this.workspace = JsonWorkspace.Create();
 
-        this.evaluator.Evaluate(ExprType, this.data);
-        this.evaluator.Evaluate(ExprExists, this.data);
-        this.evaluator.Evaluate(ExprNot, this.data);
-        this.evaluator.Evaluate(ExprBoolean, this.data);
-        this.evaluator.Evaluate(ExprNumber, this.data);
-        this.evaluator.Evaluate(ExprString, this.data);
+        this.evaluator.Evaluate(ExprTypeUtf8, this.data, this.workspace, cacheKey: ExprType);
+        this.evaluator.Evaluate(ExprExistsUtf8, this.data, this.workspace, cacheKey: ExprExists);
+        this.evaluator.Evaluate(ExprNotUtf8, this.data, this.workspace, cacheKey: ExprNot);
+        this.evaluator.Evaluate(ExprBooleanUtf8, this.data, this.workspace, cacheKey: ExprBoolean);
+        this.evaluator.Evaluate(ExprNumberUtf8, this.data, this.workspace, cacheKey: ExprNumber);
+        this.evaluator.Evaluate(ExprStringUtf8, this.data, this.workspace, cacheKey: ExprString);
 
         TypeCodeGen.Evaluate(this.data, this.workspace); this.workspace.Reset();
         ExistsCodeGen.Evaluate(this.data, this.workspace); this.workspace.Reset();
@@ -117,7 +125,7 @@ public class BenchmarkTypeConversion : JsonataBenchmarkBase
     public JsonElement Corvus_Type()
     {
         this.workspace.Reset();
-        return this.evaluator.Evaluate(ExprType, this.data, this.workspace);
+        return this.evaluator.Evaluate(ExprTypeUtf8, this.data, this.workspace, cacheKey: ExprType);
     }
 
 #if !NETFRAMEWORK
@@ -144,7 +152,7 @@ public class BenchmarkTypeConversion : JsonataBenchmarkBase
     public JsonElement Corvus_Exists()
     {
         this.workspace.Reset();
-        return this.evaluator.Evaluate(ExprExists, this.data, this.workspace);
+        return this.evaluator.Evaluate(ExprExistsUtf8, this.data, this.workspace, cacheKey: ExprExists);
     }
 
 #if !NETFRAMEWORK
@@ -171,7 +179,7 @@ public class BenchmarkTypeConversion : JsonataBenchmarkBase
     public JsonElement Corvus_Not()
     {
         this.workspace.Reset();
-        return this.evaluator.Evaluate(ExprNot, this.data, this.workspace);
+        return this.evaluator.Evaluate(ExprNotUtf8, this.data, this.workspace, cacheKey: ExprNot);
     }
 
 #if !NETFRAMEWORK
@@ -198,7 +206,7 @@ public class BenchmarkTypeConversion : JsonataBenchmarkBase
     public JsonElement Corvus_Boolean()
     {
         this.workspace.Reset();
-        return this.evaluator.Evaluate(ExprBoolean, this.data, this.workspace);
+        return this.evaluator.Evaluate(ExprBooleanUtf8, this.data, this.workspace, cacheKey: ExprBoolean);
     }
 
 #if !NETFRAMEWORK
@@ -225,7 +233,7 @@ public class BenchmarkTypeConversion : JsonataBenchmarkBase
     public JsonElement Corvus_Number()
     {
         this.workspace.Reset();
-        return this.evaluator.Evaluate(ExprNumber, this.data, this.workspace);
+        return this.evaluator.Evaluate(ExprNumberUtf8, this.data, this.workspace, cacheKey: ExprNumber);
     }
 
 #if !NETFRAMEWORK
@@ -252,7 +260,7 @@ public class BenchmarkTypeConversion : JsonataBenchmarkBase
     public JsonElement Corvus_String()
     {
         this.workspace.Reset();
-        return this.evaluator.Evaluate(ExprString, this.data, this.workspace);
+        return this.evaluator.Evaluate(ExprStringUtf8, this.data, this.workspace, cacheKey: ExprString);
     }
 
 #if !NETFRAMEWORK
