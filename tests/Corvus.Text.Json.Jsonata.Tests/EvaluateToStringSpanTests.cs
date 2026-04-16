@@ -204,7 +204,7 @@ public class EvaluateToStringSpanTests
         bool success = Evaluator.EvaluateToString("name", doc.RootElement, workspace, buffer, out int charsWritten);
 
         Assert.True(success);
-        Assert.Equal("\"John\"", new string(buffer.Slice(0, charsWritten)));
+        Assert.Equal("\"John\"", buffer.Slice(0, charsWritten).ToString());
     }
 
     [Fact]
@@ -245,7 +245,7 @@ public class EvaluateToStringSpanTests
 
         Assert.True(success);
         Assert.Equal(2, charsWritten);
-        Assert.Equal("42", new string(buffer.Slice(0, charsWritten)));
+        Assert.Equal("42", buffer.Slice(0, charsWritten).ToString());
     }
 
     [Fact]
@@ -258,7 +258,7 @@ public class EvaluateToStringSpanTests
         bool success = Evaluator.EvaluateToString("a", doc.RootElement, workspace, buffer, out int charsWritten);
 
         Assert.True(success);
-        Assert.Equal("""{"b":1}""", new string(buffer.Slice(0, charsWritten)));
+        Assert.Equal("""{"b":1}""", buffer.Slice(0, charsWritten).ToString());
     }
 
     #endregion
@@ -275,7 +275,7 @@ public class EvaluateToStringSpanTests
         bool success = Evaluator.EvaluateToString("name"u8.ToArray(), doc.RootElement, workspace, buffer, out int charsWritten, cacheKey: "name");
 
         Assert.True(success);
-        Assert.Equal("\"John\"", new string(buffer.Slice(0, charsWritten)));
+        Assert.Equal("\"John\"", buffer.Slice(0, charsWritten).ToString());
     }
 
     [Fact]
