@@ -4,6 +4,7 @@
 
 using System.Buffers;
 using System.Buffers.Text;
+using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using Corvus.Numerics;
 using Corvus.Runtime.InteropServices;
@@ -133,14 +134,20 @@ internal static class FunctionalEvaluator
             string opName = property.Name;
             JsonElement args = property.Value;
 
-            RuleEvaluator[] operands = CompileArgs(args);
-
             // Check custom operators first — allows overriding built-in operators
             if (t_customOperators is not null &&
                 t_customOperators.TryGetValue(opName, out IOperatorCompiler? compiler))
             {
-                return compiler.Compile(operands);
+                return compiler.Compile(CompileArgs(args));
             }
+
+            // Handle if/?:  before CompileArgs to allow chain flattening
+            if (opName is "if" or "?:")
+            {
+                return CompileIfChain(args);
+            }
+
+            RuleEvaluator[] operands = CompileArgs(args);
 
             return opName switch
             {
@@ -156,7 +163,6 @@ internal static class FunctionalEvaluator
                 "substr" => CompileSubstr(operands),
                 "and" => CompileAnd(operands),
                 "or" => CompileOr(operands),
-                "if" or "?:" => CompileIf(operands),
                 "==" => CompileEquals(operands),
                 "===" => CompileStrictEquals(operands),
                 "!=" => CompileNotEquals(operands),
@@ -1023,12 +1029,50 @@ internal static class FunctionalEvaluator
         };
     }
 
-    private static RuleEvaluator CompileIf(RuleEvaluator[] operands)
+    /// <summary>
+    /// Compiles an if/else chain, flattening nested {"if": [...]} in the else
+    /// position into a single flat list. When all conditions follow a uniform
+    /// comparison pattern (same operator and var path with numeric thresholds),
+    /// emits a specialized evaluator that extracts the variable once and loops
+    /// through thresholds with direct double comparisons — eliminating all
+    /// per-condition delegate calls.
+    /// </summary>
+    private static RuleEvaluator CompileIfChain(in JsonElement args)
     {
-        if (operands.Length == 0)
+        // Phase 1: Flatten the chain into condition/consequent element pairs
+        List<JsonElement> conditions = new();
+        List<JsonElement> consequents = new();
+        JsonElement defaultElement = default;
+        bool hasDefault = false;
+
+        FlattenIfChainElements(args, conditions, consequents, ref defaultElement, ref hasDefault);
+
+        // Phase 2: Try specialized uniform-comparison chain
+        if (conditions.Count >= 3
+            && TryCompileUniformComparisonChain(
+                conditions, consequents, defaultElement, hasDefault, out RuleEvaluator? specialized))
+        {
+            return specialized!;
+        }
+
+        // Phase 3: Generic — compile each element to a delegate
+        int totalOperands = (conditions.Count * 2) + (hasDefault ? 1 : 0);
+        if (totalOperands == 0)
         {
             return static (in JsonElement data, JsonWorkspace workspace) =>
                 EvalResult.FromElement(JsonLogicHelpers.NullElement());
+        }
+
+        RuleEvaluator[] operands = new RuleEvaluator[totalOperands];
+        for (int i = 0; i < conditions.Count; i++)
+        {
+            operands[i * 2] = CompileExpression(conditions[i]);
+            operands[(i * 2) + 1] = CompileExpression(consequents[i]);
+        }
+
+        if (hasDefault)
+        {
+            operands[operands.Length - 1] = CompileExpression(defaultElement);
         }
 
         return (in JsonElement data, JsonWorkspace workspace) =>
@@ -1044,7 +1088,6 @@ internal static class FunctionalEvaluator
                 i += 2;
             }
 
-            // Else clause (odd argument)
             if (i < operands.Length)
             {
                 return operands[i](data, workspace);
@@ -1052,6 +1095,310 @@ internal static class FunctionalEvaluator
 
             return EvalResult.FromElement(JsonLogicHelpers.NullElement());
         };
+    }
+
+    private static void FlattenIfChainElements(
+        in JsonElement args,
+        List<JsonElement> conditions,
+        List<JsonElement> consequents,
+        ref JsonElement defaultElement,
+        ref bool hasDefault)
+    {
+        JsonElement currentArgs = args;
+
+        while (true)
+        {
+            if (currentArgs.ValueKind != JsonValueKind.Array)
+            {
+                hasDefault = true;
+                defaultElement = currentArgs;
+                break;
+            }
+
+            int count = currentArgs.GetArrayLength();
+            if (count == 0)
+            {
+                break;
+            }
+
+            bool hasElse = count % 2 == 1;
+            int pairsEnd = hasElse ? count - 1 : count;
+
+            int idx = 0;
+            JsonElement elseArg = default;
+            JsonElement pendingCondition = default;
+            foreach (JsonElement arg in currentArgs.EnumerateArray())
+            {
+                if (idx < pairsEnd)
+                {
+                    if (idx % 2 == 0)
+                    {
+                        pendingCondition = arg;
+                    }
+                    else
+                    {
+                        conditions.Add(pendingCondition);
+                        consequents.Add(arg);
+                    }
+                }
+                else
+                {
+                    elseArg = arg;
+                }
+
+                idx++;
+            }
+
+            if (!hasElse)
+            {
+                break;
+            }
+
+            if (TryGetIfArgs(elseArg, out JsonElement innerArgs))
+            {
+                currentArgs = innerArgs;
+                continue;
+            }
+
+            hasDefault = true;
+            defaultElement = elseArg;
+            break;
+        }
+    }
+
+    /// <summary>
+    /// Detects when all conditions in a flattened if-chain compare the same
+    /// variable against numeric thresholds using the same operator, and emits
+    /// a single delegate that extracts the variable once and loops through
+    /// thresholds with direct double comparisons.
+    /// </summary>
+    private static bool TryCompileUniformComparisonChain(
+        List<JsonElement> conditions,
+        List<JsonElement> consequents,
+        in JsonElement defaultElement,
+        bool hasDefault,
+        out RuleEvaluator? evaluator)
+    {
+        evaluator = null;
+        CompareOp? uniformOp = null;
+        byte[]? uniformProp = null;
+        double[] thresholds = new double[conditions.Count];
+
+        for (int i = 0; i < conditions.Count; i++)
+        {
+            if (!TryExtractSimpleVarComparison(
+                    conditions[i], out CompareOp op, out byte[] prop, out double threshold))
+            {
+                return false;
+            }
+
+            if (uniformOp is null)
+            {
+                uniformOp = op;
+                uniformProp = prop;
+            }
+            else if (op != uniformOp.Value || !prop.AsSpan().SequenceEqual(uniformProp))
+            {
+                return false;
+            }
+
+            thresholds[i] = threshold;
+        }
+
+        // All conditions match — build the specialized evaluator
+        RuleEvaluator[] consequentDelegates = new RuleEvaluator[consequents.Count];
+        for (int i = 0; i < consequents.Count; i++)
+        {
+            consequentDelegates[i] = CompileExpression(consequents[i]);
+        }
+
+        RuleEvaluator? defaultEval = hasDefault ? CompileExpression(defaultElement) : null;
+        byte[] varProp = uniformProp!;
+        CompareOp compareOp = uniformOp!.Value;
+
+        evaluator = (in JsonElement data, JsonWorkspace workspace) =>
+        {
+            // Extract the variable once
+            double x;
+            if (data.ValueKind == JsonValueKind.Object
+                && data.TryGetProperty(varProp, out JsonElement varValue))
+            {
+                if (varValue.ValueKind == JsonValueKind.Number)
+                {
+                    varValue.TryGetDouble(out x);
+                }
+                else if (!TryCoerceToDouble(varValue, out x))
+                {
+                    // Non-numeric, non-coercible — all comparisons will be false
+                    return defaultEval is not null
+                        ? defaultEval(data, workspace)
+                        : EvalResult.FromElement(JsonLogicHelpers.NullElement());
+                }
+            }
+            else
+            {
+                // Missing var → coerces to 0 in JsonLogic
+                x = 0.0;
+            }
+
+            // Loop through thresholds with direct double comparison
+            for (int i = 0; i < thresholds.Length; i++)
+            {
+                bool match = compareOp switch
+                {
+                    CompareOp.GreaterThan => x > thresholds[i],
+                    CompareOp.GreaterThanOrEqual => x >= thresholds[i],
+                    CompareOp.LessThan => x < thresholds[i],
+                    CompareOp.LessThanOrEqual => x <= thresholds[i],
+                    _ => false,
+                };
+
+                if (match)
+                {
+                    return consequentDelegates[i](data, workspace);
+                }
+            }
+
+            return defaultEval is not null
+                ? defaultEval(data, workspace)
+                : EvalResult.FromElement(JsonLogicHelpers.NullElement());
+        };
+
+        return true;
+    }
+
+    private static bool TryExtractSimpleVarComparison(
+        in JsonElement condition,
+        out CompareOp op,
+        out byte[] varProp,
+        out double threshold)
+    {
+        op = default;
+        varProp = [];
+        threshold = 0;
+
+        if (condition.ValueKind != JsonValueKind.Object)
+        {
+            return false;
+        }
+
+        foreach (JsonProperty<JsonElement> prop in condition.EnumerateObject())
+        {
+            CompareOp? detectedOp = prop.Name switch
+            {
+                ">" => CompareOp.GreaterThan,
+                ">=" => CompareOp.GreaterThanOrEqual,
+                "<" => CompareOp.LessThan,
+                "<=" => CompareOp.LessThanOrEqual,
+                _ => null,
+            };
+
+            if (detectedOp is null)
+            {
+                return false;
+            }
+
+            op = detectedOp.Value;
+            JsonElement operandArray = prop.Value;
+
+            if (operandArray.ValueKind != JsonValueKind.Array || operandArray.GetArrayLength() != 2)
+            {
+                return false;
+            }
+
+            JsonElement left = operandArray[0];
+            JsonElement right = operandArray[1];
+
+            // Pattern: {op: [{"var":"path"}, N]}
+            if (TryExtractSimpleVarProp(left, out byte[] path)
+                && right.ValueKind == JsonValueKind.Number)
+            {
+                varProp = path;
+                right.TryGetDouble(out threshold);
+                return true;
+            }
+
+            // Pattern: {op: [N, {"var":"path"}]} — flip the operator
+            if (left.ValueKind == JsonValueKind.Number
+                && TryExtractSimpleVarProp(right, out path))
+            {
+                varProp = path;
+                left.TryGetDouble(out threshold);
+                op = FlipCompareOp(op);
+                return true;
+            }
+
+            return false;
+        }
+
+        return false;
+    }
+
+    private static bool TryExtractSimpleVarProp(in JsonElement element, out byte[] prop)
+    {
+        prop = [];
+        if (element.ValueKind != JsonValueKind.Object || element.GetPropertyCount() != 1)
+        {
+            return false;
+        }
+
+        foreach (JsonProperty<JsonElement> p in element.EnumerateObject())
+        {
+            if (p.Name != "var")
+            {
+                return false;
+            }
+
+            JsonElement pathArg = p.Value;
+
+            // Only handle simple single-segment string paths
+            if (pathArg.ValueKind != JsonValueKind.String || pathArg.IsNullOrUndefined())
+            {
+                return false;
+            }
+
+            byte[][] segments = PrecomputePathSegments(pathArg);
+            if (segments.Length != 1)
+            {
+                return false;
+            }
+
+            prop = segments[0];
+            return true;
+        }
+
+        return false;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static CompareOp FlipCompareOp(CompareOp op) => op switch
+    {
+        CompareOp.GreaterThan => CompareOp.LessThan,
+        CompareOp.GreaterThanOrEqual => CompareOp.LessThanOrEqual,
+        CompareOp.LessThan => CompareOp.GreaterThan,
+        CompareOp.LessThanOrEqual => CompareOp.GreaterThanOrEqual,
+        _ => op,
+    };
+
+    private static bool TryGetIfArgs(in JsonElement element, out JsonElement args)
+    {
+        if (element.ValueKind == JsonValueKind.Object)
+        {
+            foreach (JsonProperty<JsonElement> prop in element.EnumerateObject())
+            {
+                string name = prop.Name;
+                if (name == "if" || name == "?:")
+                {
+                    args = prop.Value;
+                    return true;
+                }
+
+                break;
+            }
+        }
+
+        args = default;
+        return false;
     }
 
     // ─── STRING ──────────────────────────────────────────────────
