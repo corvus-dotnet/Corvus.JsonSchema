@@ -46,6 +46,12 @@ public class BenchmarkColdCompile
     private const string ExprComplex =
         "$reduce($map($filter(Account.Order.Product, function($v) { $v.Price > 20 }), function($v) { $v.Price * $v.Quantity }), function($prev, $curr) { $prev + $curr }, 0)";
 
+    // Pre-encoded UTF-8 byte arrays for the Utf8 overloads
+    private static readonly byte[] ExprSimpleUtf8 = "Account.`Account Name`"u8.ToArray();
+    private static readonly byte[] ExprMediumUtf8 = "$map(Account.Order.Product, function($v) { $v.`Product Name` })"u8.ToArray();
+    private static readonly byte[] ExprComplexUtf8 =
+        "$reduce($map($filter(Account.Order.Product, function($v) { $v.Price > 20 }), function($v) { $v.Price * $v.Quantity }), function($prev, $curr) { $prev + $curr }, 0)"u8.ToArray();
+
     private JsonataEvaluator evaluator = null!;
     private ParsedJsonDocument<JsonElement>? doc;
     private JsonElement data;
@@ -93,6 +99,17 @@ public class BenchmarkColdCompile
         return this.evaluator.Evaluate(ExprSimple, this.data, this.workspace);
     }
 
+    /// <summary>
+    /// Corvus UTF-8: cold compile + evaluate a simple expression via byte[] API (no transcode).
+    /// </summary>
+    [BenchmarkCategory("Simple")]
+    [Benchmark]
+    public JsonElement Corvus_Simple_Utf8()
+    {
+        this.workspace.Reset();
+        return this.evaluator.Evaluate(ExprSimpleUtf8, this.data, this.workspace);
+    }
+
 #if !NETFRAMEWORK
     /// <summary>
     /// Jsonata.Net.Native: parse + evaluate a simple expression (always cold).
@@ -118,6 +135,17 @@ public class BenchmarkColdCompile
         return this.evaluator.Evaluate(ExprMedium, this.data, this.workspace);
     }
 
+    /// <summary>
+    /// Corvus UTF-8: cold compile + evaluate a medium expression via byte[] API.
+    /// </summary>
+    [BenchmarkCategory("Medium")]
+    [Benchmark]
+    public JsonElement Corvus_Medium_Utf8()
+    {
+        this.workspace.Reset();
+        return this.evaluator.Evaluate(ExprMediumUtf8, this.data, this.workspace);
+    }
+
 #if !NETFRAMEWORK
     /// <summary>
     /// Jsonata.Net.Native: parse + evaluate a medium expression.
@@ -141,6 +169,17 @@ public class BenchmarkColdCompile
         this.evaluator.ClearCache();
         this.workspace.Reset();
         return this.evaluator.Evaluate(ExprComplex, this.data, this.workspace);
+    }
+
+    /// <summary>
+    /// Corvus UTF-8: cold compile + evaluate a complex expression via byte[] API.
+    /// </summary>
+    [BenchmarkCategory("Complex")]
+    [Benchmark]
+    public JsonElement Corvus_Complex_Utf8()
+    {
+        this.workspace.Reset();
+        return this.evaluator.Evaluate(ExprComplexUtf8, this.data, this.workspace);
     }
 
 #if !NETFRAMEWORK

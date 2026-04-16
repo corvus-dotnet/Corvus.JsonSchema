@@ -476,6 +476,66 @@ public sealed class JsonataEvaluator
         this.cache.Clear();
     }
 
+    /// <summary>
+    /// Evaluates a JSONata expression provided as pre-encoded UTF-8 bytes.
+    /// This overload bypasses the string-to-UTF-8 transcode and does not cache
+    /// the compiled expression, making it ideal for cold-start scenarios where
+    /// each expression is evaluated once.
+    /// </summary>
+    /// <param name="utf8Expression">The JSONata expression as UTF-8 bytes.</param>
+    /// <param name="data">The input JSON data element.</param>
+    /// <param name="workspace">
+    /// The workspace for intermediate document allocation. The returned <see cref="JsonElement"/>
+    /// may reference documents owned by this workspace, so it remains valid only while the
+    /// workspace is alive and has not been reset.
+    /// </param>
+    /// <param name="maxDepth">Maximum recursion depth (default 500).</param>
+    /// <param name="timeLimitMs">Maximum evaluation time in milliseconds (0 = no limit).</param>
+    /// <returns>The evaluation result as a <see cref="JsonElement"/>, or <c>default</c> if the result is undefined.</returns>
+    public JsonElement Evaluate(byte[] utf8Expression, JsonElement data, JsonWorkspace workspace, int maxDepth = Environment.DefaultMaxDepth, int timeLimitMs = 0)
+    {
+        var ast = Parser.Parse(utf8Expression);
+        var compiled = FunctionalCompiler.Compile(ast);
+
+        var env = Environment.RentRoot();
+        try
+        {
+            env.RootInput = data;
+            env.MaxDepth = maxDepth;
+            env.Workspace = workspace;
+
+            if (timeLimitMs > 0)
+            {
+                env.TimeLimitMs = timeLimitMs;
+                env.StartTimer();
+            }
+
+            var result = compiled(data, env);
+
+            if (result.IsUndefined)
+            {
+                return default;
+            }
+
+            JsonElement resultElement = result.IsSingleton
+                ? result.FirstOrDefault
+                : JsonataHelpers.ArrayFromSequence(result, workspace);
+
+            result.ReturnBackingArray();
+
+            if (resultElement.ValueKind == JsonValueKind.Undefined)
+            {
+                return default;
+            }
+
+            return resultElement;
+        }
+        finally
+        {
+            Environment.ReturnRoot(env);
+        }
+    }
+
     private ExpressionEvaluator GetOrCompile(string expression)
     {
         if (this.cache.TryGetValue(expression, out var cached))

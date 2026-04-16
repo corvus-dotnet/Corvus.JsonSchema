@@ -12,6 +12,7 @@
     <RootNamespace>Corvus.Text.Json.Jsonata.SourceGenerator</RootNamespace>
     <CorvusTextJsonJsonataPath>..\Corvus.Text.Json.Jsonata\</CorvusTextJsonJsonataPath>
     <CorvusTextJsonJsonataCodeGenPath>..\Corvus.Text.Json.Jsonata.CodeGeneration\</CorvusTextJsonJsonataCodeGenPath>
+    <CommonPath>..\..\Common\src\</CommonPath>
   </PropertyGroup>
 
   <PropertyGroup Label="SourceGenerator">
@@ -76,10 +77,13 @@
 
   <!-- Link the JSONata parser, lexer, and AST (no external dependencies) -->
   <ItemGroup>
+    <Compile Include="$(CommonPath)System\Text\Utf8ValueStringBuilder.cs" LinkBase="Common" />
+    <Compile Include="$(CommonPath)System\Text\Utf8ValueStringBuilder.AppendHelpers.cs" LinkBase="Common" />
     <Compile Include="$(CorvusTextJsonJsonataPath)Parser.cs" LinkBase="Jsonata" />
     <Compile Include="$(CorvusTextJsonJsonataPath)Lexer.cs" LinkBase="Jsonata" />
     <Compile Include="$(CorvusTextJsonJsonataPath)Token.cs" LinkBase="Jsonata" />
     <Compile Include="$(CorvusTextJsonJsonataPath)TokenType.cs" LinkBase="Jsonata" />
+    <Compile Include="$(CorvusTextJsonJsonataPath)Utf8Name.cs" LinkBase="Jsonata" />
     <Compile Include="$(CorvusTextJsonJsonataPath)JsonataException.cs" LinkBase="Jsonata" />
     <Compile Include="$(CorvusTextJsonJsonataPath)NodeBuilderExtensions.cs" LinkBase="Jsonata" />
     <Compile Include="$(CorvusTextJsonJsonataPath)Ast\ApplyNode.cs" LinkBase="Jsonata\Ast" />

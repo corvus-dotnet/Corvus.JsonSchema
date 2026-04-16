@@ -216,8 +216,8 @@ internal static class FunctionalCompiler
         // Fast path for single-pair NameNode key + value
         if (group.Pairs is [var pair] && pair.Key is NameNode keyName && pair.Value is NameNode valueName)
         {
-            byte[] keyPropUtf8 = keyName.GetUtf8Bytes();
-            byte[] valuePropUtf8 = valueName.GetUtf8Bytes();
+            Utf8Name keyPropUtf8 = keyName.GetUtf8Name();
+            Utf8Name valuePropUtf8 = valueName.GetUtf8Name();
 
             return (in JsonElement input, Environment env) =>
             {
@@ -587,7 +587,7 @@ internal static class FunctionalCompiler
     /// Checks whether a node is a simple property chain (PathNode with all NameNode
     /// steps, no annotations or predicates) and extracts the UTF-8 encoded property names.
     /// </summary>
-    private static bool TryExtractSimpleChainNames(JsonataNode node, [NotNullWhen(true)] out byte[][]? utf8Names)
+    private static bool TryExtractSimpleChainNames(JsonataNode node, [NotNullWhen(true)] out Utf8Name[]? utf8Names)
     {
         if (node is not PathNode path
             || path.KeepArray
@@ -599,7 +599,7 @@ internal static class FunctionalCompiler
             return false;
         }
 
-        var names = new byte[path.Steps.Count][];
+        var names = new Utf8Name[path.Steps.Count];
         for (int i = 0; i < path.Steps.Count; i++)
         {
             if (path.Steps[i] is not NameNode nameNode
@@ -609,7 +609,7 @@ internal static class FunctionalCompiler
                 return false;
             }
 
-            names[i] = nameNode.GetUtf8Bytes();
+            names[i] = nameNode.GetUtf8Name();
         }
 
         utf8Names = names;
@@ -622,7 +622,7 @@ internal static class FunctionalCompiler
     /// backing arrays, and builds the result in a single document — eliminating intermediate
     /// Sequence wrappers.
     /// </summary>
-    private static ExpressionEvaluator CompileBufferFusedZip2(byte[][] names0, byte[][] names1)
+    private static ExpressionEvaluator CompileBufferFusedZip2(Utf8Name[] names0, Utf8Name[] names1)
     {
         return (in JsonElement input, Environment env) =>
         {
@@ -650,7 +650,7 @@ internal static class FunctionalCompiler
     /// </summary>
     private static ExpressionEvaluator CompileBufferFusedZipMixed2(
         JsonElement constElement, bool constIsFirst,
-        byte[][] chainNames)
+        Utf8Name[] chainNames)
     {
         return (in JsonElement input, Environment env) =>
         {
@@ -679,7 +679,7 @@ internal static class FunctionalCompiler
     /// <summary>
     /// Compiles a buffer-fused <c>$zip</c> with 3 arguments that are simple property chains.
     /// </summary>
-    private static ExpressionEvaluator CompileBufferFusedZip3(byte[][] names0, byte[][] names1, byte[][] names2)
+    private static ExpressionEvaluator CompileBufferFusedZip3(Utf8Name[] names0, Utf8Name[] names1, Utf8Name[] names2)
     {
         return (in JsonElement input, Environment env) =>
         {
@@ -710,7 +710,7 @@ internal static class FunctionalCompiler
     /// Navigates the chain directly into an <see cref="ElementBuffer"/>, shuffles in-place on the
     /// pooled backing array, and builds one result document.
     /// </summary>
-    private static ExpressionEvaluator CompileBufferFusedShuffle(byte[][] chainNames)
+    private static ExpressionEvaluator CompileBufferFusedShuffle(Utf8Name[] chainNames)
     {
         return (in JsonElement input, Environment env) =>
         {
@@ -756,7 +756,7 @@ internal static class FunctionalCompiler
     /// Compiles a fused <c>$exists(path)</c> for simple property chains.
     /// Short-circuits on the first found element — zero heap allocation.
     /// </summary>
-    private static ExpressionEvaluator CompileFusedExists(byte[][] chainNames)
+    private static ExpressionEvaluator CompileFusedExists(Utf8Name[] chainNames)
     {
         return (in JsonElement input, Environment env) =>
         {
@@ -771,7 +771,7 @@ internal static class FunctionalCompiler
     /// <see cref="CollectFlattenedChainInto"/>, avoiding the intermediate <see cref="Sequence"/>
     /// and the pool array leak that the non-fused path had.
     /// </summary>
-    private static ExpressionEvaluator CompileFusedSort(byte[][] chainNames, ExpressionEvaluator? funcArg)
+    private static ExpressionEvaluator CompileFusedSort(Utf8Name[] chainNames, ExpressionEvaluator? funcArg)
     {
         return (in JsonElement input, Environment env) =>
         {
@@ -814,7 +814,7 @@ internal static class FunctionalCompiler
     /// flattening any final array values. Used by fused <c>$sort</c> to avoid intermediate
     /// <see cref="Sequence"/> allocation.
     /// </summary>
-    private static void CollectFlattenedChainInto(in JsonElement input, byte[][] utf8Names, ref SequenceBuilder builder)
+    private static void CollectFlattenedChainInto(in JsonElement input, Utf8Name[] utf8Names, ref SequenceBuilder builder)
     {
         JsonElement current = input;
 
@@ -822,7 +822,7 @@ internal static class FunctionalCompiler
         {
             if (current.ValueKind == JsonValueKind.Object)
             {
-                if (!current.TryGetProperty(utf8Names[step], out current))
+                if (!current.TryGetProperty(utf8Names[step].Span, out current))
                 {
                     return;
                 }
@@ -857,8 +857,7 @@ internal static class FunctionalCompiler
     /// </summary>
     private static void CollectFlattenedChainOverArray(
         in JsonElement array,
-        byte[][] utf8Names,
-        int fromStep,
+        Utf8Name[] utf8Names,        int fromStep,
         ref SequenceBuilder builder)
     {
         foreach (var item in array.EnumerateArray())
@@ -869,7 +868,7 @@ internal static class FunctionalCompiler
             {
                 if (current.ValueKind == JsonValueKind.Object)
                 {
-                    if (!current.TryGetProperty(utf8Names[step], out current))
+                    if (!current.TryGetProperty(utf8Names[step].Span, out current))
                     {
                         found = false;
                         break;
@@ -994,17 +993,17 @@ internal static class FunctionalCompiler
 
     private static ExpressionEvaluator CompileName(NameNode name)
     {
-        byte[] utf8FieldName = name.GetUtf8Bytes();
+        Utf8Name utf8FieldName = name.GetUtf8Name();
         return (in JsonElement input, Environment env) =>
         {
             return LookupField(input, utf8FieldName);
         };
 
-        static Sequence LookupField(in JsonElement input, byte[] utf8FieldName)
+        static Sequence LookupField(in JsonElement input, Utf8Name utf8FieldName)
         {
             if (input.ValueKind == JsonValueKind.Object)
             {
-                return input.TryGetProperty(utf8FieldName, out var value)
+                return input.TryGetProperty(utf8FieldName.Span, out var value)
                     ? new Sequence(value)
                     : Sequence.Undefined;
             }
@@ -1209,7 +1208,7 @@ internal static class FunctionalCompiler
 
         bool keepSingletonArray = path.KeepSingletonArray;
 
-        var utf8Names = new byte[path.Steps.Count][];
+        var utf8Names = new Utf8Name[path.Steps.Count];
         int[]? constantIndices = null;
 
         // String equality predicates: (propertyNameUtf8, expectedValuesUtf8[]) per step
@@ -1288,7 +1287,7 @@ internal static class FunctionalCompiler
                 constantIndices[i] = -1;
             }
 
-            utf8Names[i] = nameNode.GetUtf8Bytes();
+            utf8Names[i] = nameNode.GetUtf8Name();
         }
 
         if (hasPredicates)
@@ -1338,7 +1337,7 @@ internal static class FunctionalCompiler
 
         return true;
 
-        static Sequence EvalSimplePropertyChain(in JsonElement input, byte[][] utf8Names)
+        static Sequence EvalSimplePropertyChain(in JsonElement input, Utf8Name[] utf8Names)
         {
             JsonElement current = input;
 
@@ -1346,7 +1345,7 @@ internal static class FunctionalCompiler
             {
                 if (current.ValueKind == JsonValueKind.Object)
                 {
-                    if (!current.TryGetProperty(utf8Names[step], out current))
+                    if (!current.TryGetProperty(utf8Names[step].Span, out current))
                     {
                         return Sequence.Undefined;
                     }
@@ -1365,14 +1364,14 @@ internal static class FunctionalCompiler
             return new Sequence(current);
         }
 
-        static Sequence EvalChainOverArray(in JsonElement array, byte[][] utf8Names, int fromStep)
+        static Sequence EvalChainOverArray(in JsonElement array, Utf8Name[] utf8Names, int fromStep)
         {
             var builder = default(SequenceBuilder);
             EvalChainOverArrayInto(array, utf8Names, fromStep, ref builder);
             return builder.ToSequence();
         }
 
-        static void EvalChainOverArrayInto(in JsonElement array, byte[][] utf8Names, int fromStep, ref SequenceBuilder builder)
+        static void EvalChainOverArrayInto(in JsonElement array, Utf8Name[] utf8Names, int fromStep, ref SequenceBuilder builder)
         {
             foreach (var item in array.EnumerateArray())
             {
@@ -1382,7 +1381,7 @@ internal static class FunctionalCompiler
                 {
                     if (current.ValueKind == JsonValueKind.Object)
                     {
-                        if (!current.TryGetProperty(utf8Names[step], out current))
+                        if (!current.TryGetProperty(utf8Names[step].Span, out current))
                         {
                             found = false;
                             break;
@@ -1421,12 +1420,12 @@ internal static class FunctionalCompiler
             }
         }
 
-        static Sequence EvalPropertyChainWithPredicates(in JsonElement input, byte[][] utf8Names, int[] constantIndices, (byte[] PropName, byte[][] ExpectedValues)[]? equalityPredicates)
+        static Sequence EvalPropertyChainWithPredicates(in JsonElement input, Utf8Name[] utf8Names, int[] constantIndices, (byte[] PropName, byte[][] ExpectedValues)[]? equalityPredicates)
         {
             return EvalFromStep(input, utf8Names, constantIndices, equalityPredicates, 0);
         }
 
-        static Sequence EvalFromStep(in JsonElement input, byte[][] utf8Names, int[] constantIndices, (byte[] PropName, byte[][] ExpectedValues)[]? equalityPredicates, int startStep)
+        static Sequence EvalFromStep(in JsonElement input, Utf8Name[] utf8Names, int[] constantIndices, (byte[] PropName, byte[][] ExpectedValues)[]? equalityPredicates, int startStep)
         {
             JsonElement current = input;
 
@@ -1434,7 +1433,7 @@ internal static class FunctionalCompiler
             {
                 if (current.ValueKind == JsonValueKind.Object)
                 {
-                    if (!current.TryGetProperty(utf8Names[step], out current))
+                    if (!current.TryGetProperty(utf8Names[step].Span, out current))
                     {
                         return Sequence.Undefined;
                     }
@@ -1529,7 +1528,7 @@ internal static class FunctionalCompiler
             return false;
         }
 
-        static Sequence FilterAndContinue(in JsonElement array, byte[][] utf8Names, int[] constantIndices, (byte[] PropName, byte[][] ExpectedValues)[]? equalityPredicates, int step, byte[] propName, byte[][] expectedValues)
+        static Sequence FilterAndContinue(in JsonElement array, Utf8Name[] utf8Names, int[] constantIndices, (byte[] PropName, byte[][] ExpectedValues)[]? equalityPredicates, int step, byte[] propName, byte[][] expectedValues)
         {
             var builder = default(SequenceBuilder);
             foreach (var item in array.EnumerateArray())
@@ -1554,7 +1553,7 @@ internal static class FunctionalCompiler
             return builder.ToSequence();
         }
 
-        static Sequence CollectAndContinue(in JsonElement array, byte[][] utf8Names, int[] constantIndices, (byte[] PropName, byte[][] ExpectedValues)[]? equalityPredicates, int step)
+        static Sequence CollectAndContinue(in JsonElement array, Utf8Name[] utf8Names, int[] constantIndices, (byte[] PropName, byte[][] ExpectedValues)[]? equalityPredicates, int step)
         {
             bool hasIndexThisStep = constantIndices[step] >= 0;
             bool hasEqPredThisStep = equalityPredicates?.Length > step && equalityPredicates[step].PropName is not null;
@@ -1566,7 +1565,7 @@ internal static class FunctionalCompiler
             {
                 if (item.ValueKind == JsonValueKind.Object)
                 {
-                    if (item.TryGetProperty(utf8Names[step], out var propValue))
+                    if (item.TryGetProperty(utf8Names[step].Span, out var propValue))
                     {
                         if (perElementIndex)
                         {
@@ -1717,7 +1716,7 @@ internal static class FunctionalCompiler
     /// produces at least one value. Short-circuits on the first match — never allocates
     /// a <see cref="SequenceBuilder"/> or rents from <see cref="System.Buffers.ArrayPool{T}"/>.
     /// </summary>
-    private static bool AnySimplePropertyChain(in JsonElement input, byte[][] utf8Names)
+    private static bool AnySimplePropertyChain(in JsonElement input, Utf8Name[] utf8Names)
     {
         JsonElement current = input;
 
@@ -1725,7 +1724,7 @@ internal static class FunctionalCompiler
         {
             if (current.ValueKind == JsonValueKind.Object)
             {
-                if (!current.TryGetProperty(utf8Names[step], out current))
+                if (!current.TryGetProperty(utf8Names[step].Span, out current))
                 {
                     return false;
                 }
@@ -1743,7 +1742,7 @@ internal static class FunctionalCompiler
         return true;
     }
 
-    private static bool AnyChainOverArray(in JsonElement array, byte[][] utf8Names, int fromStep)
+    private static bool AnyChainOverArray(in JsonElement array, Utf8Name[] utf8Names, int fromStep)
     {
         foreach (var item in array.EnumerateArray())
         {
@@ -1753,7 +1752,7 @@ internal static class FunctionalCompiler
             {
                 if (current.ValueKind == JsonValueKind.Object)
                 {
-                    if (!current.TryGetProperty(utf8Names[step], out current))
+                    if (!current.TryGetProperty(utf8Names[step].Span, out current))
                     {
                         found = false;
                         break;
@@ -1790,7 +1789,7 @@ internal static class FunctionalCompiler
     /// Class-level equivalent of the local function inside <see cref="TryCompileSimplePropertyChain"/>
     /// so it can be used from <see cref="CompileCondition"/> for coalesce fusion.
     /// </summary>
-    private static Sequence EvalSimplePropertyChainStatic(in JsonElement input, byte[][] utf8Names)
+    private static Sequence EvalSimplePropertyChainStatic(in JsonElement input, Utf8Name[] utf8Names)
     {
         JsonElement current = input;
 
@@ -1798,7 +1797,7 @@ internal static class FunctionalCompiler
         {
             if (current.ValueKind == JsonValueKind.Object)
             {
-                if (!current.TryGetProperty(utf8Names[step], out current))
+                if (!current.TryGetProperty(utf8Names[step].Span, out current))
                 {
                     return Sequence.Undefined;
                 }
@@ -1816,14 +1815,14 @@ internal static class FunctionalCompiler
         return new Sequence(current);
     }
 
-    private static Sequence EvalChainOverArrayStatic(in JsonElement array, byte[][] utf8Names, int fromStep)
+    private static Sequence EvalChainOverArrayStatic(in JsonElement array, Utf8Name[] utf8Names, int fromStep)
     {
         var builder = default(SequenceBuilder);
         EvalChainOverArrayIntoStatic(array, utf8Names, fromStep, ref builder);
         return builder.ToSequence();
     }
 
-    private static void EvalChainOverArrayIntoStatic(in JsonElement array, byte[][] utf8Names, int fromStep, ref SequenceBuilder builder)
+    private static void EvalChainOverArrayIntoStatic(in JsonElement array, Utf8Name[] utf8Names, int fromStep, ref SequenceBuilder builder)
     {
         foreach (var item in array.EnumerateArray())
         {
@@ -1833,7 +1832,7 @@ internal static class FunctionalCompiler
             {
                 if (current.ValueKind == JsonValueKind.Object)
                 {
-                    if (!current.TryGetProperty(utf8Names[step], out current))
+                    if (!current.TryGetProperty(utf8Names[step].Span, out current))
                     {
                         found = false;
                         break;
@@ -2009,15 +2008,15 @@ internal static class FunctionalCompiler
         // Detect single-pair group-by with NameNode key + NameNode value.
         // For this pattern, we can use the CVB object itself as the grouping accumulator,
         // avoiding Dictionary/List allocations, string extraction, and 2-phase evaluation.
-        byte[]? simpleGroupByKeyPropUtf8 = null;
-        byte[]? simpleGroupByValuePropUtf8 = null;
+        Utf8Name simpleGroupByKeyPropUtf8 = default;
+        Utf8Name simpleGroupByValuePropUtf8 = default;
 
         if (groupByAst is not null && groupByPairs is { Length: 1 }
             && groupByAst.Pairs[0].Key is NameNode keyNameNode
             && groupByAst.Pairs[0].Value is NameNode valueNameNode)
         {
-            simpleGroupByKeyPropUtf8 = keyNameNode.GetUtf8Bytes();
-            simpleGroupByValuePropUtf8 = valueNameNode.GetUtf8Bytes();
+            simpleGroupByKeyPropUtf8 = keyNameNode.GetUtf8Name();
+            simpleGroupByValuePropUtf8 = valueNameNode.GetUtf8Name();
         }
 
         var keepSingleton = path.KeepSingletonArray;
@@ -2059,7 +2058,7 @@ internal static class FunctionalCompiler
         // Detect steps that are simple name lookups with no annotations.
         // At runtime, these use direct TryGetProperty instead of delegate dispatch,
         // eliminating per-step delegate calls and Sequence intermediaries.
-        byte[]?[]? inlineNameUtf8 = null;
+        Utf8Name[]? inlineNameUtf8 = null;
         for (int i = 0; i < path.Steps.Count; i++)
         {
             if (path.Steps[i] is NameNode nameNode
@@ -2069,8 +2068,8 @@ internal static class FunctionalCompiler
                 && ancestorLabels[i] is null
                 && tupleLabels[i] is null)
             {
-                inlineNameUtf8 ??= new byte[]?[path.Steps.Count];
-                inlineNameUtf8[i] = nameNode.GetUtf8Bytes();
+                inlineNameUtf8 ??= new Utf8Name[path.Steps.Count];
+                inlineNameUtf8[i] = nameNode.GetUtf8Name();
             }
         }
 
@@ -2078,7 +2077,7 @@ internal static class FunctionalCompiler
         // At runtime, this pair is fused into a single-pass recursive traversal that
         // collects only matching properties, avoiding the intermediate all-descendants
         // Sequence that the two-step approach would build.
-        byte[]?[]? fusedDescendantNameUtf8 = null;
+        Utf8Name[]? fusedDescendantNameUtf8 = null;
         for (int i = 0; i < path.Steps.Count - 1; i++)
         {
             if (path.Steps[i] is DescendantNode
@@ -2087,10 +2086,10 @@ internal static class FunctionalCompiler
                 && indexVars[i] is null
                 && ancestorLabels[i] is null
                 && tupleLabels[i] is null
-                && inlineNameUtf8?[i + 1] is byte[] nextNameBytes)
+                && inlineNameUtf8?[i + 1] is { HasValue: true } nextName)
             {
-                fusedDescendantNameUtf8 ??= new byte[]?[path.Steps.Count];
-                fusedDescendantNameUtf8[i] = nextNameBytes;
+                fusedDescendantNameUtf8 ??= new Utf8Name[path.Steps.Count];
+                fusedDescendantNameUtf8[i] = nextName;
             }
         }
 
@@ -2125,15 +2124,16 @@ internal static class FunctionalCompiler
                     // that collects only properties matching the name, skipping the
                     // intermediate all-descendants Sequence. Handles the DescendantNode
                     // at stepIdx AND the NameNode at stepIdx+1 in one operation.
-                    if (fusedDescendantNameUtf8?[stepIdx] is byte[] descNameBytes
+                    if (fusedDescendantNameUtf8?[stepIdx] is { HasValue: true } descName
                         && tupleGroupIndices is null)
                     {
                         if (currentArrayOwned) { current.ReturnBackingArray(); currentArrayOwned = false; }
 
+                        ReadOnlySpan<byte> descNameSpan = descName.Span;
                         var descBuilder = default(SequenceBuilder);
                         for (int i = 0; i < current.Count; i++)
                         {
-                            CollectDescendantProperty(current[i], descNameBytes, ref descBuilder);
+                            CollectDescendantProperty(current[i], descNameSpan, ref descBuilder);
                         }
 
                         current = descBuilder.ToSequence();
@@ -2147,9 +2147,10 @@ internal static class FunctionalCompiler
                     // eliminates the CompileName delegate call, Sequence intermediaries,
                     // and all annotation/stage checks (verified null at compile time).
                     // Skipped when tuple tracking is active (preceding sort with index binding).
-                    if (inlineNameUtf8?[stepIdx] is byte[] nameBytes
+                    if (inlineNameUtf8?[stepIdx] is { HasValue: true } inlineName
                         && tupleGroupIndices is null)
                     {
+                        ReadOnlySpan<byte> nameSpan = inlineName.Span;
                         if (current.IsSingleton)
                         {
                             var element = current.FirstOrDefault;
@@ -2157,13 +2158,13 @@ internal static class FunctionalCompiler
                             {
                                 // Auto-flatten: map name lookup over array elements
                                 var nameBuilder = default(SequenceBuilder);
-                                InlineNameOverArray(element, nameBytes, ref nameBuilder);
+                                InlineNameOverArray(element, nameSpan, ref nameBuilder);
                                 current = nameBuilder.ToSequence();
                                 currentArrayOwned = current.Count >= 2;
                             }
                             else if (element.ValueKind == JsonValueKind.Object)
                             {
-                                current = element.TryGetProperty(nameBytes, out var val)
+                                current = element.TryGetProperty(nameSpan, out var val)
                                     ? new Sequence(val) : Sequence.Undefined;
                             }
                             else
@@ -2184,7 +2185,7 @@ internal static class FunctionalCompiler
                                 var element = current[i];
                                 if (element.ValueKind == JsonValueKind.Object)
                                 {
-                                    if (element.TryGetProperty(nameBytes, out var val))
+                                    if (element.TryGetProperty(nameSpan, out var val))
                                     {
                                         if (val.ValueKind == JsonValueKind.Array)
                                         {
@@ -2201,7 +2202,7 @@ internal static class FunctionalCompiler
                                 }
                                 else if (element.ValueKind == JsonValueKind.Array)
                                 {
-                                    InlineNameOverArray(element, nameBytes, ref nameBuilder);
+                                    InlineNameOverArray(element, nameSpan, ref nameBuilder);
                                 }
                             }
 
@@ -2590,9 +2591,9 @@ internal static class FunctionalCompiler
 
                     // Fast path: single-pair group-by with NameNode key + value.
                     // Uses the CVB object directly as the grouping accumulator.
-                    if (simpleGroupByKeyPropUtf8 is not null && tupleIndexVar is null)
+                    if (simpleGroupByKeyPropUtf8.HasValue && tupleIndexVar is null)
                     {
-                        current = ApplySimpleNamePairGroupBy(current, simpleGroupByKeyPropUtf8, simpleGroupByValuePropUtf8!, env);
+                        current = ApplySimpleNamePairGroupBy(current, simpleGroupByKeyPropUtf8, simpleGroupByValuePropUtf8, env);
                     }
                     else
                     {
@@ -4719,8 +4720,8 @@ internal static class FunctionalCompiler
     /// </summary>
     private static Sequence ApplySimpleNamePairGroupBy(
         Sequence current,
-        byte[] keyPropUtf8,
-        byte[] valuePropUtf8,
+        Utf8Name keyPropUtf8,
+        Utf8Name valuePropUtf8,
         Environment env)
     {
         if (current.IsUndefined)
@@ -4833,8 +4834,8 @@ internal static class FunctionalCompiler
         // Collects key-value pairs from a single element (arrays are flattened).
         static void CollectGroupByPairs(
             JsonElement element,
-            byte[] keyPropUtf8,
-            byte[] valuePropUtf8,
+            Utf8Name keyPropUtf8,
+            Utf8Name valuePropUtf8,
             JsonElement[] keyBuffer,
             JsonElement[] valBuffer,
             ref int pairCount)
@@ -4854,13 +4855,13 @@ internal static class FunctionalCompiler
 
         static void TryAddGroupByPair(
             JsonElement element,
-            byte[] keyPropUtf8,
-            byte[] valuePropUtf8,
+            Utf8Name keyPropUtf8,
+            Utf8Name valuePropUtf8,
             JsonElement[] keyBuffer,
             JsonElement[] valBuffer,
             ref int pairCount)
         {
-            if (!element.TryGetProperty(keyPropUtf8, out JsonElement keyEl))
+            if (!element.TryGetProperty(keyPropUtf8.Span, out JsonElement keyEl))
             {
                 return;
             }
@@ -4875,7 +4876,7 @@ internal static class FunctionalCompiler
                 return;
             }
 
-            if (!element.TryGetProperty(valuePropUtf8, out JsonElement valueEl))
+            if (!element.TryGetProperty(valuePropUtf8.Span, out JsonElement valueEl))
             {
                 return;
             }
@@ -5599,7 +5600,7 @@ internal static class FunctionalCompiler
     /// Inline name lookup over array elements without delegate dispatch.
     /// Recursively handles nested arrays (JSONata's one-level flattening).
     /// </summary>
-    private static void InlineNameOverArray(in JsonElement array, byte[] nameUtf8, ref SequenceBuilder builder)
+    private static void InlineNameOverArray(in JsonElement array, ReadOnlySpan<byte> nameUtf8, ref SequenceBuilder builder)
     {
         foreach (var item in array.EnumerateArray())
         {
@@ -5633,11 +5634,11 @@ internal static class FunctionalCompiler
     /// with JSONata array auto-flattening. This avoids building a Sequence of all
     /// descendants only to filter most of them in a second pass.
     /// </summary>
-    private static void CollectDescendantProperty(in JsonElement element, byte[] nameUtf8, ref SequenceBuilder builder)
+    private static void CollectDescendantProperty(in JsonElement element, ReadOnlySpan<byte> nameUtf8, ref SequenceBuilder builder)
     {
         if (element.ValueKind == JsonValueKind.Object)
         {
-            if (element.TryGetProperty((ReadOnlySpan<byte>)nameUtf8, out JsonElement val))
+            if (element.TryGetProperty(nameUtf8, out JsonElement val))
             {
                 if (val.ValueKind == JsonValueKind.Array)
                 {
@@ -7183,7 +7184,7 @@ internal static class FunctionalCompiler
             int constCount = 0;
 
             // Use fixed-size arrays to avoid allocation during classification
-            byte[][]?[] chainNames = new byte[][]?[func.Arguments.Count];
+            Utf8Name[]?[] chainNames = new Utf8Name[]?[func.Arguments.Count];
             JsonElement[] constElements = new JsonElement[func.Arguments.Count];
             bool[] isConst = new bool[func.Arguments.Count];
 

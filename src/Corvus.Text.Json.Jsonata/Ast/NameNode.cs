@@ -44,8 +44,22 @@ internal sealed class NameNode : JsonataNode
     }
 
     /// <summary>
-    /// Returns the UTF-8 bytes for this name. When source-backed, returns a slice copy
-    /// from the source buffer without materializing an intermediate string.
+    /// Returns a zero-copy <see cref="Utf8Name"/> referencing this name's UTF-8 bytes
+    /// within the shared source buffer. No allocation for source-backed names.
+    /// </summary>
+    internal Utf8Name GetUtf8Name()
+    {
+        if (this.utf8Source is not null)
+        {
+            return new Utf8Name(this.utf8Source, this.sourceOffset, this.sourceLength);
+        }
+
+        return new Utf8Name(System.Text.Encoding.UTF8.GetBytes(this.value!));
+    }
+
+    /// <summary>
+    /// Returns the UTF-8 bytes for this name as a new byte array.
+    /// Prefer <see cref="GetUtf8Name"/> to avoid copying.
     /// </summary>
     internal byte[] GetUtf8Bytes()
     {

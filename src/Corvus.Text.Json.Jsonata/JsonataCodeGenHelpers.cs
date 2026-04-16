@@ -511,7 +511,117 @@ public static class JsonataCodeGenHelpers
     }
 
     /// <summary>
-    /// Navigates a property chain with fused constant-index and string-equality predicates.
+    /// Navigates a property chain using zero-copy <see cref="Utf8Name"/> references.
+    /// Internal overload for the runtime compiler.
+    /// </summary>
+    internal static void NavigatePropertyChainInto(
+        in JsonElement data,
+        Utf8Name[] names,
+        ref ElementBuffer buffer)
+    {
+        NavigatePropertyChainInto(data, names, 0, ref buffer);
+    }
+
+    /// <summary>
+    /// Navigates a property chain using zero-copy <see cref="Utf8Name"/> references,
+    /// starting at <paramref name="startIndex"/>.
+    /// </summary>
+    internal static void NavigatePropertyChainInto(
+        in JsonElement data,
+        Utf8Name[] names,
+        int startIndex,
+        ref ElementBuffer buffer)
+    {
+        JsonElement current = data;
+
+        for (int i = startIndex; i < names.Length; i++)
+        {
+            if (current.ValueKind == JsonValueKind.Object)
+            {
+                if (!current.TryGetProperty(names[i].Span, out current))
+                {
+                    return;
+                }
+            }
+            else if (current.ValueKind == JsonValueKind.Array)
+            {
+                CollectChainFlatInto(current, names, i, ref buffer);
+                return;
+            }
+            else
+            {
+                return;
+            }
+        }
+
+        buffer.AddFlatten(current);
+    }
+
+    private static void CollectChainFlatInto(
+        in JsonElement array,
+        Utf8Name[] names,
+        int stepIndex,
+        ref ElementBuffer buffer)
+    {
+        Utf8Name name = names[stepIndex];
+        int nextStep = stepIndex + 1;
+        bool isLastStep = nextStep >= names.Length;
+
+        foreach (JsonElement item in array.EnumerateArray())
+        {
+            if (item.ValueKind == JsonValueKind.Object)
+            {
+                if (item.TryGetProperty(name.Span, out var val))
+                {
+                    if (isLastStep)
+                    {
+                        buffer.AddFlatten(val);
+                    }
+                    else
+                    {
+                        ContinueChainFlatInto(val, names, nextStep, ref buffer);
+                    }
+                }
+            }
+            else if (item.ValueKind == JsonValueKind.Array)
+            {
+                CollectChainFlatInto(item, names, stepIndex, ref buffer);
+            }
+        }
+    }
+
+    private static void ContinueChainFlatInto(
+        in JsonElement value,
+        Utf8Name[] names,
+        int nextIndex,
+        ref ElementBuffer buffer)
+    {
+        JsonElement current = value;
+
+        for (int i = nextIndex; i < names.Length; i++)
+        {
+            if (current.ValueKind == JsonValueKind.Object)
+            {
+                if (!current.TryGetProperty(names[i].Span, out current))
+                {
+                    return;
+                }
+            }
+            else if (current.ValueKind == JsonValueKind.Array)
+            {
+                CollectChainFlatInto(current, names, i, ref buffer);
+                return;
+            }
+            else
+            {
+                return;
+            }
+        }
+
+        buffer.AddFlatten(current);
+    }
+
+    /// <summary>
     /// This is the codegen equivalent of the runtime's EvalPropertyChainWithPredicates —
     /// a single tight loop handles the entire path including predicates, avoiding all
     /// delegate dispatch and intermediate element allocations.

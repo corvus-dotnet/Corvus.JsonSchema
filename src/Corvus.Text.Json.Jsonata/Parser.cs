@@ -81,6 +81,17 @@ internal ref struct Parser
     }
 
     /// <summary>
+    /// Parses a JSONata expression from pre-encoded UTF-8 bytes, bypassing
+    /// the string-to-UTF-8 transcode.
+    /// </summary>
+    /// <param name="utf8Source">The UTF-8 encoded expression bytes.</param>
+    /// <returns>The root AST node.</returns>
+    public static JsonataNode Parse(byte[] utf8Source)
+    {
+        return Parse(string.Empty, utf8Source);
+    }
+
+    /// <summary>
     /// Parses a JSONata expression from pre-encoded UTF-8 bytes.
     /// </summary>
     /// <param name="expression">The original expression string (unused, kept for API compatibility).</param>
