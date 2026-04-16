@@ -79,7 +79,10 @@ internal static class FunctionalCompiler
         // Wrap with per-expression depth tracking for non-leaf nodes.
         // Leaf nodes (numbers, strings, booleans, regex, variables) cannot recurse
         // and never cause stack overflow — skip the overhead for these.
-        if (node is not (NumberNode or StringNode or ValueNode or RegexNode or VariableNode))
+        // Simple property chain PathNodes (all NameNode steps, no complex stages)
+        // are also non-recursive: they compile to flat loops.
+        if (node is not (NumberNode or StringNode or ValueNode or RegexNode or VariableNode)
+            && !IsSimplePropertyChainPath(node))
         {
             evaluator = WrapWithDepthTracking(evaluator);
         }
@@ -122,6 +125,35 @@ internal static class FunctionalCompiler
             PlaceholderNode => throw new JsonataException("D1001", SR.D1001_UnexpectedPlaceholderOutsidePartialApplication, node.Position),
             _ => throw new JsonataException("D1001", SR.Format(SR.D1001_UnknownNodeType, node.Type), node.Position),
         };
+    }
+
+    /// <summary>
+    /// Returns <see langword="true"/> when the node is a <see cref="PathNode"/> whose steps
+    /// are all plain <see cref="NameNode"/>s with no stages or annotations that would cause
+    /// recursive evaluation.  These compile to flat property-lookup loops and can safely
+    /// skip the depth-tracking wrapper.
+    /// </summary>
+    private static bool IsSimplePropertyChainPath(JsonataNode node)
+    {
+        if (node is not PathNode path)
+        {
+            return false;
+        }
+
+        if (path.KeepArray || GetStepAnnotations(path) is not null)
+        {
+            return false;
+        }
+
+        foreach (var step in path.Steps)
+        {
+            if (step is not NameNode || GetStepAnnotations(step) is not null)
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private static ExpressionEvaluator WrapWithDepthTracking(ExpressionEvaluator inner)

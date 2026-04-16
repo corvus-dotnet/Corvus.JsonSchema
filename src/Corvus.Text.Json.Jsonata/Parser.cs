@@ -15,7 +15,7 @@ namespace Corvus.Text.Json.Jsonata;
 /// This follows the reference jsonata-js parser closely, adapted to C# with
 /// strongly-typed AST nodes.
 /// </remarks>
-internal sealed class Parser
+internal ref struct Parser
 {
     // Parser binding powers for infix operators.
     // Delimiters (: ; , ) ] } |) have BP 0 — they terminate expressions.
@@ -61,7 +61,7 @@ internal sealed class Parser
     // Ancestry tracking for parent operator resolution
     private int ancestorLabel;
     private int ancestorIndex;
-    private readonly List<ParentNode> ancestry = [];
+    private List<ParentNode>? ancestry;
 
     private Parser(string source)
     {
@@ -748,7 +748,7 @@ internal sealed class Parser
                     Level = 1,
                     Index = this.ancestorIndex++,
                 };
-                this.ancestry.Add(parent);
+                (this.ancestry ??= []).Add(parent);
                 return parent;
 
             // Terminal nodes pass through unchanged
@@ -807,47 +807,77 @@ internal sealed class Parser
 
     private JsonataNode ProcessDot(BinaryNode binary)
     {
-        var lstep = this.ProcessAst(binary.Lhs);
-
         PathNode result;
-        if (lstep is PathNode existingPath)
+
+        // Fast path for bare NameNode LHS: create PathNode directly without going
+        // through ProcessAst (which would create the same PathNode wrapper).
+        if (binary.Lhs is NameNode bareLhs && bareLhs.Annotations is null && bareLhs.SeekingParent is null)
         {
-            result = existingPath;
+            result = new PathNode { Position = bareLhs.Position };
+            result.Steps.Add(bareLhs);
+            if (bareLhs.KeepArray)
+            {
+                result.KeepSingletonArray = true;
+            }
         }
         else
         {
-            result = new PathNode { Position = lstep.Position };
-            result.Steps.Add(lstep);
-        }
+            var lstep = this.ProcessAst(binary.Lhs);
 
-        if (lstep is ParentNode parentLhs)
-        {
-            result.SeekingParent ??= [];
-            result.SeekingParent.Add(parentLhs.Slot);
-        }
+            if (lstep is PathNode existingPath)
+            {
+                result = existingPath;
+            }
+            else
+            {
+                result = new PathNode { Position = lstep.Position };
+                result.Steps.Add(lstep);
+            }
 
-        var rest = this.ProcessAst(binary.Rhs);
-        if (rest is PathNode restPath)
-        {
-            result.Steps.AddRange(restPath.Steps);
-
-            // Merge unresolved parent slots from the sub-path so multi-level
-            // parent operators (e.g. %.%.AccountName) propagate correctly.
-            if (restPath.SeekingParent is not null)
+            if (lstep is ParentNode parentLhs)
             {
                 result.SeekingParent ??= [];
-                result.SeekingParent.AddRange(restPath.SeekingParent);
+                result.SeekingParent.Add(parentLhs.Slot);
+            }
+        }
+
+        // Fast path: bare NameNode RHS avoids ProcessAst wrapping it in an
+        // intermediate PathNode + List that would be immediately merged and discarded.
+        // This is the common case for simple dot chains like a.b.c.
+        // We must still handle KeepArray (from postfix []).
+        if (binary.Rhs is NameNode bareRhs && bareRhs.Annotations is null && bareRhs.SeekingParent is null)
+        {
+            result.Steps.Add(bareRhs);
+            if (bareRhs.KeepArray)
+            {
+                result.KeepSingletonArray = true;
             }
         }
         else
         {
-            // Move predicate to stages when attaching to a path
-            if (rest is NameNode nn && nn.Annotations?.Stages.Count > 0)
+            var rest = this.ProcessAst(binary.Rhs);
+            if (rest is PathNode restPath)
             {
-                // Already has stages, nothing to move
-            }
+                result.Steps.AddRange(restPath.Steps);
 
-            result.Steps.Add(rest);
+                // Merge unresolved parent slots from the sub-path so multi-level
+                // parent operators (e.g. %.%.AccountName) propagate correctly.
+                if (restPath.SeekingParent is not null)
+                {
+                    result.SeekingParent ??= [];
+                    result.SeekingParent.AddRange(restPath.SeekingParent);
+                }
+            }
+            else
+            {
+                // Move predicate to stages when attaching to a path
+                if (rest is NameNode nn && nn.Annotations?.Stages.Count > 0)
+                {
+                    // Already has stages, nothing to move
+                }
+
+                result.Steps.Add(rest);
+            }
         }
 
         // String literals in paths become names; numbers and values are errors
