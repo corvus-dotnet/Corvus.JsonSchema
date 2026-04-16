@@ -11,6 +11,8 @@ namespace Corvus.Text.Json.JMESPath;
 /// </summary>
 internal static class Compiler
 {
+    private static readonly JsonElement NullElement = JsonElement.ParseValue("null"u8);
+
     /// <summary>
     /// Compiles a JMESPath expression string into an evaluation delegate.
     /// </summary>
@@ -76,9 +78,38 @@ internal static class Compiler
 
     private static JMESPathEval CompileRawString(RawStringNode node)
     {
-        // Pre-parse into a static JsonElement
-        JsonElement element = JsonElement.ParseValue(
-            Encoding.UTF8.GetBytes($"\"{Encoding.UTF8.GetString(node.Value)}\""));
+        // JSON-escape the raw string value and wrap in double quotes.
+        // Raw strings may contain literal backslashes that need JSON escaping.
+        string rawValue = Encoding.UTF8.GetString(node.Value);
+        StringBuilder sb = new(rawValue.Length + 8);
+        sb.Append('"');
+        foreach (char ch in rawValue)
+        {
+            switch (ch)
+            {
+                case '"': sb.Append("\\\""); break;
+                case '\\': sb.Append("\\\\"); break;
+                case '\b': sb.Append("\\b"); break;
+                case '\f': sb.Append("\\f"); break;
+                case '\n': sb.Append("\\n"); break;
+                case '\r': sb.Append("\\r"); break;
+                case '\t': sb.Append("\\t"); break;
+                default:
+                    if (ch < 0x20)
+                    {
+                        sb.Append($"\\u{(int)ch:X4}");
+                    }
+                    else
+                    {
+                        sb.Append(ch);
+                    }
+
+                    break;
+            }
+        }
+
+        sb.Append('"');
+        JsonElement element = JsonElement.ParseValue(Encoding.UTF8.GetBytes(sb.ToString()));
         return (in JsonElement data, JsonWorkspace workspace) => element;
     }
 
@@ -246,7 +277,8 @@ internal static class Compiler
 
             for (int i = 0; i < exprs.Length; i++)
             {
-                root.AddItem(exprs[i](data, workspace));
+                JsonElement val = exprs[i](data, workspace);
+                root.AddItem(val.IsNullOrUndefined() ? NullElement : val);
             }
 
             return (JsonElement)root;
@@ -275,7 +307,8 @@ internal static class Compiler
 
             for (int i = 0; i < pairs.Length; i++)
             {
-                root.SetProperty(pairs[i].key, pairs[i].value(data, workspace));
+                JsonElement val = pairs[i].value(data, workspace);
+                root.SetProperty(pairs[i].key, val.IsNullOrUndefined() ? NullElement : val);
             }
 
             return (JsonElement)root;
@@ -469,13 +502,13 @@ internal static class Compiler
 
             if (actualStep > 0)
             {
-                actualStart = start.HasValue ? ClampSliceIndex(start.Value, len) : 0;
-                actualStop = stop.HasValue ? ClampSliceIndex(stop.Value, len) : len;
+                actualStart = start.HasValue ? NormalizeSliceIndex(start.Value, len, isStart: true, positiveStep: true) : 0;
+                actualStop = stop.HasValue ? NormalizeSliceIndex(stop.Value, len, isStart: false, positiveStep: true) : len;
             }
             else
             {
-                actualStart = start.HasValue ? ClampSliceIndex(start.Value, len) : len - 1;
-                actualStop = stop.HasValue ? ClampSliceIndex(stop.Value, len) : -1;
+                actualStart = start.HasValue ? NormalizeSliceIndex(start.Value, len, isStart: true, positiveStep: false) : len - 1;
+                actualStop = stop.HasValue ? NormalizeSliceIndex(stop.Value, len, isStart: false, positiveStep: false) : -1;
             }
 
             JsonDocumentBuilder<JsonElement.Mutable> doc =
@@ -507,19 +540,44 @@ internal static class Compiler
         throw new JMESPathException($"Function '{Encoding.UTF8.GetString(node.Name)}' is not yet supported.");
     }
 
-    private static int ClampSliceIndex(int index, int length)
+    /// <summary>
+    /// Normalizes a slice index per JMESPath spec.
+    /// For negative indices: adds length, then clamps to 0 (positive step) or -1 (negative step stop).
+    /// For positive indices: clamps to length (positive step) or length-1 (negative step start).
+    /// </summary>
+    private static int NormalizeSliceIndex(int index, int length, bool isStart, bool positiveStep)
     {
         if (index < 0)
         {
             index += length;
             if (index < 0)
             {
-                index = 0;
+                // For positive step: clamp to 0 (valid array start)
+                // For negative step: clamp to -1 (sentinel that stops the descending loop)
+                index = positiveStep ? 0 : -1;
             }
         }
-        else if (index > length)
+        else
         {
-            index = length;
+            if (positiveStep)
+            {
+                if (index > length)
+                {
+                    index = length;
+                }
+            }
+            else
+            {
+                // For negative step: start clamps to length-1, stop clamps to length
+                if (isStart && index > length - 1)
+                {
+                    index = length - 1;
+                }
+                else if (!isStart && index > length)
+                {
+                    index = length;
+                }
+            }
         }
 
         return index;

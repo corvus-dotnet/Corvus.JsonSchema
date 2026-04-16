@@ -184,7 +184,6 @@ internal ref struct Lexer
 
             if (c == (byte)'\\')
             {
-                hasEscapes = true;
                 this.position++; // skip backslash
                 if (this.position >= this.source.Length)
                 {
@@ -192,12 +191,12 @@ internal ref struct Lexer
                         $"Unexpected end of expression in raw string starting at position {start}.");
                 }
 
-                // In raw strings, only \' and \\ are valid escapes
+                // In raw strings, only \' is a meaningful escape.
+                // All other backslash sequences (including \\) are preserved literally.
                 byte next = this.source[this.position];
-                if (next != (byte)'\'' && next != (byte)'\\')
+                if (next == (byte)'\'')
                 {
-                    throw new JMESPathException(
-                        $"Invalid escape '\\{(char)next}' in raw string at position {this.position - 1}.");
+                    hasEscapes = true;
                 }
             }
 
@@ -228,7 +227,19 @@ internal ref struct Lexer
             if (c == (byte)'\\')
             {
                 this.position++;
-                c = this.source[this.position];
+                byte next = this.source[this.position];
+                if (next == (byte)'\'')
+                {
+                    // Escaped single quote: skip backslash, emit quote
+                    c = next;
+                }
+                else
+                {
+                    // Everything else (including \\): emit literal backslash then the character
+                    GrowBuffer(ref buffer, ref rented, ref len);
+                    buffer[len++] = (byte)'\\';
+                    c = next;
+                }
             }
 
             if (len >= buffer.Length)
@@ -332,7 +343,6 @@ internal ref struct Lexer
                     case (byte)'t': c = (byte)'\t'; break;
                     case (byte)'u':
                         AppendUnicodeEscape(this.source, ref this.position, ref buffer, ref rented, ref len);
-                        this.position++;
                         continue;
                     default:
                         throw new JMESPathException(

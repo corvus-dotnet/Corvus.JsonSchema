@@ -20,8 +20,13 @@ internal ref struct Parser
     private const int BpNot = 15;
     private const int BpComparison = 20;
     private const int BpFlatten = 25;
+
+    // The maximum binding power for a token that stops a projection.
+    // Tokens with LBP below this threshold (Flatten, Pipe, Or, And, comparators)
+    // cannot continue inside a projection RHS — they return identity instead.
+    private const int ProjectionStop = 26;
     private const int BpStar = 30;
-    private const int BpFilter = 30;
+    private const int BpFilter = 31;
     private const int BpDot = 40;
     private const int BpBracket = 55;
     private const int BpLparen = 60;
@@ -233,55 +238,97 @@ internal ref struct Parser
         };
     }
 
-    private JMESPathNode ParseDotRhs(JMESPathNode left, int dotPosition)
+    private JMESPathNode ParseDotRhs(JMESPathNode left, int dotPosition, int bp = BpDot)
     {
         // After a dot we expect: identifier, star (wildcard), multi-select list, or multi-select hash
         Token rhs = this.current;
 
-        if (rhs.Type == TokenType.Star)
+        switch (rhs.Type)
         {
-            // Object wildcard projection: left.*.rhs
-            this.Advance();
-            return new ValueProjectionNode(left, this.ParseProjectionRhs(BpStar))
-                { Position = dotPosition };
-        }
+            case TokenType.Star:
+                // Object wildcard projection: left.*.rhs
+                this.Advance();
+                return new ValueProjectionNode(left, this.ParseProjectionRhs(BpStar))
+                    { Position = dotPosition };
 
-        if (rhs.Type == TokenType.LeftBracket)
-        {
-            // Allow left.[...] syntax
-            return this.Led(left);
-        }
+            case TokenType.LeftBracket:
+                // Multi-select list: left.[expr, expr, ...]
+                this.Advance(); // consume [
+                return new SubExpressionNode(left, this.ParseMultiSelectList(rhs.Position))
+                    { Position = dotPosition };
 
-        if (rhs.Type == TokenType.LeftBrace)
-        {
-            return new SubExpressionNode(left, this.ParseMultiSelectHash(rhs.Position))
-                { Position = dotPosition };
-        }
+            case TokenType.LeftBrace:
+                return new SubExpressionNode(left, this.ParseMultiSelectHash(rhs.Position))
+                    { Position = dotPosition };
 
-        // Must be an identifier or quoted identifier
-        JMESPathNode rightNode = this.Expression(BpDot);
-        return new SubExpressionNode(left, rightNode) { Position = dotPosition };
+            case TokenType.Identifier:
+            case TokenType.QuotedIdentifier:
+            {
+                JMESPathNode rightNode = this.Expression(bp);
+                return new SubExpressionNode(left, rightNode) { Position = dotPosition };
+            }
+
+            default:
+                throw new JMESPathException(
+                    $"Expected identifier, '*', '[', or '{{' after '.' at position {rhs.Position}.");
+        }
     }
 
     private JMESPathNode ParseNudBracket(Token bracketToken)
     {
-        // [ in NUD position — could be: [number], [start:stop:step], or [expr, expr, ...] (multi-select list)
+        // [ in NUD position — could be: [number], [start:stop:step], [*], [*.*,...], or [expr, expr, ...] (multi-select list)
         this.Advance(); // consume [
 
         if (this.current.Type == TokenType.Number || this.current.Type == TokenType.Colon)
         {
             // Index or slice
-            return this.ParseIndexOrSlice(bracketToken.Position);
+            JMESPathNode indexOrSlice = this.ParseIndexOrSlice(bracketToken.Position);
+            if (indexOrSlice is SliceNode)
+            {
+                // NUD slices create projections (same as LED slices)
+                return new ListProjectionNode(
+                    indexOrSlice,
+                    this.ParseProjectionRhs(BpStar)) { Position = bracketToken.Position };
+            }
+
+            return indexOrSlice;
         }
 
         if (this.current.Type == TokenType.Star)
         {
-            // [*] — list wildcard projection on current node
             this.Advance(); // consume *
-            this.Expect(TokenType.RightBracket);
-            return new ListProjectionNode(
+            if (this.current.Type == TokenType.RightBracket)
+            {
+                // [*] — list wildcard projection on current node
+                this.Advance(); // consume ]
+                return new ListProjectionNode(
+                    new CurrentNode { Position = bracketToken.Position },
+                    this.ParseProjectionRhs(BpStar)) { Position = bracketToken.Position };
+            }
+
+            // Multi-select list starting with * expression (e.g., [*.*] or [*, foo])
+            // Reconstruct the * as a value projection NUD
+            JMESPathNode starExpr = new ValueProjectionNode(
                 new CurrentNode { Position = bracketToken.Position },
                 this.ParseProjectionRhs(BpStar)) { Position = bracketToken.Position };
+
+            // Continue parsing LEDs for the first expression
+            while (0 < this.GetLbp())
+            {
+                starExpr = this.Led(starExpr);
+            }
+
+            List<JMESPathNode> expressions = new();
+            expressions.Add(starExpr);
+
+            while (this.current.Type == TokenType.Comma)
+            {
+                this.Advance();
+                expressions.Add(this.Expression(0));
+            }
+
+            this.Expect(TokenType.RightBracket);
+            return new MultiSelectListNode(expressions.ToArray()) { Position = bracketToken.Position };
         }
 
         // Multi-select list: [expr, expr, ...]
@@ -318,9 +365,10 @@ internal ref struct Parser
                 { Position = bracketToken.Position };
         }
 
-        // Multi-select list in LED position
-        JMESPathNode msl = this.ParseMultiSelectList(bracketToken.Position);
-        return new SubExpressionNode(left, msl) { Position = bracketToken.Position };
+        // In LED bracket position, only number, colon (slice), and star are valid.
+        // Flatten [] and filter [? are separate tokens handled elsewhere.
+        throw new JMESPathException(
+            $"Unexpected token '{this.current.Type}' in bracket expression at position {bracketToken.Position}.");
     }
 
     private JMESPathNode ParseIndexOrSlice(int position)
@@ -474,29 +522,33 @@ internal ref struct Parser
     }
 
     /// <summary>
-    /// Parses the right-hand side of a projection. This is the expression that
-    /// gets applied to each element of the projected array. Handles the projection-stop
-    /// semantics: only <c>.</c>, <c>[</c>, <c>[?</c>, and <c>[]</c> can continue a projection.
+    /// Parses the right-hand side of a projection. Uses a projection-stop threshold:
+    /// tokens with binding power below <see cref="ProjectionStop"/> (Flatten, Pipe, Or,
+    /// And, comparators) return identity, leaving them for the outer expression loop.
+    /// This ensures flatten <c>[]</c> creates a new outer projection rather than being
+    /// captured inside the current one.
     /// </summary>
     private JMESPathNode ParseProjectionRhs(int bp)
     {
+        // If the next token has binding power below the projection stop threshold,
+        // it stops the projection — return identity and let the outer loop handle it.
+        if (this.GetLbp() < ProjectionStop)
+        {
+            return new CurrentNode { Position = this.current.Position };
+        }
+
         if (this.current.Type == TokenType.Dot)
         {
             this.Advance();
-            return this.ParseDotRhs(new CurrentNode { Position = this.current.Position }, this.current.Position);
+            return this.ParseDotRhs(new CurrentNode { Position = this.current.Position }, this.current.Position, bp);
         }
 
-        if (this.current.Type == TokenType.LeftBracket || this.current.Type == TokenType.Filter)
+        if (this.current.Type == TokenType.LeftBracket
+            || this.current.Type == TokenType.Filter)
         {
             return this.Expression(bp);
         }
 
-        if (this.current.Type == TokenType.Flatten)
-        {
-            return this.Expression(bp);
-        }
-
-        // No further projection — identity
         return new CurrentNode { Position = this.current.Position };
     }
 

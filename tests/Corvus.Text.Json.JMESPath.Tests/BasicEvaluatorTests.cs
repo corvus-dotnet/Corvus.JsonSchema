@@ -47,11 +47,11 @@ public class BasicEvaluatorTests
     }
 
     [Fact]
-    public void MissingPropertyReturnsDefault()
+    public void MissingPropertyReturnsNull()
     {
         JsonElement data = JsonElement.ParseValue("""{"foo": "bar"}"""u8);
         JsonElement result = JMESPathEvaluator.Default.Search("missing", data);
-        Assert.True(result.IsUndefined());
+        Assert.Equal(JsonValueKind.Null, result.ValueKind);
     }
 
     [Fact]

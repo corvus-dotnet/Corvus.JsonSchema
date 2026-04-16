@@ -32,7 +32,12 @@ public sealed class JMESPathEvaluator
         JMESPathEval compiled = this.GetOrCompile(expression);
         using JsonWorkspace workspace = JsonWorkspace.Create();
         JsonElement result = compiled(data, workspace);
-        return result.IsNullOrUndefined() ? default : result.Clone();
+        if (result.IsNullOrUndefined())
+        {
+            return JsonElement.ParseValue("null"u8);
+        }
+
+        return result.Clone();
     }
 
     /// <summary>
