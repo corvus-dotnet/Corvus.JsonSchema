@@ -8,6 +8,7 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.RegularExpressions;
 using Corvus.Runtime.InteropServices;
+using Corvus.Text;
 using Corvus.Text.Json.Internal;
 
 namespace Corvus.Text.Json.Jsonata;
@@ -203,12 +204,21 @@ public static class JsonataCodeGenHelpers
             }
             else if (current.ValueKind == JsonValueKind.Array)
             {
-                // First array encountered — collect ALL remaining results into one builder.
-                var doc = JsonElement.CreateArrayBuilder(workspace, current.GetArrayLength());
-                JsonElement.Mutable root = doc.RootElement;
-                int count = 0;
-                CollectChainFlat(current, names, i, root, ref count);
-                return count == 0 ? default : count == 1 ? root[0] : (JsonElement)root;
+                // First array encountered — collect via ElementBuffer to avoid builder overhead.
+                var buffer = default(ElementBuffer);
+                try
+                {
+                    CollectChainFlatInto(current, names, i, ref buffer);
+                    return buffer.Count == 0
+                        ? default
+                        : buffer.Count == 1
+                            ? buffer[0]
+                            : buffer.ToResult(workspace);
+                }
+                finally
+                {
+                    buffer.Dispose();
+                }
             }
             else
             {
@@ -245,11 +255,20 @@ public static class JsonataCodeGenHelpers
             }
             else if (current.ValueKind == JsonValueKind.Array)
             {
-                var doc = JsonElement.CreateArrayBuilder(workspace, current.GetArrayLength());
-                JsonElement.Mutable root = doc.RootElement;
-                int count = 0;
-                CollectChainFlat(current, names, i, root, ref count);
-                return count == 0 ? default : count == 1 ? root[0] : (JsonElement)root;
+                var buffer = default(ElementBuffer);
+                try
+                {
+                    CollectChainFlatInto(current, names, i, ref buffer);
+                    return buffer.Count == 0
+                        ? default
+                        : buffer.Count == 1
+                            ? buffer[0]
+                            : buffer.ToResult(workspace);
+                }
+                finally
+                {
+                    buffer.Dispose();
+                }
             }
             else
             {
@@ -368,9 +387,26 @@ public static class JsonataCodeGenHelpers
         byte[][] names,
         ref ElementBuffer buffer)
     {
+        NavigatePropertyChainInto(data, names, 0, ref buffer);
+    }
+
+    /// <summary>
+    /// Navigates a property chain starting at <paramref name="startIndex"/> into an
+    /// <see cref="ElementBuffer"/>, skipping already-resolved prefix steps.
+    /// </summary>
+    /// <param name="data">The element at the start position.</param>
+    /// <param name="names">The full UTF-8 encoded property names array.</param>
+    /// <param name="startIndex">The index into <paramref name="names"/> to start navigating from.</param>
+    /// <param name="buffer">The buffer to collect results into.</param>
+    public static void NavigatePropertyChainInto(
+        in JsonElement data,
+        byte[][] names,
+        int startIndex,
+        ref ElementBuffer buffer)
+    {
         JsonElement current = data;
 
-        for (int i = 0; i < names.Length; i++)
+        for (int i = startIndex; i < names.Length; i++)
         {
             if (current.ValueKind == JsonValueKind.Object)
             {
@@ -805,6 +841,51 @@ public static class JsonataCodeGenHelpers
     }
 
     /// <summary>
+    /// Navigates a single property over an array and returns the result as an array.
+    /// Builds directly into the CVB array builder (no intermediate <see cref="ElementBuffer"/>).
+    /// Used for <c>path[]</c> syntax where the result must always be an array.
+    /// </summary>
+    /// <param name="data">The input data element (typically an array).</param>
+    /// <param name="name">The UTF-8 encoded property name.</param>
+    /// <param name="workspace">The workspace for intermediate allocations.</param>
+    /// <returns>The array result, or <c>default</c> if no matches found.</returns>
+    public static JsonElement NavigatePropertyToArray(in JsonElement data, byte[] name, JsonWorkspace workspace)
+    {
+        if (data.ValueKind == JsonValueKind.Object)
+        {
+            if (data.TryGetProperty((ReadOnlySpan<byte>)name, out JsonElement result))
+            {
+                return KeepSingletonArray(result, workspace);
+            }
+
+            return default;
+        }
+
+        if (data.ValueKind != JsonValueKind.Array)
+        {
+            return default;
+        }
+
+        // Build the flat array directly via CVB — iterate inside the builder callback.
+        JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateBuilder(
+            workspace,
+            (data, name),
+            static (in (JsonElement Array, byte[] Name) ctx, ref JsonElement.ArrayBuilder builder) =>
+            {
+                CollectPropertyFlatIntoBuilder(ctx.Array, ctx.Name, ref builder);
+            },
+            estimatedMemberCount: data.GetArrayLength() * 2 + 2);
+
+        // If nothing was collected, return undefined (not an empty array).
+        if (doc.RootElement.GetArrayLength() == 0)
+        {
+            return default;
+        }
+
+        return (JsonElement)doc.RootElement;
+    }
+
+    /// <summary>
     /// Wildcard step: enumerates all values of an object (flattening array values),
     /// or all elements of an array. Returns a collected JSON array.
     /// </summary>
@@ -918,6 +999,56 @@ public static class JsonataCodeGenHelpers
                     }
 
                     break;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Fused descendant + property navigation. Recursively collects the named property
+    /// from all descendant objects in a single pass, avoiding intermediate array materialization.
+    /// </summary>
+    /// <param name="input">The input element to traverse.</param>
+    /// <param name="name">The UTF-8 encoded property name to collect.</param>
+    /// <param name="workspace">The workspace for intermediate allocations.</param>
+    /// <returns>The collected values, or <c>default</c> if none found.</returns>
+    public static JsonElement EnumerateDescendantProperty(in JsonElement input, byte[] name, JsonWorkspace workspace)
+    {
+        var buffer = default(ElementBuffer);
+        try
+        {
+            CollectDescendantProperty(input, name, ref buffer);
+
+            return buffer.Count == 0
+                ? default
+                : buffer.Count == 1
+                    ? buffer[0]
+                    : buffer.ToResult(workspace);
+        }
+        finally
+        {
+            buffer.Dispose();
+        }
+
+        static void CollectDescendantProperty(in JsonElement element, byte[] name, ref ElementBuffer buffer)
+        {
+            if (element.ValueKind == JsonValueKind.Object)
+            {
+                if (element.TryGetProperty((ReadOnlySpan<byte>)name, out JsonElement val))
+                {
+                    buffer.AddFlatten(val);
+                }
+
+                foreach (var prop in element.EnumerateObject())
+                {
+                    CollectDescendantProperty(prop.Value, name, ref buffer);
+                }
+            }
+            else if (element.ValueKind == JsonValueKind.Array)
+            {
+                foreach (JsonElement item in element.EnumerateArray())
+                {
+                    CollectDescendantProperty(item, name, ref buffer);
+                }
             }
         }
     }
@@ -2587,11 +2718,11 @@ public static class JsonataCodeGenHelpers
             }
         }
 
-        // For arrays and objects, produce JSON representation
+        // For arrays and objects, produce JSON representation directly to UTF-8 bytes,
+        // bypassing the intermediate string allocation and StreamReader overhead.
         if (value.ValueKind is JsonValueKind.Array or JsonValueKind.Object)
         {
-            string json = StringifyElement(value, prettyPrint);
-            return JsonataHelpers.StringFromString(json, workspace);
+            return StringifyElementDirect(value, prettyPrint, workspace);
         }
 
         // true/false
@@ -2839,6 +2970,179 @@ public static class JsonataCodeGenHelpers
         }
 
         return count == 0 ? default : JsonataHelpers.NumberFromDouble(total / count, workspace);
+    }
+
+    /// <summary>
+    /// Fused navigate-and-max: walks a property chain and finds the maximum
+    /// numeric value without materializing an intermediate array.
+    /// </summary>
+    public static JsonElement MaxOverChainDouble(
+        in JsonElement input, byte[][] names, JsonWorkspace workspace)
+    {
+        double max = double.NegativeInfinity;
+        bool found = false;
+        AggregateOverChainCore(input, names, 0, ref max, ref found, AggregateOp.Max);
+        return found ? JsonataHelpers.NumberFromDouble(max, workspace) : default;
+    }
+
+    /// <summary>
+    /// Fused navigate-and-min: walks a property chain and finds the minimum
+    /// numeric value without materializing an intermediate array.
+    /// </summary>
+    public static JsonElement MinOverChainDouble(
+        in JsonElement input, byte[][] names, JsonWorkspace workspace)
+    {
+        double min = double.PositiveInfinity;
+        bool found = false;
+        AggregateOverChainCore(input, names, 0, ref min, ref found, AggregateOp.Min);
+        return found ? JsonataHelpers.NumberFromDouble(min, workspace) : default;
+    }
+
+    /// <summary>
+    /// Fused navigate-and-average: walks a property chain and computes the
+    /// average of all numeric leaf values without materializing an intermediate array.
+    /// </summary>
+    public static JsonElement AverageOverChainDouble(
+        in JsonElement input, byte[][] names, JsonWorkspace workspace)
+    {
+        double sum = 0;
+        bool found = false;
+        int count = 0;
+        AverageOverChainCore(input, names, 0, ref sum, ref count);
+        found = count > 0;
+        return found ? JsonataHelpers.NumberFromDouble(sum / count, workspace) : default;
+    }
+
+    private enum AggregateOp
+    {
+        Max,
+        Min,
+    }
+
+    private static void AggregateOverChainCore(
+        in JsonElement current,
+        byte[][] names,
+        int index,
+        ref double accumulator,
+        ref bool hasValue,
+        AggregateOp op)
+    {
+        if (index >= names.Length)
+        {
+            if (current.ValueKind == JsonValueKind.Array)
+            {
+                foreach (JsonElement el in current.EnumerateArray())
+                {
+                    if (el.ValueKind == JsonValueKind.Number)
+                    {
+                        double val = el.GetDouble();
+                        if (op == AggregateOp.Max ? val > accumulator : val < accumulator)
+                        {
+                            accumulator = val;
+                        }
+
+                        hasValue = true;
+                    }
+                    else if (!el.IsNullOrUndefined())
+                    {
+                        ThrowAggregateTypeError(op);
+                    }
+                }
+            }
+            else if (current.ValueKind == JsonValueKind.Number)
+            {
+                double val = current.GetDouble();
+                if (op == AggregateOp.Max ? val > accumulator : val < accumulator)
+                {
+                    accumulator = val;
+                }
+
+                hasValue = true;
+            }
+            else if (!current.IsNullOrUndefined())
+            {
+                ThrowAggregateTypeError(op);
+            }
+
+            return;
+        }
+
+        if (current.ValueKind == JsonValueKind.Object)
+        {
+            if (current.TryGetProperty(names[index], out JsonElement prop))
+            {
+                AggregateOverChainCore(prop, names, index + 1, ref accumulator, ref hasValue, op);
+            }
+        }
+        else if (current.ValueKind == JsonValueKind.Array)
+        {
+            foreach (JsonElement el in current.EnumerateArray())
+            {
+                AggregateOverChainCore(el, names, index, ref accumulator, ref hasValue, op);
+            }
+        }
+    }
+
+    private static void AverageOverChainCore(
+        in JsonElement current,
+        byte[][] names,
+        int index,
+        ref double sum,
+        ref int count)
+    {
+        if (index >= names.Length)
+        {
+            if (current.ValueKind == JsonValueKind.Array)
+            {
+                foreach (JsonElement el in current.EnumerateArray())
+                {
+                    if (el.ValueKind == JsonValueKind.Number)
+                    {
+                        sum += el.GetDouble();
+                        count++;
+                    }
+                    else if (!el.IsNullOrUndefined())
+                    {
+                        throw new JsonataException("T0412", SR.T0412_Argument1OfFunctionAverageMustBeAnArrayOfNumbers, 0);
+                    }
+                }
+            }
+            else if (current.ValueKind == JsonValueKind.Number)
+            {
+                sum += current.GetDouble();
+                count++;
+            }
+            else if (!current.IsNullOrUndefined())
+            {
+                throw new JsonataException("T0412", SR.T0412_Argument1OfFunctionAverageMustBeAnArrayOfNumbers, 0);
+            }
+
+            return;
+        }
+
+        if (current.ValueKind == JsonValueKind.Object)
+        {
+            if (current.TryGetProperty(names[index], out JsonElement prop))
+            {
+                AverageOverChainCore(prop, names, index + 1, ref sum, ref count);
+            }
+        }
+        else if (current.ValueKind == JsonValueKind.Array)
+        {
+            foreach (JsonElement el in current.EnumerateArray())
+            {
+                AverageOverChainCore(el, names, index, ref sum, ref count);
+            }
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private static void ThrowAggregateTypeError(AggregateOp op)
+    {
+        string msg = op == AggregateOp.Max
+            ? SR.T0412_Argument1OfFunctionMaxMustBeAnArrayOfNumbers
+            : SR.T0412_Argument1OfFunctionMinMustBeAnArrayOfNumbers;
+        throw new JsonataException("T0412", msg, 0);
     }
 
     // ===== Phase 1b: Math Functions =====
@@ -3287,7 +3591,7 @@ public static class JsonataCodeGenHelpers
     }
 
     /// <summary>
-    /// JSONata <c>$split</c> function (string separator only; regex falls back to runtime).
+    /// JSONata <c>$split</c> function (string separator only).
     /// </summary>
     public static JsonElement Split(in JsonElement input, in JsonElement separator, in JsonElement limitElement, JsonWorkspace workspace)
     {
@@ -3352,45 +3656,174 @@ public static class JsonataCodeGenHelpers
 
             return (JsonElement)arrayRoot;
         }
+        else if (limit <= 0)
+        {
+            JsonDocumentBuilder<JsonElement.Mutable> emptyDoc = JsonElement.CreateArrayBuilder(workspace, 0);
+            return (JsonElement)emptyDoc.RootElement;
+        }
         else
         {
-            // Collect split results using UTF-8 byte-level IndexOf
-            var parts = new List<(int Start, int Length)>();
+            // Count splits up to limit - 1 (to produce limit parts)
+            int matchCount = 0;
             int searchStart = 0;
-            while (parts.Count < limit)
+            while (matchCount < limit - 1)
             {
                 int idx = str.Slice(searchStart).IndexOf(sep);
                 if (idx < 0)
                 {
-                    parts.Add((searchStart, str.Length - searchStart));
                     break;
                 }
 
-                parts.Add((searchStart, idx));
+                matchCount++;
                 searchStart += idx + sep.Length;
 
                 if (searchStart > str.Length)
                 {
                     break;
                 }
-
-                if (searchStart == str.Length && parts.Count < limit)
-                {
-                    parts.Add((searchStart, 0));
-                    break;
-                }
             }
 
-            int resultCount = Math.Min(parts.Count, limit);
+            bool exhausted = matchCount < limit - 1;
+            int resultCount = exhausted ? matchCount + 1 : limit;
             JsonDocumentBuilder<JsonElement.Mutable> arrayDoc = JsonElement.CreateArrayBuilder(workspace, resultCount);
             JsonElement.Mutable arrayRoot = arrayDoc.RootElement;
-            for (int i = 0; i < resultCount; i++)
+
+            searchStart = 0;
+            for (int i = 0; i < resultCount - 1; i++)
             {
-                arrayRoot.AddItem(JsonataHelpers.StringFromUnescapedUtf8(str.Slice(parts[i].Start, parts[i].Length), workspace));
+                int idx = str.Slice(searchStart).IndexOf(sep);
+                arrayRoot.AddItem(JsonataHelpers.StringFromUnescapedUtf8(str.Slice(searchStart, idx), workspace));
+                searchStart += idx + sep.Length;
+            }
+
+            if (exhausted)
+            {
+                arrayRoot.AddItem(JsonataHelpers.StringFromUnescapedUtf8(str.Slice(searchStart), workspace));
+            }
+            else
+            {
+                int idx = str.Slice(searchStart).IndexOf(sep);
+                int partLen = idx >= 0 ? idx : str.Length - searchStart;
+                arrayRoot.AddItem(JsonataHelpers.StringFromUnescapedUtf8(str.Slice(searchStart, partLen), workspace));
             }
 
             return (JsonElement)arrayRoot;
         }
+    }
+
+    /// <summary>
+    /// JSONata <c>$split</c> function — regex separator form.
+    /// Uses a pre-compiled <see cref="Regex"/> passed from the code-generated static field.
+    /// On NET, uses <see cref="Regex.EnumerateMatches(ReadOnlySpan{char})"/>
+    /// to avoid per-match object allocations.
+    /// </summary>
+    public static JsonElement SplitRegex(in JsonElement input, Regex regex, in JsonElement limitElement, JsonWorkspace workspace)
+    {
+        if (input.ValueKind != JsonValueKind.String)
+        {
+            throw new JsonataException("T0410", SR.T0410_Argument1OfFunctionSplitIsNotOfTheCorrectType, 0);
+        }
+
+        int limit = int.MaxValue;
+        if (!limitElement.IsUndefined())
+        {
+            if (limitElement.ValueKind != JsonValueKind.Number)
+            {
+                throw new JsonataException("T0410", SR.T0410_Argument3OfFunctionSplitIsNotOfTheCorrectType, 0);
+            }
+
+            if (FunctionalCompiler.TryCoerceToNumber(limitElement, out double limitD))
+            {
+                if (limitD < 0)
+                {
+                    throw new JsonataException("D3020", SR.D3020_ThirdArgumentOfTheSplitFunctionMustEvaluateToAPositiveNumber, 0);
+                }
+
+                limit = (int)Math.Floor(limitD);
+            }
+        }
+
+        using UnescapedUtf16JsonString utf16Str = input.GetUtf16String();
+        ReadOnlySpan<char> chars = utf16Str.Span;
+
+        if (limit <= 0)
+        {
+            JsonDocumentBuilder<JsonElement.Mutable> emptyDoc = JsonElement.CreateArrayBuilder(workspace, 0);
+            return (JsonElement)emptyDoc.RootElement;
+        }
+
+#if NET8_0_OR_GREATER
+        // Pass 1: count matches up to limit - 1
+        int matchCount = 0;
+        foreach (ValueMatch vm0 in regex.EnumerateMatches(chars))
+        {
+            matchCount++;
+            if (matchCount >= limit - 1)
+            {
+                break;
+            }
+        }
+
+        bool exhausted = matchCount < limit - 1;
+        int resultCount = exhausted ? matchCount + 1 : limit;
+        JsonDocumentBuilder<JsonElement.Mutable> arrayDoc = JsonElement.CreateArrayBuilder(workspace, resultCount);
+        JsonElement.Mutable arrayRoot = arrayDoc.RootElement;
+
+        // Pass 2: emit the split parts
+        int emitted = 0;
+        int pos = 0;
+        foreach (ValueMatch vm in regex.EnumerateMatches(chars))
+        {
+            if (emitted >= resultCount - 1)
+            {
+                break;
+            }
+
+            arrayRoot.AddItem(JsonataHelpers.StringFromChars(chars.Slice(pos, vm.Index - pos), workspace));
+            pos = vm.Index + vm.Length;
+            emitted++;
+        }
+
+        if (exhausted)
+        {
+            arrayRoot.AddItem(JsonataHelpers.StringFromChars(chars.Slice(pos), workspace));
+        }
+        else
+        {
+            // Hit limit: find next match boundary and take text up to it
+            int nextEnd = chars.Length;
+            int scan = 0;
+            int mIdx = 0;
+            foreach (ValueMatch vm2 in regex.EnumerateMatches(chars))
+            {
+                if (mIdx == resultCount - 1)
+                {
+                    nextEnd = vm2.Index;
+                    break;
+                }
+
+                scan = vm2.Index + vm2.Length;
+                mIdx++;
+            }
+
+            arrayRoot.AddItem(JsonataHelpers.StringFromChars(chars.Slice(pos, nextEnd - pos), workspace));
+        }
+
+        return (JsonElement)arrayRoot;
+#else
+        // Fallback: use Regex.Split on a string
+        string str = chars.ToString();
+        string[] parts = regex.Split(str);
+        int resultCount = Math.Min(parts.Length, limit);
+        JsonDocumentBuilder<JsonElement.Mutable> arrayDoc = JsonElement.CreateArrayBuilder(workspace, resultCount);
+        JsonElement.Mutable arrayRoot = arrayDoc.RootElement;
+        for (int i = 0; i < resultCount; i++)
+        {
+            arrayRoot.AddItem(JsonataHelpers.StringFromString(parts[i], workspace));
+        }
+
+        return (JsonElement)arrayRoot;
+#endif
     }
 
     /// <summary>
@@ -3452,8 +3885,12 @@ public static class JsonataCodeGenHelpers
         }
 
         // Build code-point array for the pad string so cycling works correctly with surrogates.
+        // Pad strings are typically 1-2 characters; stackalloc avoids the heap allocation.
         int padCpCount = CountCodePoints(padSpan);
-        int[] padCodePoints = new int[padCpCount];
+        int[]? rentedCpArray = null;
+        Span<int> padCodePoints = padCpCount <= 32
+            ? stackalloc int[32]
+            : (rentedCpArray = ArrayPool<int>.Shared.Rent(padCpCount));
         int cpIdx = 0;
         for (int ci = 0; ci < padSpan.Length; ci++)
         {
@@ -3507,6 +3944,11 @@ public static class JsonataCodeGenHelpers
             if (rentedChars is not null)
             {
                 ArrayPool<char>.Shared.Return(rentedChars);
+            }
+
+            if (rentedCpArray is not null)
+            {
+                ArrayPool<int>.Shared.Return(rentedCpArray);
             }
         }
     }
@@ -3587,14 +4029,19 @@ public static class JsonataCodeGenHelpers
         }
 
         int len = input.GetArrayLength();
-        JsonDocumentBuilder<JsonElement.Mutable> arrayDoc = JsonElement.CreateArrayBuilder(workspace, len);
-        JsonElement.Mutable arrayRoot = arrayDoc.RootElement;
-        for (int i = len - 1; i >= 0; i--)
-        {
-            arrayRoot.AddItem(input[i]);
-        }
+        JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateBuilder(
+            workspace,
+            (input, len),
+            static (in (JsonElement Input, int Len) ctx, ref JsonElement.ArrayBuilder builder) =>
+            {
+                for (int i = ctx.Len - 1; i >= 0; i--)
+                {
+                    builder.AddItem(ctx.Input[i]);
+                }
+            },
+            estimatedMemberCount: len + 2);
 
-        return (JsonElement)arrayRoot;
+        return (JsonElement)doc.RootElement;
     }
 
     /// <summary>
@@ -3612,14 +4059,276 @@ public static class JsonataCodeGenHelpers
             return input;
         }
 
-        JsonDocumentBuilder<JsonElement.Mutable> arrayDoc = JsonElement.CreateArrayBuilder(workspace, input.GetArrayLength());
+        int count = input.GetArrayLength();
+        if (count <= 1)
+        {
+            return input;
+        }
+
+        var (parentDoc, _) = JsonElementHelpers.GetParentDocumentAndIndex(input);
+
+        Span<int> buckets = count <= UniqueItemsHashSet.StackAllocBucketSize
+            ? stackalloc int[UniqueItemsHashSet.StackAllocBucketSize]
+            : default;
+        int entryBytes = count * 12;
+        Span<byte> entries = entryBytes <= UniqueItemsHashSet.StackAllocEntrySize
+            ? stackalloc byte[UniqueItemsHashSet.StackAllocEntrySize]
+            : default;
+
+        using var hashSet = new UniqueItemsHashSet(parentDoc, count, buckets, entries);
+
+        JsonDocumentBuilder<JsonElement.Mutable> arrayDoc = JsonElement.CreateArrayBuilder(workspace, count);
         JsonElement.Mutable arrayRoot = arrayDoc.RootElement;
-        var seen = new HashSet<string>();
         foreach (var item in input.EnumerateArray())
         {
-            if (seen.Add(item.GetRawText()))
+            var (_, idx) = JsonElementHelpers.GetParentDocumentAndIndex(item);
+            if (hashSet.AddItemIfNotExists(idx))
             {
                 arrayRoot.AddItem(item);
+            }
+        }
+
+        return (JsonElement)arrayRoot;
+    }
+
+    /// <summary>
+    /// Fused chain navigation + distinct: navigates a property chain into a lightweight
+    /// <see cref="ElementBuffer"/> (no intermediate builder), then deduplicates directly.
+    /// </summary>
+    /// <param name="data">The input data element.</param>
+    /// <param name="names">UTF-8 encoded property name chain.</param>
+    /// <param name="workspace">The workspace for pooled memory.</param>
+    /// <returns>The deduplicated result.</returns>
+    public static JsonElement ChainDistinct(in JsonElement data, byte[][] names, JsonWorkspace workspace)
+    {
+        var buffer = default(ElementBuffer);
+        try
+        {
+            NavigatePropertyChainInto(data, names, ref buffer);
+            return DistinctFromBuffer(ref buffer, workspace);
+        }
+        finally
+        {
+            buffer.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Fused chain navigation + distinct with a start index for partially-resolved chains.
+    /// </summary>
+    /// <param name="data">The element at the start position (already resolved up to <paramref name="startIndex"/>).</param>
+    /// <param name="names">The full UTF-8 encoded property names array.</param>
+    /// <param name="startIndex">The index into <paramref name="names"/> to start navigating from.</param>
+    /// <param name="workspace">The workspace for pooled memory.</param>
+    /// <returns>The deduplicated result.</returns>
+    public static JsonElement ChainDistinct(in JsonElement data, byte[][] names, int startIndex, JsonWorkspace workspace)
+    {
+        var buffer = default(ElementBuffer);
+        try
+        {
+            NavigatePropertyChainInto(data, names, startIndex, ref buffer);
+            return DistinctFromBuffer(ref buffer, workspace);
+        }
+        finally
+        {
+            buffer.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Fused chain navigation + keep-singleton-array (<c>[]</c> syntax).
+    /// Navigates the property chain into an <see cref="ElementBuffer"/> (no intermediate builder),
+    /// then builds the result array directly from the buffer.
+    /// </summary>
+    /// <param name="data">The root element to navigate from.</param>
+    /// <param name="names">The UTF-8 encoded property names for the chain.</param>
+    /// <param name="workspace">The workspace for pooled memory.</param>
+    /// <returns>The flattened array result.</returns>
+    public static JsonElement ChainKeepSingletonArray(in JsonElement data, byte[][] names, JsonWorkspace workspace)
+    {
+        var buffer = default(ElementBuffer);
+        try
+        {
+            NavigatePropertyChainInto(data, names, ref buffer);
+            return ArrayFromBuffer(ref buffer, workspace);
+        }
+        finally
+        {
+            buffer.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Fused chain navigation + keep-singleton-array with a start index for partially-resolved chains.
+    /// </summary>
+    /// <param name="data">The element at the start position (already resolved up to <paramref name="startIndex"/>).</param>
+    /// <param name="names">The full UTF-8 encoded property names array.</param>
+    /// <param name="startIndex">The index into <paramref name="names"/> to start navigating from.</param>
+    /// <param name="workspace">The workspace for pooled memory.</param>
+    /// <returns>The flattened array result.</returns>
+    public static JsonElement ChainKeepSingletonArray(in JsonElement data, byte[][] names, int startIndex, JsonWorkspace workspace)
+    {
+        var buffer = default(ElementBuffer);
+        try
+        {
+            NavigatePropertyChainInto(data, names, startIndex, ref buffer);
+            return ArrayFromBuffer(ref buffer, workspace);
+        }
+        finally
+        {
+            buffer.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Fused chain navigation + merge. Navigates the property chain into an
+    /// <see cref="ElementBuffer"/> (no intermediate builder), then merges object
+    /// properties from the buffer elements into a single result.
+    /// </summary>
+    /// <param name="data">The root element to navigate from.</param>
+    /// <param name="names">The UTF-8 encoded property names for the chain.</param>
+    /// <param name="workspace">The workspace for pooled memory.</param>
+    /// <returns>The merged object result.</returns>
+    public static JsonElement ChainMerge(in JsonElement data, byte[][] names, JsonWorkspace workspace)
+    {
+        var buffer = default(ElementBuffer);
+        try
+        {
+            NavigatePropertyChainInto(data, names, ref buffer);
+            return MergeFromBuffer(ref buffer, workspace);
+        }
+        finally
+        {
+            buffer.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Fused chain navigation + merge with a start index for partially-resolved chains.
+    /// </summary>
+    /// <param name="data">The element at the start position (already resolved up to <paramref name="startIndex"/>).</param>
+    /// <param name="names">The full UTF-8 encoded property names array.</param>
+    /// <param name="startIndex">The index into <paramref name="names"/> to start navigating from.</param>
+    /// <param name="workspace">The workspace for pooled memory.</param>
+    /// <returns>The merged object result.</returns>
+    public static JsonElement ChainMerge(in JsonElement data, byte[][] names, int startIndex, JsonWorkspace workspace)
+    {
+        var buffer = default(ElementBuffer);
+        try
+        {
+            NavigatePropertyChainInto(data, names, startIndex, ref buffer);
+            return MergeFromBuffer(ref buffer, workspace);
+        }
+        finally
+        {
+            buffer.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Builds an array from an <see cref="ElementBuffer"/>. If the buffer is empty,
+    /// returns undefined. If it has exactly one element, returns that element wrapped
+    /// in an array. Otherwise, builds a full array document.
+    /// </summary>
+    private static JsonElement ArrayFromBuffer(ref ElementBuffer buffer, JsonWorkspace workspace)
+    {
+        if (buffer.Count == 0)
+        {
+            return default;
+        }
+
+        if (buffer.Count == 1)
+        {
+            // Single element — wrap in a 1-element array
+            var singleDoc = JsonElement.CreateArrayBuilder(workspace, 1);
+            singleDoc.RootElement.AddItem(buffer[0]);
+            return (JsonElement)singleDoc.RootElement;
+        }
+
+        JsonDocumentBuilder<JsonElement.Mutable> arrayDoc = JsonElement.CreateArrayBuilder(workspace, buffer.Count);
+        JsonElement.Mutable arrayRoot = arrayDoc.RootElement;
+        for (int i = 0; i < buffer.Count; i++)
+        {
+            arrayRoot.AddItem(buffer[i]);
+        }
+
+        return (JsonElement)arrayRoot;
+    }
+
+    /// <summary>
+    /// Merges object properties from an <see cref="ElementBuffer"/> into a single object
+    /// using the CVB pattern. Last-wins for duplicate property names.
+    /// </summary>
+    private static JsonElement MergeFromBuffer(ref ElementBuffer buffer, JsonWorkspace workspace)
+    {
+        if (buffer.Count == 0)
+        {
+            return default;
+        }
+
+        if (buffer.Count == 1)
+        {
+            return buffer[0].ValueKind == JsonValueKind.Object ? buffer[0] : default;
+        }
+
+        JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateBuilder(
+            workspace,
+            buffer,
+            static (in ElementBuffer ctx, ref JsonElement.ObjectBuilder builder) =>
+            {
+                for (int i = 0; i < ctx.Count; i++)
+                {
+                    if (ctx[i].ValueKind == JsonValueKind.Object)
+                    {
+                        foreach (var prop in ctx[i].EnumerateObject())
+                        {
+                            using UnescapedUtf8JsonString nameUtf8 = prop.Utf8NameSpan;
+                            builder.AddProperty(nameUtf8.Span, prop.Value, escapeName: false, nameRequiresUnescaping: false);
+                        }
+                    }
+                }
+            },
+            estimatedMemberCount: 16);
+
+        return (JsonElement)doc.RootElement;
+    }
+
+    /// <summary>
+    /// Deduplicates elements from an <see cref="ElementBuffer"/> using
+    /// <see cref="UniqueItemsHashSet"/> and builds the result array in one pass.
+    /// </summary>
+    private static JsonElement DistinctFromBuffer(ref ElementBuffer buffer, JsonWorkspace workspace)
+    {
+        if (buffer.Count == 0)
+        {
+            return default;
+        }
+
+        if (buffer.Count == 1)
+        {
+            return buffer[0];
+        }
+
+        var (parentDoc, _) = JsonElementHelpers.GetParentDocumentAndIndex(buffer[0]);
+
+        Span<int> buckets = buffer.Count <= UniqueItemsHashSet.StackAllocBucketSize
+            ? stackalloc int[UniqueItemsHashSet.StackAllocBucketSize]
+            : default;
+        int entryBytes = buffer.Count * 12;
+        Span<byte> entries = entryBytes <= UniqueItemsHashSet.StackAllocEntrySize
+            ? stackalloc byte[UniqueItemsHashSet.StackAllocEntrySize]
+            : default;
+
+        using var hashSet = new UniqueItemsHashSet(parentDoc, buffer.Count, buckets, entries);
+
+        JsonDocumentBuilder<JsonElement.Mutable> arrayDoc = JsonElement.CreateArrayBuilder(workspace, buffer.Count);
+        JsonElement.Mutable arrayRoot = arrayDoc.RootElement;
+        for (int i = 0; i < buffer.Count; i++)
+        {
+            var (_, idx) = JsonElementHelpers.GetParentDocumentAndIndex(buffer[i]);
+            if (hashSet.AddItemIfNotExists(idx))
+            {
+                arrayRoot.AddItem(buffer[i]);
             }
         }
 
@@ -3636,39 +4345,92 @@ public static class JsonataCodeGenHelpers
             return default;
         }
 
-        var keys = new List<string>();
-        var seen = new HashSet<string>();
-        CollectKeys(input, keys, seen);
-
-        if (keys.Count == 0)
+        if (input.ValueKind == JsonValueKind.Object)
         {
-            return default;
+            // Fast path for single object: use CVB array builder with UTF-8 property names
+            int propCount = 0;
+            foreach (var p in input.EnumerateObject())
+            {
+                propCount++;
+            }
+
+            if (propCount == 0)
+            {
+                return default;
+            }
+
+            JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateBuilder(
+                workspace,
+                input,
+                static (in JsonElement ctx, ref JsonElement.ArrayBuilder builder) =>
+                {
+                    foreach (var prop in ctx.EnumerateObject())
+                    {
+                        using UnescapedUtf8JsonString nameUtf8 = prop.Utf8NameSpan;
+                        builder.AddItem(nameUtf8.Span);
+                    }
+                },
+                estimatedMemberCount: propCount + 2);
+
+            if (propCount == 1)
+            {
+                return doc.RootElement[0];
+            }
+
+            return (JsonElement)doc.RootElement;
         }
 
-        if (keys.Count == 1)
+        if (input.ValueKind == JsonValueKind.Array)
         {
-            return JsonataHelpers.StringFromString(keys[0], workspace);
+            // Array of objects — use Utf8KeyHashSet for allocation-free dedup
+            int arrayLen = input.GetArrayLength();
+            Span<int> keyBuckets = arrayLen <= Utf8KeyHashSet.StackAllocBucketSize
+                ? stackalloc int[Utf8KeyHashSet.StackAllocBucketSize]
+                : default;
+            Span<byte> keyEntries = arrayLen * 20 <= Utf8KeyHashSet.StackAllocEntrySize
+                ? stackalloc byte[Utf8KeyHashSet.StackAllocEntrySize]
+                : default;
+            Span<byte> keyBuffer = stackalloc byte[Utf8KeyHashSet.StackAllocKeyBufferSize];
+
+            var keySet = new Utf8KeyHashSet(arrayLen, keyBuckets, keyEntries, keyBuffer);
+            try
+            {
+                JsonDocumentBuilder<JsonElement.Mutable> arrayDoc = JsonElement.CreateArrayBuilder(workspace, arrayLen);
+                JsonElement.Mutable arrayRoot = arrayDoc.RootElement;
+
+                CollectUniqueKeys(input, ref keySet, ref arrayRoot);
+
+                if (keySet.Count == 0)
+                {
+                    return default;
+                }
+
+                if (keySet.Count == 1)
+                {
+                    return arrayRoot[0];
+                }
+
+                return (JsonElement)arrayRoot;
+            }
+            finally
+            {
+                keySet.Dispose();
+            }
         }
 
-        JsonDocumentBuilder<JsonElement.Mutable> arrayDoc = JsonElement.CreateArrayBuilder(workspace, keys.Count);
-        JsonElement.Mutable arrayRoot = arrayDoc.RootElement;
-        foreach (var key in keys)
-        {
-            arrayRoot.AddItem(JsonataHelpers.StringFromString(key, workspace));
-        }
-
-        return (JsonElement)arrayRoot;
+        return default;
     }
 
-    private static void CollectKeys(JsonElement el, List<string> keys, HashSet<string> seen)
+    private static void CollectUniqueKeys(JsonElement el, ref Utf8KeyHashSet keySet, ref JsonElement.Mutable arrayRoot)
     {
         if (el.ValueKind == JsonValueKind.Object)
         {
             foreach (var prop in el.EnumerateObject())
             {
-                if (seen.Add(prop.Name))
+                using UnescapedUtf8JsonString nameUtf8 = prop.Utf8NameSpan;
+                if (keySet.AddIfNotExists(nameUtf8.Span))
                 {
-                    keys.Add(prop.Name);
+                    arrayRoot.AddItem(nameUtf8.Span);
                 }
             }
         }
@@ -3676,13 +4438,15 @@ public static class JsonataCodeGenHelpers
         {
             foreach (var item in el.EnumerateArray())
             {
-                CollectKeys(item, keys, seen);
+                CollectUniqueKeys(item, ref keySet, ref arrayRoot);
             }
         }
     }
 
     /// <summary>
     /// JSONata <c>$values</c> function — returns values from an object.
+    /// Uses <see cref="ElementBuffer"/> to avoid
+    /// document creation when the object has a single property.
     /// </summary>
     public static JsonElement Values(in JsonElement input, JsonWorkspace workspace)
     {
@@ -3691,20 +4455,20 @@ public static class JsonataCodeGenHelpers
             return default;
         }
 
-        int propCount = 0;
-        foreach (var p in input.EnumerateObject())
+        var buffer = default(ElementBuffer);
+        try
         {
-            propCount++;
-        }
+            foreach (var prop in input.EnumerateObject())
+            {
+                buffer.Add(prop.Value);
+            }
 
-        JsonDocumentBuilder<JsonElement.Mutable> arrayDoc = JsonElement.CreateArrayBuilder(workspace, propCount);
-        JsonElement.Mutable arrayRoot = arrayDoc.RootElement;
-        foreach (var prop in input.EnumerateObject())
+            return buffer.ToArrayResult(workspace);
+        }
+        finally
         {
-            arrayRoot.AddItem(prop.Value);
+            buffer.Dispose();
         }
-
-        return (JsonElement)arrayRoot;
     }
 
     /// <summary>
@@ -3774,24 +4538,34 @@ public static class JsonataCodeGenHelpers
             return input;
         }
 
-        JsonDocumentBuilder<JsonElement.Mutable> objDoc = JsonElement.CreateObjectBuilder(workspace, 16);
-        JsonElement.Mutable objRoot = objDoc.RootElement;
-
-        if (input.ValueKind == JsonValueKind.Array)
+        if (input.ValueKind != JsonValueKind.Array)
         {
-            foreach (var item in input.EnumerateArray())
-            {
-                if (item.ValueKind == JsonValueKind.Object)
-                {
-                    foreach (var prop in item.EnumerateObject())
-                    {
-                        objRoot.SetProperty(prop.Name, prop.Value);
-                    }
-                }
-            }
+            return default;
         }
 
-        return (JsonElement)objRoot;
+        // Use CVB ObjectBuilder — AddProperty is forward-only append (no O(n) scan).
+        // Last-wins semantics are handled by the fact that the document builder
+        // keeps the last value for duplicate property names when serialised.
+        JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateBuilder(
+            workspace,
+            input,
+            static (in JsonElement ctx, ref JsonElement.ObjectBuilder builder) =>
+            {
+                foreach (var item in ctx.EnumerateArray())
+                {
+                    if (item.ValueKind == JsonValueKind.Object)
+                    {
+                        foreach (var prop in item.EnumerateObject())
+                        {
+                            using UnescapedUtf8JsonString nameUtf8 = prop.Utf8NameSpan;
+                            builder.AddProperty(nameUtf8.Span, prop.Value, escapeName: false, nameRequiresUnescaping: false);
+                        }
+                    }
+                }
+            },
+            estimatedMemberCount: 16);
+
+        return (JsonElement)doc.RootElement;
     }
 
     /// <summary>
@@ -3811,7 +4585,7 @@ public static class JsonataCodeGenHelpers
 
         if (input.ValueKind == JsonValueKind.Array)
         {
-            JsonDocumentBuilder<JsonElement.Mutable> arrayDoc = JsonElement.CreateArrayBuilder(workspace, input.GetArrayLength());
+            JsonDocumentBuilder<JsonElement.Mutable> arrayDoc = JsonElement.CreateArrayBuilder(workspace, input.GetArrayLength() * 3);
             JsonElement.Mutable arrayRoot = arrayDoc.RootElement;
             foreach (var item in input.EnumerateArray())
             {
@@ -3819,10 +4593,7 @@ public static class JsonataCodeGenHelpers
                 {
                     foreach (var prop in item.EnumerateObject())
                     {
-                        JsonDocumentBuilder<JsonElement.Mutable> propDoc = JsonElement.CreateObjectBuilder(workspace, 1);
-                        JsonElement.Mutable propRoot = propDoc.RootElement;
-                        propRoot.SetProperty(prop.Name, prop.Value);
-                        arrayRoot.AddItem((JsonElement)propRoot);
+                        arrayRoot.AddItem(prop, SpreadPropertyCallback, 1);
                     }
                 }
             }
@@ -3850,13 +4621,16 @@ public static class JsonataCodeGenHelpers
         JsonElement.Mutable arrayRoot = arrayDoc.RootElement;
         foreach (var prop in obj.EnumerateObject())
         {
-            JsonDocumentBuilder<JsonElement.Mutable> propDoc = JsonElement.CreateObjectBuilder(workspace, 1);
-            JsonElement.Mutable propRoot = propDoc.RootElement;
-            propRoot.SetProperty(prop.Name, prop.Value);
-            arrayRoot.AddItem((JsonElement)propRoot);
+            arrayRoot.AddItem(prop, SpreadPropertyCallback, 1);
         }
 
         return (JsonElement)arrayRoot;
+    }
+
+    private static void SpreadPropertyCallback(in JsonProperty<JsonElement> ctx, ref JsonElement.ObjectBuilder builder)
+    {
+        using UnescapedUtf8JsonString nameUtf8 = ctx.Utf8NameSpan;
+        builder.AddProperty(nameUtf8.Span, ctx.Value, escapeName: false, nameRequiresUnescaping: false);
     }
 
     /// <summary>
@@ -4008,24 +4782,30 @@ public static class JsonataCodeGenHelpers
             return input;
         }
 
-        JsonDocumentBuilder<JsonElement.Mutable> arrayDoc = JsonElement.CreateArrayBuilder(workspace, input.GetArrayLength());
-        JsonElement.Mutable arrayRoot = arrayDoc.RootElement;
-        FlattenElement(input, ref arrayRoot);
-        return (JsonElement)arrayRoot;
+        JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateBuilder(
+            workspace,
+            input,
+            static (in JsonElement ctx, ref JsonElement.ArrayBuilder builder) =>
+            {
+                FlattenIntoBuilder(ctx, ref builder);
+            },
+            estimatedMemberCount: 16);
+
+        return (JsonElement)doc.RootElement;
     }
 
-    private static void FlattenElement(JsonElement element, ref JsonElement.Mutable arrayRoot)
+    private static void FlattenIntoBuilder(JsonElement element, ref JsonElement.ArrayBuilder builder)
     {
         if (element.ValueKind == JsonValueKind.Array)
         {
             foreach (var item in element.EnumerateArray())
             {
-                FlattenElement(item, ref arrayRoot);
+                FlattenIntoBuilder(item, ref builder);
             }
         }
         else
         {
-            arrayRoot.AddItem(element);
+            builder.AddItem(element);
         }
     }
 
@@ -4045,28 +4825,74 @@ public static class JsonataCodeGenHelpers
         }
 
         int len = input.GetArrayLength();
-        var elements = new JsonElement[len];
-        int idx = 0;
-        foreach (var item in input.EnumerateArray())
+
+        // Use ElementBuffer (ArrayPool-backed) instead of heap-allocating new JsonElement[].
+        var buf = default(ElementBuffer);
+        try
         {
-            elements[idx++] = item;
+            foreach (var item in input.EnumerateArray())
+            {
+                buf.Add(item);
+            }
+
+            buf.GetContents(out var elements, out var count);
+
+            // Fisher-Yates shuffle directly on the backing array
+            for (int i = count - 1; i > 0; i--)
+            {
+#if NET
+                int j = Random.Shared.Next(i + 1);
+#else
+                int j = ThreadLocalRandom.Next(i + 1);
+#endif
+                (elements![i], elements[j]) = (elements[j], elements[i]);
+            }
+
+            JsonDocumentBuilder<JsonElement.Mutable> arrayDoc = JsonElement.CreateArrayBuilder(workspace, count);
+            JsonElement.Mutable arrayRoot = arrayDoc.RootElement;
+            for (int k = 0; k < count; k++)
+            {
+                arrayRoot.AddItem(elements![k]);
+            }
+
+            return (JsonElement)arrayRoot;
+        }
+        finally
+        {
+            buf.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Shuffles elements from a pre-populated <see cref="ElementBuffer"/> (e.g., from a
+    /// chain navigation) and builds a single result array document. Used by the buffer-fused
+    /// CG path to avoid the intermediate chain builder.
+    /// </summary>
+    public static JsonElement ShuffleFromBuffer(ref ElementBuffer buf, JsonWorkspace workspace)
+    {
+        buf.GetContents(out var elements, out var count);
+
+        if (count == 0)
+        {
+            return default;
         }
 
-        for (int i = len - 1; i > 0; i--)
+        // Fisher-Yates shuffle directly on the pooled backing array
+        for (int i = count - 1; i > 0; i--)
         {
 #if NET
             int j = Random.Shared.Next(i + 1);
 #else
             int j = ThreadLocalRandom.Next(i + 1);
 #endif
-            (elements[i], elements[j]) = (elements[j], elements[i]);
+            (elements![i], elements[j]) = (elements[j], elements[i]);
         }
 
-        JsonDocumentBuilder<JsonElement.Mutable> arrayDoc = JsonElement.CreateArrayBuilder(workspace, len);
+        JsonDocumentBuilder<JsonElement.Mutable> arrayDoc = JsonElement.CreateArrayBuilder(workspace, count);
         JsonElement.Mutable arrayRoot = arrayDoc.RootElement;
-        for (int k = 0; k < len; k++)
+        for (int k = 0; k < count; k++)
         {
-            arrayRoot.AddItem(elements[k]);
+            arrayRoot.AddItem(elements![k]);
         }
 
         return (JsonElement)arrayRoot;
@@ -4371,6 +5197,574 @@ public static class JsonataCodeGenHelpers
     }
 
     /// <summary>
+    /// JSONata <c>$replace</c> function — regex form.
+    /// Uses <see cref="ValueStringBuilder"/> and <see cref="UnescapedUtf16JsonString"/>
+    /// to avoid intermediate string allocations. On NET, uses
+    /// <see cref="Regex.EnumerateMatches(ReadOnlySpan{char})"/> when the replacement
+    /// contains no backreferences.
+    /// </summary>
+    /// <param name="input">The input string element.</param>
+    /// <param name="regex">The pre-compiled <see cref="Regex"/> pattern.</param>
+    /// <param name="replacement">The replacement string element.</param>
+    /// <param name="limitElement">Optional limit element (number or undefined).</param>
+    /// <param name="workspace">The workspace for building the result.</param>
+    /// <returns>The replaced string, or <c>default</c> if input is undefined.</returns>
+    public static JsonElement ReplaceRegex(
+        in JsonElement input,
+        Regex regex,
+        in JsonElement replacement,
+        in JsonElement limitElement,
+        JsonWorkspace workspace)
+    {
+        if (input.IsUndefined())
+        {
+            return default;
+        }
+
+        if (input.ValueKind != JsonValueKind.String)
+        {
+            throw new JsonataException("T0410", SR.T0410_Argument1OfFunctionReplaceIsNotOfTheCorrectType, 0);
+        }
+
+        if (replacement.IsUndefined() || replacement.ValueKind != JsonValueKind.String)
+        {
+            throw new JsonataException("T0410", SR.T0410_Argument3OfFunctionReplaceIsNotOfTheCorrectType, 0);
+        }
+
+        int limit = int.MaxValue;
+        if (!limitElement.IsUndefined())
+        {
+            if (limitElement.ValueKind == JsonValueKind.Null || limitElement.ValueKind != JsonValueKind.Number)
+            {
+                throw new JsonataException("T0410", SR.T0410_Argument4OfFunctionReplaceIsNotOfTheCorrectType, 0);
+            }
+
+            double n = limitElement.GetDouble();
+            if (n < 0)
+            {
+                throw new JsonataException("D3011", SR.D3011_TheFourthArgumentOfTheReplaceFunctionMustBeAPositiveNumber, 0);
+            }
+
+            limit = (int)n;
+        }
+
+        if (limit <= 0)
+        {
+            return input;
+        }
+
+        using var utf16Str = input.GetUtf16String();
+        ReadOnlySpan<char> strChars = utf16Str.Span;
+
+        using var utf16Rep = replacement.GetUtf16String();
+        ReadOnlySpan<char> repChars = utf16Rep.Span;
+
+        ValueStringBuilder sb = new(stackalloc char[JsonConstants.StackallocCharThreshold]);
+        try
+        {
+#if NET
+            bool hasBackrefs = repChars.Contains('$');
+
+            if (!hasBackrefs)
+            {
+                int count = 0;
+                int searchStart = 0;
+                foreach (ValueMatch vm in regex.EnumerateMatches(strChars))
+                {
+                    if (count >= limit)
+                    {
+                        break;
+                    }
+
+                    if (vm.Length == 0)
+                    {
+                        throw new JsonataException("D1004", SR.D1004_RegularExpressionMatchesZeroLengthString, 0);
+                    }
+
+                    sb.Append(strChars.Slice(searchStart, vm.Index - searchStart));
+                    sb.Append(repChars);
+                    searchStart = vm.Index + vm.Length;
+                    count++;
+                }
+
+                sb.Append(strChars.Slice(searchStart));
+            }
+            else
+            {
+                string str = input.GetString()!;
+                int count = 0;
+                int searchStart = 0;
+                while (count < limit && searchStart <= str.Length)
+                {
+                    System.Text.RegularExpressions.Match m = regex.Match(str, searchStart);
+                    if (!m.Success)
+                    {
+                        break;
+                    }
+
+                    if (m.Length == 0)
+                    {
+                        throw new JsonataException("D1004", SR.D1004_RegularExpressionMatchesZeroLengthString, 0);
+                    }
+
+                    sb.Append(strChars.Slice(searchStart, m.Index - searchStart));
+                    ApplyJsonataBackreferencesSpan(repChars, m, ref sb);
+                    searchStart = m.Index + m.Length;
+                    count++;
+                }
+
+                sb.Append(strChars.Slice(searchStart));
+            }
+#else
+            string str = input.GetString()!;
+            int count = 0;
+            int searchStart = 0;
+            while (count < limit && searchStart <= str.Length)
+            {
+                System.Text.RegularExpressions.Match m = regex.Match(str, searchStart);
+                if (!m.Success)
+                {
+                    break;
+                }
+
+                if (m.Length == 0)
+                {
+                    throw new JsonataException("D1004", SR.D1004_RegularExpressionMatchesZeroLengthString, 0);
+                }
+
+                sb.Append(strChars.Slice(searchStart, m.Index - searchStart));
+                ApplyJsonataBackreferencesSpan(repChars, m, ref sb);
+                searchStart = m.Index + m.Length;
+                count++;
+            }
+
+            sb.Append(strChars.Slice(searchStart));
+#endif
+
+            return JsonataHelpers.StringFromChars(sb.AsSpan(), workspace);
+        }
+        finally
+        {
+            sb.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Applies JSONata backreference substitution ($0, $1, etc.) from a replacement span
+    /// directly into a <see cref="ValueStringBuilder"/>.
+    /// </summary>
+    private static void ApplyJsonataBackreferencesSpan(
+        ReadOnlySpan<char> replacement, System.Text.RegularExpressions.Match match, ref ValueStringBuilder sb)
+    {
+        int numGroups = match.Groups.Count - 1;
+        int segStart = 0;
+
+        for (int i = 0; i < replacement.Length; i++)
+        {
+            if (replacement[i] != '$')
+            {
+                continue;
+            }
+
+            if (i > segStart)
+            {
+                sb.Append(replacement.Slice(segStart, i - segStart));
+            }
+
+            if (i + 1 >= replacement.Length)
+            {
+                sb.Append('$');
+                segStart = i + 1;
+                continue;
+            }
+
+            char next = replacement[i + 1];
+
+            if (next == '$')
+            {
+                sb.Append('$');
+                i++;
+                segStart = i + 1;
+            }
+            else if (next >= '0' && next <= '9')
+            {
+                int digitStart = i + 1;
+                int digitEnd = digitStart;
+                while (digitEnd < replacement.Length && replacement[digitEnd] >= '0' && replacement[digitEnd] <= '9')
+                {
+                    digitEnd++;
+                }
+
+                int consumed = digitEnd - digitStart;
+                bool found = false;
+                while (consumed > 0)
+                {
+                    int groupNum = ParseDigits(replacement.Slice(digitStart, consumed));
+                    if (groupNum <= numGroups)
+                    {
+#if NET
+                        sb.Append(match.Groups[groupNum].ValueSpan);
+#else
+                        sb.Append(match.Groups[groupNum].Value);
+#endif
+
+                        if (digitEnd > digitStart + consumed)
+                        {
+                            sb.Append(replacement.Slice(digitStart + consumed, digitEnd - digitStart - consumed));
+                        }
+
+                        found = true;
+                        break;
+                    }
+
+                    consumed--;
+                }
+
+                if (!found && digitEnd > digitStart + 1)
+                {
+                    sb.Append(replacement.Slice(digitStart + 1, digitEnd - digitStart - 1));
+                }
+
+                i = digitEnd - 1;
+                segStart = digitEnd;
+            }
+            else
+            {
+                sb.Append('$');
+                sb.Append(next);
+                i++;
+                segStart = i + 1;
+            }
+        }
+
+        if (segStart < replacement.Length)
+        {
+            sb.Append(replacement.Slice(segStart));
+        }
+    }
+
+    private static int ParseDigits(ReadOnlySpan<char> digits)
+    {
+        int result = 0;
+        for (int i = 0; i < digits.Length; i++)
+        {
+            result = (result * 10) + (digits[i] - '0');
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// JSONata <c>$match</c> function — matches a string against a compiled <see cref="Regex"/>
+    /// and returns an array of match objects <c>{"match","index","groups"}</c>.
+    /// Uses <see cref="Regex.EnumerateMatches(ReadOnlySpan{char})"/> for patterns without
+    /// capture groups (zero <see cref="Match"/> allocations), and CVB for building results.
+    /// </summary>
+    /// <param name="input">The input string element.</param>
+    /// <param name="regex">The pre-compiled <see cref="Regex"/> pattern.</param>
+    /// <param name="limitElement">Optional limit element (number or undefined).</param>
+    /// <param name="workspace">The workspace for building the result.</param>
+    /// <returns>A match object, array of match objects, or <c>default</c> if no matches.</returns>
+    public static JsonElement Match(
+        in JsonElement input,
+        Regex regex,
+        in JsonElement limitElement,
+        JsonWorkspace workspace)
+    {
+        if (input.IsUndefined())
+        {
+            return default;
+        }
+
+        if (input.ValueKind != JsonValueKind.String)
+        {
+            throw new JsonataException("T0410", SR.T0410_Argument1OfFunctionMatchIsNotOfTheCorrectType, 0);
+        }
+
+        int limit = int.MaxValue;
+        if (limitElement.ValueKind != JsonValueKind.Undefined)
+        {
+            if (limitElement.ValueKind != JsonValueKind.Number)
+            {
+                throw new JsonataException("T0410", SR.T0410_Argument3OfFunctionMatchIsNotOfTheCorrectType, 0);
+            }
+
+            if (FunctionalCompiler.TryCoerceToNumber(limitElement, out double limitD))
+            {
+                limit = (int)limitD;
+            }
+        }
+
+#if NET
+        bool hasGroups = regex.GetGroupNumbers().Length > 1;
+
+        if (!hasGroups)
+        {
+            using UnescapedUtf16JsonString utf16Str = input.GetUtf16String();
+            ReadOnlyMemory<char> charMemory = utf16Str.Memory;
+
+            // Fused single-document: outer array with nested object builders per match
+            var doc = JsonElement.CreateBuilder(
+                workspace,
+                (charMemory, regex, limit),
+                static (in (ReadOnlyMemory<char> Chars, Regex Regex, int Limit) ctx, ref JsonElement.ArrayBuilder ab) =>
+                {
+                    int count = 0;
+                    foreach (ValueMatch vm in ctx.Regex.EnumerateMatches(ctx.Chars.Span))
+                    {
+                        if (count >= ctx.Limit)
+                        {
+                            break;
+                        }
+
+                        ab.AddItem(
+                            (ctx.Chars, vm.Index, vm.Length),
+                            static (in (ReadOnlyMemory<char> C, int Index, int Length) mctx, ref JsonElement.ObjectBuilder ob) =>
+                            {
+                                ob.AddProperty("match"u8, mctx.C.Span.Slice(mctx.Index, mctx.Length));
+                                ob.AddProperty("index"u8, mctx.Index);
+                                ob.AddProperty("groups"u8, static (ref JsonElement.ArrayBuilder _) => { });
+                            });
+                        count++;
+                    }
+                },
+                estimatedMemberCount: 30);
+
+            return UnwrapMatchArray((JsonElement)doc.RootElement);
+        }
+        else
+        {
+            string regexStr = input.GetString()!;
+            ReadOnlyMemory<char> charMemory = regexStr.AsMemory();
+
+            // Fused single-document: outer array with nested object+groups builders per match
+            var doc = JsonElement.CreateBuilder(
+                workspace,
+                (charMemory, regex, regexStr, limit),
+                static (in (ReadOnlyMemory<char> Chars, Regex Regex, string RegexStr, int Limit) ctx, ref JsonElement.ArrayBuilder ab) =>
+                {
+                    int count = 0;
+                    System.Text.RegularExpressions.Match m = ctx.Regex.Match(ctx.RegexStr);
+                    while (m.Success && count < ctx.Limit)
+                    {
+                        ab.AddItem(
+                            (ctx.Chars, m),
+                            static (in (ReadOnlyMemory<char> C, System.Text.RegularExpressions.Match M) mctx, ref JsonElement.ObjectBuilder ob) =>
+                            {
+                                ob.AddProperty("match"u8, mctx.C.Span.Slice(mctx.M.Index, mctx.M.Length));
+                                ob.AddProperty("index"u8, mctx.M.Index);
+                                ob.AddProperty("groups"u8, (mctx.C, mctx.M),
+                                    static (in (ReadOnlyMemory<char> C, System.Text.RegularExpressions.Match M) gctx, ref JsonElement.ArrayBuilder gab) =>
+                                    {
+                                        for (int g = 1; g < gctx.M.Groups.Count; g++)
+                                        {
+                                            Group grp = gctx.M.Groups[g];
+                                            gab.AddItem(gctx.C.Span.Slice(grp.Index, grp.Length));
+                                        }
+                                    });
+                            });
+                        count++;
+                        m = m.NextMatch();
+                    }
+                },
+                estimatedMemberCount: 30);
+
+            return UnwrapMatchArray((JsonElement)doc.RootElement);
+        }
+#else
+        string? regexStr = input.GetString();
+        if (regexStr is null)
+        {
+            return default;
+        }
+
+        ReadOnlyMemory<char> charMemory = regexStr.AsMemory();
+        MatchCollection matches = regex.Matches(regexStr);
+
+        // Fused single-document: outer array with nested object+groups builders per match
+        var doc = JsonElement.CreateBuilder(
+            workspace,
+            (charMemory, matches, limit),
+            static (in (ReadOnlyMemory<char> Chars, MatchCollection Matches, int Limit) ctx, ref JsonElement.ArrayBuilder ab) =>
+            {
+                int count = 0;
+                foreach (System.Text.RegularExpressions.Match m in ctx.Matches)
+                {
+                    if (count >= ctx.Limit)
+                    {
+                        break;
+                    }
+
+                    ab.AddItem(
+                        (ctx.Chars, m),
+                        static (in (ReadOnlyMemory<char> C, System.Text.RegularExpressions.Match M) mctx, ref JsonElement.ObjectBuilder ob) =>
+                        {
+                            ob.AddProperty("match"u8, mctx.C.Span.Slice(mctx.M.Index, mctx.M.Length));
+                            ob.AddProperty("index"u8, mctx.M.Index);
+                            ob.AddProperty("groups"u8, (mctx.C, mctx.M),
+                                static (in (ReadOnlyMemory<char> C, System.Text.RegularExpressions.Match M) gctx, ref JsonElement.ArrayBuilder gab) =>
+                                {
+                                    for (int g = 1; g < gctx.M.Groups.Count; g++)
+                                    {
+                                        Group grp = gctx.M.Groups[g];
+                                        gab.AddItem(gctx.C.Span.Slice(grp.Index, grp.Length));
+                                    }
+                                });
+                        });
+                    count++;
+                }
+            },
+            estimatedMemberCount: 30);
+
+        return UnwrapMatchArray((JsonElement)doc.RootElement);
+#endif
+    }
+
+    /// <summary>
+    /// Unwraps a match result array: 0 elements → undefined, 1 element → the single
+    /// match object, N elements → the array itself.
+    /// </summary>
+    private static JsonElement UnwrapMatchArray(JsonElement array)
+    {
+        int count = array.GetArrayLength();
+        if (count == 0)
+        {
+            return default;
+        }
+
+        if (count == 1)
+        {
+            return array[0];
+        }
+
+        return array;
+    }
+
+    /// <summary>
+    /// JSONata <c>$zip</c> function — transposes a single array.
+    /// Each element becomes a single-element inner array.
+    /// </summary>
+    /// <param name="arg0">The input array element.</param>
+    /// <param name="workspace">The workspace for building the result.</param>
+    /// <returns>An array of single-element arrays, or <c>default</c> if no valid arrays.</returns>
+    public static JsonElement Zip(JsonElement arg0, JsonWorkspace workspace)
+    {
+        ResolveZipArg(arg0, out bool isArr0, out int len0);
+
+        if (len0 == 0)
+        {
+            var emptyDoc = JsonElement.CreateArrayBuilder(workspace, 0);
+            return (JsonElement)emptyDoc.RootElement;
+        }
+
+        var doc = JsonElement.CreateBuilder(
+            workspace,
+            (arg0, len0, isArr0),
+            static (in (JsonElement A0, int Len, bool IsArr0) ctx, ref JsonElement.ArrayBuilder outer) =>
+            {
+                for (int i = 0; i < ctx.Len; i++)
+                {
+                    outer.AddItem(
+                        (ctx.A0, i, ctx.IsArr0),
+                        static (in (JsonElement A0, int I, bool IsArr0) ictx, ref JsonElement.ArrayBuilder inner) =>
+                        {
+                            inner.AddItem(ictx.IsArr0 ? ictx.A0[ictx.I] : ictx.A0);
+                        });
+                }
+            },
+            estimatedMemberCount: (len0 * 2) + 2);
+
+        return (JsonElement)doc.RootElement;
+    }
+
+    /// <summary>
+    /// JSONata <c>$zip</c> function — transposes two arrays.
+    /// Specialized 2-argument overload that avoids intermediate array allocation.
+    /// </summary>
+    /// <param name="arg0">The first input array element.</param>
+    /// <param name="arg1">The second input array element.</param>
+    /// <param name="workspace">The workspace for building the result.</param>
+    /// <returns>An array of arrays, or <c>default</c> if no valid arrays.</returns>
+    public static JsonElement Zip(JsonElement arg0, JsonElement arg1, JsonWorkspace workspace)
+    {
+        ResolveZipArg(arg0, out bool isArr0, out int len0);
+        ResolveZipArg(arg1, out bool isArr1, out int len1);
+
+        int minLen = Math.Min(len0, len1);
+
+        if (minLen == 0)
+        {
+            var emptyDoc = JsonElement.CreateArrayBuilder(workspace, 0);
+            return (JsonElement)emptyDoc.RootElement;
+        }
+
+        var doc = JsonElement.CreateBuilder(
+            workspace,
+            (arg0, arg1, minLen, isArr0, isArr1),
+            static (in (JsonElement A0, JsonElement A1, int MinLen, bool IsArr0, bool IsArr1) ctx, ref JsonElement.ArrayBuilder outer) =>
+            {
+                for (int i = 0; i < ctx.MinLen; i++)
+                {
+                    outer.AddItem(
+                        (ctx.A0, ctx.A1, i, ctx.IsArr0, ctx.IsArr1),
+                        static (in (JsonElement A0, JsonElement A1, int I, bool IsArr0, bool IsArr1) ictx, ref JsonElement.ArrayBuilder inner) =>
+                        {
+                            inner.AddItem(ictx.IsArr0 ? ictx.A0[ictx.I] : ictx.A0);
+                            inner.AddItem(ictx.IsArr1 ? ictx.A1[ictx.I] : ictx.A1);
+                        });
+                }
+            },
+            estimatedMemberCount: (minLen * 3) + 2);
+
+        return (JsonElement)doc.RootElement;
+    }
+
+    /// <summary>
+    /// JSONata <c>$zip</c> function — transposes three arrays.
+    /// Specialized 3-argument overload that avoids intermediate array allocation.
+    /// </summary>
+    /// <param name="arg0">The first input array element.</param>
+    /// <param name="arg1">The second input array element.</param>
+    /// <param name="arg2">The third input array element.</param>
+    /// <param name="workspace">The workspace for building the result.</param>
+    /// <returns>An array of arrays, or <c>default</c> if no valid arrays.</returns>
+    public static JsonElement Zip(JsonElement arg0, JsonElement arg1, JsonElement arg2, JsonWorkspace workspace)
+    {
+        ResolveZipArg(arg0, out bool isArr0, out int len0);
+        ResolveZipArg(arg1, out bool isArr1, out int len1);
+        ResolveZipArg(arg2, out bool isArr2, out int len2);
+
+        int minLen = Math.Min(len0, Math.Min(len1, len2));
+
+        if (minLen == 0)
+        {
+            var emptyDoc = JsonElement.CreateArrayBuilder(workspace, 0);
+            return (JsonElement)emptyDoc.RootElement;
+        }
+
+        var doc = JsonElement.CreateBuilder(
+            workspace,
+            (arg0, arg1, arg2, minLen, isArr0, isArr1, isArr2),
+            static (in (JsonElement A0, JsonElement A1, JsonElement A2, int MinLen, bool IsArr0, bool IsArr1, bool IsArr2) ctx, ref JsonElement.ArrayBuilder outer) =>
+            {
+                for (int i = 0; i < ctx.MinLen; i++)
+                {
+                    outer.AddItem(
+                        (ctx.A0, ctx.A1, ctx.A2, i, ctx.IsArr0, ctx.IsArr1, ctx.IsArr2),
+                        static (in (JsonElement A0, JsonElement A1, JsonElement A2, int I, bool IsArr0, bool IsArr1, bool IsArr2) ictx, ref JsonElement.ArrayBuilder inner) =>
+                        {
+                            inner.AddItem(ictx.IsArr0 ? ictx.A0[ictx.I] : ictx.A0);
+                            inner.AddItem(ictx.IsArr1 ? ictx.A1[ictx.I] : ictx.A1);
+                            inner.AddItem(ictx.IsArr2 ? ictx.A2[ictx.I] : ictx.A2);
+                        });
+                }
+            },
+            estimatedMemberCount: (minLen * 4) + 2);
+
+        return (JsonElement)doc.RootElement;
+    }
+
+    /// <summary>
     /// JSONata <c>$zip</c> function — transposes arrays.
     /// Takes multiple arrays and returns an array of arrays where the i-th inner array
     /// contains the i-th element from each input array.
@@ -4385,66 +5779,234 @@ public static class JsonataCodeGenHelpers
             return default;
         }
 
-        // Collect arrays — scalars become single-element arrays, undefined is empty
         int minLen = int.MaxValue;
-        int validCount = 0;
         for (int a = 0; a < args.Length; a++)
         {
-            int len;
-            if (args[a].ValueKind == JsonValueKind.Array)
-            {
-                len = args[a].GetArrayLength();
-            }
-            else if (args[a].IsUndefined())
-            {
-                len = 0;
-            }
-            else
-            {
-                // Scalar → treat as single-element array
-                len = 1;
-            }
+            ResolveZipArg(args[a], out _, out int len);
 
             if (len < minLen)
             {
                 minLen = len;
             }
-
-            validCount++;
         }
 
         if (minLen == 0 || minLen == int.MaxValue)
         {
-            // Return empty array (not undefined) — matches runtime behavior
             var emptyDoc = JsonElement.CreateArrayBuilder(workspace, 0);
             return (JsonElement)emptyDoc.RootElement;
         }
 
-        var outerDoc = JsonElement.CreateArrayBuilder(workspace, minLen);
-        JsonElement.Mutable outerRoot = outerDoc.RootElement;
-
-        for (int i = 0; i < minLen; i++)
-        {
-            var innerDoc = JsonElement.CreateArrayBuilder(workspace, args.Length);
-            JsonElement.Mutable innerRoot = innerDoc.RootElement;
-
-            for (int a = 0; a < args.Length; a++)
+        var doc = JsonElement.CreateBuilder(
+            workspace,
+            (args, minLen),
+            static (in (JsonElement[] Args, int MinLen) ctx, ref JsonElement.ArrayBuilder outer) =>
             {
-                if (args[a].ValueKind == JsonValueKind.Array)
+                for (int i = 0; i < ctx.MinLen; i++)
                 {
-                    innerRoot.AddItem(args[a][i]);
+                    outer.AddItem(
+                        (ctx.Args, i),
+                        static (in (JsonElement[] Args, int I) ictx, ref JsonElement.ArrayBuilder inner) =>
+                        {
+                            for (int a = 0; a < ictx.Args.Length; a++)
+                            {
+                                if (ictx.Args[a].ValueKind == JsonValueKind.Array)
+                                {
+                                    inner.AddItem(ictx.Args[a][ictx.I]);
+                                }
+                                else if (!ictx.Args[a].IsUndefined())
+                                {
+                                    inner.AddItem(ictx.Args[a]);
+                                }
+                            }
+                        });
                 }
-                else if (!args[a].IsUndefined())
-                {
-                    // Scalar value
-                    innerRoot.AddItem(args[a]);
-                }
-            }
+            },
+            estimatedMemberCount: (minLen * (args.Length + 1)) + 2);
 
-            outerRoot.AddItem((JsonElement)innerRoot);
+        return (JsonElement)doc.RootElement;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static void ResolveZipArg(JsonElement arg, out bool isArray, out int length)
+    {
+        if (arg.ValueKind == JsonValueKind.Array)
+        {
+            isArray = true;
+            length = arg.GetArrayLength();
+        }
+        else if (arg.IsUndefined())
+        {
+            isArray = false;
+            length = 0;
+        }
+        else
+        {
+            isArray = false;
+            length = 1;
+        }
+    }
+
+    /// <summary>
+    /// Buffer-fused 2-arg zip: takes raw backing arrays from <see cref="ElementBuffer.GetContents"/>
+    /// and produces the zip result with a single builder document (no intermediate array materialization).
+    /// </summary>
+    public static JsonElement ZipFromBuffers(
+        JsonElement[]? arr0, int cnt0,
+        JsonElement[]? arr1, int cnt1,
+        JsonWorkspace workspace)
+    {
+        if (cnt0 == 0 || cnt1 == 0)
+        {
+            var emptyDoc = JsonElement.CreateArrayBuilder(workspace, 0);
+            return (JsonElement)emptyDoc.RootElement;
         }
 
-        return (JsonElement)outerRoot;
+        int minLen = cnt0 < cnt1 ? cnt0 : cnt1;
+
+        var doc = JsonElement.CreateBuilder(
+            workspace,
+            (arr0!, arr1!, minLen),
+            static (in (JsonElement[] A0, JsonElement[] A1, int MinLen) ctx, ref JsonElement.ArrayBuilder outer) =>
+            {
+                for (int i = 0; i < ctx.MinLen; i++)
+                {
+                    outer.AddItem(
+                        (ctx.A0, ctx.A1, i),
+                        static (in (JsonElement[] A0, JsonElement[] A1, int I) ictx, ref JsonElement.ArrayBuilder inner) =>
+                        {
+                            inner.AddItem(ictx.A0[ictx.I]);
+                            inner.AddItem(ictx.A1[ictx.I]);
+                        });
+                }
+            },
+            estimatedMemberCount: (minLen * 3) + 2);
+
+        return (JsonElement)doc.RootElement;
+    }
+
+    /// <summary>
+    /// Buffer-fused 3-arg zip.
+    /// </summary>
+    public static JsonElement ZipFromBuffers(
+        JsonElement[]? arr0, int cnt0,
+        JsonElement[]? arr1, int cnt1,
+        JsonElement[]? arr2, int cnt2,
+        JsonWorkspace workspace)
+    {
+        int minLen = cnt0;
+        if (cnt1 < minLen)
+        {
+            minLen = cnt1;
+        }
+
+        if (cnt2 < minLen)
+        {
+            minLen = cnt2;
+        }
+
+        if (minLen == 0)
+        {
+            var emptyDoc = JsonElement.CreateArrayBuilder(workspace, 0);
+            return (JsonElement)emptyDoc.RootElement;
+        }
+
+        var doc = JsonElement.CreateBuilder(
+            workspace,
+            (arr0!, arr1!, arr2!, minLen),
+            static (in (JsonElement[] A0, JsonElement[] A1, JsonElement[] A2, int MinLen) ctx, ref JsonElement.ArrayBuilder outer) =>
+            {
+                for (int i = 0; i < ctx.MinLen; i++)
+                {
+                    outer.AddItem(
+                        (ctx.A0, ctx.A1, ctx.A2, i),
+                        static (in (JsonElement[] A0, JsonElement[] A1, JsonElement[] A2, int I) ictx, ref JsonElement.ArrayBuilder inner) =>
+                        {
+                            inner.AddItem(ictx.A0[ictx.I]);
+                            inner.AddItem(ictx.A1[ictx.I]);
+                            inner.AddItem(ictx.A2[ictx.I]);
+                        });
+                }
+            },
+            estimatedMemberCount: (minLen * 4) + 2);
+
+        return (JsonElement)doc.RootElement;
+    }
+
+    /// <summary>
+    /// Buffer-fused mixed zip: one arg is a pre-resolved JsonElement (e.g., a constant),
+    /// the other is a raw buffer from property chain navigation.
+    /// </summary>
+    public static JsonElement ZipElementAndBuffer(
+        in JsonElement resolved,
+        JsonElement[]? arr1, int cnt1,
+        JsonWorkspace workspace)
+    {
+        ResolveZipArg(resolved, out bool isArray0, out int len0);
+        if (len0 == 0 || cnt1 == 0)
+        {
+            var emptyDoc = JsonElement.CreateArrayBuilder(workspace, 0);
+            return (JsonElement)emptyDoc.RootElement;
+        }
+
+        int minLen = len0 < cnt1 ? len0 : cnt1;
+
+        var doc = JsonElement.CreateBuilder(
+            workspace,
+            (resolved, isArray0, arr1!, minLen),
+            static (in (JsonElement R, bool IsArr, JsonElement[] A1, int MinLen) ctx, ref JsonElement.ArrayBuilder outer) =>
+            {
+                for (int i = 0; i < ctx.MinLen; i++)
+                {
+                    outer.AddItem(
+                        (ctx.R, ctx.IsArr, ctx.A1, i),
+                        static (in (JsonElement R, bool IsArr, JsonElement[] A1, int I) ictx, ref JsonElement.ArrayBuilder inner) =>
+                        {
+                            inner.AddItem(ictx.IsArr ? ictx.R[ictx.I] : ictx.R);
+                            inner.AddItem(ictx.A1[ictx.I]);
+                        });
+                }
+            },
+            estimatedMemberCount: (minLen * 3) + 2);
+
+        return (JsonElement)doc.RootElement;
+    }
+
+    /// <summary>
+    /// Buffer-fused mixed zip: first arg is a raw buffer, second is a pre-resolved JsonElement.
+    /// </summary>
+    public static JsonElement ZipBufferAndElement(
+        JsonElement[]? arr0, int cnt0,
+        in JsonElement resolved,
+        JsonWorkspace workspace)
+    {
+        ResolveZipArg(resolved, out bool isArray1, out int len1);
+        if (cnt0 == 0 || len1 == 0)
+        {
+            var emptyDoc = JsonElement.CreateArrayBuilder(workspace, 0);
+            return (JsonElement)emptyDoc.RootElement;
+        }
+
+        int minLen = cnt0 < len1 ? cnt0 : len1;
+
+        var doc = JsonElement.CreateBuilder(
+            workspace,
+            (arr0!, resolved, isArray1, minLen),
+            static (in (JsonElement[] A0, JsonElement R, bool IsArr, int MinLen) ctx, ref JsonElement.ArrayBuilder outer) =>
+            {
+                for (int i = 0; i < ctx.MinLen; i++)
+                {
+                    outer.AddItem(
+                        (ctx.A0, ctx.R, ctx.IsArr, i),
+                        static (in (JsonElement[] A0, JsonElement R, bool IsArr, int I) ictx, ref JsonElement.ArrayBuilder inner) =>
+                        {
+                            inner.AddItem(ictx.A0[ictx.I]);
+                            inner.AddItem(ictx.IsArr ? ictx.R[ictx.I] : ictx.R);
+                        });
+                }
+            },
+            estimatedMemberCount: (minLen * 3) + 2);
+
+        return (JsonElement)doc.RootElement;
     }
 
     /// <summary>
@@ -4773,19 +6335,25 @@ public static class JsonataCodeGenHelpers
             return default;
         }
 
-        string str = FunctionalCompiler.CoerceElementToString(input);
-
         if (pictureElement.ValueKind == JsonValueKind.Undefined)
         {
+            // Fast path: parse directly from UTF-8 backing (zero-alloc for standard ISO 8601)
+            if (input.ValueKind == JsonValueKind.String && input.TryGetDateTimeOffset(out var dto))
+            {
+                return JsonataHelpers.NumberFromDouble(dto.ToUnixTimeMilliseconds(), workspace);
+            }
+
+            string str = FunctionalCompiler.CoerceElementToString(input);
             Sequence result = BuiltInFunctions.ParseIso8601ToMillis(str, workspace);
             return result.IsUndefined ? default : result.FirstOrDefault;
         }
 
+        string strVal = FunctionalCompiler.CoerceElementToString(input);
         string picture = FunctionalCompiler.CoerceElementToString(pictureElement);
 
         try
         {
-            if (XPathDateTimeFormatter.TryParseDateTime(str, picture, out long millis))
+            if (XPathDateTimeFormatter.TryParseDateTime(strVal, picture, out long millis))
             {
                 return JsonataHelpers.NumberFromDouble(millis, workspace);
             }
@@ -4816,8 +6384,62 @@ public static class JsonataCodeGenHelpers
         string picture = FunctionalCompiler.CoerceElementToString(pictureElement);
         JsonElement options = optionsElement.ValueKind != JsonValueKind.Undefined ? optionsElement : default;
 
-        return JsonataHelpers.StringFromString(
-            BuiltInFunctions.FormatNumberXPath(num, picture, options), workspace);
+        FormatNumberPicture parsedPic = FormatNumberPicture.Parse(picture, options);
+        Utf8ValueStringBuilder sb = new(stackalloc byte[JsonConstants.StackallocByteThreshold]);
+        try
+        {
+            parsedPic.Format(num, ref sb);
+            return JsonataHelpers.StringFromRawUtf8Content(sb.AsSpan(), workspace);
+        }
+        finally
+        {
+            sb.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Creates a pre-parsed format-number picture for use with <see cref="FormatNumberPreParsed"/>.
+    /// Called once from a static field initializer in generated code.
+    /// </summary>
+    public static CachedFormatNumberPicture CreateFormatNumberPicture(string picture, JsonElement options)
+    {
+        return new CachedFormatNumberPicture(FormatNumberPicture.Parse(picture, options));
+    }
+
+    /// <summary>
+    /// Creates a pre-parsed format-number picture with no options for use with <see cref="FormatNumberPreParsed"/>.
+    /// Called once from a static field initializer in generated code.
+    /// </summary>
+    public static CachedFormatNumberPicture CreateFormatNumberPicture(string picture)
+    {
+        return new CachedFormatNumberPicture(FormatNumberPicture.Parse(picture, default));
+    }
+
+    /// <summary>
+    /// JSONata <c>$formatNumber</c> using a pre-parsed picture. Zero per-call allocations.
+    /// </summary>
+    public static JsonElement FormatNumberPreParsed(in JsonElement input, CachedFormatNumberPicture cached, JsonWorkspace workspace)
+    {
+        if (input.IsNullOrUndefined())
+        {
+            return default;
+        }
+
+        if (!FunctionalCompiler.TryCoerceToNumber(input, out double num))
+        {
+            return default;
+        }
+
+        Utf8ValueStringBuilder sb = new(stackalloc byte[JsonConstants.StackallocByteThreshold]);
+        try
+        {
+            cached.Picture.Format(num, ref sb);
+            return JsonataHelpers.StringFromRawUtf8Content(sb.AsSpan(), workspace);
+        }
+        finally
+        {
+            sb.Dispose();
+        }
     }
 
     /// <summary>
@@ -5097,6 +6719,101 @@ public static class JsonataCodeGenHelpers
 
         var singleDoc = JsonElement.CreateArrayBuilder(workspace, 1);
         singleDoc.RootElement.AddItem(single);
+        return (JsonElement)singleDoc.RootElement;
+    }
+
+    /// <summary>
+    /// Specialized map that keeps results as raw <c>double</c> values, avoiding the per-element
+    /// <see cref="DoubleToElement"/> and intermediate <c>FixedJsonValueDocument</c> creation.
+    /// The result array is built via CVB <see cref="JsonElement.ArrayBuilder.AddItem(double)"/>
+    /// which writes doubles directly to the MetadataDb.
+    /// </summary>
+    public static JsonElement MapElementsDouble(
+        in JsonElement input,
+        Func<JsonElement, JsonWorkspace, double> transform,
+        JsonWorkspace workspace)
+    {
+        if (input.IsNullOrUndefined())
+        {
+            return default;
+        }
+
+        if (input.ValueKind == JsonValueKind.Array)
+        {
+            int len = input.GetArrayLength();
+            if (len == 0)
+            {
+                return JsonataHelpers.EmptyArray();
+            }
+
+            // Collect doubles into a rented array, then build via CVB in one pass.
+            // Always rent (never stackalloc) so we can pass the array directly
+            // as the CVB context tuple without a ToArray() heap allocation.
+            double[] rented = ArrayPool<double>.Shared.Rent(len);
+
+            try
+            {
+                int count = 0;
+                foreach (JsonElement item in input.EnumerateArray())
+                {
+                    double d = transform(item, workspace);
+                    if (!double.IsNaN(d))
+                    {
+                        if (count == rented.Length)
+                        {
+                            // Grow — extremely rare (NaN filtering changed count estimate)
+                            double[] bigger = ArrayPool<double>.Shared.Rent(rented.Length * 2);
+                            rented.AsSpan(0, count).CopyTo(bigger);
+                            ArrayPool<double>.Shared.Return(rented);
+                            rented = bigger;
+                        }
+
+                        rented[count++] = d;
+                    }
+                }
+
+                if (count == 0)
+                {
+                    return JsonataHelpers.EmptyArray();
+                }
+
+                JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateBuilder(
+                    workspace,
+                    (rented, count),
+                    static (in (double[] Array, int Count) ctx, ref JsonElement.ArrayBuilder builder) =>
+                    {
+                        for (int i = 0; i < ctx.Count; i++)
+                        {
+                            builder.AddItem(ctx.Array[i]);
+                        }
+                    },
+                    estimatedMemberCount: count + 2,
+                    initialValueBufferSize: Math.Max(8192, count * 28));
+
+                return (JsonElement)doc.RootElement;
+            }
+            finally
+            {
+                ArrayPool<double>.Shared.Return(rented);
+            }
+        }
+
+        // Single value — map once, wrap in array
+        double single = transform(input, workspace);
+        if (double.IsNaN(single))
+        {
+            return default;
+        }
+
+        JsonDocumentBuilder<JsonElement.Mutable> singleDoc = JsonElement.CreateBuilder(
+            workspace,
+            single,
+            static (in double ctx, ref JsonElement.ArrayBuilder builder) =>
+            {
+                builder.AddItem(ctx);
+            },
+            estimatedMemberCount: 3);
+
         return (JsonElement)singleDoc.RootElement;
     }
 
@@ -5409,6 +7126,48 @@ public static class JsonataCodeGenHelpers
         }
 
         return accumulator;
+    }
+
+    /// <summary>
+    /// Specialized reduce that keeps the accumulator as a raw <c>double</c> throughout the loop,
+    /// avoiding the per-iteration <see cref="DoubleToElement"/>/<see cref="ToArithmeticDoubleLeft"/>
+    /// roundtrip that creates a <see cref="JsonataHelpers.NumberFromDouble"/> document per iteration.
+    /// Only the final result is materialized to <see cref="JsonElement"/>.
+    /// </summary>
+    public static JsonElement ReduceElementsDouble(
+        in JsonElement input,
+        double initial,
+        Func<double, JsonElement, JsonWorkspace, double> reducer,
+        JsonWorkspace workspace)
+    {
+        if (input.IsNullOrUndefined())
+        {
+            return default;
+        }
+
+        double accumulator;
+
+        if (input.ValueKind == JsonValueKind.Array)
+        {
+            int len = input.GetArrayLength();
+            if (len == 0)
+            {
+                return DoubleToElement(initial, workspace);
+            }
+
+            accumulator = initial;
+            foreach (JsonElement item in input.EnumerateArray())
+            {
+                accumulator = reducer(accumulator, item, workspace);
+            }
+        }
+        else
+        {
+            // Scalar input treated as single-element sequence
+            accumulator = reducer(initial, input, workspace);
+        }
+
+        return DoubleToElement(accumulator, workspace);
     }
 
     // ===== Object Construction =====
@@ -6146,17 +7905,72 @@ public static class JsonataCodeGenHelpers
     private static JsonElement NavigatePropertyOverArray(
         in JsonElement array, byte[] name, JsonWorkspace workspace)
     {
-        int count = 0;
-        var doc = JsonElement.CreateArrayBuilder(workspace, array.GetArrayLength());
-        JsonElement.Mutable root = doc.RootElement;
+        var buffer = default(ElementBuffer);
+        try
+        {
+            foreach (JsonElement item in array.EnumerateArray())
+            {
+                if (item.ValueKind == JsonValueKind.Object)
+                {
+                    if (item.TryGetProperty((ReadOnlySpan<byte>)name, out var val))
+                    {
+                        buffer.AddFlatten(val);
+                    }
+                }
+                else if (item.ValueKind == JsonValueKind.Array)
+                {
+                    JsonElement nested = NavigatePropertyOverArray(item, name, workspace);
+                    if (!nested.IsNullOrUndefined())
+                    {
+                        buffer.AddFlatten(nested);
+                    }
+                }
+            }
 
+            return buffer.Count == 0
+                ? default
+                : buffer.Count == 1
+                    ? buffer[0]
+                    : buffer.ToResult(workspace);
+        }
+        finally
+        {
+            buffer.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Collects property values from array elements directly into an <see cref="JsonElement.ArrayBuilder"/>.
+    /// Used by <see cref="NavigatePropertyToArray"/> to avoid intermediate buffers.
+    /// </summary>
+    private static void CollectPropertyFlatIntoBuilder(
+        in JsonElement array, byte[] name, ref JsonElement.ArrayBuilder builder)
+    {
+        ReadOnlySpan<byte> nameSpan = name;
         foreach (JsonElement item in array.EnumerateArray())
         {
-            JsonElement result = NavigateProperty(item, name, workspace);
-            count = AddResultWithFlatten(root, result, count);
+            if (item.ValueKind == JsonValueKind.Object)
+            {
+                if (item.TryGetProperty(nameSpan, out var val))
+                {
+                    if (val.ValueKind == JsonValueKind.Array)
+                    {
+                        foreach (JsonElement child in val.EnumerateArray())
+                        {
+                            builder.AddItem(child);
+                        }
+                    }
+                    else
+                    {
+                        builder.AddItem(val);
+                    }
+                }
+            }
+            else if (item.ValueKind == JsonValueKind.Array)
+            {
+                CollectPropertyFlatIntoBuilder(item, name, ref builder);
+            }
         }
-
-        return count == 0 ? default : count == 1 ? root[0] : (JsonElement)root;
     }
 
     /// <summary>
@@ -6352,7 +8166,8 @@ public static class JsonataCodeGenHelpers
     /// <summary>
     /// Appends a number formatted like JavaScript to a UTF-8 builder.
     /// Integer values with plain literal representation use raw UTF-8 (zero alloc).
-    /// Non-integer values use G15 formatting (one string alloc for format, written as ASCII bytes).
+    /// Non-integer values use G15 formatting directly to UTF-8 (zero alloc on .NET 8+
+    /// for the common non-exponent case; falls back to string allocation for exponent forms).
     /// </summary>
     private static void AppendFormattedNumber(in JsonElement element, ref Utf8ValueStringBuilder sb)
     {
@@ -6375,7 +8190,21 @@ public static class JsonataCodeGenHelpers
             }
         }
 
-        // Non-integer: format via G15 then write as ASCII bytes
+#if NET8_0_OR_GREATER
+        // Non-integer: format G15 directly to UTF-8 bytes (zero alloc for non-exponent case)
+        Span<byte> scratch = stackalloc byte[64];
+        if (value.TryFormat(scratch, out int written, "G15", System.Globalization.CultureInfo.InvariantCulture))
+        {
+            ReadOnlySpan<byte> result = scratch.Slice(0, written);
+            if (result.IndexOf((byte)'E') < 0)
+            {
+                sb.Append(result);
+                return;
+            }
+        }
+#endif
+
+        // Exponent case or pre-.NET 8: fall back to string-based formatting
         string formatted = FunctionalCompiler.FormatNumberLikeJavaScript(value);
         Span<byte> dest = sb.AppendSpan(formatted.Length);
         for (int i = 0; i < formatted.Length; i++)
@@ -6404,6 +8233,32 @@ public static class JsonataCodeGenHelpers
         ms.Position = 0;
         using var reader = new System.IO.StreamReader(ms);
         return reader.ReadToEnd();
+    }
+
+    /// <summary>
+    /// Serializes a JSON element directly to a JSON string element, bypassing
+    /// the intermediate <see langword="string"/> allocation by reading the
+    /// <see cref="System.IO.MemoryStream"/> buffer directly as UTF-8 bytes.
+    /// </summary>
+    private static JsonElement StringifyElementDirect(
+        in JsonElement element, bool prettyPrint, JsonWorkspace workspace)
+    {
+        using var ms = new System.IO.MemoryStream(256);
+        using var writer = new Utf8JsonWriter(ms, new JsonWriterOptions
+        {
+            Indented = prettyPrint,
+            NewLine = "\n",
+            Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+        });
+
+        WriteStringifiedElement(element, writer);
+        writer.Flush();
+
+        // Read directly from the MemoryStream's internal buffer as UTF-8 bytes,
+        // avoiding StreamReader allocation, intermediate char[] buffer, and
+        // the string allocation from ReadToEnd().
+        return JsonataHelpers.StringFromUnescapedUtf8(
+            new ReadOnlySpan<byte>(ms.GetBuffer(), 0, (int)ms.Length), workspace);
     }
 
     private static void WriteStringifiedElement(in JsonElement element, Utf8JsonWriter writer)
@@ -6448,5 +8303,233 @@ public static class JsonataCodeGenHelpers
                 element.WriteTo(writer);
                 break;
         }
+    }
+
+    /// <summary>
+    /// Delegate for <c>$each</c> transform: receives the property value and
+    /// the property key as unescaped UTF-8 bytes, avoiding intermediate <see cref="JsonElement"/> creation for the key.
+    /// </summary>
+    /// <param name="value">The property value.</param>
+    /// <param name="keyUtf8">The property name as unescaped UTF-8 bytes.</param>
+    /// <param name="workspace">The workspace for memory allocation.</param>
+    /// <returns>The transformed element.</returns>
+    public delegate JsonElement EachTransform(JsonElement value, ReadOnlySpan<byte> keyUtf8, JsonWorkspace workspace);
+
+    /// <summary>
+    /// Delegate for <c>$each</c> transform with original object: receives the property value,
+    /// the property key as unescaped UTF-8 bytes, the original object, and the workspace.
+    /// </summary>
+    /// <param name="value">The property value.</param>
+    /// <param name="keyUtf8">The property name as unescaped UTF-8 bytes.</param>
+    /// <param name="obj">The original object being iterated.</param>
+    /// <param name="workspace">The workspace for memory allocation.</param>
+    /// <returns>The transformed element.</returns>
+    public delegate JsonElement EachTransformWithObject(JsonElement value, ReadOnlySpan<byte> keyUtf8, JsonElement obj, JsonWorkspace workspace);
+
+    /// <summary>
+    /// Delegate for <c>$sift</c> predicate: receives the property value and
+    /// the property key as unescaped UTF-8 bytes, avoiding intermediate <see cref="JsonElement"/> creation for the key.
+    /// </summary>
+    /// <param name="value">The property value.</param>
+    /// <param name="keyUtf8">The property name as unescaped UTF-8 bytes.</param>
+    /// <param name="workspace">The workspace for memory allocation.</param>
+    /// <returns><see langword="true"/> if the property should be included.</returns>
+    public delegate bool SiftPredicate(JsonElement value, ReadOnlySpan<byte> keyUtf8, JsonWorkspace workspace);
+
+    /// <summary>
+    /// Delegate for <c>$sift</c> predicate with original object: receives the property value,
+    /// the property key as unescaped UTF-8 bytes, the original object, and the workspace.
+    /// </summary>
+    /// <param name="value">The property value.</param>
+    /// <param name="keyUtf8">The property name as unescaped UTF-8 bytes.</param>
+    /// <param name="obj">The original object being sifted.</param>
+    /// <param name="workspace">The workspace for memory allocation.</param>
+    /// <returns><see langword="true"/> if the property should be included.</returns>
+    public delegate bool SiftPredicateWithObject(JsonElement value, ReadOnlySpan<byte> keyUtf8, JsonElement obj, JsonWorkspace workspace);
+
+    /// <summary>
+    /// Creates a JSON string element from unescaped UTF-8 bytes.
+    /// Forwarding method so generated code can use the single <c>H.</c> prefix.
+    /// </summary>
+    /// <param name="unescapedUtf8">The unescaped UTF-8 bytes.</param>
+    /// <param name="workspace">The workspace for memory allocation.</param>
+    /// <returns>A JSON string element.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static JsonElement StringFromUnescapedUtf8(ReadOnlySpan<byte> unescapedUtf8, JsonWorkspace workspace)
+        => JsonataHelpers.StringFromUnescapedUtf8(unescapedUtf8, workspace);
+
+    /// <summary>
+    /// JSONata <c>$each</c> — maps a function over each property of an object,
+    /// returning an array of the transform results.
+    /// </summary>
+    /// <param name="input">The object to iterate.</param>
+    /// <param name="transform">A delegate <c>(value, keyUtf8, workspace) → result</c>.</param>
+    /// <param name="workspace">The workspace for memory allocation.</param>
+    /// <returns>An array of transform results, or undefined if input is not an object.</returns>
+    public static JsonElement EachProperty(
+        in JsonElement input,
+        EachTransform transform,
+        JsonWorkspace workspace)
+    {
+        if (input.IsNullOrUndefined())
+        {
+            return default;
+        }
+
+        if (input.ValueKind != JsonValueKind.Object)
+        {
+            return default;
+        }
+
+        var buffer = default(ElementBuffer);
+        try
+        {
+            foreach (var prop in input.EnumerateObject())
+            {
+                using UnescapedUtf8JsonString nameUtf8 = prop.Utf8NameSpan;
+                JsonElement result = transform(prop.Value, nameUtf8.Span, workspace);
+                if (result.ValueKind != JsonValueKind.Undefined)
+                {
+                    buffer.Add(result);
+                }
+            }
+
+            return buffer.ToArrayResult(workspace);
+        }
+        finally
+        {
+            buffer.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// JSONata <c>$each(obj, fn($v,$k,$o))</c> — iterates properties with access to the original object.
+    /// </summary>
+    /// <param name="input">The object to iterate.</param>
+    /// <param name="transform">A delegate <c>(value, keyUtf8, obj, workspace) → JsonElement</c>.</param>
+    /// <param name="workspace">The workspace for memory allocation.</param>
+    /// <returns>An array of transform results, or undefined if input is not an object.</returns>
+    public static JsonElement EachProperty(
+        in JsonElement input,
+        EachTransformWithObject transform,
+        JsonWorkspace workspace)
+    {
+        if (input.IsNullOrUndefined())
+        {
+            return default;
+        }
+
+        if (input.ValueKind != JsonValueKind.Object)
+        {
+            return default;
+        }
+
+        var buffer = default(ElementBuffer);
+        try
+        {
+            foreach (var prop in input.EnumerateObject())
+            {
+                using UnescapedUtf8JsonString nameUtf8 = prop.Utf8NameSpan;
+                JsonElement result = transform(prop.Value, nameUtf8.Span, input, workspace);
+                if (result.ValueKind != JsonValueKind.Undefined)
+                {
+                    buffer.Add(result);
+                }
+            }
+
+            return buffer.ToArrayResult(workspace);
+        }
+        finally
+        {
+            buffer.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// JSONata <c>$sift</c> — filters the properties of an object,
+    /// returning a new object containing only properties for which the predicate returns truthy.
+    /// Uses the CVB pattern for forward-only object construction.
+    /// </summary>
+    /// <param name="input">The object to filter.</param>
+    /// <param name="predicate">A delegate <c>(value, keyUtf8, workspace) → bool</c>.</param>
+    /// <param name="workspace">The workspace for memory allocation.</param>
+    /// <returns>A filtered object, or undefined if no properties match or input is not an object.</returns>
+    public static JsonElement SiftProperty(
+        in JsonElement input,
+        SiftPredicate predicate,
+        JsonWorkspace workspace)
+    {
+        if (input.IsNullOrUndefined())
+        {
+            return default;
+        }
+
+        if (input.ValueKind != JsonValueKind.Object)
+        {
+            return default;
+        }
+
+        JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateBuilder(
+            workspace,
+            (input, predicate, workspace),
+            static (in (JsonElement input, SiftPredicate predicate, JsonWorkspace workspace) ctx, ref JsonElement.ObjectBuilder builder) =>
+            {
+                foreach (var prop in ctx.input.EnumerateObject())
+                {
+                    using UnescapedUtf8JsonString nameUtf8 = prop.Utf8NameSpan;
+                    if (ctx.predicate(prop.Value, nameUtf8.Span, ctx.workspace))
+                    {
+                        builder.AddProperty(nameUtf8.Span, prop.Value);
+                    }
+                }
+            },
+            estimatedMemberCount: 16);
+
+        JsonElement result = (JsonElement)doc.RootElement;
+        var enumerator = result.EnumerateObject();
+        return enumerator.MoveNext() ? result : default;
+    }
+
+    /// <summary>
+    /// JSONata <c>$sift(obj, fn($v,$k,$o))</c> — filters properties with access to the original object.
+    /// </summary>
+    /// <param name="input">The object to filter.</param>
+    /// <param name="predicate">A delegate <c>(value, keyUtf8, obj, workspace) → bool</c>.</param>
+    /// <param name="workspace">The workspace for memory allocation.</param>
+    /// <returns>A filtered object, or undefined if no properties match or input is not an object.</returns>
+    public static JsonElement SiftProperty(
+        in JsonElement input,
+        SiftPredicateWithObject predicate,
+        JsonWorkspace workspace)
+    {
+        if (input.IsNullOrUndefined())
+        {
+            return default;
+        }
+
+        if (input.ValueKind != JsonValueKind.Object)
+        {
+            return default;
+        }
+
+        JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateBuilder(
+            workspace,
+            (input, predicate, workspace),
+            static (in (JsonElement input, SiftPredicateWithObject predicate, JsonWorkspace workspace) ctx, ref JsonElement.ObjectBuilder builder) =>
+            {
+                foreach (var prop in ctx.input.EnumerateObject())
+                {
+                    using UnescapedUtf8JsonString nameUtf8 = prop.Utf8NameSpan;
+                    if (ctx.predicate(prop.Value, nameUtf8.Span, ctx.input, ctx.workspace))
+                    {
+                        builder.AddProperty(nameUtf8.Span, prop.Value);
+                    }
+                }
+            },
+            estimatedMemberCount: 16);
+
+        JsonElement result = (JsonElement)doc.RootElement;
+        var enumerator = result.EnumerateObject();
+        return enumerator.MoveNext() ? result : default;
     }
 }

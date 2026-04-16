@@ -1,84 +1,141 @@
+// Allocation-tracing test for $match RT performance.
+
 using System;
-using System.Diagnostics;
-using System.IO;
 using System.Text;
 using Corvus.Text.Json;
 using Corvus.Text.Json.Jsonata;
 
 using JsonElement = Corvus.Text.Json.JsonElement;
 
-string dataJson = File.ReadAllText(@"D:\source\corvus-dotnet\Corvus.JsonSchema\Jsonata-Test-Suite\test\test-suite\datasets\dataset5.json");
+// Test data matching the benchmark
+const string DataJson = """
+    {
+        "text": "Call me at 555-123-4567 or 555-987-6543. My other number is 555-000-1111. Office: 555-222-3333."
+    }
+    """;
 
-using var doc = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes(dataJson));
+using var doc = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes(DataJson));
 var data = doc.RootElement;
 
 var evaluator = new JsonataEvaluator();
 
-// Benchmark expressions
-(string Name, string Expr)[] benchmarks = [
-    ("DeepPath",       "Account.Order.Product.Price"),
-    ("MapArithmetic",  "Account.Order.Product.(Price * Quantity)"),
-    ("SortPath",       "Account.Order.Product^(Price).SKU"),
-    ("SumAggregate",   "$sum(Account.Order.Product.(Price * Quantity))"),
-    ("StringLookup",   "Account.Order.Product.`Product Name`"),
-    ("ScalarPath",     "Account.`Account Name`"),
-    ("ArrayPath",      "Account.Order.OrderID"),
-    ("SortFull",       "Account.Order.Product^(Price)"),
+(string Name, string Expr)[] tests = [
+    ("$match (4 matches)",      @"$match(text, /\d{3}-\d{3}-\d{4}/)"),
+    ("$match (groups)",         @"$match(text, /(\d{3})-(\d{3})-(\d{4})/)"),
+    ("$match (1 match, limit)", @"$match(text, /\d{3}-\d{3}-\d{4}/, 1)"),
+    ("$replace",                @"$replace(text, /\d{3}-\d{3}-\d{4}/, ""***-***-****"")"),
+    ("$contains",               @"$contains(text, /\d{3}-\d{3}-\d{4}/)"),
+    ("$split",                  @"$split(text, /\d{3}-\d{3}-\d{4}/)"),
 ];
 
-const int warmupIters = 500;
-const int benchIters = 5000;
+Console.WriteLine("=== RT $match/$replace Allocation Tracing ===");
+Console.WriteLine();
+Console.WriteLine($"{"Expression",-30} {"Total Alloc",14} {"Result"}");
+Console.WriteLine(new string('-', 80));
 
-Console.WriteLine($"{"Benchmark",-20} {"Ops/sec",12} {"Mean (us)",12} {"Alloc (B)",12}");
-Console.WriteLine(new string('-', 60));
-
-foreach (var (name, expr) in benchmarks)
+foreach (var (name, expr) in tests)
 {
-    // Warmup
-    for (int i = 0; i < warmupIters; i++)
+    using var workspace = JsonWorkspace.Create();
+
+    // Pre-warm
+    for (int i = 0; i < 3; i++)
     {
-        evaluator.Evaluate(expr, data);
+        workspace.Reset();
+        evaluator.Evaluate(expr, data, workspace);
     }
 
-    // Force GC
+    workspace.Reset();
     GC.Collect(2, GCCollectionMode.Forced, true, true);
     GC.WaitForPendingFinalizers();
     GC.Collect(2, GCCollectionMode.Forced, true, true);
 
-    long allocBefore = GC.GetTotalAllocatedBytes(true);
-    var sw = Stopwatch.StartNew();
+    long before = GC.GetAllocatedBytesForCurrentThread();
+    workspace.Reset();
+    var result = evaluator.Evaluate(expr, data, workspace);
+    long after = GC.GetAllocatedBytesForCurrentThread();
+    long total = after - before;
 
-    for (int i = 0; i < benchIters; i++)
+    string resultInfo = result.ValueKind switch
     {
-        evaluator.Evaluate(expr, data);
-    }
+        JsonValueKind.Array => $"array[{result.GetArrayLength()}]",
+        JsonValueKind.Object => $"object({result.GetRawText()[..Math.Min(60, result.GetRawText().Length)]}...)",
+        JsonValueKind.String => $"string({result.GetString()?[..Math.Min(40, result.GetString()!.Length)]})",
+        JsonValueKind.True or JsonValueKind.False => $"bool={result.GetRawText()}",
+        _ => result.ValueKind.ToString(),
+    };
 
-    sw.Stop();
-    long allocAfter = GC.GetTotalAllocatedBytes(true);
-
-    double totalMs = sw.Elapsed.TotalMilliseconds;
-    double meanUs = (totalMs / benchIters) * 1000.0;
-    double opsPerSec = benchIters / (totalMs / 1000.0);
-    long allocPerOp = (allocAfter - allocBefore) / benchIters;
-
-    Console.WriteLine($"{name,-20} {opsPerSec,12:N0} {meanUs,12:F2} {allocPerOp,12:N0}");
+    Console.WriteLine($"{name,-30} {total,14:N0} {resultInfo}");
 }
 
+// Detailed per-call breakdown: run $match N times and check scaling
 Console.WriteLine();
+Console.WriteLine("=== Scaling test: $match on varying match counts ===");
 
-// Parallel correctness check
-string expected = """["0406634348","0406654608","040657863","0406654603"]""";
-int pass = 0, fail = 0;
-System.Threading.Tasks.Parallel.For(0, 500, i =>
+string[] matchTexts = [
+    """{"text":"no matches here"}""",
+    """{"text":"one 555-123-4567 match"}""",
+    """{"text":"two 555-123-4567 and 555-987-6543"}""",
+    """{"text":"Call me at 555-123-4567 or 555-987-6543. My other number is 555-000-1111. Office: 555-222-3333."}""",
+];
+
+string matchExpr = @"$match(text, /\d{3}-\d{3}-\d{4}/)";
+
+foreach (string json in matchTexts)
 {
-    var result = evaluator.Evaluate("Account.Order.Product^(Price).SKU", data);
-    string resultJson = result.GetRawText();
-    if (resultJson == expected)
-        System.Threading.Interlocked.Increment(ref pass);
-    else
+    using var matchDoc = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes(json));
+    var matchData = matchDoc.RootElement;
+    using var workspace = JsonWorkspace.Create();
+
+    // Pre-warm
+    for (int i = 0; i < 3; i++)
     {
-        int f = System.Threading.Interlocked.Increment(ref fail);
-        if (f <= 5) Console.WriteLine($"  FAIL run {i}: {resultJson}");
+        workspace.Reset();
+        evaluator.Evaluate(matchExpr, matchData, workspace);
     }
-});
-Console.WriteLine($"Parallel sort correctness: Pass={pass}, Fail={fail}");
+
+    workspace.Reset();
+    GC.Collect(2, GCCollectionMode.Forced, true, true);
+    GC.WaitForPendingFinalizers();
+    GC.Collect(2, GCCollectionMode.Forced, true, true);
+
+    long before = GC.GetAllocatedBytesForCurrentThread();
+    workspace.Reset();
+    var result = evaluator.Evaluate(matchExpr, matchData, workspace);
+    long after = GC.GetAllocatedBytesForCurrentThread();
+    long total = after - before;
+
+    int matchCount = result.ValueKind == JsonValueKind.Array ? result.GetArrayLength()
+                   : result.ValueKind == JsonValueKind.Object ? 1
+                   : 0;
+
+    long perMatch = matchCount > 0 ? total / matchCount : 0;
+    Console.WriteLine($"  {matchCount} matches: {total,8:N0} bytes total, {perMatch,6:N0} B/match");
+}
+
+// Iteration scaling: run $match 1000 times to see amortized cost
+Console.WriteLine();
+Console.WriteLine("=== Amortized cost: 1000 iterations of $match (4 matches) ===");
+{
+    using var workspace = JsonWorkspace.Create();
+
+    // Pre-warm
+    for (int i = 0; i < 3; i++)
+    {
+        workspace.Reset();
+        evaluator.Evaluate(matchExpr, data, workspace);
+    }
+
+    GC.Collect(2, GCCollectionMode.Forced, true, true);
+    GC.WaitForPendingFinalizers();
+    GC.Collect(2, GCCollectionMode.Forced, true, true);
+
+    long before = GC.GetAllocatedBytesForCurrentThread();
+    for (int i = 0; i < 1000; i++)
+    {
+        workspace.Reset();
+        evaluator.Evaluate(matchExpr, data, workspace);
+    }
+    long after = GC.GetAllocatedBytesForCurrentThread();
+    long total = after - before;
+    Console.WriteLine($"  Total: {total:N0} bytes, per-iteration: {total / 1000.0:F1} bytes");
+}

@@ -5,6 +5,7 @@
 using System.Buffers;
 using System.Buffers.Text;
 using System.Runtime.CompilerServices;
+using System.Text.RegularExpressions;
 using Corvus.Runtime.InteropServices;
 using Corvus.Text.Json.Internal;
 
@@ -385,6 +386,56 @@ internal static class JsonataHelpers
 
         return (JsonElement)root;
     }
+
+    /// <summary>
+    /// Creates a regex match object via CVB from a <see cref="Match"/> and the original
+    /// input chars. Uses <see cref="Group.Index"/>/<see cref="Group.Length"/> to slice the
+    /// char memory instead of allocating via <see cref="Group.Value"/>.
+    /// </summary>
+    public static JsonElement CreateMatchObjectFromMatch(ReadOnlyMemory<char> chars, Match match, JsonWorkspace workspace)
+    {
+        var doc = JsonElement.CreateBuilder(
+            workspace,
+            (chars, match),
+            static (in (ReadOnlyMemory<char> Chars, Match M) ctx, ref JsonElement.ObjectBuilder ob) =>
+            {
+                ob.AddProperty("match"u8, ctx.Chars.Span.Slice(ctx.M.Index, ctx.M.Length));
+                ob.AddProperty("index"u8, ctx.M.Index);
+                ob.AddProperty("groups"u8, (ctx.Chars, ctx.M),
+                    static (in (ReadOnlyMemory<char> C, Match M) gctx, ref JsonElement.ArrayBuilder ab) =>
+                    {
+                        for (int g = 1; g < gctx.M.Groups.Count; g++)
+                        {
+                            Group grp = gctx.M.Groups[g];
+                            ab.AddItem(gctx.C.Span.Slice(grp.Index, grp.Length));
+                        }
+                    });
+            },
+            estimatedMemberCount: 10);
+        return (JsonElement)doc.RootElement;
+    }
+
+#if NET
+    /// <summary>
+    /// Creates a regex match object via CVB for a match with no capture groups.
+    /// Avoids <see cref="Match"/> allocation entirely by accepting raw index/length
+    /// from <see cref="Regex.EnumerateMatches(ReadOnlySpan{char})"/>.
+    /// </summary>
+    public static JsonElement CreateMatchObjectNoGroups(ReadOnlyMemory<char> chars, int matchIndex, int matchLength, JsonWorkspace workspace)
+    {
+        var doc = JsonElement.CreateBuilder(
+            workspace,
+            (chars, matchIndex, matchLength),
+            static (in (ReadOnlyMemory<char> Chars, int Index, int Length) ctx, ref JsonElement.ObjectBuilder ob) =>
+            {
+                ob.AddProperty("match"u8, ctx.Chars.Span.Slice(ctx.Index, ctx.Length));
+                ob.AddProperty("index"u8, ctx.Index);
+                ob.AddProperty("groups"u8, static (ref JsonElement.ArrayBuilder _) => { });
+            },
+            estimatedMemberCount: 10);
+        return (JsonElement)doc.RootElement;
+    }
+#endif
 
     /// <summary>
     /// Appends the coerced UTF-8 representation of a JSON element to a rented byte buffer.

@@ -90,7 +90,9 @@ public class BenchmarkLargeArray
     public JsonElement Corvus_Map()
     {
         this.workspace.Reset();
-        return this.evaluator.Evaluate(ExprMap, this.data, this.workspace);
+        var result = this.evaluator.Evaluate(ExprMap, this.data, this.workspace);
+        this.workspace.Reset();
+        return result;
     }
 
 #if !NETFRAMEWORK
@@ -122,7 +124,9 @@ public class BenchmarkLargeArray
     public JsonElement Corvus_Filter()
     {
         this.workspace.Reset();
-        return this.evaluator.Evaluate(ExprFilter, this.data, this.workspace);
+        var result = this.evaluator.Evaluate(ExprFilter, this.data, this.workspace);
+        this.workspace.Reset();
+        return result;
     }
 
 #if !NETFRAMEWORK
@@ -154,7 +158,9 @@ public class BenchmarkLargeArray
     public JsonElement Corvus_Reduce()
     {
         this.workspace.Reset();
-        return this.evaluator.Evaluate(ExprReduce, this.data, this.workspace);
+        var result = this.evaluator.Evaluate(ExprReduce, this.data, this.workspace);
+        this.workspace.Reset();
+        return result;
     }
 
 #if !NETFRAMEWORK

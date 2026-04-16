@@ -213,6 +213,7 @@ public static class JsonataCodeGenerator
         L(sb, string.Empty, "#nullable enable");
         L(sb, string.Empty, "using System;");
         L(sb, string.Empty, "using System.Runtime.CompilerServices;");
+        L(sb, string.Empty, "using System.Text.RegularExpressions;");
         L(sb, string.Empty, "using Corvus.Text.Json;");
         L(sb, string.Empty, "using Corvus.Text.Json.Jsonata;");
         Blank(sb);
@@ -391,6 +392,7 @@ public static class JsonataCodeGenerator
         private readonly Dictionary<string, string> _nameFields = new(StringComparer.Ordinal);
         private readonly List<string> _staticFieldDeclarations = new();
         private readonly Dictionary<string, string> _variables = new(StringComparer.Ordinal);
+        private readonly Dictionary<string, string> _doubleVars = new(StringComparer.Ordinal);
 
         /// <summary>
         /// CSE cache for property navigation steps.
@@ -408,6 +410,9 @@ public static class JsonataCodeGenerator
         private int _pathFieldCounter;
         private int _predicateFieldCounter;
         private int _lambdaCounter;
+        private int _regexFieldCounter;
+        private int _constantFieldCounter;
+        private int _fmtPicFieldCounter;
 
         /// <summary>
         /// When set to a data variable name, <see cref="EmitName"/> and
@@ -432,6 +437,22 @@ public static class JsonataCodeGenerator
         /// parameter.
         /// </summary>
         private bool _usesBindings;
+
+        /// <summary>
+        /// Tracks variable names that are typed as <c>double</c> in the generated code
+        /// (e.g. the accumulator parameter in a double-specialized reduce lambda).
+        /// <see cref="EmitArithmeticOperandAsDouble"/> uses this to skip the
+        /// <c>ToArithmeticDoubleLeft/Right</c> extraction when the variable is already a double.
+        /// </summary>
+        private HashSet<string>? _doubleVariables;
+
+        /// <summary>
+        /// Set of JSONata parameter names that are currently bound to a
+        /// <c>ReadOnlySpan&lt;byte&gt;</c> (unescaped UTF-8 property name).
+        /// In concat context the span is appended directly via <c>AppendLiteral</c>;
+        /// elsewhere <c>StringFromUnescapedUtf8</c> materialises a <see cref="JsonElement"/>.
+        /// </summary>
+        private HashSet<string>? _utf8SpanVariables;
 
         /// <summary>
         /// Returns <c>"static "</c> when lambdas can be static, or <c>""</c> when
@@ -507,6 +528,50 @@ public static class JsonataCodeGenerator
         }
 
         /// <summary>
+        /// Creates a static <c>Regex</c> field for a compiled regex pattern.
+        /// </summary>
+        private string CreateRegexField(string pattern, string flags)
+        {
+            string fieldName = $"s_rx{_regexFieldCounter++}";
+
+            // Verbatim string literal: only " needs doubling; \ is literal
+            string escapedPattern = pattern.Replace("\"", "\"\"");
+
+            // Map JSONata flags to RegexOptions
+            var options = new List<string> { "RegexOptions.Compiled" };
+            foreach (char flag in flags)
+            {
+                switch (flag)
+                {
+                    case 'i':
+                        options.Add("RegexOptions.IgnoreCase");
+                        break;
+                    case 'm':
+                        options.Add("RegexOptions.Multiline");
+                        break;
+                }
+            }
+
+            string optionsExpr = string.Join(" | ", options);
+            _staticFieldDeclarations.Add(
+                $"private static readonly Regex {fieldName} = new(@\"{escapedPattern}\", {optionsExpr});");
+            return fieldName;
+        }
+
+        /// <summary>
+        /// Emits a <c>private static readonly JsonElement</c> field initialized by
+        /// <c>JsonElement.ParseValue</c> from a UTF-8 JSON literal. Returns the field name.
+        /// </summary>
+        private string EmitConstantField(string json)
+        {
+            string fieldName = $"s_c{_constantFieldCounter++}";
+            string escaped = EscapeStringLiteral(json);
+            _staticFieldDeclarations.Add(
+                $"private static readonly JsonElement {fieldName} = JsonElement.ParseValue(\"{escaped}\"u8);");
+            return fieldName;
+        }
+
+        /// <summary>
         /// Emits C# statements for the given AST node and returns the variable name
         /// holding the result.
         /// </summary>
@@ -522,13 +587,14 @@ public static class JsonataCodeGenerator
                 StringNode str => EmitString(sb, str, indent, wsVar),
                 ValueNode val => EmitValue(sb, val, indent),
                 NameNode name => EmitName(sb, name, indent, dataVar, wsVar),
-                VariableNode variable => EmitVariable(sb, variable, indent, dataVar),
+                VariableNode variable => EmitVariable(sb, variable, indent, dataVar, wsVar),
                 ConditionNode cond => EmitCondition(sb, cond, indent, dataVar, wsVar),
                 BlockNode block => EmitBlock(sb, block, indent, dataVar, wsVar),
                 BindNode bind => EmitBind(sb, bind, indent, dataVar, wsVar),
                 ArrayConstructorNode arr => EmitArrayConstructor(sb, arr, indent, dataVar, wsVar),
                 ObjectConstructorNode obj => EmitObjectConstructor(sb, obj, indent, dataVar, wsVar),
                 FunctionCallNode func => EmitFunctionCall(sb, func, indent, dataVar, wsVar),
+                ApplyNode apply => EmitApply(sb, apply, indent, dataVar, wsVar),
                 FilterNode => throw new FallbackException(),
                 _ => throw new FallbackException(),
             };
@@ -580,17 +646,13 @@ public static class JsonataCodeGenerator
             // Check for simple property chain (all NameNode, no annotations on steps or path)
             if (IsSimplePropertyChain(steps) && path.Annotations?.Group is null)
             {
-                string result = EmitSimplePropertyChain(sb, steps, indent, dataVar, wsVar);
+                bool keepArray = path.KeepSingletonArray || path.KeepArray
+                    || steps.Exists(s => s.KeepArray);
 
-                // Still apply KeepSingletonArray wrapping if needed (e.g. number[])
-                if (path.KeepSingletonArray || path.KeepArray
-                    || steps.Exists(s => s.KeepArray))
-                {
-                    string wrapped = NextVar();
-                    L(sb, indent, $"var {wrapped} = {H}.KeepSingletonArray({result}, {wsVar});");
-                    result = wrapped;
-                }
+                string result = EmitSimplePropertyChain(sb, steps, indent, dataVar, wsVar, keepArray);
 
+                // KeepSingletonArray is now handled inside EmitSimplePropertyChain's branches
+                // (inline success, NavigatePropertyToArray, ChainKeepSingletonArray fallbacks).
                 return result;
             }
 
@@ -624,7 +686,7 @@ public static class JsonataCodeGenerator
                     throw new FallbackException();
                 }
 
-                currentVar = EmitVariable(sb, leadVar, indent, dataVar);
+                currentVar = EmitVariable(sb, leadVar, indent, dataVar, wsVar);
 
                 // Apply stages on the variable (e.g. $[0] applies index to root)
                 if (HasStages(leadVar))
@@ -781,6 +843,30 @@ public static class JsonataCodeGenerator
                     if (HasComplexAnnotations(step))
                     {
                         throw new FallbackException();
+                    }
+
+                    // Fuse descendant + property into single-pass when the next step is a simple NameNode
+                    if (step is DescendantNode
+                        && i + 1 < steps.Count
+                        && steps[i + 1] is NameNode nextName
+                        && !HasStages(nextName)
+                        && !HasComplexAnnotations(nextName)
+                        && !HasGroupAnnotation(nextName))
+                    {
+                        string nameField = GetOrCreateNameField(nextName.Value);
+                        string v = NextVar();
+                        if (i == 0)
+                        {
+                            L(sb, indent, $"var {v} = {H}.EnumerateDescendantProperty({currentVar}, {nameField}, {wsVar});");
+                        }
+                        else
+                        {
+                            L(sb, indent, $"var {v} = {H}.ApplyStepOverElements({currentVar}, static (el, ws) => {H}.EnumerateDescendantProperty(el, {nameField}, ws), {wsVar});");
+                        }
+
+                        currentVar = v;
+                        i += 2; // consumed both descendant and property steps
+                        continue;
                     }
 
                     string helperName = step is WildcardNode ? "EnumerateWildcard" : "EnumerateDescendant";
@@ -1747,14 +1833,18 @@ public static class JsonataCodeGenerator
         }
 
         private string EmitSimplePropertyChain(
-            StringBuilder sb, List<JsonataNode> steps, string indent, string dataVar, string wsVar)
+            StringBuilder sb, List<JsonataNode> steps, string indent, string dataVar, string wsVar, bool keepArray = false)
         {
             if (steps.Count == 1)
             {
                 string nameField = GetOrCreateNameField(((NameNode)steps[0]).Value);
                 string v = NextVar();
 
-                if (_knownObjectDataVar != null && dataVar == _knownObjectDataVar)
+                if (keepArray)
+                {
+                    L(sb, indent, $"var {v} = {H}.NavigatePropertyToArray({dataVar}, {nameField}, {wsVar});");
+                }
+                else if (_knownObjectDataVar != null && dataVar == _knownObjectDataVar)
                 {
                     string tmp = NextVar();
                     L(sb, indent, $"var {v} = {dataVar}.ValueKind == JsonValueKind.Object && {dataVar}.TryGetProperty((ReadOnlySpan<byte>){nameField}, out var {tmp}) ? {tmp} : default;");
@@ -1767,12 +1857,12 @@ public static class JsonataCodeGenerator
                 return v;
             }
 
-            return EmitInlinePropertyChain(sb, steps, 0, steps.Count, indent, dataVar, wsVar);
+            return EmitInlinePropertyChain(sb, steps, 0, steps.Count, indent, dataVar, wsVar, keepArray);
         }
 
         private string EmitPropertyChainSegment(
             StringBuilder sb, List<JsonataNode> steps, int start, int end,
-            string indent, string currentVar, string wsVar)
+            string indent, string currentVar, string wsVar, bool keepArray = false)
         {
             int count = end - start;
             if (count == 1)
@@ -1780,20 +1870,33 @@ public static class JsonataCodeGenerator
                 string name = ((NameNode)steps[start]).Value;
 
                 // CSE: reuse if this (source, property) was already navigated.
-                var cacheKey = (currentVar, name);
-                if (_propertyStepCache.TryGetValue(cacheKey, out string? cached))
+                // Skip CSE when keepArray is true (different method needed).
+                if (!keepArray)
                 {
-                    return cached;
+                    var cacheKey = (currentVar, name);
+                    if (_propertyStepCache.TryGetValue(cacheKey, out string? cached))
+                    {
+                        return cached;
+                    }
                 }
 
                 string nameField = GetOrCreateNameField(name);
                 string v = NextVar();
-                L(sb, indent, $"var {v} = {H}.NavigateProperty({currentVar}, {nameField}, {wsVar});");
-                _propertyStepCache[cacheKey] = v;
+
+                if (keepArray)
+                {
+                    L(sb, indent, $"var {v} = {H}.NavigatePropertyToArray({currentVar}, {nameField}, {wsVar});");
+                }
+                else
+                {
+                    L(sb, indent, $"var {v} = {H}.NavigateProperty({currentVar}, {nameField}, {wsVar});");
+                    _propertyStepCache[(currentVar, name)] = v;
+                }
+
                 return v;
             }
 
-            return EmitInlinePropertyChain(sb, steps, start, end, indent, currentVar, wsVar);
+            return EmitInlinePropertyChain(sb, steps, start, end, indent, currentVar, wsVar, keepArray);
         }
 
         /// <summary>
@@ -1805,16 +1908,16 @@ public static class JsonataCodeGenerator
         /// </summary>
         private string EmitInlinePropertyChain(
             StringBuilder sb, List<JsonataNode> steps, int start, int end,
-            string indent, string dataVar, string wsVar)
+            string indent, string dataVar, string wsVar, bool keepArray = false)
         {
             int count = end - start;
 
             if (count <= 2)
             {
-                return EmitPerStepInlineChain(sb, steps, start, end, indent, dataVar, wsVar);
+                return EmitPerStepInlineChain(sb, steps, start, end, indent, dataVar, wsVar, keepArray);
             }
 
-            return EmitAndChainWithFlatFallback(sb, steps, start, end, indent, dataVar, wsVar);
+            return EmitAndChainWithFlatFallback(sb, steps, start, end, indent, dataVar, wsVar, keepArray);
         }
 
         /// <summary>
@@ -1825,20 +1928,26 @@ public static class JsonataCodeGenerator
         /// </summary>
         private string EmitPerStepInlineChain(
             StringBuilder sb, List<JsonataNode> steps, int start, int end,
-            string indent, string dataVar, string wsVar)
+            string indent, string dataVar, string wsVar, bool keepArray = false)
         {
             string prevVar = dataVar;
 
             for (int i = start; i < end; i++)
             {
                 string name = ((NameNode)steps[i]).Value;
+                bool isLastStep = i == end - 1;
+                bool useToArray = keepArray && isLastStep;
 
                 // CSE: if this exact (source, property) pair was already navigated, reuse.
-                var cacheKey = (prevVar, name);
-                if (_propertyStepCache.TryGetValue(cacheKey, out string? cached))
+                // Skip CSE when useToArray (different method).
+                if (!useToArray)
                 {
-                    prevVar = cached;
-                    continue;
+                    var cacheKey = (prevVar, name);
+                    if (_propertyStepCache.TryGetValue(cacheKey, out string? cached))
+                    {
+                        prevVar = cached;
+                        continue;
+                    }
                 }
 
                 string escapedName = EscapeStringLiteral(name);
@@ -1848,14 +1957,35 @@ public static class JsonataCodeGenerator
                 L(sb, indent, $"JsonElement {resultVar};");
                 L(sb, indent, $"if ({prevVar}.ValueKind == JsonValueKind.Object && {prevVar}.TryGetProperty(\"{escapedName}\"u8, out {resultVar}))");
                 L(sb, indent, "{");
+
+                if (useToArray)
+                {
+                    // Inline success: apply KeepSingletonArray so caller doesn't need an outer wrapper.
+                    L(sb, indent, $"    {resultVar} = {H}.KeepSingletonArray({resultVar}, {wsVar});");
+                }
+
                 L(sb, indent, "}");
                 L(sb, indent, "else");
                 L(sb, indent, "{");
-                L(sb, indent, $"    {resultVar} = {H}.NavigateProperty({prevVar}, {nameField}, {wsVar});");
+
+                if (useToArray)
+                {
+                    // NavigatePropertyToArray handles KeepSingletonArray internally.
+                    L(sb, indent, $"    {resultVar} = {H}.NavigatePropertyToArray({prevVar}, {nameField}, {wsVar});");
+                }
+                else
+                {
+                    L(sb, indent, $"    {resultVar} = {H}.NavigateProperty({prevVar}, {nameField}, {wsVar});");
+                }
+
                 L(sb, indent, "}");
                 L(sb, indent, "");
 
-                _propertyStepCache[cacheKey] = resultVar;
+                if (!useToArray)
+                {
+                    _propertyStepCache[(prevVar, name)] = resultVar;
+                }
+
                 prevVar = resultVar;
             }
 
@@ -1871,7 +2001,7 @@ public static class JsonataCodeGenerator
         /// </summary>
         private string EmitAndChainWithFlatFallback(
             StringBuilder sb, List<JsonataNode> steps, int start, int end,
-            string indent, string dataVar, string wsVar)
+            string indent, string dataVar, string wsVar, bool keepArray = false)
         {
             int count = end - start;
 
@@ -1916,7 +2046,14 @@ public static class JsonataCodeGenerator
                 indent += "    ";
             }
 
-            // Innermost block: all steps succeeded — nothing more to do (resultVar is set)
+            // Innermost block: all steps succeeded via inline TryGetProperty.
+            // When keepArray is set, apply KeepSingletonArray here so that the
+            // caller does not need a redundant outer wrapper.
+            if (keepArray)
+            {
+                L(sb, indent, $"{resultVar} = {H}.KeepSingletonArray({resultVar}, {wsVar});");
+            }
+
             indent = indent.Substring(0, indent.Length - 4); // back one level
 
             // Close each nesting level with an else that falls back to NavigatePropertyChain
@@ -1929,18 +2066,42 @@ public static class JsonataCodeGenerator
                 if (i == 0)
                 {
                     // First step failed — navigate full chain from dataVar
-                    L(sb, indent, $"    {resultVar} = {H}.NavigatePropertyChain({dataVar}, {chainField}, {wsVar});");
+                    if (keepArray)
+                    {
+                        L(sb, indent, $"    {resultVar} = {H}.ChainKeepSingletonArray({dataVar}, {chainField}, {wsVar});");
+                    }
+                    else
+                    {
+                        L(sb, indent, $"    {resultVar} = {H}.NavigatePropertyChain({dataVar}, {chainField}, {wsVar});");
+                    }
                 }
                 else if (i == count - 1)
                 {
                     // Last step failed — just navigate single property from previous chain var
                     string nameField = GetOrCreateNameField(names[i]);
-                    L(sb, indent, $"    {resultVar} = {H}.NavigateProperty({chainVars[i - 1]}, {nameField}, {wsVar});");
+
+                    if (keepArray)
+                    {
+                        // Build directly into array (no intermediate ElementBuffer).
+                        // NavigatePropertyToArray handles KeepSingletonArray internally.
+                        L(sb, indent, $"    {resultVar} = {H}.NavigatePropertyToArray({chainVars[i - 1]}, {nameField}, {wsVar});");
+                    }
+                    else
+                    {
+                        L(sb, indent, $"    {resultVar} = {H}.NavigateProperty({chainVars[i - 1]}, {nameField}, {wsVar});");
+                    }
                 }
                 else
                 {
                     // Middle step failed — navigate remaining chain from previous chain var
-                    L(sb, indent, $"    {resultVar} = {H}.NavigatePropertyChain({chainVars[i - 1]}, {chainField}, {i}, {wsVar});");
+                    if (keepArray)
+                    {
+                        L(sb, indent, $"    {resultVar} = {H}.ChainKeepSingletonArray({chainVars[i - 1]}, {chainField}, {i}, {wsVar});");
+                    }
+                    else
+                    {
+                        L(sb, indent, $"    {resultVar} = {H}.NavigatePropertyChain({chainVars[i - 1]}, {chainField}, {i}, {wsVar});");
+                    }
                 }
 
                 L(sb, indent, "}");
@@ -2459,7 +2620,62 @@ public static class JsonataCodeGenerator
             return v2;
         }
 
-        // ── Binary ───────────────────────────────────────────
+        // ── Apply (pipe) ────────────────────────────────────
+
+        /// <summary>
+        /// Emits the <c>~&gt;</c> (apply/pipe) operator. Desugars into a direct function call
+        /// with LHS as the first argument when the RHS is a known built-in.
+        /// </summary>
+        private string EmitApply(
+            StringBuilder sb, ApplyNode apply, string indent, string dataVar, string wsVar)
+        {
+            // RHS is a VariableNode referencing a built-in unary function
+            // e.g. expr ~> $sum → H.Sum(lhs, workspace)
+            if (apply.Rhs is VariableNode varNode && TryGetUnaryBuiltinHelperName(varNode.Name) is string helperName)
+            {
+                string lhs = EmitExpression(sb, apply.Lhs, indent, dataVar, wsVar);
+                string v = NextVar();
+                L(sb, indent, $"var {v} = {H}.{helperName}({lhs}, {wsVar});");
+                return v;
+            }
+
+            throw new FallbackException();
+        }
+
+        /// <summary>
+        /// Returns the CG helper method name for a built-in function that can be called
+        /// as a unary function (single argument), or <c>null</c> if not a known unary built-in.
+        /// </summary>
+        private static string? TryGetUnaryBuiltinHelperName(string name)
+        {
+            return name switch
+            {
+                "sum" => "Sum",
+                "count" => "Count",
+                "max" => "Max",
+                "min" => "Min",
+                "average" => "Average",
+                "string" => "String",
+                "boolean" => "Boolean",
+                "number" => "Number",
+                "abs" => "Abs",
+                "floor" => "Floor",
+                "ceil" => "Ceil",
+                "sqrt" => "Sqrt",
+                "length" => "Length",
+                "reverse" => "Reverse",
+                "distinct" => "Distinct",
+                "keys" => "Keys",
+                "values" => "Values",
+                "spread" => "Spread",
+                "flatten" => "Flatten",
+                "shuffle" => "Shuffle",
+                "exists" => "Exists",
+                "type" => "Type",
+                _ => null,
+            };
+        }
+
         private string EmitBinary(
             StringBuilder sb, BinaryNode binary, string indent, string dataVar, string wsVar)
         {
@@ -2563,6 +2779,10 @@ public static class JsonataCodeGenerator
                 case BinaryNode { Operator: "+" or "-" or "*" or "/" or "%" } binary:
                     return EmitArithmeticAsDouble(sb, binary, indent, dataVar, wsVar);
 
+                case VariableNode vn when _doubleVariables?.Contains(vn.Name) == true:
+                    // Variable is already typed as double (e.g. reduce accumulator) — use directly.
+                    return _variables[vn.Name];
+
                 default:
                     // Non-arithmetic leaf: emit as element, extract double
                     string elem = EmitExpression(sb, node, indent, dataVar, wsVar);
@@ -2636,6 +2856,168 @@ public static class JsonataCodeGenerator
             };
         }
 
+        /// <summary>
+        /// Returns <see langword="true"/> if the entire subtree is a constant expression
+        /// (no data dependencies) that can be pre-parsed at class initialization time.
+        /// Nodes with annotations (stages, predicates, group-by) are excluded.
+        /// </summary>
+        private static bool IsConstantExpression(JsonataNode node)
+        {
+            if (node.Annotations is not null)
+            {
+                return false;
+            }
+
+            switch (node)
+            {
+                case NumberNode:
+                case StringNode:
+                case ValueNode:
+                    return true;
+
+                case UnaryNode { Operator: "-" } u:
+                    return IsConstantExpression(u.Expression);
+
+                case ArrayConstructorNode arr:
+                    if (arr.Expressions.Count == 0)
+                    {
+                        return false; // handled by EmptyArray
+                    }
+
+                    for (int i = 0; i < arr.Expressions.Count; i++)
+                    {
+                        if (!IsConstantExpression(arr.Expressions[i]))
+                        {
+                            return false;
+                        }
+                    }
+
+                    return true;
+
+                case ObjectConstructorNode obj:
+                    if (obj.Pairs.Count == 0)
+                    {
+                        return false; // handled by EmptyObject
+                    }
+
+                    for (int i = 0; i < obj.Pairs.Count; i++)
+                    {
+                        if (obj.Pairs[i].Key is not StringNode
+                            || !IsConstantExpression(obj.Pairs[i].Value))
+                        {
+                            return false;
+                        }
+                    }
+
+                    return true;
+
+                default:
+                    return false;
+            }
+        }
+
+        /// <summary>
+        /// Serializes a constant AST subtree to its JSON representation.
+        /// Only call after <see cref="IsConstantExpression"/> returns <see langword="true"/>.
+        /// </summary>
+        private static string SerializeConstantJson(JsonataNode node)
+        {
+            switch (node)
+            {
+                case NumberNode num:
+                    return num.Value.ToString("R", CultureInfo.InvariantCulture);
+
+                case StringNode str:
+                    return $"\"{EscapeJsonStringContent(str.Value)}\"";
+
+                case ValueNode val:
+                    return val.Value; // "true", "false", "null"
+
+                case UnaryNode { Operator: "-" } u:
+                    if (u.Expression is NumberNode inner)
+                    {
+                        return (-inner.Value).ToString("R", CultureInfo.InvariantCulture);
+                    }
+
+                    return $"-{SerializeConstantJson(u.Expression)}";
+
+                case ArrayConstructorNode arr:
+                {
+                    var sb = new StringBuilder("[");
+                    for (int i = 0; i < arr.Expressions.Count; i++)
+                    {
+                        if (i > 0)
+                        {
+                            sb.Append(',');
+                        }
+
+                        sb.Append(SerializeConstantJson(arr.Expressions[i]));
+                    }
+
+                    sb.Append(']');
+                    return sb.ToString();
+                }
+
+                case ObjectConstructorNode obj:
+                {
+                    var sb = new StringBuilder("{");
+                    for (int i = 0; i < obj.Pairs.Count; i++)
+                    {
+                        if (i > 0)
+                        {
+                            sb.Append(',');
+                        }
+
+                        sb.Append('"');
+                        sb.Append(EscapeJsonStringContent(((StringNode)obj.Pairs[i].Key).Value));
+                        sb.Append("\":");
+                        sb.Append(SerializeConstantJson(obj.Pairs[i].Value));
+                    }
+
+                    sb.Append('}');
+                    return sb.ToString();
+                }
+
+                default:
+                    throw new InvalidOperationException("Not a constant expression");
+            }
+        }
+
+        /// <summary>
+        /// Escapes a string value for embedding inside a JSON string (handles
+        /// backslash, double-quote, and control characters).
+        /// </summary>
+        private static string EscapeJsonStringContent(string s)
+        {
+            var sb = new StringBuilder(s.Length);
+            foreach (char c in s)
+            {
+                switch (c)
+                {
+                    case '\\': sb.Append("\\\\"); break;
+                    case '"': sb.Append("\\\""); break;
+                    case '\n': sb.Append("\\n"); break;
+                    case '\r': sb.Append("\\r"); break;
+                    case '\t': sb.Append("\\t"); break;
+                    case '\b': sb.Append("\\b"); break;
+                    case '\f': sb.Append("\\f"); break;
+                    default:
+                        if (c < ' ')
+                        {
+                            sb.AppendFormat("\\u{0:X4}", (int)c);
+                        }
+                        else
+                        {
+                            sb.Append(c);
+                        }
+
+                        break;
+                }
+            }
+
+            return sb.ToString();
+        }
+
         private string EmitEqualityComparison(
             StringBuilder sb, BinaryNode binary, string indent, string dataVar,
             string wsVar, string helperName)
@@ -2676,6 +3058,50 @@ public static class JsonataCodeGenerator
             if (expr is not BinaryNode binary)
             {
                 return null;
+            }
+
+            string? csharpOp = binary.Operator switch
+            {
+                ">" => ">",
+                ">=" => ">=",
+                "<" => "<",
+                "<=" => "<=",
+                _ => null,
+            };
+
+            if (csharpOp is null)
+            {
+                return null;
+            }
+
+            // Fast path: double variable vs constant → direct double comparison
+            // Avoids DoubleToElement, NumberFromDouble, and element-level GreaterThan.
+            if (binary.Rhs is NumberNode rightConst
+                && binary.Lhs is VariableNode rightLhsVar
+                && _doubleVars.TryGetValue(rightLhsVar.Name, out string? dblVar))
+            {
+                string literal = rightConst.Value.ToString("R", CultureInfo.InvariantCulture);
+                string v = NextVar();
+                L(sb, indent, $"bool {v} = {dblVar} {csharpOp} {literal};");
+                return v;
+            }
+
+            if (binary.Lhs is NumberNode leftConst
+                && binary.Rhs is VariableNode leftRhsVar
+                && _doubleVars.TryGetValue(leftRhsVar.Name, out string? dblVar2))
+            {
+                string flippedOp = binary.Operator switch
+                {
+                    ">" => "<",
+                    ">=" => "<=",
+                    "<" => ">",
+                    "<=" => ">=",
+                    _ => null!,
+                };
+                string literal = leftConst.Value.ToString("R", CultureInfo.InvariantCulture);
+                string v = NextVar();
+                L(sb, indent, $"bool {v} = {dblVar2} {flippedOp} {literal};");
+                return v;
             }
 
             // Map operator → fused helper name (element on left, constant on right)
@@ -2853,6 +3279,24 @@ public static class JsonataCodeGenerator
             StringBuilder sb, JsonataNode operand, string indent, string dataVar,
             string wsVar, List<(string Var, bool IsLiteral, string? AutoMapPropField)> operands)
         {
+            // UTF-8 span variable (e.g. $k in $each/$sift) — append directly, no materialisation.
+            if (operand is VariableNode spanVarNode
+                && _utf8SpanVariables?.Contains(spanVarNode.Name) == true
+                && _variables.TryGetValue(spanVarNode.Name, out string? spanCsVar))
+            {
+                operands.Add((spanCsVar, true, null));
+                return;
+            }
+
+            // $string(x) in concat context — AppendElement already coerces to string,
+            // so emit the argument directly and skip the intermediate document allocation.
+            if (operand is FunctionCallNode { Procedure: VariableNode { Name: "string" } } stringFunc
+                && stringFunc.Arguments.Count == 1)
+            {
+                operands.Add((EmitExpression(sb, stringFunc.Arguments[0], indent, dataVar, wsVar), false, null));
+                return;
+            }
+
             // Detect auto-map candidate: PathNode with 2+ simple name steps, no annotations
             if (operand is PathNode autoMapPath
                 && autoMapPath.Steps.Count >= 2
@@ -3029,7 +3473,8 @@ public static class JsonataCodeGenerator
             else
             {
                 string literal = value.ToString("R", CultureInfo.InvariantCulture);
-                L(sb, indent, $"var {v} = {H}.NumberFromDouble({literal}, {wsVar});");
+                string field = EmitConstantField(literal);
+                L(sb, indent, $"var {v} = {field};");
             }
 
             return v;
@@ -3044,8 +3489,9 @@ public static class JsonataCodeGenerator
             }
             else
             {
-                string escaped = EscapeStringLiteral(str.Value);
-                L(sb, indent, $"var {v} = {H}.StringElement(\"{escaped}\", {wsVar});");
+                string json = $"\"{EscapeJsonStringContent(str.Value)}\"";
+                string field = EmitConstantField(json);
+                L(sb, indent, $"var {v} = {field};");
             }
 
             return v;
@@ -3088,7 +3534,7 @@ public static class JsonataCodeGenerator
         }
 
         private string EmitVariable(
-            StringBuilder sb, VariableNode variable, string indent, string dataVar)
+            StringBuilder sb, VariableNode variable, string indent, string dataVar, string wsVar)
         {
             // $ (empty name) -> current data context
             if (string.IsNullOrEmpty(variable.Name))
@@ -3105,6 +3551,15 @@ public static class JsonataCodeGenerator
 
             if (_variables.TryGetValue(variable.Name, out string? csVar))
             {
+                // Variable is a ReadOnlySpan<byte> (e.g. $k in $each/$sift lambda) —
+                // materialise a JsonElement on demand for non-concat usage sites.
+                if (_utf8SpanVariables?.Contains(variable.Name) == true)
+                {
+                    string temp = NextVar();
+                    L(sb, indent, $"var {temp} = {H}.StringFromUnescapedUtf8({csVar}, {wsVar});");
+                    return temp;
+                }
+
                 return csVar;
             }
 
@@ -3127,10 +3582,22 @@ public static class JsonataCodeGenerator
         private string EmitCondition(
             StringBuilder sb, ConditionNode cond, string indent, string dataVar, string wsVar)
         {
-            string condVar = EmitExpression(sb, cond.Condition, indent, dataVar, wsVar);
+            // Try to emit the condition as a raw bool, avoiding element-level comparisons
+            // and IsTruthy. Handles arithmetic-bound double variables compared to constants.
+            string? boolVar = TryEmitExpressionAsBool(sb, cond.Condition, indent, dataVar, wsVar);
             string v = NextVar();
             L(sb, indent, $"JsonElement {v};");
-            L(sb, indent, $"if ({H}.IsTruthy({condVar}))");
+
+            if (boolVar is not null)
+            {
+                L(sb, indent, $"if ({boolVar})");
+            }
+            else
+            {
+                string condVar = EmitExpression(sb, cond.Condition, indent, dataVar, wsVar);
+                L(sb, indent, $"if ({H}.IsTruthy({condVar}))");
+            }
+
             L(sb, indent, "{");
 
             string thenVar = EmitExpression(sb, cond.Then, indent + "    ", dataVar, wsVar);
@@ -3170,16 +3637,34 @@ public static class JsonataCodeGenerator
             }
 
             // Track variables bound in this block so we can restore outer scope
-            var boundVars = new List<(string name, string? saved)>();
+            var boundVars = new List<(string name, string? saved, string? savedDouble)>();
             string lastVar = dataVar;
             foreach (JsonataNode expr in block.Expressions)
             {
                 if (expr is BindNode bind && bind.Lhs is VariableNode varNode)
                 {
-                    string rhsVar = EmitExpression(sb, bind.Rhs, indent, dataVar, wsVar);
-                    string? saved = StashVariable(varNode.Name, rhsVar);
-                    boundVars.Add((varNode.Name, saved));
-                    lastVar = rhsVar;
+                    // When the RHS is arithmetic, keep the raw double for optimized comparisons.
+                    if (bind.Rhs is BinaryNode arith && arith.Operator is "+" or "-" or "*" or "/" or "%")
+                    {
+                        string doubleVar = EmitArithmeticAsDouble(sb, arith, indent, dataVar, wsVar);
+                        string elementVar = NextVar();
+                        L(sb, indent, $"var {elementVar} = {H}.DoubleToElement({doubleVar}, {wsVar});");
+
+                        string? saved = StashVariable(varNode.Name, elementVar);
+                        _doubleVars.TryGetValue(varNode.Name, out string? savedDouble);
+                        _doubleVars[varNode.Name] = doubleVar;
+                        boundVars.Add((varNode.Name, saved, savedDouble));
+                        lastVar = elementVar;
+                    }
+                    else
+                    {
+                        string rhsVar = EmitExpression(sb, bind.Rhs, indent, dataVar, wsVar);
+                        string? saved = StashVariable(varNode.Name, rhsVar);
+                        _doubleVars.TryGetValue(varNode.Name, out string? savedDouble);
+                        _doubleVars.Remove(varNode.Name);
+                        boundVars.Add((varNode.Name, saved, savedDouble));
+                        lastVar = rhsVar;
+                    }
                 }
                 else
                 {
@@ -3191,6 +3676,15 @@ public static class JsonataCodeGenerator
             for (int i = boundVars.Count - 1; i >= 0; i--)
             {
                 RestoreVariable(boundVars[i].name, boundVars[i].saved);
+
+                if (boundVars[i].savedDouble is not null)
+                {
+                    _doubleVars[boundVars[i].name] = boundVars[i].savedDouble!;
+                }
+                else
+                {
+                    _doubleVars.Remove(boundVars[i].name);
+                }
             }
 
             return lastVar;
@@ -3202,6 +3696,19 @@ public static class JsonataCodeGenerator
             if (bind.Lhs is not VariableNode varNode)
             {
                 throw new FallbackException();
+            }
+
+            // When the RHS is arithmetic, keep the raw double for optimized comparisons.
+            // The element form is still emitted for general use, but TryEmitExpressionAsBool
+            // can use the double directly for constant comparisons like $p > 50.
+            if (bind.Rhs is BinaryNode arith && arith.Operator is "+" or "-" or "*" or "/" or "%")
+            {
+                string doubleVar = EmitArithmeticAsDouble(sb, arith, indent, dataVar, wsVar);
+                string elementVar = NextVar();
+                L(sb, indent, $"var {elementVar} = {H}.DoubleToElement({doubleVar}, {wsVar});");
+                _variables[varNode.Name] = elementVar;
+                _doubleVars[varNode.Name] = doubleVar;
+                return elementVar;
             }
 
             string rhsVar = EmitExpression(sb, bind.Rhs, indent, dataVar, wsVar);
@@ -3217,6 +3724,16 @@ public static class JsonataCodeGenerator
             {
                 string v = NextVar();
                 L(sb, indent, $"var {v} = (JsonElement)JsonElement.CreateArrayBuilder({wsVar}, 0).RootElement;");
+                return v;
+            }
+
+            // All-constant array: emit as static field, zero per-call cost.
+            if (IsConstantExpression(arr))
+            {
+                string json = SerializeConstantJson(arr);
+                string field = EmitConstantField(json);
+                string v = NextVar();
+                L(sb, indent, $"var {v} = {field};");
                 return v;
             }
 
@@ -3580,6 +4097,16 @@ public static class JsonataCodeGenerator
                 string docVar = NextVar();
                 L(sb, indent, $"var {docVar} = (JsonElement)JsonElement.CreateObjectBuilder({wsVar}, 0).RootElement;");
                 return docVar;
+            }
+
+            // All-constant object: emit as static field, zero per-call cost.
+            if (IsConstantExpression(obj))
+            {
+                string json = SerializeConstantJson(obj);
+                string constField = EmitConstantField(json);
+                string constVar = NextVar();
+                L(sb, indent, $"var {constVar} = {constField};");
+                return constVar;
             }
 
             // Classify each value: double, concat bytes, or JsonElement.
@@ -3966,9 +4493,12 @@ public static class JsonataCodeGenerator
                 "type" => EmitBuiltinUnary(sb, func, indent, dataVar, wsVar, "Type"),
                 "length" => EmitBuiltinUnary(sb, func, indent, dataVar, wsVar, "Length"),
                 "number" => EmitBuiltinContextOptional(sb, func, indent, dataVar, wsVar, "Number"),
-                "max" => EmitBuiltinUnaryOrError(sb, func, indent, dataVar, wsVar, "Max", "max"),
-                "min" => EmitBuiltinUnaryOrError(sb, func, indent, dataVar, wsVar, "Min", "min"),
-                "average" => EmitBuiltinUnaryOrError(sb, func, indent, dataVar, wsVar, "Average", "average"),
+                "max" => TryEmitAggregationChainFusion(sb, func, indent, dataVar, wsVar, "MaxOverChainDouble")
+                         ?? EmitBuiltinUnaryOrError(sb, func, indent, dataVar, wsVar, "Max", "max"),
+                "min" => TryEmitAggregationChainFusion(sb, func, indent, dataVar, wsVar, "MinOverChainDouble")
+                         ?? EmitBuiltinUnaryOrError(sb, func, indent, dataVar, wsVar, "Min", "min"),
+                "average" => TryEmitAggregationChainFusion(sb, func, indent, dataVar, wsVar, "AverageOverChainDouble")
+                             ?? EmitBuiltinUnaryOrError(sb, func, indent, dataVar, wsVar, "Average", "average"),
 
                 // Phase 1b: Math functions
                 "abs" => EmitBuiltinUnary(sb, func, indent, dataVar, wsVar, "Abs"),
@@ -3992,15 +4522,15 @@ public static class JsonataCodeGenerator
                 // Phase 1d: Array/Object ops
                 "append" => EmitBuiltinBinary(sb, func, indent, dataVar, wsVar, "Append"),
                 "reverse" => EmitBuiltinUnary(sb, func, indent, dataVar, wsVar, "Reverse"),
-                "distinct" => EmitBuiltinUnary(sb, func, indent, dataVar, wsVar, "Distinct"),
+                "distinct" => EmitDistinct(sb, func, indent, dataVar, wsVar),
                 "keys" => EmitBuiltinUnary(sb, func, indent, dataVar, wsVar, "Keys"),
                 "values" => EmitBuiltinUnary(sb, func, indent, dataVar, wsVar, "Values"),
                 "lookup" => EmitBuiltinBinary(sb, func, indent, dataVar, wsVar, "Lookup"),
-                "merge" => EmitBuiltinUnary(sb, func, indent, dataVar, wsVar, "Merge"),
+                "merge" => EmitMerge(sb, func, indent, dataVar, wsVar),
                 "spread" => EmitBuiltinUnary(sb, func, indent, dataVar, wsVar, "Spread"),
                 "single" => EmitBuiltinSingle(sb, func, indent, dataVar, wsVar),
                 "flatten" => EmitBuiltinUnary(sb, func, indent, dataVar, wsVar, "Flatten"),
-                "shuffle" => EmitBuiltinUnary(sb, func, indent, dataVar, wsVar, "Shuffle"),
+                "shuffle" => EmitBuiltinShuffle(sb, func, indent, dataVar, wsVar),
 
                 // Phase 1e: Error/utility
                 "error" => EmitBuiltinNullaryOrUnary(sb, func, indent, dataVar, wsVar, "Error"),
@@ -4019,14 +4549,19 @@ public static class JsonataCodeGenerator
                 // Phase 1g: Date/time formatting
                 "fromMillis" => EmitBuiltinUpToThree(sb, func, indent, dataVar, wsVar, "FromMillis"),
                 "toMillis" => EmitBuiltinOptionalSecond(sb, func, indent, dataVar, wsVar, "ToMillis"),
-                "formatNumber" => EmitBuiltinOptionalThird(sb, func, indent, dataVar, wsVar, "FormatNumber"),
+                "formatNumber" => EmitBuiltinFormatNumber(sb, func, indent, dataVar, wsVar),
                 "formatBase" => EmitBuiltinOptionalSecond(sb, func, indent, dataVar, wsVar, "FormatBase"),
                 "formatInteger" => EmitBuiltinBinary(sb, func, indent, dataVar, wsVar, "FormatInteger"),
                 "parseInteger" => EmitBuiltinBinary(sb, func, indent, dataVar, wsVar, "ParseInteger"),
 
-                // Phase 2: Replace and Zip
+                // Phase 2: Replace, Match, and Zip
                 "replace" => EmitBuiltinReplace(sb, func, indent, dataVar, wsVar),
+                "match" => EmitBuiltinMatch(sb, func, indent, dataVar, wsVar),
                 "zip" => EmitBuiltinZip(sb, func, indent, dataVar, wsVar),
+
+                // Phase 3: Object HOFs
+                "each" => EmitHofEach(sb, func, indent, dataVar, wsVar),
+                "sift" => EmitHofSift(sb, func, indent, dataVar, wsVar),
 
                 _ => EmitCustomFunctionCallOrFallback(sb, func, procVar.Name, indent, dataVar, wsVar),
             };
@@ -4084,6 +4619,56 @@ public static class JsonataCodeGenerator
             string v = NextVar();
             L(sb, indent, $"var {v} = {H}.{helperName}({arg}, {wsVar});");
             return v;
+        }
+
+        /// <summary>
+        /// Emits <c>$distinct</c>. When the argument is a simple property chain, emits a
+        /// fused <c>ChainDistinct</c> call that navigates into an <see cref="ElementBuffer"/>
+        /// and deduplicates in one pass, avoiding the intermediate mutable builder.
+        /// </summary>
+        private string EmitDistinct(
+            StringBuilder sb, FunctionCallNode func, string indent, string dataVar, string wsVar)
+        {
+            if (func.Arguments.Count != 1)
+            {
+                throw new FallbackException();
+            }
+
+            // Check if argument is a simple property chain
+            string? chainField = TryGetSimpleChainField(func.Arguments[0]);
+            if (chainField is not null)
+            {
+                string v = NextVar();
+                L(sb, indent, $"var {v} = {H}.ChainDistinct({dataVar}, {chainField}, {wsVar});");
+                return v;
+            }
+
+            // Fallback: standard emit
+            return EmitBuiltinUnary(sb, func, indent, dataVar, wsVar, "Distinct");
+        }
+
+        /// <summary>
+        /// Emits <c>$merge(arg)</c>, fusing with chain navigation when possible.
+        /// </summary>
+        private string EmitMerge(
+            StringBuilder sb, FunctionCallNode func, string indent, string dataVar, string wsVar)
+        {
+            if (func.Arguments.Count != 1)
+            {
+                throw new FallbackException();
+            }
+
+            // Check if argument is a simple property chain
+            string? chainField = TryGetSimpleChainField(func.Arguments[0]);
+            if (chainField is not null)
+            {
+                string v = NextVar();
+                L(sb, indent, $"var {v} = {H}.ChainMerge({dataVar}, {chainField}, {wsVar});");
+                return v;
+            }
+
+            // Fallback: standard emit
+            return EmitBuiltinUnary(sb, func, indent, dataVar, wsVar, "Merge");
         }
 
         /// <summary>
@@ -4203,6 +4788,43 @@ public static class JsonataCodeGenerator
             }
 
             return null;
+        }
+
+        /// <summary>
+        /// Attempts to fuse a simple property chain argument with an aggregation function
+        /// ($max, $min, $average), eliminating the intermediate array materialization.
+        /// Returns <c>null</c> if the argument is not a simple property chain.
+        /// </summary>
+        private string? TryEmitAggregationChainFusion(
+            StringBuilder sb, FunctionCallNode func, string indent,
+            string dataVar, string wsVar, string fusedHelper)
+        {
+            if (func.Arguments.Count != 1)
+            {
+                return null;
+            }
+
+            // Unwrap single-step path wrapper to get the real path.
+            JsonataNode arg = func.Arguments[0];
+            if (arg is PathNode outerPath && outerPath.Steps.Count == 1)
+            {
+                arg = outerPath.Steps[0];
+            }
+
+            if (arg is not PathNode path || path.Steps.Count < 2)
+            {
+                return null;
+            }
+
+            if (!IsSimplePropertyChain(path.Steps))
+            {
+                return null;
+            }
+
+            string chainField = GetOrCreateChainField(path.Steps, 0, path.Steps.Count);
+            string v = NextVar();
+            L(sb, indent, $"var {v} = {H}.{fusedHelper}({dataVar}, {chainField}, {wsVar});");
+            return v;
         }
 
         /// <summary>
@@ -4466,6 +5088,40 @@ public static class JsonataCodeGenerator
         }
 
         /// <summary>
+        /// Emit <c>$formatNumber</c> with compile-time picture caching when the picture
+        /// is a constant string with no options argument.
+        /// </summary>
+        private string EmitBuiltinFormatNumber(
+            StringBuilder sb, FunctionCallNode func, string indent, string dataVar,
+            string wsVar)
+        {
+            if (func.Arguments.Count < 2 || func.Arguments.Count > 3)
+            {
+                throw new FallbackException();
+            }
+
+            // Cache the picture when it's a constant string and no options arg is present.
+            // When options are provided they may reference runtime data, so fall back.
+            if (func.Arguments.Count == 2 && func.Arguments[1] is StringNode picNode)
+            {
+                string arg0 = EmitExpression(sb, func.Arguments[0], indent, dataVar, wsVar);
+
+                // Emit a static field for the pre-parsed picture.
+                string picField = $"s_fp{_fmtPicFieldCounter++}";
+                string escapedPic = EscapeStringLiteral(picNode.Value);
+                _staticFieldDeclarations.Add(
+                    $"private static readonly CachedFormatNumberPicture {picField} = {H}.CreateFormatNumberPicture(\"{escapedPic}\");");
+
+                string v = NextVar();
+                L(sb, indent, $"var {v} = {H}.FormatNumberPreParsed({arg0}, {picField}, {wsVar});");
+                return v;
+            }
+
+            // Non-constant picture or has options: fall back to per-call parsing.
+            return EmitBuiltinOptionalThird(sb, func, indent, dataVar, wsVar, "FormatNumber");
+        }
+
+        /// <summary>
         /// Emit a built-in that takes 1-3 args (e.g. $fromMillis).
         /// </summary>
         private string EmitBuiltinUpToThree(
@@ -4532,47 +5188,76 @@ public static class JsonataCodeGenerator
                 throw new FallbackException();
             }
 
-            string arg0;
-            string arg1;
-            string arg2;
+            // Determine argument positions
+            int strArgIdx, sepArgIdx, limitArgIdx;
             bool contextImplied;
-
             if (func.Arguments.Count == 1)
             {
-                arg0 = dataVar;
-                arg1 = EmitExpression(sb, func.Arguments[0], indent, dataVar, wsVar);
-                arg2 = "default";
+                strArgIdx = -1; // context data
+                sepArgIdx = 0;
+                limitArgIdx = -1;
                 contextImplied = true;
             }
             else if (func.Arguments.Count == 2)
             {
-                arg0 = EmitExpression(sb, func.Arguments[0], indent, dataVar, wsVar);
-                arg1 = EmitExpression(sb, func.Arguments[1], indent, dataVar, wsVar);
-                arg2 = "default";
+                strArgIdx = 0;
+                sepArgIdx = 1;
+                limitArgIdx = -1;
                 contextImplied = false;
             }
             else
             {
-                arg0 = EmitExpression(sb, func.Arguments[0], indent, dataVar, wsVar);
-                arg1 = EmitExpression(sb, func.Arguments[1], indent, dataVar, wsVar);
-                arg2 = EmitExpression(sb, func.Arguments[2], indent, dataVar, wsVar);
+                strArgIdx = 0;
+                sepArgIdx = 1;
+                limitArgIdx = 2;
                 contextImplied = false;
             }
 
-            string v = NextVar();
+            // Regex separator: emit static compiled Regex field + H.SplitRegex(...)
+            if (func.Arguments[sepArgIdx] is RegexNode regexNode)
+            {
+                string rxField = CreateRegexField(regexNode.Pattern, regexNode.Flags);
+
+                string arg0 = strArgIdx >= 0
+                    ? EmitExpression(sb, func.Arguments[strArgIdx], indent, dataVar, wsVar)
+                    : dataVar;
+                string arg2 = limitArgIdx >= 0
+                    ? EmitExpression(sb, func.Arguments[limitArgIdx], indent, dataVar, wsVar)
+                    : "default";
+
+                string v = NextVar();
+                if (contextImplied)
+                {
+                    L(sb, indent, $"var {v} = {H}.SplitRegex({arg0}, {rxField}, {arg2}, {wsVar});");
+                }
+                else
+                {
+                    L(sb, indent, $"var {v} = {arg0}.ValueKind == JsonValueKind.Undefined ? default : {H}.SplitRegex({arg0}, {rxField}, {arg2}, {wsVar});");
+                }
+
+                return v;
+            }
+
+            // String separator: emit H.Split(...)
+            string strVar = strArgIdx >= 0
+                ? EmitExpression(sb, func.Arguments[strArgIdx], indent, dataVar, wsVar)
+                : dataVar;
+            string sepVar = EmitExpression(sb, func.Arguments[sepArgIdx], indent, dataVar, wsVar);
+            string limitVar = limitArgIdx >= 0
+                ? EmitExpression(sb, func.Arguments[limitArgIdx], indent, dataVar, wsVar)
+                : "default";
+
+            string result = NextVar();
             if (contextImplied)
             {
-                // Context-implied: don't guard for undefined (runtime ContextArg wraps even undefined,
-                // so Split's type check fires T0410 for non-string input including undefined).
-                L(sb, indent, $"var {v} = {H}.Split({arg0}, {arg1}, {arg2}, {wsVar});");
+                L(sb, indent, $"var {result} = {H}.Split({strVar}, {sepVar}, {limitVar}, {wsVar});");
             }
             else
             {
-                // Explicit first arg: undefined input returns undefined (matches runtime seq.IsUndefined check).
-                L(sb, indent, $"var {v} = {arg0}.ValueKind == JsonValueKind.Undefined ? default : {H}.Split({arg0}, {arg1}, {arg2}, {wsVar});");
+                L(sb, indent, $"var {result} = {strVar}.ValueKind == JsonValueKind.Undefined ? default : {H}.Split({strVar}, {sepVar}, {limitVar}, {wsVar});");
             }
 
-            return v;
+            return result;
         }
 
         // ── HOF: $map / $filter ──────────────────────────────
@@ -4598,6 +5283,42 @@ public static class JsonataCodeGenerator
             }
 
             bool hasIndex = lambda.Parameters.Count >= 2 && helperName == "MapElements";
+
+            // Double-map specialization: when the map lambda body is pure arithmetic,
+            // keep results as raw doubles — avoids per-element DoubleToElement and
+            // FixedJsonValueDocument creation. Uses MapElementsDouble which writes
+            // doubles directly to MetadataDb via ArrayBuilder.AddItem(double).
+            if (helperName == "MapElements" && returnsElement && !hasIndex
+                && lambda.Body is BinaryNode { Operator: "+" or "-" or "*" or "/" or "%" } mapArithBody
+                && !IsConstantNumericExpression(mapArithBody))
+            {
+                string mapInputVar = EmitExpression(sb, func.Arguments[0], indent, dataVar, wsVar);
+
+                int mapLambdaIdx = _lambdaCounter++;
+                string mapElParam = $"el_{mapLambdaIdx}";
+                string mapWsParam = $"ws_{mapLambdaIdx}";
+                string mapInnerIndent = indent + "    ";
+                StringBuilder mapLambdaBody = new();
+
+                string? mapSavedVar = StashVariable(lambda.Parameters[0], mapElParam);
+                bool mapPrevRootRef = _usesRootRef;
+                _usesRootRef = true;
+
+                string bodyDouble = EmitArithmeticAsDouble(mapLambdaBody, mapArithBody, mapInnerIndent, mapElParam, mapWsParam);
+
+                bool mapBodyUsedRoot = bodyDouble.Contains("__rootData")
+                    || mapLambdaBody.ToString().Contains("__rootData");
+                _usesRootRef = mapPrevRootRef || mapBodyUsedRoot;
+                RestoreVariable(lambda.Parameters[0], mapSavedVar);
+
+                string mapV = NextVar();
+                L(sb, indent, $"var {mapV} = {H}.MapElementsDouble({mapInputVar}, {Static}(JsonElement {mapElParam}, JsonWorkspace {mapWsParam}) =>");
+                L(sb, indent, "{");
+                sb.Append(mapLambdaBody);
+                L(sb, mapInnerIndent, $"return {bodyDouble};");
+                L(sb, indent, $"}}, {wsVar});");
+                return mapV;
+            }
 
             // Fusion: detect simple property chain input BEFORE evaluating it,
             // so we skip the intermediate NavigatePropertyChain when fusing.
@@ -4704,37 +5425,187 @@ public static class JsonataCodeGenerator
             }
 
             string inputVar = EmitExpression(sb, func.Arguments[0], indent, dataVar, wsVar);
+
+            // Try the double-accumulator specialization: if the lambda body is pure arithmetic
+            // and the init is a numeric literal, keep the accumulator as a raw double throughout
+            // the loop and only materialize to JsonElement at the end.
+            if (func.Arguments.Count >= 3
+                && func.Arguments[2] is NumberNode initNum
+                && lambda.Body is BinaryNode { Operator: "+" or "-" or "*" or "/" or "%" } arithBody
+                && IsParamSafeForDoubleReduce(arithBody, lambda.Parameters[0]))
+            {
+                string initLiteral = initNum.Value.ToString("R", CultureInfo.InvariantCulture);
+
+                int lambdaIdx = _lambdaCounter++;
+                string prevParam = $"prev_{lambdaIdx}";
+                string currParam = $"curr_{lambdaIdx}";
+                string wsParam = $"ws_{lambdaIdx}";
+                string innerIndent = indent + "    ";
+                StringBuilder lambdaBody = new();
+
+                // Register $prev as a double variable so EmitArithmeticOperandAsDouble
+                // can use it directly without ToArithmeticDoubleLeft/Right extraction.
+                (_doubleVariables ??= new(StringComparer.Ordinal)).Add(lambda.Parameters[0]);
+                string? savedPrev = StashVariable(lambda.Parameters[0], prevParam);
+                string? savedCurr = StashVariable(lambda.Parameters[1], currParam);
+                bool prevRootRef = _usesRootRef;
+                _usesRootRef = true;
+
+                string bodyDouble = EmitArithmeticAsDouble(lambdaBody, arithBody, innerIndent, currParam, wsParam);
+
+                bool bodyUsedRoot = bodyDouble.Contains("__rootData")
+                    || lambdaBody.ToString().Contains("__rootData");
+                _usesRootRef = prevRootRef || bodyUsedRoot;
+                RestoreVariable(lambda.Parameters[1], savedCurr);
+                RestoreVariable(lambda.Parameters[0], savedPrev);
+                _doubleVariables.Remove(lambda.Parameters[0]);
+
+                string v = NextVar();
+                L(sb, indent, $"var {v} = {H}.ReduceElementsDouble({inputVar}, {initLiteral},");
+                L(sb, indent + "    ", $"{Static}(double {prevParam}, JsonElement {currParam}, JsonWorkspace {wsParam}) =>");
+                L(sb, indent + "    ", "{");
+                sb.Append(lambdaBody);
+                L(sb, innerIndent, $"return {bodyDouble};");
+                L(sb, indent + "    ", "},");
+                L(sb, indent + "    ", $"{wsVar});");
+                return v;
+            }
+
+            // Standard path — full JsonElement accumulator
             string initVar = func.Arguments.Count >= 3
                 ? EmitExpression(sb, func.Arguments[2], indent, dataVar, wsVar)
                 : "default";
 
-            int lambdaIdx = _lambdaCounter++;
-            string prevParam = $"prev_{lambdaIdx}";
-            string currParam = $"curr_{lambdaIdx}";
-            string wsParam = $"ws_{lambdaIdx}";
-            string innerIndent = indent + "    ";
-            StringBuilder lambdaBody = new();
+            int stdLambdaIdx = _lambdaCounter++;
+            string stdPrevParam = $"prev_{stdLambdaIdx}";
+            string stdCurrParam = $"curr_{stdLambdaIdx}";
+            string stdWsParam = $"ws_{stdLambdaIdx}";
+            string stdInnerIndent = indent + "    ";
+            StringBuilder stdLambdaBody = new();
 
-            string? savedPrev = StashVariable(lambda.Parameters[0], prevParam);
-            string? savedCurr = StashVariable(lambda.Parameters[1], currParam);
-            bool prevRootRef = _usesRootRef;
+            string? stdSavedPrev = StashVariable(lambda.Parameters[0], stdPrevParam);
+            string? stdSavedCurr = StashVariable(lambda.Parameters[1], stdCurrParam);
+            bool stdPrevRootRef = _usesRootRef;
             _usesRootRef = true;
-            string bodyResult = EmitExpression(lambdaBody, lambda.Body, innerIndent, currParam, wsParam);
-            bool bodyUsedRoot = bodyResult.Contains("__rootData")
-                || lambdaBody.ToString().Contains("__rootData");
-            _usesRootRef = prevRootRef || bodyUsedRoot;
-            RestoreVariable(lambda.Parameters[1], savedCurr);
-            RestoreVariable(lambda.Parameters[0], savedPrev);
+            string stdBodyResult = EmitExpression(stdLambdaBody, lambda.Body, stdInnerIndent, stdCurrParam, stdWsParam);
+            bool stdBodyUsedRoot = stdBodyResult.Contains("__rootData")
+                || stdLambdaBody.ToString().Contains("__rootData");
+            _usesRootRef = stdPrevRootRef || stdBodyUsedRoot;
+            RestoreVariable(lambda.Parameters[1], stdSavedCurr);
+            RestoreVariable(lambda.Parameters[0], stdSavedPrev);
 
-            string v = NextVar();
-            L(sb, indent, $"var {v} = {H}.ReduceElements({inputVar}, {initVar},");
-            L(sb, indent + "    ", $"{Static}(JsonElement {prevParam}, JsonElement {currParam}, JsonWorkspace {wsParam}) =>");
+            string stdV = NextVar();
+            L(sb, indent, $"var {stdV} = {H}.ReduceElements({inputVar}, {initVar},");
+            L(sb, indent + "    ", $"{Static}(JsonElement {stdPrevParam}, JsonElement {stdCurrParam}, JsonWorkspace {stdWsParam}) =>");
             L(sb, indent + "    ", "{");
-            sb.Append(lambdaBody);
-            L(sb, innerIndent, $"return {bodyResult};");
+            sb.Append(stdLambdaBody);
+            L(sb, stdInnerIndent, $"return {stdBodyResult};");
             L(sb, indent + "    ", "},");
             L(sb, indent + "    ", $"{wsVar});");
-            return v;
+            return stdV;
+        }
+
+        /// <summary>
+        /// Checks whether the accumulator parameter (<paramref name="paramName"/>) is safe
+        /// to type as <c>double</c> in a reduce lambda. Returns <see langword="true"/> only
+        /// when every reference to the parameter in the arithmetic <paramref name="body"/>
+        /// is in a position that <see cref="EmitArithmeticOperandAsDouble"/> handles directly
+        /// (direct operand of arithmetic operators or unary minus).
+        /// </summary>
+        private static bool IsParamSafeForDoubleReduce(BinaryNode body, string paramName)
+        {
+            return IsOperandSafe(body.Lhs, paramName) && IsOperandSafe(body.Rhs, paramName);
+
+            static bool IsOperandSafe(JsonataNode operand, string paramName)
+            {
+                // Direct variable reference — will be handled by the VariableNode case
+                // in EmitArithmeticOperandAsDouble.
+                if (operand is VariableNode v)
+                {
+                    return true; // Whether it matches paramName or not, it's in a safe position.
+                }
+
+                // Unary minus — recurse
+                if (operand is UnaryNode { Operator: "-" } unary)
+                {
+                    return IsOperandSafe(unary.Expression, paramName);
+                }
+
+                // Nested arithmetic — recurse into both sides
+                if (operand is BinaryNode { Operator: "+" or "-" or "*" or "/" or "%" } binary)
+                {
+                    return IsOperandSafe(binary.Lhs, paramName) && IsOperandSafe(binary.Rhs, paramName);
+                }
+
+                // Any other node type (path, function call, condition, etc.) —
+                // the operand goes through EmitExpression in the default case.
+                // If it internally references $prev, the generated code would
+                // pass a double where JsonElement is expected → compile error.
+                return !SubtreeReferencesParam(operand, paramName);
+            }
+        }
+
+        /// <summary>
+        /// Returns <see langword="true"/> if any <see cref="VariableNode"/> in the subtree
+        /// references the given parameter name. Unknown node types conservatively return
+        /// <see langword="true"/> to avoid unsafe double-typing.
+        /// </summary>
+        private static bool SubtreeReferencesParam(JsonataNode node, string paramName)
+        {
+            switch (node)
+            {
+                case VariableNode v:
+                    return v.Name == paramName;
+
+                case NumberNode or StringNode or RegexNode or NameNode or WildcardNode or ValueNode:
+                    return false;
+
+                case BinaryNode b:
+                    return SubtreeReferencesParam(b.Lhs, paramName)
+                        || SubtreeReferencesParam(b.Rhs, paramName);
+
+                case UnaryNode u:
+                    return SubtreeReferencesParam(u.Expression, paramName);
+
+                case PathNode p:
+                    foreach (JsonataNode step in p.Steps)
+                    {
+                        if (SubtreeReferencesParam(step, paramName))
+                        {
+                            return true;
+                        }
+                    }
+
+                    return false;
+
+                case FunctionCallNode f:
+                    foreach (JsonataNode arg in f.Arguments)
+                    {
+                        if (SubtreeReferencesParam(arg, paramName))
+                        {
+                            return true;
+                        }
+                    }
+
+                    return false;
+
+                case FilterNode f:
+                    return SubtreeReferencesParam(f.Expression, paramName);
+
+                case ConditionNode c:
+                    return SubtreeReferencesParam(c.Condition, paramName)
+                        || SubtreeReferencesParam(c.Then, paramName)
+                        || (c.Else is not null && SubtreeReferencesParam(c.Else, paramName));
+
+                case LambdaNode l:
+                    // If the inner lambda shadows the parameter, it doesn't reference the outer one.
+                    return !l.Parameters.Contains(paramName)
+                        && SubtreeReferencesParam(l.Body, paramName);
+
+                default:
+                    // Unknown node type — conservatively assume it references the param.
+                    return true;
+            }
         }
 
         /// <summary>
@@ -4934,7 +5805,184 @@ public static class JsonataCodeGenerator
             return v;
         }
 
-        // ── Filter (standalone) ──────────────────────────────
+        // ── HOF: $each ──────────────────────────────────────
+        private string EmitHofEach(
+            StringBuilder sb, FunctionCallNode func, string indent, string dataVar, string wsVar)
+        {
+            if (func.Arguments.Count < 2 || func.Arguments[1] is not LambdaNode lambda)
+            {
+                throw new FallbackException();
+            }
+
+            if (lambda.Parameters.Count < 1)
+            {
+                throw new FallbackException();
+            }
+
+            string inputVar = EmitExpression(sb, func.Arguments[0], indent, dataVar, wsVar);
+
+            int lambdaIdx = _lambdaCounter++;
+            string elParam = $"el_{lambdaIdx}";
+            string keyUtf8Param = $"keyUtf8_{lambdaIdx}";
+            string objParam = $"obj_{lambdaIdx}";
+            string wsParam = $"ws_{lambdaIdx}";
+            string innerIndent = indent + "    ";
+            StringBuilder lambdaBody = new();
+
+            string? savedVal = StashVariable(lambda.Parameters[0], elParam);
+
+            // Map $k directly to the ReadOnlySpan<byte> parameter — in concat context
+            // the span is appended directly (zero alloc); non-concat sites materialise on demand.
+            string? savedKey = null;
+            bool hasKeyParam = lambda.Parameters.Count >= 2;
+            if (hasKeyParam)
+            {
+                savedKey = StashVariable(lambda.Parameters[1], keyUtf8Param);
+                (_utf8SpanVariables ??= new(StringComparer.Ordinal)).Add(lambda.Parameters[1]);
+            }
+
+            // Map $o to the original object parameter.
+            string? savedObj = null;
+            bool hasObjParam = lambda.Parameters.Count >= 3;
+            if (hasObjParam)
+            {
+                savedObj = StashVariable(lambda.Parameters[2], objParam);
+            }
+
+            bool prevRootRef = _usesRootRef;
+            _usesRootRef = true;
+
+            string bodyResult = EmitExpression(lambdaBody, lambda.Body, innerIndent, elParam, wsParam);
+
+            bool bodyUsedRoot = bodyResult.Contains("__rootData")
+                || lambdaBody.ToString().Contains("__rootData");
+            _usesRootRef = prevRootRef || bodyUsedRoot;
+
+            if (hasObjParam)
+            {
+                RestoreVariable(lambda.Parameters[2], savedObj);
+            }
+
+            if (hasKeyParam)
+            {
+                _utf8SpanVariables!.Remove(lambda.Parameters[1]);
+                RestoreVariable(lambda.Parameters[1], savedKey);
+            }
+
+            RestoreVariable(lambda.Parameters[0], savedVal);
+
+            string v = NextVar();
+            if (hasObjParam)
+            {
+                L(sb, indent, $"var {v} = {H}.EachProperty({inputVar}, {Static}(JsonElement {elParam}, ReadOnlySpan<byte> {keyUtf8Param}, JsonElement {objParam}, JsonWorkspace {wsParam}) =>");
+            }
+            else
+            {
+                L(sb, indent, $"var {v} = {H}.EachProperty({inputVar}, {Static}(JsonElement {elParam}, ReadOnlySpan<byte> {keyUtf8Param}, JsonWorkspace {wsParam}) =>");
+            }
+
+            L(sb, indent, "{");
+
+            sb.Append(lambdaBody);
+            L(sb, innerIndent, $"return {bodyResult};");
+            L(sb, indent, $"}}, {wsVar});");
+            return v;
+        }
+
+        // ── HOF: $sift ──────────────────────────────────────
+        private string EmitHofSift(
+            StringBuilder sb, FunctionCallNode func, string indent, string dataVar, string wsVar)
+        {
+            if (func.Arguments.Count < 2 || func.Arguments[1] is not LambdaNode lambda)
+            {
+                throw new FallbackException();
+            }
+
+            if (lambda.Parameters.Count < 1)
+            {
+                throw new FallbackException();
+            }
+
+            string inputVar = EmitExpression(sb, func.Arguments[0], indent, dataVar, wsVar);
+
+            int lambdaIdx = _lambdaCounter++;
+            string elParam = $"el_{lambdaIdx}";
+            string keyUtf8Param = $"keyUtf8_{lambdaIdx}";
+            string objParam = $"obj_{lambdaIdx}";
+            string wsParam = $"ws_{lambdaIdx}";
+            string innerIndent = indent + "    ";
+            StringBuilder lambdaBody = new();
+
+            string? savedVal = StashVariable(lambda.Parameters[0], elParam);
+
+            // Map $k directly to the ReadOnlySpan<byte> parameter.
+            string? savedKey = null;
+            bool hasKeyParam = lambda.Parameters.Count >= 2;
+            if (hasKeyParam)
+            {
+                savedKey = StashVariable(lambda.Parameters[1], keyUtf8Param);
+                (_utf8SpanVariables ??= new(StringComparer.Ordinal)).Add(lambda.Parameters[1]);
+            }
+
+            // Map $o to the original object parameter.
+            string? savedObj = null;
+            bool hasObjParam = lambda.Parameters.Count >= 3;
+            if (hasObjParam)
+            {
+                savedObj = StashVariable(lambda.Parameters[2], objParam);
+            }
+
+            bool prevRootRef = _usesRootRef;
+            _usesRootRef = true;
+
+            // Try to emit as direct boolean expression for the predicate
+            string? boolResult = TryEmitExpressionAsBool(lambdaBody, lambda.Body, innerIndent, elParam, wsParam);
+            string bodyResult = boolResult ?? EmitExpression(lambdaBody, lambda.Body, innerIndent, elParam, wsParam);
+
+            bool bodyUsedRoot = bodyResult.Contains("__rootData")
+                || lambdaBody.ToString().Contains("__rootData");
+            _usesRootRef = prevRootRef || bodyUsedRoot;
+
+            if (hasObjParam)
+            {
+                RestoreVariable(lambda.Parameters[2], savedObj);
+            }
+
+            if (hasKeyParam)
+            {
+                _utf8SpanVariables!.Remove(lambda.Parameters[1]);
+                RestoreVariable(lambda.Parameters[1], savedKey);
+            }
+
+            RestoreVariable(lambda.Parameters[0], savedVal);
+
+            string v = NextVar();
+            if (hasObjParam)
+            {
+                L(sb, indent, $"var {v} = {H}.SiftProperty({inputVar}, {Static}(JsonElement {elParam}, ReadOnlySpan<byte> {keyUtf8Param}, JsonElement {objParam}, JsonWorkspace {wsParam}) =>");
+            }
+            else
+            {
+                L(sb, indent, $"var {v} = {H}.SiftProperty({inputVar}, {Static}(JsonElement {elParam}, ReadOnlySpan<byte> {keyUtf8Param}, JsonWorkspace {wsParam}) =>");
+            }
+
+            L(sb, indent, "{");
+
+            sb.Append(lambdaBody);
+
+            if (boolResult != null)
+            {
+                L(sb, innerIndent, $"return {boolResult};");
+            }
+            else
+            {
+                L(sb, innerIndent, $"return {H}.IsTruthy({bodyResult});");
+            }
+
+            L(sb, indent, $"}}, {wsVar});");
+            return v;
+        }
+
         // ── Variable scoping helpers ─────────────────────────
         private string? StashVariable(string name, string csVar)
         {
@@ -5065,8 +6113,8 @@ public static class JsonataCodeGenerator
             StringBuilder sb, FunctionCallNode func, string indent, string dataVar, string wsVar)
         {
             // $replace(str, pattern, replacement [, limit])
-            // Runtime also supports 2-arg context form, but that uses ~> which we can't handle
-            if (func.Arguments.Count < 3 || func.Arguments.Count > 4)
+            // 2-arg context form uses ~> which we handle as context-implied
+            if (func.Arguments.Count < 2 || func.Arguments.Count > 4)
             {
                 if (func.Arguments.Count is 0 or 1)
                 {
@@ -5076,21 +6124,121 @@ public static class JsonataCodeGenerator
                 throw new FallbackException();
             }
 
-            // If the pattern is a regex literal, fall back to runtime
-            if (func.Arguments[1] is RegexNode)
+            // Determine argument positions based on count
+            int strArgIdx, patArgIdx, repArgIdx;
+            if (func.Arguments.Count == 2)
+            {
+                // Context-implied: $replace(pattern, replacement) — str is context data
+                strArgIdx = -1; // use dataVar
+                patArgIdx = 0;
+                repArgIdx = 1;
+            }
+            else
+            {
+                strArgIdx = 0;
+                patArgIdx = 1;
+                repArgIdx = 2;
+            }
+
+            // If replacement is a lambda, fall back
+            if (func.Arguments[repArgIdx] is LambdaNode)
             {
                 throw new FallbackException();
             }
 
-            string arg0 = EmitExpression(sb, func.Arguments[0], indent, dataVar, wsVar);
-            string arg1 = EmitExpression(sb, func.Arguments[1], indent, dataVar, wsVar);
-            string arg2 = EmitExpression(sb, func.Arguments[2], indent, dataVar, wsVar);
-            string arg3 = func.Arguments.Count >= 4
-                ? EmitExpression(sb, func.Arguments[3], indent, dataVar, wsVar)
-                : "default";
+            if (func.Arguments[patArgIdx] is RegexNode regexNode)
+            {
+                // Regex pattern: emit a static compiled Regex field
+                string rxField = CreateRegexField(regexNode.Pattern, regexNode.Flags);
+
+                string arg0 = strArgIdx >= 0
+                    ? EmitExpression(sb, func.Arguments[strArgIdx], indent, dataVar, wsVar)
+                    : dataVar;
+                string arg2 = EmitExpression(sb, func.Arguments[repArgIdx], indent, dataVar, wsVar);
+                string arg3 = func.Arguments.Count >= (strArgIdx >= 0 ? 4 : 3)
+                    ? EmitExpression(sb, func.Arguments[^1], indent, dataVar, wsVar)
+                    : "default";
+
+                string v = NextVar();
+                L(sb, indent, $"var {v} = {arg0}.ValueKind == JsonValueKind.Undefined ? default : {H}.ReplaceRegex({arg0}, {rxField}, {arg2}, {arg3}, {wsVar});");
+                return v;
+            }
+            else
+            {
+                // String pattern: emit H.Replace(str, pattern, replacement, limit, ws)
+                string arg0 = strArgIdx >= 0
+                    ? EmitExpression(sb, func.Arguments[strArgIdx], indent, dataVar, wsVar)
+                    : dataVar;
+                string arg1 = EmitExpression(sb, func.Arguments[patArgIdx], indent, dataVar, wsVar);
+                string arg2 = EmitExpression(sb, func.Arguments[repArgIdx], indent, dataVar, wsVar);
+
+                // Limit is the last arg when we have more args than the 3 positional ones (or 2 for context-implied)
+                int expectedMinArgs = strArgIdx >= 0 ? 3 : 2;
+                string arg3 = func.Arguments.Count > expectedMinArgs
+                    ? EmitExpression(sb, func.Arguments[^1], indent, dataVar, wsVar)
+                    : "default";
+
+                string v = NextVar();
+                L(sb, indent, $"var {v} = {H}.Replace({arg0}, {arg1}, {arg2}, {arg3}, {wsVar});");
+                return v;
+            }
+        }
+
+        /// <summary>
+        /// Emits a $match call: <c>$match(str, regex [, limit])</c>.
+        /// </summary>
+        private string EmitBuiltinMatch(
+            StringBuilder sb, FunctionCallNode func, string indent, string dataVar, string wsVar)
+        {
+            // $match(str, pattern [, limit]) — 1-arg context-implied, 2-arg, or 3-arg
+            if (func.Arguments.Count < 1 || func.Arguments.Count > 3)
+            {
+                throw new JsonataException("T0410", SR.T0410_MatchExpects13Arguments, 0);
+            }
+
+            // Determine which argument is the regex pattern
+            int patternArgIndex;
+            string arg0;
+
+            if (func.Arguments.Count == 1)
+            {
+                // Context-implied: $match(pattern) — str is the context data
+                patternArgIndex = 0;
+                arg0 = dataVar;
+            }
+            else
+            {
+                // Explicit: $match(str, pattern [, limit])
+                patternArgIndex = 1;
+                arg0 = EmitExpression(sb, func.Arguments[0], indent, dataVar, wsVar);
+            }
+
+            // Only handle regex literal patterns; lambda matchers fall back to runtime
+            if (func.Arguments[patternArgIndex] is not RegexNode regexNode)
+            {
+                throw new FallbackException();
+            }
+
+            // Create a static compiled Regex field
+            string regexField = CreateRegexField(regexNode.Pattern, regexNode.Flags);
+
+            string arg2 = func.Arguments.Count == 3
+                ? EmitExpression(sb, func.Arguments[2], indent, dataVar, wsVar)
+                : func.Arguments.Count == 1 ? "default" // 1-arg form has no limit
+                : "default"; // 2-arg form has no limit
 
             string v = NextVar();
-            L(sb, indent, $"var {v} = {H}.Replace({arg0}, {arg1}, {arg2}, {arg3}, {wsVar});");
+            if (func.Arguments.Count == 1)
+            {
+                // Context-implied: no undefined guard (matches RT behavior)
+                L(sb, indent, $"var {v} = {H}.Match({arg0}, {regexField}, {arg2}, {wsVar});");
+            }
+            else
+            {
+                // Explicit first arg: undefined input returns undefined
+                L(sb, indent, $"var {v} = {arg0}.ValueKind == JsonValueKind.Undefined ? default : {H}.Match({arg0}, {regexField}, {arg2}, {wsVar});");
+            }
+
             return v;
         }
 
@@ -5107,17 +6255,310 @@ public static class JsonataCodeGenerator
                 return undef;
             }
 
-            // Emit all args and build the array
+            // Fully-constant zip: all args are constant arrays → evaluate at codegen time.
+            if (TryEmitConstantZip(sb, func, indent, out string? constVar))
+            {
+                return constVar!;
+            }
+
+            // Classify each arg: constant (static field), chain (buffer-navigate), or other (emit normally).
+            int argCount = func.Arguments.Count;
+            string?[] chainFields = new string?[argCount];
+            bool[] isConstant = new bool[argCount];
+            bool anyChain = false;
+
+            for (int i = 0; i < argCount; i++)
+            {
+                var arg = func.Arguments[i];
+
+                if (IsConstantExpression(arg))
+                {
+                    isConstant[i] = true;
+                }
+                else
+                {
+                    string? cf = TryGetSimpleChainField(arg);
+                    if (cf != null)
+                    {
+                        chainFields[i] = cf;
+                        anyChain = true;
+                    }
+                }
+            }
+
+            // If any arg is a chain, use the buffer-fused path
+            if (anyChain && argCount <= 3)
+            {
+                return EmitBufferFusedZip(sb, func, indent, dataVar, wsVar, chainFields, isConstant);
+            }
+
+            // Fallback: emit all args normally
             var argVars = new List<string>();
             foreach (var arg in func.Arguments)
             {
                 argVars.Add(EmitExpression(sb, arg, indent, dataVar, wsVar));
             }
 
-            string argsArray = string.Join(", ", argVars);
             string v = NextVar();
-            L(sb, indent, $"var {v} = {H}.Zip(new JsonElement[] {{ {argsArray} }}, {wsVar});");
+
+            if (argVars.Count <= 3)
+            {
+                string argList = string.Join(", ", argVars);
+                L(sb, indent, $"var {v} = {H}.Zip({argList}, {wsVar});");
+            }
+            else
+            {
+                string argsArray = string.Join(", ", argVars);
+                L(sb, indent, $"var {v} = {H}.Zip(new JsonElement[] {{ {argsArray} }}, {wsVar});");
+            }
+
             return v;
+        }
+
+        /// <summary>
+        /// Emits buffer-fused zip code for 2-3 args where at least one is a simple property chain.
+        /// Chain args navigate into ElementBuffers; constant/other args are emitted normally.
+        /// </summary>
+        private string EmitBufferFusedZip(
+            StringBuilder sb, FunctionCallNode func, string indent, string dataVar, string wsVar,
+            string?[] chainFields, bool[] isConstant)
+        {
+            int argCount = func.Arguments.Count;
+            string[] bufVars = new string[argCount];
+            string[] arrVars = new string[argCount];
+            string[] cntVars = new string[argCount];
+            string?[] elemVars = new string?[argCount]; // for non-chain args
+
+            // Declare result variable before try/finally
+            string result = NextVar();
+            L(sb, indent, $"JsonElement {result};");
+
+            // Declare buffers for chain args
+            for (int i = 0; i < argCount; i++)
+            {
+                if (chainFields[i] != null)
+                {
+                    bufVars[i] = $"__zbuf{i}";
+                    L(sb, indent, $"var {bufVars[i]} = default(ElementBuffer);");
+                }
+            }
+
+            L(sb, indent, "try");
+            L(sb, indent, "{");
+            string inner = indent + "    ";
+
+            // Emit each arg
+            for (int i = 0; i < argCount; i++)
+            {
+                if (chainFields[i] != null)
+                {
+                    // Chain arg: navigate into buffer
+                    L(sb, inner, $"{H}.NavigatePropertyChainInto({dataVar}, {chainFields[i]}, ref {bufVars[i]});");
+                    arrVars[i] = $"__zarr{i}";
+                    cntVars[i] = $"__zcnt{i}";
+                    L(sb, inner, $"{bufVars[i]}.GetContents(out var {arrVars[i]}, out var {cntVars[i]});");
+                }
+                else
+                {
+                    // Constant or other: emit as normal expression
+                    elemVars[i] = EmitExpression(sb, func.Arguments[i], inner, dataVar, wsVar);
+                }
+            }
+
+            // Choose the optimal zip call based on arg classification
+            EmitZipCall(sb, inner, result, argCount, chainFields, bufVars, arrVars, cntVars, elemVars, wsVar);
+
+            L(sb, indent, "}");
+            L(sb, indent, "finally");
+            L(sb, indent, "{");
+
+            for (int i = 0; i < argCount; i++)
+            {
+                if (chainFields[i] != null)
+                {
+                    L(sb, indent + "    ", $"{bufVars[i]}.Dispose();");
+                }
+            }
+
+            L(sb, indent, "}");
+
+            return result;
+        }
+
+        private void EmitZipCall(
+            StringBuilder sb, string indent, string result, int argCount,
+            string?[] chainFields, string[] bufVars, string[] arrVars, string[] cntVars, string?[] elemVars, string wsVar)
+        {
+            // Count how many are chains vs elements
+            int chainCount = 0;
+            for (int i = 0; i < argCount; i++)
+            {
+                if (chainFields[i] != null)
+                {
+                    chainCount++;
+                }
+            }
+
+            if (chainCount == argCount)
+            {
+                // All args are chains: use ZipFromBuffers
+                if (argCount == 2)
+                {
+                    L(sb, indent, $"{result} = {H}.ZipFromBuffers({arrVars[0]}, {cntVars[0]}, {arrVars[1]}, {cntVars[1]}, {wsVar});");
+                }
+                else
+                {
+                    L(sb, indent, $"{result} = {H}.ZipFromBuffers({arrVars[0]}, {cntVars[0]}, {arrVars[1]}, {cntVars[1]}, {arrVars[2]}, {cntVars[2]}, {wsVar});");
+                }
+            }
+            else if (argCount == 2)
+            {
+                // Mixed 2-arg: one chain, one element
+                if (chainFields[0] != null)
+                {
+                    L(sb, indent, $"{result} = {H}.ZipBufferAndElement({arrVars[0]}, {cntVars[0]}, {elemVars[1]!}, {wsVar});");
+                }
+                else
+                {
+                    L(sb, indent, $"{result} = {H}.ZipElementAndBuffer({elemVars[0]!}, {arrVars[1]}, {cntVars[1]}, {wsVar});");
+                }
+            }
+            else
+            {
+                // Mixed 3-arg: materialize chain buffers via ToResult and use standard Zip
+                var allVars = new string[argCount];
+                for (int i = 0; i < argCount; i++)
+                {
+                    if (chainFields[i] != null)
+                    {
+                        allVars[i] = NextVar();
+                        L(sb, indent, $"var {allVars[i]} = {bufVars[i]}.ToResult({wsVar});");
+                    }
+                    else
+                    {
+                        allVars[i] = elemVars[i]!;
+                    }
+                }
+
+                string argList = string.Join(", ", allVars);
+                L(sb, indent, $"{result} = {H}.Zip({argList}, {wsVar});");
+            }
+        }
+
+        /// <summary>
+        /// When all zip arguments are constant array constructors, evaluates the
+        /// zip at codegen time and emits the result as a single static field.
+        /// </summary>
+        private bool TryEmitConstantZip(
+            StringBuilder sb, FunctionCallNode func, string indent, out string? resultVar)
+        {
+            resultVar = null;
+
+            // All args must be constant ArrayConstructorNodes
+            var arrays = new List<List<string>>();
+            foreach (var arg in func.Arguments)
+            {
+                if (arg is not ArrayConstructorNode arr || !IsConstantExpression(arr))
+                {
+                    return false;
+                }
+
+                var elements = new List<string>(arr.Expressions.Count);
+                for (int i = 0; i < arr.Expressions.Count; i++)
+                {
+                    elements.Add(SerializeConstantJson(arr.Expressions[i]));
+                }
+
+                arrays.Add(elements);
+            }
+
+            // Compute the zip result at codegen time
+            int minLen = int.MaxValue;
+            for (int i = 0; i < arrays.Count; i++)
+            {
+                if (arrays[i].Count < minLen)
+                {
+                    minLen = arrays[i].Count;
+                }
+            }
+
+            if (minLen == 0)
+            {
+                string emptyField = EmitConstantField("[]");
+                resultVar = NextVar();
+                L(sb, indent, $"var {resultVar} = {emptyField};");
+                return true;
+            }
+
+            var json = new StringBuilder("[");
+            for (int i = 0; i < minLen; i++)
+            {
+                if (i > 0)
+                {
+                    json.Append(',');
+                }
+
+                json.Append('[');
+                for (int a = 0; a < arrays.Count; a++)
+                {
+                    if (a > 0)
+                    {
+                        json.Append(',');
+                    }
+
+                    json.Append(arrays[a][i]);
+                }
+
+                json.Append(']');
+            }
+
+            json.Append(']');
+
+            string field = EmitConstantField(json.ToString());
+            resultVar = NextVar();
+            L(sb, indent, $"var {resultVar} = {field};");
+            return true;
+        }
+
+        /// <summary>
+        /// Emits <c>$shuffle</c>. When the argument is a simple property chain, emits buffer-fused
+        /// code that navigates into an <see cref="ElementBuffer"/> and shuffles directly from
+        /// the pooled backing array — avoiding the intermediate chain builder.
+        /// Falls back to the standard <c>Shuffle(input, workspace)</c> call for non-chain args.
+        /// </summary>
+        private string EmitBuiltinShuffle(
+            StringBuilder sb, FunctionCallNode func, string indent, string dataVar, string wsVar)
+        {
+            if (func.Arguments.Count != 1)
+            {
+                throw new FallbackException();
+            }
+
+            string? chainField = TryGetSimpleChainField(func.Arguments[0]);
+            if (chainField is null)
+            {
+                // Non-chain argument: fall back to standard unary emission
+                return EmitBuiltinUnary(sb, func, indent, dataVar, wsVar, "Shuffle");
+            }
+
+            // Buffer-fused path: navigate chain into buffer, shuffle from buffer
+            string result = NextVar();
+            const string bufVar = "__sbuf0";
+
+            L(sb, indent, $"JsonElement {result};");
+            L(sb, indent, $"var {bufVar} = default(ElementBuffer);");
+            L(sb, indent, "try");
+            L(sb, indent, "{");
+            string inner = indent + "    ";
+            L(sb, inner, $"{H}.NavigatePropertyChainInto({dataVar}, {chainField}, ref {bufVar});");
+            L(sb, inner, $"{result} = {H}.ShuffleFromBuffer(ref {bufVar}, {wsVar});");
+            L(sb, indent, "}");
+            L(sb, indent, "finally");
+            L(sb, indent, "{");
+            L(sb, indent + "    ", $"{bufVar}.Dispose();");
+            L(sb, indent, "}");
+
+            return result;
         }
 
         private static bool IsBuiltinFunctionName(string name)

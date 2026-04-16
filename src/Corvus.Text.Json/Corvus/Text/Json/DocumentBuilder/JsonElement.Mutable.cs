@@ -1671,7 +1671,7 @@ public readonly partial struct JsonElement
     /// </remarks>
     /// <remarks>This method is not CLS compliant.</remarks>
     [CLSCompliant(false)]
-    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Source source, int estimatedMemberCount = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Source source, int estimatedMemberCount = 30, int initialValueBufferSize = 8192)
     {
         // Create the document builder without a MetadataDb
         if (source.IsUndefined)
@@ -1679,7 +1679,7 @@ public readonly partial struct JsonElement
             ThrowHelper.ThrowArgumentException(SR.EmptyJsonIsInvalid);
         }
 
-        JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+        JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
         var cvb = ComplexValueBuilder.Create(documentBuilder, estimatedMemberCount);
         source.AddAsItem(ref cvb);
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
@@ -1694,15 +1694,16 @@ public readonly partial struct JsonElement
     /// <param name="context">The builder context.</param>
     /// <param name="builder">The array value builder.</param>
     /// <param name="estimatedMemberCount">The estimated number of members in the document.</param>
+    /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
     /// <returns>A JSON document builder containing the source value.</returns>
     [CLSCompliant(false)]
-    public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, ArrayBuilder.Build<TContext> builder, int estimatedMemberCount = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, ArrayBuilder.Build<TContext> builder, int estimatedMemberCount = 30, int initialValueBufferSize = 8192)
 #if NET9_0_OR_GREATER
         where TContext : allows ref struct
 #endif
     {
         // Create the document builder without a MetadataDb
-        JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+        JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
         var cvb = ComplexValueBuilder.Create(documentBuilder, estimatedMemberCount);
         cvb.AddItem(BuildWithContext.Create(context, builder), static (in b, ref o) => ArrayBuilder.BuildValue(b.Context, b.Build, ref o));
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
@@ -1717,15 +1718,16 @@ public readonly partial struct JsonElement
     /// <param name="context">The builder context.</param>
     /// <param name="builder">The array value builder.</param>
     /// <param name="estimatedMemberCount">The estimated number of members in the document.</param>
+    /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
     /// <returns>A JSON document builder containing the array value.</returns>
     [CLSCompliant(false)]
-    public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, ObjectBuilder.Build<TContext> builder, int estimatedMemberCount = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, ObjectBuilder.Build<TContext> builder, int estimatedMemberCount = 30, int initialValueBufferSize = 8192)
 #if NET9_0_OR_GREATER
         where TContext : allows ref struct
 #endif
     {
         // Create the document builder without a MetadataDb
-        JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+        JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
         var cvb = ComplexValueBuilder.Create(documentBuilder, estimatedMemberCount);
         cvb.AddItem(BuildWithContext.Create(context, builder), static (in b, ref o) => ObjectBuilder.BuildValue(b.Context, b.Build, ref o));
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
@@ -1739,9 +1741,9 @@ public readonly partial struct JsonElement
     /// <param name="estimatedMemberCount">The estimated number of members in the document.</param>
     /// <returns>A JSON document builder containing an empty array.</returns>
     [CLSCompliant(false)]
-    public static JsonDocumentBuilder<Mutable> CreateArrayBuilder(JsonWorkspace workspace, int estimatedMemberCount = 30)
+    public static JsonDocumentBuilder<Mutable> CreateArrayBuilder(JsonWorkspace workspace, int estimatedMemberCount = 30, int initialValueBufferSize = 8192)
     {
-        JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+        JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
         var cvb = ComplexValueBuilder.Create(documentBuilder, estimatedMemberCount);
         cvb.StartArray();
         cvb.EndArray();
@@ -1756,9 +1758,9 @@ public readonly partial struct JsonElement
     /// <param name="estimatedMemberCount">The estimated number of members in the document.</param>
     /// <returns>A JSON document builder containing an empty object.</returns>
     [CLSCompliant(false)]
-    public static JsonDocumentBuilder<Mutable> CreateObjectBuilder(JsonWorkspace workspace, int estimatedMemberCount = 30)
+    public static JsonDocumentBuilder<Mutable> CreateObjectBuilder(JsonWorkspace workspace, int estimatedMemberCount = 30, int initialValueBufferSize = 8192)
     {
-        JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+        JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
         var cvb = ComplexValueBuilder.Create(documentBuilder, estimatedMemberCount);
         cvb.StartObject();
         cvb.EndObject();

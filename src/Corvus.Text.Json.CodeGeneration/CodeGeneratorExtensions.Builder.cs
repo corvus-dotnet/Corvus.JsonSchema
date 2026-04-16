@@ -1688,12 +1688,13 @@ internal static partial class CodeGeneratorExtensions
                         /// <param name="workspace">The JSON workspace.</param>
                         /// <param name="value">The value with which to initialize the builder.</param>
                         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+                        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
                         /// <returns>An instance of a mutable document initialized with the given value.</returns>
                         public static JsonDocumentBuilder<{{generator.MutableClassName()}}> CreateBuilder(
-                            JsonWorkspace workspace, scoped in {{builderClassName}}.Build value, int initialCapacity = {{initialCapacity}})
+                            JsonWorkspace workspace, scoped in {{builderClassName}}.Build value, int initialCapacity = {{initialCapacity}}, int initialValueBufferSize = 8192)
                         {
                             // Create the document builder without a MetadataDb
-                            JsonDocumentBuilder<{{generator.MutableClassName()}}> documentBuilder = workspace.CreateBuilder<{{generator.MutableClassName()}}>(-1);
+                            JsonDocumentBuilder<{{generator.MutableClassName()}}> documentBuilder = workspace.CreateBuilder<{{generator.MutableClassName()}}>(-1, initialValueBufferSize);
                             ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
                             var source = new {{sourceClassName}}(value);
                             source.AddAsItem(ref cvb);
@@ -1716,15 +1717,16 @@ internal static partial class CodeGeneratorExtensions
                     /// <param name="context">The context to pass to the builder.</param>
                     /// <param name="value">The value with which to initialize the builder.</param>
                     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+                    /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
                     /// <returns>An instance of a mutable document initialized with the given value.</returns>
                     public static JsonDocumentBuilder<{{generator.MutableClassName()}}> CreateBuilder<TContext>(
-                        JsonWorkspace workspace, scoped in TContext context, scoped in {{builderClassName}}.Build<TContext> value, int initialCapacity = {{initialCapacity}})
+                        JsonWorkspace workspace, scoped in TContext context, scoped in {{builderClassName}}.Build<TContext> value, int initialCapacity = {{initialCapacity}}, int initialValueBufferSize = 8192)
                         #if NET9_0_OR_GREATER
                         where TContext : allows ref struct
                         #endif
                     {
                         // Create the document builder without a MetadataDb
-                        JsonDocumentBuilder<{{generator.MutableClassName()}}> documentBuilder = workspace.CreateBuilder<{{generator.MutableClassName()}}>(-1);
+                        JsonDocumentBuilder<{{generator.MutableClassName()}}> documentBuilder = workspace.CreateBuilder<{{generator.MutableClassName()}}>(-1, initialValueBufferSize);
                         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
                         var source = new {{sourceClassName}}<TContext>(context, value);
                         source.AddAsItem(ref cvb);
@@ -1746,11 +1748,12 @@ internal static partial class CodeGeneratorExtensions
                     /// </summary>
                     /// <param name="workspace">The JSON workspace.</param>
                     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+                    /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
                     /// <returns>An empty mutable document builder.</returns>
                     public static JsonDocumentBuilder<{{generator.MutableClassName()}}> {{methodName}}(
-                        JsonWorkspace workspace, int initialCapacity = {{initialCapacity}})
+                        JsonWorkspace workspace, int initialCapacity = {{initialCapacity}}, int initialValueBufferSize = 8192)
                     {
-                        JsonDocumentBuilder<{{generator.MutableClassName()}}> documentBuilder = workspace.CreateBuilder<{{generator.MutableClassName()}}>(-1);
+                        JsonDocumentBuilder<{{generator.MutableClassName()}}> documentBuilder = workspace.CreateBuilder<{{generator.MutableClassName()}}>(-1, initialValueBufferSize);
                         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
                         cvb.{{startMethod}}();
                         cvb.{{endMethod}}();

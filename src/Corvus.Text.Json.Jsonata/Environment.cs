@@ -137,6 +137,13 @@ internal sealed class Environment
     }
 
     /// <summary>
+    /// Gets a value indicating whether this environment has been captured
+    /// by a lambda closure. A captured environment must not be reused
+    /// by <see cref="LambdaValue.InvokeReusing"/>.
+    /// </summary>
+    internal bool IsCaptured => this.isCaptured;
+
+    /// <summary>
     /// Marks this environment as captured by a lambda closure.
     /// A captured environment will not be returned to the pool.
     /// </summary>

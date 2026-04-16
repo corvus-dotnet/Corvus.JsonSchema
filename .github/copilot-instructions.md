@@ -339,19 +339,15 @@ dotnet run -c Release -f net10.0 -- --filter '*'
   - `Native_<Category>` → Jsonata.Net.Native baseline
 - **CG/RT ratio** = `CodeGen.Mean / Corvus.Mean`. CG WIN ≤ 0.95, RT WIN ≥ 1.05, PARITY otherwise.
 
-### Parsing results (PowerShell)
+### Comparison table
 
-```powershell
-$base = "benchmarks\Corvus.Text.Json.Jsonata.Benchmarks\BenchmarkDotNet.Artifacts\results"
-$files = Get-ChildItem $base -Filter "*Jsonata*-report-full.json"
-foreach ($f in $files) {
-    $report = Get-Content $f.FullName -Raw | ConvertFrom-Json
-    foreach ($b in $report.Benchmarks) {
-        $method = $b.Method; $mean = $b.Statistics.Mean
-        # Group by category (from BenchmarkCategory attribute), compute CG/RT ratio
-    }
-}
+After running benchmarks, generate the full comparison table with:
+
+```bash
+node benchmarks/bench_table.js
 ```
+
+This reads `*-report-default.md` files and outputs a markdown table with Native/RT/CG columns for Mean, Ratio, and Allocated. Flags benchmarks where CG or RT exceeds parity (ratio > 1.0).
 
 ### Troubleshooting
 

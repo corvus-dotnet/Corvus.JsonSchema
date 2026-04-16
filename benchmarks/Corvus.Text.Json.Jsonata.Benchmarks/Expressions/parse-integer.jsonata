@@ -1,0 +1,1 @@
+$parseInteger("one thousand, two hundred and thirty-four", "w")

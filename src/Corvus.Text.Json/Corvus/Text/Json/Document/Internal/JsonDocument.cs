@@ -503,7 +503,7 @@ public abstract partial class JsonDocument
         ReadOnlySpan<byte> valueUtf8 = value ? JsonConstants.TrueValue : JsonConstants.FalseValue;
         int offset = _valueOffset;
         int length = valueUtf8.Length;
-        Enlarge(length, ref _valueBacking);
+        Enlarge(_valueOffset + 4 + length, ref _valueBacking);
 
         BitConverter.TryWriteBytes(_valueBacking.AsSpan(_valueOffset), (uint)(length << 4) | (uint)DynamicValueType.Boolean);
 
@@ -528,7 +528,7 @@ public abstract partial class JsonDocument
 
         int offset = _valueOffset;
         int length = JsonConstants.NullValue.Length;
-        Enlarge(length, ref _valueBacking);
+        Enlarge(_valueOffset + 4 + length, ref _valueBacking);
 
         BitConverter.TryWriteBytes(_valueBacking.AsSpan(_valueOffset), (uint)(length << 4) | (uint)DynamicValueType.Null);
 
@@ -550,7 +550,7 @@ public abstract partial class JsonDocument
         int offset = _valueOffset;
         int result = offset;
         int length = JsonConstants.MaximumFormatGuidLength + 2;
-        Enlarge(length, ref _valueBacking);
+        Enlarge(_valueOffset + 4 + length, ref _valueBacking);
 
         offset += 4;
 
@@ -580,7 +580,7 @@ public abstract partial class JsonDocument
         int offset = _valueOffset;
         int result = offset;
         int length = JsonConstants.MaximumFormatGuidLength + 2;
-        Enlarge(length, ref _valueBacking);
+        Enlarge(_valueOffset + 4 + length, ref _valueBacking);
 
         offset += 4;
 
@@ -609,7 +609,7 @@ public abstract partial class JsonDocument
         int offset = _valueOffset;
         int result = offset;
         int length = JsonConstants.MaximumFormatGuidLength + 2;
-        Enlarge(length, ref _valueBacking);
+        Enlarge(_valueOffset + 4 + length, ref _valueBacking);
 
         offset += 4;
 
@@ -638,7 +638,7 @@ public abstract partial class JsonDocument
         int offset = _valueOffset;
         int result = offset;
         int length = JsonConstants.MaximumFormatDateTimeOffsetLength + 2;
-        Enlarge(length, ref _valueBacking);
+        Enlarge(_valueOffset + 4 + length, ref _valueBacking);
 
         offset += 4;
 
@@ -669,7 +669,7 @@ public abstract partial class JsonDocument
         int offset = _valueOffset;
         int result = offset;
         int length = JsonConstants.MaximumFormatOffsetDateLength + 2;
-        Enlarge(length, ref _valueBacking);
+        Enlarge(_valueOffset + 4 + length, ref _valueBacking);
 
         offset += 4;
 
@@ -700,7 +700,7 @@ public abstract partial class JsonDocument
         int offset = _valueOffset;
         int result = offset;
         int length = JsonConstants.MaximumFormatOffsetTimeLength + 2;
-        Enlarge(length, ref _valueBacking);
+        Enlarge(_valueOffset + 4 + length, ref _valueBacking);
 
         offset += 4;
 
@@ -731,7 +731,7 @@ public abstract partial class JsonDocument
         int offset = _valueOffset;
         int result = offset;
         int length = JsonConstants.MaximumFormatOffsetTimeLength + 2;
-        Enlarge(length, ref _valueBacking);
+        Enlarge(_valueOffset + 4 + length, ref _valueBacking);
 
         offset += 4;
 
@@ -762,7 +762,7 @@ public abstract partial class JsonDocument
         int offset = _valueOffset;
         int result = offset;
         int length = JsonConstants.MaximumFormatOffsetTimeLength + 2;
-        Enlarge(length, ref _valueBacking);
+        Enlarge(_valueOffset + 4 + length, ref _valueBacking);
 
         offset += 4;
 
@@ -794,7 +794,7 @@ public abstract partial class JsonDocument
         int offset = _valueOffset;
         int result = offset;
         int length = JsonConstants.MaximumFormatInt64Length;
-        Enlarge(length, ref _valueBacking);
+        Enlarge(_valueOffset + 4 + length, ref _valueBacking);
 
         offset += 4;
 
@@ -818,7 +818,7 @@ public abstract partial class JsonDocument
         int offset = _valueOffset;
         int result = offset;
         int length = JsonConstants.MaximumFormatUInt64Length;
-        Enlarge(length, ref _valueBacking);
+        Enlarge(_valueOffset + 4 + length, ref _valueBacking);
 
         offset += 4;
 
@@ -842,7 +842,7 @@ public abstract partial class JsonDocument
         int offset = _valueOffset;
         int result = offset;
         int length = JsonConstants.MaximumFormatInt64Length;
-        Enlarge(length, ref _valueBacking);
+        Enlarge(_valueOffset + 4 + length, ref _valueBacking);
 
         offset += 4;
 
@@ -867,7 +867,7 @@ public abstract partial class JsonDocument
         int offset = _valueOffset;
         int result = offset;
         int length = JsonConstants.MaximumFormatUInt64Length;
-        Enlarge(length, ref _valueBacking);
+        Enlarge(_valueOffset + 4 + length, ref _valueBacking);
 
         offset += 4;
 
@@ -891,7 +891,7 @@ public abstract partial class JsonDocument
         int offset = _valueOffset;
         int result = offset;
         int length = JsonConstants.MaximumFormatInt64Length;
-        Enlarge(length, ref _valueBacking);
+        Enlarge(_valueOffset + 4 + length, ref _valueBacking);
 
         offset += 4;
 
@@ -916,7 +916,7 @@ public abstract partial class JsonDocument
         int offset = _valueOffset;
         int result = offset;
         int length = JsonConstants.MaximumFormatUInt64Length;
-        Enlarge(length, ref _valueBacking);
+        Enlarge(_valueOffset + 4 + length, ref _valueBacking);
 
         offset += 4;
 
@@ -940,7 +940,7 @@ public abstract partial class JsonDocument
         int offset = _valueOffset;
         int result = offset;
         int length = JsonConstants.MaximumFormatInt64Length;
-        Enlarge(length, ref _valueBacking);
+        Enlarge(_valueOffset + 4 + length, ref _valueBacking);
 
         offset += 4;
 
@@ -965,7 +965,7 @@ public abstract partial class JsonDocument
         int offset = _valueOffset;
         int result = offset;
         int length = JsonConstants.MaximumFormatUInt64Length;
-        Enlarge(length, ref _valueBacking);
+        Enlarge(_valueOffset + 4 + length, ref _valueBacking);
 
         offset += 4;
 
@@ -989,7 +989,7 @@ public abstract partial class JsonDocument
         int offset = _valueOffset;
         int result = offset;
         int length = JsonConstants.MaximumFormatSingleLength;
-        Enlarge(length, ref _valueBacking);
+        Enlarge(_valueOffset + 4 + length, ref _valueBacking);
 
         offset += 4;
 
@@ -1013,7 +1013,7 @@ public abstract partial class JsonDocument
         int offset = _valueOffset;
         int result = offset;
         int length = JsonConstants.MaximumFormatDoubleLength;
-        Enlarge(length, ref _valueBacking);
+        Enlarge(_valueOffset + 4 + length, ref _valueBacking);
 
         offset += 4;
 
@@ -1037,7 +1037,7 @@ public abstract partial class JsonDocument
         int offset = _valueOffset;
         int result = offset;
         int length = JsonConstants.MaximumFormatDecimalLength;
-        Enlarge(length, ref _valueBacking);
+        Enlarge(_valueOffset + 4 + length, ref _valueBacking);
 
         offset += 4;
 
@@ -1141,7 +1141,7 @@ public abstract partial class JsonDocument
         int offset = _valueOffset;
         int result = offset;
         int length = JsonConstants.MaximumFormatInt128Length;
-        Enlarge(length, ref _valueBacking);
+        Enlarge(_valueOffset + 4 + length, ref _valueBacking);
 
         offset += 4;
 
@@ -1166,7 +1166,7 @@ public abstract partial class JsonDocument
         int offset = _valueOffset;
         int result = offset;
         int length = JsonConstants.MaximumFormatUInt128Length;
-        Enlarge(length, ref _valueBacking);
+        Enlarge(_valueOffset + 4 + length, ref _valueBacking);
 
         offset += 4;
 
@@ -1190,7 +1190,7 @@ public abstract partial class JsonDocument
         int offset = _valueOffset;
         int result = offset;
         int length = JsonConstants.MaximumFormatHalfLength;
-        Enlarge(length, ref _valueBacking);
+        Enlarge(_valueOffset + 4 + length, ref _valueBacking);
 
         offset += 4;
 

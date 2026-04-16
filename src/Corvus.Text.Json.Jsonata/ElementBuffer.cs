@@ -99,15 +99,7 @@ public struct ElementBuffer : IDisposable
             return this.array![0];
         }
 
-        JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateArrayBuilder(workspace, this.count);
-        JsonElement.Mutable root = doc.RootElement;
-
-        for (int i = 0; i < this.count; i++)
-        {
-            root.AddItem(this.array![i]);
-        }
-
-        return (JsonElement)root;
+        return this.BuildArray(workspace);
     }
 
     /// <summary>
@@ -122,15 +114,42 @@ public struct ElementBuffer : IDisposable
             return JsonataHelpers.EmptyArray();
         }
 
-        JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateArrayBuilder(workspace, this.count);
-        JsonElement.Mutable root = doc.RootElement;
+        return this.BuildArray(workspace);
+    }
 
-        for (int i = 0; i < this.count; i++)
-        {
-            root.AddItem(this.array![i]);
-        }
+    /// <summary>
+    /// Builds a JSON array from the buffer contents using the CVB (CreateBuilder + ArrayBuilder)
+    /// pattern, which writes directly to the MetadataDb without per-item staleness checks or
+    /// array-length scans.
+    /// </summary>
+    private readonly JsonElement BuildArray(JsonWorkspace workspace)
+    {
+        JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateBuilder(
+            workspace,
+            (this.array!, this.count),
+            static (in (JsonElement[] Arr, int Count) ctx, ref JsonElement.ArrayBuilder builder) =>
+            {
+                for (int i = 0; i < ctx.Count; i++)
+                {
+                    builder.AddItem(ctx.Arr[i]);
+                }
+            },
+            estimatedMemberCount: this.count + 2);
 
-        return (JsonElement)root;
+        return (JsonElement)doc.RootElement;
+    }
+
+    /// <summary>
+    /// Exposes the backing array and count for direct consumption (e.g., by buffer-fused zip).
+    /// The caller must NOT modify or return the array; the buffer retains ownership.
+    /// </summary>
+    /// <param name="backingArray">The backing array (may be larger than <paramref name="elementCount"/>).</param>
+    /// <param name="elementCount">The number of valid elements in <paramref name="backingArray"/>.</param>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public readonly void GetContents(out JsonElement[]? backingArray, out int elementCount)
+    {
+        backingArray = this.array;
+        elementCount = this.count;
     }
 
     /// <summary>

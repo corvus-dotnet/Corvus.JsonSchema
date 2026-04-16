@@ -21,6 +21,22 @@ internal static class BuiltInFunctions
 {
     private static readonly Regex WhitespaceCollapseRegex = new(@"\s+", RegexOptions.Compiled);
 
+    private static readonly string[] Iso8601Formats =
+    [
+        "yyyy-MM-ddTHH:mm:ss.fffzzz",
+        "yyyy-MM-ddTHH:mm:ss.fffZ",
+        "yyyy-MM-ddTHH:mm:ss.fff",
+        "yyyy-MM-ddTHH:mm:sszzz",
+        "yyyy-MM-ddTHH:mm:ssZ",
+        "yyyy-MM-ddTHH:mm:ss",
+        "yyyy-MM-ddTHH:mmzzz",
+        "yyyy-MM-ddTHH:mmZ",
+        "yyyy-MM-ddTHH:mm",
+        "yyyy-MM-dd",
+        "yyyy-MM",
+        "yyyy",
+    ];
+
     /// <summary>
     /// Evaluator that returns the current context as a singleton sequence.
     /// Used for context-binding (0-arg calls like <c>$number()</c>).
@@ -1299,8 +1315,8 @@ internal static class BuiltInFunctions
                 throw new JsonataException("T0410", SR.T0410_Argument1OfFunctionSplitIsNotOfTheCorrectType, 0);
             }
 
-            string? str = strSeq.FirstOrDefault.GetString();
-            if (str is null)
+            JsonElement strElement = strSeq.FirstOrDefault;
+            if (strElement.ValueKind != JsonValueKind.String)
             {
                 return Sequence.Undefined;
             }
@@ -1343,44 +1359,14 @@ internal static class BuiltInFunctions
                 }
             }
 
-            string[] parts;
             if (sepSeq.IsRegex)
             {
-                parts = sepSeq.Regex!.Split(str);
+                return new Sequence(SplitRegex(strElement, sepSeq.Regex!, limit, env.Workspace));
             }
             else
             {
-                string? sep = sepSeq.FirstOrDefault.GetString();
-                if (sep is null)
-                {
-                    return Sequence.Undefined;
-                }
-
-                if (sep.Length == 0)
-                {
-                    // Empty separator: split into individual characters
-                    parts = new string[str.Length];
-                    for (int i = 0; i < str.Length; i++)
-                    {
-                        parts[i] = str[i].ToString();
-                    }
-                }
-                else
-                {
-                    parts = str.Split(new[] { sep }, StringSplitOptions.None);
-                }
+                return new Sequence(SplitString(strElement, sepSeq.FirstOrDefault, limit, env.Workspace));
             }
-
-            int count = Math.Min(parts.Length, limit);
-
-            JsonDocumentBuilder<JsonElement.Mutable> arrayDoc = JsonElement.CreateArrayBuilder(env.Workspace, count);
-            JsonElement.Mutable arrayRoot = arrayDoc.RootElement;
-            for (int i = 0; i < count; i++)
-            {
-                arrayRoot.AddItem(JsonataHelpers.StringFromString(parts[i], env.Workspace));
-            }
-
-            return new Sequence((JsonElement)arrayRoot);
         };
     }
 
@@ -1603,55 +1589,71 @@ internal static class BuiltInFunctions
                 return Sequence.Undefined;
             }
 
-            // Collect unique keys from objects (handles arrays of objects too)
-            var keys = new List<string>();
-            var seen = new HashSet<string>();
+            return KeysCore(seq, env);
+        };
+    }
 
-            void CollectKeys(JsonElement el)
-            {
-                if (el.ValueKind == JsonValueKind.Object)
-                {
-                    foreach (var prop in el.EnumerateObject())
-                    {
-                        if (seen.Add(prop.Name))
-                        {
-                            keys.Add(prop.Name);
-                        }
-                    }
-                }
-                else if (el.ValueKind == JsonValueKind.Array)
-                {
-                    foreach (var item in el.EnumerateArray())
-                    {
-                        CollectKeys(item);
-                    }
-                }
-            }
+    private static Sequence KeysCore(Sequence seq, Environment env)
+    {
+        const int estimate = 8;
+
+        Span<int> keyBuckets = estimate <= Utf8KeyHashSet.StackAllocBucketSize
+            ? stackalloc int[Utf8KeyHashSet.StackAllocBucketSize]
+            : default;
+        Span<byte> keyEntries = estimate * 20 <= Utf8KeyHashSet.StackAllocEntrySize
+            ? stackalloc byte[Utf8KeyHashSet.StackAllocEntrySize]
+            : default;
+        Span<byte> keyBuffer = stackalloc byte[Utf8KeyHashSet.StackAllocKeyBufferSize];
+
+        var keySet = new Utf8KeyHashSet(estimate, keyBuckets, keyEntries, keyBuffer);
+        try
+        {
+            JsonDocumentBuilder<JsonElement.Mutable> arrayDoc = JsonElement.CreateArrayBuilder(env.Workspace, estimate);
+            JsonElement.Mutable arrayRoot = arrayDoc.RootElement;
 
             for (int i = 0; i < seq.Count; i++)
             {
-                CollectKeys(seq[i]);
+                CollectUniqueKeysRT(seq[i], ref keySet, ref arrayRoot);
             }
 
-            if (keys.Count == 0)
+            if (keySet.Count == 0)
             {
                 return Sequence.Undefined;
             }
 
-            if (keys.Count == 1)
+            if (keySet.Count == 1)
             {
-                return new Sequence(JsonataHelpers.StringFromString(keys[0], env.Workspace));
-            }
-
-            JsonDocumentBuilder<JsonElement.Mutable> arrayDoc = JsonElement.CreateArrayBuilder(env.Workspace, keys.Count);
-            JsonElement.Mutable arrayRoot = arrayDoc.RootElement;
-            foreach (var key in keys)
-            {
-                arrayRoot.AddItem(JsonataHelpers.StringFromString(key, env.Workspace));
+                return new Sequence(arrayRoot[0]);
             }
 
             return new Sequence((JsonElement)arrayRoot);
-        };
+        }
+        finally
+        {
+            keySet.Dispose();
+        }
+    }
+
+    private static void CollectUniqueKeysRT(JsonElement el, ref Utf8KeyHashSet keySet, ref JsonElement.Mutable arrayRoot)
+    {
+        if (el.ValueKind == JsonValueKind.Object)
+        {
+            foreach (var prop in el.EnumerateObject())
+            {
+                using UnescapedUtf8JsonString nameUtf8 = prop.Utf8NameSpan;
+                if (keySet.AddIfNotExists(nameUtf8.Span))
+                {
+                    arrayRoot.AddItem(nameUtf8.Span);
+                }
+            }
+        }
+        else if (el.ValueKind == JsonValueKind.Array)
+        {
+            foreach (var item in el.EnumerateArray())
+            {
+                CollectUniqueKeysRT(item, ref keySet, ref arrayRoot);
+            }
+        }
     }
 
     private static ExpressionEvaluator CompileValues(ExpressionEvaluator[] args)
@@ -1671,17 +1673,19 @@ internal static class BuiltInFunctions
             }
 
             var obj = seq.FirstOrDefault;
-            int propCount = 0;
-            foreach (var p in obj.EnumerateObject()) { propCount++; }
+            JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateBuilder(
+                env.Workspace,
+                obj,
+                static (in JsonElement ctx, ref JsonElement.ArrayBuilder builder) =>
+                {
+                    foreach (var prop in ctx.EnumerateObject())
+                    {
+                        builder.AddItem(prop.Value);
+                    }
+                },
+                estimatedMemberCount: 10);
 
-            JsonDocumentBuilder<JsonElement.Mutable> arrayDoc = JsonElement.CreateArrayBuilder(env.Workspace, propCount);
-            JsonElement.Mutable arrayRoot = arrayDoc.RootElement;
-            foreach (var prop in obj.EnumerateObject())
-            {
-                arrayRoot.AddItem(prop.Value);
-            }
-
-            return new Sequence((JsonElement)arrayRoot);
+            return new Sequence((JsonElement)doc.RootElement);
         };
     }
 
@@ -1768,49 +1772,60 @@ internal static class BuiltInFunctions
                 {
                     var lambda = funcSeq.Lambda!;
                     var sortInput = input;
-                    var sortArgs = new Sequence[2];
-                    var reverseArgs = new Sequence[2];
                     var invokeEnv = lambda.CreateInvokeEnv(env);
-                    StableSort(ref elements, (a, b) =>
+                    try
                     {
-                        sortArgs[0] = new Sequence(a);
-                        sortArgs[1] = new Sequence(b);
-                        var result = lambda.InvokeReusing(sortArgs, 2, sortInput, invokeEnv, env);
-                        if (result.IsUndefined)
+                        StableSort(ref elements, (a, b) =>
                         {
-                            return 0;
-                        }
-
-                        var el = result.FirstOrDefault;
-
-                        // Boolean comparator: true means a > b (a should come after b).
-                        // false could mean a < b OR a == b, so check the reverse.
-                        if (el.ValueKind == JsonValueKind.True)
-                        {
-                            return 1;
-                        }
-
-                        if (el.ValueKind == JsonValueKind.False)
-                        {
-                            reverseArgs[0] = sortArgs[1];
-                            reverseArgs[1] = sortArgs[0];
-                            var reverseResult = lambda.InvokeReusing(reverseArgs, 2, sortInput, invokeEnv, env);
-                            if (!reverseResult.IsUndefined
-                                && reverseResult.FirstOrDefault.ValueKind == JsonValueKind.True)
+                            Sequence sa = new Sequence(a);
+                            Sequence sb = new Sequence(b);
+#if NET9_0_OR_GREATER
+                            var result = lambda.InvokeReusing([sa, sb], sortInput, invokeEnv, env);
+#else
+                            var result = lambda.InvokeReusing(new Sequence[] { sa, sb }, sortInput, invokeEnv, env);
+#endif
+                            if (result.IsUndefined)
                             {
-                                return -1;
+                                return 0;
+                            }
+
+                            var el = result.FirstOrDefault;
+
+                            // Boolean comparator: true means a > b (a should come after b).
+                            // false could mean a < b OR a == b, so check the reverse.
+                            if (el.ValueKind == JsonValueKind.True)
+                            {
+                                return 1;
+                            }
+
+                            if (el.ValueKind == JsonValueKind.False)
+                            {
+#if NET9_0_OR_GREATER
+                                var reverseResult = lambda.InvokeReusing([sb, sa], sortInput, invokeEnv, env);
+#else
+                                var reverseResult = lambda.InvokeReusing(new Sequence[] { sb, sa }, sortInput, invokeEnv, env);
+#endif
+                                if (!reverseResult.IsUndefined
+                                    && reverseResult.FirstOrDefault.ValueKind == JsonValueKind.True)
+                                {
+                                    return -1;
+                                }
+
+                                return 0;
+                            }
+
+                            if (FunctionalCompiler.TryCoerceToNumber(el, out double num))
+                            {
+                                return num < 0 ? -1 : (num > 0 ? 1 : 0);
                             }
 
                             return 0;
-                        }
-
-                        if (FunctionalCompiler.TryCoerceToNumber(el, out double num))
-                        {
-                            return num < 0 ? -1 : (num > 0 ? 1 : 0);
-                        }
-
-                        return 0;
-                    });
+                        });
+                    }
+                    finally
+                    {
+                        Environment.ReturnChild(invokeEnv);
+                    }
                 }
             }
             else
@@ -1871,14 +1886,19 @@ internal static class BuiltInFunctions
             }
 
             int len = arr.GetArrayLength();
-            JsonDocumentBuilder<JsonElement.Mutable> arrayDoc = JsonElement.CreateArrayBuilder(env.Workspace, len);
-            JsonElement.Mutable arrayRoot = arrayDoc.RootElement;
-            for (int i = len - 1; i >= 0; i--)
-            {
-                arrayRoot.AddItem(arr[i]);
-            }
+            JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateBuilder(
+                env.Workspace,
+                (arr, len),
+                static (in (JsonElement Arr, int Len) ctx, ref JsonElement.ArrayBuilder builder) =>
+                {
+                    for (int i = ctx.Len - 1; i >= 0; i--)
+                    {
+                        builder.AddItem(ctx.Arr[i]);
+                    }
+                },
+                estimatedMemberCount: len + 2);
 
-            return new Sequence((JsonElement)arrayRoot);
+            return new Sequence((JsonElement)doc.RootElement);
         };
     }
 
@@ -1898,38 +1918,57 @@ internal static class BuiltInFunctions
                 return Sequence.Undefined;
             }
 
-            // Collect all items to deduplicate, flattening arrays in multi-valued sequences
-            var items = default(SequenceBuilder);
-            for (int si = 0; si < seq.Count; si++)
+            return DistinctCore(seq, env);
+        };
+    }
+
+    private static Sequence DistinctCore(Sequence seq, Environment env)
+    {
+        // Collect all items to deduplicate, flattening arrays in multi-valued sequences
+        var items = default(SequenceBuilder);
+        for (int si = 0; si < seq.Count; si++)
+        {
+            var el = seq[si];
+            if (el.ValueKind == JsonValueKind.Array)
             {
-                var el = seq[si];
-                if (el.ValueKind == JsonValueKind.Array)
+                foreach (var item in el.EnumerateArray())
                 {
-                    foreach (var item in el.EnumerateArray())
-                    {
-                        items.Add(item);
-                    }
-                }
-                else
-                {
-                    items.Add(el);
+                    items.Add(item);
                 }
             }
-
-            // If only one non-array item, return as-is
-            if (items.Count <= 1 && seq.Count == 1 && seq.FirstOrDefault.ValueKind != JsonValueKind.Array)
+            else
             {
-                items.ReturnArray();
-                return seq;
+                items.Add(el);
             }
+        }
 
+        // If only one non-array item, return as-is
+        if (items.Count <= 1 && seq.Count == 1 && seq.FirstOrDefault.ValueKind != JsonValueKind.Array)
+        {
+            items.ReturnArray();
+            return seq;
+        }
+
+        // Use UniqueItemsHashSet for allocation-free dedup
+        var (parentDoc, _) = JsonElementHelpers.GetParentDocumentAndIndex(items[0]);
+
+        Span<int> buckets = items.Count <= UniqueItemsHashSet.StackAllocBucketSize
+            ? stackalloc int[UniqueItemsHashSet.StackAllocBucketSize]
+            : default;
+        int entryBytes = items.Count * 12;
+        Span<byte> entries = entryBytes <= UniqueItemsHashSet.StackAllocEntrySize
+            ? stackalloc byte[UniqueItemsHashSet.StackAllocEntrySize]
+            : default;
+
+        var hashSet = new UniqueItemsHashSet(parentDoc, items.Count, buckets, entries);
+        try
+        {
             JsonDocumentBuilder<JsonElement.Mutable> arrayDoc = JsonElement.CreateArrayBuilder(env.Workspace, items.Count);
             JsonElement.Mutable arrayRoot = arrayDoc.RootElement;
-            var seen = new HashSet<string>();
             for (int i = 0; i < items.Count; i++)
             {
-                var raw = items[i].GetRawText();
-                if (seen.Add(raw))
+                var (_, idx) = JsonElementHelpers.GetParentDocumentAndIndex(items[i]);
+                if (hashSet.AddItemIfNotExists(idx))
                 {
                     arrayRoot.AddItem(items[i]);
                 }
@@ -1937,7 +1976,11 @@ internal static class BuiltInFunctions
 
             items.ReturnArray();
             return new Sequence((JsonElement)arrayRoot);
-        };
+        }
+        finally
+        {
+            hashSet.Dispose();
+        }
     }
 
     private static ExpressionEvaluator CompileFlatten(ExpressionEvaluator[] args)
@@ -1962,24 +2005,30 @@ internal static class BuiltInFunctions
                 return seq;
             }
 
-            JsonDocumentBuilder<JsonElement.Mutable> arrayDoc = JsonElement.CreateArrayBuilder(env.Workspace, arr.GetArrayLength());
-            JsonElement.Mutable arrayRoot = arrayDoc.RootElement;
-            FlattenElement(arr, ref arrayRoot);
-            return new Sequence((JsonElement)arrayRoot);
+            JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateBuilder(
+                env.Workspace,
+                arr,
+                static (in JsonElement ctx, ref JsonElement.ArrayBuilder builder) =>
+                {
+                    FlattenIntoBuilder(ctx, ref builder);
+                },
+                estimatedMemberCount: 16);
+
+            return new Sequence((JsonElement)doc.RootElement);
         };
 
-        static void FlattenElement(JsonElement element, ref JsonElement.Mutable arrayRoot)
+        static void FlattenIntoBuilder(JsonElement element, ref JsonElement.ArrayBuilder builder)
         {
             if (element.ValueKind == JsonValueKind.Array)
             {
                 foreach (var item in element.EnumerateArray())
                 {
-                    FlattenElement(item, ref arrayRoot);
+                    FlattenIntoBuilder(item, ref builder);
                 }
             }
             else
             {
-                arrayRoot.AddItem(element);
+                builder.AddItem(element);
             }
         }
     }
@@ -2007,7 +2056,6 @@ internal static class BuiltInFunctions
 
             var lambda = funcSeq.Lambda!;
             int arity = lambda.Arity;
-            var builder = default(SequenceBuilder);
 
             // Collect all items into a flat list for indexing
             var items = default(SequenceBuilder);
@@ -2053,35 +2101,137 @@ internal static class BuiltInFunctions
                 flatArrSeq = new Sequence((JsonElement)flatRoot);
             }
 
-            // Reuse args array and child environment across all iterations.
-            // Always pass 3 args (the standard for $map), but skip computing expensive
-            // index/array values when the lambda won't use them.
-            var lambdaArgs = new Sequence[3];
-            if (arity >= 3)
-            {
-                lambdaArgs[2] = flatArrSeq;
-            }
-
             var invokeEnv = lambda.CreateInvokeEnv(env);
-            for (int i = 0; i < items.Count; i++)
+
+            // Dual-mode collection: optimistic doubles, fallback to elements.
+            // Then build via CVB for direct MetadataDb writes (no Mutable.AddItem overhead).
+            double[]? doubleResults = ArrayPool<double>.Shared.Rent(items.Count);
+            JsonElement[]? elementResults = null;
+            bool allDoubles = true;
+            int resultCount = 0;
+
+            try
             {
-                lambdaArgs[0] = new Sequence(items[i]);
-                if (arity >= 2)
+                for (int i = 0; i < items.Count; i++)
                 {
-                    lambdaArgs[1] = Sequence.FromDouble(i, env.Workspace);
+                    Sequence arg0 = new Sequence(items[i]);
+                    Sequence arg1 = arity >= 2 ? Sequence.FromDouble(i, env.Workspace) : default;
+
+#if NET9_0_OR_GREATER
+                    var result = lambda.InvokeReusing([arg0, arg1, flatArrSeq], items[i], invokeEnv, env);
+#else
+                    var result = lambda.InvokeReusing(new Sequence[] { arg0, arg1, flatArrSeq }, items[i], invokeEnv, env);
+#endif
+
+                    if (allDoubles && result.IsSingleton && result.IsRawDouble)
+                    {
+                        result.TryGetDouble(out double d);
+                        if (resultCount == doubleResults.Length)
+                        {
+                            var bigger = ArrayPool<double>.Shared.Rent(doubleResults.Length * 2);
+                            doubleResults.AsSpan(0, resultCount).CopyTo(bigger);
+                            ArrayPool<double>.Shared.Return(doubleResults);
+                            doubleResults = bigger;
+                        }
+
+                        doubleResults[resultCount++] = d;
+                    }
+                    else
+                    {
+                        if (allDoubles)
+                        {
+                            // Switch from double to element mode.
+                            allDoubles = false;
+                            elementResults = ArrayPool<JsonElement>.Shared.Rent(Math.Max(items.Count, resultCount + result.Count));
+
+                            // Materialize pending doubles.
+                            for (int j = 0; j < resultCount; j++)
+                            {
+                                elementResults[j] = JsonataHelpers.NumberFromDouble(doubleResults[j], env.Workspace);
+                            }
+                        }
+
+                        for (int j = 0; j < result.Count; j++)
+                        {
+                            if (resultCount >= elementResults!.Length)
+                            {
+                                var bigger = ArrayPool<JsonElement>.Shared.Rent(elementResults.Length * 2);
+                                elementResults.AsSpan(0, resultCount).CopyTo(bigger);
+                                ArrayPool<JsonElement>.Shared.Return(elementResults);
+                                elementResults = bigger;
+                            }
+
+                            elementResults![resultCount++] = result[j];
+                        }
+                    }
                 }
 
-                var result = lambda.InvokeReusing(lambdaArgs, 3, items[i], invokeEnv, env);
-                builder.AddRange(result);
+                items.ReturnArray();
+
+                if (resultCount == 0)
+                {
+                    return Sequence.Undefined;
+                }
+
+                // Singleton auto-unwrap: JSONata returns just the value, not [value].
+                if (resultCount == 1)
+                {
+                    if (allDoubles)
+                    {
+                        return Sequence.FromDouble(doubleResults![0], env.Workspace);
+                    }
+
+                    return new Sequence(elementResults![0]);
+                }
+
+                // Build via CVB — writes directly to MetadataDb, no Mutable per-item overhead.
+                JsonDocumentBuilder<JsonElement.Mutable> doc;
+                if (allDoubles)
+                {
+                    doc = JsonElement.CreateBuilder(
+                        env.Workspace,
+                        (doubleResults!, resultCount),
+                        static (in (double[] Array, int Count) ctx, ref JsonElement.ArrayBuilder builder) =>
+                        {
+                            for (int i = 0; i < ctx.Count; i++)
+                            {
+                                builder.AddItem(ctx.Array[i]);
+                            }
+                        },
+                        estimatedMemberCount: resultCount + 2,
+                        initialValueBufferSize: Math.Max(8192, resultCount * 28));
+                }
+                else
+                {
+                    doc = JsonElement.CreateBuilder(
+                        env.Workspace,
+                        (elementResults!, resultCount),
+                        static (in (JsonElement[] Array, int Count) ctx, ref JsonElement.ArrayBuilder builder) =>
+                        {
+                            for (int i = 0; i < ctx.Count; i++)
+                            {
+                                builder.AddItem(ctx.Array[i]);
+                            }
+                        },
+                        estimatedMemberCount: resultCount + 2);
+                }
+
+                return new Sequence((JsonElement)doc.RootElement);
             }
+            finally
+            {
+                Environment.ReturnChild(invokeEnv);
 
-            items.ReturnArray();
+                if (doubleResults is not null)
+                {
+                    ArrayPool<double>.Shared.Return(doubleResults);
+                }
 
-            // Return as a multi-value Sequence (not wrapped in a JSON array).
-            // The evaluator's Sequence→JsonElement conversion handles array
-            // creation when there are multiple results, and auto-unwraps
-            // singletons. This matches JSONata's auto-wrap/unwrap semantics.
-            return builder.ToSequence();
+                if (elementResults is not null)
+                {
+                    ArrayPool<JsonElement>.Shared.Return(elementResults);
+                }
+            }
         };
     }
 
@@ -2147,85 +2297,104 @@ internal static class BuiltInFunctions
                 }
             }
 
-            var matchBuilder = default(SequenceBuilder);
+            // Collect matching elements into a pooled array, then build via CVB.
+            JsonElement[]? matchResults = null;
             int matchCount = 0;
 
-            // Reuse args array and child environment across all iterations.
-            // Always pass 3 args (the standard for $filter), but skip computing expensive
-            // index/array values when the lambda won't use them.
-            var lambdaArgs = new Sequence[3];
             var invokeEnv = lambda.CreateInvokeEnv(env);
+            Sequence arrSeq = arity >= 3 ? seq : default;
 
-            if (inputWasArray)
+            try
             {
-                var arr = seq.FirstOrDefault;
-                if (arity >= 3)
+                if (inputWasArray)
                 {
-                    lambdaArgs[2] = seq;
-                }
+                    var arr = seq.FirstOrDefault;
+                    int arrLen = arr.GetArrayLength();
+                    matchResults = ArrayPool<JsonElement>.Shared.Rent(Math.Max(arrLen, 4));
 
-                int i = 0;
-                foreach (var item in arr.EnumerateArray())
-                {
-                    lambdaArgs[0] = new Sequence(item);
-                    if (arity >= 2)
+                    int i = 0;
+                    foreach (var item in arr.EnumerateArray())
                     {
-                        lambdaArgs[1] = Sequence.FromDouble(i, env.Workspace);
-                    }
+                        Sequence arg0 = new Sequence(item);
+                        Sequence arg1 = arity >= 2 ? Sequence.FromDouble(i, env.Workspace) : default;
 
-                    var result = lambda.InvokeReusing(lambdaArgs, 3, item, invokeEnv, env);
-                    if (FunctionalCompiler.IsTruthy(result))
-                    {
-                        matchBuilder.Add(item);
-                        matchCount++;
-                    }
+#if NET9_0_OR_GREATER
+                        var result = lambda.InvokeReusing([arg0, arg1, arrSeq], item, invokeEnv, env);
+#else
+                        var result = lambda.InvokeReusing(new Sequence[] { arg0, arg1, arrSeq }, item, invokeEnv, env);
+#endif
+                        if (FunctionalCompiler.IsTruthy(result))
+                        {
+                            matchResults[matchCount++] = item;
+                        }
 
-                    i++;
-                }
-            }
-            else
-            {
-                if (arity >= 3)
-                {
-                    lambdaArgs[2] = seq;
-                }
-
-                for (int i = 0; i < seq.Count; i++)
-                {
-                    lambdaArgs[0] = new Sequence(seq[i]);
-                    if (arity >= 2)
-                    {
-                        lambdaArgs[1] = Sequence.FromDouble(i, env.Workspace);
-                    }
-
-                    var result = lambda.InvokeReusing(lambdaArgs, 3, seq[i], invokeEnv, env);
-                    if (FunctionalCompiler.IsTruthy(result))
-                    {
-                        matchBuilder.Add(seq[i]);
-                        matchCount++;
+                        i++;
                     }
                 }
-            }
+                else
+                {
+                    matchResults = ArrayPool<JsonElement>.Shared.Rent(Math.Max(seq.Count, 4));
 
-            // If input was not an array, unwrap single results
-            if (!inputWasArray)
-            {
+                    for (int i = 0; i < seq.Count; i++)
+                    {
+                        Sequence arg0 = new Sequence(seq[i]);
+                        Sequence arg1 = arity >= 2 ? Sequence.FromDouble(i, env.Workspace) : default;
+
+#if NET9_0_OR_GREATER
+                        var result = lambda.InvokeReusing([arg0, arg1, arrSeq], seq[i], invokeEnv, env);
+#else
+                        var result = lambda.InvokeReusing(new Sequence[] { arg0, arg1, arrSeq }, seq[i], invokeEnv, env);
+#endif
+                        if (FunctionalCompiler.IsTruthy(result))
+                        {
+                            matchResults[matchCount++] = seq[i];
+                        }
+                    }
+                }
+
+                // If input was not an array, unwrap single results
+                if (!inputWasArray)
+                {
+                    if (matchCount == 0)
+                    {
+                        return Sequence.Undefined;
+                    }
+
+                    if (matchCount == 1)
+                    {
+                        return new Sequence(matchResults[0]);
+                    }
+                }
+
                 if (matchCount == 0)
                 {
-                    matchBuilder.ReturnArray();
-                    return Sequence.Undefined;
+                    return new Sequence(JsonataHelpers.EmptyArray());
                 }
 
-                if (matchCount == 1)
+                // Build via CVB — writes directly to MetadataDb, no Mutable per-item overhead.
+                var doc = JsonElement.CreateBuilder(
+                    env.Workspace,
+                    (matchResults!, matchCount),
+                    static (in (JsonElement[] Array, int Count) ctx, ref JsonElement.ArrayBuilder builder) =>
+                    {
+                        for (int i = 0; i < ctx.Count; i++)
+                        {
+                            builder.AddItem(ctx.Array[i]);
+                        }
+                    },
+                    estimatedMemberCount: matchCount + 2);
+
+                return new Sequence((JsonElement)doc.RootElement);
+            }
+            finally
+            {
+                Environment.ReturnChild(invokeEnv);
+
+                if (matchResults is not null)
                 {
-                    var single = matchBuilder[0];
-                    matchBuilder.ReturnArray();
-                    return new Sequence(single);
+                    ArrayPool<JsonElement>.Shared.Return(matchResults);
                 }
             }
-
-            var resultArr = JsonataHelpers.ArrayFromBuilder(ref matchBuilder, env.Workspace);
-            return new Sequence(resultArr);
         };
     }
 
@@ -2323,30 +2492,33 @@ internal static class BuiltInFunctions
                 arrSeq = Sequence.Undefined;
             }
 
-            // Reuse args array across iterations, but use standard Invoke
-            // (not InvokeReusing) because the accumulator can be a closure
-            // that captures the iteration environment (e.g., function composition via $reduce).
-            // Always pass 4 args (the standard for $reduce), but skip computing expensive
-            // index/array values when the lambda won't use them.
-            var lambdaArgs = new Sequence[4];
-            if (arity >= 4)
-            {
-                lambdaArgs[3] = arrSeq;
-            }
+            // Use InvokeReusing to avoid per-iteration Environment allocation.
+            // After each iteration, check if the body captured the reused environment
+            // (e.g. by defining a closure). If so, create a fresh one — correct but rare.
+            var invokeEnv = lambda.CreateInvokeEnv(env);
 
             for (int i = startIdx; i < itemCount; i++)
             {
-                lambdaArgs[0] = accumulator;
-                lambdaArgs[1] = isTuple ? seq.GetItemSequence(i) : new Sequence(items[i]);
-                if (arity >= 3)
-                {
-                    lambdaArgs[2] = Sequence.FromDouble(i, env.Workspace);
-                }
+                Sequence arg0 = accumulator;
+                Sequence arg1 = isTuple ? seq.GetItemSequence(i) : new Sequence(items[i]);
+                Sequence arg2 = arity >= 3 ? Sequence.FromDouble(i, env.Workspace) : default;
 
-                accumulator = lambda.Invoke(lambdaArgs, 4, input, env);
+#if NET9_0_OR_GREATER
+                accumulator = lambda.InvokeReusing([arg0, arg1, arg2, arrSeq], input, invokeEnv, env);
+#else
+                accumulator = lambda.InvokeReusing(new Sequence[] { arg0, arg1, arg2, arrSeq }, input, invokeEnv, env);
+#endif
+
+                // If the body created a closure that captured our reused environment,
+                // we must not overwrite its bindings — allocate a fresh one.
+                if (invokeEnv.IsCaptured)
+                {
+                    invokeEnv = lambda.CreateInvokeEnv(env);
+                }
             }
 
             items.ReturnArray();
+            Environment.ReturnChild(invokeEnv);
 
             return accumulator;
         };
@@ -2383,25 +2555,36 @@ internal static class BuiltInFunctions
             JsonDocumentBuilder<JsonElement.Mutable> arrayDoc = JsonElement.CreateArrayBuilder(env.Workspace, 16);
             JsonElement.Mutable arrayRoot = arrayDoc.RootElement;
 
-            foreach (var prop in obj.EnumerateObject())
+            Environment reuseEnv = lambda.CreateInvokeEnv(env);
+            Sequence[] lambdaArgs = ArrayPool<Sequence>.Shared.Rent(2);
+            try
             {
-                var valSeq = new Sequence(prop.Value);
-                var keySeq = new Sequence(JsonataHelpers.StringFromString(prop.Name, env.Workspace));
-                var result = lambda.Invoke(new[] { valSeq, keySeq }, 2, input, env);
-                if (!result.IsUndefined)
+                foreach (var prop in obj.EnumerateObject())
                 {
-                    if (result.IsSingleton)
+                    lambdaArgs[0] = new Sequence(prop.Value);
+                    using UnescapedUtf8JsonString nameUtf8 = prop.Utf8NameSpan;
+                    lambdaArgs[1] = new Sequence(JsonataHelpers.StringFromUnescapedUtf8(nameUtf8.Span, env.Workspace));
+                    var result = lambda.InvokeReusing(lambdaArgs, input, reuseEnv, env);
+                    if (!result.IsUndefined)
                     {
-                        arrayRoot.AddItem(result.FirstOrDefault);
-                    }
-                    else
-                    {
-                        for (int i = 0; i < result.Count; i++)
+                        if (result.IsSingleton)
                         {
-                            arrayRoot.AddItem(result[i]);
+                            arrayRoot.AddItem(result.FirstOrDefault);
+                        }
+                        else
+                        {
+                            for (int i = 0; i < result.Count; i++)
+                            {
+                                arrayRoot.AddItem(result[i]);
+                            }
                         }
                     }
                 }
+            }
+            finally
+            {
+                ArrayPool<Sequence>.Shared.Return(lambdaArgs);
+                Environment.ReturnChild(reuseEnv);
             }
 
             return new Sequence((JsonElement)arrayRoot);
@@ -2430,38 +2613,58 @@ internal static class BuiltInFunctions
                 return seq;
             }
 
-            JsonDocumentBuilder<JsonElement.Mutable> objDoc = JsonElement.CreateObjectBuilder(env.Workspace, 16);
-            JsonElement.Mutable objRoot = objDoc.RootElement;
-
             if (seq.IsSingleton && seq.FirstOrDefault.ValueKind == JsonValueKind.Array)
             {
-                foreach (var item in seq.FirstOrDefault.EnumerateArray())
-                {
-                    if (item.ValueKind == JsonValueKind.Object)
+                JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateBuilder(
+                    env.Workspace,
+                    seq.FirstOrDefault,
+                    static (in JsonElement ctx, ref JsonElement.ObjectBuilder builder) =>
                     {
-                        foreach (var prop in item.EnumerateObject())
+                        foreach (var item in ctx.EnumerateArray())
                         {
-                            objRoot.SetProperty(prop.Name, prop.Value);
+                            if (item.ValueKind == JsonValueKind.Object)
+                            {
+                                foreach (var prop in item.EnumerateObject())
+                                {
+                                    using UnescapedUtf8JsonString nameUtf8 = prop.Utf8NameSpan;
+                                    builder.AddProperty(nameUtf8.Span, prop.Value, escapeName: false, nameRequiresUnescaping: false);
+                                }
+                            }
                         }
-                    }
-                }
-            }
-            else if (seq.Count > 1)
-            {
-                for (int i = 0; i < seq.Count; i++)
-                {
-                    var item = seq[i];
-                    if (item.ValueKind == JsonValueKind.Object)
-                    {
-                        foreach (var prop in item.EnumerateObject())
-                        {
-                            objRoot.SetProperty(prop.Name, prop.Value);
-                        }
-                    }
-                }
+                    },
+                    estimatedMemberCount: 16);
+
+                return new Sequence((JsonElement)doc.RootElement);
             }
 
-            return new Sequence((JsonElement)objRoot);
+            if (seq.Count > 1)
+            {
+                // Multi-element sequence — build from first element that is an object,
+                // then overlay remaining. Use CVB with the first object as seed.
+                JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateBuilder(
+                    env.Workspace,
+                    seq,
+                    static (in Sequence ctx, ref JsonElement.ObjectBuilder builder) =>
+                    {
+                        for (int i = 0; i < ctx.Count; i++)
+                        {
+                            var item = ctx[i];
+                            if (item.ValueKind == JsonValueKind.Object)
+                            {
+                                foreach (var prop in item.EnumerateObject())
+                                {
+                                    using UnescapedUtf8JsonString nameUtf8 = prop.Utf8NameSpan;
+                                    builder.AddProperty(nameUtf8.Span, prop.Value, escapeName: false, nameRequiresUnescaping: false);
+                                }
+                            }
+                        }
+                    },
+                    estimatedMemberCount: 16);
+
+                return new Sequence((JsonElement)doc.RootElement);
+            }
+
+            return Sequence.Undefined;
         };
     }
 
@@ -2489,8 +2692,58 @@ internal static class BuiltInFunctions
                 return Sequence.Undefined;
             }
 
-            // Collect all elements to spread
-            var objects = default(SequenceBuilder);
+            // Single-element fast path: delegate to the CG helper which uses CVB
+            if (seq.Count == 1)
+            {
+                var el = seq[0];
+                if (el.ValueKind == JsonValueKind.Object || el.ValueKind == JsonValueKind.Array)
+                {
+                    JsonElement result = JsonataCodeGenHelpers.Spread(el, env.Workspace);
+                    return result.IsNullOrUndefined() ? Sequence.Undefined : new Sequence(result);
+                }
+
+                return new Sequence(el);
+            }
+
+            // Multi-element sequence: count total properties for capacity, then build
+            int totalProps = 0;
+            for (int i = 0; i < seq.Count; i++)
+            {
+                var el = seq[i];
+                if (el.ValueKind == JsonValueKind.Object)
+                {
+                    foreach (var p in el.EnumerateObject())
+                    {
+                        totalProps++;
+                    }
+                }
+                else if (el.ValueKind == JsonValueKind.Array)
+                {
+                    foreach (var item in el.EnumerateArray())
+                    {
+                        if (item.ValueKind == JsonValueKind.Object)
+                        {
+                            foreach (var p in item.EnumerateObject())
+                            {
+                                totalProps++;
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    // Non-objects return as-is
+                    return new Sequence(el);
+                }
+            }
+
+            if (totalProps == 0)
+            {
+                return Sequence.Undefined;
+            }
+
+            JsonDocumentBuilder<JsonElement.Mutable> arrayDoc = JsonElement.CreateArrayBuilder(env.Workspace, totalProps);
+            JsonElement.Mutable arrayRoot = arrayDoc.RootElement;
             for (int i = 0; i < seq.Count; i++)
             {
                 var el = seq[i];
@@ -2498,10 +2751,7 @@ internal static class BuiltInFunctions
                 {
                     foreach (var prop in el.EnumerateObject())
                     {
-                        JsonDocumentBuilder<JsonElement.Mutable> propDoc = JsonElement.CreateObjectBuilder(env.Workspace, 1);
-                        JsonElement.Mutable propRoot = propDoc.RootElement;
-                        propRoot.SetProperty(prop.Name, prop.Value);
-                        objects.Add((JsonElement)propRoot);
+                        arrayRoot.AddItem(prop, SpreadPropertyCallback, 1);
                     }
                 }
                 else if (el.ValueKind == JsonValueKind.Array)
@@ -2512,39 +2762,26 @@ internal static class BuiltInFunctions
                         {
                             foreach (var prop in item.EnumerateObject())
                             {
-                                JsonDocumentBuilder<JsonElement.Mutable> propDoc = JsonElement.CreateObjectBuilder(env.Workspace, 1);
-                                JsonElement.Mutable propRoot = propDoc.RootElement;
-                                propRoot.SetProperty(prop.Name, prop.Value);
-                                objects.Add((JsonElement)propRoot);
+                                arrayRoot.AddItem(prop, SpreadPropertyCallback, 1);
                             }
                         }
                     }
                 }
-                else
-                {
-                    // Non-objects return as-is
-                    objects.ReturnArray();
-                    return new Sequence(el);
-                }
             }
 
-            Sequence objSeqResult = objects.ToSequence();
-            if (objSeqResult.IsUndefined)
+            if (totalProps == 1)
             {
-                objects.ReturnArray();
-                return Sequence.Undefined;
+                return new Sequence(arrayRoot[0]);
             }
 
-            if (objSeqResult.Count == 1)
-            {
-                objects.ReturnArray();
-                return new Sequence(objSeqResult[0]);
-            }
-
-            JsonElement arrResult = JsonataHelpers.ArrayFromSequence(objSeqResult, env.Workspace);
-            objects.ReturnArray();
-            return new Sequence(arrResult);
+            return new Sequence((JsonElement)arrayRoot);
         };
+    }
+
+    private static void SpreadPropertyCallback(in JsonProperty<JsonElement> ctx, ref JsonElement.ObjectBuilder builder)
+    {
+        using UnescapedUtf8JsonString nameUtf8 = ctx.Utf8NameSpan;
+        builder.AddProperty(nameUtf8.Span, ctx.Value, escapeName: false, nameRequiresUnescaping: false);
     }
 
     private static ExpressionEvaluator CompileLookup(ExpressionEvaluator[] args)
@@ -2682,92 +2919,118 @@ internal static class BuiltInFunctions
                 return Sequence.Undefined;
             }
 
-            var elements = default(SequenceBuilder);
-            if (seq.IsSingleton && seq.FirstOrDefault.ValueKind == JsonValueKind.Array)
-            {
-                foreach (var item in seq.FirstOrDefault.EnumerateArray())
-                {
-                    elements.Add(item);
-                }
-            }
-            else
-            {
-                for (int i = 0; i < seq.Count; i++)
-                {
-                    elements.Add(seq[i]);
-                }
-            }
-
+            // No predicate — just check that there is exactly one element
             if (funcArg is null)
             {
-                if (elements.Count == 0)
+                if (seq.IsSingleton && seq.FirstOrDefault.ValueKind == JsonValueKind.Array)
                 {
-                    elements.ReturnArray();
+                    var arr = seq.FirstOrDefault;
+                    int len = arr.GetArrayLength();
+                    if (len == 0)
+                    {
+                        throw new JsonataException("D3139", SR.D3139_TheSingleFunctionMatchedZeroResults, 0);
+                    }
+
+                    if (len != 1)
+                    {
+                        throw new JsonataException("D3138", SR.D3138_TheSingleFunctionExpectedExactlyOneMatchingResult, 0);
+                    }
+
+                    return new Sequence(arr[0]);
+                }
+
+                if (seq.Count == 0)
+                {
                     throw new JsonataException("D3139", SR.D3139_TheSingleFunctionMatchedZeroResults, 0);
                 }
 
-                if (elements.Count != 1)
+                if (seq.Count != 1)
                 {
-                    elements.ReturnArray();
                     throw new JsonataException("D3138", SR.D3138_TheSingleFunctionExpectedExactlyOneMatchingResult, 0);
                 }
 
-                var result = new Sequence(elements[0]);
-                elements.ReturnArray();
-                return result;
+                return new Sequence(seq.FirstOrDefault);
             }
 
+            // With predicate — iterate directly, no intermediate SequenceBuilder
             var funcSeq = funcArg(input, env);
             if (!funcSeq.IsLambda)
             {
-                elements.ReturnArray();
                 return Sequence.Undefined;
             }
 
             var lambda = funcSeq.Lambda!;
+            int arity = lambda.Arity;
+            var invokeEnv = lambda.CreateInvokeEnv(env);
+            Sequence arrSeq = arity >= 3 ? seq : default;
 
-            // Build array element for 3rd lambda arg
-            JsonElement arrElement;
+            try
             {
-                JsonDocumentBuilder<JsonElement.Mutable> arrDoc = JsonElement.CreateArrayBuilder(env.Workspace, elements.Count);
-                JsonElement.Mutable arrRoot = arrDoc.RootElement;
-                for (int i = 0; i < elements.Count; i++)
-                {
-                    arrRoot.AddItem(elements[i]);
-                }
+                JsonElement? match = null;
 
-                arrElement = (JsonElement)arrRoot;
-            }
-
-            var arrSeq = new Sequence(arrElement);
-            JsonElement? match = null;
-            for (int i = 0; i < elements.Count; i++)
-            {
-                var lambdaResult = lambda.Invoke(
-                    new[] { new Sequence(elements[i]), Sequence.FromDouble(i, env.Workspace), arrSeq },
-                    3,
-                    elements[i],
-                    env);
-                if (FunctionalCompiler.IsTruthy(lambdaResult))
+                if (seq.IsSingleton && seq.FirstOrDefault.ValueKind == JsonValueKind.Array)
                 {
-                    if (match.HasValue)
+                    var arr = seq.FirstOrDefault;
+                    int i = 0;
+                    foreach (var item in arr.EnumerateArray())
                     {
-                        elements.ReturnArray();
-                        throw new JsonataException("D3138", SR.D3138_TheSingleFunctionExpectedExactlyOneMatchingResult, 0);
+                        Sequence arg0 = new Sequence(item);
+                        Sequence arg1 = arity >= 2 ? Sequence.FromDouble(i, env.Workspace) : default;
+
+#if NET9_0_OR_GREATER
+                        var result = lambda.InvokeReusing([arg0, arg1, arrSeq], item, invokeEnv, env);
+#else
+                        var result = lambda.InvokeReusing(new Sequence[] { arg0, arg1, arrSeq }, item, invokeEnv, env);
+#endif
+                        if (FunctionalCompiler.IsTruthy(result))
+                        {
+                            if (match.HasValue)
+                            {
+                                throw new JsonataException("D3138", SR.D3138_TheSingleFunctionExpectedExactlyOneMatchingResult, 0);
+                            }
+
+                            match = item;
+                        }
+
+                        i++;
                     }
-
-                    match = elements[i];
                 }
+                else
+                {
+                    for (int i = 0; i < seq.Count; i++)
+                    {
+                        var item = seq[i];
+                        Sequence arg0 = new Sequence(item);
+                        Sequence arg1 = arity >= 2 ? Sequence.FromDouble(i, env.Workspace) : default;
+
+#if NET9_0_OR_GREATER
+                        var result = lambda.InvokeReusing([arg0, arg1, arrSeq], item, invokeEnv, env);
+#else
+                        var result = lambda.InvokeReusing(new Sequence[] { arg0, arg1, arrSeq }, item, invokeEnv, env);
+#endif
+                        if (FunctionalCompiler.IsTruthy(result))
+                        {
+                            if (match.HasValue)
+                            {
+                                throw new JsonataException("D3138", SR.D3138_TheSingleFunctionExpectedExactlyOneMatchingResult, 0);
+                            }
+
+                            match = item;
+                        }
+                    }
+                }
+
+                if (!match.HasValue)
+                {
+                    throw new JsonataException("D3139", SR.D3139_TheSingleFunctionMatchedZeroResults, 0);
+                }
+
+                return new Sequence(match.Value);
             }
-
-            elements.ReturnArray();
-
-            if (!match.HasValue)
+            finally
             {
-                throw new JsonataException("D3139", SR.D3139_TheSingleFunctionMatchedZeroResults, 0);
+                Environment.ReturnChild(invokeEnv);
             }
-
-            return new Sequence(match.Value);
         };
     }
 
@@ -2800,18 +3063,30 @@ internal static class BuiltInFunctions
             var lambda = funcSeq.Lambda!;
             JsonDocumentBuilder<JsonElement.Mutable> objDoc = JsonElement.CreateObjectBuilder(env.Workspace, 16);
             JsonElement.Mutable objRoot = objDoc.RootElement;
-            var objSeq = new Sequence(obj);
             bool anyMatch = false;
-            foreach (var prop in obj.EnumerateObject())
+
+            Environment reuseEnv = lambda.CreateInvokeEnv(env);
+            Sequence[] lambdaArgs = ArrayPool<Sequence>.Shared.Rent(3);
+            try
             {
-                var valSeq = new Sequence(prop.Value);
-                var keySeq = new Sequence(JsonataHelpers.StringFromString(prop.Name, env.Workspace));
-                var result = lambda.Invoke(new[] { valSeq, keySeq, objSeq }, 3, input, env);
-                if (FunctionalCompiler.IsTruthy(result))
+                lambdaArgs[2] = new Sequence(obj);
+                foreach (var prop in obj.EnumerateObject())
                 {
-                    objRoot.SetProperty(prop.Name, prop.Value);
-                    anyMatch = true;
+                    lambdaArgs[0] = new Sequence(prop.Value);
+                    using UnescapedUtf8JsonString nameUtf8 = prop.Utf8NameSpan;
+                    lambdaArgs[1] = new Sequence(JsonataHelpers.StringFromUnescapedUtf8(nameUtf8.Span, env.Workspace));
+                    var result = lambda.InvokeReusing(lambdaArgs, input, reuseEnv, env);
+                    if (FunctionalCompiler.IsTruthy(result))
+                    {
+                        objRoot.SetProperty(nameUtf8.Span, prop.Value);
+                        anyMatch = true;
+                    }
                 }
+            }
+            finally
+            {
+                ArrayPool<Sequence>.Shared.Return(lambdaArgs);
+                Environment.ReturnChild(reuseEnv);
             }
 
             if (!anyMatch)
@@ -3024,16 +3299,13 @@ internal static class BuiltInFunctions
                     return new Sequence(customResult[0]);
                 }
 
-                return customResult;
+                // Wrap multi-element result in an array — consistent with all other array-returning functions
+                JsonElement array = JsonataHelpers.ArrayFromSequence(customResult, env.Workspace);
+                matcherResults.ReturnArray();
+                return new Sequence(array);
             }
 
             if (!patSeq.IsRegex)
-            {
-                return Sequence.Undefined;
-            }
-
-            string? regexStr = strSeq.FirstOrDefault.GetString();
-            if (regexStr is null)
             {
                 return Sequence.Undefined;
             }
@@ -3049,42 +3321,135 @@ internal static class BuiltInFunctions
             }
 
             Regex regex = patSeq.Regex!;
-            MatchCollection matches = regex.Matches(regexStr);
 
-            var results = default(SequenceBuilder);
-            int count = 0;
-            foreach (Match m in matches)
+#if NET
+            if (strSeq.FirstOrDefault.ValueKind != JsonValueKind.String)
             {
-                if (count >= limit)
-                {
-                    break;
-                }
-
-                var groups = new List<string>();
-                for (int g = 1; g < m.Groups.Count; g++)
-                {
-                    groups.Add(m.Groups[g].Value);
-                }
-
-                results.Add(JsonataHelpers.CreateMatchObject(m.Value, m.Index, groups, env.Workspace));
-                count++;
-            }
-
-            Sequence resultSeq = results.ToSequence();
-            if (resultSeq.IsUndefined)
-            {
-                results.ReturnArray();
                 return Sequence.Undefined;
             }
 
-            if (resultSeq.Count == 1)
+            bool hasGroups = regex.GetGroupNumbers().Length > 1;
+
+            if (!hasGroups)
             {
-                results.ReturnArray();
-                return new Sequence(resultSeq[0]);
+                // Fused single-document: outer array with nested object builders per match
+                using UnescapedUtf16JsonString utf16Str = strSeq.FirstOrDefault.GetUtf16String();
+                ReadOnlyMemory<char> charMemory = utf16Str.Memory;
+
+                var doc = JsonElement.CreateBuilder(
+                    env.Workspace,
+                    (charMemory, regex, limit),
+                    static (in (ReadOnlyMemory<char> Chars, Regex Regex, int Limit) ctx, ref JsonElement.ArrayBuilder ab) =>
+                    {
+                        int count = 0;
+                        foreach (ValueMatch vm in ctx.Regex.EnumerateMatches(ctx.Chars.Span))
+                        {
+                            if (count >= ctx.Limit)
+                            {
+                                break;
+                            }
+
+                            ab.AddItem(
+                                (ctx.Chars, vm.Index, vm.Length),
+                                static (in (ReadOnlyMemory<char> C, int Index, int Length) mctx, ref JsonElement.ObjectBuilder ob) =>
+                                {
+                                    ob.AddProperty("match"u8, mctx.C.Span.Slice(mctx.Index, mctx.Length));
+                                    ob.AddProperty("index"u8, mctx.Index);
+                                    ob.AddProperty("groups"u8, static (ref JsonElement.ArrayBuilder _) => { });
+                                });
+                            count++;
+                        }
+                    },
+                    estimatedMemberCount: 30);
+
+                return UnwrapMatchArray((JsonElement)doc.RootElement);
+            }
+            else
+            {
+                // Fused single-document: outer array with nested object+groups builders per match
+                string regexStr = strSeq.FirstOrDefault.GetString()!;
+                ReadOnlyMemory<char> charMemory = regexStr.AsMemory();
+
+                var doc = JsonElement.CreateBuilder(
+                    env.Workspace,
+                    (charMemory, regex, regexStr, limit),
+                    static (in (ReadOnlyMemory<char> Chars, Regex Regex, string RegexStr, int Limit) ctx, ref JsonElement.ArrayBuilder ab) =>
+                    {
+                        int count = 0;
+                        Match m = ctx.Regex.Match(ctx.RegexStr);
+                        while (m.Success && count < ctx.Limit)
+                        {
+                            ab.AddItem(
+                                (ctx.Chars, m),
+                                static (in (ReadOnlyMemory<char> C, Match M) mctx, ref JsonElement.ObjectBuilder ob) =>
+                                {
+                                    ob.AddProperty("match"u8, mctx.C.Span.Slice(mctx.M.Index, mctx.M.Length));
+                                    ob.AddProperty("index"u8, mctx.M.Index);
+                                    ob.AddProperty("groups"u8, (mctx.C, mctx.M),
+                                        static (in (ReadOnlyMemory<char> C, Match M) gctx, ref JsonElement.ArrayBuilder gab) =>
+                                        {
+                                            for (int g = 1; g < gctx.M.Groups.Count; g++)
+                                            {
+                                                Group grp = gctx.M.Groups[g];
+                                                gab.AddItem(gctx.C.Span.Slice(grp.Index, grp.Length));
+                                            }
+                                        });
+                                });
+                            count++;
+                            m = m.NextMatch();
+                        }
+                    },
+                    estimatedMemberCount: 30);
+
+                return UnwrapMatchArray((JsonElement)doc.RootElement);
+            }
+#else
+            string? regexStr = strSeq.FirstOrDefault.GetString();
+            if (regexStr is null)
+            {
+                return Sequence.Undefined;
             }
 
-            // For multi-match, the Sequence already holds the array — return it directly
-            return resultSeq;
+            ReadOnlyMemory<char> charMemory = regexStr.AsMemory();
+            MatchCollection matches = regex.Matches(regexStr);
+
+            // Fused single-document: outer array with nested object+groups builders per match
+            var doc = JsonElement.CreateBuilder(
+                env.Workspace,
+                (charMemory, matches, limit),
+                static (in (ReadOnlyMemory<char> Chars, MatchCollection Matches, int Limit) ctx, ref JsonElement.ArrayBuilder ab) =>
+                {
+                    int count = 0;
+                    foreach (Match m in ctx.Matches)
+                    {
+                        if (count >= ctx.Limit)
+                        {
+                            break;
+                        }
+
+                        ab.AddItem(
+                            (ctx.Chars, m),
+                            static (in (ReadOnlyMemory<char> C, Match M) mctx, ref JsonElement.ObjectBuilder ob) =>
+                            {
+                                ob.AddProperty("match"u8, mctx.C.Span.Slice(mctx.M.Index, mctx.M.Length));
+                                ob.AddProperty("index"u8, mctx.M.Index);
+                                ob.AddProperty("groups"u8, (mctx.C, mctx.M),
+                                    static (in (ReadOnlyMemory<char> C, Match M) gctx, ref JsonElement.ArrayBuilder gab) =>
+                                    {
+                                        for (int g = 1; g < gctx.M.Groups.Count; g++)
+                                        {
+                                            Group grp = gctx.M.Groups[g];
+                                            gab.AddItem(gctx.C.Span.Slice(grp.Index, grp.Length));
+                                        }
+                                    });
+                            });
+                        count++;
+                    }
+                },
+                estimatedMemberCount: 30);
+
+            return UnwrapMatchArray((JsonElement)doc.RootElement);
+#endif
         };
     }
 
@@ -3156,7 +3521,6 @@ internal static class BuiltInFunctions
                 }
             }
 
-            string str = FunctionalCompiler.CoerceElementToString(strSeq.FirstOrDefault);
             int limit = int.MaxValue;
             if (limitArg is not null)
             {
@@ -3185,36 +3549,21 @@ internal static class BuiltInFunctions
                 Regex regex = patSeq.Regex!;
                 if (isLambdaReplacement)
                 {
+                    string str = FunctionalCompiler.CoerceElementToString(strSeq.FirstOrDefault);
                     str = RegexReplaceWithFunction(str, regex, repSeq.Lambda!, limit, input, env);
+                    return new Sequence(JsonataHelpers.StringFromString(str, env.Workspace));
                 }
                 else
                 {
-                    string replacement = FunctionalCompiler.CoerceElementToString(repSeq.FirstOrDefault);
-                    str = RegexReplaceWithString(str, regex, replacement, limit);
+                    return new Sequence(RegexReplaceWithStringElement(
+                        strSeq.FirstOrDefault, regex, repSeq.FirstOrDefault, limit, env.Workspace));
                 }
             }
             else
             {
-                string pattern = FunctionalCompiler.CoerceElementToString(patSeq.FirstOrDefault);
-
-                // Empty string pattern is an error
-                if (pattern.Length == 0)
-                {
-                    throw new JsonataException("D3010", SR.D3010_TheSecondArgumentOfTheReplaceFunctionCannotBeAnEmptyString, 0);
-                }
-
-                string replacement = FunctionalCompiler.CoerceElementToString(repSeq.FirstOrDefault);
-
-                int count = 0;
-                int idx;
-                while (count < limit && (idx = str.IndexOf(pattern, StringComparison.Ordinal)) >= 0)
-                {
-                    str = str.Substring(0, idx) + replacement + str.Substring(idx + pattern.Length);
-                    count++;
-                }
+                return new Sequence(StringReplaceElement(
+                    strSeq.FirstOrDefault, patSeq.FirstOrDefault, repSeq.FirstOrDefault, limit, env.Workspace));
             }
-
-            return new Sequence(JsonataHelpers.StringFromString(str, env.Workspace));
         };
     }
 
@@ -3385,6 +3734,487 @@ internal static class BuiltInFunctions
         }
 
         return sb.ToString();
+    }
+
+    // --- Optimized string replace ---
+
+    /// <summary>
+    /// Optimized string-pattern replace: uses <see cref="Utf8ValueStringBuilder"/> and
+    /// UTF-8 byte-level <see cref="MemoryExtensions.IndexOf{T}(ReadOnlySpan{T}, ReadOnlySpan{T})"/>
+    /// to avoid intermediate string allocations.
+    /// </summary>
+    private static JsonElement StringReplaceElement(
+        in JsonElement strElement,
+        in JsonElement patElement,
+        in JsonElement repElement,
+        int limit,
+        JsonWorkspace workspace)
+    {
+        using UnescapedUtf8JsonString utf8Str = strElement.GetUtf8String();
+        using UnescapedUtf8JsonString utf8Pat = patElement.GetUtf8String();
+        using UnescapedUtf8JsonString utf8Rep = repElement.GetUtf8String();
+
+        ReadOnlySpan<byte> str = utf8Str.Span;
+        ReadOnlySpan<byte> pat = utf8Pat.Span;
+        ReadOnlySpan<byte> rep = utf8Rep.Span;
+
+        if (pat.Length == 0)
+        {
+            throw new JsonataException("D3010", SR.D3010_TheSecondArgumentOfTheReplaceFunctionCannotBeAnEmptyString, 0);
+        }
+
+        Utf8ValueStringBuilder sb = new(stackalloc byte[JsonConstants.StackallocByteThreshold]);
+        try
+        {
+            int count = 0;
+            int searchStart = 0;
+            int idx;
+            while (count < limit && (idx = str.Slice(searchStart).IndexOf(pat)) >= 0)
+            {
+                sb.Append(str.Slice(searchStart, idx));
+                sb.Append(rep);
+                searchStart += idx + pat.Length;
+                count++;
+            }
+
+            sb.Append(str.Slice(searchStart));
+
+            return JsonataHelpers.StringFromUnescapedUtf8(sb.AsSpan(), workspace);
+        }
+        finally
+        {
+            sb.Dispose();
+        }
+    }
+
+    // --- Optimized regex replace ---
+
+    /// <summary>
+    /// Optimized regex replace: uses <see cref="ValueStringBuilder"/> and
+    /// <see cref="UnescapedUtf16JsonString"/> to avoid intermediate string allocations.
+    /// On NET, uses <see cref="Regex.EnumerateMatches(ReadOnlySpan{char})"/> for patterns
+    /// whose replacement string contains no backreferences.
+    /// </summary>
+    private static JsonElement RegexReplaceWithStringElement(
+        in JsonElement strElement,
+        Regex regex,
+        in JsonElement repElement,
+        int limit,
+        JsonWorkspace workspace)
+    {
+        if (limit <= 0)
+        {
+            return strElement;
+        }
+
+        using var utf16Str = strElement.GetUtf16String();
+        ReadOnlySpan<char> strChars = utf16Str.Span;
+
+        using var utf16Rep = repElement.GetUtf16String();
+        ReadOnlySpan<char> repChars = utf16Rep.Span;
+
+        ValueStringBuilder sb = new(stackalloc char[JsonConstants.StackallocCharThreshold]);
+        try
+        {
+#if NET
+            bool hasBackrefs = repChars.Contains('$');
+
+            if (!hasBackrefs)
+            {
+                // Fast path: EnumerateMatches, no group access needed
+                int count = 0;
+                int searchStart = 0;
+                foreach (ValueMatch vm in regex.EnumerateMatches(strChars))
+                {
+                    if (count >= limit)
+                    {
+                        break;
+                    }
+
+                    if (vm.Length == 0)
+                    {
+                        throw new JsonataException("D1004", SR.D1004_RegularExpressionMatchesZeroLengthString, 0);
+                    }
+
+                    sb.Append(strChars.Slice(searchStart, vm.Index - searchStart));
+                    sb.Append(repChars);
+                    searchStart = vm.Index + vm.Length;
+                    count++;
+                }
+
+                sb.Append(strChars.Slice(searchStart));
+            }
+            else
+            {
+                // Backreference path: need Match objects for group access
+                string str = strElement.GetString()!;
+                int count = 0;
+                int searchStart = 0;
+                while (count < limit && searchStart <= str.Length)
+                {
+                    Match m = regex.Match(str, searchStart);
+                    if (!m.Success)
+                    {
+                        break;
+                    }
+
+                    if (m.Length == 0)
+                    {
+                        throw new JsonataException("D1004", SR.D1004_RegularExpressionMatchesZeroLengthString, 0);
+                    }
+
+                    sb.Append(strChars.Slice(searchStart, m.Index - searchStart));
+                    ApplyJsonataBackreferencesSpan(repChars, m, ref sb);
+                    searchStart = m.Index + m.Length;
+                    count++;
+                }
+
+                sb.Append(strChars.Slice(searchStart));
+            }
+#else
+            // netstandard: use Match objects
+            string str = strElement.GetString()!;
+            int count = 0;
+            int searchStart = 0;
+            while (count < limit && searchStart <= str.Length)
+            {
+                Match m = regex.Match(str, searchStart);
+                if (!m.Success)
+                {
+                    break;
+                }
+
+                if (m.Length == 0)
+                {
+                    throw new JsonataException("D1004", SR.D1004_RegularExpressionMatchesZeroLengthString, 0);
+                }
+
+                sb.Append(strChars.Slice(searchStart, m.Index - searchStart));
+                ApplyJsonataBackreferencesSpan(repChars, m, ref sb);
+                searchStart = m.Index + m.Length;
+                count++;
+            }
+
+            sb.Append(strChars.Slice(searchStart));
+#endif
+
+            return JsonataHelpers.StringFromChars(sb.AsSpan(), workspace);
+        }
+        finally
+        {
+            sb.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Applies JSONata backreference substitution ($0, $1, etc.) from a replacement span
+    /// directly into a <see cref="ValueStringBuilder"/>, avoiding intermediate string allocations.
+    /// </summary>
+    private static void ApplyJsonataBackreferencesSpan(
+        ReadOnlySpan<char> replacement, Match match, ref ValueStringBuilder sb)
+    {
+        int numGroups = match.Groups.Count - 1;
+        int segStart = 0;
+
+        for (int i = 0; i < replacement.Length; i++)
+        {
+            if (replacement[i] != '$')
+            {
+                continue;
+            }
+
+            // Flush segment before '$'
+            if (i > segStart)
+            {
+                sb.Append(replacement.Slice(segStart, i - segStart));
+            }
+
+            if (i + 1 >= replacement.Length)
+            {
+                // $ at end of string → literal $
+                sb.Append('$');
+                segStart = i + 1;
+                continue;
+            }
+
+            char next = replacement[i + 1];
+
+            if (next == '$')
+            {
+                // $$ → literal $
+                sb.Append('$');
+                i++;
+                segStart = i + 1;
+            }
+            else if (next >= '0' && next <= '9')
+            {
+                // Read all following digits
+                int digitStart = i + 1;
+                int digitEnd = digitStart;
+                while (digitEnd < replacement.Length && replacement[digitEnd] >= '0' && replacement[digitEnd] <= '9')
+                {
+                    digitEnd++;
+                }
+
+                // Try longest valid prefix (shorten from the right)
+                int consumed = digitEnd - digitStart;
+                bool found = false;
+                while (consumed > 0)
+                {
+                    int groupNum = ParseDigits(replacement.Slice(digitStart, consumed));
+                    if (groupNum <= numGroups)
+                    {
+#if NET
+                        sb.Append(match.Groups[groupNum].ValueSpan);
+#else
+                        sb.Append(match.Groups[groupNum].Value);
+#endif
+
+                        // Remaining digits become literal
+                        if (digitEnd > digitStart + consumed)
+                        {
+                            sb.Append(replacement.Slice(digitStart + consumed, digitEnd - digitStart - consumed));
+                        }
+
+                        found = true;
+                        break;
+                    }
+
+                    consumed--;
+                }
+
+                if (!found)
+                {
+                    // No valid group reference; remaining digits after the single invalid digit are literal
+                    if (digitEnd > digitStart + 1)
+                    {
+                        sb.Append(replacement.Slice(digitStart + 1, digitEnd - digitStart - 1));
+                    }
+                }
+
+                i = digitEnd - 1;
+                segStart = digitEnd;
+            }
+            else
+            {
+                // $ followed by non-digit, non-$ → literal $<char>
+                sb.Append('$');
+                sb.Append(next);
+                i++;
+                segStart = i + 1;
+            }
+        }
+
+        // Flush remaining segment
+        if (segStart < replacement.Length)
+        {
+            sb.Append(replacement.Slice(segStart));
+        }
+    }
+
+    /// <summary>
+    /// Parses a span of ASCII digit characters as a non-negative integer.
+    /// </summary>
+    private static int ParseDigits(ReadOnlySpan<char> digits)
+    {
+        int result = 0;
+        for (int i = 0; i < digits.Length; i++)
+        {
+            result = (result * 10) + (digits[i] - '0');
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// Span-based string split for RT. Uses UTF-8 byte-level IndexOf to avoid
+    /// allocating <c>string[]</c> or <c>GetString()</c> calls.
+    /// </summary>
+    private static JsonElement SplitString(
+        in JsonElement strElement, in JsonElement sepElement, int limit, JsonWorkspace workspace)
+    {
+        if (sepElement.ValueKind != JsonValueKind.String)
+        {
+            return default;
+        }
+
+        using UnescapedUtf8JsonString utf8Str = strElement.GetUtf8String();
+        using UnescapedUtf8JsonString utf8Sep = sepElement.GetUtf8String();
+        ReadOnlySpan<byte> str = utf8Str.Span;
+        ReadOnlySpan<byte> sep = utf8Sep.Span;
+
+        if (sep.Length == 0)
+        {
+            // Split into individual UTF-8 code points
+            int cpCount = 0;
+            for (int i = 0; i < str.Length;)
+            {
+                cpCount++;
+                byte b = str[i];
+                i += b < 0x80 ? 1 : b < 0xE0 ? 2 : b < 0xF0 ? 3 : 4;
+            }
+
+            int count = Math.Min(cpCount, limit);
+            JsonDocumentBuilder<JsonElement.Mutable> arrayDoc = JsonElement.CreateArrayBuilder(workspace, count);
+            JsonElement.Mutable arrayRoot = arrayDoc.RootElement;
+            int pos = 0;
+            for (int c = 0; c < count; c++)
+            {
+                byte b = str[pos];
+                int cpLen = b < 0x80 ? 1 : b < 0xE0 ? 2 : b < 0xF0 ? 3 : 4;
+                arrayRoot.AddItem(JsonataHelpers.StringFromUnescapedUtf8(str.Slice(pos, cpLen), workspace));
+                pos += cpLen;
+            }
+
+            return (JsonElement)arrayRoot;
+        }
+        else if (limit <= 0)
+        {
+            JsonDocumentBuilder<JsonElement.Mutable> emptyDoc = JsonElement.CreateArrayBuilder(workspace, 0);
+            return (JsonElement)emptyDoc.RootElement;
+        }
+        else
+        {
+            // Count splits up to limit - 1 (to produce limit parts)
+            int matchCount = 0;
+            int searchStart = 0;
+            while (matchCount < limit - 1)
+            {
+                int idx = str.Slice(searchStart).IndexOf(sep);
+                if (idx < 0)
+                {
+                    break;
+                }
+
+                matchCount++;
+                searchStart += idx + sep.Length;
+
+                if (searchStart > str.Length)
+                {
+                    break;
+                }
+            }
+
+            // JSONata: limit caps the number of results. If we found fewer splits
+            // than limit-1, all parts fit. Otherwise, emit exactly limit parts
+            // (no remainder appended beyond limit).
+            bool exhausted = matchCount < limit - 1;
+            int resultCount = exhausted ? matchCount + 1 : limit;
+            JsonDocumentBuilder<JsonElement.Mutable> arrayDoc = JsonElement.CreateArrayBuilder(workspace, resultCount);
+            JsonElement.Mutable arrayRoot = arrayDoc.RootElement;
+
+            searchStart = 0;
+            for (int i = 0; i < resultCount - 1; i++)
+            {
+                int idx = str.Slice(searchStart).IndexOf(sep);
+                arrayRoot.AddItem(JsonataHelpers.StringFromUnescapedUtf8(str.Slice(searchStart, idx), workspace));
+                searchStart += idx + sep.Length;
+            }
+
+            if (exhausted)
+            {
+                // All parts fit — add remainder
+                arrayRoot.AddItem(JsonataHelpers.StringFromUnescapedUtf8(str.Slice(searchStart), workspace));
+            }
+            else
+            {
+                // Hit limit: take text up to next separator (or end)
+                int idx = str.Slice(searchStart).IndexOf(sep);
+                int partLen = idx >= 0 ? idx : str.Length - searchStart;
+                arrayRoot.AddItem(JsonataHelpers.StringFromUnescapedUtf8(str.Slice(searchStart, partLen), workspace));
+            }
+
+            return (JsonElement)arrayRoot;
+        }
+    }
+
+    /// <summary>
+    /// Span-based regex split for RT. On NET8+, uses <see cref="Regex.EnumerateMatches(ReadOnlySpan{char})"/>
+    /// to avoid per-match object allocations.
+    /// </summary>
+    private static JsonElement SplitRegex(
+        in JsonElement strElement, Regex regex, int limit, JsonWorkspace workspace)
+    {
+        using UnescapedUtf16JsonString utf16Str = strElement.GetUtf16String();
+        ReadOnlySpan<char> chars = utf16Str.Span;
+
+        if (limit <= 0)
+        {
+            JsonDocumentBuilder<JsonElement.Mutable> emptyDoc = JsonElement.CreateArrayBuilder(workspace, 0);
+            return (JsonElement)emptyDoc.RootElement;
+        }
+
+#if NET8_0_OR_GREATER
+        // Pass 1: count matches up to limit - 1
+        int matchCount = 0;
+        foreach (ValueMatch vm0 in regex.EnumerateMatches(chars))
+        {
+            matchCount++;
+            if (matchCount >= limit - 1)
+            {
+                break;
+            }
+        }
+
+        bool exhausted = matchCount < limit - 1;
+        int resultCount = exhausted ? matchCount + 1 : limit;
+        JsonDocumentBuilder<JsonElement.Mutable> arrayDoc = JsonElement.CreateArrayBuilder(workspace, resultCount);
+        JsonElement.Mutable arrayRoot = arrayDoc.RootElement;
+
+        // Pass 2: emit parts
+        int emitted = 0;
+        int pos = 0;
+        foreach (ValueMatch vm in regex.EnumerateMatches(chars))
+        {
+            if (emitted >= resultCount - 1)
+            {
+                break;
+            }
+
+            arrayRoot.AddItem(JsonataHelpers.StringFromChars(chars.Slice(pos, vm.Index - pos), workspace));
+            pos = vm.Index + vm.Length;
+            emitted++;
+        }
+
+        if (exhausted)
+        {
+            arrayRoot.AddItem(JsonataHelpers.StringFromChars(chars.Slice(pos), workspace));
+        }
+        else
+        {
+            // Hit limit: find next match boundary and take text up to it
+            int nextEnd = chars.Length;
+            int scan = 0;
+            int mIdx = 0;
+            foreach (ValueMatch vm2 in regex.EnumerateMatches(chars))
+            {
+                if (mIdx == resultCount - 1)
+                {
+                    nextEnd = vm2.Index;
+                    break;
+                }
+
+                scan = vm2.Index + vm2.Length;
+                mIdx++;
+            }
+
+            arrayRoot.AddItem(JsonataHelpers.StringFromChars(chars.Slice(pos, nextEnd - pos), workspace));
+        }
+
+        return (JsonElement)arrayRoot;
+#else
+        string str = chars.ToString();
+        string[] parts = regex.Split(str);
+        int resultCount = Math.Min(parts.Length, limit);
+        JsonDocumentBuilder<JsonElement.Mutable> arrayDoc = JsonElement.CreateArrayBuilder(workspace, resultCount);
+        JsonElement.Mutable arrayRoot = arrayDoc.RootElement;
+        for (int i = 0; i < resultCount; i++)
+        {
+            arrayRoot.AddItem(JsonataHelpers.StringFromString(parts[i], workspace));
+        }
+
+        return (JsonElement)arrayRoot;
+#endif
     }
 
     // --- Encoding functions ---
@@ -4412,16 +5242,37 @@ internal static class BuiltInFunctions
                 return Sequence.Undefined;
             }
 
-            var arr = seq.FirstOrDefault;
-            if (arr.ValueKind != JsonValueKind.Array)
+            var elements = default(SequenceBuilder);
+
+            if (seq.IsSingleton && seq.FirstOrDefault.ValueKind == JsonValueKind.Array)
             {
+                // Singleton array element — extract items into builder
+                var arr = seq.FirstOrDefault;
+                foreach (var item in arr.EnumerateArray())
+                {
+                    elements.Add(item);
+                }
+            }
+            else if (seq.Count > 1)
+            {
+                // Multi-element Sequence — treat the elements as the array to shuffle
+                for (int i = 0; i < seq.Count; i++)
+                {
+                    elements.Add(seq[i]);
+                }
+
+                seq.ReturnBackingArray();
+            }
+            else
+            {
+                // Singleton non-array — return as-is
                 return seq;
             }
 
-            var elements = default(SequenceBuilder);
-            foreach (var item in arr.EnumerateArray())
+            if (elements.Count == 0)
             {
-                elements.Add(item);
+                elements.ReturnArray();
+                return Sequence.Undefined;
             }
 
             // Fisher-Yates shuffle
@@ -4445,64 +5296,151 @@ internal static class BuiltInFunctions
 
     private static ExpressionEvaluator CompileZip(ExpressionEvaluator[] args)
     {
+        if (args.Length == 0)
+        {
+            return static (in JsonElement input, Environment env) => Sequence.Undefined;
+        }
+
+        if (args.Length == 2)
+        {
+            return CompileZip2(args[0], args[1]);
+        }
+
+        return CompileZipN(args);
+    }
+
+    private static ExpressionEvaluator CompileZip2(ExpressionEvaluator arg0Eval, ExpressionEvaluator arg1Eval)
+    {
         return (in JsonElement input, Environment env) =>
         {
-            var arrays = new List<List<JsonElement>>();
-            foreach (var arg in args)
+            var seq0 = arg0Eval(input, env);
+            var seq1 = arg1Eval(input, env);
+
+            int len0 = GetZipArgLength(in seq0);
+            int len1 = GetZipArgLength(in seq1);
+            int minLen = Math.Min(len0, len1);
+
+            if (minLen == 0)
             {
-                var seq = arg(input, env);
-                var list = new List<JsonElement>();
-                if (seq.IsSingleton && seq.FirstOrDefault.ValueKind == JsonValueKind.Array)
+                seq0.ReturnBackingArray();
+                seq1.ReturnBackingArray();
+                var emptyDoc = JsonElement.CreateArrayBuilder(env.Workspace, 0);
+                return new Sequence((JsonElement)emptyDoc.RootElement);
+            }
+
+            var doc = JsonElement.CreateBuilder(
+                env.Workspace,
+                (seq0, seq1, minLen),
+                static (in (Sequence S0, Sequence S1, int MinLen) ctx, ref JsonElement.ArrayBuilder outer) =>
                 {
-                    list.AddRange(seq.FirstOrDefault.EnumerateArray());
-                }
-                else if (!seq.IsUndefined)
-                {
-                    // Scalar values: treat as single-element array
-                    for (int i = 0; i < seq.Count; i++)
+                    for (int i = 0; i < ctx.MinLen; i++)
                     {
-                        list.Add(seq[i]);
+                        outer.AddItem(
+                            (ctx.S0, ctx.S1, i),
+                            static (in (Sequence S0, Sequence S1, int I) ictx, ref JsonElement.ArrayBuilder inner) =>
+                            {
+                                inner.AddItem(GetZipElement(in ictx.S0, ictx.I));
+                                inner.AddItem(GetZipElement(in ictx.S1, ictx.I));
+                            });
                     }
-                }
+                },
+                estimatedMemberCount: (minLen * 3) + 2);
 
-                arrays.Add(list);
-            }
+            // Return rented backing arrays to the pool now that the builder has
+            // consumed all elements. The CreateBuilder callback executes synchronously,
+            // so the arrays are no longer referenced by the time we reach this point.
+            seq0.ReturnBackingArray();
+            seq1.ReturnBackingArray();
 
-            if (arrays.Count == 0)
-            {
-                return Sequence.Undefined;
-            }
-
-            int minLen = int.MaxValue;
-            foreach (var a in arrays)
-            {
-                if (a.Count < minLen)
-                {
-                    minLen = a.Count;
-                }
-            }
-
-            if (minLen == int.MaxValue)
-            {
-                minLen = 0;
-            }
-
-            JsonDocumentBuilder<JsonElement.Mutable> outerDoc = JsonElement.CreateArrayBuilder(env.Workspace, minLen);
-            JsonElement.Mutable outerRoot = outerDoc.RootElement;
-            for (int i = 0; i < minLen; i++)
-            {
-                JsonDocumentBuilder<JsonElement.Mutable> innerDoc = JsonElement.CreateArrayBuilder(env.Workspace, arrays.Count);
-                JsonElement.Mutable innerRoot = innerDoc.RootElement;
-                foreach (var a in arrays)
-                {
-                    innerRoot.AddItem(a[i]);
-                }
-
-                outerRoot.AddItem((JsonElement)innerRoot);
-            }
-
-            return new Sequence((JsonElement)outerRoot);
+            return new Sequence((JsonElement)doc.RootElement);
         };
+    }
+
+    private static ExpressionEvaluator CompileZipN(ExpressionEvaluator[] args)
+    {
+        return (in JsonElement input, Environment env) =>
+        {
+            // Evaluate args and keep the Sequences — no List copying.
+            var evaluated = new (Sequence Seq, int Length)[args.Length];
+            int minLen = int.MaxValue;
+
+            for (int a = 0; a < args.Length; a++)
+            {
+                evaluated[a].Seq = args[a](input, env);
+                evaluated[a].Length = GetZipArgLength(in evaluated[a].Seq);
+
+                if (evaluated[a].Length < minLen)
+                {
+                    minLen = evaluated[a].Length;
+                }
+            }
+
+            if (minLen == 0 || minLen == int.MaxValue)
+            {
+                for (int a = 0; a < evaluated.Length; a++)
+                {
+                    evaluated[a].Seq.ReturnBackingArray();
+                }
+
+                var emptyDoc = JsonElement.CreateArrayBuilder(env.Workspace, 0);
+                return new Sequence((JsonElement)emptyDoc.RootElement);
+            }
+
+            var doc = JsonElement.CreateBuilder(
+                env.Workspace,
+                (evaluated, minLen),
+                static (in ((Sequence Seq, int Length)[] Evaluated, int MinLen) ctx, ref JsonElement.ArrayBuilder outer) =>
+                {
+                    for (int i = 0; i < ctx.MinLen; i++)
+                    {
+                        outer.AddItem(
+                            (ctx.Evaluated, i),
+                            static (in ((Sequence Seq, int Length)[] Evaluated, int I) ictx, ref JsonElement.ArrayBuilder inner) =>
+                            {
+                                for (int a = 0; a < ictx.Evaluated.Length; a++)
+                                {
+                                    inner.AddItem(GetZipElement(in ictx.Evaluated[a].Seq, ictx.I));
+                                }
+                            });
+                    }
+                },
+                estimatedMemberCount: (minLen * (evaluated.Length + 1)) + 2);
+
+            for (int a = 0; a < evaluated.Length; a++)
+            {
+                evaluated[a].Seq.ReturnBackingArray();
+            }
+
+            return new Sequence((JsonElement)doc.RootElement);
+        };
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static int GetZipArgLength(in Sequence seq)
+    {
+        if (seq.IsUndefined)
+        {
+            return 0;
+        }
+
+        if (seq.IsSingleton && seq.FirstOrDefault.ValueKind == JsonValueKind.Array)
+        {
+            return seq.FirstOrDefault.GetArrayLength();
+        }
+
+        // Multi-element sequence or scalar — treat elements as individual array entries
+        return seq.Count;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static JsonElement GetZipElement(in Sequence seq, int i)
+    {
+        if (seq.IsSingleton && seq.FirstOrDefault.ValueKind == JsonValueKind.Array)
+        {
+            return seq.FirstOrDefault[i];
+        }
+
+        return seq[i];
     }
 
     // --- Misc functions: error, assert, now, millis, fromMillis, toMillis, eval ---
@@ -4685,26 +5623,9 @@ internal static class BuiltInFunctions
     /// </summary>
     internal static Sequence ParseIso8601ToMillis(string str, JsonWorkspace workspace)
     {
-        // ISO 8601 formats: YYYY, YYYY-MM, YYYY-MM-DD, YYYY-MM-DDThh:mm:ss[.fff][Z|±hh:mm]
-        string[] iso8601Formats =
-        [
-            "yyyy-MM-ddTHH:mm:ss.fffzzz",
-            "yyyy-MM-ddTHH:mm:ss.fffZ",
-            "yyyy-MM-ddTHH:mm:ss.fff",
-            "yyyy-MM-ddTHH:mm:sszzz",
-            "yyyy-MM-ddTHH:mm:ssZ",
-            "yyyy-MM-ddTHH:mm:ss",
-            "yyyy-MM-ddTHH:mmzzz",
-            "yyyy-MM-ddTHH:mmZ",
-            "yyyy-MM-ddTHH:mm",
-            "yyyy-MM-dd",
-            "yyyy-MM",
-            "yyyy",
-        ];
-
         if (DateTimeOffset.TryParseExact(
             str,
-            iso8601Formats,
+            Iso8601Formats,
             CultureInfo.InvariantCulture,
             DateTimeStyles.AssumeUniversal,
             out var dt))
@@ -4733,24 +5654,33 @@ internal static class BuiltInFunctions
                 return Sequence.Undefined;
             }
 
-            string str = FunctionalCompiler.CoerceElementToString(strSeq.FirstOrDefault);
+            JsonElement el = strSeq.FirstOrDefault;
 
             if (pictureArg == null)
             {
+                // Fast path: parse directly from UTF-8 backing (zero-alloc for standard ISO 8601)
+                if (el.ValueKind == JsonValueKind.String && el.TryGetDateTimeOffset(out var dto))
+                {
+                    return Sequence.FromDouble(dto.ToUnixTimeMilliseconds(), env.Workspace);
+                }
+
+                string str = FunctionalCompiler.CoerceElementToString(el);
                 return ParseIso8601ToMillis(str, env.Workspace);
             }
 
             var picSeq = pictureArg(input, env);
+            string strVal = FunctionalCompiler.CoerceElementToString(el);
+
             if (picSeq.IsUndefined)
             {
-                return ParseIso8601ToMillis(str, env.Workspace);
+                return ParseIso8601ToMillis(strVal, env.Workspace);
             }
 
             string picture = FunctionalCompiler.CoerceElementToString(picSeq.FirstOrDefault);
 
             try
             {
-                if (XPathDateTimeFormatter.TryParseDateTime(str, picture, out long millis))
+                if (XPathDateTimeFormatter.TryParseDateTime(strVal, picture, out long millis))
                 {
                     return Sequence.FromDouble(millis, env.Workspace);
                 }
@@ -4922,6 +5852,27 @@ internal static class BuiltInFunctions
 
     // --- Helpers ---
     private delegate void NumericAccumulator(ref double accumulator, double value);
+
+    /// <summary>
+    /// Unwraps a match result array: 0 elements → Undefined, 1 element → singleton
+    /// Sequence wrapping the match object, N elements → singleton Sequence wrapping
+    /// the array (consistent with all other array-returning built-in functions).
+    /// </summary>
+    private static Sequence UnwrapMatchArray(JsonElement array)
+    {
+        int count = array.GetArrayLength();
+        if (count == 0)
+        {
+            return Sequence.Undefined;
+        }
+
+        if (count == 1)
+        {
+            return new Sequence(array[0]);
+        }
+
+        return new Sequence(array);
+    }
 
     private static void EnumerateNumericValues(Sequence seq, ref double accumulator, NumericAccumulator action)
     {

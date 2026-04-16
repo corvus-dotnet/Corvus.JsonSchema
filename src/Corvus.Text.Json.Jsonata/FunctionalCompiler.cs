@@ -4,10 +4,12 @@
 
 using System.Buffers;
 using System.Buffers.Text;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 using Corvus.Runtime.InteropServices;
+using Corvus.Text;
 using Corvus.Text.Json.Internal;
 using Corvus.Text.Json.Jsonata.Ast;
 
@@ -33,6 +35,11 @@ internal static class FunctionalCompiler
 
     [ThreadStatic]
     private static bool[]? t_singleFlagArray;
+
+#if !NET
+    [ThreadStatic]
+    private static Random? t_shuffleRandom;
+#endif
 
     // Pre-compiled regex for stripping leading zeros from exponents in number formatting
     private static readonly Regex ExponentLeadingZeroRegex = new(@"e([+-])0+(\d)", RegexOptions.Compiled);
@@ -233,6 +240,21 @@ internal static class FunctionalCompiler
         return new Sequence(JsonataHelpers.ArrayFromSequence(seq, workspace));
     }
 
+    /// <summary>
+    /// Applies KeepSingletonArray semantics: if the result is a single non-array value,
+    /// wrap it in a one-element JSON array. Used by the simple property chain fast path.
+    /// </summary>
+    private static Sequence ApplyKeepSingletonArray(Sequence result, JsonWorkspace workspace)
+    {
+        if (!result.IsUndefined && result.IsSingleton
+            && result.FirstOrDefault.ValueKind != JsonValueKind.Array)
+        {
+            return MaterializeAsArray(result, workspace);
+        }
+
+        return result;
+    }
+
     private static ExpressionEvaluator CompileNumber(NumberNode num)
     {
         double value = num.Value;
@@ -287,6 +309,451 @@ internal static class FunctionalCompiler
         }
 
         return false;
+    }
+
+    /// <summary>
+    /// Determines whether a node is a constant expression that can be evaluated
+    /// at compile time (numbers, strings, booleans, null, and compound arrays/objects
+    /// composed entirely of constants).
+    /// </summary>
+    private static bool IsConstantExpression(JsonataNode node)
+    {
+        if (node.Annotations is not null)
+        {
+            return false;
+        }
+
+        switch (node)
+        {
+            case NumberNode:
+            case ValueNode:
+                return true;
+
+            case StringNode s:
+                return !HasUnpairedSurrogate(s.Value);
+
+            case UnaryNode { Operator: "-" } u:
+                return IsConstantExpression(u.Expression);
+
+            case ArrayConstructorNode arr:
+                if (arr.Expressions.Count == 0)
+                {
+                    return false;
+                }
+
+                for (int i = 0; i < arr.Expressions.Count; i++)
+                {
+                    if (!IsConstantExpression(arr.Expressions[i]))
+                    {
+                        return false;
+                    }
+                }
+
+                return true;
+
+            case ObjectConstructorNode obj:
+                if (obj.Pairs.Count == 0)
+                {
+                    return false;
+                }
+
+                for (int i = 0; i < obj.Pairs.Count; i++)
+                {
+                    if (obj.Pairs[i].Key is not StringNode
+                        || !IsConstantExpression(obj.Pairs[i].Value))
+                    {
+                        return false;
+                    }
+                }
+
+                return true;
+
+            default:
+                return false;
+        }
+    }
+
+    /// <summary>
+    /// Serializes a constant AST subtree to its JSON representation.
+    /// Only call after <see cref="IsConstantExpression"/> returns <see langword="true"/>.
+    /// </summary>
+    private static string SerializeConstantJson(JsonataNode node)
+    {
+        switch (node)
+        {
+            case NumberNode num:
+                return num.Value.ToString("R", CultureInfo.InvariantCulture);
+
+            case StringNode str:
+                return $"\"{EscapeJsonStringContent(str.Value)}\"";
+
+            case ValueNode val:
+                return val.Value; // "true", "false", "null"
+
+            case UnaryNode { Operator: "-" } u:
+                if (u.Expression is NumberNode inner)
+                {
+                    return (-inner.Value).ToString("R", CultureInfo.InvariantCulture);
+                }
+
+                return $"-{SerializeConstantJson(u.Expression)}";
+
+            case ArrayConstructorNode arr:
+            {
+                var sb = new System.Text.StringBuilder("[");
+                for (int i = 0; i < arr.Expressions.Count; i++)
+                {
+                    if (i > 0)
+                    {
+                        sb.Append(',');
+                    }
+
+                    sb.Append(SerializeConstantJson(arr.Expressions[i]));
+                }
+
+                sb.Append(']');
+                return sb.ToString();
+            }
+
+            case ObjectConstructorNode obj:
+            {
+                var sb = new System.Text.StringBuilder("{");
+                for (int i = 0; i < obj.Pairs.Count; i++)
+                {
+                    if (i > 0)
+                    {
+                        sb.Append(',');
+                    }
+
+                    sb.Append('"');
+                    sb.Append(EscapeJsonStringContent(((StringNode)obj.Pairs[i].Key).Value));
+                    sb.Append("\":");
+                    sb.Append(SerializeConstantJson(obj.Pairs[i].Value));
+                }
+
+                sb.Append('}');
+                return sb.ToString();
+            }
+
+            default:
+                throw new InvalidOperationException("Not a constant expression");
+        }
+    }
+
+    /// <summary>
+    /// Escapes a string value for embedding inside a JSON string.
+    /// </summary>
+    private static string EscapeJsonStringContent(string s)
+    {
+        var sb = new System.Text.StringBuilder(s.Length);
+        foreach (char c in s)
+        {
+            switch (c)
+            {
+                case '\\': sb.Append("\\\\"); break;
+                case '"': sb.Append("\\\""); break;
+                case '\n': sb.Append("\\n"); break;
+                case '\r': sb.Append("\\r"); break;
+                case '\t': sb.Append("\\t"); break;
+                case '\b': sb.Append("\\b"); break;
+                case '\f': sb.Append("\\f"); break;
+                default:
+                    if (c < ' ')
+                    {
+                        sb.AppendFormat("\\u{0:X4}", (int)c);
+                    }
+                    else
+                    {
+                        sb.Append(c);
+                    }
+
+                    break;
+            }
+        }
+
+        return sb.ToString();
+    }
+
+    /// <summary>
+    /// Compiles a constant compound expression (array or object) by pre-evaluating
+    /// it at compile time and returning a cached result. The parsed element is
+    /// backed by a <see cref="ParsedJsonDocument{T}"/> that owns its own memory
+    /// (independent of any workspace).
+    /// </summary>
+    private static ExpressionEvaluator CompileConstant(JsonataNode node)
+    {
+        string json = SerializeConstantJson(node);
+        byte[] utf8 = System.Text.Encoding.UTF8.GetBytes(json);
+        var element = JsonElement.ParseValue(utf8);
+        return (in JsonElement input, Environment env) => new Sequence(element);
+    }
+
+    /// <summary>
+    /// Evaluates a <c>$zip</c> call with all-constant array arguments at compile time.
+    /// Transposes the arrays and returns a cached result element.
+    /// </summary>
+    private static ExpressionEvaluator CompileConstantZip(FunctionCallNode func)
+    {
+        var arrays = new List<List<string>>();
+        foreach (var arg in func.Arguments)
+        {
+            var arr = (ArrayConstructorNode)arg;
+            var elements = new List<string>(arr.Expressions.Count);
+            for (int i = 0; i < arr.Expressions.Count; i++)
+            {
+                elements.Add(SerializeConstantJson(arr.Expressions[i]));
+            }
+
+            arrays.Add(elements);
+        }
+
+        int minLen = int.MaxValue;
+        for (int i = 0; i < arrays.Count; i++)
+        {
+            if (arrays[i].Count < minLen)
+            {
+                minLen = arrays[i].Count;
+            }
+        }
+
+        if (minLen == 0)
+        {
+            var emptyArr = JsonElement.ParseValue("[]"u8);
+            return (in JsonElement input, Environment env) => new Sequence(emptyArr);
+        }
+
+        var json = new System.Text.StringBuilder("[");
+        for (int i = 0; i < minLen; i++)
+        {
+            if (i > 0)
+            {
+                json.Append(',');
+            }
+
+            json.Append('[');
+            for (int a = 0; a < arrays.Count; a++)
+            {
+                if (a > 0)
+                {
+                    json.Append(',');
+                }
+
+                json.Append(arrays[a][i]);
+            }
+
+            json.Append(']');
+        }
+
+        json.Append(']');
+
+        byte[] utf8 = System.Text.Encoding.UTF8.GetBytes(json.ToString());
+        var element = JsonElement.ParseValue(utf8);
+        return (in JsonElement input, Environment env) => new Sequence(element);
+    }
+
+    /// <summary>
+    /// Checks whether a node is a simple property chain (PathNode with all NameNode
+    /// steps, no annotations or predicates) and extracts the UTF-8 encoded property names.
+    /// </summary>
+    private static bool TryExtractSimpleChainNames(JsonataNode node, [NotNullWhen(true)] out byte[][]? utf8Names)
+    {
+        if (node is not PathNode path
+            || path.KeepArray
+            || path.KeepSingletonArray
+            || path.Steps.Count == 0
+            || GetStepAnnotations(path) is not null)
+        {
+            utf8Names = null;
+            return false;
+        }
+
+        var names = new byte[path.Steps.Count][];
+        for (int i = 0; i < path.Steps.Count; i++)
+        {
+            if (path.Steps[i] is not NameNode nameNode
+                || GetStepAnnotations(path.Steps[i]) is not null)
+            {
+                utf8Names = null;
+                return false;
+            }
+
+            names[i] = System.Text.Encoding.UTF8.GetBytes(nameNode.Value);
+        }
+
+        utf8Names = names;
+        return true;
+    }
+
+    /// <summary>
+    /// Compiles a buffer-fused <c>$zip</c> where all arguments are simple property chains.
+    /// Navigates each chain directly into an <see cref="ElementBuffer"/>, extracts the
+    /// backing arrays, and builds the result in a single document — eliminating intermediate
+    /// Sequence wrappers.
+    /// </summary>
+    private static ExpressionEvaluator CompileBufferFusedZip2(byte[][] names0, byte[][] names1)
+    {
+        return (in JsonElement input, Environment env) =>
+        {
+            var buf0 = default(ElementBuffer);
+            var buf1 = default(ElementBuffer);
+            try
+            {
+                JsonataCodeGenHelpers.NavigatePropertyChainInto(input, names0, ref buf0);
+                JsonataCodeGenHelpers.NavigatePropertyChainInto(input, names1, ref buf1);
+                buf0.GetContents(out var arr0, out var cnt0);
+                buf1.GetContents(out var arr1, out var cnt1);
+                return new Sequence(JsonataCodeGenHelpers.ZipFromBuffers(arr0, cnt0, arr1, cnt1, env.Workspace));
+            }
+            finally
+            {
+                buf0.Dispose();
+                buf1.Dispose();
+            }
+        };
+    }
+
+    /// <summary>
+    /// Compiles a buffer-fused <c>$zip</c> where one argument is a pre-resolved constant
+    /// element and the other is a simple property chain navigated into an <see cref="ElementBuffer"/>.
+    /// </summary>
+    private static ExpressionEvaluator CompileBufferFusedZipMixed2(
+        JsonElement constElement, bool constIsFirst,
+        byte[][] chainNames)
+    {
+        return (in JsonElement input, Environment env) =>
+        {
+            var buf = default(ElementBuffer);
+            try
+            {
+                JsonataCodeGenHelpers.NavigatePropertyChainInto(input, chainNames, ref buf);
+                buf.GetContents(out var arr, out var cnt);
+
+                if (constIsFirst)
+                {
+                    return new Sequence(JsonataCodeGenHelpers.ZipElementAndBuffer(constElement, arr, cnt, env.Workspace));
+                }
+                else
+                {
+                    return new Sequence(JsonataCodeGenHelpers.ZipBufferAndElement(arr, cnt, constElement, env.Workspace));
+                }
+            }
+            finally
+            {
+                buf.Dispose();
+            }
+        };
+    }
+
+    /// <summary>
+    /// Compiles a buffer-fused <c>$zip</c> with 3 arguments that are simple property chains.
+    /// </summary>
+    private static ExpressionEvaluator CompileBufferFusedZip3(byte[][] names0, byte[][] names1, byte[][] names2)
+    {
+        return (in JsonElement input, Environment env) =>
+        {
+            var buf0 = default(ElementBuffer);
+            var buf1 = default(ElementBuffer);
+            var buf2 = default(ElementBuffer);
+            try
+            {
+                JsonataCodeGenHelpers.NavigatePropertyChainInto(input, names0, ref buf0);
+                JsonataCodeGenHelpers.NavigatePropertyChainInto(input, names1, ref buf1);
+                JsonataCodeGenHelpers.NavigatePropertyChainInto(input, names2, ref buf2);
+                buf0.GetContents(out var arr0, out var cnt0);
+                buf1.GetContents(out var arr1, out var cnt1);
+                buf2.GetContents(out var arr2, out var cnt2);
+                return new Sequence(JsonataCodeGenHelpers.ZipFromBuffers(arr0, cnt0, arr1, cnt1, arr2, cnt2, env.Workspace));
+            }
+            finally
+            {
+                buf0.Dispose();
+                buf1.Dispose();
+                buf2.Dispose();
+            }
+        };
+    }
+
+    /// <summary>
+    /// Compiles a buffer-fused <c>$shuffle</c> where the single argument is a simple property chain.
+    /// Navigates the chain directly into an <see cref="ElementBuffer"/>, shuffles in-place on the
+    /// pooled backing array, and builds one result document.
+    /// </summary>
+    private static ExpressionEvaluator CompileBufferFusedShuffle(byte[][] chainNames)
+    {
+        return (in JsonElement input, Environment env) =>
+        {
+            var buf = default(ElementBuffer);
+            try
+            {
+                JsonataCodeGenHelpers.NavigatePropertyChainInto(input, chainNames, ref buf);
+                buf.GetContents(out var elements, out var count);
+
+                if (count == 0)
+                {
+                    return Sequence.Undefined;
+                }
+
+                // Fisher-Yates shuffle directly on the pooled backing array
+                for (int i = count - 1; i > 0; i--)
+                {
+#if NET
+                    int j = Random.Shared.Next(i + 1);
+#else
+                    int j = (t_shuffleRandom ??= new Random()).Next(i + 1);
+#endif
+                    (elements![i], elements[j]) = (elements[j], elements[i]);
+                }
+
+                JsonDocumentBuilder<JsonElement.Mutable> arrayDoc = JsonElement.CreateArrayBuilder(env.Workspace, count);
+                JsonElement.Mutable arrayRoot = arrayDoc.RootElement;
+                for (int k = 0; k < count; k++)
+                {
+                    arrayRoot.AddItem(elements![k]);
+                }
+
+                return new Sequence((JsonElement)arrayRoot);
+            }
+            finally
+            {
+                buf.Dispose();
+            }
+        };
+    }
+
+    /// <summary>
+    /// Compiles a $formatNumber call with a pre-parsed picture. Zero managed allocations
+    /// per evaluation: the mantissa is formatted directly into a stackalloc-seeded
+    /// <see cref="Utf8ValueStringBuilder"/> and the result element is created from the
+    /// raw UTF-8 span.
+    /// </summary>
+    private static ExpressionEvaluator CompilePreParsedFormatNumber(
+        ExpressionEvaluator numArg,
+        FormatNumberPicture parsedPicture)
+    {
+        return (in JsonElement input, Environment env) =>
+        {
+            var numSeq = numArg(input, env);
+            if (numSeq.IsUndefined)
+            {
+                return Sequence.Undefined;
+            }
+
+            if (!TryCoerceToNumber(numSeq.FirstOrDefault, out double num))
+            {
+                return Sequence.Undefined;
+            }
+
+            Utf8ValueStringBuilder sb = new(stackalloc byte[JsonConstants.StackallocByteThreshold]);
+            try
+            {
+                parsedPicture.Format(num, ref sb);
+                return new Sequence(JsonataHelpers.StringFromRawUtf8Content(sb.AsSpan(), env.Workspace));
+            }
+            finally
+            {
+                sb.Dispose();
+            }
+        };
     }
 
     private static ExpressionEvaluator CompileValue(ValueNode val)
@@ -546,12 +1013,15 @@ internal static class FunctionalCompiler
     private static bool TryCompileSimplePropertyChain(PathNode path, out ExpressionEvaluator evaluator)
     {
         // Check all steps are NameNodes with no annotations (or simple constant-integer predicates
-        // or simple string equality predicates like [type = 'mobile'])
-        if (path.KeepArray || path.KeepSingletonArray || GetStepAnnotations(path) is not null)
+        // or simple string equality predicates like [type = 'mobile']).
+        // KeepSingletonArray (from the [] modifier) is handled below — it doesn't block the fast path.
+        if (path.KeepArray || GetStepAnnotations(path) is not null)
         {
             evaluator = default!;
             return false;
         }
+
+        bool keepSingletonArray = path.KeepSingletonArray;
 
         var utf8Names = new byte[path.Steps.Count][];
         int[]? constantIndices = null;
@@ -645,17 +1115,39 @@ internal static class FunctionalCompiler
                 constantIndices.AsSpan().Fill(-1);
             }
 
-            evaluator = (in JsonElement input, Environment env) =>
+            if (keepSingletonArray)
             {
-                return EvalPropertyChainWithPredicates(input, utf8Names, constantIndices, equalityPredicates);
-            };
+                evaluator = (in JsonElement input, Environment env) =>
+                {
+                    var result = EvalPropertyChainWithPredicates(input, utf8Names, constantIndices, equalityPredicates);
+                    return ApplyKeepSingletonArray(result, env.Workspace);
+                };
+            }
+            else
+            {
+                evaluator = (in JsonElement input, Environment env) =>
+                {
+                    return EvalPropertyChainWithPredicates(input, utf8Names, constantIndices, equalityPredicates);
+                };
+            }
         }
         else
         {
-            evaluator = (in JsonElement input, Environment env) =>
+            if (keepSingletonArray)
             {
-                return EvalSimplePropertyChain(input, utf8Names);
-            };
+                evaluator = (in JsonElement input, Environment env) =>
+                {
+                    var result = EvalSimplePropertyChain(input, utf8Names);
+                    return ApplyKeepSingletonArray(result, env.Workspace);
+                };
+            }
+            else
+            {
+                evaluator = (in JsonElement input, Environment env) =>
+                {
+                    return EvalSimplePropertyChain(input, utf8Names);
+                };
+            }
         }
 
         return true;
@@ -1239,11 +1731,31 @@ internal static class FunctionalCompiler
             }
         }
 
+        // Detect DescendantNode followed by NameNode (both with no annotations).
+        // At runtime, this pair is fused into a single-pass recursive traversal that
+        // collects only matching properties, avoiding the intermediate all-descendants
+        // Sequence that the two-step approach would build.
+        byte[]?[]? fusedDescendantNameUtf8 = null;
+        for (int i = 0; i < path.Steps.Count - 1; i++)
+        {
+            if (path.Steps[i] is DescendantNode
+                && stages[i] is null
+                && focusVars[i] is null
+                && indexVars[i] is null
+                && ancestorLabels[i] is null
+                && tupleLabels[i] is null
+                && inlineNameUtf8?[i + 1] is byte[] nextNameBytes)
+            {
+                fusedDescendantNameUtf8 ??= new byte[]?[path.Steps.Count];
+                fusedDescendantNameUtf8[i] = nextNameBytes;
+            }
+        }
+
         return (in JsonElement input, Environment env) =>
         {
-            return EvalPathFrom(new Sequence(input), 0);
+            return EvalPathFrom(new Sequence(input), 0, env);
 
-            Sequence EvalPathFrom(Sequence initial, int startStep)
+            Sequence EvalPathFrom(Sequence initial, int startStep, Environment env)
             {
                 Sequence current = initial;
 
@@ -1264,6 +1776,27 @@ internal static class FunctionalCompiler
                     if (current.IsUndefined)
                     {
                         return Sequence.Undefined;
+                    }
+
+                    // Fused descendant+name fast path: single-pass recursive traversal
+                    // that collects only properties matching the name, skipping the
+                    // intermediate all-descendants Sequence. Handles the DescendantNode
+                    // at stepIdx AND the NameNode at stepIdx+1 in one operation.
+                    if (fusedDescendantNameUtf8?[stepIdx] is byte[] descNameBytes
+                        && tupleGroupIndices is null)
+                    {
+                        if (currentArrayOwned) { current.ReturnBackingArray(); currentArrayOwned = false; }
+
+                        var descBuilder = default(SequenceBuilder);
+                        for (int i = 0; i < current.Count; i++)
+                        {
+                            CollectDescendantProperty(current[i], descNameBytes, ref descBuilder);
+                        }
+
+                        current = descBuilder.ToSequence();
+                        currentArrayOwned = current.Count >= 2;
+                        stepIdx++; // skip the next step (NameNode) — already handled
+                        continue;
                     }
 
                     // Inline name step fast path: direct UTF-8 property lookup without
@@ -1350,7 +1883,7 @@ internal static class FunctionalCompiler
                     {
                         // Relinquish ownership — EvalAncestorStep iterates current's elements.
                         if (currentArrayOwned) { current.ReturnBackingArray(); currentArrayOwned = false; }
-                        return EvalAncestorStep(current, stepIdx);
+                        return EvalAncestorStep(current, stepIdx, env);
                     }
 
                     // Tuple block step — when a step is a tuple-mode block (containing
@@ -1362,7 +1895,7 @@ internal static class FunctionalCompiler
                     if (tLabels is not null)
                     {
                         if (currentArrayOwned) { current.ReturnBackingArray(); currentArrayOwned = false; }
-                        return EvalTupleBlockStep(current, stepIdx, tLabels);
+                        return EvalTupleBlockStep(current, stepIdx, tLabels, env);
                     }
 
                     // Focus binding (@$var) — cross-join semantics.
@@ -1373,7 +1906,7 @@ internal static class FunctionalCompiler
                     if (focusVar is not null)
                     {
                         if (currentArrayOwned) { current.ReturnBackingArray(); currentArrayOwned = false; }
-                        return EvalFocusStep(current, stepIdx);
+                        return EvalFocusStep(current, stepIdx, env);
                     }
 
                     // Index binding (#$var) without focus — per-element propagation.
@@ -1398,7 +1931,7 @@ internal static class FunctionalCompiler
                         if (downstreamSortIdx < 0)
                         {
                             if (currentArrayOwned) { current.ReturnBackingArray(); currentArrayOwned = false; }
-                            return EvalIndexStep(current, stepIdx);
+                            return EvalIndexStep(current, stepIdx, env);
                         }
                         else if (downstreamSortIdx == stepIdx + 1)
                         {
@@ -1409,7 +1942,7 @@ internal static class FunctionalCompiler
                             // Sort is downstream but not immediate — evaluate index step
                             // and intermediate steps, then sort globally with index tracking.
                             if (currentArrayOwned) { current.ReturnBackingArray(); currentArrayOwned = false; }
-                            return EvalIndexWithSort(current, stepIdx, downstreamSortIdx);
+                            return EvalIndexWithSort(current, stepIdx, downstreamSortIdx, env);
                         }
                     }
 
@@ -1451,22 +1984,7 @@ internal static class FunctionalCompiler
                                 // round-tripping through JSON which breaks element identity).
                                 var terms = sortTermsPerStep[stepIdx]!;
                                 var indices = RentSortIndices(sortElems.Count);
-                                SortIndices(indices, sortElems.Count, (a, b) =>
-                                {
-                                    for (int t = 0; t < terms.Length; t++)
-                                    {
-                                        var (expr, desc) = terms[t];
-                                        var aVal = expr(sortElems[a], env);
-                                        var bVal = expr(sortElems[b], env);
-                                        int cmp = CompareSortKeys(aVal, bVal);
-                                        if (cmp != 0)
-                                        {
-                                            return desc ? -cmp : cmp;
-                                        }
-                                    }
-
-                                    return a.CompareTo(b);
-                                });
+                                SortByTerms(indices, sortElems, terms, env);
 
                                 // Reorder elements and groups
                                 var sortedElems = default(SequenceBuilder);
@@ -1763,7 +2281,7 @@ internal static class FunctionalCompiler
             // For the last step in a path, there are no remaining steps to evaluate.
             // In that case, we accumulate the inner __t_ bindings across all input
             // elements so the outer path can read the correctly accumulated values.
-            Sequence EvalTupleBlockStep(Sequence inputContext, int stepIdx, string[] tLabels)
+            Sequence EvalTupleBlockStep(Sequence inputContext, int stepIdx, string[] tLabels, Environment env)
             {
                 var step = steps[stepIdx];
                 bool shouldFlatten = stepIdx > 0 || isPropertyStep[stepIdx];
@@ -1907,7 +2425,7 @@ internal static class FunctionalCompiler
                                 }
                             }
 
-                            var subResult = EvalPathFrom(elementSeq, stepIdx + 1);
+                            var subResult = EvalPathFrom(elementSeq, stepIdx + 1, env);
                             if (!subResult.IsUndefined)
                             {
                                 for (int k = 0; k < subResult.Count; k++)
@@ -1938,7 +2456,7 @@ internal static class FunctionalCompiler
             // Evaluates a focus-bound step (@$var) with cross-join semantics.
             // The step's result elements are bound to the focus variable,
             // and remaining steps evaluate from the parent context (this step's input).
-            Sequence EvalFocusStep(Sequence parentContext, int stepIdx)
+            Sequence EvalFocusStep(Sequence parentContext, int stepIdx, Environment env)
             {
                 var step = steps[stepIdx];
                 var focusVar = focusVars[stepIdx]!;
@@ -2171,7 +2689,8 @@ internal static class FunctionalCompiler
                 {
                     return EvalCrossJoinFocus(
                         elements, parentContext, stepIdx, crossJoinNextStep,
-                        focusVar, indexVar, survivingOriginalIndices);
+                        focusVar, indexVar, survivingOriginalIndices,
+                        env);
                 }
 
                 // For each surviving focus element: bind, evaluate remaining steps
@@ -2199,7 +2718,7 @@ internal static class FunctionalCompiler
                     Sequence subResult;
                     if (nextStep < steps.Length)
                     {
-                        subResult = EvalPathFrom(parentContext, nextStep);
+                        subResult = EvalPathFrom(parentContext, nextStep, env);
                     }
                     else
                     {
@@ -2262,7 +2781,8 @@ internal static class FunctionalCompiler
                 int innerStepIdx,
                 string outerFocusVar,
                 string? outerIndexVar,
-                List<int>? outerSurvivingIndices)
+                List<int>? outerSurvivingIndices,
+                Environment env)
             {
                 var innerStep = steps[innerStepIdx];
                 var innerFocusVar = focusVars[innerStepIdx]!;
@@ -2543,7 +3063,7 @@ internal static class FunctionalCompiler
                     Sequence subResult;
                     if (remainingStart < steps.Length)
                     {
-                        subResult = EvalPathFrom(parentContext, remainingStart);
+                        subResult = EvalPathFrom(parentContext, remainingStart, env);
                     }
                     else
                     {
@@ -2565,7 +3085,7 @@ internal static class FunctionalCompiler
             // The INPUT to this step is bound under the ancestor labels so that
             // downstream % operators can look it up. We process per-element to
             // ensure each element carries its correct parent binding.
-            Sequence EvalAncestorStep(Sequence inputContext, int stepIdx)
+            Sequence EvalAncestorStep(Sequence inputContext, int stepIdx, Environment env)
             {
                 var step = steps[stepIdx];
                 var labels = ancestorLabels[stepIdx]!;
@@ -2604,7 +3124,7 @@ internal static class FunctionalCompiler
 
                 if (sortStepIndex >= 0)
                 {
-                    return EvalAncestorWithSort(inputElements, stepIdx, labels, sortStepIndex);
+                    return EvalAncestorWithSort(inputElements, stepIdx, labels, sortStepIndex, env);
                 }
 
                 // Determine group-by handling
@@ -2658,7 +3178,7 @@ internal static class FunctionalCompiler
                     Sequence subResult;
                     if (stepIdx + 1 < steps.Length)
                     {
-                        subResult = EvalPathFrom(stepResult, stepIdx + 1);
+                        subResult = EvalPathFrom(stepResult, stepIdx + 1, env);
 
                         // stepResult was consumed by EvalPathFrom — return its array.
                         stepResult.ReturnBackingArray();
@@ -2743,7 +3263,7 @@ internal static class FunctionalCompiler
             // Handles the case where an ancestor step has a downstream sort.
             // Collects (element, ancestor) pairs through intermediate steps,
             // sorts with per-element ancestor binding, then continues remaining steps.
-            Sequence EvalAncestorWithSort(SequenceBuilder inputElements, int stepIdx, string[] labels, int sortStepIdx)
+            Sequence EvalAncestorWithSort(SequenceBuilder inputElements, int stepIdx, string[] labels, int sortStepIdx, Environment env)
             {
                 var step = steps[stepIdx];
 
@@ -3044,19 +3564,18 @@ internal static class FunctionalCompiler
                         }
                     }
 
-                    var subResult = EvalPathFrom(new Sequence(finalElements[i]), sortStepIdx + 1);
+                    var subResult = EvalPathFrom(new Sequence(finalElements[i]), sortStepIdx + 1, env);
                     builder.AddRange(subResult);
                 }
 
                 finalElements.ReturnArray();
-
                 return builder.ToSequence();
             }
 
             // Evaluates a step with index binding (#$var) without focus binding.
             // The step's result elements each get their index bound, then remaining
             // steps are evaluated per-element so each carries the correct index.
-            Sequence EvalIndexStep(Sequence inputContext, int stepIdx)
+            Sequence EvalIndexStep(Sequence inputContext, int stepIdx, Environment env)
             {
                 var step = steps[stepIdx];
                 var indexVar = indexVars[stepIdx]!;
@@ -3162,7 +3681,7 @@ internal static class FunctionalCompiler
                     }
 
                     // Evaluate remaining steps on this element (not parent context — unlike focus)
-                    Sequence subResult = EvalPathFrom(new Sequence(el), stepIdx + 1);
+                    Sequence subResult = EvalPathFrom(new Sequence(el), stepIdx + 1, env);
 
                     // Handle group-by accumulation
                     if (applyGroupByHere && !subResult.IsUndefined)
@@ -3188,7 +3707,7 @@ internal static class FunctionalCompiler
             // intermediate steps per-element, collecting all results with their group
             // indices, then sorts globally and continues remaining steps with restored
             // index bindings.
-            Sequence EvalIndexWithSort(Sequence inputContext, int stepIdx, int sortStepIdx)
+            Sequence EvalIndexWithSort(Sequence inputContext, int stepIdx, int sortStepIdx, Environment env)
             {
                 var step = steps[stepIdx];
                 var idxVar = indexVars[stepIdx]!;
@@ -3373,7 +3892,7 @@ internal static class FunctionalCompiler
                         env.Bind(idxVar, Sequence.FromDouble(groupIndices[i], env.Workspace));
                     }
 
-                    var subResult = EvalPathFrom(new Sequence(finalElements[i]), sortStepIdx + 1);
+                    var subResult = EvalPathFrom(new Sequence(finalElements[i]), sortStepIdx + 1, env);
                     builder.AddRange(subResult);
                 }
 
@@ -4766,6 +5285,45 @@ internal static class FunctionalCompiler
     }
 
     /// <summary>
+    /// Fused descendant + property-name traversal. Recursively walks the element tree
+    /// and collects only values of properties matching <paramref name="nameUtf8"/>,
+    /// with JSONata array auto-flattening. This avoids building a Sequence of all
+    /// descendants only to filter most of them in a second pass.
+    /// </summary>
+    private static void CollectDescendantProperty(in JsonElement element, byte[] nameUtf8, ref SequenceBuilder builder)
+    {
+        if (element.ValueKind == JsonValueKind.Object)
+        {
+            if (element.TryGetProperty((ReadOnlySpan<byte>)nameUtf8, out JsonElement val))
+            {
+                if (val.ValueKind == JsonValueKind.Array)
+                {
+                    foreach (var item in val.EnumerateArray())
+                    {
+                        builder.Add(item);
+                    }
+                }
+                else
+                {
+                    builder.Add(val);
+                }
+            }
+
+            foreach (var prop in element.EnumerateObject())
+            {
+                CollectDescendantProperty(prop.Value, nameUtf8, ref builder);
+            }
+        }
+        else if (element.ValueKind == JsonValueKind.Array)
+        {
+            foreach (JsonElement item in element.EnumerateArray())
+            {
+                CollectDescendantProperty(item, nameUtf8, ref builder);
+            }
+        }
+    }
+
+    /// <summary>
     /// Applies only non-sort (filter) stages to a per-element result.
     /// In JSONata, filter predicates are applied per-input-element inside the
     /// path step evaluation loop, not globally after all elements are collected.
@@ -4897,9 +5455,17 @@ internal static class FunctionalCompiler
 
     private static ExpressionEvaluator CompileBinary(BinaryNode binary)
     {
+        var op = binary.Operator;
+
+        // String concat gets special handling to inline $string() calls —
+        // avoids intermediate string allocation by coercing directly to UTF-8.
+        if (op == "&")
+        {
+            return CompileStringConcatInlined(binary.Lhs, binary.Rhs);
+        }
+
         var lhs = Compile(binary.Lhs);
         var rhs = Compile(binary.Rhs);
-        var op = binary.Operator;
 
         return op switch
         {
@@ -4914,7 +5480,6 @@ internal static class FunctionalCompiler
             "<=" => CompileNumericComparison(lhs, rhs, static (a, b) => a <= b),
             ">" => CompileNumericComparison(lhs, rhs, static (a, b) => a > b),
             ">=" => CompileNumericComparison(lhs, rhs, static (a, b) => a >= b),
-            "&" => CompileStringConcat(lhs, rhs),
             "and" => CompileAnd(lhs, rhs),
             "or" => CompileOr(lhs, rhs),
             "in" => CompileIn(lhs, rhs),
@@ -4948,7 +5513,7 @@ internal static class FunctionalCompiler
                 {
                     // Raw double — already a number, fast path
                 }
-                else if (left.FirstOrDefault.ValueKind != JsonValueKind.Number)
+                else if (left.Count > 1 || left.FirstOrDefault.ValueKind != JsonValueKind.Number)
                 {
                     throw new JsonataException("T2001", SR.T2001_TheLeftSideOfTheArithmeticExpressionIsNotANumber, 0);
                 }
@@ -4965,7 +5530,7 @@ internal static class FunctionalCompiler
                 {
                     // Raw double — already a number, fast path
                 }
-                else if (right.FirstOrDefault.ValueKind != JsonValueKind.Number)
+                else if (right.Count > 1 || right.FirstOrDefault.ValueKind != JsonValueKind.Number)
                 {
                     throw new JsonataException("T2002", SR.T2002_TheRightSideOfTheArithmeticExpressionIsNotANumber, 0);
                 }
@@ -5102,6 +5667,34 @@ internal static class FunctionalCompiler
             // Type mismatch (e.g. string vs number)
             throw new JsonataException("T2009", SR.T2009_TheValuesEitherSideOfTheOperatorMustBeOfTheSameDataType, 0);
         };
+    }
+
+    /// <summary>
+    /// Compiles a string concatenation (<c>&amp;</c>) with $string() inlining.
+    /// When an operand is <c>$string(x)</c> with a single argument, compiles just <c>x</c>
+    /// and lets the existing <see cref="AppendCoercedToBuffer"/> handle the coercion
+    /// directly to UTF-8, avoiding intermediate string allocation.
+    /// </summary>
+    private static ExpressionEvaluator CompileStringConcatInlined(JsonataNode lhsNode, JsonataNode rhsNode)
+    {
+        var lhs = IsSimpleStringCall(lhsNode, out var innerLhs) ? Compile(innerLhs) : Compile(lhsNode);
+        var rhs = IsSimpleStringCall(rhsNode, out var innerRhs) ? Compile(innerRhs) : Compile(rhsNode);
+        return CompileStringConcat(lhs, rhs);
+    }
+
+    /// <summary>
+    /// Checks whether a node is a simple <c>$string(x)</c> call (1 argument, no pretty-print).
+    /// </summary>
+    private static bool IsSimpleStringCall(JsonataNode node, [NotNullWhen(true)] out JsonataNode? innerArg)
+    {
+        if (node is FunctionCallNode { Procedure: VariableNode { Name: "string" }, Arguments: { Count: 1 } args })
+        {
+            innerArg = args[0];
+            return true;
+        }
+
+        innerArg = null;
+        return false;
     }
 
     private static ExpressionEvaluator CompileStringConcat(ExpressionEvaluator lhs, ExpressionEvaluator rhs)
@@ -5292,6 +5885,23 @@ internal static class FunctionalCompiler
 
     private static void AppendG15FormattedNumber(double value, ref byte[] buffer, ref int pos)
     {
+#if NET8_0_OR_GREATER
+        // Try formatting G15 directly to UTF-8 (zero alloc for non-exponent case)
+        Span<byte> scratch = stackalloc byte[64];
+        if (value.TryFormat(scratch, out int written, "G15", System.Globalization.CultureInfo.InvariantCulture))
+        {
+            ReadOnlySpan<byte> result = scratch.Slice(0, written);
+            if (result.IndexOf((byte)'E') < 0)
+            {
+                JsonataHelpers.GrowBufferIfNeeded(ref buffer, pos, written);
+                result.CopyTo(buffer.AsSpan(pos));
+                pos += written;
+                return;
+            }
+        }
+#endif
+
+        // Exponent case or pre-.NET 8: fall back to string-based formatting
         string formatted = FormatNumberLikeJavaScript(value);
         JsonataHelpers.GrowBufferIfNeeded(ref buffer, pos, formatted.Length);
         for (int i = 0; i < formatted.Length; i++)
@@ -5570,6 +6180,12 @@ internal static class FunctionalCompiler
 
     private static ExpressionEvaluator CompileArrayConstructor(ArrayConstructorNode arr)
     {
+        // All-constant array: pre-evaluate at compile time, zero per-call cost.
+        if (IsConstantExpression(arr))
+        {
+            return CompileConstant(arr);
+        }
+
         // Fused array-of-objects: detect [path.to.{"const-key": value, ...}]
         // When the sole expression is a path ending in a constant-key object constructor
         // with no annotations on the last step, we can build each object directly into
@@ -5914,6 +6530,12 @@ internal static class FunctionalCompiler
 
     private static ExpressionEvaluator CompileObjectConstructor(ObjectConstructorNode obj)
     {
+        // All-constant object: pre-evaluate at compile time, zero per-call cost.
+        if (IsConstantExpression(obj))
+        {
+            return CompileConstant(obj);
+        }
+
         // Check if ALL keys are compile-time string constants.
         // When they are, we can skip runtime key evaluation, GetString(),
         // and the duplicate-detection dictionary entirely.
@@ -6172,6 +6794,122 @@ internal static class FunctionalCompiler
 
     private static ExpressionEvaluator CompileFunctionCall(FunctionCallNode func)
     {
+        // Fully-constant $zip: evaluate at compile time, zero per-call cost.
+        if (func.Procedure is VariableNode zipCheck
+            && zipCheck.Name == "zip"
+            && func.Arguments.Count > 0
+            && func.Arguments.All(a => a is ArrayConstructorNode && IsConstantExpression(a)))
+        {
+            return CompileConstantZip(func);
+        }
+
+        // Buffer-fused $zip: when all arguments are simple property chains (or constants),
+        // navigate chains directly into ElementBuffers and build the zip result in a single
+        // document — eliminating intermediate Sequence wrappers and rented arrays.
+        if (func.Procedure is VariableNode zipFusedCheck
+            && zipFusedCheck.Name == "zip"
+            && func.Arguments.Count >= 2
+            && func.Arguments.Count <= 3)
+        {
+            // Classify each arg: chain, constant, or other
+            bool allFusible = true;
+            bool anyChain = false;
+            int chainCount = 0;
+            int constCount = 0;
+
+            // Use fixed-size arrays to avoid allocation during classification
+            byte[][]?[] chainNames = new byte[][]?[func.Arguments.Count];
+            JsonElement[] constElements = new JsonElement[func.Arguments.Count];
+            bool[] isConst = new bool[func.Arguments.Count];
+
+            for (int i = 0; i < func.Arguments.Count; i++)
+            {
+                if (TryExtractSimpleChainNames(func.Arguments[i], out var names))
+                {
+                    chainNames[i] = names;
+                    anyChain = true;
+                    chainCount++;
+                }
+                else if (IsConstantExpression(func.Arguments[i]))
+                {
+                    string json = SerializeConstantJson(func.Arguments[i]);
+                    byte[] utf8 = System.Text.Encoding.UTF8.GetBytes(json);
+                    constElements[i] = JsonElement.ParseValue(utf8);
+                    isConst[i] = true;
+                    constCount++;
+                }
+                else
+                {
+                    allFusible = false;
+                    break;
+                }
+            }
+
+            if (allFusible && anyChain)
+            {
+                if (func.Arguments.Count == 2)
+                {
+                    if (chainCount == 2)
+                    {
+                        return CompileBufferFusedZip2(chainNames[0]!, chainNames[1]!);
+                    }
+
+                    // Mixed: one constant + one chain
+                    if (isConst[0])
+                    {
+                        return CompileBufferFusedZipMixed2(constElements[0], constIsFirst: true, chainNames[1]!);
+                    }
+                    else
+                    {
+                        return CompileBufferFusedZipMixed2(constElements[1], constIsFirst: false, chainNames[0]!);
+                    }
+                }
+
+                if (func.Arguments.Count == 3 && chainCount == 3)
+                {
+                    return CompileBufferFusedZip3(chainNames[0]!, chainNames[1]!, chainNames[2]!);
+                }
+
+                // 3-arg with mixed const/chain falls through to standard path
+            }
+        }
+
+        // Buffer-fused $shuffle: when the single argument is a simple property chain,
+        // navigate directly into an ElementBuffer, shuffle in-place, and build
+        // one result document — eliminating intermediate Sequence and builder allocations.
+        if (func.Procedure is VariableNode shuffleFusedCheck
+            && shuffleFusedCheck.Name == "shuffle"
+            && func.Arguments.Count == 1
+            && TryExtractSimpleChainNames(func.Arguments[0], out var shuffleChainNames))
+        {
+            return CompileBufferFusedShuffle(shuffleChainNames);
+        }
+
+        // Pre-parsed $formatNumber: when the picture (and optional options) are constants,
+        // parse the picture once at compile time and use zero-alloc UTF-8 formatting at runtime.
+        if (func.Procedure is VariableNode fmtNumCheck
+            && fmtNumCheck.Name == "formatNumber"
+            && func.Arguments.Count >= 2
+            && func.Arguments.Count <= 3
+            && func.Arguments[1] is StringNode fmtPicNode)
+        {
+            JsonElement fmtOptions = default;
+            bool optionsAreConstant = func.Arguments.Count < 3 || IsConstantExpression(func.Arguments[2]);
+            if (func.Arguments.Count >= 3 && optionsAreConstant)
+            {
+                string optJson = SerializeConstantJson(func.Arguments[2]);
+                byte[] optUtf8 = System.Text.Encoding.UTF8.GetBytes(optJson);
+                fmtOptions = JsonElement.ParseValue(optUtf8);
+            }
+
+            if (optionsAreConstant)
+            {
+                FormatNumberPicture parsedPic = FormatNumberPicture.Parse(fmtPicNode.Value, fmtOptions);
+                var numArg = Compile(func.Arguments[0]);
+                return CompilePreParsedFormatNumber(numArg, parsedPic);
+            }
+        }
+
         var args = func.Arguments.Select(Compile).ToArray();
 
         // Check for built-in functions by name.
@@ -6818,6 +7556,37 @@ internal static class FunctionalCompiler
     private static void ReturnSortIndices(int[] indices)
     {
         ArrayPool<int>.Shared.Return(indices);
+    }
+
+    /// <summary>
+    /// Sorts a rented index array by the given sort terms.
+    /// Extracted from inline lambdas to prevent the compiler from hoisting
+    /// <paramref name="env"/> into a display-class on the calling method's
+    /// entry path — the display-class would allocate on every invocation
+    /// even when sorting is not needed.
+    /// </summary>
+    private static void SortByTerms(
+        int[] indices,
+        SequenceBuilder elements,
+        (ExpressionEvaluator Expr, bool Descending)[] terms,
+        Environment env)
+    {
+        SortIndices(indices, elements.Count, (a, b) =>
+        {
+            for (int t = 0; t < terms.Length; t++)
+            {
+                var (expr, desc) = terms[t];
+                var aVal = expr(elements[a], env);
+                var bVal = expr(elements[b], env);
+                int cmp = CompareSortKeys(aVal, bVal);
+                if (cmp != 0)
+                {
+                    return desc ? -cmp : cmp;
+                }
+            }
+
+            return a.CompareTo(b);
+        });
     }
 
     /// <summary>

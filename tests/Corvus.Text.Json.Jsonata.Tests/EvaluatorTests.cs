@@ -276,6 +276,49 @@ public class EvaluatorTests
     }
 
     [Fact]
+    public void ArithmeticWithArrayLeftOperandThrowsT2001()
+    {
+        // Account.Order.Product.Price collects [34.45, 21.67] — an array, not a number.
+        // Arithmetic on an array operand must throw T2001.
+        var ex = Assert.Throws<JsonataException>(() =>
+            Evaluator.EvaluateToString(
+                "Account.Order.Product.Price + 1",
+                """{"Account": {"Order": [{"Product": {"Price": 34.45}}, {"Product": {"Price": 21.67}}]}}"""));
+        Assert.Equal("T2001", ex.Code);
+    }
+
+    [Fact]
+    public void ArithmeticWithArrayRightOperandThrowsT2002()
+    {
+        // Same pattern but array on the right side — must throw T2002.
+        var ex = Assert.Throws<JsonataException>(() =>
+            Evaluator.EvaluateToString(
+                "1 + Account.Order.Product.Price",
+                """{"Account": {"Order": [{"Product": {"Price": 34.45}}, {"Product": {"Price": 21.67}}]}}"""));
+        Assert.Equal("T2002", ex.Code);
+    }
+
+    [Fact]
+    public void ArithmeticWithObjectLeftOperandThrowsT2001()
+    {
+        var ex = Assert.Throws<JsonataException>(() =>
+            Evaluator.EvaluateToString(
+                "item + 1",
+                """{"item": {"price": 34.45}}"""));
+        Assert.Equal("T2001", ex.Code);
+    }
+
+    [Fact]
+    public void ArithmeticWithObjectRightOperandThrowsT2002()
+    {
+        var ex = Assert.Throws<JsonataException>(() =>
+            Evaluator.EvaluateToString(
+                "1 + item",
+                """{"item": {"price": 34.45}}"""));
+        Assert.Equal("T2002", ex.Code);
+    }
+
+    [Fact]
     public void EvaluateReturnsUndefinedForMissingField()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("""{"x": 1}"""u8.ToArray());
@@ -780,6 +823,33 @@ public class EvaluatorTests
     }
 
     [Fact]
+    public void ShufflePropertyChainActuallyShuffles()
+    {
+        // a.b produces a multi-element Sequence [1,2,...,10] via auto-flatten.
+        // $shuffle must treat this as an array and randomize the element order.
+        // With 10 elements the probability of the original order is 1/10! ≈ 0.
+        string json = """{"a": [{"b": 1}, {"b": 2}, {"b": 3}, {"b": 4}, {"b": 5}, {"b": 6}, {"b": 7}, {"b": 8}, {"b": 9}, {"b": 10}]}""";
+        string original = "[1,2,3,4,5,6,7,8,9,10]";
+
+        bool foundDifferent = false;
+        for (int i = 0; i < 5; i++)
+        {
+            var result = Evaluator.EvaluateToString("$shuffle(a.b)", json);
+            if (result != original)
+            {
+                foundDifferent = true;
+
+                // Also verify all elements are preserved (same values, just reordered)
+                var sorted = Evaluator.EvaluateToString("$sort($shuffle(a.b))", json);
+                Assert.Equal(original, sorted);
+                break;
+            }
+        }
+
+        Assert.True(foundDifferent, "$shuffle on a property chain through arrays must actually shuffle the elements");
+    }
+
+    [Fact]
     public void ZipFunction()
     {
         var result = Evaluator.EvaluateToString("""$zip([1,2],[3,4])""", "{}");
@@ -1033,5 +1103,85 @@ public class EvaluatorTests
         // Extra 3rd arg is silently sliced away (matches JSONata convention).
         var result = evaluator.Evaluate("$hypot(3, 4, 999)", doc.RootElement, workspace, bindings);
         Assert.Equal(5.0, result.GetDouble());
+    }
+
+    [Fact]
+    public void KeepArrayOverArrayWithNoMatchingProperties_ReturnsUndefined()
+    {
+        // path[] over an array of objects where no object has the property should be undefined
+        var result = Evaluator.EvaluateToString(
+            """items.nonexistent[]""",
+            """{"items": [{"a": 1}, {"b": 2}]}""");
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public void KeepArrayOverEmptyArray_ReturnsUndefined()
+    {
+        // path[] over an empty array should be undefined
+        var result = Evaluator.EvaluateToString(
+            """items.a[]""",
+            """{"items": []}""");
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public void KeepArrayWithDeepNesting_FlattensCorrectly()
+    {
+        // 3 levels of array nesting: [[[ {a:1} ]]].a[] should flatten to [1]
+        var result = Evaluator.EvaluateToString(
+            """items.a[]""",
+            """{"items": [[[{"a": 1}]]]}""");
+        Assert.Equal("[1]", result);
+    }
+
+    [Fact]
+    public void KeepArrayWithMixedTypes_SkipsNonObjects()
+    {
+        // Mixed array: only objects with the property contribute; primitives and nulls are skipped
+        var result = Evaluator.EvaluateToString(
+            """items.x[]""",
+            """{"items": [1, "str", {"x": 5}, null, [{"x": 6}]]}""");
+        Assert.Equal("[5,6]", result);
+    }
+
+    [Fact]
+    public void KeepArrayWithSingleMatch_WrapsInArray()
+    {
+        // Single match with [] should still wrap in array
+        var result = Evaluator.EvaluateToString(
+            """items.a[]""",
+            """{"items": [{"a": 42}]}""");
+        Assert.Equal("[42]", result);
+    }
+
+    [Fact]
+    public void KeepArrayWithArrayPropertyValues_Flattens()
+    {
+        // Property values that are arrays should be flattened into the result
+        var result = Evaluator.EvaluateToString(
+            """items.a[]""",
+            """{"items": [{"a": [1, 2]}, {"a": [3]}]}""");
+        Assert.Equal("[1,2,3]", result);
+    }
+
+    [Fact]
+    public void KeepArrayOnObjectInput_WrapsPropertyValue()
+    {
+        // path[] on an object (not array) should wrap the property value in an array
+        var result = Evaluator.EvaluateToString(
+            """data.name[]""",
+            """{"data": {"name": "Alice"}}""");
+        Assert.Equal("[\"Alice\"]", result);
+    }
+
+    [Fact]
+    public void KeepArrayOnObjectWithMissingProperty_ReturnsUndefined()
+    {
+        // path[] on an object where the property doesn't exist should be undefined
+        var result = Evaluator.EvaluateToString(
+            """data.missing[]""",
+            """{"data": {"name": "Alice"}}""");
+        Assert.Null(result);
     }
 }

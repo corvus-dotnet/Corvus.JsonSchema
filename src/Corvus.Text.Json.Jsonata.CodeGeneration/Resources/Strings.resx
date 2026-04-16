@@ -65,5 +65,8 @@
   <data name="T0410_ReplaceExpects3Or4Arguments" xml:space="preserve">
     <value>$replace expects 3-4 arguments</value>
   </data>
+  <data name="T0410_MatchExpects13Arguments" xml:space="preserve">
+    <value>$match expects 1-3 arguments</value>
+  </data>
 
 </root>

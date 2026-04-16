@@ -53,6 +53,8 @@ public class BenchmarkDeepNavigation
 
         DeepNavigationCodeGen.Evaluate(this.data, this.workspace);
         this.workspace.Reset();
+        DeepNavigation5LevelCodeGen.Evaluate(this.data, this.workspace);
+        this.workspace.Reset();
 
 #if !NETFRAMEWORK
         this.nativeData = JToken.Parse(dataJson);
@@ -123,6 +125,17 @@ public class BenchmarkDeepNavigation
     public JToken JsonataDotNet_5Level() =>
         this.native5Level.Eval(this.nativeData);
 #endif
+
+    /// <summary>
+    /// CodeGen: navigate 5 levels deep.
+    /// </summary>
+    [BenchmarkCategory("5Level")]
+    [Benchmark]
+    public JsonElement Corvus_CodeGen_5Level()
+    {
+        this.workspace.Reset();
+        return DeepNavigation5LevelCodeGen.Evaluate(this.data, this.workspace);
+    }
 
     private static string BuildNestedJson(string[] keys, int leafValue)
     {
