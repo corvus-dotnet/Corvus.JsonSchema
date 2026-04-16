@@ -478,9 +478,10 @@ public sealed class JsonataEvaluator
 
     /// <summary>
     /// Evaluates a JSONata expression provided as pre-encoded UTF-8 bytes.
-    /// This overload bypasses the string-to-UTF-8 transcode and does not cache
-    /// the compiled expression, making it ideal for cold-start scenarios where
-    /// each expression is evaluated once.
+    /// This overload bypasses the string-to-UTF-8 transcode. When a <paramref name="cacheKey"/>
+    /// is provided, the compiled expression is cached under that key (same cache as the string
+    /// overloads). When <paramref name="cacheKey"/> is <c>null</c>, the expression is compiled
+    /// fresh each invocation — ideal for cold-start scenarios where each expression is evaluated once.
     /// </summary>
     /// <param name="utf8Expression">The JSONata expression as UTF-8 bytes.</param>
     /// <param name="data">The input JSON data element.</param>
@@ -489,13 +490,26 @@ public sealed class JsonataEvaluator
     /// may reference documents owned by this workspace, so it remains valid only while the
     /// workspace is alive and has not been reset.
     /// </param>
+    /// <param name="cacheKey">
+    /// Optional cache key. When non-null, the compiled expression is stored (and retrieved on
+    /// subsequent calls) using this key. The caller is responsible for ensuring the key uniquely
+    /// identifies the expression.
+    /// </param>
     /// <param name="maxDepth">Maximum recursion depth (default 500).</param>
     /// <param name="timeLimitMs">Maximum evaluation time in milliseconds (0 = no limit).</param>
     /// <returns>The evaluation result as a <see cref="JsonElement"/>, or <c>default</c> if the result is undefined.</returns>
-    public JsonElement Evaluate(byte[] utf8Expression, JsonElement data, JsonWorkspace workspace, int maxDepth = Environment.DefaultMaxDepth, int timeLimitMs = 0)
+    public JsonElement Evaluate(byte[] utf8Expression, JsonElement data, JsonWorkspace workspace, string? cacheKey = null, int maxDepth = Environment.DefaultMaxDepth, int timeLimitMs = 0)
     {
-        var ast = Parser.Parse(utf8Expression);
-        var compiled = FunctionalCompiler.Compile(ast);
+        ExpressionEvaluator compiled;
+        if (cacheKey is not null)
+        {
+            compiled = this.GetOrCompile(cacheKey, utf8Expression);
+        }
+        else
+        {
+            var ast = Parser.Parse(utf8Expression);
+            compiled = FunctionalCompiler.Compile(ast);
+        }
 
         var env = Environment.RentRoot();
         try
@@ -547,6 +561,20 @@ public sealed class JsonataEvaluator
         var compiled = FunctionalCompiler.Compile(ast);
 
         this.cache.TryAdd(expression, compiled);
+        return compiled;
+    }
+
+    private ExpressionEvaluator GetOrCompile(string cacheKey, byte[] utf8Expression)
+    {
+        if (this.cache.TryGetValue(cacheKey, out var cached))
+        {
+            return cached;
+        }
+
+        var ast = Parser.Parse(utf8Expression);
+        var compiled = FunctionalCompiler.Compile(ast);
+
+        this.cache.TryAdd(cacheKey, compiled);
         return compiled;
     }
 }
