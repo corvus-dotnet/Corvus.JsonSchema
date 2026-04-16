@@ -692,7 +692,7 @@ public static class JMESPathCodeGenerator
                 "contains" => EmitBinaryFunc(body, "Contains", args, indent, inputVar, needsWorkspace: false),
                 "ends_with" => EmitBinaryFunc(body, "EndsWith", args, indent, inputVar, needsWorkspace: false),
                 "floor" => EmitUnaryFunc(body, "Floor", args, indent, inputVar, needsWorkspace: true),
-                "join" => EmitBinaryFunc(body, "Join", args, indent, inputVar, needsWorkspace: false),
+                "join" => EmitBinaryFunc(body, "Join", args, indent, inputVar, needsWorkspace: true),
                 "keys" => EmitUnaryFunc(body, "Keys", args, indent, inputVar, needsWorkspace: true),
                 "length" => EmitUnaryFunc(body, "Length", args, indent, inputVar, needsWorkspace: true),
                 "map" => EmitMapFunc(body, args, indent, inputVar),

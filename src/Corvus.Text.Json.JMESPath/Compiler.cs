@@ -267,17 +267,21 @@ internal static partial class Compiler
                 return default;
             }
 
-            JsonDocumentBuilder<JsonElement.Mutable> doc =
-                JsonElement.CreateArrayBuilder(workspace, exprs.Length);
-            JsonElement.Mutable root = doc.RootElement;
-
-            for (int i = 0; i < exprs.Length; i++)
+            JMESPathSequenceBuilder builder = default;
+            try
             {
-                JsonElement val = exprs[i](data, workspace);
-                root.AddItem(val.IsNullOrUndefined() ? NullElement : val);
-            }
+                for (int i = 0; i < exprs.Length; i++)
+                {
+                    JsonElement val = exprs[i](data, workspace);
+                    builder.Add(val.IsNullOrUndefined() ? NullElement : val);
+                }
 
-            return (JsonElement)root;
+                return builder.ToElement(workspace);
+            }
+            finally
+            {
+                builder.ReturnArray();
+            }
         };
     }
 
@@ -330,20 +334,24 @@ internal static partial class Compiler
                 return arr;
             }
 
-            JsonDocumentBuilder<JsonElement.Mutable> doc =
-                JsonElement.CreateArrayBuilder(workspace, len);
-            JsonElement.Mutable root = doc.RootElement;
-
-            foreach (JsonElement item in arr.EnumerateArray())
+            JMESPathSequenceBuilder builder = default;
+            try
             {
-                JsonElement projected = right(item, workspace);
-                if (!projected.IsNullOrUndefined())
+                foreach (JsonElement item in arr.EnumerateArray())
                 {
-                    root.AddItem(projected);
+                    JsonElement projected = right(item, workspace);
+                    if (!projected.IsNullOrUndefined())
+                    {
+                        builder.Add(projected);
+                    }
                 }
-            }
 
-            return (JsonElement)root;
+                return builder.ToElement(workspace);
+            }
+            finally
+            {
+                builder.ReturnArray();
+            }
         };
     }
 
@@ -360,21 +368,24 @@ internal static partial class Compiler
                 return default;
             }
 
-            int count = obj.GetPropertyCount();
-            JsonDocumentBuilder<JsonElement.Mutable> doc =
-                JsonElement.CreateArrayBuilder(workspace, count);
-            JsonElement.Mutable root = doc.RootElement;
-
-            foreach (JsonProperty<JsonElement> prop in obj.EnumerateObject())
+            JMESPathSequenceBuilder builder = default;
+            try
             {
-                JsonElement projected = right(prop.Value, workspace);
-                if (!projected.IsNullOrUndefined())
+                foreach (JsonProperty<JsonElement> prop in obj.EnumerateObject())
                 {
-                    root.AddItem(projected);
+                    JsonElement projected = right(prop.Value, workspace);
+                    if (!projected.IsNullOrUndefined())
+                    {
+                        builder.Add(projected);
+                    }
                 }
-            }
 
-            return (JsonElement)root;
+                return builder.ToElement(workspace);
+            }
+            finally
+            {
+                builder.ReturnArray();
+            }
         };
     }
 
@@ -391,48 +402,39 @@ internal static partial class Compiler
                 return default;
             }
 
-            // First flatten: merge nested arrays
-            JsonDocumentBuilder<JsonElement.Mutable> flatDoc =
-                JsonElement.CreateArrayBuilder(workspace, arr.GetArrayLength());
-            JsonElement.Mutable flatRoot = flatDoc.RootElement;
-
-            foreach (JsonElement item in arr.EnumerateArray())
+            // Single-pass: flatten and project in one loop.
+            JMESPathSequenceBuilder builder = default;
+            try
             {
-                if (item.ValueKind == JsonValueKind.Array)
+                foreach (JsonElement item in arr.EnumerateArray())
                 {
-                    foreach (JsonElement nested in item.EnumerateArray())
+                    if (item.ValueKind == JsonValueKind.Array)
                     {
-                        flatRoot.AddItem(nested);
+                        foreach (JsonElement nested in item.EnumerateArray())
+                        {
+                            JsonElement projected = right(nested, workspace);
+                            if (!projected.IsNullOrUndefined())
+                            {
+                                builder.Add(projected);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        JsonElement projected = right(item, workspace);
+                        if (!projected.IsNullOrUndefined())
+                        {
+                            builder.Add(projected);
+                        }
                     }
                 }
-                else
-                {
-                    flatRoot.AddItem(item);
-                }
-            }
 
-            // Then project
-            JsonElement flattened = (JsonElement)flatRoot;
-            int len = flattened.GetArrayLength();
-            if (len == 0)
+                return builder.ToElement(workspace);
+            }
+            finally
             {
-                return flattened;
+                builder.ReturnArray();
             }
-
-            JsonDocumentBuilder<JsonElement.Mutable> doc =
-                JsonElement.CreateArrayBuilder(workspace, len);
-            JsonElement.Mutable root = doc.RootElement;
-
-            foreach (JsonElement item in flattened.EnumerateArray())
-            {
-                JsonElement projected = right(item, workspace);
-                if (!projected.IsNullOrUndefined())
-                {
-                    root.AddItem(projected);
-                }
-            }
-
-            return (JsonElement)root;
         };
     }
 
@@ -450,25 +452,28 @@ internal static partial class Compiler
                 return default;
             }
 
-            int len = arr.GetArrayLength();
-            JsonDocumentBuilder<JsonElement.Mutable> doc =
-                JsonElement.CreateArrayBuilder(workspace, len);
-            JsonElement.Mutable root = doc.RootElement;
-
-            foreach (JsonElement item in arr.EnumerateArray())
+            JMESPathSequenceBuilder builder = default;
+            try
             {
-                JsonElement condResult = condition(item, workspace);
-                if (IsTruthy(condResult))
+                foreach (JsonElement item in arr.EnumerateArray())
                 {
-                    JsonElement projected = right(item, workspace);
-                    if (!projected.IsNullOrUndefined())
+                    JsonElement condResult = condition(item, workspace);
+                    if (IsTruthy(condResult))
                     {
-                        root.AddItem(projected);
+                        JsonElement projected = right(item, workspace);
+                        if (!projected.IsNullOrUndefined())
+                        {
+                            builder.Add(projected);
+                        }
                     }
                 }
-            }
 
-            return (JsonElement)root;
+                return builder.ToElement(workspace);
+            }
+            finally
+            {
+                builder.ReturnArray();
+            }
         };
     }
 
@@ -507,26 +512,30 @@ internal static partial class Compiler
                 actualStop = stop.HasValue ? NormalizeSliceIndex(stop.Value, len, isStart: false, positiveStep: false) : -1;
             }
 
-            JsonDocumentBuilder<JsonElement.Mutable> doc =
-                JsonElement.CreateArrayBuilder(workspace, len);
-            JsonElement.Mutable root = doc.RootElement;
-
-            if (actualStep > 0)
+            JMESPathSequenceBuilder builder = default;
+            try
             {
-                for (int i = actualStart; i < actualStop; i += actualStep)
+                if (actualStep > 0)
                 {
-                    root.AddItem(data[i]);
+                    for (int i = actualStart; i < actualStop; i += actualStep)
+                    {
+                        builder.Add(data[i]);
+                    }
                 }
-            }
-            else
-            {
-                for (int i = actualStart; i > actualStop; i += actualStep)
+                else
                 {
-                    root.AddItem(data[i]);
+                    for (int i = actualStart; i > actualStop; i += actualStep)
+                    {
+                        builder.Add(data[i]);
+                    }
                 }
-            }
 
-            return (JsonElement)root;
+                return builder.ToElement(workspace);
+            }
+            finally
+            {
+                builder.ReturnArray();
+            }
         };
     }
 
@@ -617,17 +626,27 @@ internal static partial class Compiler
             return false;
         }
 
-        return value.ValueKind switch
+        switch (value.ValueKind)
         {
-            JsonValueKind.False => false,
-            JsonValueKind.True => true,
-            JsonValueKind.Null => false,
-            JsonValueKind.Number => true,
-            JsonValueKind.String => value.GetString()?.Length > 0,
-            JsonValueKind.Array => value.GetArrayLength() > 0,
-            JsonValueKind.Object => value.GetPropertyCount() > 0,
-            _ => false,
-        };
+            case JsonValueKind.False:
+            case JsonValueKind.Null:
+                return false;
+            case JsonValueKind.True:
+            case JsonValueKind.Number:
+                return true;
+            case JsonValueKind.String:
+                {
+                    using UnescapedUtf8JsonString utf8 = value.GetUtf8String();
+                    return utf8.Span.Length > 0;
+                }
+
+            case JsonValueKind.Array:
+                return value.GetArrayLength() > 0;
+            case JsonValueKind.Object:
+                return value.GetPropertyCount() > 0;
+            default:
+                return false;
+        }
     }
 
     private static bool DeepEquals(in JsonElement left, in JsonElement right)
@@ -647,15 +666,28 @@ internal static partial class Compiler
             return false;
         }
 
-        return left.ValueKind switch
+        switch (left.ValueKind)
         {
-            JsonValueKind.True or JsonValueKind.False or JsonValueKind.Null => true,
-            JsonValueKind.Number => left.GetDouble() == right.GetDouble(),
-            JsonValueKind.String => string.Equals(left.GetString(), right.GetString(), StringComparison.Ordinal),
-            JsonValueKind.Array => ArrayEquals(left, right),
-            JsonValueKind.Object => ObjectEquals(left, right),
-            _ => false,
-        };
+            case JsonValueKind.True:
+            case JsonValueKind.False:
+            case JsonValueKind.Null:
+                return true;
+            case JsonValueKind.Number:
+                return left.GetDouble() == right.GetDouble();
+            case JsonValueKind.String:
+                {
+                    using UnescapedUtf8JsonString leftStr = left.GetUtf8String();
+                    using UnescapedUtf8JsonString rightStr = right.GetUtf8String();
+                    return leftStr.Span.SequenceEqual(rightStr.Span);
+                }
+
+            case JsonValueKind.Array:
+                return ArrayEquals(left, right);
+            case JsonValueKind.Object:
+                return ObjectEquals(left, right);
+            default:
+                return false;
+        }
     }
 
     private static bool ArrayEquals(in JsonElement left, in JsonElement right)
@@ -686,7 +718,8 @@ internal static partial class Compiler
 
         foreach (JsonProperty<JsonElement> prop in left.EnumerateObject())
         {
-            if (!right.TryGetProperty(prop.Name, out JsonElement rightVal)
+            using UnescapedUtf8JsonString name = prop.Utf8NameSpan;
+            if (!right.TryGetProperty(name.Span, out JsonElement rightVal)
                 || !DeepEquals(prop.Value, rightVal))
             {
                 return false;

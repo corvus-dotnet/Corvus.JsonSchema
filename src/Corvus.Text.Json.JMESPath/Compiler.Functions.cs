@@ -2,9 +2,12 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Buffers;
 using System.Buffers.Text;
-using System.Globalization;
+using System.Runtime.CompilerServices;
 using System.Text;
+using Corvus.Runtime.InteropServices;
+using Corvus.Text.Json.Internal;
 
 namespace Corvus.Text.Json.JMESPath;
 
@@ -157,8 +160,9 @@ internal static partial class Compiler
 
             if (val.ValueKind == JsonValueKind.String)
             {
-                string? s = val.GetString();
-                if (s is not null && double.TryParse(s, NumberStyles.Float, CultureInfo.InvariantCulture, out double d))
+                using UnescapedUtf8JsonString utf8 = val.GetUtf8String();
+                ReadOnlySpan<byte> span = utf8.Span;
+                if (span.Length > 0 && Utf8Parser.TryParse(span, out double d, out int consumed) && consumed == span.Length)
                 {
                     return DoubleToElement(d, ws);
                 }
@@ -182,7 +186,9 @@ internal static partial class Compiler
             if (subject.ValueKind == JsonValueKind.String)
             {
                 RequireString("contains", search);
-                bool found = subject.GetString()!.Contains(search.GetString()!);
+                using UnescapedUtf8JsonString subjectStr = subject.GetUtf8String();
+                using UnescapedUtf8JsonString searchStr = search.GetUtf8String();
+                bool found = subjectStr.Span.IndexOf(searchStr.Span) >= 0;
                 return found ? TrueElement : FalseElement;
             }
 
@@ -214,7 +220,9 @@ internal static partial class Compiler
             JsonElement suffix = evalSuffix(data, ws);
             RequireString("ends_with", str);
             RequireString("ends_with", suffix);
-            bool found = str.GetString()!.EndsWith(suffix.GetString()!, StringComparison.Ordinal);
+            using UnescapedUtf8JsonString strUtf8 = str.GetUtf8String();
+            using UnescapedUtf8JsonString suffixUtf8 = suffix.GetUtf8String();
+            bool found = strUtf8.Span.EndsWith(suffixUtf8.Span);
             return found ? TrueElement : FalseElement;
         };
     }
@@ -230,7 +238,9 @@ internal static partial class Compiler
             JsonElement prefix = evalPrefix(data, ws);
             RequireString("starts_with", str);
             RequireString("starts_with", prefix);
-            bool found = str.GetString()!.StartsWith(prefix.GetString()!, StringComparison.Ordinal);
+            using UnescapedUtf8JsonString strUtf8 = str.GetUtf8String();
+            using UnescapedUtf8JsonString prefixUtf8 = prefix.GetUtf8String();
+            bool found = strUtf8.Span.StartsWith(prefixUtf8.Span);
             return found ? TrueElement : FalseElement;
         };
     }
@@ -247,23 +257,70 @@ internal static partial class Compiler
             RequireString("join", sep);
             RequireArray("join", arr);
 
-            string separator = sep.GetString()!;
-            StringBuilder sb = new();
-            bool first = true;
-            foreach (JsonElement item in arr.EnumerateArray())
+            int arrLen = arr.GetArrayLength();
+            if (arrLen == 0)
             {
-                RequireString("join", item);
-                if (!first)
-                {
-                    sb.Append(separator);
-                }
-
-                sb.Append(item.GetString());
-                first = false;
+                return EmptyStringElement;
             }
 
-            return StringToElement(sb.ToString());
+            // Get separator as raw JSON (includes quotes, already escaped)
+            using RawUtf8JsonString sepRaw = JsonMarshal.GetRawUtf8Value(sep);
+            ReadOnlySpan<byte> sepInner = sepRaw.Span.Slice(1, sepRaw.Span.Length - 2);
+
+            // Build result in a rented buffer
+            byte[] buffer = ArrayPool<byte>.Shared.Rent(256);
+            int pos = 0;
+            buffer[pos++] = (byte)'"';
+
+            try
+            {
+                bool first = true;
+                foreach (JsonElement item in arr.EnumerateArray())
+                {
+                    RequireString("join", item);
+
+                    if (!first)
+                    {
+                        EnsureJoinBuffer(ref buffer, pos, sepInner.Length);
+                        sepInner.CopyTo(buffer.AsSpan(pos));
+                        pos += sepInner.Length;
+                    }
+
+                    // Get item's raw JSON bytes (includes quotes, already escaped)
+                    using RawUtf8JsonString itemRaw = JsonMarshal.GetRawUtf8Value(item);
+                    ReadOnlySpan<byte> itemInner = itemRaw.Span.Slice(1, itemRaw.Span.Length - 2);
+                    EnsureJoinBuffer(ref buffer, pos, itemInner.Length);
+                    itemInner.CopyTo(buffer.AsSpan(pos));
+                    pos += itemInner.Length;
+
+                    first = false;
+                }
+
+                EnsureJoinBuffer(ref buffer, pos, 1);
+                buffer[pos++] = (byte)'"';
+
+                FixedJsonValueDocument<JsonElement> doc =
+                    FixedJsonValueDocument<JsonElement>.ForStringFromSpan(
+                        new ReadOnlySpan<byte>(buffer, 0, pos));
+                ws.RegisterDocument(doc);
+                return doc.RootElement;
+            }
+            finally
+            {
+                ArrayPool<byte>.Shared.Return(buffer);
+            }
         };
+    }
+
+    private static void EnsureJoinBuffer(ref byte[] buffer, int pos, int needed)
+    {
+        if (pos + needed >= buffer.Length)
+        {
+            byte[] newBuffer = ArrayPool<byte>.Shared.Rent(Math.Max(buffer.Length * 2, pos + needed + 1));
+            buffer.AsSpan(0, pos).CopyTo(newBuffer);
+            ArrayPool<byte>.Shared.Return(buffer);
+            buffer = newBuffer;
+        }
     }
 
     private static JMESPathEval CompileLength(JMESPathNode[] args)
@@ -273,13 +330,25 @@ internal static partial class Compiler
         return (in JsonElement data, JsonWorkspace ws) =>
         {
             JsonElement val = evalArg(data, ws);
-            int len = val.ValueKind switch
+            int len;
+            switch (val.ValueKind)
             {
-                JsonValueKind.String => GetStringInfoLength(val.GetString()!),
-                JsonValueKind.Array => val.GetArrayLength(),
-                JsonValueKind.Object => val.GetPropertyCount(),
-                _ => throw new JMESPathException("invalid-type: length() expects a string, array, or object argument."),
-            };
+                case JsonValueKind.String:
+                    {
+                        using UnescapedUtf8JsonString utf8 = val.GetUtf8String();
+                        len = JsonElementHelpers.GetUtf8StringLength(utf8.Span);
+                        break;
+                    }
+
+                case JsonValueKind.Array:
+                    len = val.GetArrayLength();
+                    break;
+                case JsonValueKind.Object:
+                    len = val.GetPropertyCount();
+                    break;
+                default:
+                    throw new JMESPathException("invalid-type: length() expects a string, array, or object argument.");
+            }
 
             return DoubleToElement(len, ws);
         };
@@ -294,29 +363,84 @@ internal static partial class Compiler
             JsonElement val = evalArg(data, ws);
             if (val.ValueKind == JsonValueKind.String)
             {
-                string s = val.GetString()!;
-                StringInfo si = new(s);
-                int textLen = si.LengthInTextElements;
-                StringBuilder sb = new(s.Length);
-                for (int i = textLen - 1; i >= 0; i--)
+                using UnescapedUtf8JsonString utf8Str = val.GetUtf8String();
+                ReadOnlySpan<byte> source = utf8Str.Span;
+
+                if (source.Length == 0)
                 {
-                    sb.Append(si.SubstringByTextElements(i, 1));
+                    return EmptyStringElement;
                 }
 
-                return StringToElement(sb.ToString());
+                // Reverse code points in UTF-8: each code point is 1-4 bytes.
+                // The reversed bytes are the same length as the source.
+                byte[] reversedBuffer = ArrayPool<byte>.Shared.Rent(source.Length);
+                try
+                {
+                    int writePos = 0;
+
+                    // Walk backwards through the source, identifying code point boundaries
+                    int i = source.Length;
+                    while (i > 0)
+                    {
+                        // Find the start of this code point by scanning back over continuation bytes (10xxxxxx)
+                        int cpEnd = i;
+                        i--;
+                        while (i > 0 && (source[i] & 0xC0) == 0x80)
+                        {
+                            i--;
+                        }
+
+                        // Copy the code point bytes [i..cpEnd) into the reversed buffer
+                        int cpLen = cpEnd - i;
+                        source.Slice(i, cpLen).CopyTo(reversedBuffer.AsSpan(writePos));
+                        writePos += cpLen;
+                    }
+
+                    // JSON-escape the reversed bytes and create a string element
+                    ReadOnlySpan<byte> reversed = reversedBuffer.AsSpan(0, writePos);
+                    int maxEscapedLen = (writePos * 6) + 2;
+                    byte[] escapedBuffer = ArrayPool<byte>.Shared.Rent(maxEscapedLen);
+                    try
+                    {
+                        int pos = 0;
+                        escapedBuffer[pos++] = (byte)'"';
+                        pos += WriteJsonEscapedFromUtf8(reversed, escapedBuffer.AsSpan(pos));
+                        escapedBuffer[pos++] = (byte)'"';
+
+                        FixedJsonValueDocument<JsonElement> doc =
+                            FixedJsonValueDocument<JsonElement>.ForStringFromSpan(
+                                new ReadOnlySpan<byte>(escapedBuffer, 0, pos));
+                        ws.RegisterDocument(doc);
+                        return doc.RootElement;
+                    }
+                    finally
+                    {
+                        ArrayPool<byte>.Shared.Return(escapedBuffer);
+                    }
+                }
+                finally
+                {
+                    ArrayPool<byte>.Shared.Return(reversedBuffer);
+                }
             }
 
             if (val.ValueKind == JsonValueKind.Array)
             {
                 int len = val.GetArrayLength();
-                JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateArrayBuilder(ws, len);
-                JsonElement.Mutable root = doc.RootElement;
-                for (int i = len - 1; i >= 0; i--)
+                JMESPathSequenceBuilder builder = default;
+                try
                 {
-                    root.AddItem(val[i]);
-                }
+                    for (int i = len - 1; i >= 0; i--)
+                    {
+                        builder.Add(val[i]);
+                    }
 
-                return (JsonElement)root;
+                    return builder.ToElement(ws);
+                }
+                finally
+                {
+                    builder.ReturnArray();
+                }
             }
 
             throw new JMESPathException("invalid-type: reverse() expects a string or array argument.");
@@ -357,17 +481,50 @@ internal static partial class Compiler
 
             if (val.IsNullOrUndefined())
             {
-                return StringToElement("null");
+                return StringToElement("null", ws);
             }
 
-            // Serialize compactly (no whitespace) via Utf8JsonWriter
-            using System.IO.MemoryStream ms = new();
-            using (Utf8JsonWriter writer = new(ms))
+            // Serialize compactly to a rented buffer, then wrap as a string element
+            byte[] jsonBuffer = ArrayPool<byte>.Shared.Rent(256);
+            try
             {
-                val.WriteTo(writer);
-            }
+                int written;
+                using (System.IO.MemoryStream ms = new(jsonBuffer, writable: true))
+                {
+                    using (Utf8JsonWriter writer = new(ms))
+                    {
+                        val.WriteTo(writer);
+                    }
 
-            return StringToElement(Encoding.UTF8.GetString(ms.ToArray()));
+                    written = (int)ms.Position;
+                }
+
+                // The serialized JSON needs to be JSON-escaped and wrapped in quotes
+                ReadOnlySpan<byte> serialized = jsonBuffer.AsSpan(0, written);
+                int maxEscapedLen = (serialized.Length * 6) + 2;
+                byte[] escapedBuffer = ArrayPool<byte>.Shared.Rent(maxEscapedLen);
+                try
+                {
+                    int pos = 0;
+                    escapedBuffer[pos++] = (byte)'"';
+                    pos += WriteJsonEscapedFromUtf8(serialized, escapedBuffer.AsSpan(pos));
+                    escapedBuffer[pos++] = (byte)'"';
+
+                    FixedJsonValueDocument<JsonElement> doc =
+                        FixedJsonValueDocument<JsonElement>.ForStringFromSpan(
+                            new ReadOnlySpan<byte>(escapedBuffer, 0, pos));
+                    ws.RegisterDocument(doc);
+                    return doc.RootElement;
+                }
+                finally
+                {
+                    ArrayPool<byte>.Shared.Return(escapedBuffer);
+                }
+            }
+            finally
+            {
+                ArrayPool<byte>.Shared.Return(jsonBuffer);
+            }
         };
     }
 
@@ -383,9 +540,16 @@ internal static partial class Compiler
                 return val;
             }
 
-            JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateArrayBuilder(ws, 1);
-            doc.RootElement.AddItem(val);
-            return (JsonElement)doc.RootElement;
+            JMESPathSequenceBuilder builder = default;
+            try
+            {
+                builder.Add(val);
+                return builder.ToElement(ws);
+            }
+            finally
+            {
+                builder.ReturnArray();
+            }
         };
     }
 
@@ -399,22 +563,46 @@ internal static partial class Compiler
             JsonElement val = evalArg(data, ws);
             RequireObject("keys", val);
 
-            List<string> keyList = [];
-            foreach (JsonProperty<JsonElement> prop in val.EnumerateObject())
+            int count = val.GetPropertyCount();
+            if (count == 0)
             {
-                keyList.Add(prop.Name);
+                return JMESPathCodeGenHelpers.EmptyArrayElement;
             }
 
-            keyList.Sort(StringComparer.Ordinal);
-
-            JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateArrayBuilder(ws, keyList.Count);
-            JsonElement.Mutable root = doc.RootElement;
-            foreach (string key in keyList)
+            // Create key elements and sort by their UTF-8 content (ordinal sort)
+            JsonElement[] keys = ArrayPool<JsonElement>.Shared.Rent(count);
+            try
             {
-                root.AddItem(StringToElement(key));
-            }
+                int idx = 0;
+                foreach (JsonProperty<JsonElement> prop in val.EnumerateObject())
+                {
+                    using UnescapedUtf8JsonString name = prop.Utf8NameSpan;
+                    keys[idx++] = StringElementFromUnescapedUtf8(name.Span, ws);
+                }
 
-            return (JsonElement)root;
+                // Sort using UTF-8 ordinal comparison of the unescaped string content
+                Array.Sort(keys, 0, count, Utf8StringElementComparer.Instance);
+
+                JMESPathSequenceBuilder builder = default;
+                try
+                {
+                    for (int i = 0; i < count; i++)
+                    {
+                        builder.Add(keys[i]);
+                    }
+
+                    return builder.ToElement(ws);
+                }
+                finally
+                {
+                    builder.ReturnArray();
+                }
+            }
+            finally
+            {
+                keys.AsSpan(0, count).Clear();
+                ArrayPool<JsonElement>.Shared.Return(keys);
+            }
         };
     }
 
@@ -427,15 +615,20 @@ internal static partial class Compiler
             JsonElement val = evalArg(data, ws);
             RequireObject("values", val);
 
-            int count = val.GetPropertyCount();
-            JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateArrayBuilder(ws, count);
-            JsonElement.Mutable root = doc.RootElement;
-            foreach (JsonProperty<JsonElement> prop in val.EnumerateObject())
+            JMESPathSequenceBuilder builder = default;
+            try
             {
-                root.AddItem(prop.Value);
-            }
+                foreach (JsonProperty<JsonElement> prop in val.EnumerateObject())
+                {
+                    builder.Add(prop.Value);
+                }
 
-            return (JsonElement)root;
+                return builder.ToElement(ws);
+            }
+            finally
+            {
+                builder.ReturnArray();
+            }
         };
     }
 
@@ -450,31 +643,27 @@ internal static partial class Compiler
 
         return (in JsonElement data, JsonWorkspace ws) =>
         {
-            // Collect all key-value pairs, later values overwrite earlier ones
-            Dictionary<string, JsonElement> merged = [];
-            List<string> keyOrder = [];
-
+            // Use object builder directly — SetProperty handles last-wins for duplicate keys
+            // Estimate capacity: total properties across all inputs
+            int estimatedCount = 0;
             foreach (JMESPathEval evalArg in evalArgs)
             {
                 JsonElement val = evalArg(data, ws);
                 RequireObject("merge", val);
-                foreach (JsonProperty<JsonElement> prop in val.EnumerateObject())
-                {
-                    string key = prop.Name;
-                    if (!merged.ContainsKey(key))
-                    {
-                        keyOrder.Add(key);
-                    }
-
-                    merged[key] = prop.Value;
-                }
+                estimatedCount += val.GetPropertyCount();
             }
 
-            JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateObjectBuilder(ws, merged.Count);
+            JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateObjectBuilder(ws, estimatedCount);
             JsonElement.Mutable root = doc.RootElement;
-            foreach (string key in keyOrder)
+
+            foreach (JMESPathEval evalArg in evalArgs)
             {
-                root.SetProperty(Encoding.UTF8.GetBytes(key), merged[key]);
+                JsonElement val = evalArg(data, ws);
+                foreach (JsonProperty<JsonElement> prop in val.EnumerateObject())
+                {
+                    using UnescapedUtf8JsonString name = prop.Utf8NameSpan;
+                    root.SetProperty(name.Span, prop.Value);
+                }
             }
 
             return (JsonElement)root;
@@ -495,45 +684,53 @@ internal static partial class Compiler
                 return EmptyArrayElement;
             }
 
-            // Collect elements and determine type
-            JsonElement[] elements = new JsonElement[len];
-            for (int i = 0; i < len; i++)
+            // Rent array from pool
+            JsonElement[] elements = ArrayPool<JsonElement>.Shared.Rent(len);
+            try
             {
-                elements[i] = val[i];
-            }
-
-            JsonValueKind kind = elements[0].ValueKind;
-            if (kind != JsonValueKind.Number && kind != JsonValueKind.String)
-            {
-                throw new JMESPathException("invalid-type: sort() expects an array of numbers or strings.");
-            }
-
-            // Verify homogeneous types
-            for (int i = 1; i < len; i++)
-            {
-                if (elements[i].ValueKind != kind)
+                for (int i = 0; i < len; i++)
                 {
-                    throw new JMESPathException("invalid-type: sort() requires all elements to be the same type.");
+                    elements[i] = val[i];
+                }
+
+                JsonValueKind kind = elements[0].ValueKind;
+                if (kind != JsonValueKind.Number && kind != JsonValueKind.String)
+                {
+                    throw new JMESPathException("invalid-type: sort() expects an array of numbers or strings.");
+                }
+
+                // Verify homogeneous types
+                for (int i = 1; i < len; i++)
+                {
+                    if (elements[i].ValueKind != kind)
+                    {
+                        throw new JMESPathException("invalid-type: sort() requires all elements to be the same type.");
+                    }
+                }
+
+                // Stable sort: use index tiebreaker
+                StableSort(elements.AsSpan(0, len), kind);
+
+                JMESPathSequenceBuilder builder = default;
+                try
+                {
+                    for (int i = 0; i < len; i++)
+                    {
+                        builder.Add(elements[i]);
+                    }
+
+                    return builder.ToElement(ws);
+                }
+                finally
+                {
+                    builder.ReturnArray();
                 }
             }
-
-            if (kind == JsonValueKind.Number)
+            finally
             {
-                Array.Sort(elements, (a, b) => a.GetDouble().CompareTo(b.GetDouble()));
+                elements.AsSpan(0, len).Clear();
+                ArrayPool<JsonElement>.Shared.Return(elements);
             }
-            else
-            {
-                Array.Sort(elements, (a, b) => string.CompareOrdinal(a.GetString(), b.GetString()));
-            }
-
-            JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateArrayBuilder(ws, len);
-            JsonElement.Mutable root = doc.RootElement;
-            foreach (JsonElement e in elements)
-            {
-                root.AddItem(e);
-            }
-
-            return (JsonElement)root;
         };
     }
 
@@ -571,16 +768,22 @@ internal static partial class Compiler
         {
             JsonElement arr = evalArr(data, ws);
             RequireArray("map", arr);
-            int len = arr.GetArrayLength();
-            JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateArrayBuilder(ws, len);
-            JsonElement.Mutable root = doc.RootElement;
-            foreach (JsonElement item in arr.EnumerateArray())
-            {
-                JsonElement mapped = exprFn(item, ws);
-                root.AddItem(mapped.IsNullOrUndefined() ? NullElement : mapped);
-            }
 
-            return (JsonElement)root;
+            JMESPathSequenceBuilder builder = default;
+            try
+            {
+                foreach (JsonElement item in arr.EnumerateArray())
+                {
+                    JsonElement mapped = exprFn(item, ws);
+                    builder.Add(mapped.IsNullOrUndefined() ? NullElement : mapped);
+                }
+
+                return builder.ToElement(ws);
+            }
+            finally
+            {
+                builder.ReturnArray();
+            }
         };
     }
 
@@ -599,48 +802,54 @@ internal static partial class Compiler
                 return EmptyArrayElement;
             }
 
-            // Build array of (element, key) pairs
-            (JsonElement Element, JsonElement Key)[] pairs = new (JsonElement, JsonElement)[len];
-            for (int i = 0; i < len; i++)
+            // Rent array for (index, element, key) triples
+            var pairs = ArrayPool<(int Index, JsonElement Element, JsonElement Key)>.Shared.Rent(len);
+            try
             {
-                JsonElement item = arr[i];
-                JsonElement key = exprFn(item, ws);
-                pairs[i] = (item, key);
-            }
-
-            // Verify homogeneous key types
-            JsonValueKind keyKind = pairs[0].Key.ValueKind;
-            if (keyKind != JsonValueKind.Number && keyKind != JsonValueKind.String)
-            {
-                throw new JMESPathException("invalid-type: sort_by() expression must return numbers or strings.");
-            }
-
-            for (int i = 1; i < len; i++)
-            {
-                if (pairs[i].Key.ValueKind != keyKind)
+                for (int i = 0; i < len; i++)
                 {
-                    throw new JMESPathException("invalid-type: sort_by() expression must return consistent types.");
+                    JsonElement item = arr[i];
+                    JsonElement key = exprFn(item, ws);
+                    pairs[i] = (i, item, key);
+                }
+
+                // Verify homogeneous key types
+                JsonValueKind keyKind = pairs[0].Key.ValueKind;
+                if (keyKind != JsonValueKind.Number && keyKind != JsonValueKind.String)
+                {
+                    throw new JMESPathException("invalid-type: sort_by() expression must return numbers or strings.");
+                }
+
+                for (int i = 1; i < len; i++)
+                {
+                    if (pairs[i].Key.ValueKind != keyKind)
+                    {
+                        throw new JMESPathException("invalid-type: sort_by() expression must return consistent types.");
+                    }
+                }
+
+                StableSortBy(pairs, len, keyKind);
+
+                JMESPathSequenceBuilder builder = default;
+                try
+                {
+                    for (int i = 0; i < len; i++)
+                    {
+                        builder.Add(pairs[i].Element);
+                    }
+
+                    return builder.ToElement(ws);
+                }
+                finally
+                {
+                    builder.ReturnArray();
                 }
             }
-
-            // Stable sort using Array.Sort (which is stable since .NET Core)
-            if (keyKind == JsonValueKind.Number)
+            finally
             {
-                Array.Sort(pairs, (a, b) => a.Key.GetDouble().CompareTo(b.Key.GetDouble()));
+                pairs.AsSpan(0, len).Clear();
+                ArrayPool<(int, JsonElement, JsonElement)>.Shared.Return(pairs);
             }
-            else
-            {
-                Array.Sort(pairs, (a, b) => string.CompareOrdinal(a.Key.GetString(), b.Key.GetString()));
-            }
-
-            JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateArrayBuilder(ws, len);
-            JsonElement.Mutable root = doc.RootElement;
-            foreach ((JsonElement element, _) in pairs)
-            {
-                root.AddItem(element);
-            }
-
-            return (JsonElement)root;
         };
     }
 
@@ -741,41 +950,164 @@ internal static partial class Compiler
         return ZeroElement;
     }
 
-    private static JsonElement StringToElement(string value)
+    private static JsonElement StringToElement(string value, JsonWorkspace workspace)
     {
-        // JSON-escape and wrap in quotes
-        StringBuilder sb = new(value.Length + 8);
-        sb.Append('"');
-        foreach (char ch in value)
+        if (value.Length == 0)
         {
-            switch (ch)
-            {
-                case '"': sb.Append("\\\""); break;
-                case '\\': sb.Append("\\\\"); break;
-                case '\b': sb.Append("\\b"); break;
-                case '\f': sb.Append("\\f"); break;
-                case '\n': sb.Append("\\n"); break;
-                case '\r': sb.Append("\\r"); break;
-                case '\t': sb.Append("\\t"); break;
-                default:
-                    if (ch < 0x20)
-                    {
-                        sb.Append($"\\u{(int)ch:X4}");
-                    }
-                    else
-                    {
-                        sb.Append(ch);
-                    }
-
-                    break;
-            }
+            return EmptyStringElement;
         }
 
-        sb.Append('"');
-        return JsonElement.ParseValue(Encoding.UTF8.GetBytes(sb.ToString()));
+        // Encode string to UTF-8, then JSON-escape into a rented buffer
+        int maxUtf8 = value.Length * 3;
+        byte[] utf8Buffer = ArrayPool<byte>.Shared.Rent(maxUtf8);
+        try
+        {
+            int utf8Len = Encoding.UTF8.GetBytes(value, 0, value.Length, utf8Buffer, 0);
+            ReadOnlySpan<byte> unescaped = utf8Buffer.AsSpan(0, utf8Len);
+
+            int maxEscapedLen = (utf8Len * 6) + 2;
+            byte[] escapedBuffer = ArrayPool<byte>.Shared.Rent(maxEscapedLen);
+            try
+            {
+                int pos = 0;
+                escapedBuffer[pos++] = (byte)'"';
+                pos += WriteJsonEscapedFromUtf8(unescaped, escapedBuffer.AsSpan(pos));
+                escapedBuffer[pos++] = (byte)'"';
+
+                FixedJsonValueDocument<JsonElement> doc =
+                    FixedJsonValueDocument<JsonElement>.ForStringFromSpan(
+                        new ReadOnlySpan<byte>(escapedBuffer, 0, pos));
+                workspace.RegisterDocument(doc);
+                return doc.RootElement;
+            }
+            finally
+            {
+                ArrayPool<byte>.Shared.Return(escapedBuffer);
+            }
+        }
+        finally
+        {
+            ArrayPool<byte>.Shared.Return(utf8Buffer);
+        }
     }
 
     private static JsonElement BoolElement(bool value) => value ? TrueElement : FalseElement;
+
+    /// <summary>
+    /// Creates a string JsonElement from unescaped UTF-8 bytes (e.g., from a property name).
+    /// </summary>
+    private static JsonElement StringElementFromUnescapedUtf8(ReadOnlySpan<byte> unescaped, JsonWorkspace workspace)
+    {
+        if (unescaped.Length == 0)
+        {
+            return EmptyStringElement;
+        }
+
+        int maxEscapedLen = (unescaped.Length * 6) + 2;
+        byte[] escapedBuffer = ArrayPool<byte>.Shared.Rent(maxEscapedLen);
+        try
+        {
+            int pos = 0;
+            escapedBuffer[pos++] = (byte)'"';
+            pos += WriteJsonEscapedFromUtf8(unescaped, escapedBuffer.AsSpan(pos));
+            escapedBuffer[pos++] = (byte)'"';
+
+            FixedJsonValueDocument<JsonElement> doc =
+                FixedJsonValueDocument<JsonElement>.ForStringFromSpan(
+                    new ReadOnlySpan<byte>(escapedBuffer, 0, pos));
+            workspace.RegisterDocument(doc);
+            return doc.RootElement;
+        }
+        finally
+        {
+            ArrayPool<byte>.Shared.Return(escapedBuffer);
+        }
+    }
+
+    /// <summary>
+    /// Comparer for JsonElement strings using their unescaped UTF-8 byte content.
+    /// </summary>
+    private sealed class Utf8StringElementComparer : IComparer<JsonElement>
+    {
+        public static readonly Utf8StringElementComparer Instance = new();
+
+        public int Compare(JsonElement x, JsonElement y)
+        {
+            using UnescapedUtf8JsonString xStr = x.GetUtf8String();
+            using UnescapedUtf8JsonString yStr = y.GetUtf8String();
+            return xStr.Span.SequenceCompareTo(yStr.Span);
+        }
+    }
+
+    /// <summary>
+    /// Writes JSON-escaped UTF-8 bytes from unescaped UTF-8 source.
+    /// </summary>
+    private static int WriteJsonEscapedFromUtf8(ReadOnlySpan<byte> source, Span<byte> destination)
+    {
+        int pos = 0;
+
+        for (int i = 0; i < source.Length; i++)
+        {
+            byte b = source[i];
+
+            if (b == (byte)'"')
+            {
+                destination[pos++] = (byte)'\\';
+                destination[pos++] = (byte)'"';
+            }
+            else if (b == (byte)'\\')
+            {
+                destination[pos++] = (byte)'\\';
+                destination[pos++] = (byte)'\\';
+            }
+            else if (b < 0x20)
+            {
+                switch (b)
+                {
+                    case (byte)'\b':
+                        destination[pos++] = (byte)'\\';
+                        destination[pos++] = (byte)'b';
+                        break;
+                    case (byte)'\f':
+                        destination[pos++] = (byte)'\\';
+                        destination[pos++] = (byte)'f';
+                        break;
+                    case (byte)'\n':
+                        destination[pos++] = (byte)'\\';
+                        destination[pos++] = (byte)'n';
+                        break;
+                    case (byte)'\r':
+                        destination[pos++] = (byte)'\\';
+                        destination[pos++] = (byte)'r';
+                        break;
+                    case (byte)'\t':
+                        destination[pos++] = (byte)'\\';
+                        destination[pos++] = (byte)'t';
+                        break;
+                    default:
+                        destination[pos++] = (byte)'\\';
+                        destination[pos++] = (byte)'u';
+                        destination[pos++] = (byte)'0';
+                        destination[pos++] = (byte)'0';
+                        destination[pos++] = HexDigit(b >> 4);
+                        destination[pos++] = HexDigit(b & 0xF);
+                        break;
+                }
+            }
+            else
+            {
+                destination[pos++] = b;
+            }
+        }
+
+        return pos;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static byte HexDigit(int value)
+    {
+        return (byte)(value < 10 ? '0' + value : 'a' + value - 10);
+    }
 
     // ─── COMPARISON HELPERS ─────────────────────────────────────────
     private static JsonElement FindExtremum(in JsonElement array, bool isMax)
@@ -797,9 +1129,17 @@ internal static partial class Compiler
                 throw new JMESPathException("invalid-type: max()/min() requires all elements to be the same type.");
             }
 
-            int cmp = kind == JsonValueKind.Number
-                ? item.GetDouble().CompareTo(best.GetDouble())
-                : string.CompareOrdinal(item.GetString(), best.GetString());
+            int cmp;
+            if (kind == JsonValueKind.Number)
+            {
+                cmp = item.GetDouble().CompareTo(best.GetDouble());
+            }
+            else
+            {
+                using UnescapedUtf8JsonString itemStr = item.GetUtf8String();
+                using UnescapedUtf8JsonString bestStr = best.GetUtf8String();
+                cmp = itemStr.Span.SequenceCompareTo(bestStr.Span);
+            }
 
             if (isMax ? cmp > 0 : cmp < 0)
             {
@@ -840,9 +1180,17 @@ internal static partial class Compiler
                 throw new JMESPathException("invalid-type: max_by()/min_by() expression must return consistent types.");
             }
 
-            int cmp = keyKind == JsonValueKind.Number
-                ? key.GetDouble().CompareTo(bestKey.GetDouble())
-                : string.CompareOrdinal(key.GetString(), bestKey.GetString());
+            int cmp;
+            if (keyKind == JsonValueKind.Number)
+            {
+                cmp = key.GetDouble().CompareTo(bestKey.GetDouble());
+            }
+            else
+            {
+                using UnescapedUtf8JsonString keyStr = key.GetUtf8String();
+                using UnescapedUtf8JsonString bestKeyStr = bestKey.GetUtf8String();
+                cmp = keyStr.Span.SequenceCompareTo(bestKeyStr.Span);
+            }
 
             if (isMax ? cmp > 0 : cmp < 0)
             {
@@ -855,12 +1203,106 @@ internal static partial class Compiler
     }
 
     /// <summary>
-    /// Gets the length of a string in text elements (grapheme clusters),
-    /// matching JMESPath's Unicode-aware string length semantics.
+    /// Performs a stable sort of <see cref="JsonElement"/> values, using an
+    /// index-based tiebreaker to preserve original order for equal keys.
     /// </summary>
-    private static int GetStringInfoLength(string s)
+    private static void StableSort(Span<JsonElement> elements, JsonValueKind kind)
     {
-        StringInfo si = new(s);
-        return si.LengthInTextElements;
+        int len = elements.Length;
+
+        // Build (index, element) pairs for stable tiebreaker
+        (int Index, JsonElement Element)[] pairs = ArrayPool<(int, JsonElement)>.Shared.Rent(len);
+        try
+        {
+            for (int i = 0; i < len; i++)
+            {
+                pairs[i] = (i, elements[i]);
+            }
+
+            if (kind == JsonValueKind.Number)
+            {
+                Array.Sort(pairs, 0, len, StableNumberComparer.Instance);
+            }
+            else
+            {
+                Array.Sort(pairs, 0, len, StableStringComparer.Instance);
+            }
+
+            for (int i = 0; i < len; i++)
+            {
+                elements[i] = pairs[i].Element;
+            }
+        }
+        finally
+        {
+            pairs.AsSpan(0, len).Clear();
+            ArrayPool<(int, JsonElement)>.Shared.Return(pairs);
+        }
+    }
+
+    /// <summary>
+    /// Performs a stable sort of keyed pairs, using an index-based tiebreaker.
+    /// </summary>
+    private static void StableSortBy(
+        (int Index, JsonElement Element, JsonElement Key)[] pairs,
+        int len,
+        JsonValueKind keyKind)
+    {
+        if (keyKind == JsonValueKind.Number)
+        {
+            Array.Sort(pairs, 0, len, StableKeyedNumberComparer.Instance);
+        }
+        else
+        {
+            Array.Sort(pairs, 0, len, StableKeyedStringComparer.Instance);
+        }
+    }
+
+    private sealed class StableNumberComparer : IComparer<(int Index, JsonElement Element)>
+    {
+        public static readonly StableNumberComparer Instance = new();
+
+        public int Compare((int Index, JsonElement Element) a, (int Index, JsonElement Element) b)
+        {
+            int cmp = a.Element.GetDouble().CompareTo(b.Element.GetDouble());
+            return cmp != 0 ? cmp : a.Index.CompareTo(b.Index);
+        }
+    }
+
+    private sealed class StableStringComparer : IComparer<(int Index, JsonElement Element)>
+    {
+        public static readonly StableStringComparer Instance = new();
+
+        public int Compare((int Index, JsonElement Element) a, (int Index, JsonElement Element) b)
+        {
+            using UnescapedUtf8JsonString aStr = a.Element.GetUtf8String();
+            using UnescapedUtf8JsonString bStr = b.Element.GetUtf8String();
+            int cmp = aStr.Span.SequenceCompareTo(bStr.Span);
+            return cmp != 0 ? cmp : a.Index.CompareTo(b.Index);
+        }
+    }
+
+    private sealed class StableKeyedNumberComparer : IComparer<(int Index, JsonElement Element, JsonElement Key)>
+    {
+        public static readonly StableKeyedNumberComparer Instance = new();
+
+        public int Compare((int Index, JsonElement Element, JsonElement Key) a, (int Index, JsonElement Element, JsonElement Key) b)
+        {
+            int cmp = a.Key.GetDouble().CompareTo(b.Key.GetDouble());
+            return cmp != 0 ? cmp : a.Index.CompareTo(b.Index);
+        }
+    }
+
+    private sealed class StableKeyedStringComparer : IComparer<(int Index, JsonElement Element, JsonElement Key)>
+    {
+        public static readonly StableKeyedStringComparer Instance = new();
+
+        public int Compare((int Index, JsonElement Element, JsonElement Key) a, (int Index, JsonElement Element, JsonElement Key) b)
+        {
+            using UnescapedUtf8JsonString aStr = a.Key.GetUtf8String();
+            using UnescapedUtf8JsonString bStr = b.Key.GetUtf8String();
+            int cmp = aStr.Span.SequenceCompareTo(bStr.Span);
+            return cmp != 0 ? cmp : a.Index.CompareTo(b.Index);
+        }
     }
 }
