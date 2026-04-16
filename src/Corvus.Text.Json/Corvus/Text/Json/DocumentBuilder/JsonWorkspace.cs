@@ -77,6 +77,21 @@ public class JsonWorkspace : IDisposable
     }
 
     /// <summary>
+    /// Rents a UTF-8 JSON writer and associated buffer writer from the pool,
+    /// using the specified writer options instead of the workspace defaults.
+    /// </summary>
+    /// <param name="options">The writer options to configure the returned writer instance.</param>
+    /// <param name="defaultBufferSize">The default buffer size to use for the buffer writer.</param>
+    /// <param name="bufferWriter">When this method returns, contains the rented buffer writer.</param>
+    /// <returns>A rented UTF-8 JSON writer configured with the specified options.</returns>
+    public Utf8JsonWriter RentWriterAndBuffer(JsonWriterOptions options, int defaultBufferSize, out IByteBufferWriter bufferWriter)
+    {
+        Utf8JsonWriter result = Utf8JsonWriterCache.RentWriterAndBuffer(options, defaultBufferSize, out PooledByteBufferWriter writer);
+        bufferWriter = writer;
+        return result;
+    }
+
+    /// <summary>
     /// Rents a UTF-8 JSON writer from the pool that writes to the specified buffer writer.
     /// </summary>
     /// <param name="bufferWriter">The buffer writer to write JSON data to.</param>

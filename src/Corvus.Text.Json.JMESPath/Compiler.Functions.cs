@@ -427,19 +427,36 @@ internal static partial class Compiler
             if (val.ValueKind == JsonValueKind.Array)
             {
                 int len = val.GetArrayLength();
-                JMESPathSequenceBuilder builder = default;
+
+                // Copy elements forward via enumerator (O(n)), then reverse-iterate the managed array
+                JsonElement[] temp = ArrayPool<JsonElement>.Shared.Rent(len);
                 try
                 {
-                    for (int i = len - 1; i >= 0; i--)
+                    int idx = 0;
+                    foreach (JsonElement item in val.EnumerateArray())
                     {
-                        builder.Add(val[i]);
+                        temp[idx++] = item;
                     }
 
-                    return builder.ToElement(ws);
+                    JMESPathSequenceBuilder builder = default;
+                    try
+                    {
+                        for (int i = len - 1; i >= 0; i--)
+                        {
+                            builder.Add(temp[i]);
+                        }
+
+                        return builder.ToElement(ws);
+                    }
+                    finally
+                    {
+                        builder.ReturnArray();
+                    }
                 }
                 finally
                 {
-                    builder.ReturnArray();
+                    temp.AsSpan(0, len).Clear();
+                    ArrayPool<JsonElement>.Shared.Return(temp);
                 }
             }
 
@@ -481,51 +498,61 @@ internal static partial class Compiler
 
             if (val.IsNullOrUndefined())
             {
-                return StringToElement("null", ws);
+                return StringElementFromUnescapedUtf8("null"u8, ws);
             }
 
-            // Serialize compactly to a rented buffer, then wrap as a string element
-            byte[] jsonBuffer = ArrayPool<byte>.Shared.Rent(256);
+            return ToStringCore(val, ws);
+        };
+    }
+
+    private static readonly JsonWriterOptions CompactWriterOptions = new() { Indented = false };
+
+    private static JsonElement ToStringCore(in JsonElement val, JsonWorkspace ws)
+    {
+        // For numbers and booleans, GetRawUtf8Value is always compact — zero alloc
+        // For arrays and objects, re-serialize through a rented Utf8JsonWriter for compact output
+        // (GetRawUtf8Value would preserve original whitespace, e.g., "[0, 1]" instead of "[0,1]")
+        if (val.ValueKind is JsonValueKind.Array or JsonValueKind.Object)
+        {
+            Utf8JsonWriter writer = ws.RentWriterAndBuffer(CompactWriterOptions, 256, out IByteBufferWriter bufferWriter);
             try
             {
-                int written;
-                using (System.IO.MemoryStream ms = new(jsonBuffer, writable: true))
-                {
-                    using (Utf8JsonWriter writer = new(ms))
-                    {
-                        val.WriteTo(writer);
-                    }
-
-                    written = (int)ms.Position;
-                }
-
-                // The serialized JSON needs to be JSON-escaped and wrapped in quotes
-                ReadOnlySpan<byte> serialized = jsonBuffer.AsSpan(0, written);
-                int maxEscapedLen = (serialized.Length * 6) + 2;
-                byte[] escapedBuffer = ArrayPool<byte>.Shared.Rent(maxEscapedLen);
-                try
-                {
-                    int pos = 0;
-                    escapedBuffer[pos++] = (byte)'"';
-                    pos += WriteJsonEscapedFromUtf8(serialized, escapedBuffer.AsSpan(pos));
-                    escapedBuffer[pos++] = (byte)'"';
-
-                    FixedJsonValueDocument<JsonElement> doc =
-                        FixedJsonValueDocument<JsonElement>.ForStringFromSpan(
-                            new ReadOnlySpan<byte>(escapedBuffer, 0, pos));
-                    ws.RegisterDocument(doc);
-                    return doc.RootElement;
-                }
-                finally
-                {
-                    ArrayPool<byte>.Shared.Return(escapedBuffer);
-                }
+                val.WriteTo(writer);
+                writer.Flush();
+                return EscapeAndWrapAsString(bufferWriter.WrittenSpan, ws);
             }
             finally
             {
-                ArrayPool<byte>.Shared.Return(jsonBuffer);
+                ws.ReturnWriterAndBuffer(writer, bufferWriter);
             }
-        };
+        }
+
+        // Numbers, booleans: raw UTF-8 is already compact
+        using RawUtf8JsonString rawUtf8 = JsonMarshal.GetRawUtf8Value(val);
+        return EscapeAndWrapAsString(rawUtf8.Span, ws);
+    }
+
+    private static JsonElement EscapeAndWrapAsString(ReadOnlySpan<byte> serialized, JsonWorkspace ws)
+    {
+        int maxEscapedLen = (serialized.Length * 6) + 2;
+        byte[] escapedBuffer = ArrayPool<byte>.Shared.Rent(maxEscapedLen);
+        try
+        {
+            int pos = 0;
+            escapedBuffer[pos++] = (byte)'"';
+            pos += WriteJsonEscapedFromUtf8(serialized, escapedBuffer.AsSpan(pos));
+            escapedBuffer[pos++] = (byte)'"';
+
+            FixedJsonValueDocument<JsonElement> doc =
+                FixedJsonValueDocument<JsonElement>.ForStringFromSpan(
+                    new ReadOnlySpan<byte>(escapedBuffer, 0, pos));
+            ws.RegisterDocument(doc);
+            return doc.RootElement;
+        }
+        finally
+        {
+            ArrayPool<byte>.Shared.Return(escapedBuffer);
+        }
     }
 
     private static JMESPathEval CompileToArray(JMESPathNode[] args)
@@ -699,9 +726,10 @@ internal static partial class Compiler
             JsonElement[] elements = ArrayPool<JsonElement>.Shared.Rent(len);
             try
             {
-                for (int i = 0; i < len; i++)
+                int idx = 0;
+                foreach (JsonElement item in val.EnumerateArray())
                 {
-                    elements[i] = val[i];
+                    elements[idx++] = item;
                 }
 
                 JsonValueKind kind = elements[0].ValueKind;
@@ -817,11 +845,12 @@ internal static partial class Compiler
             var pairs = ArrayPool<(int Index, JsonElement Element, JsonElement Key)>.Shared.Rent(len);
             try
             {
-                for (int i = 0; i < len; i++)
+                int idx = 0;
+                foreach (JsonElement item in arr.EnumerateArray())
                 {
-                    JsonElement item = arr[i];
                     JsonElement key = exprFn(item, ws);
-                    pairs[i] = (i, item, key);
+                    pairs[idx] = (idx, item, key);
+                    idx++;
                 }
 
                 // Verify homogeneous key types
@@ -961,47 +990,6 @@ internal static partial class Compiler
         return ZeroElement;
     }
 
-    private static JsonElement StringToElement(string value, JsonWorkspace workspace)
-    {
-        if (value.Length == 0)
-        {
-            return EmptyStringElement;
-        }
-
-        // Encode string to UTF-8, then JSON-escape into a rented buffer
-        int maxUtf8 = value.Length * 3;
-        byte[] utf8Buffer = ArrayPool<byte>.Shared.Rent(maxUtf8);
-        try
-        {
-            int utf8Len = Encoding.UTF8.GetBytes(value, 0, value.Length, utf8Buffer, 0);
-            ReadOnlySpan<byte> unescaped = utf8Buffer.AsSpan(0, utf8Len);
-
-            int maxEscapedLen = (utf8Len * 6) + 2;
-            byte[] escapedBuffer = ArrayPool<byte>.Shared.Rent(maxEscapedLen);
-            try
-            {
-                int pos = 0;
-                escapedBuffer[pos++] = (byte)'"';
-                pos += WriteJsonEscapedFromUtf8(unescaped, escapedBuffer.AsSpan(pos));
-                escapedBuffer[pos++] = (byte)'"';
-
-                FixedJsonValueDocument<JsonElement> doc =
-                    FixedJsonValueDocument<JsonElement>.ForStringFromSpan(
-                        new ReadOnlySpan<byte>(escapedBuffer, 0, pos));
-                workspace.RegisterDocument(doc);
-                return doc.RootElement;
-            }
-            finally
-            {
-                ArrayPool<byte>.Shared.Return(escapedBuffer);
-            }
-        }
-        finally
-        {
-            ArrayPool<byte>.Shared.Return(utf8Buffer);
-        }
-    }
-
     private static JsonElement BoolElement(bool value) => value ? TrueElement : FalseElement;
 
     /// <summary>
@@ -1123,7 +1111,9 @@ internal static partial class Compiler
     // ─── COMPARISON HELPERS ─────────────────────────────────────────
     private static JsonElement FindExtremum(in JsonElement array, bool isMax)
     {
-        JsonElement best = array[0];
+        var enumerator = array.EnumerateArray();
+        enumerator.MoveNext();
+        JsonElement best = enumerator.Current;
         JsonValueKind kind = best.ValueKind;
 
         if (kind != JsonValueKind.Number && kind != JsonValueKind.String)
@@ -1131,10 +1121,9 @@ internal static partial class Compiler
             throw new JMESPathException("invalid-type: max()/min() expects an array of numbers or strings.");
         }
 
-        int len = array.GetArrayLength();
-        for (int i = 1; i < len; i++)
+        while (enumerator.MoveNext())
         {
-            JsonElement item = array[i];
+            JsonElement item = enumerator.Current;
             if (item.ValueKind != kind)
             {
                 throw new JMESPathException("invalid-type: max()/min() requires all elements to be the same type.");
@@ -1173,7 +1162,9 @@ internal static partial class Compiler
             return NullElement;
         }
 
-        JsonElement bestElement = array[0];
+        var enumerator = array.EnumerateArray();
+        enumerator.MoveNext();
+        JsonElement bestElement = enumerator.Current;
         JsonElement bestKey = exprFn(bestElement, ws);
         JsonValueKind keyKind = bestKey.ValueKind;
 
@@ -1182,9 +1173,9 @@ internal static partial class Compiler
             throw new JMESPathException("invalid-type: max_by()/min_by() expression must return numbers or strings.");
         }
 
-        for (int i = 1; i < len; i++)
+        while (enumerator.MoveNext())
         {
-            JsonElement item = array[i];
+            JsonElement item = enumerator.Current;
             JsonElement key = exprFn(item, ws);
             if (key.ValueKind != keyKind)
             {

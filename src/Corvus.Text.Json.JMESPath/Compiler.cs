@@ -532,29 +532,45 @@ internal static partial class Compiler
                 actualStop = stop.HasValue ? NormalizeSliceIndex(stop.Value, len, isStart: false, positiveStep: false) : -1;
             }
 
-            JMESPathSequenceBuilder builder = default;
+            // Copy elements via enumerator (O(n)) to avoid O(n²) indexed access
+            JsonElement[] temp = ArrayPool<JsonElement>.Shared.Rent(len);
             try
             {
-                if (actualStep > 0)
+                int idx = 0;
+                foreach (JsonElement item in data.EnumerateArray())
                 {
-                    for (int i = actualStart; i < actualStop; i += actualStep)
-                    {
-                        builder.Add(data[i]);
-                    }
-                }
-                else
-                {
-                    for (int i = actualStart; i > actualStop; i += actualStep)
-                    {
-                        builder.Add(data[i]);
-                    }
+                    temp[idx++] = item;
                 }
 
-                return builder.ToElement(workspace);
+                JMESPathSequenceBuilder builder = default;
+                try
+                {
+                    if (actualStep > 0)
+                    {
+                        for (int i = actualStart; i < actualStop; i += actualStep)
+                        {
+                            builder.Add(temp[i]);
+                        }
+                    }
+                    else
+                    {
+                        for (int i = actualStart; i > actualStop; i += actualStep)
+                        {
+                            builder.Add(temp[i]);
+                        }
+                    }
+
+                    return builder.ToElement(workspace);
+                }
+                finally
+                {
+                    builder.ReturnArray();
+                }
             }
             finally
             {
-                builder.ReturnArray();
+                temp.AsSpan(0, len).Clear();
+                ArrayPool<JsonElement>.Shared.Return(temp);
             }
         };
     }
@@ -718,9 +734,12 @@ internal static partial class Compiler
             return false;
         }
 
-        for (int i = 0; i < len; i++)
+        var leftEnum = left.EnumerateArray();
+        var rightEnum = right.EnumerateArray();
+        while (leftEnum.MoveNext())
         {
-            if (!DeepEquals(left[i], right[i]))
+            rightEnum.MoveNext();
+            if (!DeepEquals(leftEnum.Current, rightEnum.Current))
             {
                 return false;
             }
