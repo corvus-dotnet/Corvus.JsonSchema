@@ -1,0 +1,7 @@
+{
+    "if": [
+        { ">=": [{ "var": "order.total" }, 100] },
+        { "*": [{ "var": "order.total" }, 0.9] },
+        { "var": "order.total" }
+    ]
+}

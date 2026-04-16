@@ -71,4 +71,10 @@
   <Folder Name="/023-JsonPatch/">
     <Project Path="023-JsonPatch\JsonPatch.csproj" />
   </Folder>
+  <Folder Name="/024-JsonLogic/">
+    <Project Path="024-JsonLogic\JsonLogic.csproj" />
+  </Folder>
+  <Folder Name="/025-JSONata/">
+    <Project Path="025-JSONata\JSONata.csproj" />
+  </Folder>
 </Solution>
