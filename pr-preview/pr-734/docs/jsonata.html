@@ -259,6 +259,10 @@
 </tbody>
 </table>
 <p>The source generator and CLI tool produce optimized static C# that eliminates delegate dispatch. Benchmarks show the interpreted evaluator is <strong>up to 8× faster</strong> than <a href="https://github.com/mikhail-barg/jsonata.net.native">Jsonata.Net.Native</a> (the .NET reference implementation) with <strong>90–100% less memory allocation</strong>, and code-generated evaluators can be <strong>up to 12× faster</strong>.</p>
+<blockquote>
+<p><strong>Choosing between JSONata and JsonLogic:</strong> JSONata is ideal for <strong>querying, reshaping, and transforming</strong> JSON data — path navigation, filtering, object construction, and string manipulation. If you need <strong>declarative business rules</strong> — branching logic, predicates, and simple calculations expressed as JSON — see <a href="/Corvus.JsonSchema/pr-preview/pr-734/docs/json-logic.html">JsonLogic</a> instead.</p>
+</blockquote>
+<p><strong>Requirements:</strong> The runtime packages target <code>net9.0</code>, <code>net10.0</code>, <code>netstandard2.0</code>, and <code>netstandard2.1</code>. The source generator is an analyzer package and does not impose additional runtime requirements.</p>
 <h2 id="conformance">Conformance</h2>
 <p><img src="https://img.shields.io/badge/JSONata_Runtime-1665%2F1665_(100%25)-brightgreen" alt="JSONata Runtime Conformance" />
 <img src="https://img.shields.io/badge/JSONata_CodeGen-1665%2F1665_(100%25)-brightgreen" alt="JSONata CodeGen Conformance" /></p>
@@ -272,11 +276,21 @@
 <pre><code class="language-bash">dotnet add package Corvus.Text.Json
 dotnet add package Corvus.Text.Json.Jsonata
 </code></pre>
-<p>Evaluate an expression:</p>
+<p><strong>Simplest approach — string in, string out:</strong></p>
+<pre><code class="language-csharp">using Corvus.Text.Json.Jsonata;
+
+string? result = JsonataEvaluator.Default.EvaluateToString(
+    &quot;FirstName &amp; ' ' &amp; Surname&quot;,
+    &quot;&quot;&quot;{&quot;FirstName&quot;: &quot;Fred&quot;, &quot;Surname&quot;: &quot;Smith&quot;, &quot;Age&quot;: 28}&quot;&quot;&quot;);
+
+Console.WriteLine(result); // &quot;\&quot;Fred Smith\&quot;&quot;
+</code></pre>
+<p><code>EvaluateToString</code> parses the input JSON, evaluates the expression, and returns the result as a JSON string via <code>GetRawText()</code>. It is the simplest way to get started — no document parsing, workspace management, or disposal needed.</p>
+<p><strong>Full API — zero-allocation evaluation:</strong></p>
 <pre><code class="language-csharp">using Corvus.Text.Json;
 using Corvus.Text.Json.Jsonata;
 
-// Parse the input data
+// Parse the input data (using statement ensures pooled memory is returned)
 using var dataDoc = ParsedJsonDocument&lt;JsonElement&gt;.Parse(
     &quot;&quot;&quot;
     {
@@ -298,7 +312,7 @@ JsonElement result = JsonataEvaluator.Default.Evaluate(
 
 Console.WriteLine(result); // &quot;Fred Smith&quot;
 </code></pre>
-<p>The evaluator compiles the expression into a delegate tree on first use and caches it. Subsequent evaluations of the same expression skip compilation entirely.</p>
+<p>The evaluator compiles the expression into a delegate tree on first use and caches it. Subsequent evaluations of the same expression skip compilation entirely. Create one <code>JsonataEvaluator</code> instance and reuse it — <code>JsonataEvaluator.Default</code> provides a shared static instance.</p>
 <p>The workspace provides pooled memory for the result — <strong>zero GC allocation</strong> per evaluation for most expressions. The result remains valid until the workspace is disposed or reset.</p>
 <h2 id="evaluation-modes">Evaluation modes</h2>
 <p>Three evaluation modes are available. All three produce the same results for the same expression; they differ in when compilation happens and what overhead is incurred at evaluation time.</p>
@@ -764,7 +778,7 @@ catch (JsonataException ex)
 </tbody>
 </table>
 <h3 id="string-to-string-evaluation">String-to-string evaluation</h3>
-<p>For simple string-in, string-out transformations:</p>
+<p>For simple string-in, string-out transformations (also shown in <a href="#quick-start">Quick start</a>):</p>
 <pre><code class="language-csharp">string? result = evaluator.EvaluateToString(
     &quot;FirstName &amp; ' ' &amp; Surname&quot;,
     &quot;&quot;&quot;{&quot;FirstName&quot;: &quot;Fred&quot;, &quot;Surname&quot;: &quot;Smith&quot;}&quot;&quot;&quot;);
@@ -1206,6 +1220,61 @@ catch (JsonataException ex)
 </tr>
 </tbody>
 </table>
+<h2 id="common-pitfalls">Common pitfalls</h2>
+<h3 id="always-dispose-parsedjsondocument">Always dispose <code>ParsedJsonDocument</code></h3>
+<p><code>ParsedJsonDocument&lt;T&gt;</code> rents memory from <code>ArrayPool&lt;byte&gt;</code>. Forgetting to dispose it leaks pooled memory:</p>
+<pre><code class="language-csharp">// ❌ BAD — leaks pooled memory
+var doc = ParsedJsonDocument&lt;JsonElement&gt;.Parse(json);
+var result = evaluator.Evaluate(expression, doc.RootElement, workspace);
+
+// ✅ GOOD — using statement returns memory to the pool
+using var doc = ParsedJsonDocument&lt;JsonElement&gt;.Parse(json);
+var result = evaluator.Evaluate(expression, doc.RootElement, workspace);
+</code></pre>
+<h3 id="reset-the-workspace-in-loops">Reset the workspace in loops</h3>
+<p>Without <code>Reset()</code>, workspace memory grows with each evaluation. The workspace remains valid, but old results consume pooled memory unnecessarily:</p>
+<pre><code class="language-csharp">// ❌ BAD — workspace grows unboundedly
+foreach (var item in items)
+{
+    var result = evaluator.Evaluate(expression, item, workspace);
+    ProcessResult(result);
+}
+
+// ✅ GOOD — reset frees previous results
+foreach (var item in items)
+{
+    workspace.Reset();
+    var result = evaluator.Evaluate(expression, item, workspace);
+    ProcessResult(result);
+}
+</code></pre>
+<h3 id="dont-forget-additionalfiles-for-the-source-generator">Don't forget <code>AdditionalFiles</code> for the source generator</h3>
+<p>The source generator reads expression files from <code>AdditionalFiles</code>. Without the MSBuild item, the generator can't find the expression and produces diagnostic <code>JASG001</code>:</p>
+<pre><code class="language-xml">&lt;!-- ❌ Missing — generator produces JASG001 --&gt;
+&lt;ItemGroup&gt;
+  &lt;None Include=&quot;Expressions\transform.jsonata&quot; /&gt;
+&lt;/ItemGroup&gt;
+
+&lt;!-- ✅ Correct --&gt;
+&lt;ItemGroup&gt;
+  &lt;AdditionalFiles Include=&quot;Expressions\transform.jsonata&quot; /&gt;
+&lt;/ItemGroup&gt;
+</code></pre>
+<h3 id="result-lifetime-is-tied-to-the-workspace">Result lifetime is tied to the workspace</h3>
+<p>When you pass a workspace, the returned <code>JsonElement</code> is backed by that workspace's memory. Using the result after the workspace is disposed or reset produces undefined behavior:</p>
+<pre><code class="language-csharp">// ❌ BAD — result is invalid after workspace disposal
+JsonElement result;
+using (JsonWorkspace workspace = JsonWorkspace.Create())
+{
+    result = evaluator.Evaluate(expression, data, workspace);
+}
+Console.WriteLine(result.GetRawText()); // undefined behavior
+
+// ✅ GOOD — use result before workspace is disposed
+using JsonWorkspace workspace = JsonWorkspace.Create();
+JsonElement result = evaluator.Evaluate(expression, data, workspace);
+Console.WriteLine(result.GetRawText()); // safe
+</code></pre>
 <h2 id="comparison-with-other-libraries">Comparison with other libraries</h2>
 <p>The Corvus JSONata implementation is designed for high-throughput scenarios where expressions are evaluated millions of times. Key differences from the existing .NET implementation:</p>
 <table>
@@ -1280,7 +1349,14 @@ catch (JsonataException ex)
 </tbody>
 </table>
 <h3 id="benchmark-summary">Benchmark summary</h3>
-<p>Measured on .NET 10.0 (13th Gen Intel Core i7-13800H) across 95 scenarios covering property navigation, arithmetic, math functions, string operations, pattern matching, higher-order functions, predicate filtering, object construction, array functions, object functions, language operators, variable bindings, date/time, formatting, encoding, type conversion, aggregation, and zip/shuffle. Each benchmark compares three implementations: <code>Corvus</code> (interpreted), <code>CodeGen</code> (source-generated), and <code>Jsonata.Net.Native</code> (reference .NET implementation, v3.0.0).</p>
+<p>Across 95 scenarios, the Corvus implementation consistently outperforms <a href="https://github.com/mikhail-barg/jsonata.net.native">Jsonata.Net.Native</a> (the reference .NET implementation):</p>
+<ul>
+<li><strong>Interpreted runtime:</strong> 1.2–8× faster with 90–100% less memory allocation</li>
+<li><strong>Code-generated:</strong> 1.5–12× faster with near-zero allocation (0–200 B vs 1–12 KB)</li>
+<li><strong>Zero allocation</strong> in 70+ of 95 scenarios for the interpreted evaluator</li>
+<li><strong>Constant folding</strong> by the source generator reduces pure arithmetic and constant <code>$zip</code> to sub-nanosecond evaluation</li>
+</ul>
+<p>The detailed results below are measured on .NET 10.0 (13th Gen Intel Core i7-13800H). Each benchmark compares three implementations: <code>Corvus</code> (interpreted), <code>CodeGen</code> (source-generated), and <code>Jsonata.Net.Native</code> (v3.0.0).</p>
 <p>All Runtime benchmarks use caller-managed <code>JsonWorkspace</code> with the UTF-8 byte[] evaluation API and expression caching for zero-allocation evaluation. Jsonata.Net.Native uses pre-compiled <code>JsonataQuery</code> objects with pre-parsed <code>JToken</code> data. The &quot;Alloc&quot; columns show per-invocation GC allocation.</p>
 <h4 id="employee-transform-reference-benchmark">Employee transform (reference benchmark)</h4>
 <p>This benchmark replicates the <a href="https://github.com/mikhail-barg/jsonata.net.native">Jsonata.Net.Native benchmark scenario</a> — a multi-step expression with property navigation, string concatenation, and array predicate filtering against a real-world employee dataset:</p>

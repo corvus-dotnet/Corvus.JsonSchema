@@ -228,6 +228,9 @@
 <h2 id="overview">Overview</h2>
 <p><code>Corvus.Text.Json.JsonLogic</code> implements <a href="https://jsonlogic.com/">JsonLogic</a> for the Corvus.Text.Json document model — a safe, side-effect-free rule engine that evaluates JSON-encoded logic rules against JSON data.</p>
 <p><a href="https://jsonlogic.com/">JsonLogic</a> is a standard for expressing business rules as JSON. Rules are portable, storable in databases, and safely evaluated without allowing arbitrary code execution. The Corvus implementation passes the full <a href="https://jsonlogic.com/tests.json">official test suite</a> and adds support for extended numeric types (<code>BigNumber</code>) via custom operators.</p>
+<blockquote>
+<p><strong>Choosing between JsonLogic and JSONata:</strong> JsonLogic is ideal for <strong>declarative business rules</strong> — branching logic, predicates, and simple calculations expressed as JSON. If you need to <strong>query, reshape, or transform</strong> JSON data (path navigation, filtering, object construction), see <a href="/Corvus.JsonSchema/pr-preview/pr-734/docs/jsonata.html">JSONata</a> instead.</p>
+</blockquote>
 <p>Three evaluation modes are available:</p>
 <table>
 <thead>
@@ -256,6 +259,44 @@
 </tbody>
 </table>
 <p>The source generator and CLI tool produce optimized static C# that eliminates delegate dispatch and can constant-fold literal expressions. Benchmarks show generated code is <strong>60–95% faster</strong> than interpreted evaluation and <strong>60–95% faster</strong> than JsonEverything.</p>
+<p><strong>Requirements:</strong> The runtime packages target <code>net9.0</code>, <code>net10.0</code>, <code>netstandard2.0</code>, and <code>netstandard2.1</code>. The source generator is an analyzer package and does not impose additional runtime requirements.</p>
+<h2 id="quick-start">Quick start</h2>
+<p>Install the packages:</p>
+<pre><code class="language-bash">dotnet add package Corvus.Text.Json
+dotnet add package Corvus.Text.Json.JsonLogic
+</code></pre>
+<p><strong>Simplest approach — string in, string out:</strong></p>
+<pre><code class="language-csharp">using Corvus.Text.Json.JsonLogic;
+
+string? result = JsonLogicEvaluator.Default.EvaluateToString(
+    &quot;&quot;&quot;{&quot;+&quot;:[{&quot;var&quot;:&quot;a&quot;},{&quot;var&quot;:&quot;b&quot;}]}&quot;&quot;&quot;,
+    &quot;&quot;&quot;{&quot;a&quot;:3,&quot;b&quot;:4}&quot;&quot;&quot;);
+
+Console.WriteLine(result); // &quot;7&quot;
+</code></pre>
+<p><code>EvaluateToString</code> parses the rule and data, evaluates the rule, and returns the result as a JSON string. It is the simplest way to get started — no document parsing, workspace management, or disposal needed.</p>
+<p><strong>Full API — zero-allocation evaluation:</strong></p>
+<pre><code class="language-csharp">using Corvus.Text.Json;
+using Corvus.Text.Json.JsonLogic;
+
+// Parse the rule and data (using statements ensure pooled memory is returned)
+using var ruleDoc = ParsedJsonDocument&lt;JsonElement&gt;.Parse(
+    &quot;&quot;&quot;{&quot;+&quot;:[{&quot;var&quot;:&quot;a&quot;},{&quot;var&quot;:&quot;b&quot;}]}&quot;&quot;&quot;u8);
+using var dataDoc = ParsedJsonDocument&lt;JsonElement&gt;.Parse(
+    &quot;&quot;&quot;{&quot;a&quot;:3,&quot;b&quot;:4}&quot;&quot;&quot;u8);
+
+// Create a workspace for zero-allocation evaluation
+using JsonWorkspace workspace = JsonWorkspace.Create();
+
+// Evaluate
+JsonLogicRule rule = new(ruleDoc.RootElement);
+JsonElement result = JsonLogicEvaluator.Default.Evaluate(
+    rule, dataDoc.RootElement, workspace);
+
+Console.WriteLine(result.GetRawText()); // &quot;7&quot;
+</code></pre>
+<p>The evaluator compiles the rule into a delegate tree on first use and caches it. Subsequent evaluations of the same rule skip compilation entirely. Create one <code>JsonLogicEvaluator</code> instance and reuse it — <code>JsonLogicEvaluator.Default</code> provides a shared static instance.</p>
+<p>The workspace provides pooled memory for the result — <strong>zero GC allocation</strong> per evaluation for most rules. The result remains valid until the workspace is disposed or reset.</p>
 <h2 id="installation">Installation</h2>
 <h3 id="interpreted-mode-runtime-evaluation">Interpreted mode (runtime evaluation)</h3>
 <pre><code class="language-bash">dotnet add package Corvus.Text.Json
@@ -272,15 +313,16 @@ dotnet add package Corvus.Text.Json.JsonLogic.SourceGenerator
 </code></pre>
 <p>The <code>generatejsonschematypes</code> tool includes a <code>jsonlogic</code> subcommand. See <a href="#cli-code-generation">CLI code generation</a> below.</p>
 <h2 id="interpreted-evaluation">Interpreted evaluation</h2>
+<h3 id="basic-evaluation">Basic evaluation</h3>
 <p>Parse a rule, wrap it in a <code>JsonLogicRule</code>, and evaluate it against data:</p>
 <pre><code class="language-csharp">using Corvus.Text.Json;
 using Corvus.Text.Json.JsonLogic;
 
 // Parse the rule and data
 using var ruleDoc = ParsedJsonDocument&lt;JsonElement&gt;.Parse(
-    &quot;&quot;&quot;{&quot;+&quot;:[{&quot;var&quot;:&quot;a&quot;},{&quot;var&quot;:&quot;b&quot;}]}&quot;&quot;&quot;);
+    &quot;&quot;&quot;{&quot;+&quot;:[{&quot;var&quot;:&quot;a&quot;},{&quot;var&quot;:&quot;b&quot;}]}&quot;&quot;&quot;u8);
 using var dataDoc = ParsedJsonDocument&lt;JsonElement&gt;.Parse(
-    &quot;&quot;&quot;{&quot;a&quot;:3,&quot;b&quot;:4}&quot;&quot;&quot;);
+    &quot;&quot;&quot;{&quot;a&quot;:3,&quot;b&quot;:4}&quot;&quot;&quot;u8);
 
 // Evaluate
 JsonLogicRule rule = new(ruleDoc.RootElement);
@@ -289,7 +331,7 @@ JsonElement result = JsonLogicEvaluator.Default.Evaluate(rule, dataDoc.RootEleme
 // result is a number element with value 7
 Console.WriteLine(result.GetRawText()); // &quot;7&quot;
 </code></pre>
-<p>The evaluator compiles the rule into a delegate tree on first use and caches it. Subsequent evaluations of the same rule skip compilation entirely.</p>
+<p>When you omit the workspace, the evaluator creates one internally and returns a cloned, self-contained result.</p>
 <h3 id="caller-managed-workspace">Caller-managed workspace</h3>
 <p>For zero-allocation evaluation on the hot path, provide your own <code>JsonWorkspace</code>:</p>
 <pre><code class="language-csharp">using JsonWorkspace workspace = JsonWorkspace.Create();
@@ -297,8 +339,7 @@ Console.WriteLine(result.GetRawText()); // &quot;7&quot;
 JsonElement result = JsonLogicEvaluator.Default.Evaluate(
     rule, dataDoc.RootElement, workspace);
 </code></pre>
-<p>When you provide a workspace, the result element is backed by the workspace's memory. It remains valid until the workspace is disposed.</p>
-<p>When you omit the workspace, the evaluator creates one internally and returns a cloned, self-contained result.</p>
+<p>When you provide a workspace, the result element is backed by the workspace's memory. It remains valid until the workspace is disposed or reset.</p>
 <h2 id="source-generator">Source generator</h2>
 <p>For rules known at build time, the source generator eliminates all runtime compilation overhead. Declare a partial class annotated with <code>[JsonLogicRule]</code>, pointing at a JSON rule file:</p>
 <pre><code class="language-csharp">using Corvus.Text.Json.JsonLogic;
@@ -1030,16 +1071,80 @@ if (!val.TryGetDouble(out double d))
 <li><strong>With workspace</strong>: Results are allocated from the workspace. No heap allocations on the hot path. The caller is responsible for disposing the workspace.</li>
 <li><strong>Without workspace</strong>: The evaluator creates a temporary workspace internally and clones the result before disposing it.</li>
 </ul>
-<p>For best performance in tight loops or request-processing pipelines, reuse a workspace:</p>
+<p>For best performance in tight loops or request-processing pipelines, reuse a workspace and call <code>Reset()</code> between iterations:</p>
 <pre><code class="language-csharp">using JsonWorkspace workspace = JsonWorkspace.Create();
 
 foreach (var request in requests)
 {
+    workspace.Reset();
     using var dataDoc = ParsedJsonDocument&lt;JsonElement&gt;.Parse(request.Json);
     JsonElement result = JsonLogicEvaluator.Default.Evaluate(
         rule, dataDoc.RootElement, workspace);
     ProcessResult(result);
 }
+</code></pre>
+<p>This pattern achieves <strong>zero GC allocation</strong> per evaluation for most rules. The workspace pools memory internally via <code>ArrayPool&lt;byte&gt;</code> and reuses it across evaluations.</p>
+<p><strong>Clearing the expression cache:</strong></p>
+<p>The evaluator caches compiled delegate trees per rule. If your application dynamically generates many unique rules over time, the cache can grow unbounded. Use <code>ClearCache()</code> to release all cached compilations:</p>
+<pre><code class="language-csharp">var evaluator = new JsonLogicEvaluator();
+// ... many evaluations with unique rules ...
+
+evaluator.ClearCache(); // releases all cached delegate trees
+</code></pre>
+<h2 id="common-pitfalls">Common pitfalls</h2>
+<h3 id="always-dispose-parsedjsondocument">Always dispose <code>ParsedJsonDocument</code></h3>
+<p><code>ParsedJsonDocument&lt;T&gt;</code> rents memory from <code>ArrayPool&lt;byte&gt;</code>. Forgetting to dispose it leaks pooled memory:</p>
+<pre><code class="language-csharp">// ❌ BAD — leaks pooled memory
+var doc = ParsedJsonDocument&lt;JsonElement&gt;.Parse(json);
+var result = evaluator.Evaluate(rule, doc.RootElement);
+
+// ✅ GOOD — using statement returns memory to the pool
+using var doc = ParsedJsonDocument&lt;JsonElement&gt;.Parse(json);
+var result = evaluator.Evaluate(rule, doc.RootElement);
+</code></pre>
+<h3 id="reset-the-workspace-in-loops">Reset the workspace in loops</h3>
+<p>Without <code>Reset()</code>, workspace memory grows with each evaluation. The workspace remains valid, but old results consume pooled memory unnecessarily:</p>
+<pre><code class="language-csharp">// ❌ BAD — workspace grows unboundedly
+foreach (var item in items)
+{
+    var result = evaluator.Evaluate(rule, item, workspace);
+    ProcessResult(result);
+}
+
+// ✅ GOOD — reset frees previous results
+foreach (var item in items)
+{
+    workspace.Reset();
+    var result = evaluator.Evaluate(rule, item, workspace);
+    ProcessResult(result);
+}
+</code></pre>
+<h3 id="dont-forget-additionalfiles-for-the-source-generator">Don't forget <code>AdditionalFiles</code> for the source generator</h3>
+<p>The source generator reads rule files from <code>AdditionalFiles</code>. Without the MSBuild item, the generator can't find the rule and produces diagnostic <code>JLSG001</code>:</p>
+<pre><code class="language-xml">&lt;!-- ❌ Missing — generator produces JLSG001 --&gt;
+&lt;ItemGroup&gt;
+  &lt;None Include=&quot;Rules\discount.json&quot; /&gt;
+&lt;/ItemGroup&gt;
+
+&lt;!-- ✅ Correct --&gt;
+&lt;ItemGroup&gt;
+  &lt;AdditionalFiles Include=&quot;Rules\discount.json&quot; /&gt;
+&lt;/ItemGroup&gt;
+</code></pre>
+<h3 id="result-lifetime-is-tied-to-the-workspace">Result lifetime is tied to the workspace</h3>
+<p>When you pass a workspace, the returned <code>JsonElement</code> is backed by that workspace's memory. Using the result after the workspace is disposed or reset produces undefined behavior:</p>
+<pre><code class="language-csharp">// ❌ BAD — result is invalid after workspace disposal
+JsonElement result;
+using (JsonWorkspace workspace = JsonWorkspace.Create())
+{
+    result = evaluator.Evaluate(rule, data, workspace);
+}
+Console.WriteLine(result.GetRawText()); // undefined behavior
+
+// ✅ GOOD — use result before workspace is disposed
+using JsonWorkspace workspace = JsonWorkspace.Create();
+JsonElement result = evaluator.Evaluate(rule, data, workspace);
+Console.WriteLine(result.GetRawText()); // safe
 </code></pre>
 <h2 id="comparison-with-other-libraries">Comparison with other libraries</h2>
 <p>The Corvus JsonLogic implementation is designed for high-throughput scenarios where rules are evaluated millions of times. Key differences from other .NET implementations:</p>
