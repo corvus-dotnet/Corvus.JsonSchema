@@ -9,7 +9,7 @@ namespace Corvus.Text.Json.JMESPath;
 /// <summary>
 /// Compiles JMESPath expression strings into delegate trees for efficient evaluation.
 /// </summary>
-internal static class Compiler
+internal static partial class Compiler
 {
     private static readonly JsonElement NullElement = JsonElement.ParseValue("null"u8);
 
@@ -536,8 +536,39 @@ internal static class Compiler
 
     private static JMESPathEval CompileFunctionCall(FunctionCallNode node)
     {
-        // Phase 2: built-in functions
-        throw new JMESPathException($"Function '{Encoding.UTF8.GetString(node.Name)}' is not yet supported.");
+        string name = Encoding.UTF8.GetString(node.Name);
+        JMESPathNode[] args = node.Arguments;
+
+        return name switch
+        {
+            "abs" => CompileAbs(args),
+            "avg" => CompileAvg(args),
+            "ceil" => CompileCeil(args),
+            "contains" => CompileContains(args),
+            "ends_with" => CompileEndsWith(args),
+            "floor" => CompileFloor(args),
+            "join" => CompileJoin(args),
+            "keys" => CompileKeys(args),
+            "length" => CompileLength(args),
+            "map" => CompileMap(args),
+            "max" => CompileMax(args),
+            "max_by" => CompileMaxBy(args),
+            "merge" => CompileMerge(args),
+            "min" => CompileMin(args),
+            "min_by" => CompileMinBy(args),
+            "not_null" => CompileNotNull(args),
+            "reverse" => CompileReverse(args),
+            "sort" => CompileSort(args),
+            "sort_by" => CompileSortBy(args),
+            "starts_with" => CompileStartsWith(args),
+            "sum" => CompileSum(args),
+            "to_array" => CompileToArray(args),
+            "to_number" => CompileToNumber(args),
+            "to_string" => CompileToString(args),
+            "type" => CompileType(args),
+            "values" => CompileValues(args),
+            _ => throw new JMESPathException($"Unknown function: {name}()"),
+        };
     }
 
     /// <summary>
