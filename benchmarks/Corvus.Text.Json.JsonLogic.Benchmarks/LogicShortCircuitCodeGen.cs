@@ -19,11 +19,6 @@ public static class LogicShortCircuitCodeGen
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     public static JsonElement Evaluate(in JsonElement data, JsonWorkspace workspace)
     {
-        return EvalAnd(data, workspace);
-    }
-
-    private static JsonElement EvalAnd(in JsonElement data, JsonWorkspace workspace)
-    {
         // Operand 0: {">":[{"var":"temp"},0]}
         double cmp0 = CodeGenHelpers.CoerceToDouble(CodeGenHelpers.VarSimple(data, "temp"u8));
         JsonElement and0 = JsonLogicHelpers.BooleanElement(cmp0 > 0.0);

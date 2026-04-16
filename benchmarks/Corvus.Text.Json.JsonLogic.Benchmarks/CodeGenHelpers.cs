@@ -125,6 +125,7 @@ internal static class CodeGenHelpers
     /// Appends the UTF-8 coercion of a JsonElement to a byte buffer for cat operations.
     /// Strings append their unquoted content; numbers append raw digits; booleans/null append literal text.
     /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void AppendCoercedToBuffer(in JsonElement value, ref byte[] buffer, ref int pos)
     {
         if (value.IsNullOrUndefined())
@@ -143,10 +144,10 @@ internal static class CodeGenHelpers
                 ReadOnlySpan<byte> span = raw.Span;
                 if (span.Length > 2)
                 {
-                    ReadOnlySpan<byte> content = span.Slice(1, span.Length - 2);
-                    GrowBuffer(ref buffer, pos, content.Length);
-                    content.CopyTo(buffer.AsSpan(pos));
-                    pos += content.Length;
+                    int contentLen = span.Length - 2;
+                    GrowBuffer(ref buffer, pos, contentLen);
+                    span.Slice(1, contentLen).CopyTo(buffer.AsSpan(pos));
+                    pos += contentLen;
                 }
 
                 break;
@@ -205,7 +206,18 @@ internal static class CodeGenHelpers
                 case JsonValueKind.Number:
                     return JsonLogicHelpers.AreNumbersEqual(left, right);
                 case JsonValueKind.String:
+                {
+                    // Compare raw UTF-8 bytes first to avoid GetString() allocation.
+                    using RawUtf8JsonString rawLeft = JsonMarshal.GetRawUtf8Value(left);
+                    using RawUtf8JsonString rawRight = JsonMarshal.GetRawUtf8Value(right);
+                    if (rawLeft.Span.SequenceEqual(rawRight.Span))
+                    {
+                        return true;
+                    }
+
+                    // Raw bytes may differ due to escape sequences; fall back to string comparison.
                     return string.Equals(left.GetString(), right.GetString(), StringComparison.Ordinal);
+                }
                 case JsonValueKind.True:
                 case JsonValueKind.False:
                     return true; // Same kind already checked

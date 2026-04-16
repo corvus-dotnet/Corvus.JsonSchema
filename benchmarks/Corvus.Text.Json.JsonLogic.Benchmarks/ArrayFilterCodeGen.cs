@@ -17,11 +17,6 @@ public static class ArrayFilterCodeGen
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     public static JsonElement Evaluate(in JsonElement data, JsonWorkspace workspace)
     {
-        return EvalFilter(data, workspace);
-    }
-
-    private static JsonElement EvalFilter(in JsonElement data, JsonWorkspace workspace)
-    {
         JsonElement arr = CodeGenHelpers.VarSimple(data, "items"u8);
         if (arr.ValueKind != JsonValueKind.Array || arr.GetArrayLength() == 0)
         {
@@ -35,9 +30,10 @@ public static class ArrayFilterCodeGen
         foreach (JsonElement item in arr.EnumerateArray())
         {
             // Predicate: {">":[{"var":""},5]}
-            // var("") = item (current data context in filter)
-            double d = CodeGenHelpers.CoerceToDouble(item);
-            if (d > 5.0)
+            // var("") = item; known-numeric comparison — inline TryGetDouble directly.
+            if (item.ValueKind == JsonValueKind.Number
+                && item.TryGetDouble(out double d)
+                && d > 5.0)
             {
                 root.AddItem(item);
             }
