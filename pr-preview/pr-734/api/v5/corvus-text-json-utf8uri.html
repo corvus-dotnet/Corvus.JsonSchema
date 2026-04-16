@@ -252,6 +252,14 @@
 <td>Tries to create a new UTF-8 URI from the specified URI bytes.</td>
 </tr>
 <tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-utf8uri.tryescapedatastring.html#tryescapedatastring-readonlyspan-byte-span-byte-ref-int">TryEscapeDataString(ReadOnlySpan&lt;byte&gt;, Span&lt;byte&gt;, ref int)</a> <code>static</code></td>
+<td>Escapes a UTF-8 string per RFC 3986 <code>EscapeDataString</code> semantics. Unreserved characters (A-Z, a-z, 0-9, '-', '_', '.', '~') pass through; all other bytes are percent-encoded as <code>%XX</code> with uppercase...</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-utf8uri.tryescapeuri.html#tryescapeuri-readonlyspan-byte-span-byte-ref-int">TryEscapeUri(ReadOnlySpan&lt;byte&gt;, Span&lt;byte&gt;, ref int)</a> <code>static</code></td>
+<td>Escapes a UTF-8 string with URI semantics (matching JavaScript's <code>encodeURI</code>). RFC 3986 unreserved characters plus reserved characters (<code>: / ? # \[ \] @ ! $ &amp; ' ( ) * + , ; =</code>) pass through unescaped...</td>
+</tr>
+<tr>
 <td><a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-utf8uri.tryformatcanonical.html#tryformatcanonical-span-byte-ref-int">TryFormatCanonical(Span&lt;byte&gt;, ref int)</a></td>
 <td>Gets the URI in canonical form.</td>
 </tr>
@@ -262,6 +270,10 @@
 <tr>
 <td><a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-utf8uri.trymakerelative.html#trymakerelative-ref-utf8uri-span-byte-ref-utf8urireference">TryMakeRelative(ref Utf8Uri, Span&lt;byte&gt;, ref Utf8UriReference)</a></td>
 <td>Makes a relative URI reference from the current (base) URI to the target URI. If the scheme, host, and port match, a relative reference is created; otherwise, the full target URI is returned.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-utf8uri.tryunescapedatastring.html#tryunescapedatastring-readonlyspan-byte-span-byte-ref-int">TryUnescapeDataString(ReadOnlySpan&lt;byte&gt;, Span&lt;byte&gt;, ref int)</a> <code>static</code></td>
+<td>Unescapes a percent-encoded UTF-8 string, matching <code>Uri.UnescapeDataString</code> semantics. Valid <code>%XX</code> sequences are decoded. Non-ASCII decoded bytes are only emitted when consecutive <code>%XX</code> sequences f...</td>
 </tr>
 </tbody>
 </table>

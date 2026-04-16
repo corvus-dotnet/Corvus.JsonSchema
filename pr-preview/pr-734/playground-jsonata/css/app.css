@@ -340,8 +340,8 @@ html, body {
     font-size: 10px;
 }
 
-/* ── Panel copy button ── */
-.panel-copy-btn {
+/* ── Panel copy/maximize buttons ── */
+.panel-copy-btn, .panel-maximize-btn {
     background: none;
     border: none;
     color: var(--fg-muted);
@@ -351,8 +351,23 @@ html, body {
     line-height: 1;
 }
 
-.panel-copy-btn:hover {
+.panel-copy-btn:hover, .panel-maximize-btn:hover {
     color: var(--fg-secondary);
+}
+
+/* ── Maximize/minimize panels ── */
+.jsonata-grid.has-maximized {
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr;
+}
+
+.playground-panel.maximized {
+    grid-column: 1 / -1;
+    grid-row: 1 / -1;
+}
+
+.playground-panel.hidden {
+    display: none;
 }
 
 /* ── Dirty confirmation modal ── */

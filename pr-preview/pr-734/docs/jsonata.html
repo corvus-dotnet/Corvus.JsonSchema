@@ -210,6 +210,12 @@
                             <li class="sidebar__item">
                                 <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/json-patch.html">JSON Patch (RFC 6902)</a>
                             </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/json-logic.html">JsonLogic Rule Evaluation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/jso-nata.html">JSONata Expression Evaluation</a>
+                            </li>
                 </ul>
             </div>
         </div>
@@ -220,11 +226,11 @@
         <div class="doc__content">
             <h1>JSONata Query and Transformation Language</h1>
 <blockquote>
-<p><strong><a href="/Corvus.JsonSchema/pr-preview/pr-734/playground-jsonata/">Try the JSONata Playground</a></strong> ÔÇö evaluate JSONata expressions in your browser using the Corvus interpreted runtime.</p>
+<p><strong><a href="/Corvus.JsonSchema/pr-preview/pr-734/playground-jsonata/">Try the JSONata Playground</a></strong> — evaluate JSONata expressions in your browser using the Corvus interpreted runtime.</p>
 </blockquote>
 <h2 id="overview">Overview</h2>
-<p><code>Corvus.Text.Json.Jsonata</code> implements <a href="https://jsonata.org/">JSONata</a> for the Corvus.Text.Json document model ÔÇö a high-performance query and transformation language that evaluates JSONata expressions against JSON data with zero-allocation evaluation, compiled delegate trees, and pooled workspace memory.</p>
-<p><a href="https://jsonata.org/">JSONata</a> is an expressive, Turing-complete functional query and transformation language for JSON. It supports path navigation, predicate filtering, higher-order functions (<code>$map</code>, <code>$filter</code>, <code>$reduce</code>, <code>$sort</code>), object construction, string manipulation, arithmetic, regular expressions, and user-defined functions. The Corvus implementation passes <strong>all 1,665</strong> tests in the official <a href="https://github.com/jsonata-js/jsonata">JSONata test suite</a> (100% conformance). Two additional test cases in the upstream suite contain lone UTF-16 surrogates (<code>\uD800</code>) that are not representable in .NET's <code>System.String</code>; these are detected and gracefully skipped at the test-harness level (see <a href="#conformance">Conformance</a>).</p>
+<p><code>Corvus.Text.Json.Jsonata</code> implements <a href="https://jsonata.org/">JSONata</a> for the Corvus.Text.Json document model — a high-performance query and transformation language that evaluates JSONata expressions against JSON data with zero-allocation evaluation, compiled delegate trees, and pooled workspace memory.</p>
+<p><a href="https://jsonata.org/">JSONata</a> is an expressive, Turing-complete functional query and transformation language for JSON. It supports path navigation, predicate filtering, higher-order functions (<code>$map</code>, <code>$filter</code>, <code>$reduce</code>, <code>$sort</code>), object construction, string manipulation, arithmetic, regular expressions, and user-defined functions. The Corvus implementation passes <strong>all 1,665</strong> tests in the official <a href="https://github.com/jsonata-js/jsonata">JSONata test suite</a> (100% conformance). Two upstream test cases involve lone UTF-16 surrogates (<code>\uD800</code>) that cannot be threaded through .NET's string-based lexer; these are verified by dedicated unit tests that exercise the D3140 validation directly (see <a href="#conformance">Conformance</a>).</p>
 <p>Three evaluation modes are available:</p>
 <table>
 <thead>
@@ -252,14 +258,14 @@
 </tr>
 </tbody>
 </table>
-<p>The source generator and CLI tool produce optimized static C# that eliminates delegate dispatch. Benchmarks show the interpreted evaluator is <strong>up to 4├ù faster</strong> than <a href="https://github.com/mikhail-barg/jsonata.net.native">Jsonata.Net.Native</a> (the .NET reference implementation) with <strong>90ÔÇô100% less memory allocation</strong>, and code-generated evaluators can be <strong>up to 7├ù faster</strong>.</p>
+<p>The source generator and CLI tool produce optimized static C# that eliminates delegate dispatch. Benchmarks show the interpreted evaluator is <strong>up to 8× faster</strong> than <a href="https://github.com/mikhail-barg/jsonata.net.native">Jsonata.Net.Native</a> (the .NET reference implementation) with <strong>90–100% less memory allocation</strong>, and code-generated evaluators can be <strong>up to 12× faster</strong>.</p>
 <h2 id="conformance">Conformance</h2>
 <p><img src="https://img.shields.io/badge/JSONata_Runtime-1665%2F1665_(100%25)-brightgreen" alt="JSONata Runtime Conformance" />
 <img src="https://img.shields.io/badge/JSONata_CodeGen-1665%2F1665_(100%25)-brightgreen" alt="JSONata CodeGen Conformance" /></p>
 <p>Both the runtime evaluator and the code generation pipeline pass all <strong>1,665</strong> official JSONata test suite cases (100% conformance) on .NET 10.0. The runtime evaluator also passes on .NET Framework 4.8.1.</p>
 <p>The code generation pipeline compiles each expression to optimized static C#. Tests that require runtime-only features (variable bindings, custom recursion depth, execution timeout) are validated through the 5-parameter overload which delegates to the runtime evaluator.</p>
 <blockquote>
-<p><strong>Note on surrogate edge cases:</strong> The upstream test suite contains two additional cases (<code>function-encodeUrl/case002</code> and <code>function-encodeUrlComponent/case002</code>) whose expression strings include a lone UTF-16 surrogate (<code>\uD800</code>). These are not representable in .NET's <code>System.String</code> ÔÇö the JSON parser cannot load the test data. JavaScript engines (where jsonata-js runs) permit lone surrogates in strings, so these tests are valid on that platform. The test harness detects this at load time and gracefully skips both cases.</p>
+<p><strong>Note on surrogate edge cases:</strong> The upstream test suite contains two cases (<code>function-encodeUrl/case002</code> and <code>function-encodeUrlComponent/case002</code>) whose expression strings include a lone UTF-16 surrogate (<code>\uD800</code>). JavaScript engines permit lone surrogates in strings, so these tests work natively on the jsonata-js reference implementation. In .NET, the JSONata lexer materialises string tokens via <code>Encoding.UTF8.GetString</code>, which rejects the WTF-8 byte sequences that lone surrogates produce. The conformance test runner therefore cannot load these two expressions. However, the underlying D3140 error validation is fully covered by dedicated unit tests (<code>EncodeUrlSurrogateTests</code>) that construct the invalid data directly and verify both the runtime and code-generation paths throw the correct error.</p>
 </blockquote>
 <h2 id="quick-start">Quick start</h2>
 <p>Install the packages:</p>
@@ -293,7 +299,7 @@ JsonElement result = JsonataEvaluator.Default.Evaluate(
 Console.WriteLine(result); // &quot;Fred Smith&quot;
 </code></pre>
 <p>The evaluator compiles the expression into a delegate tree on first use and caches it. Subsequent evaluations of the same expression skip compilation entirely.</p>
-<p>The workspace provides pooled memory for the result ÔÇö <strong>zero GC allocation</strong> per evaluation for most expressions. The result remains valid until the workspace is disposed or reset.</p>
+<p>The workspace provides pooled memory for the result — <strong>zero GC allocation</strong> per evaluation for most expressions. The result remains valid until the workspace is disposed or reset.</p>
 <h2 id="evaluation-modes">Evaluation modes</h2>
 <p>Three evaluation modes are available. All three produce the same results for the same expression; they differ in when compilation happens and what overhead is incurred at evaluation time.</p>
 <h3 id="interpreted-runtime-evaluation">Interpreted (runtime evaluation)</h3>
@@ -306,7 +312,7 @@ JsonElement result = evaluator.Evaluate(
     dataDoc.RootElement,
     workspace);
 </code></pre>
-<p>Create one <code>JsonataEvaluator</code> instance and reuse it ÔÇö it caches compiled delegate trees per expression string and is thread-safe. For simple cases, <code>JsonataEvaluator.Default</code> provides a shared static instance.</p>
+<p>Create one <code>JsonataEvaluator</code> instance and reuse it — it caches compiled delegate trees per expression string and is thread-safe. For simple cases, <code>JsonataEvaluator.Default</code> provides a shared static instance.</p>
 <h3 id="source-generator-build-time-code-generation">Source generator (build-time code generation)</h3>
 <p>When expressions are known at build time, the source generator eliminates all runtime compilation overhead.</p>
 <p><strong>1. Install the source generator package:</strong></p>
@@ -346,7 +352,7 @@ internal static partial class EmployeeTransform
 <pre><code class="language-csharp">using JsonWorkspace workspace = JsonWorkspace.Create();
 JsonElement result = EmployeeTransform.Evaluate(dataDoc.RootElement, workspace);
 </code></pre>
-<p>The generated method is a static method that directly evaluates the expression without delegate dispatch. For expressions that use external variables (see <a href="#variable-bindings">Variable bindings</a>), the generator also emits overloads that accept <code>bindings</code>, <code>maxDepth</code>, and <code>timeLimitMs</code> parameters ÔÇö identical to the interpreted API.</p>
+<p>The generated method is a static method that directly evaluates the expression without delegate dispatch. For expressions that use external variables (see <a href="#variable-bindings">Variable bindings</a>), the generator also emits overloads that accept <code>bindings</code>, <code>maxDepth</code>, and <code>timeLimitMs</code> parameters — identical to the interpreted API.</p>
 <p><strong>Diagnostic messages:</strong></p>
 <table>
 <thead>
@@ -434,9 +440,9 @@ JsonElement result = EmployeeTransform.Evaluate(dataDoc.RootElement, workspace);
 
 var bindings = new Dictionary&lt;string, JsonataBinding&gt;
 {
-    [&quot;threshold&quot;] = JsonataBinding.FromValue(100.0),    // double ÔÇö stored inline, zero allocation
+    [&quot;threshold&quot;] = JsonataBinding.FromValue(100.0),    // double — stored inline, zero allocation
     [&quot;label&quot;]     = JsonataBinding.FromValue(&quot;High&quot;),    // string
-    [&quot;active&quot;]    = JsonataBinding.FromValue(true),      // bool ÔÇö pre-cached singleton
+    [&quot;active&quot;]    = JsonataBinding.FromValue(true),      // bool — pre-cached singleton
 };
 
 JsonElement result = JsonataEvaluator.Default.Evaluate(
@@ -448,9 +454,9 @@ JsonElement result = JsonataEvaluator.Default.Evaluate(
 <p><code>JsonataBinding.FromValue()</code> has overloads for <code>JsonElement</code>, <code>double</code>, <code>string</code>, and <code>bool</code>. The primitive overloads avoid allocating a <code>JsonElement</code> until the value is actually consumed by the expression. Implicit conversions from <code>JsonElement</code>, <code>double</code>, and <code>bool</code> are also available:</p>
 <pre><code class="language-csharp">var bindings = new Dictionary&lt;string, JsonataBinding&gt;
 {
-    [&quot;rate&quot;]  = 0.15,                                     // implicit double ÔåÆ JsonataBinding
-    [&quot;debug&quot;] = true,                                     // implicit bool ÔåÆ JsonataBinding
-    [&quot;config&quot;] = JsonElement.ParseValue(&quot;&quot;&quot;{&quot;a&quot;:1}&quot;&quot;&quot;u8), // implicit JsonElement ÔåÆ JsonataBinding
+    [&quot;rate&quot;]  = 0.15,                                     // implicit double → JsonataBinding
+    [&quot;debug&quot;] = true,                                     // implicit bool → JsonataBinding
+    [&quot;config&quot;] = JsonElement.ParseValue(&quot;&quot;&quot;{&quot;a&quot;:1}&quot;&quot;&quot;u8), // implicit JsonElement → JsonataBinding
 };
 </code></pre>
 <p><strong>Using <code>JsonElement</code> dictionary (legacy):</strong></p>
@@ -486,7 +492,7 @@ JsonElement result = JsonataEvaluator.Default.Evaluate(
   $factorial(10)
 )
 </code></pre>
-<p><strong>Higher-order functions</strong> ÔÇö all of the standard JSONata higher-order functions are supported:</p>
+<p><strong>Higher-order functions</strong> — all of the standard JSONata higher-order functions are supported:</p>
 <pre><code class="language-csharp">using JsonWorkspace workspace = JsonWorkspace.Create();
 
 // $filter with an inline predicate
@@ -511,7 +517,7 @@ JsonElement sorted = JsonataEvaluator.Default.Evaluate(
 </code></pre>
 <h4 id="external-c-function-bindings-interpreted-mode">External C# function bindings (interpreted mode)</h4>
 <p>Bind C# functions to JSONata variables using <code>JsonataBinding.FromFunction()</code>. Three overload families are available:</p>
-<h5 id="sequencefunction-oco-the-recommended-approach"><code>SequenceFunction</code> ÔÇö the recommended approach</h5>
+<h5 id="sequencefunction-the-recommended-approach"><code>SequenceFunction</code> — the recommended approach</h5>
 <p>The <code>SequenceFunction</code> delegate receives arguments as a <code>ReadOnlySpan&lt;Sequence&gt;</code> and returns a <code>Sequence</code> result. This avoids materializing <code>JsonElement</code> values for numeric operations and integrates directly with the JSONata runtime's value proxy system:</p>
 <pre><code class="language-csharp">using JsonWorkspace workspace = JsonWorkspace.Create();
 
@@ -553,20 +559,20 @@ JsonElement result = evaluator.Evaluate(
 </thead>
 <tbody>
 <tr>
-<td><code>args[i].AsDouble()</code> ÔÇö extract number</td>
-<td><code>Sequence.FromDouble(value, workspace)</code> ÔÇö zero allocation</td>
+<td><code>args[i].AsDouble()</code> — extract number</td>
+<td><code>Sequence.FromDouble(value, workspace)</code> — zero allocation</td>
 </tr>
 <tr>
-<td><code>args[i].TryGetDouble(out double v)</code> ÔÇö try extract</td>
-<td><code>Sequence.FromString(value, workspace)</code> ÔÇö materializes immediately</td>
+<td><code>args[i].TryGetDouble(out double v)</code> — try extract</td>
+<td><code>Sequence.FromString(value, workspace)</code> — materializes immediately</td>
 </tr>
 <tr>
-<td><code>args[i].AsElement()</code> ÔÇö materialize to <code>JsonElement</code></td>
-<td><code>Sequence.FromBool(value)</code> ÔÇö pre-cached singleton</td>
+<td><code>args[i].AsElement()</code> — materialize to <code>JsonElement</code></td>
+<td><code>Sequence.FromBool(value)</code> — pre-cached singleton</td>
 </tr>
 <tr>
-<td><code>args[i].AsElement(workspace)</code> ÔÇö materialize with workspace</td>
-<td><code>new Sequence(in jsonElement)</code> ÔÇö wrap existing element</td>
+<td><code>args[i].AsElement(workspace)</code> — materialize with workspace</td>
+<td><code>new Sequence(in jsonElement)</code> — wrap existing element</td>
 </tr>
 </tbody>
 </table>
@@ -580,21 +586,21 @@ JsonElement result = evaluator.Evaluate(
     parameterCount: 1,
     signature: &quot;&lt;s:s&gt;&quot;),  // expects a string argument, returns a string
 </code></pre>
-<h5 id="funcdouble-double-and-funcdouble-double-double-oco-numeric-convenience"><code>Func&lt;double, double&gt;</code> and <code>Func&lt;double, double, double&gt;</code> ÔÇö numeric convenience</h5>
+<h5 id="funcdouble-double-and-funcdouble-double-double-numeric-convenience"><code>Func&lt;double, double&gt;</code> and <code>Func&lt;double, double, double&gt;</code> — numeric convenience</h5>
 <p>For pure numeric functions, shorthand overloads automatically extract <code>double</code> arguments and wrap the result with zero allocation:</p>
 <pre><code class="language-csharp">var bindings = new Dictionary&lt;string, JsonataBinding&gt;
 {
-    // Unary: double ÔåÆ double (parameter count is inferred as 1)
+    // Unary: double → double (parameter count is inferred as 1)
     [&quot;cosine&quot;]   = JsonataBinding.FromFunction((double v) =&gt; Math.Cos(v)),
     [&quot;to_celsius&quot;] = JsonataBinding.FromFunction((double f) =&gt; (f - 32) * 5.0 / 9.0),
 
-    // Binary: (double, double) ÔåÆ double (parameter count is inferred as 2)
+    // Binary: (double, double) → double (parameter count is inferred as 2)
     [&quot;max&quot;]      = JsonataBinding.FromFunction((double a, double b) =&gt; Math.Max(a, b)),
     [&quot;distance&quot;] = JsonataBinding.FromFunction((double x, double y) =&gt; Math.Sqrt(x * x + y * y)),
 };
 </code></pre>
 <p>These are equivalent to writing the full <code>SequenceFunction</code> with <code>args[0].AsDouble()</code> / <code>Sequence.FromDouble(...)</code> boilerplate.</p>
-<h5 id="funcjsonelement-jsonworkspace-jsonelement-oco-legacy-overload"><code>Func&lt;JsonElement[], JsonWorkspace, JsonElement&gt;</code> ÔÇö legacy overload</h5>
+<h5 id="funcjsonelement-jsonworkspace-jsonelement-legacy-overload"><code>Func&lt;JsonElement[], JsonWorkspace, JsonElement&gt;</code> — legacy overload</h5>
 <p>The original function binding API receives <code>JsonElement[]</code> arguments and returns a <code>JsonElement</code>. It is retained for backwards compatibility:</p>
 <pre><code class="language-csharp">[&quot;double_it&quot;] = JsonataBinding.FromFunction(
     (JsonElement[] args, JsonWorkspace ws) =&gt;
@@ -604,7 +610,7 @@ JsonElement result = evaluator.Evaluate(
     },
     parameterCount: 1),
 </code></pre>
-<p>Prefer the <code>SequenceFunction</code> overload for new code ÔÇö it avoids the <code>JsonElement[]</code> array allocation and the <code>JsonElement.ParseValue</code> materialization overhead.</p>
+<p>Prefer the <code>SequenceFunction</code> overload for new code — it avoids the <code>JsonElement[]</code> array allocation and the <code>JsonElement.ParseValue</code> materialization overhead.</p>
 <h5 id="mixing-value-and-function-bindings">Mixing value and function bindings</h5>
 <p>You can mix value bindings and function bindings in the same dictionary. External functions are available as <code>$name(...)</code> in the expression:</p>
 <pre><code class="language-csharp">var bindings = new Dictionary&lt;string, JsonataBinding&gt;
@@ -673,7 +679,7 @@ catch (JsonataException ex) when (ex.Code == &quot;U1001&quot;)
 JsonElement result = evaluator.Evaluate(expression, data, workspace);
 // result is valid until workspace is disposed or reset
 </code></pre>
-<p><strong>Batch evaluation ÔÇö reset the workspace between iterations:</strong></p>
+<p><strong>Batch evaluation — reset the workspace between iterations:</strong></p>
 <pre><code class="language-csharp">var evaluator = new JsonataEvaluator();
 using JsonWorkspace workspace = JsonWorkspace.Create();
 
@@ -686,7 +692,7 @@ foreach (var item in items)
 </code></pre>
 <p>This pattern achieves <strong>zero GC allocation</strong> per evaluation for most expressions. The workspace pools memory internally via <code>ArrayPool&lt;byte&gt;</code> and reuses it across evaluations.</p>
 <p><strong>Without a workspace (convenience, allocates per call):</strong></p>
-<pre><code class="language-csharp">// Omit the workspace ÔÇö the evaluator creates one internally and clones the result
+<pre><code class="language-csharp">// Omit the workspace — the evaluator creates one internally and clones the result
 JsonElement result = evaluator.Evaluate(expression, data);
 </code></pre>
 <p>This overload creates a workspace internally, evaluates the expression, clones the result into a standalone <code>JsonElement</code>, and disposes the workspace. It is convenient for one-off evaluations but allocates on every call.</p>
@@ -766,7 +772,7 @@ catch (JsonataException ex)
 // result is the JSON string: &quot;Fred Smith&quot; (with quotes)
 // Returns null if the expression produces no result
 </code></pre>
-<p>This convenience method parses the input JSON, evaluates the expression, and returns the result as a JSON string via <code>GetRawText()</code>. It does not support bindings or resource limits ÔÇö use the full <code>Evaluate</code> overloads for those.</p>
+<p>This convenience method parses the input JSON, evaluates the expression, and returns the result as a JSON string via <code>GetRawText()</code>. It does not support bindings or resource limits — use the full <code>Evaluate</code> overloads for those.</p>
 <h2 id="supported-functions">Supported functions</h2>
 <p>The implementation supports the full set of <a href="https://docs.jsonata.org/overview">JSONata built-in functions</a>:</p>
 <h3 id="string-functions">String functions</h3>
@@ -1275,9 +1281,9 @@ catch (JsonataException ex)
 </table>
 <h3 id="benchmark-summary">Benchmark summary</h3>
 <p>Measured on .NET 10.0 (13th Gen Intel Core i7-13800H) across 95 scenarios covering property navigation, arithmetic, math functions, string operations, pattern matching, higher-order functions, predicate filtering, object construction, array functions, object functions, language operators, variable bindings, date/time, formatting, encoding, type conversion, aggregation, and zip/shuffle. Each benchmark compares three implementations: <code>Corvus</code> (interpreted), <code>CodeGen</code> (source-generated), and <code>Jsonata.Net.Native</code> (reference .NET implementation, v3.0.0).</p>
-<p>All Runtime benchmarks use caller-managed <code>JsonWorkspace</code> for zero-allocation evaluation. Jsonata.Net.Native uses pre-compiled <code>JsonataQuery</code> objects with pre-parsed <code>JToken</code> data. The &quot;Alloc&quot; columns show per-invocation GC allocation.</p>
+<p>All Runtime benchmarks use caller-managed <code>JsonWorkspace</code> with the UTF-8 byte[] evaluation API and expression caching for zero-allocation evaluation. Jsonata.Net.Native uses pre-compiled <code>JsonataQuery</code> objects with pre-parsed <code>JToken</code> data. The &quot;Alloc&quot; columns show per-invocation GC allocation.</p>
 <h4 id="employee-transform-reference-benchmark">Employee transform (reference benchmark)</h4>
-<p>This benchmark replicates the <a href="https://github.com/mikhail-barg/jsonata.net.native">Jsonata.Net.Native benchmark scenario</a> ÔÇö a multi-step expression with property navigation, string concatenation, and array predicate filtering against a real-world employee dataset:</p>
+<p>This benchmark replicates the <a href="https://github.com/mikhail-barg/jsonata.net.native">Jsonata.Net.Native benchmark scenario</a> — a multi-step expression with property navigation, string concatenation, and array predicate filtering against a real-world employee dataset:</p>
 <pre><code class="language-jsonata">{
   'name': Employee.FirstName &amp; ' ' &amp; Employee.Surname,
   'mobile': Contact.Phone[type = 'mobile'].number
@@ -1295,22 +1301,22 @@ catch (JsonataException ex)
 <tbody>
 <tr>
 <td>Runtime (interpreted)</td>
-<td style="text-align: right;">2,067 ns</td>
+<td style="text-align: right;">1,658 ns</td>
 <td style="text-align: right;">960 B</td>
 </tr>
 <tr>
 <td>Runtime (code-gen)</td>
-<td style="text-align: right;">1,826 ns</td>
+<td style="text-align: right;">1,585 ns</td>
 <td style="text-align: right;">240 B</td>
 </tr>
 <tr>
 <td>Jsonata.Net.Native</td>
-<td style="text-align: right;">3,529 ns</td>
+<td style="text-align: right;">3,032 ns</td>
 <td style="text-align: right;">9,920 B</td>
 </tr>
 </tbody>
 </table>
-<p>The runtime evaluator is <strong>1.7├ù faster</strong> with <strong>90% less allocation</strong> than the reference implementation. Code-gen is <strong>1.9├ù faster</strong> with 97% less allocation (240 B vs 9,920 B).</p>
+<p>The runtime evaluator is <strong>1.8× faster</strong> with <strong>90% less allocation</strong> than the reference implementation. Code-gen is <strong>1.9× faster</strong> with 97% less allocation (240 B vs 9,920 B).</p>
 <p><strong>Cold start</strong> (fresh compile + evaluate):</p>
 <table>
 <thead>
@@ -1323,17 +1329,17 @@ catch (JsonataException ex)
 <tbody>
 <tr>
 <td>Runtime (interpreted)</td>
-<td style="text-align: right;">6,695 ns</td>
-<td style="text-align: right;">10,824 B</td>
+<td style="text-align: right;">4,593 ns</td>
+<td style="text-align: right;">8,072 B</td>
 </tr>
 <tr>
 <td>Jsonata.Net.Native</td>
-<td style="text-align: right;">6,978 ns</td>
+<td style="text-align: right;">6,235 ns</td>
 <td style="text-align: right;">19,296 B</td>
 </tr>
 </tbody>
 </table>
-<p>Cold start is comparable in speed, but Corvus allocates 44% less memory.</p>
+<p>Cold start runtime is 1.4× faster than native, and Corvus allocates 58% less memory.</p>
 <h4 id="detailed-results">Detailed results</h4>
 <h5 id="property-navigation">Property navigation</h5>
 <table>
@@ -1353,9 +1359,9 @@ catch (JsonataException ex)
 <tr>
 <td>Deep path</td>
 <td><code>Account.Order.Product.Price</code></td>
-<td style="text-align: right;">707 ns</td>
-<td style="text-align: right;">524 ns</td>
-<td style="text-align: right;">626 ns</td>
+<td style="text-align: right;">650 ns</td>
+<td style="text-align: right;">458 ns</td>
+<td style="text-align: right;">544 ns</td>
 <td style="text-align: right;">120 B</td>
 <td style="text-align: right;">120 B</td>
 <td style="text-align: right;">1,816 B</td>
@@ -1363,9 +1369,9 @@ catch (JsonataException ex)
 <tr>
 <td>Flatten path</td>
 <td><code>Account.Order.Product[]</code></td>
-<td style="text-align: right;">757 ns</td>
-<td style="text-align: right;">573 ns</td>
-<td style="text-align: right;">437 ns</td>
+<td style="text-align: right;">630 ns</td>
+<td style="text-align: right;">432 ns</td>
+<td style="text-align: right;">399 ns</td>
 <td style="text-align: right;">120 B</td>
 <td style="text-align: right;">120 B</td>
 <td style="text-align: right;">1,520 B</td>
@@ -1373,9 +1379,9 @@ catch (JsonataException ex)
 <tr>
 <td>Quoted property</td>
 <td><code>Account.`Account Name`</code></td>
-<td style="text-align: right;">72 ns</td>
-<td style="text-align: right;">55 ns</td>
-<td style="text-align: right;">248 ns</td>
+<td style="text-align: right;">60 ns</td>
+<td style="text-align: right;">47 ns</td>
+<td style="text-align: right;">214 ns</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">1,024 B</td>
@@ -1383,9 +1389,9 @@ catch (JsonataException ex)
 <tr>
 <td>Array index</td>
 <td><code>Account.Order[0].OrderID</code></td>
-<td style="text-align: right;">103 ns</td>
-<td style="text-align: right;">91 ns</td>
-<td style="text-align: right;">357 ns</td>
+<td style="text-align: right;">87 ns</td>
+<td style="text-align: right;">79 ns</td>
+<td style="text-align: right;">317 ns</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">1,408 B</td>
@@ -1393,9 +1399,9 @@ catch (JsonataException ex)
 <tr>
 <td>5-level path</td>
 <td><code>a.b.c.d.e.value</code></td>
-<td style="text-align: right;">131 ns</td>
-<td style="text-align: right;">169 ns</td>
-<td style="text-align: right;">517 ns</td>
+<td style="text-align: right;">128 ns</td>
+<td style="text-align: right;">152 ns</td>
+<td style="text-align: right;">480 ns</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">1,936 B</td>
@@ -1403,16 +1409,16 @@ catch (JsonataException ex)
 <tr>
 <td>10-level path</td>
 <td><code>a.b.c.d.e.f.g.h.i.j.value</code></td>
-<td style="text-align: right;">250 ns</td>
-<td style="text-align: right;">273 ns</td>
-<td style="text-align: right;">871 ns</td>
+<td style="text-align: right;">220 ns</td>
+<td style="text-align: right;">249 ns</td>
+<td style="text-align: right;">701 ns</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">3,328 B</td>
 </tr>
 </tbody>
 </table>
-<p>The runtime evaluator is <strong>3ÔÇô4├ù faster</strong> for simple property access and deep navigation, with zero allocation. Flatten path (<code>Product[]</code>) through nested arrays is slower due to document model overhead, but uses <strong>92% less memory</strong>. Code-gen is <strong>2ÔÇô5├ù faster</strong> for most navigation patterns.</p>
+<p>The runtime evaluator is <strong>3.5–4.5× faster</strong> for simple property access and <strong>2–3.8× faster</strong> for deep navigation, with zero allocation. Flatten path (<code>Product[]</code>) through nested arrays is slower due to document model overhead, but uses <strong>92% less memory</strong>. Code-gen is <strong>3–5× faster</strong> for most navigation patterns.</p>
 <h5 id="arithmetic">Arithmetic</h5>
 <table>
 <thead>
@@ -1431,19 +1437,19 @@ catch (JsonataException ex)
 <tr>
 <td>Sum-product</td>
 <td><code>$sum(Account.Order.Product.(Price * Quantity))</code></td>
-<td style="text-align: right;">1,214 ns</td>
-<td style="text-align: right;">416 ns</td>
-<td style="text-align: right;">1,370 ns</td>
-<td style="text-align: right;">184 B</td>
+<td style="text-align: right;">1,168 ns</td>
+<td style="text-align: right;">598 ns</td>
+<td style="text-align: right;">1,275 ns</td>
+<td style="text-align: right;">32 B</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">6,480 B</td>
 </tr>
 <tr>
 <td>Map arithmetic</td>
 <td><code>Account.Order.Product.(Price * Quantity)</code></td>
-<td style="text-align: right;">1,119 ns</td>
-<td style="text-align: right;">807 ns</td>
-<td style="text-align: right;">1,110 ns</td>
+<td style="text-align: right;">1,058 ns</td>
+<td style="text-align: right;">800 ns</td>
+<td style="text-align: right;">1,016 ns</td>
 <td style="text-align: right;">152 B</td>
 <td style="text-align: right;">120 B</td>
 <td style="text-align: right;">5,536 B</td>
@@ -1451,16 +1457,16 @@ catch (JsonataException ex)
 <tr>
 <td>Pure arithmetic</td>
 <td><code>1 + 2 * 3 - 4 / 2 + 10 % 3</code></td>
-<td style="text-align: right;">182 ns</td>
-<td style="text-align: right;">0.6 ns</td>
-<td style="text-align: right;">244 ns</td>
+<td style="text-align: right;">186 ns</td>
+<td style="text-align: right;">0.5 ns</td>
+<td style="text-align: right;">218 ns</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">1,352 B</td>
 </tr>
 </tbody>
 </table>
-<p>Code-gen achieves <strong>3× speedup</strong> over the reference implementation for arithmetic with <strong>zero allocation</strong>. Pure arithmetic is <strong>constant-folded at compile time</strong> by the source generator (0.6 ns), achieving effectively infinite speedup. Map arithmetic shows runtime at parity with native while using <strong>97% less memory</strong>.</p>
+<p>Code-gen achieves <strong>2× speedup</strong> over the reference implementation for arithmetic with <strong>zero allocation</strong>. Pure arithmetic is <strong>constant-folded at compile time</strong> by the source generator (0.5 ns), achieving effectively infinite speedup. Map arithmetic shows runtime at parity with native while using <strong>97% less memory</strong>.</p>
 <h5 id="math-functions">Math functions</h5>
 <table>
 <thead>
@@ -1479,9 +1485,9 @@ catch (JsonataException ex)
 <tr>
 <td>$abs</td>
 <td><code>$abs(Account.Order[0].Product[0].Price - 50)</code></td>
-<td style="text-align: right;">635 ns</td>
-<td style="text-align: right;">565 ns</td>
-<td style="text-align: right;">876 ns</td>
+<td style="text-align: right;">601 ns</td>
+<td style="text-align: right;">529 ns</td>
+<td style="text-align: right;">835 ns</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">3,040 B</td>
@@ -1489,9 +1495,9 @@ catch (JsonataException ex)
 <tr>
 <td>$ceil</td>
 <td><code>$ceil(Account.Order[0].Product[0].Price)</code></td>
-<td style="text-align: right;">282 ns</td>
-<td style="text-align: right;">254 ns</td>
-<td style="text-align: right;">774 ns</td>
+<td style="text-align: right;">274 ns</td>
+<td style="text-align: right;">238 ns</td>
+<td style="text-align: right;">777 ns</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">2,888 B</td>
@@ -1499,9 +1505,9 @@ catch (JsonataException ex)
 <tr>
 <td>$floor</td>
 <td><code>$floor(Account.Order[0].Product[0].Price)</code></td>
-<td style="text-align: right;">308 ns</td>
-<td style="text-align: right;">263 ns</td>
-<td style="text-align: right;">795 ns</td>
+<td style="text-align: right;">270 ns</td>
+<td style="text-align: right;">229 ns</td>
+<td style="text-align: right;">745 ns</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">2,888 B</td>
@@ -1509,9 +1515,9 @@ catch (JsonataException ex)
 <tr>
 <td>$power</td>
 <td><code>$power(Account.Order[0].Product[0].Price, 2)</code></td>
-<td style="text-align: right;">509 ns</td>
-<td style="text-align: right;">374 ns</td>
-<td style="text-align: right;">941 ns</td>
+<td style="text-align: right;">483 ns</td>
+<td style="text-align: right;">343 ns</td>
+<td style="text-align: right;">934 ns</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">3,200 B</td>
@@ -1519,9 +1525,9 @@ catch (JsonataException ex)
 <tr>
 <td>$round</td>
 <td><code>$round(Account.Order[0].Product[0].Price, 1)</code></td>
-<td style="text-align: right;">497 ns</td>
-<td style="text-align: right;">319 ns</td>
-<td style="text-align: right;">1,032 ns</td>
+<td style="text-align: right;">461 ns</td>
+<td style="text-align: right;">298 ns</td>
+<td style="text-align: right;">936 ns</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">3,224 B</td>
@@ -1529,16 +1535,16 @@ catch (JsonataException ex)
 <tr>
 <td>$sqrt</td>
 <td><code>$sqrt(Account.Order[0].Product[0].Price)</code></td>
-<td style="text-align: right;">325 ns</td>
-<td style="text-align: right;">208 ns</td>
-<td style="text-align: right;">617 ns</td>
+<td style="text-align: right;">335 ns</td>
+<td style="text-align: right;">291 ns</td>
+<td style="text-align: right;">773 ns</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">2,888 B</td>
 </tr>
 </tbody>
 </table>
-<p>Math functions achieve <strong>2–3× speedup</strong> with <strong>zero allocation</strong> across the board. Code-gen is <strong>1.5–3× faster</strong> than native for all six functions. <code>$round</code> code-gen is <strong>3.2× faster</strong> than native; <code>$sqrt</code> code-gen is <strong>3× faster</strong>.</p>
+<p>Math functions achieve <strong>1.4–2.8× speedup</strong> with <strong>zero allocation</strong> across the board. Code-gen is <strong>1.6–3.3× faster</strong> than native for all six functions. <code>$round</code> code-gen is <strong>3.1× faster</strong> than native; <code>$sqrt</code> code-gen is <strong>2.7× faster</strong>.</p>
 <h5 id="string-concatenation">String concatenation</h5>
 <table>
 <thead>
@@ -1557,9 +1563,9 @@ catch (JsonataException ex)
 <tr>
 <td>Simple concat</td>
 <td><code>FirstName &amp; ' ' &amp; Surname</code></td>
-<td style="text-align: right;">495 ns</td>
-<td style="text-align: right;">214 ns</td>
-<td style="text-align: right;">392 ns</td>
+<td style="text-align: right;">366 ns</td>
+<td style="text-align: right;">177 ns</td>
+<td style="text-align: right;">332 ns</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">1,408 B</td>
@@ -1567,9 +1573,9 @@ catch (JsonataException ex)
 <tr>
 <td>Concat + number</td>
 <td><code>FirstName &amp; ' ' &amp; Surname &amp; ', age ' &amp; $string(Age)</code></td>
-<td style="text-align: right;">839 ns</td>
-<td style="text-align: right;">284 ns</td>
-<td style="text-align: right;">1,046 ns</td>
+<td style="text-align: right;">727 ns</td>
+<td style="text-align: right;">236 ns</td>
+<td style="text-align: right;">865 ns</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">3,136 B</td>
@@ -1577,16 +1583,16 @@ catch (JsonataException ex)
 <tr>
 <td>Join array</td>
 <td><code>$join([Address.Street, Address.City, Address.Postcode], ', ')</code></td>
-<td style="text-align: right;">894 ns</td>
-<td style="text-align: right;">306 ns</td>
-<td style="text-align: right;">1,372 ns</td>
+<td style="text-align: right;">752 ns</td>
+<td style="text-align: right;">241 ns</td>
+<td style="text-align: right;">1,173 ns</td>
 <td style="text-align: right;">120 B</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">4,040 B</td>
 </tr>
 </tbody>
 </table>
-<p>Code-gen is <strong>2ÔÇô5├ù faster</strong> than the reference implementation for string operations with zero allocation. The interpreted evaluator matches or beats native for multi-part concatenation.</p>
+<p>Code-gen is <strong>2–5× faster</strong> than the reference implementation for string operations with zero allocation. The interpreted evaluator matches or beats native for multi-part concatenation.</p>
 <h5 id="string-functions-1">String functions</h5>
 <table>
 <thead>
@@ -1605,9 +1611,9 @@ catch (JsonataException ex)
 <tr>
 <td>$contains</td>
 <td><code>$contains(Product.&quot;Product Name&quot;, &quot;Hat&quot;)</code></td>
-<td style="text-align: right;">291 ns</td>
-<td style="text-align: right;">182 ns</td>
-<td style="text-align: right;">1,070 ns</td>
+<td style="text-align: right;">252 ns</td>
+<td style="text-align: right;">153 ns</td>
+<td style="text-align: right;">895 ns</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">3,136 B</td>
@@ -1615,9 +1621,9 @@ catch (JsonataException ex)
 <tr>
 <td>$length</td>
 <td><code>$length(Product.&quot;Product Name&quot;)</code></td>
-<td style="text-align: right;">328 ns</td>
-<td style="text-align: right;">275 ns</td>
-<td style="text-align: right;">907 ns</td>
+<td style="text-align: right;">302 ns</td>
+<td style="text-align: right;">224 ns</td>
+<td style="text-align: right;">754 ns</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">2,864 B</td>
@@ -1625,9 +1631,9 @@ catch (JsonataException ex)
 <tr>
 <td>$lowercase</td>
 <td><code>$lowercase(Product.&quot;Product Name&quot;)</code></td>
-<td style="text-align: right;">318 ns</td>
-<td style="text-align: right;">249 ns</td>
-<td style="text-align: right;">933 ns</td>
+<td style="text-align: right;">267 ns</td>
+<td style="text-align: right;">218 ns</td>
+<td style="text-align: right;">781 ns</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">2,864 B</td>
@@ -1635,9 +1641,9 @@ catch (JsonataException ex)
 <tr>
 <td>$uppercase</td>
 <td><code>$uppercase(Product.&quot;Product Name&quot;)</code></td>
-<td style="text-align: right;">323 ns</td>
-<td style="text-align: right;">263 ns</td>
-<td style="text-align: right;">986 ns</td>
+<td style="text-align: right;">260 ns</td>
+<td style="text-align: right;">209 ns</td>
+<td style="text-align: right;">791 ns</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">2,864 B</td>
@@ -1645,9 +1651,9 @@ catch (JsonataException ex)
 <tr>
 <td>$trim</td>
 <td><code>$trim(Product.&quot;Product Name&quot;)</code></td>
-<td style="text-align: right;">428 ns</td>
-<td style="text-align: right;">284 ns</td>
-<td style="text-align: right;">1,112 ns</td>
+<td style="text-align: right;">350 ns</td>
+<td style="text-align: right;">238 ns</td>
+<td style="text-align: right;">950 ns</td>
 <td style="text-align: right;">96 B</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">2,864 B</td>
@@ -1655,9 +1661,9 @@ catch (JsonataException ex)
 <tr>
 <td>$substring</td>
 <td><code>$substring(Product.&quot;Product Name&quot;, 0, 6)</code></td>
-<td style="text-align: right;">681 ns</td>
-<td style="text-align: right;">321 ns</td>
-<td style="text-align: right;">1,147 ns</td>
+<td style="text-align: right;">571 ns</td>
+<td style="text-align: right;">272 ns</td>
+<td style="text-align: right;">959 ns</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">3,416 B</td>
@@ -1665,9 +1671,9 @@ catch (JsonataException ex)
 <tr>
 <td>$substringBefore</td>
 <td><code>$substringBefore(Product.&quot;Product Name&quot;, &quot; &quot;)</code></td>
-<td style="text-align: right;">397 ns</td>
-<td style="text-align: right;">242 ns</td>
-<td style="text-align: right;">1,065 ns</td>
+<td style="text-align: right;">316 ns</td>
+<td style="text-align: right;">204 ns</td>
+<td style="text-align: right;">865 ns</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">3,120 B</td>
@@ -1675,9 +1681,9 @@ catch (JsonataException ex)
 <tr>
 <td>$substringAfter</td>
 <td><code>$substringAfter(Product.&quot;Product Name&quot;, &quot; &quot;)</code></td>
-<td style="text-align: right;">364 ns</td>
-<td style="text-align: right;">273 ns</td>
-<td style="text-align: right;">1,029 ns</td>
+<td style="text-align: right;">303 ns</td>
+<td style="text-align: right;">195 ns</td>
+<td style="text-align: right;">899 ns</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">3,112 B</td>
@@ -1685,16 +1691,16 @@ catch (JsonataException ex)
 <tr>
 <td>$pad</td>
 <td><code>$pad(Account.Order[0].Product[0].&quot;Product Name&quot;, 20)</code></td>
-<td style="text-align: right;">556 ns</td>
-<td style="text-align: right;">357 ns</td>
-<td style="text-align: right;">1,151 ns</td>
+<td style="text-align: right;">472 ns</td>
+<td style="text-align: right;">300 ns</td>
+<td style="text-align: right;">993 ns</td>
 <td style="text-align: right;">360 B</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">3,808 B</td>
 </tr>
 </tbody>
 </table>
-<p>String functions show <strong>3ÔÇô6├ù speedup</strong> across the board with <strong>zero or minimal allocation</strong> for both runtime and code-gen. Code-gen <code>$pad</code> achieves zero allocation by using <code>stackalloc</code> for code-point indexing. The reference implementation allocates 2ÔÇô4 KB per call due to <code>JToken</code> intermediaries.</p>
+<p>String functions show <strong>3–6× speedup</strong> across the board with <strong>zero or minimal allocation</strong> for both runtime and code-gen. Code-gen <code>$pad</code> achieves zero allocation by using <code>stackalloc</code> for code-point indexing. The reference implementation allocates 2–4 KB per call due to <code>JToken</code> intermediaries.</p>
 <h5 id="pattern-matching">Pattern matching</h5>
 <table>
 <thead>
@@ -1713,9 +1719,9 @@ catch (JsonataException ex)
 <tr>
 <td>$match</td>
 <td><code>$match(text, /\d{3}-\d{3}-\d{4}/)</code></td>
-<td style="text-align: right;">1,273 ns</td>
-<td style="text-align: right;">1,173 ns</td>
-<td style="text-align: right;">2,662 ns</td>
+<td style="text-align: right;">1,091 ns</td>
+<td style="text-align: right;">828 ns</td>
+<td style="text-align: right;">2,310 ns</td>
 <td style="text-align: right;">152 B</td>
 <td style="text-align: right;">152 B</td>
 <td style="text-align: right;">8,072 B</td>
@@ -1723,9 +1729,9 @@ catch (JsonataException ex)
 <tr>
 <td>$replace (regex)</td>
 <td><code>$replace(text, /\d{3}-\d{3}-\d{4}/, &quot;***&quot;)</code></td>
-<td style="text-align: right;">912 ns</td>
-<td style="text-align: right;">554 ns</td>
-<td style="text-align: right;">3,041 ns</td>
+<td style="text-align: right;">719 ns</td>
+<td style="text-align: right;">457 ns</td>
+<td style="text-align: right;">2,760 ns</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">9,312 B</td>
@@ -1733,9 +1739,9 @@ catch (JsonataException ex)
 <tr>
 <td>$replace (string)</td>
 <td><code>$replace(text, &quot;555&quot;, &quot;XXX&quot;)</code></td>
-<td style="text-align: right;">368 ns</td>
-<td style="text-align: right;">342 ns</td>
-<td style="text-align: right;">1,273 ns</td>
+<td style="text-align: right;">319 ns</td>
+<td style="text-align: right;">262 ns</td>
+<td style="text-align: right;">1,108 ns</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">3,264 B</td>
@@ -1743,9 +1749,9 @@ catch (JsonataException ex)
 <tr>
 <td>$split (regex)</td>
 <td><code>$split(text, /\d{3}-\d{3}-\d{4}/)</code></td>
-<td style="text-align: right;">2,171 ns</td>
-<td style="text-align: right;">1,693 ns</td>
-<td style="text-align: right;">2,565 ns</td>
+<td style="text-align: right;">1,786 ns</td>
+<td style="text-align: right;">1,339 ns</td>
+<td style="text-align: right;">2,166 ns</td>
 <td style="text-align: right;">120 B</td>
 <td style="text-align: right;">120 B</td>
 <td style="text-align: right;">7,536 B</td>
@@ -1753,16 +1759,16 @@ catch (JsonataException ex)
 <tr>
 <td>$split (string)</td>
 <td><code>$split(text, &quot;. &quot;)</code></td>
-<td style="text-align: right;">1,059 ns</td>
-<td style="text-align: right;">1,202 ns</td>
-<td style="text-align: right;">1,081 ns</td>
+<td style="text-align: right;">502 ns</td>
+<td style="text-align: right;">401 ns</td>
+<td style="text-align: right;">878 ns</td>
 <td style="text-align: right;">120 B</td>
 <td style="text-align: right;">120 B</td>
 <td style="text-align: right;">2,552 B</td>
 </tr>
 </tbody>
 </table>
-<p>Pattern matching shows <strong>92ÔÇô100% less allocation</strong>. Regex replacement is <strong>3.3ÔÇô5.5├ù faster</strong> than native with zero allocation thanks to UTF-8 span processing. String replacement is <strong>3.5ÔÇô3.7├ù faster</strong>. <code>$match</code> is <strong>2├ù faster</strong> with 98% less allocation.</p>
+<p>Pattern matching shows <strong>92–100% less allocation</strong>. Regex replacement is <strong>3.8–6.0× faster</strong> than native with zero allocation thanks to UTF-8 span processing. String replacement is <strong>3.5–4.2× faster</strong>. <code>$match</code> is <strong>2–2.8× faster</strong> with 98% less allocation.</p>
 <h5 id="higher-order-functions-1">Higher-order functions</h5>
 <table>
 <thead>
@@ -1781,29 +1787,29 @@ catch (JsonataException ex)
 <tr>
 <td>$map</td>
 <td><code>$map(Account.Order.Product, function($v) { ... })</code></td>
-<td style="text-align: right;">1,782 ns</td>
-<td style="text-align: right;">1,245 ns</td>
-<td style="text-align: right;">2,151 ns</td>
-<td style="text-align: right;">480 B</td>
+<td style="text-align: right;">1,188 ns</td>
+<td style="text-align: right;">1,061 ns</td>
+<td style="text-align: right;">1,765 ns</td>
+<td style="text-align: right;">200 B</td>
 <td style="text-align: right;">120 B</td>
 <td style="text-align: right;">6,768 B</td>
 </tr>
 <tr>
 <td>$filter</td>
 <td><code>$filter(Account.Order.Product, function($v) { ... })</code></td>
-<td style="text-align: right;">2,151 ns</td>
-<td style="text-align: right;">1,357 ns</td>
-<td style="text-align: right;">2,557 ns</td>
-<td style="text-align: right;">480 B</td>
+<td style="text-align: right;">1,486 ns</td>
+<td style="text-align: right;">1,123 ns</td>
+<td style="text-align: right;">2,113 ns</td>
+<td style="text-align: right;">200 B</td>
 <td style="text-align: right;">120 B</td>
 <td style="text-align: right;">7,632 B</td>
 </tr>
 <tr>
 <td>$reduce</td>
 <td><code>$reduce(Account.Order.Product, function($prev, $curr) { ... }, 0)</code></td>
-<td style="text-align: right;">2,624 ns</td>
-<td style="text-align: right;">1,449 ns</td>
-<td style="text-align: right;">3,716 ns</td>
+<td style="text-align: right;">2,412 ns</td>
+<td style="text-align: right;">1,236 ns</td>
+<td style="text-align: right;">3,312 ns</td>
 <td style="text-align: right;">360 B</td>
 <td style="text-align: right;">120 B</td>
 <td style="text-align: right;">10,120 B</td>
@@ -1811,16 +1817,16 @@ catch (JsonataException ex)
 <tr>
 <td>$sort</td>
 <td><code>$sort(Account.Order.Product, function($a, $b) { ... })</code></td>
-<td style="text-align: right;">3,432 ns</td>
-<td style="text-align: right;">2,201 ns</td>
-<td style="text-align: right;">3,534 ns</td>
-<td style="text-align: right;">600 B</td>
-<td style="text-align: right;">240 B</td>
+<td style="text-align: right;">2,681 ns</td>
+<td style="text-align: right;">1,156 ns</td>
+<td style="text-align: right;">3,081 ns</td>
+<td style="text-align: right;">200 B</td>
+<td style="text-align: right;">120 B</td>
 <td style="text-align: right;">9,992 B</td>
 </tr>
 </tbody>
 </table>
-<p>Higher-order functions show <strong>93ÔÇô98% less allocation</strong> than the reference implementation. Code-gen is <strong>1.6ÔÇô2.6├ù faster</strong> with 120ÔÇô240 B allocation vs 6ÔÇô10 KB for native.</p>
+<p>Higher-order functions show <strong>96–99% less allocation</strong> than the reference implementation. Code-gen is <strong>1.7–2.7× faster</strong> with 120 B allocation vs 6–10 KB for native.</p>
 <p><strong>Large array (5,000 items):</strong></p>
 <table>
 <thead>
@@ -1839,9 +1845,9 @@ catch (JsonataException ex)
 <tr>
 <td>$map</td>
 <td><code>$map(items, function($v) { $v.value * 2 })</code></td>
-<td style="text-align: right;">2,814 ╬╝s</td>
-<td style="text-align: right;">1,180 ╬╝s</td>
-<td style="text-align: right;">7,684 ╬╝s</td>
+<td style="text-align: right;">2,264 µs</td>
+<td style="text-align: right;">971 µs</td>
+<td style="text-align: right;">6,402 µs</td>
 <td style="text-align: right;">200 B</td>
 <td style="text-align: right;">120 B</td>
 <td style="text-align: right;">~12 MB</td>
@@ -1849,9 +1855,9 @@ catch (JsonataException ex)
 <tr>
 <td>$filter</td>
 <td><code>$filter(items, function($v) { $v.value &gt; 2500 })</code></td>
-<td style="text-align: right;">2,344 ╬╝s</td>
-<td style="text-align: right;">869 ╬╝s</td>
-<td style="text-align: right;">3,667 ╬╝s</td>
+<td style="text-align: right;">1,957 µs</td>
+<td style="text-align: right;">641 µs</td>
+<td style="text-align: right;">3,153 µs</td>
 <td style="text-align: right;">200 B</td>
 <td style="text-align: right;">120 B</td>
 <td style="text-align: right;">~12 MB</td>
@@ -1859,16 +1865,16 @@ catch (JsonataException ex)
 <tr>
 <td>$reduce</td>
 <td><code>$reduce(items, function($prev, $curr) { ... }, 0)</code></td>
-<td style="text-align: right;">2,591 ╬╝s</td>
-<td style="text-align: right;">525 ╬╝s</td>
-<td style="text-align: right;">3,836 ╬╝s</td>
+<td style="text-align: right;">2,091 µs</td>
+<td style="text-align: right;">441 µs</td>
+<td style="text-align: right;">3,179 µs</td>
 <td style="text-align: right;">80 B</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">~11 MB</td>
 </tr>
 </tbody>
 </table>
-<p>At scale (5,000 items), code-gen is <strong>4ÔÇô7├ù faster</strong> than native with <strong>near-zero allocation</strong> (0ÔÇô200 B vs ~12 MB). The interpreted evaluator is <strong>1.5ÔÇô2.7├ù faster</strong> with 200 B or less per call.</p>
+<p>At scale (5,000 items), code-gen is <strong>5–7× faster</strong> than native with <strong>near-zero allocation</strong> (0–200 B vs ~12 MB). The interpreted evaluator is <strong>1.5–2.8× faster</strong> with 200 B or less per call.</p>
 <h5 id="iteration-functions">Iteration functions</h5>
 <table>
 <thead>
@@ -1887,9 +1893,9 @@ catch (JsonataException ex)
 <tr>
 <td>$each</td>
 <td><code>$each(obj, function($v, $k) { $k &amp; &quot;: &quot; &amp; $string($v) })</code></td>
-<td style="text-align: right;">2,665 ns</td>
-<td style="text-align: right;">964 ns</td>
-<td style="text-align: right;">3,658 ns</td>
+<td style="text-align: right;">2,379 ns</td>
+<td style="text-align: right;">871 ns</td>
+<td style="text-align: right;">3,215 ns</td>
 <td style="text-align: right;">200 B</td>
 <td style="text-align: right;">120 B</td>
 <td style="text-align: right;">8,096 B</td>
@@ -1897,16 +1903,16 @@ catch (JsonataException ex)
 <tr>
 <td>$sift</td>
 <td><code>$sift(obj, function($v) { $type($v) = &quot;number&quot; })</code></td>
-<td style="text-align: right;">1,792 ns</td>
-<td style="text-align: right;">938 ns</td>
-<td style="text-align: right;">2,546 ns</td>
+<td style="text-align: right;">1,192 ns</td>
+<td style="text-align: right;">421 ns</td>
+<td style="text-align: right;">2,236 ns</td>
 <td style="text-align: right;">200 B</td>
 <td style="text-align: right;">120 B</td>
 <td style="text-align: right;">7,088 B</td>
 </tr>
 </tbody>
 </table>
-<p>Code-gen <code>$each</code> is <strong>3.8├ù faster</strong> than native. Both functions show <strong>97ÔÇô98% less allocation</strong>.</p>
+<p>Code-gen <code>$each</code> is <strong>3.7× faster</strong> than native and <code>$sift</code> is <strong>5.3× faster</strong>. Both functions show <strong>97–98% less allocation</strong>.</p>
 <h5 id="predicate-filtering">Predicate filtering</h5>
 <table>
 <thead>
@@ -1925,9 +1931,9 @@ catch (JsonataException ex)
 <tr>
 <td>Single predicate</td>
 <td><code>Contact.Phone[type = 'mobile'].number</code></td>
-<td style="text-align: right;">983 ns</td>
-<td style="text-align: right;">817 ns</td>
-<td style="text-align: right;">1,957 ns</td>
+<td style="text-align: right;">840 ns</td>
+<td style="text-align: right;">701 ns</td>
+<td style="text-align: right;">1,695 ns</td>
 <td style="text-align: right;">120 B</td>
 <td style="text-align: right;">120 B</td>
 <td style="text-align: right;">5,760 B</td>
@@ -1935,9 +1941,9 @@ catch (JsonataException ex)
 <tr>
 <td>Chained predicate</td>
 <td><code>Contact[ssn = '496913021'].Phone[0].number</code></td>
-<td style="text-align: right;">255 ns</td>
-<td style="text-align: right;">208 ns</td>
-<td style="text-align: right;">883 ns</td>
+<td style="text-align: right;">216 ns</td>
+<td style="text-align: right;">180 ns</td>
+<td style="text-align: right;">743 ns</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">3,072 B</td>
@@ -1945,16 +1951,16 @@ catch (JsonataException ex)
 <tr>
 <td>Compound predicate</td>
 <td><code>Contact.Phone[type = 'office' or type = 'mobile'].number</code></td>
-<td style="text-align: right;">1,336 ns</td>
-<td style="text-align: right;">976 ns</td>
-<td style="text-align: right;">3,384 ns</td>
+<td style="text-align: right;">1,097 ns</td>
+<td style="text-align: right;">816 ns</td>
+<td style="text-align: right;">2,897 ns</td>
 <td style="text-align: right;">120 B</td>
 <td style="text-align: right;">120 B</td>
 <td style="text-align: right;">10,376 B</td>
 </tr>
 </tbody>
 </table>
-<p>Predicate filtering shows <strong>2ÔÇô3.5├ù speedup</strong> over the reference implementation with <strong>97ÔÇô100% less allocation</strong>.</p>
+<p>Predicate filtering shows <strong>2–4× speedup</strong> over the reference implementation with <strong>97–100% less allocation</strong>.</p>
 <h5 id="object-construction">Object construction</h5>
 <table>
 <thead>
@@ -1973,19 +1979,19 @@ catch (JsonataException ex)
 <tr>
 <td>Simple object</td>
 <td><code>{&quot;name&quot;: Account.`Account Name`, &quot;total&quot;: $sum(...)}</code></td>
-<td style="text-align: right;">2,376 ns</td>
-<td style="text-align: right;">1,031 ns</td>
-<td style="text-align: right;">2,777 ns</td>
-<td style="text-align: right;">304 B</td>
+<td style="text-align: right;">1,899 ns</td>
+<td style="text-align: right;">831 ns</td>
+<td style="text-align: right;">2,406 ns</td>
+<td style="text-align: right;">152 B</td>
 <td style="text-align: right;">120 B</td>
 <td style="text-align: right;">7,840 B</td>
 </tr>
 <tr>
 <td>Group-by object</td>
 <td><code>Account.Order.Product.{`Product Name`: Price}</code></td>
-<td style="text-align: right;">2,953 ns</td>
-<td style="text-align: right;">997 ns</td>
-<td style="text-align: right;">1,874 ns</td>
+<td style="text-align: right;">2,543 ns</td>
+<td style="text-align: right;">855 ns</td>
+<td style="text-align: right;">1,658 ns</td>
 <td style="text-align: right;">600 B</td>
 <td style="text-align: right;">120 B</td>
 <td style="text-align: right;">7,104 B</td>
@@ -1993,16 +1999,16 @@ catch (JsonataException ex)
 <tr>
 <td>Array of objects</td>
 <td><code>[Account.Order.Product.{&quot;name&quot;: ..., &quot;total&quot;: ...}]</code></td>
-<td style="text-align: right;">2,135 ns</td>
-<td style="text-align: right;">1,983 ns</td>
-<td style="text-align: right;">2,945 ns</td>
+<td style="text-align: right;">1,751 ns</td>
+<td style="text-align: right;">1,476 ns</td>
+<td style="text-align: right;">2,586 ns</td>
 <td style="text-align: right;">120 B</td>
 <td style="text-align: right;">120 B</td>
 <td style="text-align: right;">9,664 B</td>
 </tr>
 </tbody>
 </table>
-<p>Code-gen achieves <strong>1.5ÔÇô2.7├ù speedup</strong> for object construction with <strong>98ÔÇô99% less allocation</strong>. Group-by is the only scenario where the runtime evaluator is slower than native (1.6├ù), due to the overhead of building grouped object keys.</p>
+<p>Code-gen achieves <strong>1.8–2.9× speedup</strong> for object construction with <strong>98–99% less allocation</strong>. Group-by is the only scenario where the runtime evaluator is slower than native (1.5×), due to the overhead of building grouped object keys.</p>
 <h5 id="array-functions-1">Array functions</h5>
 <table>
 <thead>
@@ -2021,9 +2027,9 @@ catch (JsonataException ex)
 <tr>
 <td>$count</td>
 <td><code>$count(Account.Order[0].Product)</code></td>
-<td style="text-align: right;">144 ns</td>
-<td style="text-align: right;">239 ns</td>
-<td style="text-align: right;">854 ns</td>
+<td style="text-align: right;">203 ns</td>
+<td style="text-align: right;">157 ns</td>
+<td style="text-align: right;">592 ns</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">2,112 B</td>
@@ -2031,9 +2037,9 @@ catch (JsonataException ex)
 <tr>
 <td>$append</td>
 <td><code>$append(Order[0].Product, Order[1].Product)</code></td>
-<td style="text-align: right;">453 ns</td>
-<td style="text-align: right;">440 ns</td>
-<td style="text-align: right;">681 ns</td>
+<td style="text-align: right;">643 ns</td>
+<td style="text-align: right;">621 ns</td>
+<td style="text-align: right;">963 ns</td>
 <td style="text-align: right;">120 B</td>
 <td style="text-align: right;">120 B</td>
 <td style="text-align: right;">3,280 B</td>
@@ -2041,9 +2047,9 @@ catch (JsonataException ex)
 <tr>
 <td>$reverse</td>
 <td><code>$reverse(Account.Order[0].Product)</code></td>
-<td style="text-align: right;">417 ns</td>
-<td style="text-align: right;">418 ns</td>
-<td style="text-align: right;">674 ns</td>
+<td style="text-align: right;">360 ns</td>
+<td style="text-align: right;">351 ns</td>
+<td style="text-align: right;">599 ns</td>
 <td style="text-align: right;">120 B</td>
 <td style="text-align: right;">120 B</td>
 <td style="text-align: right;">2,136 B</td>
@@ -2051,19 +2057,19 @@ catch (JsonataException ex)
 <tr>
 <td>$distinct</td>
 <td><code>$distinct(Account.Order.Product.&quot;Product Name&quot;)</code></td>
-<td style="text-align: right;">1,063 ns</td>
-<td style="text-align: right;">925 ns</td>
-<td style="text-align: right;">1,080 ns</td>
-<td style="text-align: right;">400 B</td>
+<td style="text-align: right;">935 ns</td>
+<td style="text-align: right;">794 ns</td>
+<td style="text-align: right;">891 ns</td>
+<td style="text-align: right;">120 B</td>
 <td style="text-align: right;">120 B</td>
 <td style="text-align: right;">2,848 B</td>
 </tr>
 <tr>
 <td>$flatten</td>
 <td><code>Account.Order.Product[]</code></td>
-<td style="text-align: right;">757 ns</td>
-<td style="text-align: right;">573 ns</td>
-<td style="text-align: right;">437 ns</td>
+<td style="text-align: right;">630 ns</td>
+<td style="text-align: right;">432 ns</td>
+<td style="text-align: right;">399 ns</td>
 <td style="text-align: right;">120 B</td>
 <td style="text-align: right;">120 B</td>
 <td style="text-align: right;">1,520 B</td>
@@ -2071,16 +2077,16 @@ catch (JsonataException ex)
 <tr>
 <td>$single</td>
 <td><code>$single(Account.Order[0].Product, function($v) { $v.Price &gt; 30 })</code></td>
-<td style="text-align: right;">653 ns</td>
-<td style="text-align: right;">352 ns</td>
-<td style="text-align: right;">1,641 ns</td>
+<td style="text-align: right;">557 ns</td>
+<td style="text-align: right;">286 ns</td>
+<td style="text-align: right;">1,436 ns</td>
 <td style="text-align: right;">80 B</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">4,960 B</td>
 </tr>
 </tbody>
 </table>
-<p>Array functions are <strong>1.5ÔÇô6├ù faster</strong> with zero or minimal allocation. <code>$count</code> is <strong>6├ù faster</strong> with zero allocation. <code>$single</code> achieves <strong>zero allocation</strong> in code-gen by inlining the predicate as a direct comparison. <code>$distinct</code> uses a zero-copy <code>UniqueItemsHashSet</code> for deduplication via document-internal element references.</p>
+<p>Array functions are <strong>1.5–3× faster</strong> with zero or minimal allocation. <code>$count</code> is <strong>2.9× faster</strong> with zero allocation. <code>$single</code> achieves <strong>zero allocation</strong> in code-gen by inlining the predicate as a direct comparison. <code>$distinct</code> uses a zero-copy <code>UniqueItemsHashSet</code> for deduplication via document-internal element references.</p>
 <h5 id="object-functions-1">Object functions</h5>
 <table>
 <thead>
@@ -2099,9 +2105,9 @@ catch (JsonataException ex)
 <tr>
 <td>$keys</td>
 <td><code>$keys(Account.Order[0].Product[0])</code></td>
-<td style="text-align: right;">533 ns</td>
-<td style="text-align: right;">335 ns</td>
-<td style="text-align: right;">851 ns</td>
+<td style="text-align: right;">440 ns</td>
+<td style="text-align: right;">285 ns</td>
+<td style="text-align: right;">701 ns</td>
 <td style="text-align: right;">120 B</td>
 <td style="text-align: right;">120 B</td>
 <td style="text-align: right;">2,696 B</td>
@@ -2109,19 +2115,19 @@ catch (JsonataException ex)
 <tr>
 <td>$merge</td>
 <td><code>$merge(Account.Order.Product)</code></td>
-<td style="text-align: right;">770 ns</td>
-<td style="text-align: right;">773 ns</td>
-<td style="text-align: right;">1,249 ns</td>
-<td style="text-align: right;">400 B</td>
+<td style="text-align: right;">642 ns</td>
+<td style="text-align: right;">588 ns</td>
+<td style="text-align: right;">1,092 ns</td>
+<td style="text-align: right;">120 B</td>
 <td style="text-align: right;">120 B</td>
 <td style="text-align: right;">2,784 B</td>
 </tr>
 <tr>
 <td>$each (as $values)</td>
 <td><code>$each(obj, function($v){$v})</code></td>
-<td style="text-align: right;">1,101 ns</td>
-<td style="text-align: right;">347 ns</td>
-<td style="text-align: right;">1,362 ns</td>
+<td style="text-align: right;">890 ns</td>
+<td style="text-align: right;">294 ns</td>
+<td style="text-align: right;">1,209 ns</td>
 <td style="text-align: right;">200 B</td>
 <td style="text-align: right;">120 B</td>
 <td style="text-align: right;">4,232 B</td>
@@ -2129,9 +2135,9 @@ catch (JsonataException ex)
 <tr>
 <td>$lookup</td>
 <td><code>$lookup(Account.Order[0].Product[0], &quot;Price&quot;)</code></td>
-<td style="text-align: right;">241 ns</td>
-<td style="text-align: right;">161 ns</td>
-<td style="text-align: right;">902 ns</td>
+<td style="text-align: right;">197 ns</td>
+<td style="text-align: right;">142 ns</td>
+<td style="text-align: right;">786 ns</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">120 B</td>
 <td style="text-align: right;">2,752 B</td>
@@ -2139,9 +2145,9 @@ catch (JsonataException ex)
 <tr>
 <td>$spread</td>
 <td><code>$spread(Account.Order[0].Product[0])</code></td>
-<td style="text-align: right;">836 ns</td>
-<td style="text-align: right;">665 ns</td>
-<td style="text-align: right;">954 ns</td>
+<td style="text-align: right;">639 ns</td>
+<td style="text-align: right;">573 ns</td>
+<td style="text-align: right;">834 ns</td>
 <td style="text-align: right;">120 B</td>
 <td style="text-align: right;">120 B</td>
 <td style="text-align: right;">3,400 B</td>
@@ -2149,16 +2155,16 @@ catch (JsonataException ex)
 <tr>
 <td>$values</td>
 <td><code>$values(obj)</code></td>
-<td style="text-align: right;">348 ns</td>
-<td style="text-align: right;">351 ns</td>
-<td style="text-align: right;">ÔÇö</td>
+<td style="text-align: right;">287 ns</td>
+<td style="text-align: right;">310 ns</td>
+<td style="text-align: right;">—</td>
 <td style="text-align: right;">120 B</td>
 <td style="text-align: right;">120 B</td>
-<td style="text-align: right;">ÔÇö</td>
+<td style="text-align: right;">—</td>
 </tr>
 </tbody>
 </table>
-<p>Object functions are <strong>1.6ÔÇô5.6├ù faster</strong> for runtime, <strong>2.5ÔÇô5.6├ù faster</strong> for code-gen. <code>$lookup</code> achieves <strong>5.6├ù speedup</strong> over native with zero allocation by resolving directly from the document backing store. <code>$keys</code> uses a <code>Utf8KeyHashSet</code> for zero-copy deduplication over raw UTF-8 property names. Corvus also provides <code>$values()</code> as an extension function (not available in standard JSONata).</p>
+<p>Object functions are <strong>1.3–4.0× faster</strong> for runtime, <strong>1.5–5.5× faster</strong> for code-gen. <code>$lookup</code> achieves <strong>5.5× speedup</strong> over native by resolving directly from the document backing store. <code>$keys</code> uses a <code>Utf8KeyHashSet</code> for zero-copy deduplication over raw UTF-8 property names. Corvus also provides <code>$values()</code> as an extension function (not available in standard JSONata).</p>
 <h5 id="language-operators">Language operators</h5>
 <table>
 <thead>
@@ -2177,9 +2183,9 @@ catch (JsonataException ex)
 <tr>
 <td>Conditional</td>
 <td><code>Account.Order[0].Product[0].Price &gt; 30 ? &quot;expensive&quot; : &quot;cheap&quot;</code></td>
-<td style="text-align: right;">211 ns</td>
-<td style="text-align: right;">136 ns</td>
-<td style="text-align: right;">664 ns</td>
+<td style="text-align: right;">175 ns</td>
+<td style="text-align: right;">112 ns</td>
+<td style="text-align: right;">578 ns</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">2,280 B</td>
@@ -2187,9 +2193,9 @@ catch (JsonataException ex)
 <tr>
 <td>Descendant</td>
 <td><code>**.&quot;Product Name&quot;</code></td>
-<td style="text-align: right;">940 ns</td>
-<td style="text-align: right;">713 ns</td>
-<td style="text-align: right;">1,200 ns</td>
+<td style="text-align: right;">984 ns</td>
+<td style="text-align: right;">661 ns</td>
+<td style="text-align: right;">1,202 ns</td>
 <td style="text-align: right;">120 B</td>
 <td style="text-align: right;">120 B</td>
 <td style="text-align: right;">2,432 B</td>
@@ -2197,16 +2203,16 @@ catch (JsonataException ex)
 <tr>
 <td>Transform pipe</td>
 <td><code>Account.Order.Product.Price ~&gt; $sum</code></td>
-<td style="text-align: right;">830 ns</td>
-<td style="text-align: right;">936 ns</td>
-<td style="text-align: right;">1,080 ns</td>
-<td style="text-align: right;">776 B</td>
+<td style="text-align: right;">604 ns</td>
+<td style="text-align: right;">512 ns</td>
+<td style="text-align: right;">1,078 ns</td>
+<td style="text-align: right;">0 B</td>
 <td style="text-align: right;">120 B</td>
 <td style="text-align: right;">2,792 B</td>
 </tr>
 </tbody>
 </table>
-<p>Conditional expressions are <strong>3.1ÔÇô4.9├ù faster</strong> than native with <strong>zero allocation</strong>. The descendant operator (<code>**</code>) uses a fused single-pass traversal that collects only matching properties during recursive descent, achieving <strong>1.3ÔÇô1.7├ù speedup</strong> with 120 B allocation (vs 2,432 B).</p>
+<p>Conditional expressions are <strong>3.3–5.2× faster</strong> than native with <strong>zero allocation</strong>. The descendant operator (<code>**</code>) uses a fused single-pass traversal that collects only matching properties during recursive descent, achieving <strong>1.2–1.8× speedup</strong> with 120 B allocation (vs 2,432 B).</p>
 <h5 id="variable-bindings-1">Variable bindings</h5>
 <table>
 <thead>
@@ -2225,26 +2231,26 @@ catch (JsonataException ex)
 <tr>
 <td>Let binding</td>
 <td><code>($total := $sum(...); $total &gt; 100 ? &quot;high&quot; : &quot;low&quot;)</code></td>
-<td style="text-align: right;">2,070 ns</td>
-<td style="text-align: right;">760 ns</td>
-<td style="text-align: right;">2,749 ns</td>
-<td style="text-align: right;">304 B</td>
+<td style="text-align: right;">1,700 ns</td>
+<td style="text-align: right;">622 ns</td>
+<td style="text-align: right;">2,190 ns</td>
+<td style="text-align: right;">152 B</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">6,992 B</td>
 </tr>
 <tr>
 <td>Binding in HOF</td>
 <td><code>$map(Products, function($v) { ($p := $v.Price * $v.Quantity; ...) })</code></td>
-<td style="text-align: right;">3,240 ns</td>
-<td style="text-align: right;">1,723 ns</td>
-<td style="text-align: right;">4,153 ns</td>
-<td style="text-align: right;">912 B</td>
+<td style="text-align: right;">2,443 ns</td>
+<td style="text-align: right;">1,444 ns</td>
+<td style="text-align: right;">3,496 ns</td>
+<td style="text-align: right;">632 B</td>
 <td style="text-align: right;">120 B</td>
 <td style="text-align: right;">11,792 B</td>
 </tr>
 </tbody>
 </table>
-<p>Code-gen eliminates all allocation for simple let-bindings by keeping intermediate values in local variables (0 B vs 6,992 B for native). For bindings inside higher-order functions, code-gen emits a direct <code>double &gt; constant</code> comparison shortcut that avoids element round-trips, achieving <strong>2.4├ù speedup</strong> with 120 B allocation (vs 11,792 B).</p>
+<p>Code-gen eliminates all allocation for simple let-bindings by keeping intermediate values in local variables (0 B vs 6,992 B for native). For bindings inside higher-order functions, code-gen emits a direct <code>double &gt; constant</code> comparison shortcut that avoids element round-trips, achieving <strong>2.4× speedup</strong> with 120 B allocation (vs 11,792 B).</p>
 <h5 id="datetime-functions-1">Date/time functions</h5>
 <table>
 <thead>
@@ -2263,9 +2269,9 @@ catch (JsonataException ex)
 <tr>
 <td>$millis</td>
 <td><code>$millis()</code></td>
-<td style="text-align: right;">220 ns</td>
-<td style="text-align: right;">190 ns</td>
-<td style="text-align: right;">166 ns</td>
+<td style="text-align: right;">201 ns</td>
+<td style="text-align: right;">156 ns</td>
+<td style="text-align: right;">130 ns</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">560 B</td>
@@ -2273,19 +2279,19 @@ catch (JsonataException ex)
 <tr>
 <td>$now</td>
 <td><code>$now()</code></td>
-<td style="text-align: right;">303 ns</td>
-<td style="text-align: right;">257 ns</td>
-<td style="text-align: right;">335 ns</td>
-<td style="text-align: right;">72 B</td>
-<td style="text-align: right;">72 B</td>
+<td style="text-align: right;">239 ns</td>
+<td style="text-align: right;">208 ns</td>
+<td style="text-align: right;">293 ns</td>
+<td style="text-align: right;">0 B</td>
+<td style="text-align: right;">0 B</td>
 <td style="text-align: right;">600 B</td>
 </tr>
 <tr>
 <td>$toMillis</td>
 <td><code>$toMillis(&quot;2021-04-07T22:00:00.000Z&quot;)</code></td>
-<td style="text-align: right;">229 ns</td>
-<td style="text-align: right;">177 ns</td>
-<td style="text-align: right;">610 ns</td>
+<td style="text-align: right;">216 ns</td>
+<td style="text-align: right;">168 ns</td>
+<td style="text-align: right;">520 ns</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">1,376 B</td>
@@ -2293,16 +2299,16 @@ catch (JsonataException ex)
 <tr>
 <td>$fromMillis</td>
 <td><code>$fromMillis(1617836400000)</code></td>
-<td style="text-align: right;">517 ns</td>
-<td style="text-align: right;">285 ns</td>
-<td style="text-align: right;">767 ns</td>
-<td style="text-align: right;">72 B</td>
-<td style="text-align: right;">72 B</td>
+<td style="text-align: right;">401 ns</td>
+<td style="text-align: right;">249 ns</td>
+<td style="text-align: right;">591 ns</td>
+<td style="text-align: right;">0 B</td>
+<td style="text-align: right;">0 B</td>
 <td style="text-align: right;">1,568 B</td>
 </tr>
 </tbody>
 </table>
-<p><code>$toMillis</code> uses a zero-alloc fast path via <code>TryGetDateTimeOffset</code> that parses directly from the UTF-8 backing ÔÇö <strong>2.7├ù faster</strong> for runtime, <strong>3.4├ù faster</strong> for code-gen with zero allocation (vs 1,376 B for native). <code>$millis</code> is the only scenario where native is slightly faster (due to evaluator framework overhead for a trivial function), but Corvus achieves zero allocation.</p>
+<p><code>$toMillis</code> uses a zero-alloc fast path via <code>TryGetDateTimeOffset</code> that parses directly from the UTF-8 backing — <strong>2.4× faster</strong> for runtime, <strong>3.1× faster</strong> for code-gen with zero allocation (vs 1,376 B for native). <code>$millis</code> is the only scenario where native is slightly faster (due to evaluator framework overhead for a trivial function), but Corvus achieves zero allocation. <code>$now</code> and <code>$fromMillis</code> now achieve <strong>zero allocation</strong> for both runtime and code-gen.</p>
 <h5 id="aggregation-functions">Aggregation functions</h5>
 <table>
 <thead>
@@ -2321,36 +2327,36 @@ catch (JsonataException ex)
 <tr>
 <td>$average</td>
 <td><code>$average(Account.Order.Product.Price)</code></td>
-<td style="text-align: right;">432 ns</td>
-<td style="text-align: right;">312 ns</td>
-<td style="text-align: right;">745 ns</td>
-<td style="text-align: right;">368 B</td>
+<td style="text-align: right;">380 ns</td>
+<td style="text-align: right;">297 ns</td>
+<td style="text-align: right;">625 ns</td>
+<td style="text-align: right;">0 B</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">2,760 B</td>
 </tr>
 <tr>
 <td>$max</td>
 <td><code>$max(Account.Order.Product.Price)</code></td>
-<td style="text-align: right;">422 ns</td>
-<td style="text-align: right;">314 ns</td>
-<td style="text-align: right;">646 ns</td>
-<td style="text-align: right;">368 B</td>
+<td style="text-align: right;">374 ns</td>
+<td style="text-align: right;">300 ns</td>
+<td style="text-align: right;">580 ns</td>
+<td style="text-align: right;">0 B</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">2,760 B</td>
 </tr>
 <tr>
 <td>$min</td>
 <td><code>$min(Account.Order.Product.Price)</code></td>
-<td style="text-align: right;">403 ns</td>
-<td style="text-align: right;">304 ns</td>
-<td style="text-align: right;">636 ns</td>
-<td style="text-align: right;">368 B</td>
+<td style="text-align: right;">372 ns</td>
+<td style="text-align: right;">290 ns</td>
+<td style="text-align: right;">602 ns</td>
+<td style="text-align: right;">0 B</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">2,760 B</td>
 </tr>
 </tbody>
 </table>
-<p>Aggregation functions are <strong>1.5ÔÇô2.4├ù faster</strong> with <strong>zero allocation</strong> in code-gen. Code-gen fuses chain navigation with aggregation to eliminate intermediate array construction.</p>
+<p>Aggregation functions are <strong>1.6–2.1× faster</strong> with <strong>zero allocation</strong> in both runtime and code-gen. Code-gen fuses chain navigation with aggregation to eliminate intermediate array construction.</p>
 <h5 id="formatting-functions">Formatting functions</h5>
 <table>
 <thead>
@@ -2369,19 +2375,19 @@ catch (JsonataException ex)
 <tr>
 <td>$formatBase</td>
 <td><code>$formatBase(255, 16)</code></td>
-<td style="text-align: right;">552 ns</td>
-<td style="text-align: right;">183 ns</td>
-<td style="text-align: right;">528 ns</td>
-<td style="text-align: right;">32 B</td>
-<td style="text-align: right;">32 B</td>
+<td style="text-align: right;">427 ns</td>
+<td style="text-align: right;">158 ns</td>
+<td style="text-align: right;">447 ns</td>
+<td style="text-align: right;">0 B</td>
+<td style="text-align: right;">0 B</td>
 <td style="text-align: right;">1,592 B</td>
 </tr>
 <tr>
 <td>$formatNumber</td>
 <td><code>$formatNumber(1234.5678, &quot;#,##0.00&quot;)</code></td>
-<td style="text-align: right;">618 ns</td>
-<td style="text-align: right;">612 ns</td>
-<td style="text-align: right;">1,110 ns</td>
+<td style="text-align: right;">524 ns</td>
+<td style="text-align: right;">461 ns</td>
+<td style="text-align: right;">886 ns</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">1,728 B</td>
@@ -2389,26 +2395,26 @@ catch (JsonataException ex)
 <tr>
 <td>$formatInteger</td>
 <td><code>$formatInteger(1234, &quot;w&quot;)</code></td>
-<td style="text-align: right;">605 ns</td>
-<td style="text-align: right;">404 ns</td>
-<td style="text-align: right;">ÔÇö</td>
-<td style="text-align: right;">928 B</td>
-<td style="text-align: right;">928 B</td>
-<td style="text-align: right;">ÔÇö</td>
+<td style="text-align: right;">299 ns</td>
+<td style="text-align: right;">140 ns</td>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;">0 B</td>
+<td style="text-align: right;">0 B</td>
+<td style="text-align: right;">—</td>
 </tr>
 <tr>
 <td>$parseInteger</td>
 <td><code>$parseInteger(&quot;one hundred and twenty three&quot;, &quot;w&quot;)</code></td>
-<td style="text-align: right;">704 ns</td>
-<td style="text-align: right;">582 ns</td>
-<td style="text-align: right;">ÔÇö</td>
-<td style="text-align: right;">760 B</td>
-<td style="text-align: right;">760 B</td>
-<td style="text-align: right;">ÔÇö</td>
+<td style="text-align: right;">312 ns</td>
+<td style="text-align: right;">247 ns</td>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;">0 B</td>
+<td style="text-align: right;">0 B</td>
+<td style="text-align: right;">—</td>
 </tr>
 </tbody>
 </table>
-<p><code>$formatNumber</code> uses a zero-alloc implementation ÔÇö <strong>1.8├ù faster</strong> than native with zero allocation. <code>$formatBase</code> code-gen is <strong>2.9├ù faster</strong>. <code>$formatInteger</code> and <code>$parseInteger</code> are Corvus extensions not available in Jsonata.Net.Native.</p>
+<p><code>$formatNumber</code> uses a zero-alloc implementation — <strong>1.9× faster</strong> than native with zero allocation. <code>$formatBase</code> code-gen is <strong>2.8× faster</strong> and now achieves <strong>zero allocation</strong>. <code>$formatInteger</code> and <code>$parseInteger</code> are Corvus extensions not available in Jsonata.Net.Native.</p>
 <h5 id="encoding-functions">Encoding functions</h5>
 <table>
 <thead>
@@ -2427,66 +2433,66 @@ catch (JsonataException ex)
 <tr>
 <td>$base64encode</td>
 <td><code>$base64encode(text)</code></td>
-<td style="text-align: right;">272 ns</td>
-<td style="text-align: right;">174 ns</td>
-<td style="text-align: right;">440 ns</td>
-<td style="text-align: right;">208 B</td>
-<td style="text-align: right;">208 B</td>
+<td style="text-align: right;">140 ns</td>
+<td style="text-align: right;">92 ns</td>
+<td style="text-align: right;">366 ns</td>
+<td style="text-align: right;">0 B</td>
+<td style="text-align: right;">0 B</td>
 <td style="text-align: right;">1,336 B</td>
 </tr>
 <tr>
 <td>$base64decode</td>
 <td><code>$base64decode(encoded)</code></td>
-<td style="text-align: right;">293 ns</td>
-<td style="text-align: right;">204 ns</td>
-<td style="text-align: right;">494 ns</td>
-<td style="text-align: right;">208 B</td>
-<td style="text-align: right;">208 B</td>
+<td style="text-align: right;">132 ns</td>
+<td style="text-align: right;">89 ns</td>
+<td style="text-align: right;">434 ns</td>
+<td style="text-align: right;">0 B</td>
+<td style="text-align: right;">0 B</td>
 <td style="text-align: right;">1,320 B</td>
 </tr>
 <tr>
 <td>$encodeUrl</td>
 <td><code>$encodeUrl(url)</code></td>
-<td style="text-align: right;">318 ns</td>
-<td style="text-align: right;">224 ns</td>
-<td style="text-align: right;">423 ns</td>
-<td style="text-align: right;">224 B</td>
-<td style="text-align: right;">224 B</td>
+<td style="text-align: right;">174 ns</td>
+<td style="text-align: right;">135 ns</td>
+<td style="text-align: right;">377 ns</td>
+<td style="text-align: right;">0 B</td>
+<td style="text-align: right;">0 B</td>
 <td style="text-align: right;">1,312 B</td>
 </tr>
 <tr>
 <td>$encodeUrlComponent</td>
 <td><code>$encodeUrlComponent(component)</code></td>
-<td style="text-align: right;">306 ns</td>
-<td style="text-align: right;">227 ns</td>
-<td style="text-align: right;">453 ns</td>
-<td style="text-align: right;">160 B</td>
-<td style="text-align: right;">160 B</td>
+<td style="text-align: right;">145 ns</td>
+<td style="text-align: right;">108 ns</td>
+<td style="text-align: right;">412 ns</td>
+<td style="text-align: right;">0 B</td>
+<td style="text-align: right;">0 B</td>
 <td style="text-align: right;">1,288 B</td>
 </tr>
 <tr>
 <td>$decodeUrl</td>
 <td><code>$decodeUrl(encoded)</code></td>
-<td style="text-align: right;">296 ns</td>
-<td style="text-align: right;">231 ns</td>
-<td style="text-align: right;">482 ns</td>
-<td style="text-align: right;">224 B</td>
-<td style="text-align: right;">224 B</td>
+<td style="text-align: right;">212 ns</td>
+<td style="text-align: right;">157 ns</td>
+<td style="text-align: right;">389 ns</td>
+<td style="text-align: right;">0 B</td>
+<td style="text-align: right;">0 B</td>
 <td style="text-align: right;">1,312 B</td>
 </tr>
 <tr>
 <td>$decodeUrlComponent</td>
 <td><code>$decodeUrlComponent(encoded)</code></td>
-<td style="text-align: right;">294 ns</td>
-<td style="text-align: right;">207 ns</td>
-<td style="text-align: right;">443 ns</td>
-<td style="text-align: right;">160 B</td>
-<td style="text-align: right;">160 B</td>
+<td style="text-align: right;">165 ns</td>
+<td style="text-align: right;">133 ns</td>
+<td style="text-align: right;">395 ns</td>
+<td style="text-align: right;">0 B</td>
+<td style="text-align: right;">0 B</td>
 <td style="text-align: right;">1,272 B</td>
 </tr>
 </tbody>
 </table>
-<p>Encoding functions are <strong>1.5ÔÇô2.5├ù faster</strong> with <strong>80ÔÇô85% less allocation</strong>.</p>
+<p>Encoding functions are <strong>2–5× faster</strong> with <strong>zero allocation</strong> across the board, eliminating all per-call allocation previously required for intermediate buffers.</p>
 <h5 id="type-conversion-functions">Type conversion functions</h5>
 <table>
 <thead>
@@ -2505,9 +2511,9 @@ catch (JsonataException ex)
 <tr>
 <td>$boolean</td>
 <td><code>$boolean(Account.Order[0].Product[0].Price)</code></td>
-<td style="text-align: right;">170 ns</td>
-<td style="text-align: right;">118 ns</td>
-<td style="text-align: right;">782 ns</td>
+<td style="text-align: right;">156 ns</td>
+<td style="text-align: right;">116 ns</td>
+<td style="text-align: right;">766 ns</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">2,840 B</td>
@@ -2515,19 +2521,19 @@ catch (JsonataException ex)
 <tr>
 <td>$exists</td>
 <td><code>$exists(Account.Order.Product)</code></td>
-<td style="text-align: right;">185 ns</td>
-<td style="text-align: right;">499 ns</td>
-<td style="text-align: right;">711 ns</td>
-<td style="text-align: right;">280 B</td>
-<td style="text-align: right;">120 B</td>
+<td style="text-align: right;">82 ns</td>
+<td style="text-align: right;">58 ns</td>
+<td style="text-align: right;">680 ns</td>
+<td style="text-align: right;">0 B</td>
+<td style="text-align: right;">0 B</td>
 <td style="text-align: right;">2,352 B</td>
 </tr>
 <tr>
 <td>$not</td>
 <td><code>$not(Account.&quot;Account Name&quot; = &quot;Firefly&quot;)</code></td>
-<td style="text-align: right;">138 ns</td>
-<td style="text-align: right;">94 ns</td>
-<td style="text-align: right;">548 ns</td>
+<td style="text-align: right;">123 ns</td>
+<td style="text-align: right;">92 ns</td>
+<td style="text-align: right;">557 ns</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">1,960 B</td>
@@ -2535,9 +2541,9 @@ catch (JsonataException ex)
 <tr>
 <td>$number</td>
 <td><code>$number(&quot;34.45&quot;)</code></td>
-<td style="text-align: right;">245 ns</td>
-<td style="text-align: right;">178 ns</td>
-<td style="text-align: right;">513 ns</td>
+<td style="text-align: right;">246 ns</td>
+<td style="text-align: right;">154 ns</td>
+<td style="text-align: right;">486 ns</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">1,232 B</td>
@@ -2545,26 +2551,26 @@ catch (JsonataException ex)
 <tr>
 <td>$string</td>
 <td><code>$string(Account.Order[0].Product[0].Price)</code></td>
-<td style="text-align: right;">407 ns</td>
-<td style="text-align: right;">349 ns</td>
-<td style="text-align: right;">929 ns</td>
-<td style="text-align: right;">32 B</td>
+<td style="text-align: right;">375 ns</td>
+<td style="text-align: right;">340 ns</td>
+<td style="text-align: right;">907 ns</td>
+<td style="text-align: right;">0 B</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">3,112 B</td>
 </tr>
 <tr>
 <td>$type</td>
 <td><code>$type(Account.Order[0].Product[0].Price)</code></td>
-<td style="text-align: right;">205 ns</td>
-<td style="text-align: right;">181 ns</td>
-<td style="text-align: right;">798 ns</td>
+<td style="text-align: right;">136 ns</td>
+<td style="text-align: right;">101 ns</td>
+<td style="text-align: right;">751 ns</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">2,816 B</td>
 </tr>
 </tbody>
 </table>
-<p><code>$not</code> is <strong>4–6× faster</strong> with zero allocation. <code>$boolean</code> code-gen is <strong>6.6× faster</strong> with zero allocation (vs 2,840 B for native). <code>$type</code> is <strong>3.9–4.4× faster</strong> with zero allocation. <code>$string</code> is <strong>2.3–2.7× faster</strong> with zero or near-zero allocation.</p>
+<p><code>$not</code> is <strong>4.5–6× faster</strong> with zero allocation. <code>$boolean</code> code-gen is <strong>6.6× faster</strong> with zero allocation (vs 2,840 B for native). <code>$type</code> is <strong>5.5–7.4× faster</strong> with zero allocation. <code>$string</code> is <strong>2.4–2.7× faster</strong> with zero allocation.</p>
 <h5 id="zip-and-shuffle">Zip and shuffle</h5>
 <table>
 <thead>
@@ -2583,9 +2589,9 @@ catch (JsonataException ex)
 <tr>
 <td>$zip (constant)</td>
 <td><code>$zip([1,2,3],[4,5,6])</code></td>
-<td style="text-align: right;">18 ns</td>
-<td style="text-align: right;">0.6 ns</td>
-<td style="text-align: right;">714 ns</td>
+<td style="text-align: right;">27 ns</td>
+<td style="text-align: right;">0.9 ns</td>
+<td style="text-align: right;">985 ns</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">3,696 B</td>
@@ -2593,9 +2599,9 @@ catch (JsonataException ex)
 <tr>
 <td>$zip (data)</td>
 <td><code>$zip(Account.Order.Product.Price, Account.Order.Product.Quantity)</code></td>
-<td style="text-align: right;">661 ns</td>
-<td style="text-align: right;">640 ns</td>
-<td style="text-align: right;">1,059 ns</td>
+<td style="text-align: right;">959 ns</td>
+<td style="text-align: right;">902 ns</td>
+<td style="text-align: right;">1,486 ns</td>
 <td style="text-align: right;">120 B</td>
 <td style="text-align: right;">120 B</td>
 <td style="text-align: right;">4,784 B</td>
@@ -2603,9 +2609,9 @@ catch (JsonataException ex)
 <tr>
 <td>$zip (mixed)</td>
 <td><code>$zip(keys, Order[0].Product.Price)</code></td>
-<td style="text-align: right;">505 ns</td>
-<td style="text-align: right;">464 ns</td>
-<td style="text-align: right;">920 ns</td>
+<td style="text-align: right;">730 ns</td>
+<td style="text-align: right;">662 ns</td>
+<td style="text-align: right;">1,280 ns</td>
 <td style="text-align: right;">120 B</td>
 <td style="text-align: right;">120 B</td>
 <td style="text-align: right;">4,240 B</td>
@@ -2613,18 +2619,18 @@ catch (JsonataException ex)
 <tr>
 <td>$shuffle</td>
 <td><code>$shuffle(Account.Order[0].Product)</code></td>
-<td style="text-align: right;">444 ns</td>
-<td style="text-align: right;">415 ns</td>
-<td style="text-align: right;">763 ns</td>
+<td style="text-align: right;">626 ns</td>
+<td style="text-align: right;">582 ns</td>
+<td style="text-align: right;">1,097 ns</td>
 <td style="text-align: right;">120 B</td>
 <td style="text-align: right;">120 B</td>
 <td style="text-align: right;">2,824 B</td>
 </tr>
 </tbody>
 </table>
-<p><code>$zip</code> with constant arrays is <strong>constant-folded</strong> by the source generator (0.6 ns). Data-driven zip is <strong>1.6–1.7× faster</strong> with <strong>97% less allocation</strong>. <code>$shuffle</code> is <strong>1.7–1.8× faster</strong> using a Fisher–Yates in-place shuffle over the mutable document model.</p>
+<p><code>$zip</code> with constant arrays is <strong>constant-folded</strong> by the source generator (0.9 ns). Data-driven zip is <strong>1.5–1.6× faster</strong> with <strong>97% less allocation</strong>. <code>$shuffle</code> is <strong>1.8× faster</strong> using a Fisher–Yates in-place shuffle over the mutable document model.</p>
 <blockquote>
-<p><em>Benchmarks run with BenchmarkDotNet v0.15.8 on .NET 10.0.5, 13th Gen Intel Core i7-13800H, Windows 11. All Runtime benchmarks use <code>JsonWorkspace</code> for pooled evaluation. Jsonata.Net.Native v3.0.0 uses pre-compiled <code>JsonataQuery</code> with pre-parsed <code>JToken</code> data. OutlierMode=RemoveAll, WarmupCount=5, IterationCount=15, RunStrategy=Throughput.</em></p>
+<p><em>Benchmarks run with BenchmarkDotNet v0.15.8 on .NET 10.0.6, 13th Gen Intel Core i7-13800H, Windows 11. All Runtime benchmarks use the UTF-8 byte[] evaluation API with expression caching. Jsonata.Net.Native v3.0.0 uses pre-compiled <code>JsonataQuery</code> with pre-parsed <code>JToken</code> data. OutlierMode=RemoveAll, WarmupCount=5, IterationCount=15, RunStrategy=Throughput.</em></p>
 </blockquote>
         </div>
     </main>
