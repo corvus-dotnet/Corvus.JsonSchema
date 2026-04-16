@@ -131,8 +131,10 @@ public sealed class JsonLogicEvaluator
     private RuleEvaluator GetOrCompile(in JsonLogicRule rule)
     {
         // Fast path: same rule element as last call (zero allocation).
-        // The cached element may outlive the document that owned it,
-        // so guard against ObjectDisposedException.
+        // The cached element may outlive the document that owned it.
+        // When the backing document is disposed, its pooled buffer may be returned
+        // and reused, causing various exceptions depending on the TFM:
+        // ObjectDisposedException, ArgumentOutOfRangeException, or others.
         if (_lastCompiled is not null)
         {
             try
@@ -142,7 +144,7 @@ public sealed class JsonLogicEvaluator
                     return _lastCompiled;
                 }
             }
-            catch (ObjectDisposedException)
+            catch
             {
                 _lastCompiled = null;
             }
