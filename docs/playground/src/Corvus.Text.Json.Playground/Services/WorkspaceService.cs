@@ -127,7 +127,7 @@ public class WorkspaceService
     public CSharpCompilation CreateCompilation(IEnumerable<string> generatedSources, string userCode)
     {
         CSharpParseOptions parseOptions = new CSharpParseOptions(LanguageVersion.Latest)
-            .WithPreprocessorSymbols("NET", "NET10_0", "NET10_0_OR_GREATER", "NET9_0_OR_GREATER", "NET8_0_OR_GREATER", "NET7_0_OR_GREATER");
+            .WithPreprocessorSymbols("NET", "NET10_0", "NET10_0_OR_GREATER", "NET9_0_OR_GREATER", "NET8_0_OR_GREATER", "NET7_0_OR_GREATER", "DYNAMIC_BUILD");
 
         var syntaxTrees = new List<SyntaxTree>();
 
