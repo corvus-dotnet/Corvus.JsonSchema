@@ -54,7 +54,7 @@ internal ref struct Parser
         ["&"] = 50,
     };
 
-    private readonly string source;
+    private readonly byte[] utf8Source;
     private Lexer lexer;
     private Token current;
 
@@ -63,10 +63,10 @@ internal ref struct Parser
     private int ancestorIndex;
     private List<ParentNode>? ancestry;
 
-    private Parser(string source)
+    private Parser(byte[] utf8Source)
     {
-        this.source = source;
-        this.lexer = new Lexer(source);
+        this.utf8Source = utf8Source;
+        this.lexer = new Lexer(utf8Source);
     }
 
     /// <summary>
@@ -76,17 +76,30 @@ internal ref struct Parser
     /// <returns>The root AST node.</returns>
     public static JsonataNode Parse(string expression)
     {
-        var parser = new Parser(expression);
+        byte[] utf8 = System.Text.Encoding.UTF8.GetBytes(expression);
+        return Parse(expression, utf8);
+    }
+
+    /// <summary>
+    /// Parses a JSONata expression from pre-encoded UTF-8 bytes.
+    /// </summary>
+    /// <param name="expression">The original expression string (unused, kept for API compatibility).</param>
+    /// <param name="utf8Source">The UTF-8 encoded expression bytes.</param>
+    /// <returns>The root AST node.</returns>
+    public static JsonataNode Parse(string expression, byte[] utf8Source)
+    {
+        var parser = new Parser(utf8Source);
         parser.Advance();
         var ast = parser.Expression(0);
 
         if (parser.current.Type != TokenType.End)
         {
+            string tokenValue = parser.current.GetValue(utf8Source);
             throw new JsonataException(
                 "S0201",
-                SR.Format(SR.S0201_UnexpectedToken, parser.current.Value),
+                SR.Format(SR.S0201_UnexpectedToken, tokenValue),
                 parser.current.Position,
-                parser.current.Value);
+                tokenValue);
         }
 
         ast = parser.ProcessAst(ast);
@@ -110,11 +123,12 @@ internal ref struct Parser
             && !(this.current.Type == TokenType.Operator && this.current.Value == expectedOperator))
         {
             string code = this.current.Type == TokenType.End ? "S0203" : "S0202";
+            string tokenValue = this.current.GetValue(this.utf8Source);
             throw new JsonataException(
                 code,
-                $"Expected '{expectedOperator}', got '{this.current.Value}'",
+                $"Expected '{expectedOperator}', got '{tokenValue}'",
                 this.current.Position,
-                this.current.Value);
+                tokenValue);
         }
 
         this.current = this.lexer.Next(prefixMode: infix);
@@ -144,7 +158,7 @@ internal ref struct Parser
     /// </summary>
     private int GetLbp()
     {
-        if (this.current.Type == TokenType.Operator && OperatorPrecedence.TryGetValue(this.current.Value, out int bp))
+        if (this.current.Type == TokenType.Operator && this.current.Value is not null && OperatorPrecedence.TryGetValue(this.current.Value, out int bp))
         {
             return bp;
         }
@@ -162,8 +176,8 @@ internal ref struct Parser
             TokenType.Name => this.NudName(token),
             TokenType.Variable => this.NudVariable(token),
             TokenType.Number => new NumberNode { Value = token.NumericValue, Position = token.Position },
-            TokenType.String => new StringNode { Value = token.Value, Position = token.Position },
-            TokenType.Value => new ValueNode { Value = token.Value, Position = token.Position },
+            TokenType.String => new StringNode { Value = token.Value!, Position = token.Position },
+            TokenType.Value => new ValueNode { Value = token.Value!, Position = token.Position },
             TokenType.Regex => new RegexNode
             {
                 Pattern = token.RegexPattern ?? string.Empty,
@@ -175,23 +189,28 @@ internal ref struct Parser
                 "S0207",
                 SR.S0207_UnexpectedEndOfExpression,
                 token.Position,
-                token.Value),
+                token.GetValue(this.utf8Source)),
             _ => throw new JsonataException(
                 "S0211",
-                SR.Format(SR.S0211_UnexpectedToken, token.Value),
+                SR.Format(SR.S0211_UnexpectedToken, token.GetValue(this.utf8Source)),
                 token.Position,
-                token.Value),
+                token.GetValue(this.utf8Source)),
         };
     }
 
     private JsonataNode NudName(Token token)
     {
+        if (token.Value is null)
+        {
+            return NameNode.FromUtf8Source(this.utf8Source, token.ValueOffset, token.ValueLength, token.Position);
+        }
+
         return new NameNode { Value = token.Value, Position = token.Position };
     }
 
     private JsonataNode NudVariable(Token token)
     {
-        return new VariableNode { Name = token.Value, Position = token.Position };
+        return new VariableNode { Name = token.GetValue(this.utf8Source), Position = token.Position };
     }
 
     private JsonataNode NudOperator(Token token)
@@ -217,7 +236,7 @@ internal ref struct Parser
             "|" => this.NudTransform(token),
 
             // 'and', 'or', 'in' can appear as names when used in prefix position
-            "and" or "or" or "in" => new NameNode { Value = token.Value, Position = token.Position },
+            "and" or "or" or "in" => new NameNode { Value = token.Value!, Position = token.Position },
             _ => throw new JsonataException(
                 "S0211",
                 SR.Format(SR.S0211_UnexpectedOperatorInPrefixPosition, token.Value),
@@ -395,11 +414,11 @@ internal ref struct Parser
 
     private JsonataNode LedBinary(Token token, JsonataNode left)
     {
-        int bp = OperatorPrecedence[token.Value];
+        int bp = OperatorPrecedence[token.Value!];
         var rhs = this.Expression(bp);
         return new BinaryNode
         {
-            Operator = token.Value,
+            Operator = token.Value!,
             Lhs = left,
             Rhs = rhs,
             Position = token.Position,
@@ -512,7 +531,7 @@ internal ref struct Parser
                     depth++;
                 }
 
-                sig += this.current.Value;
+                sig += this.current.GetValue(this.utf8Source);
             }
 
             this.Advance(">");

@@ -2,33 +2,35 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Buffers.Text;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Text;
+using Corvus.Text;
 
 namespace Corvus.Text.Json.Jsonata;
 
 /// <summary>
 /// Tokenizer for JSONata expressions. Produces a stream of <see cref="Token"/> values
-/// from a source string. Follows the reference jsonata-js tokenizer faithfully.
+/// from a UTF-8 byte source. Follows the reference jsonata-js tokenizer faithfully.
 /// </summary>
-internal struct Lexer
+internal ref struct Lexer
 {
-    private readonly string source;
+    private readonly byte[] source;
     private int position;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="Lexer"/> struct.
     /// </summary>
-    /// <param name="source">The JSONata expression to tokenize.</param>
-    public Lexer(string source)
+    /// <param name="source">The JSONata expression as UTF-8 bytes.</param>
+    public Lexer(byte[] source)
     {
         this.source = source;
         this.position = 0;
     }
 
     /// <summary>
-    /// Gets the current position in the source string.
+    /// Gets the current position in the source.
     /// </summary>
     public readonly int Position => this.position;
 
@@ -56,13 +58,13 @@ internal struct Lexer
         }
 
         // Skip comments (/* ... */)
-        if (this.Peek() == '/' && this.PeekAt(1) == '*')
+        if (this.Peek() == (byte)'/' && this.PeekAt(1) == (byte)'*')
         {
             int commentStart = this.position;
             this.position += 2;
             while (this.position < this.source.Length)
             {
-                if (this.source[this.position] == '*' && this.PeekAt(1) == '/')
+                if (this.source[this.position] == (byte)'*' && this.PeekAt(1) == (byte)'/')
                 {
                     this.position += 2;
                     return this.Next(prefixMode);
@@ -74,10 +76,10 @@ internal struct Lexer
             throw new JsonataException("S0106", SR.S0106_CommentNotTerminated, commentStart);
         }
 
-        char c = this.Peek();
+        byte c = this.Peek();
 
         // Regex literal
-        if (!prefixMode && c == '/')
+        if (!prefixMode && c == (byte)'/')
         {
             this.position++;
             return this.ScanRegex();
@@ -86,18 +88,18 @@ internal struct Lexer
         // Double-character operators (must check before single-char)
         if (this.position + 1 < this.source.Length)
         {
-            char next = this.source[this.position + 1];
+            byte next = this.source[this.position + 1];
             string? doubleOp = (c, next) switch
             {
-                ('.', '.') => "..",
-                (':', '=') => ":=",
-                ('!', '=') => "!=",
-                ('>', '=') => ">=",
-                ('<', '=') => "<=",
-                ('*', '*') => "**",
-                ('~', '>') => "~>",
-                ('?', ':') => "?:",
-                ('?', '?') => "??",
+                ((byte)'.', (byte)'.') => "..",
+                ((byte)':', (byte)'=') => ":=",
+                ((byte)'!', (byte)'=') => "!=",
+                ((byte)'>', (byte)'=') => ">=",
+                ((byte)'<', (byte)'=') => "<=",
+                ((byte)'*', (byte)'*') => "**",
+                ((byte)'~', (byte)'>') => "~>",
+                ((byte)'?', (byte)':') => "?:",
+                ((byte)'?', (byte)'?') => "??",
                 _ => null,
             };
 
@@ -114,23 +116,23 @@ internal struct Lexer
         {
             int pos = this.position;
             this.position++;
-            return new Token(TokenType.Operator, c.ToString(), pos);
+            return new Token(TokenType.Operator, ((char)c).ToString(), pos);
         }
 
         // Characters that are only valid as part of multi-char operators (e.g. ! in !=, ~ in ~>)
-        if (c == '!' || c == '~')
+        if (c == (byte)'!' || c == (byte)'~')
         {
-            throw new JsonataException("S0204", SR.Format(SR.S0204_UnknownOperator, c), this.position, c.ToString());
+            throw new JsonataException("S0204", SR.Format(SR.S0204_UnknownOperator, (char)c), this.position, ((char)c).ToString());
         }
 
         // String literals
-        if (c == '"' || c == '\'')
+        if (c == (byte)'"' || c == (byte)'\'')
         {
             return this.ScanString(c);
         }
 
         // Numeric literals
-        if (c >= '0' && c <= '9')
+        if (c >= (byte)'0' && c <= (byte)'9')
         {
             Token? num = this.TryScanNumber();
             if (num.HasValue)
@@ -140,7 +142,7 @@ internal struct Lexer
         }
 
         // Backtick-quoted names
-        if (c == '`')
+        if (c == (byte)'`')
         {
             return this.ScanBacktickName();
         }
@@ -150,21 +152,21 @@ internal struct Lexer
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private readonly char Peek() => this.source[this.position];
+    private readonly byte Peek() => this.source[this.position];
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private readonly char PeekAt(int offset)
+    private readonly byte PeekAt(int offset)
     {
         int idx = this.position + offset;
-        return idx < this.source.Length ? this.source[idx] : '\0';
+        return idx < this.source.Length ? this.source[idx] : (byte)0;
     }
 
     private void SkipWhitespace()
     {
         while (this.position < this.source.Length)
         {
-            char c = this.source[this.position];
-            if (c == ' ' || c == '\t' || c == '\n' || c == '\r' || c == '\v')
+            byte c = this.source[this.position];
+            if (c == (byte)' ' || c == (byte)'\t' || c == (byte)'\n' || c == (byte)'\r' || c == 0x0B /* \v */)
             {
                 this.position++;
             }
@@ -176,80 +178,108 @@ internal struct Lexer
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static bool IsOperatorChar(char c)
+    private static bool IsOperatorChar(byte c)
     {
         return c switch
         {
-            '.' or '[' or ']' or '{' or '}' or '(' or ')' or ',' or
-            '@' or '#' or ';' or ':' or '?' or '+' or '-' or '*' or
-            '/' or '%' or '|' or '=' or '<' or '>' or '^' or '&' => true,
+            (byte)'.' or (byte)'[' or (byte)']' or (byte)'{' or (byte)'}' or (byte)'(' or (byte)')' or (byte)',' or
+            (byte)'@' or (byte)'#' or (byte)';' or (byte)':' or (byte)'?' or (byte)'+' or (byte)'-' or (byte)'*' or
+            (byte)'/' or (byte)'%' or (byte)'|' or (byte)'=' or (byte)'<' or (byte)'>' or (byte)'^' or (byte)'&' => true,
             _ => false,
         };
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static bool IsNameStopChar(char c)
+    private static bool IsNameStopChar(byte c)
     {
-        return c == ' ' || c == '\t' || c == '\n' || c == '\r' || c == '\v'
-            || IsOperatorChar(c) || c == '!' || c == '~';
+        return c == (byte)' ' || c == (byte)'\t' || c == (byte)'\n' || c == (byte)'\r' || c == 0x0B /* \v */
+            || IsOperatorChar(c) || c == (byte)'!' || c == (byte)'~';
     }
 
-    private Token ScanString(char quote)
+    private Token ScanString(byte quote)
     {
         int start = this.position;
         this.position++; // skip opening quote
 
-        var sb = new StringBuilder();
+        Utf8ValueStringBuilder sb = new(stackalloc byte[256]);
 
         while (this.position < this.source.Length)
         {
-            char c = this.source[this.position];
+            byte c = this.source[this.position];
 
-            if (c == '\\')
+            if (c == (byte)'\\')
             {
                 this.position++;
                 if (this.position >= this.source.Length)
                 {
+                    sb.Dispose();
                     throw new JsonataException("S0101", SR.S0101_StringLiteralNotTerminated, start);
                 }
 
                 c = this.source[this.position];
                 switch (c)
                 {
-                    case '"': sb.Append('"'); break;
-                    case '\\': sb.Append('\\'); break;
-                    case '/': sb.Append('/'); break;
-                    case 'b': sb.Append('\b'); break;
-                    case 'f': sb.Append('\f'); break;
-                    case 'n': sb.Append('\n'); break;
-                    case 'r': sb.Append('\r'); break;
-                    case 't': sb.Append('\t'); break;
-                    case 'u':
+                    case (byte)'"': sb.Append((byte)'"'); break;
+                    case (byte)'\\': sb.Append((byte)'\\'); break;
+                    case (byte)'/': sb.Append((byte)'/'); break;
+                    case (byte)'b': sb.Append((byte)'\b'); break;
+                    case (byte)'f': sb.Append((byte)'\f'); break;
+                    case (byte)'n': sb.Append((byte)'\n'); break;
+                    case (byte)'r': sb.Append((byte)'\r'); break;
+                    case (byte)'t': sb.Append((byte)'\t'); break;
+                    case (byte)'u':
                         if (this.position + 4 >= this.source.Length)
                         {
+                            sb.Dispose();
                             throw new JsonataException("S0104", SR.S0104_InvalidUnicodeEscape, this.position);
                         }
 
-                        string hex = this.source.Substring(this.position + 1, 4);
-                        if (int.TryParse(hex, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out int codepoint))
+                        // Parse the 4 hex digits from UTF-8 bytes (all ASCII hex chars)
+                        ReadOnlySpan<byte> hexBytes = this.source.AsSpan(this.position + 1, 4);
+                        if (TryParseHexCodepoint(hexBytes, out int codepoint))
                         {
-                            sb.Append((char)codepoint);
                             this.position += 4;
+
+                            // Handle surrogate pairs: high surrogate must be followed by \uXXXX low surrogate
+                            if (codepoint >= 0xD800 && codepoint <= 0xDBFF)
+                            {
+                                if (this.position + 6 < this.source.Length
+                                    && this.source[this.position + 1] == (byte)'\\'
+                                    && this.source[this.position + 2] == (byte)'u'
+                                    && TryParseHexCodepoint(this.source.AsSpan(this.position + 3, 4), out int low)
+                                    && low >= 0xDC00 && low <= 0xDFFF)
+                                {
+                                    codepoint = 0x10000 + ((codepoint - 0xD800) << 10) + (low - 0xDC00);
+                                    this.position += 6;
+                                }
+                            }
+
+                            AppendCodepoint(ref sb, codepoint);
                         }
                         else
                         {
+                            sb.Dispose();
                             throw new JsonataException("S0104", SR.S0104_InvalidUnicodeEscape, this.position);
                         }
 
                         break;
                     default:
-                        throw new JsonataException("S0103", SR.Format(SR.S0103_IllegalEscapeSequence, c), this.position, c.ToString());
+                        sb.Dispose();
+                        throw new JsonataException("S0103", SR.Format(SR.S0103_IllegalEscapeSequence, (char)c), this.position, ((char)c).ToString());
                 }
             }
             else if (c == quote)
             {
                 this.position++;
-                return new Token(TokenType.String, sb.ToString(), start);
+
+                // String token values are materialized since StringNode.Value is always used as string
+#if NETSTANDARD2_0
+                string value = Encoding.UTF8.GetString(sb.AsSpan().ToArray(), 0, sb.Length);
+#else
+                string value = Encoding.UTF8.GetString(sb.AsSpan());
+#endif
+                sb.Dispose();
+                return new Token(TokenType.String, value, start);
             }
             else
             {
@@ -259,6 +289,7 @@ internal struct Lexer
             this.position++;
         }
 
+        sb.Dispose();
         throw new JsonataException("S0101", SR.S0101_StringLiteralNotTerminated, start);
     }
 
@@ -268,34 +299,34 @@ internal struct Lexer
 
         // Match the JSON number regex: -?(0|([1-9][0-9]*))(\.[0-9]+)?([Ee][-+]?[0-9]+)?
         int i = start;
-        if (i < this.source.Length && this.source[i] == '-')
+        if (i < this.source.Length && this.source[i] == (byte)'-')
         {
             i++;
         }
 
-        if (i >= this.source.Length || this.source[i] < '0' || this.source[i] > '9')
+        if (i >= this.source.Length || this.source[i] < (byte)'0' || this.source[i] > (byte)'9')
         {
             return null;
         }
 
-        if (this.source[i] == '0')
+        if (this.source[i] == (byte)'0')
         {
             i++;
         }
         else
         {
-            while (i < this.source.Length && this.source[i] >= '0' && this.source[i] <= '9')
+            while (i < this.source.Length && this.source[i] >= (byte)'0' && this.source[i] <= (byte)'9')
             {
                 i++;
             }
         }
 
-        if (i < this.source.Length && this.source[i] == '.'
-            && (i + 1 >= this.source.Length || this.source[i + 1] != '.'))
+        if (i < this.source.Length && this.source[i] == (byte)'.'
+            && (i + 1 >= this.source.Length || this.source[i + 1] != (byte)'.'))
         {
             i++;
             int fracStart = i;
-            while (i < this.source.Length && this.source[i] >= '0' && this.source[i] <= '9')
+            while (i < this.source.Length && this.source[i] >= (byte)'0' && this.source[i] <= (byte)'9')
             {
                 i++;
             }
@@ -307,16 +338,16 @@ internal struct Lexer
             }
         }
 
-        if (i < this.source.Length && (this.source[i] == 'e' || this.source[i] == 'E'))
+        if (i < this.source.Length && (this.source[i] == (byte)'e' || this.source[i] == (byte)'E'))
         {
             i++;
-            if (i < this.source.Length && (this.source[i] == '+' || this.source[i] == '-'))
+            if (i < this.source.Length && (this.source[i] == (byte)'+' || this.source[i] == (byte)'-'))
             {
                 i++;
             }
 
             int expStart = i;
-            while (i < this.source.Length && this.source[i] >= '0' && this.source[i] <= '9')
+            while (i < this.source.Length && this.source[i] >= (byte)'0' && this.source[i] <= (byte)'9')
             {
                 i++;
             }
@@ -327,15 +358,21 @@ internal struct Lexer
             }
         }
 
-        string numStr = this.source.Substring(start, i - start);
-        if (double.TryParse(numStr, NumberStyles.Float, CultureInfo.InvariantCulture, out double value)
+        ReadOnlySpan<byte> numSpan = this.source.AsSpan(start, i - start);
+
+        if (Utf8Parser.TryParse(numSpan, out double value, out _)
             && !double.IsNaN(value)
             && !double.IsInfinity(value))
         {
             this.position = i;
-            return new Token(TokenType.Number, numStr, start) { NumericValue = value };
+            return new Token(TokenType.Number, start, start, i - start) { NumericValue = value };
         }
 
+#if NETSTANDARD2_0
+        string numStr = Encoding.UTF8.GetString(numSpan.ToArray(), 0, numSpan.Length);
+#else
+        string numStr = Encoding.UTF8.GetString(numSpan);
+#endif
         throw new JsonataException("S0102", SR.Format(SR.S0102_InvalidNumber, numStr), start, numStr);
     }
 
@@ -344,16 +381,20 @@ internal struct Lexer
         int start = this.position;
         this.position++; // skip opening backtick
 
-        int end = this.source.IndexOf('`', this.position);
+        int end = this.source.AsSpan(this.position).IndexOf((byte)'`');
         if (end == -1)
         {
             this.position = this.source.Length;
             throw new JsonataException("S0105", SR.S0105_BacktickQuotedNameNotTerminated, start);
         }
 
-        string name = this.source.Substring(this.position, end - this.position);
+        end += this.position; // convert relative to absolute
+
+        // Semantic value is between the backticks (excludes them)
+        int valueOffset = this.position;
+        int valueLength = end - this.position;
         this.position = end + 1;
-        return new Token(TokenType.Name, name, start);
+        return new Token(TokenType.Name, start, valueOffset, valueLength);
     }
 
     private Token ScanNameOrVariable()
@@ -366,27 +407,43 @@ internal struct Lexer
             i++;
         }
 
-        if (this.source[start] == '$')
-        {
-            // Variable reference — value excludes the '$'
-            string varName = this.source.Substring(start + 1, i - start - 1);
-            this.position = i;
-            return new Token(TokenType.Variable, varName, start);
-        }
-
-        string name = this.source.Substring(start, i - start);
+        int length = i - start;
         this.position = i;
 
-        return name switch
+        if (this.source[start] == (byte)'$')
         {
-            "or" or "in" or "and" => new Token(TokenType.Operator, name, start),
-            "true" => new Token(TokenType.Value, "true", start),
-            "false" => new Token(TokenType.Value, "false", start),
-            "null" => new Token(TokenType.Value, "null", start),
-            _ => this.position == this.source.Length && name.Length == 0
-                ? new Token(TokenType.End, "(end)", start)
-                : new Token(TokenType.Name, name, start),
-        };
+            // Variable reference — value excludes the '$'
+            return new Token(TokenType.Variable, start, start + 1, length - 1);
+        }
+
+        ReadOnlySpan<byte> span = this.source.AsSpan(start, length);
+
+        if (span.SequenceEqual("or"u8) || span.SequenceEqual("in"u8) || span.SequenceEqual("and"u8))
+        {
+#if NETSTANDARD2_0
+            return new Token(TokenType.Operator, Encoding.UTF8.GetString(this.source, start, length), start);
+#else
+            return new Token(TokenType.Operator, Encoding.UTF8.GetString(span), start);
+#endif
+        }
+
+        if (span.SequenceEqual("true"u8))
+        {
+            return new Token(TokenType.Value, "true", start);
+        }
+
+        if (span.SequenceEqual("false"u8))
+        {
+            return new Token(TokenType.Value, "false", start);
+        }
+
+        if (span.SequenceEqual("null"u8))
+        {
+            return new Token(TokenType.Value, "null", start);
+        }
+
+        // Non-keyword name: store offset/length, no allocation
+        return new Token(TokenType.Name, start, start, length);
     }
 
     private Token ScanRegex()
@@ -397,23 +454,27 @@ internal struct Lexer
 
         while (this.position < this.source.Length)
         {
-            char c = this.source[this.position];
+            byte c = this.source[this.position];
 
             // Check for closing '/' at depth 0
-            if (c == '/' && depth == 0)
+            if (c == (byte)'/' && depth == 0)
             {
                 // Count preceding backslashes
                 int backslashes = 0;
                 while (this.position - (backslashes + 1) >= start
-                    && this.source[this.position - (backslashes + 1)] == '\\')
+                    && this.source[this.position - (backslashes + 1)] == (byte)'\\')
                 {
                     backslashes++;
                 }
 
                 if (backslashes % 2 == 0)
                 {
-                    // End of regex
-                    string pattern = this.source.Substring(start, this.position - start);
+                    // End of regex — pattern and flags are ASCII, safe to convert directly
+#if NETSTANDARD2_0
+                    string pattern = Encoding.UTF8.GetString(this.source, start, this.position - start);
+#else
+                    string pattern = Encoding.UTF8.GetString(this.source.AsSpan(start, this.position - start));
+#endif
                     if (pattern.Length == 0)
                     {
                         throw new JsonataException("S0301", SR.S0301_EmptyRegularExpression, this.position);
@@ -424,12 +485,16 @@ internal struct Lexer
                     // Scan flags
                     int flagStart = this.position;
                     while (this.position < this.source.Length
-                        && (this.source[this.position] == 'i' || this.source[this.position] == 'm'))
+                        && (this.source[this.position] == (byte)'i' || this.source[this.position] == (byte)'m'))
                     {
                         this.position++;
                     }
 
-                    string flags = this.source.Substring(flagStart, this.position - flagStart);
+#if NETSTANDARD2_0
+                    string flags = Encoding.UTF8.GetString(this.source, flagStart, this.position - flagStart);
+#else
+                    string flags = Encoding.UTF8.GetString(this.source.AsSpan(flagStart, this.position - flagStart));
+#endif
 
                     return new Token(TokenType.Regex, pattern, start - 1)
                     {
@@ -439,12 +504,12 @@ internal struct Lexer
                 }
             }
 
-            if ((c == '(' || c == '[' || c == '{') && (this.position == start || this.source[this.position - 1] != '\\'))
+            if ((c == (byte)'(' || c == (byte)'[' || c == (byte)'{') && (this.position == start || this.source[this.position - 1] != (byte)'\\'))
             {
                 depth++;
             }
 
-            if ((c == ')' || c == ']' || c == '}') && (this.position == start || this.source[this.position - 1] != '\\'))
+            if ((c == (byte)')' || c == (byte)']' || c == (byte)'}') && (this.position == start || this.source[this.position - 1] != (byte)'\\'))
             {
                 depth--;
             }
@@ -453,5 +518,66 @@ internal struct Lexer
         }
 
         throw new JsonataException("S0302", SR.S0302_RegularExpressionNotTerminated, this.position);
+    }
+
+    private static bool TryParseHexCodepoint(ReadOnlySpan<byte> hexBytes, out int codepoint)
+    {
+        codepoint = 0;
+        if (hexBytes.Length != 4)
+        {
+            return false;
+        }
+
+        for (int i = 0; i < 4; i++)
+        {
+            byte b = hexBytes[i];
+            int digit;
+            if (b >= (byte)'0' && b <= (byte)'9')
+            {
+                digit = b - (byte)'0';
+            }
+            else if (b >= (byte)'a' && b <= (byte)'f')
+            {
+                digit = 10 + b - (byte)'a';
+            }
+            else if (b >= (byte)'A' && b <= (byte)'F')
+            {
+                digit = 10 + b - (byte)'A';
+            }
+            else
+            {
+                return false;
+            }
+
+            codepoint = (codepoint << 4) | digit;
+        }
+
+        return true;
+    }
+
+    private static void AppendCodepoint(ref Utf8ValueStringBuilder sb, int codepoint)
+    {
+        if (codepoint <= 0x7F)
+        {
+            sb.Append((byte)codepoint);
+        }
+        else if (codepoint <= 0x7FF)
+        {
+            sb.Append((byte)(0xC0 | (codepoint >> 6)));
+            sb.Append((byte)(0x80 | (codepoint & 0x3F)));
+        }
+        else if (codepoint <= 0xFFFF)
+        {
+            sb.Append((byte)(0xE0 | (codepoint >> 12)));
+            sb.Append((byte)(0x80 | ((codepoint >> 6) & 0x3F)));
+            sb.Append((byte)(0x80 | (codepoint & 0x3F)));
+        }
+        else
+        {
+            sb.Append((byte)(0xF0 | (codepoint >> 18)));
+            sb.Append((byte)(0x80 | ((codepoint >> 12) & 0x3F)));
+            sb.Append((byte)(0x80 | ((codepoint >> 6) & 0x3F)));
+            sb.Append((byte)(0x80 | (codepoint & 0x3F)));
+        }
     }
 }

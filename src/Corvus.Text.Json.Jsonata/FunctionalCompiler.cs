@@ -216,8 +216,8 @@ internal static class FunctionalCompiler
         // Fast path for single-pair NameNode key + value
         if (group.Pairs is [var pair] && pair.Key is NameNode keyName && pair.Value is NameNode valueName)
         {
-            byte[] keyPropUtf8 = System.Text.Encoding.UTF8.GetBytes(keyName.Value);
-            byte[] valuePropUtf8 = System.Text.Encoding.UTF8.GetBytes(valueName.Value);
+            byte[] keyPropUtf8 = keyName.GetUtf8Bytes();
+            byte[] valuePropUtf8 = valueName.GetUtf8Bytes();
 
             return (in JsonElement input, Environment env) =>
             {
@@ -609,7 +609,7 @@ internal static class FunctionalCompiler
                 return false;
             }
 
-            names[i] = System.Text.Encoding.UTF8.GetBytes(nameNode.Value);
+            names[i] = nameNode.GetUtf8Bytes();
         }
 
         utf8Names = names;
@@ -994,7 +994,7 @@ internal static class FunctionalCompiler
 
     private static ExpressionEvaluator CompileName(NameNode name)
     {
-        byte[] utf8FieldName = System.Text.Encoding.UTF8.GetBytes(name.Value);
+        byte[] utf8FieldName = name.GetUtf8Bytes();
         return (in JsonElement input, Environment env) =>
         {
             return LookupField(input, utf8FieldName);
@@ -1288,7 +1288,7 @@ internal static class FunctionalCompiler
                 constantIndices[i] = -1;
             }
 
-            utf8Names[i] = System.Text.Encoding.UTF8.GetBytes(nameNode.Value);
+            utf8Names[i] = nameNode.GetUtf8Bytes();
         }
 
         if (hasPredicates)
@@ -2016,8 +2016,8 @@ internal static class FunctionalCompiler
             && groupByAst.Pairs[0].Key is NameNode keyNameNode
             && groupByAst.Pairs[0].Value is NameNode valueNameNode)
         {
-            simpleGroupByKeyPropUtf8 = System.Text.Encoding.UTF8.GetBytes(keyNameNode.Value);
-            simpleGroupByValuePropUtf8 = System.Text.Encoding.UTF8.GetBytes(valueNameNode.Value);
+            simpleGroupByKeyPropUtf8 = keyNameNode.GetUtf8Bytes();
+            simpleGroupByValuePropUtf8 = valueNameNode.GetUtf8Bytes();
         }
 
         var keepSingleton = path.KeepSingletonArray;
@@ -2070,7 +2070,7 @@ internal static class FunctionalCompiler
                 && tupleLabels[i] is null)
             {
                 inlineNameUtf8 ??= new byte[]?[path.Steps.Count];
-                inlineNameUtf8[i] = System.Text.Encoding.UTF8.GetBytes(nameNode.Value);
+                inlineNameUtf8[i] = nameNode.GetUtf8Bytes();
             }
         }
 
