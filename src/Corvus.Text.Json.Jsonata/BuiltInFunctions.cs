@@ -4309,6 +4309,12 @@ internal static class BuiltInFunctions
             {
                 using UnescapedUtf8JsonString utf8 = element.GetUtf8String();
                 ReadOnlySpan<byte> source = utf8.Span;
+
+                if (ContainsUtf8Surrogate(source))
+                {
+                    throw new JsonataException("D3140", SR.D3140_MalformedUrlEncodeUrlComponent, 0);
+                }
+
                 int maxLen = source.Length * 3;
                 byte[]? rented = null;
                 Span<byte> dest = maxLen <= JsonConstants.StackallocByteThreshold
@@ -4431,6 +4437,12 @@ internal static class BuiltInFunctions
             {
                 using UnescapedUtf8JsonString utf8 = element.GetUtf8String();
                 ReadOnlySpan<byte> source = utf8.Span;
+
+                if (ContainsUtf8Surrogate(source))
+                {
+                    throw new JsonataException("D3140", SR.D3140_MalformedUrlEncodeUrl, 0);
+                }
+
                 int maxLen = source.Length * 3;
                 byte[]? rented = null;
                 Span<byte> dest = maxLen <= JsonConstants.StackallocByteThreshold
@@ -4578,6 +4590,30 @@ internal static class BuiltInFunctions
                 if (i + 2 >= input.Length ||
                     !IsHexDigit((char)input[i + 1]) ||
                     !IsHexDigit((char)input[i + 2]))
+                {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Returns <see langword="true"/> if the UTF-8 byte span contains WTF-8 encoded
+    /// surrogate code points (U+D800..U+DFFF). Properly paired surrogates in a JSONata
+    /// expression are encoded as 4-byte UTF-8 by the lexer, so any 3-byte <c>ED [A0-BF] [80-BF]</c>
+    /// sequence indicates an unpaired surrogate.
+    /// </summary>
+    internal static bool ContainsUtf8Surrogate(ReadOnlySpan<byte> utf8)
+    {
+        int last = utf8.Length - 2;
+        for (int i = 0; i < last; i++)
+        {
+            if (utf8[i] == 0xED)
+            {
+                byte b1 = utf8[i + 1];
+                if (b1 >= 0xA0 && b1 <= 0xBF && utf8[i + 2] >= 0x80 && utf8[i + 2] <= 0xBF)
                 {
                     return true;
                 }

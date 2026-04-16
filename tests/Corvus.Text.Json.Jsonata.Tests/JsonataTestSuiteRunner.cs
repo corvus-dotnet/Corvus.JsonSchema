@@ -84,9 +84,13 @@ public class JsonataTestSuiteRunner
         }
         catch (InvalidOperationException)
         {
-            // Malformed UTF-16 (e.g., lone surrogates in encodeUrl tests).
-            // .NET cannot represent these in System.String; skip gracefully.
-            this.output.WriteLine("SKIP: Expression contains malformed UTF-16 surrogates");
+            // Two upstream test cases (function-encodeUrl/case002, function-encodeUrlComponent/case002)
+            // contain the JSON escape \uD800 which produces a lone UTF-16 surrogate. .NET's
+            // Encoding.UTF8.GetString (used by the lexer's ScanString) cannot materialise WTF-8
+            // bytes into a System.String, so the expression cannot be extracted here.
+            // The underlying D3140 validation is covered by EncodeUrlSurrogateTests, which
+            // constructs the invalid data directly and verifies both the RT and CG paths.
+            this.output.WriteLine("SKIP: Expression contains lone UTF-16 surrogate (tested in EncodeUrlSurrogateTests)");
             return;
         }
 

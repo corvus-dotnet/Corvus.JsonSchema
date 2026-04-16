@@ -5518,7 +5518,14 @@ public static class JsonataCodeGenHelpers
         if (input.ValueKind == JsonValueKind.String)
         {
             using UnescapedUtf8JsonString utf8 = input.GetUtf8String();
-            return EscapeDataStringToElement(utf8.Span, workspace);
+            ReadOnlySpan<byte> source = utf8.Span;
+
+            if (BuiltInFunctions.ContainsUtf8Surrogate(source))
+            {
+                throw new JsonataException("D3140", SR.D3140_MalformedUrlEncodeUrlComponent, 0);
+            }
+
+            return EscapeDataStringToElement(source, workspace);
         }
 
         string str;
@@ -5588,7 +5595,14 @@ public static class JsonataCodeGenHelpers
         if (input.ValueKind == JsonValueKind.String)
         {
             using UnescapedUtf8JsonString utf8 = input.GetUtf8String();
-            return EscapeUriToElement(utf8.Span, workspace);
+            ReadOnlySpan<byte> source = utf8.Span;
+
+            if (BuiltInFunctions.ContainsUtf8Surrogate(source))
+            {
+                throw new JsonataException("D3140", SR.D3140_MalformedUrlEncodeUrl, 0);
+            }
+
+            return EscapeUriToElement(source, workspace);
         }
 
         string str;

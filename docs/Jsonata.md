@@ -6,7 +6,7 @@
 
 `Corvus.Text.Json.Jsonata` implements [JSONata](https://jsonata.org/) for the Corvus.Text.Json document model — a high-performance query and transformation language that evaluates JSONata expressions against JSON data with zero-allocation evaluation, compiled delegate trees, and pooled workspace memory.
 
-[JSONata](https://jsonata.org/) is an expressive, Turing-complete functional query and transformation language for JSON. It supports path navigation, predicate filtering, higher-order functions (`$map`, `$filter`, `$reduce`, `$sort`), object construction, string manipulation, arithmetic, regular expressions, and user-defined functions. The Corvus implementation passes **all 1,665** tests in the official [JSONata test suite](https://github.com/jsonata-js/jsonata) (100% conformance). Two additional test cases in the upstream suite contain lone UTF-16 surrogates (`\uD800`) that are not representable in .NET's `System.String`; these are detected and gracefully skipped at the test-harness level (see [Conformance](#conformance)).
+[JSONata](https://jsonata.org/) is an expressive, Turing-complete functional query and transformation language for JSON. It supports path navigation, predicate filtering, higher-order functions (`$map`, `$filter`, `$reduce`, `$sort`), object construction, string manipulation, arithmetic, regular expressions, and user-defined functions. The Corvus implementation passes **all 1,665** tests in the official [JSONata test suite](https://github.com/jsonata-js/jsonata) (100% conformance). Two upstream test cases involve lone UTF-16 surrogates (`\uD800`) that cannot be threaded through .NET's string-based lexer; these are verified by dedicated unit tests that exercise the D3140 validation directly (see [Conformance](#conformance)).
 
 Three evaluation modes are available:
 
@@ -27,7 +27,7 @@ Both the runtime evaluator and the code generation pipeline pass all **1,665** o
 
 The code generation pipeline compiles each expression to optimized static C#. Tests that require runtime-only features (variable bindings, custom recursion depth, execution timeout) are validated through the 5-parameter overload which delegates to the runtime evaluator.
 
-> **Note on surrogate edge cases:** The upstream test suite contains two additional cases (`function-encodeUrl/case002` and `function-encodeUrlComponent/case002`) whose expression strings include a lone UTF-16 surrogate (`\uD800`). These are not representable in .NET's `System.String` — the JSON parser cannot load the test data. JavaScript engines (where jsonata-js runs) permit lone surrogates in strings, so these tests are valid on that platform. The test harness detects this at load time and gracefully skips both cases.
+> **Note on surrogate edge cases:** The upstream test suite contains two cases (`function-encodeUrl/case002` and `function-encodeUrlComponent/case002`) whose expression strings include a lone UTF-16 surrogate (`\uD800`). JavaScript engines permit lone surrogates in strings, so these tests work natively on the jsonata-js reference implementation. In .NET, the JSONata lexer materialises string tokens via `Encoding.UTF8.GetString`, which rejects the WTF-8 byte sequences that lone surrogates produce. The conformance test runner therefore cannot load these two expressions. However, the underlying D3140 error validation is fully covered by dedicated unit tests (`EncodeUrlSurrogateTests`) that construct the invalid data directly and verify both the runtime and code-generation paths throw the correct error.
 
 ## Quick start
 
