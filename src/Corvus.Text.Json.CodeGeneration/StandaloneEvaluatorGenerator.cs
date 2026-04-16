@@ -577,7 +577,7 @@ internal static partial class StandaloneEvaluatorGenerator
                     string fieldName = $"PatternRegex_{MakeSafeIdentifier(patternProp.Pattern)}";
                     if (emittedPatterns.Add(fieldName))
                     {
-                        string quotedPattern = SymbolDisplay.FormatLiteral(patternProp.Pattern, true);
+                        string quotedPattern = SymbolDisplay.FormatLiteral(EcmaRegexTranslator.TranslateOrFallback(patternProp.Pattern), true);
                         ctx.AppendLine($"private static readonly System.Text.RegularExpressions.Regex {fieldName} = new({quotedPattern}, System.Text.RegularExpressions.RegexOptions.Compiled);");
                     }
                 }
@@ -598,7 +598,7 @@ internal static partial class StandaloneEvaluatorGenerator
                 string fieldName = "PatternRegex_" + MakeSafeIdentifier(keyword.Keyword);
                 if (emittedPatterns.Add(fieldName))
                 {
-                    string quotedPattern = SymbolDisplay.FormatLiteral(expressions[0], true);
+                    string quotedPattern = SymbolDisplay.FormatLiteral(EcmaRegexTranslator.TranslateOrFallback(expressions[0]), true);
                     ctx.AppendLine($"private static readonly System.Text.RegularExpressions.Regex {fieldName} = new({quotedPattern}, System.Text.RegularExpressions.RegexOptions.Compiled);");
                 }
             }
@@ -4255,7 +4255,7 @@ internal static partial class StandaloneEvaluatorGenerator
                 {
                     try
                     {
-                        Regex regex = new(patternProp.Pattern);
+                        Regex regex = new(EcmaRegexTranslator.TranslateOrFallback(patternProp.Pattern));
                         if (propertyNames.Any(name => regex.IsMatch(name)))
                         {
                             return true;

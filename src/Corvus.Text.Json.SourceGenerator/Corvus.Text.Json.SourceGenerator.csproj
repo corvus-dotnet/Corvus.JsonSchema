@@ -193,6 +193,7 @@
     <Compile Include="$(CorvusTextJsonCodeGenerationPath)FormatHandlers\WellKnownNumericFormatHandler.cs" LinkBase="Corvus.Text.Json.CodeGeneration\FormatHandlers" />
     <Compile Include="$(CorvusTextJsonCodeGenerationPath)FormatHandlers\WellKnownStringFormatHandler.cs" LinkBase="Corvus.Text.Json.CodeGeneration\FormatHandlers" />
     <Compile Include="$(CorvusTextJsonCodeGenerationPath)Formatting.cs" LinkBase="Corvus.Text.Json.CodeGeneration" />
+    <Compile Include="$(CorvusTextJsonCodeGenerationPath)EcmaRegexTranslator.cs" LinkBase="Corvus.Text.Json.CodeGeneration" />
     <Compile Include="$(CorvusTextJsonCodeGenerationPath)StandaloneEvaluatorGenerator.cs" LinkBase="Corvus.Text.Json.CodeGeneration" />
     <Compile Include="$(CorvusTextJsonCodeGenerationPath)CodeGenerationMode.cs" LinkBase="Corvus.Text.Json.CodeGeneration" />
     <Compile Include="$(CorvusTextJsonCodeGenerationPath)RegexPatternCategory.cs" LinkBase="Corvus.Text.Json.CodeGeneration" />

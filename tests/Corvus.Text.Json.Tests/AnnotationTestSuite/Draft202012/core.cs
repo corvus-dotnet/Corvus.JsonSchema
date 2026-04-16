@@ -39,7 +39,7 @@ public class SuiteRefAndDefs : IClassFixture<SuiteRefAndDefs.Fixture>
                 "annotations/core.json",
                 "{\r\n        \"$ref\": \"#/$defs/foo\",\r\n        \"$defs\": {\r\n          \"foo\": { \"title\": \"Foo\" }\r\n        }\r\n      }",
                 "AnnotationTestSuite.Draft202012.Core",
-                "D:\\source\\mwadams\\Corvus.Text.Json\\JSON-Schema-Test-Suite\\remotes",
+                "D:\\source\\corvus-dotnet\\Corvus.JsonSchema\\JSON-Schema-Test-Suite\\remotes",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());

@@ -50,7 +50,7 @@ public class SuiteContentMediaTypeIsAnAnnotationForStringInstances : IClassFixtu
                 "annotations/content.json",
                 "{\r\n        \"contentMediaType\": \"application/json\"\r\n      }",
                 "AnnotationTestSuite.Draft202012.Content",
-                "D:\\source\\mwadams\\Corvus.Text.Json\\JSON-Schema-Test-Suite\\remotes",
+                "D:\\source\\corvus-dotnet\\Corvus.JsonSchema\\JSON-Schema-Test-Suite\\remotes",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -101,7 +101,7 @@ public class SuiteContentEncodingIsAnAnnotationForStringInstances : IClassFixtur
                 "annotations/content.json",
                 "{\r\n        \"contentEncoding\": \"base64\"\r\n      }",
                 "AnnotationTestSuite.Draft202012.Content",
-                "D:\\source\\mwadams\\Corvus.Text.Json\\JSON-Schema-Test-Suite\\remotes",
+                "D:\\source\\corvus-dotnet\\Corvus.JsonSchema\\JSON-Schema-Test-Suite\\remotes",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -152,7 +152,7 @@ public class SuiteContentSchemaIsAnAnnotationForStringInstances : IClassFixture<
                 "annotations/content.json",
                 "{\r\n        \"contentMediaType\": \"application/json\",\r\n        \"contentSchema\": { \"type\": \"number\" }\r\n      }",
                 "AnnotationTestSuite.Draft202012.Content",
-                "D:\\source\\mwadams\\Corvus.Text.Json\\JSON-Schema-Test-Suite\\remotes",
+                "D:\\source\\corvus-dotnet\\Corvus.JsonSchema\\JSON-Schema-Test-Suite\\remotes",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -192,7 +192,7 @@ public class SuiteContentSchemaRequiresContentMediaType : IClassFixture<SuiteCon
                 "annotations/content.json",
                 "{\r\n        \"contentSchema\": { \"type\": \"number\" }\r\n      }",
                 "AnnotationTestSuite.Draft202012.Content",
-                "D:\\source\\mwadams\\Corvus.Text.Json\\JSON-Schema-Test-Suite\\remotes",
+                "D:\\source\\corvus-dotnet\\Corvus.JsonSchema\\JSON-Schema-Test-Suite\\remotes",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());

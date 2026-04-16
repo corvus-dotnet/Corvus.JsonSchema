@@ -32,6 +32,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Include="EcmaRegexTranslator.cs" />
     <Compile Include="StandaloneEvaluatorGenerator.cs" />
     <Compile Include="CodeGenerationMode.cs" />
     <Compile Include="RegexPatternCategory.cs" />
@@ -133,6 +134,7 @@
 
   <ItemGroup>
     <InternalsVisibleTo Include="Corvus.Text.Json.Tests" />
+    <InternalsVisibleTo Include="Corvus.Text.Json.CodeGenerator.Tests" />
   </ItemGroup>
 
   <ItemGroup>

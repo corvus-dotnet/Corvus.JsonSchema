@@ -39,7 +39,7 @@ public class SuiteFormatIsAnAnnotation : IClassFixture<SuiteFormatIsAnAnnotation
                 "annotations/format.json",
                 "{\r\n        \"format\": \"email\"\r\n      }",
                 "AnnotationTestSuite.Draft202012.Format",
-                "D:\\source\\mwadams\\Corvus.Text.Json\\JSON-Schema-Test-Suite\\remotes",
+                "D:\\source\\corvus-dotnet\\Corvus.JsonSchema\\JSON-Schema-Test-Suite\\remotes",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());

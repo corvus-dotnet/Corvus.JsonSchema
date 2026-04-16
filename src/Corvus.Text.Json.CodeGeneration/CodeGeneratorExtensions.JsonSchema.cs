@@ -452,6 +452,7 @@ internal static partial class CodeGenerationExtensions
             return generator;
         }
 
+        string translatedValue = EcmaRegexTranslator.TranslateOrFallback(value);
         string memberName = generator.GetMethodNameInScope(keyword.Keyword, prefix: "Create", suffix: index?.ToString());
 
         return generator
@@ -459,12 +460,12 @@ internal static partial class CodeGenerationExtensions
                 .AppendIndent("private static Regex ")
                 .Append(memberName)
                 .Append("() => new(")
-                .Append(SymbolDisplay.FormatLiteral(value, true))
+                .Append(SymbolDisplay.FormatLiteral(translatedValue, true))
                 .AppendLine(", RegexOptions.Compiled);");
 #else
                 .AppendLine("#if NET8_0_OR_GREATER && !DYNAMIC_BUILD")
                 .AppendIndent("[GeneratedRegex(")
-                .Append(SymbolDisplay.FormatLiteral(value, true))
+                .Append(SymbolDisplay.FormatLiteral(translatedValue, true))
                 .AppendLine(")]")
                 .AppendIndent("private static partial Regex ")
                 .Append(memberName)
@@ -473,7 +474,7 @@ internal static partial class CodeGenerationExtensions
             .AppendIndent("private static Regex ")
             .Append(memberName)
             .Append("() => new(")
-            .Append(SymbolDisplay.FormatLiteral(value, true))
+            .Append(SymbolDisplay.FormatLiteral(translatedValue, true))
             .AppendLine(", RegexOptions.Compiled);")
             .AppendLine("#endif");
 #endif
