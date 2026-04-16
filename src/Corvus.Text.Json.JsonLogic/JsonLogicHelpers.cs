@@ -337,13 +337,41 @@ public static class JsonLogicHelpers
     /// </summary>
     public static JsonElement StringToElement(string value)
     {
-        // Build quoted UTF-8: "value"
-        byte[] utf8Value = System.Text.Encoding.UTF8.GetBytes(value);
-        byte[] quoted = new byte[utf8Value.Length + 2];
-        quoted[0] = (byte)'"';
-        Buffer.BlockCopy(utf8Value, 0, quoted, 1, utf8Value.Length);
-        quoted[quoted.Length - 1] = (byte)'"';
-        return StringFromQuotedUtf8(quoted);
+        // Encode the string as quoted UTF-8: "value"
+        // Use stackalloc for small strings, ArrayPool for large ones.
+        int maxUtf8Len = System.Text.Encoding.UTF8.GetMaxByteCount(value.Length) + 2;
+        byte[]? rented = null;
+
+        Span<byte> buffer = maxUtf8Len <= 256
+            ? stackalloc byte[256]
+            : (rented = ArrayPool<byte>.Shared.Rent(maxUtf8Len));
+
+        try
+        {
+            buffer[0] = (byte)'"';
+#if NET
+            int written = System.Text.Encoding.UTF8.GetBytes(value, buffer.Slice(1));
+#else
+            int written;
+            unsafe
+            {
+                fixed (char* pChars = value)
+                fixed (byte* pBytes = buffer.Slice(1))
+                {
+                    written = System.Text.Encoding.UTF8.GetBytes(pChars, value.Length, pBytes, buffer.Length - 2);
+                }
+            }
+#endif
+            buffer[1 + written] = (byte)'"';
+            return StringFromQuotedUtf8Span(buffer.Slice(0, written + 2));
+        }
+        finally
+        {
+            if (rented is not null)
+            {
+                ArrayPool<byte>.Shared.Return(rented);
+            }
+        }
     }
 
     /// <summary>
@@ -404,12 +432,21 @@ public static class JsonLogicHelpers
     {
         using RawUtf8JsonString raw = JsonMarshal.GetRawUtf8Value(value);
         ReadOnlySpan<byte> span = raw.Span;
-        char[] chars = new char[span.Length];
+
+        // JSON numbers are always ASCII, so byte-to-char is 1:1
+        Span<char> chars = span.Length <= 128
+            ? stackalloc char[128]
+            : new char[span.Length];
+
         for (int i = 0; i < span.Length; i++)
         {
             chars[i] = (char)span[i];
         }
 
-        return new string(chars);
+#if NET
+        return new string(chars.Slice(0, span.Length));
+#else
+        return new string(chars.Slice(0, span.Length).ToArray());
+#endif
     }
 }

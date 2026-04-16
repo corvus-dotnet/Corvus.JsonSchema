@@ -1534,46 +1534,148 @@ internal static class FunctionalEvaluator
 
         return (in JsonElement data, JsonWorkspace workspace) =>
         {
-            string? str = JsonLogicHelpers.CoerceToString(operands[0](data, workspace).AsElement(workspace));
-            if (str is null)
+            JsonElement source = operands[0](data, workspace).AsElement(workspace);
+
+            // Fast path: source is a string element — work directly on UTF-8 content
+            if (source.ValueKind == JsonValueKind.String)
+            {
+                return SubstrFromStringElement(source, operands, data, workspace);
+            }
+
+            // Slow path: non-string source, coerce to string first
+            string? str = JsonLogicHelpers.CoerceToString(source);
+            if (str is null || str.Length == 0)
             {
                 return EvalResult.FromElement(JsonLogicHelpers.EmptyString());
             }
 
-            BigNumber startBn = operands.Length > 1
-                ? CoerceToBigNumber(operands[1](data, workspace).AsElement(workspace))
-                : BigNumber.Zero;
-            int start = (int)(long)startBn;
-            if (start < 0)
-            {
-                start = Math.Max(0, str.Length + start);
-            }
-
-            if (start >= str.Length)
-            {
-                return EvalResult.FromElement(JsonLogicHelpers.EmptyString());
-            }
-
-            int length;
-            if (operands.Length > 2)
-            {
-                BigNumber lenBn = CoerceToBigNumber(operands[2](data, workspace).AsElement(workspace));
-                int lenVal = (int)(long)lenBn;
-                length = lenVal < 0 ? Math.Max(0, str.Length - start + lenVal) : lenVal;
-            }
-            else
-            {
-                length = str.Length - start;
-            }
-
-            length = Math.Min(length, str.Length - start);
-            if (length <= 0)
-            {
-                return EvalResult.FromElement(JsonLogicHelpers.EmptyString());
-            }
-
-            return EvalResult.FromElement(JsonLogicHelpers.StringToElement(str.Substring(start, length)));
+            return SubstrFromString(str, operands, data, workspace);
         };
+    }
+
+    private static EvalResult SubstrFromStringElement(
+        in JsonElement source,
+        RuleEvaluator[] operands,
+        in JsonElement data,
+        JsonWorkspace workspace)
+    {
+        using RawUtf8JsonString raw = JsonMarshal.GetRawUtf8Value(source);
+        ReadOnlySpan<byte> span = raw.Span;
+
+        // Strip surrounding quotes
+        if (span.Length < 2)
+        {
+            return EvalResult.FromElement(JsonLogicHelpers.EmptyString());
+        }
+
+        ReadOnlySpan<byte> content = span.Slice(1, span.Length - 2);
+
+        // For ASCII strings (no multi-byte or escapes), char positions == byte positions
+        // Check for any bytes >= 0x80 (multi-byte UTF-8) or 0x5C (backslash = escape)
+        bool isSimpleAscii = true;
+        for (int i = 0; i < content.Length; i++)
+        {
+            if (content[i] >= 0x80 || content[i] == (byte)'\\')
+            {
+                isSimpleAscii = false;
+                break;
+            }
+        }
+
+        if (!isSimpleAscii)
+        {
+            // Fall back to string path for non-ASCII or escaped strings
+            string str = source.GetString()!;
+            return SubstrFromString(str, operands, data, workspace);
+        }
+
+        int len = content.Length;
+
+        BigNumber startBn = operands.Length > 1
+            ? CoerceToBigNumber(operands[1](data, workspace).AsElement(workspace))
+            : BigNumber.Zero;
+        int start = (int)(long)startBn;
+        if (start < 0)
+        {
+            start = Math.Max(0, len + start);
+        }
+
+        if (start >= len)
+        {
+            return EvalResult.FromElement(JsonLogicHelpers.EmptyString());
+        }
+
+        int length;
+        if (operands.Length > 2)
+        {
+            BigNumber lenBn = CoerceToBigNumber(operands[2](data, workspace).AsElement(workspace));
+            int lenVal = (int)(long)lenBn;
+            length = lenVal < 0 ? Math.Max(0, len - start + lenVal) : lenVal;
+        }
+        else
+        {
+            length = len - start;
+        }
+
+        length = Math.Min(length, len - start);
+        if (length <= 0)
+        {
+            return EvalResult.FromElement(JsonLogicHelpers.EmptyString());
+        }
+
+        // Build quoted result directly on the stack
+        int resultLen = length + 2;
+        Span<byte> result = resultLen <= 256
+            ? stackalloc byte[256]
+            : new byte[resultLen];
+
+        result[0] = (byte)'"';
+        content.Slice(start, length).CopyTo(result.Slice(1));
+        result[length + 1] = (byte)'"';
+
+        return EvalResult.FromElement(
+            JsonLogicHelpers.StringFromQuotedUtf8Span(result.Slice(0, resultLen), workspace));
+    }
+
+    private static EvalResult SubstrFromString(
+        string str,
+        RuleEvaluator[] operands,
+        in JsonElement data,
+        JsonWorkspace workspace)
+    {
+        BigNumber startBn = operands.Length > 1
+            ? CoerceToBigNumber(operands[1](data, workspace).AsElement(workspace))
+            : BigNumber.Zero;
+        int start = (int)(long)startBn;
+        if (start < 0)
+        {
+            start = Math.Max(0, str.Length + start);
+        }
+
+        if (start >= str.Length)
+        {
+            return EvalResult.FromElement(JsonLogicHelpers.EmptyString());
+        }
+
+        int length;
+        if (operands.Length > 2)
+        {
+            BigNumber lenBn = CoerceToBigNumber(operands[2](data, workspace).AsElement(workspace));
+            int lenVal = (int)(long)lenBn;
+            length = lenVal < 0 ? Math.Max(0, str.Length - start + lenVal) : lenVal;
+        }
+        else
+        {
+            length = str.Length - start;
+        }
+
+        length = Math.Min(length, str.Length - start);
+        if (length <= 0)
+        {
+            return EvalResult.FromElement(JsonLogicHelpers.EmptyString());
+        }
+
+        return EvalResult.FromElement(JsonLogicHelpers.StringToElement(str.Substring(start, length)));
     }
 
     // ─── ARRAY ───────────────────────────────────────────────────
