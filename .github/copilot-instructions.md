@@ -258,6 +258,52 @@ After changing source files, you must rebuild the affected pipeline steps **and*
 
 The generator at `docs/website/tools/XmlDocToMarkdown/` processes XML docs + assemblies into markdown, taxonomy, Razor views, and per-type HTML pages. It supports multi-assembly input (V4 has 8 libraries), versioned output with engine switcher, and per-version search indices. Key entry points: `ApiViewGenerator.cs` (Razor view generation), `HtmlPageGenerator.cs` (per-type HTML), `MarkdownGenerator.cs` (namespace markdown).
 
+## Playgrounds
+
+Two Blazor WASM playgrounds provide interactive browser-based tools for trying out the libraries. They live under `docs/` and share the same architecture: a Blazor WASM app with Monaco editor integration bundled via esbuild.
+
+### JSONata Playground
+
+Located at `docs/playground-jsonata/`. Provides an interactive editor for JSONata expressions with live evaluation, custom bindings, and sample expressions.
+
+**Running the preview server:**
+
+```powershell
+# 1. Build the JavaScript bundle (only needed after changing JS/Monaco assets)
+cd docs/playground-jsonata
+npm ci
+npm run bundle
+
+# 2. Start the Blazor WASM dev server on a fixed port
+$env:ASPNETCORE_URLS = "http://127.0.0.1:5280"
+dotnet run --project docs/playground-jsonata/src/Corvus.Text.Json.Jsonata.Playground/Corvus.Text.Json.Jsonata.Playground.csproj
+```
+
+The app will be available at `http://127.0.0.1:5280/`. Use `ASPNETCORE_URLS` to pin the port — the `--urls` flag does not work with the WASM app host.
+
+**IMPORTANT:** Stop the server before rebuilding. The WASM host holds file locks that prevent rebuild from completing.
+
+**Error messages in WASM:** `SR.Format` does not work correctly in Blazor WASM because `System.Resources.UseSystemResourceKeys` returns `true`, causing it to fall back to `string.Join` instead of `string.Format`. The `EvaluationService.FixBrokenSRFormat()` method compensates for this by detecting unsubstituted `{0}` placeholders and re-applying `string.Format`. All exception messages displayed to the user must go through this method.
+
+### Corvus.Text.Json Playground
+
+Located at `docs/playground/`. Provides an interactive JSON Schema validation playground.
+
+**Running the preview server:**
+
+```powershell
+# 1. Build the JavaScript bundle (only needed after changing JS/Monaco assets)
+cd docs/playground
+npm ci
+npm run bundle
+
+# 2. Start the Blazor WASM dev server on a fixed port
+$env:ASPNETCORE_URLS = "http://127.0.0.1:5281"
+dotnet run --project docs/playground/src/Corvus.Text.Json.Playground/Corvus.Text.Json.Playground.csproj
+```
+
+The app will be available at `http://127.0.0.1:5281/`.
+
 ## Benchmarks
 
 The `benchmarks/` directory contains BenchmarkDotNet projects that compare validation performance against a frozen baseline. Each benchmark model project (e.g., `Corvus.Text.Json.AnsibleMetaBenchmarkModels`) has two subdirectories:
