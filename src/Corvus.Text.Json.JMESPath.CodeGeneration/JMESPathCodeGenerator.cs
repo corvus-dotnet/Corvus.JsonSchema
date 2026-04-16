@@ -28,11 +28,18 @@ public static class JMESPathCodeGenerator
     /// <param name="expression">The JMESPath expression string.</param>
     /// <param name="className">The name of the generated static class.</param>
     /// <param name="namespaceName">The namespace for the generated class.</param>
+    /// <param name="accessibility">The accessibility modifier (e.g. <c>"internal"</c> or <c>"public"</c>).</param>
+    /// <param name="isPartial">Whether to emit the <c>partial</c> modifier on the class.</param>
     /// <returns>A complete C# source file as a string.</returns>
     /// <exception cref="JMESPathException">
     /// Thrown if <paramref name="expression"/> is not a valid JMESPath expression.
     /// </exception>
-    public static string Generate(string expression, string className, string namespaceName)
+    public static string Generate(
+        string expression,
+        string className,
+        string namespaceName,
+        string accessibility = "internal",
+        bool isPartial = false)
     {
         byte[] utf8 = Encoding.UTF8.GetBytes(expression);
         JMESPathNode ast = Parser.Parse(utf8);
@@ -52,7 +59,8 @@ public static class JMESPathCodeGenerator
         L(sb, "", $"namespace {namespaceName};");
         Blank(sb);
 
-        L(sb, "", $"internal static class {className}");
+        string partialKeyword = isPartial ? " partial" : string.Empty;
+        L(sb, "", $"{accessibility} static{partialKeyword} class {className}");
         L(sb, "", "{");
 
         // Emit static literal fields inside the class

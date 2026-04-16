@@ -163,10 +163,13 @@ public sealed class JMESPathSourceGenerator : IIncrementalGenerator
 
         try
         {
-            string generated = JMESPathCodeGenerator.Generate(expression!, spec.TypeName, spec.NamespaceName);
-
-            // Transform the standalone static class into a partial type body
-            string source = TransformToPartialType(generated, spec);
+            string accessibility = spec.IsPublic ? "public" : "internal";
+            string source = JMESPathCodeGenerator.Generate(
+                expression!,
+                spec.TypeName,
+                spec.NamespaceName,
+                accessibility,
+                isPartial: true);
 
             context.AddSource($"{spec.TypeName}.JMESPath.g.cs", SourceText.From(source, Encoding.UTF8));
         }
@@ -184,19 +187,6 @@ public sealed class JMESPathSourceGenerator : IIncrementalGenerator
                 spec.ExpressionFile,
                 ex.Message));
         }
-    }
-
-    /// <summary>
-    /// Transforms the output of <see cref="JMESPathCodeGenerator.Generate(string, string, string)"/> from a standalone
-    /// static class into a partial type body matching the user's declaration.
-    /// </summary>
-    private static string TransformToPartialType(string generated, GenerationSpec spec)
-    {
-        string accessibility = spec.IsPublic ? "public" : "internal";
-        string oldDecl = $"internal static class {spec.TypeName}";
-        string newDecl = $"{accessibility} static partial class {spec.TypeName}";
-
-        return generated.Replace(oldDecl, newDecl);
     }
 
     private readonly record struct GenerationSpec(
