@@ -1,0 +1,1 @@
+{"if":[{"<":[{"var":"age"},13]},{"cat":["Hello, ",{"var":"name"},"! You are a child."]},{"<":[{"var":"age"},18]},{"cat":["Hello, ",{"var":"name"},"! You are a teenager."]},{">=":[{"var":"age"},65]},{"cat":["Hello, ",{"var":"name"},"! You are a senior."]},{"cat":["Hello, ",{"var":"name"},"! You are an adult."]}]}

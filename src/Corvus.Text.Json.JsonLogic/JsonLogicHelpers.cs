@@ -3,7 +3,9 @@
 // </copyright>
 
 using System.Buffers;
+using System.Buffers.Text;
 using System.Runtime.CompilerServices;
+using Corvus.Numerics;
 using Corvus.Runtime.InteropServices;
 using Corvus.Text;
 using Corvus.Text.Json.Internal;
@@ -375,6 +377,221 @@ public static class JsonLogicHelpers
     }
 
     /// <summary>
+    /// Extracts a substring from a <see cref="JsonElement"/> string value using JsonLogic
+    /// substr semantics. Uses a zero-allocation UTF-8 fast path for ASCII strings.
+    /// </summary>
+    /// <param name="source">The source element (coerced to string if not already).</param>
+    /// <param name="start">The start index (may be negative to index from end).</param>
+    /// <param name="length">The length to extract (may be negative to trim from end). Use <see cref="int.MaxValue"/> for "to end".</param>
+    /// <param name="workspace">The workspace for creating the result element.</param>
+    /// <returns>A <see cref="JsonElement"/> containing the extracted substring.</returns>
+    public static JsonElement SubstrFromElement(in JsonElement source, int start, int length, JsonWorkspace workspace)
+    {
+        if (source.ValueKind == JsonValueKind.String)
+        {
+            using RawUtf8JsonString raw = JsonMarshal.GetRawUtf8Value(source);
+            ReadOnlySpan<byte> span = raw.Span;
+
+            if (span.Length >= 2)
+            {
+                ReadOnlySpan<byte> content = span.Slice(1, span.Length - 2);
+
+                // ASCII fast path: char positions == byte positions
+                bool isSimpleAscii = true;
+                for (int i = 0; i < content.Length; i++)
+                {
+                    if (content[i] >= 0x80 || content[i] == (byte)'\\')
+                    {
+                        isSimpleAscii = false;
+                        break;
+                    }
+                }
+
+                if (isSimpleAscii)
+                {
+                    return SubstrFromAsciiUtf8(content, start, length, workspace);
+                }
+            }
+        }
+
+        // Slow path: coerce to string, then substring
+        string? str = CoerceToString(source);
+        if (str is null || str.Length == 0)
+        {
+            return EmptyString();
+        }
+
+        return SubstrFromManagedString(str, start, length, workspace);
+    }
+
+    private static JsonElement SubstrFromAsciiUtf8(ReadOnlySpan<byte> content, int start, int length, JsonWorkspace workspace)
+    {
+        int len = content.Length;
+
+        if (start < 0)
+        {
+            start = Math.Max(0, len + start);
+        }
+
+        if (start >= len)
+        {
+            return EmptyString();
+        }
+
+        int actualLength = length == int.MaxValue
+            ? len - start
+            : (length < 0 ? Math.Max(0, len - start + length) : length);
+
+        actualLength = Math.Min(actualLength, len - start);
+        if (actualLength <= 0)
+        {
+            return EmptyString();
+        }
+
+        int resultLen = actualLength + 2;
+        Span<byte> result = resultLen <= 256
+            ? stackalloc byte[256]
+            : new byte[resultLen];
+
+        result[0] = (byte)'"';
+        content.Slice(start, actualLength).CopyTo(result.Slice(1));
+        result[actualLength + 1] = (byte)'"';
+
+        return StringFromQuotedUtf8Span(result.Slice(0, resultLen), workspace);
+    }
+
+    private static JsonElement SubstrFromManagedString(string str, int start, int length, JsonWorkspace workspace)
+    {
+        if (start < 0)
+        {
+            start = Math.Max(0, str.Length + start);
+        }
+
+        if (start >= str.Length)
+        {
+            return EmptyString();
+        }
+
+        int actualLength = length == int.MaxValue
+            ? str.Length - start
+            : (length < 0 ? Math.Max(0, str.Length - start + length) : length);
+
+        actualLength = Math.Min(actualLength, str.Length - start);
+        if (actualLength <= 0)
+        {
+            return EmptyString();
+        }
+
+        return StringToElement(str.Substring(start, actualLength));
+    }
+
+    /// <summary>
+    /// Concatenates multiple <see cref="JsonElement"/> values into a single JSON string element,
+    /// coercing each to its string representation using UTF-8 buffer building (zero managed string allocation).
+    /// </summary>
+    /// <param name="operands">The operands to concatenate.</param>
+    /// <param name="workspace">The workspace for creating the result element.</param>
+    /// <returns>A <see cref="JsonElement"/> containing the concatenated string.</returns>
+    public static JsonElement ConcatToElement(ReadOnlySpan<JsonElement> operands, JsonWorkspace workspace)
+    {
+        byte[] buffer = ArrayPool<byte>.Shared.Rent(256);
+        int pos = 0;
+        buffer[pos++] = (byte)'"';
+
+        for (int i = 0; i < operands.Length; i++)
+        {
+            AppendCoercedToBuffer(operands[i], ref buffer, ref pos);
+        }
+
+        GrowCatBufferIfNeeded(ref buffer, pos, 1);
+        buffer[pos++] = (byte)'"';
+
+        JsonElement result = StringFromQuotedUtf8Span(
+            new ReadOnlySpan<byte>(buffer, 0, pos), workspace);
+        ArrayPool<byte>.Shared.Return(buffer);
+        return result;
+    }
+
+    /// <summary>
+    /// Appends the coerced string representation of a JSON element to a buffer.
+    /// </summary>
+    public static void AppendCoercedToBuffer(in JsonElement elem, ref byte[] buffer, ref int pos)
+    {
+        if (elem.IsNullOrUndefined())
+        {
+            GrowCatBufferIfNeeded(ref buffer, pos, 4);
+            "null"u8.CopyTo(buffer.AsSpan(pos));
+            pos += 4;
+            return;
+        }
+
+        switch (elem.ValueKind)
+        {
+            case JsonValueKind.String:
+            {
+                using RawUtf8JsonString raw = JsonMarshal.GetRawUtf8Value(elem);
+                ReadOnlySpan<byte> span = raw.Span;
+                if (span.Length > 2)
+                {
+                    int contentLen = span.Length - 2;
+                    GrowCatBufferIfNeeded(ref buffer, pos, contentLen);
+                    span.Slice(1, contentLen).CopyTo(buffer.AsSpan(pos));
+                    pos += contentLen;
+                }
+
+                break;
+            }
+
+            case JsonValueKind.Number:
+            {
+                using RawUtf8JsonString raw = JsonMarshal.GetRawUtf8Value(elem);
+                ReadOnlySpan<byte> span = raw.Span;
+                GrowCatBufferIfNeeded(ref buffer, pos, span.Length);
+                span.CopyTo(buffer.AsSpan(pos));
+                pos += span.Length;
+                break;
+            }
+
+            case JsonValueKind.True:
+                GrowCatBufferIfNeeded(ref buffer, pos, 4);
+                "true"u8.CopyTo(buffer.AsSpan(pos));
+                pos += 4;
+                break;
+            case JsonValueKind.False:
+                GrowCatBufferIfNeeded(ref buffer, pos, 5);
+                "false"u8.CopyTo(buffer.AsSpan(pos));
+                pos += 5;
+                break;
+            case JsonValueKind.Null:
+                GrowCatBufferIfNeeded(ref buffer, pos, 4);
+                "null"u8.CopyTo(buffer.AsSpan(pos));
+                pos += 4;
+                break;
+        }
+    }
+
+    /// <summary>
+    /// Grows the cat buffer if needed to accommodate the specified number of bytes.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void GrowCatBufferIfNeeded(ref byte[] buffer, int pos, int needed)
+    {
+        if (pos + needed > buffer.Length)
+        {
+            GrowCatBuffer(ref buffer, pos, needed);
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private static void GrowCatBuffer(ref byte[] buffer, int pos, int needed)
+    {
+        byte[] newBuffer = ArrayPool<byte>.Shared.Rent(Math.Max(buffer.Length * 2, pos + needed));
+        buffer.AsSpan(0, pos).CopyTo(newBuffer);
+        ArrayPool<byte>.Shared.Return(buffer);
+        buffer = newBuffer;
+    }
+
+    /// <summary>
     /// Determines whether a numeric <see cref="JsonElement"/> is zero.
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -448,5 +665,286 @@ public static class JsonLogicHelpers
 #else
         return new string(chars.Slice(0, span.Length).ToArray());
 #endif
+    }
+
+    // ─── Code-generation helpers ─────────────────────────────────
+    // These methods are called by source-generated JsonLogic evaluators
+    // (produced by JsonLogicCodeGenerator / JsonLogicSourceGenerator).
+    // They were previously emitted into every generated class; they now
+    // live here so the generated code is smaller and the JIT sees a
+    // single copy.
+
+    /// <summary>
+    /// Strict equality: same <see cref="JsonValueKind"/> and equal value.
+    /// </summary>
+    public static bool StrictElementEquals(in JsonElement left, in JsonElement right)
+    {
+        if (left.ValueKind != right.ValueKind)
+        {
+            return false;
+        }
+
+        if (left.IsNullOrUndefined() && right.IsNullOrUndefined())
+        {
+            return true;
+        }
+
+        if (left.ValueKind == JsonValueKind.Number)
+        {
+            return AreNumbersEqual(left, right);
+        }
+
+        if (left.ValueKind == JsonValueKind.String)
+        {
+            using RawUtf8JsonString leftRaw = JsonMarshal.GetRawUtf8Value(left);
+            using RawUtf8JsonString rightRaw = JsonMarshal.GetRawUtf8Value(right);
+            return leftRaw.Span.SequenceEqual(rightRaw.Span);
+        }
+
+        return left.ValueKind is JsonValueKind.True or JsonValueKind.False;
+    }
+
+    /// <summary>
+    /// Coercing (abstract) equality per JsonLogic semantics.
+    /// </summary>
+    public static bool CoercingElementEquals(in JsonElement left, in JsonElement right)
+    {
+        if (left.ValueKind == right.ValueKind)
+        {
+            return StrictElementEquals(left, right);
+        }
+
+        if (left.IsNullOrUndefined() && right.IsNullOrUndefined())
+        {
+            return true;
+        }
+
+        if (left.IsNullOrUndefined() || right.IsNullOrUndefined())
+        {
+            return false;
+        }
+
+        if (left.ValueKind == JsonValueKind.Number && right.ValueKind == JsonValueKind.String)
+        {
+            return TryCoerceToNumber(right, out JsonElement rn) && AreNumbersEqual(left, rn);
+        }
+
+        if (left.ValueKind == JsonValueKind.String && right.ValueKind == JsonValueKind.Number)
+        {
+            return TryCoerceToNumber(left, out JsonElement ln) && AreNumbersEqual(ln, right);
+        }
+
+        if (left.ValueKind is JsonValueKind.True or JsonValueKind.False)
+        {
+            JsonElement leftNum = left.ValueKind == JsonValueKind.True ? One() : Zero();
+            return CoercingElementEquals(leftNum, right);
+        }
+
+        if (right.ValueKind is JsonValueKind.True or JsonValueKind.False)
+        {
+            JsonElement rightNum = right.ValueKind == JsonValueKind.True ? One() : Zero();
+            return CoercingElementEquals(left, rightNum);
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Compare two elements with double fast-path and BigNumber fallback.
+    /// <paramref name="op"/>: 1 = &gt;, 2 = &gt;=, 3 = &lt;, 4 = &lt;=.
+    /// </summary>
+    public static bool CompareCoerced(in JsonElement left, in JsonElement right, int op)
+    {
+        if (left.IsNullOrUndefined() || right.IsNullOrUndefined())
+        {
+            return false;
+        }
+
+        if (TryCoerceToDouble(left, out double ld) && TryCoerceToDouble(right, out double rd))
+        {
+            return op switch { 1 => ld > rd, 2 => ld >= rd, 3 => ld < rd, 4 => ld <= rd, _ => false };
+        }
+
+        if (!TryCoerceToNumber(left, out JsonElement ln) || !TryCoerceToNumber(right, out JsonElement rn))
+        {
+            return false;
+        }
+
+        int cmp = CompareNumbers(ln, rn);
+        return op switch
+        {
+            1 => cmp > 0,
+            2 => cmp >= 0,
+            3 => cmp < 0,
+            4 => cmp <= 0,
+            _ => false,
+        };
+    }
+
+    /// <summary>
+    /// Coerces a <see cref="JsonElement"/> to a <see cref="BigNumber"/>.
+    /// </summary>
+    public static BigNumber CoerceToBigNumber(in JsonElement element)
+    {
+        if (element.ValueKind == JsonValueKind.Number && BigNumber.TryParse(element.GetRawText(), out BigNumber result))
+        {
+            return result;
+        }
+
+        if (element.ValueKind == JsonValueKind.True)
+        {
+            return BigNumber.One;
+        }
+
+        if (element.ValueKind == JsonValueKind.False || element.ValueKind == JsonValueKind.Null)
+        {
+            return BigNumber.Zero;
+        }
+
+        if (element.ValueKind == JsonValueKind.String && TryCoerceToNumber(element, out JsonElement numElem) && BigNumber.TryParse(numElem.GetRawText(), out BigNumber numResult))
+        {
+            return numResult;
+        }
+
+        return BigNumber.Zero;
+    }
+
+    /// <summary>
+    /// Materializes a <see cref="BigNumber"/> into a number <see cref="JsonElement"/>.
+    /// </summary>
+    public static JsonElement BigNumberToElement(BigNumber value, JsonWorkspace workspace)
+    {
+        Span<byte> buffer = stackalloc byte[64];
+        if (value.TryFormat(buffer, out int bytesWritten))
+        {
+            return NumberFromSpan(buffer.Slice(0, bytesWritten), workspace);
+        }
+
+        return Zero();
+    }
+
+    /// <summary>
+    /// Attempts to coerce a <see cref="JsonElement"/> to a <see langword="double"/>.
+    /// Handles Number, True (1), False/Null (0), and numeric strings.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static bool TryCoerceToDouble(in JsonElement element, out double value)
+    {
+        if (element.ValueKind == JsonValueKind.Number)
+        {
+            return element.TryGetDouble(out value);
+        }
+
+        if (element.ValueKind == JsonValueKind.True)
+        {
+            value = 1;
+            return true;
+        }
+
+        if (element.ValueKind == JsonValueKind.False || element.ValueKind == JsonValueKind.Null)
+        {
+            value = 0;
+            return true;
+        }
+
+        if (element.ValueKind == JsonValueKind.String && TryCoerceToNumber(element, out JsonElement numElem) && numElem.TryGetDouble(out value))
+        {
+            return true;
+        }
+
+        value = 0;
+        return false;
+    }
+
+    /// <summary>
+    /// Materializes a <see langword="double"/> into a number <see cref="JsonElement"/>.
+    /// </summary>
+    public static JsonElement DoubleToElement(double value, JsonWorkspace workspace)
+    {
+        Span<byte> buffer = stackalloc byte[32];
+        if (System.Buffers.Text.Utf8Formatter.TryFormat(value, buffer, out int bytesWritten))
+        {
+            return NumberFromSpan(buffer.Slice(0, bytesWritten), workspace);
+        }
+
+        return Zero();
+    }
+
+    /// <summary>
+    /// Resolves a variable path from <paramref name="data"/> using <paramref name="pathElement"/>.
+    /// Handles dotted paths (e.g. "a.b.c") and array indexing. Zero-allocation for common paths.
+    /// </summary>
+    public static JsonElement ResolveVar(in JsonElement data, in JsonElement pathElement)
+    {
+        if (pathElement.IsNullOrUndefined())
+        {
+            return data;
+        }
+
+        if (pathElement.ValueKind == JsonValueKind.Number)
+        {
+            // Number path — raw text is digits only, no quotes
+            using RawUtf8JsonString raw = JsonMarshal.GetRawUtf8Value(pathElement);
+            return ResolvePathSegment(data, raw.Span);
+        }
+
+        if (pathElement.ValueKind == JsonValueKind.String)
+        {
+            using UnescapedUtf8JsonString utf8 = pathElement.GetUtf8String();
+            ReadOnlySpan<byte> path = utf8.Span;
+            if (path.Length == 0)
+            {
+                return data;
+            }
+
+            return ResolveVarPath(data, path);
+        }
+
+        return NullElement();
+    }
+
+    private static JsonElement ResolveVarPath(in JsonElement data, ReadOnlySpan<byte> path)
+    {
+        JsonElement current = data;
+
+        while (true)
+        {
+            if (current.IsNullOrUndefined())
+            {
+                return NullElement();
+            }
+
+            int dotIndex = path.IndexOf((byte)'.');
+            ReadOnlySpan<byte> segment = dotIndex >= 0 ? path.Slice(0, dotIndex) : path;
+
+            current = ResolvePathSegment(current, segment);
+
+            if (dotIndex < 0)
+            {
+                return current;
+            }
+
+            path = path.Slice(dotIndex + 1);
+        }
+    }
+
+    private static JsonElement ResolvePathSegment(in JsonElement current, ReadOnlySpan<byte> segment)
+    {
+        if (current.ValueKind == JsonValueKind.Object)
+        {
+            return current.TryGetProperty(segment, out JsonElement value)
+                ? value
+                : NullElement();
+        }
+
+        if (current.ValueKind == JsonValueKind.Array
+            && Utf8Parser.TryParse(segment, out int idx, out int consumed)
+            && consumed == segment.Length
+            && idx >= 0 && idx < current.GetArrayLength())
+        {
+            return current[idx];
+        }
+
+        return NullElement();
     }
 }

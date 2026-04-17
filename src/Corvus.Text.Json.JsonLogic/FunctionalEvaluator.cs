@@ -114,16 +114,20 @@ internal static class FunctionalEvaluator
 
         return (in JsonElement data, JsonWorkspace workspace) =>
         {
-            JsonDocumentBuilder<JsonElement.Mutable> doc =
-                JsonElement.CreateArrayBuilder(workspace, items.Length);
-            JsonElement.Mutable root = doc.RootElement;
-
-            for (int j = 0; j < items.Length; j++)
+            var buf = default(ElementBuffer);
+            try
             {
-                root.AddItem(items[j](data, workspace).AsElement(workspace));
-            }
+                for (int j = 0; j < items.Length; j++)
+                {
+                    buf.Add(items[j](data, workspace).AsElement(workspace));
+                }
 
-            return EvalResult.FromElement((JsonElement)root);
+                return EvalResult.FromElement(buf.ToArrayResult(workspace));
+            }
+            finally
+            {
+                buf.Dispose();
+            }
         };
     }
 
@@ -160,7 +164,7 @@ internal static class FunctionalEvaluator
                 "min" => CompileMinMax(operands, isMin: true),
                 "max" => CompileMinMax(operands, isMin: false),
                 "cat" => CompileCat(operands),
-                "substr" => CompileSubstr(operands),
+                "substr" => CompileSubstr(args),
                 "and" => CompileAnd(operands),
                 "or" => CompileOr(operands),
                 "==" => CompileEquals(operands),
@@ -173,8 +177,8 @@ internal static class FunctionalEvaluator
                 ">=" => CompileComparison(operands, CompareOp.GreaterThanOrEqual),
                 "<" => CompileComparison(operands, CompareOp.LessThan),
                 "<=" => CompileComparison(operands, CompareOp.LessThanOrEqual),
-                "in" => CompileIn(operands),
-                "merge" => CompileMerge(operands),
+                "in" => CompileIn(args),
+                "merge" => CompileMerge(args),
                 "map" => CompileMap(args),
                 "filter" => CompileFilter(args),
                 "reduce" => CompileReduce(args),
@@ -954,6 +958,19 @@ internal static class FunctionalEvaluator
         return left.ValueKind is JsonValueKind.True or JsonValueKind.False;
     }
 
+    private static bool IsConstantLiteralArray(in JsonElement element)
+    {
+        foreach (JsonElement sub in element.EnumerateArray())
+        {
+            if (sub.ValueKind is JsonValueKind.Object or JsonValueKind.Array)
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     // ─── LOGIC ───────────────────────────────────────────────────
     private static RuleEvaluator CompileNot(RuleEvaluator[] operands)
     {
@@ -1524,175 +1541,126 @@ internal static class FunctionalEvaluator
         buffer = newBuffer;
     }
 
-    private static RuleEvaluator CompileSubstr(RuleEvaluator[] operands)
+    private static RuleEvaluator CompileSubstr(in JsonElement args)
     {
+        RuleEvaluator[] operands = CompileArgs(args);
         if (operands.Length == 0)
         {
             return static (in JsonElement data, JsonWorkspace workspace) =>
                 EvalResult.FromElement(JsonLogicHelpers.EmptyString());
         }
 
+        // Detect constant start/length at compile time to avoid BigNumber at runtime
+        JsonElement[] rawArgs = args.ValueKind == JsonValueKind.Array
+            ? [.. args.EnumerateArray()]
+            : [args];
+
+        bool hasConstStart = rawArgs.Length > 1 && rawArgs[1].ValueKind == JsonValueKind.Number;
+        bool hasConstLength = rawArgs.Length > 2 && rawArgs[2].ValueKind == JsonValueKind.Number;
+
+        int constStart = hasConstStart ? (int)rawArgs[1].GetDouble() : 0;
+        int constLength = hasConstLength ? (int)rawArgs[2].GetDouble() : int.MaxValue;
+
+        if (hasConstStart && (hasConstLength || rawArgs.Length <= 2))
+        {
+            // Fully constant start/length — skip delegates and BigNumber entirely
+            int capturedStart = constStart;
+            int capturedLength = rawArgs.Length > 2 ? constLength : int.MaxValue;
+
+            return (in JsonElement data, JsonWorkspace workspace) =>
+            {
+                JsonElement source = operands[0](data, workspace).AsElement(workspace);
+                return EvalResult.FromElement(
+                    JsonLogicHelpers.SubstrFromElement(source, capturedStart, capturedLength, workspace));
+            };
+        }
+
+        // Dynamic start/length — evaluate at runtime
         return (in JsonElement data, JsonWorkspace workspace) =>
         {
             JsonElement source = operands[0](data, workspace).AsElement(workspace);
 
-            // Fast path: source is a string element — work directly on UTF-8 content
-            if (source.ValueKind == JsonValueKind.String)
+            BigNumber startBn = operands.Length > 1
+                ? CoerceToBigNumber(operands[1](data, workspace).AsElement(workspace))
+                : BigNumber.Zero;
+            int start = (int)(long)startBn;
+
+            int length;
+            if (operands.Length > 2)
             {
-                return SubstrFromStringElement(source, operands, data, workspace);
+                BigNumber lenBn = CoerceToBigNumber(operands[2](data, workspace).AsElement(workspace));
+                length = (int)(long)lenBn;
+            }
+            else
+            {
+                length = int.MaxValue;
             }
 
-            // Slow path: non-string source, coerce to string first
-            string? str = JsonLogicHelpers.CoerceToString(source);
-            if (str is null || str.Length == 0)
-            {
-                return EvalResult.FromElement(JsonLogicHelpers.EmptyString());
-            }
-
-            return SubstrFromString(str, operands, data, workspace);
+            return EvalResult.FromElement(
+                JsonLogicHelpers.SubstrFromElement(source, start, length, workspace));
         };
     }
 
-    private static EvalResult SubstrFromStringElement(
-        in JsonElement source,
-        RuleEvaluator[] operands,
-        in JsonElement data,
-        JsonWorkspace workspace)
-    {
-        using RawUtf8JsonString raw = JsonMarshal.GetRawUtf8Value(source);
-        ReadOnlySpan<byte> span = raw.Span;
-
-        // Strip surrounding quotes
-        if (span.Length < 2)
-        {
-            return EvalResult.FromElement(JsonLogicHelpers.EmptyString());
-        }
-
-        ReadOnlySpan<byte> content = span.Slice(1, span.Length - 2);
-
-        // For ASCII strings (no multi-byte or escapes), char positions == byte positions
-        // Check for any bytes >= 0x80 (multi-byte UTF-8) or 0x5C (backslash = escape)
-        bool isSimpleAscii = true;
-        for (int i = 0; i < content.Length; i++)
-        {
-            if (content[i] >= 0x80 || content[i] == (byte)'\\')
-            {
-                isSimpleAscii = false;
-                break;
-            }
-        }
-
-        if (!isSimpleAscii)
-        {
-            // Fall back to string path for non-ASCII or escaped strings
-            string str = source.GetString()!;
-            return SubstrFromString(str, operands, data, workspace);
-        }
-
-        int len = content.Length;
-
-        BigNumber startBn = operands.Length > 1
-            ? CoerceToBigNumber(operands[1](data, workspace).AsElement(workspace))
-            : BigNumber.Zero;
-        int start = (int)(long)startBn;
-        if (start < 0)
-        {
-            start = Math.Max(0, len + start);
-        }
-
-        if (start >= len)
-        {
-            return EvalResult.FromElement(JsonLogicHelpers.EmptyString());
-        }
-
-        int length;
-        if (operands.Length > 2)
-        {
-            BigNumber lenBn = CoerceToBigNumber(operands[2](data, workspace).AsElement(workspace));
-            int lenVal = (int)(long)lenBn;
-            length = lenVal < 0 ? Math.Max(0, len - start + lenVal) : lenVal;
-        }
-        else
-        {
-            length = len - start;
-        }
-
-        length = Math.Min(length, len - start);
-        if (length <= 0)
-        {
-            return EvalResult.FromElement(JsonLogicHelpers.EmptyString());
-        }
-
-        // Build quoted result directly on the stack
-        int resultLen = length + 2;
-        Span<byte> result = resultLen <= 256
-            ? stackalloc byte[256]
-            : new byte[resultLen];
-
-        result[0] = (byte)'"';
-        content.Slice(start, length).CopyTo(result.Slice(1));
-        result[length + 1] = (byte)'"';
-
-        return EvalResult.FromElement(
-            JsonLogicHelpers.StringFromQuotedUtf8Span(result.Slice(0, resultLen), workspace));
-    }
-
-    private static EvalResult SubstrFromString(
-        string str,
-        RuleEvaluator[] operands,
-        in JsonElement data,
-        JsonWorkspace workspace)
-    {
-        BigNumber startBn = operands.Length > 1
-            ? CoerceToBigNumber(operands[1](data, workspace).AsElement(workspace))
-            : BigNumber.Zero;
-        int start = (int)(long)startBn;
-        if (start < 0)
-        {
-            start = Math.Max(0, str.Length + start);
-        }
-
-        if (start >= str.Length)
-        {
-            return EvalResult.FromElement(JsonLogicHelpers.EmptyString());
-        }
-
-        int length;
-        if (operands.Length > 2)
-        {
-            BigNumber lenBn = CoerceToBigNumber(operands[2](data, workspace).AsElement(workspace));
-            int lenVal = (int)(long)lenBn;
-            length = lenVal < 0 ? Math.Max(0, str.Length - start + lenVal) : lenVal;
-        }
-        else
-        {
-            length = str.Length - start;
-        }
-
-        length = Math.Min(length, str.Length - start);
-        if (length <= 0)
-        {
-            return EvalResult.FromElement(JsonLogicHelpers.EmptyString());
-        }
-
-        return EvalResult.FromElement(JsonLogicHelpers.StringToElement(str.Substring(start, length)));
-    }
-
     // ─── ARRAY ───────────────────────────────────────────────────
-    private static RuleEvaluator CompileIn(RuleEvaluator[] operands)
+    private static RuleEvaluator CompileIn(in JsonElement args)
     {
+        RuleEvaluator[] operands = CompileArgs(args);
         if (operands.Length < 2)
         {
             return static (in JsonElement data, JsonWorkspace workspace) =>
                 EvalResult.FromElement(JsonLogicHelpers.BooleanElement(false));
         }
 
-        RuleEvaluator needleExpr = operands[0];
-        RuleEvaluator haystackExpr = operands[1];
+        // Check if the haystack (second operand in args) is a constant literal array.
+        // If so, capture the elements directly and skip building an array document per call.
+        JsonElement haystackArg = default;
+        int idx = 0;
+        if (args.ValueKind == JsonValueKind.Array)
+        {
+            foreach (JsonElement item in args.EnumerateArray())
+            {
+                if (idx == 1)
+                {
+                    haystackArg = item;
+                    break;
+                }
+
+                idx++;
+            }
+        }
+
+        if (haystackArg.ValueKind == JsonValueKind.Array && IsConstantLiteralArray(haystackArg))
+        {
+            // Pre-capture all haystack elements at compile time
+            JsonElement[] haystackItems = new JsonElement[haystackArg.GetArrayLength()];
+            int i = 0;
+            foreach (JsonElement sub in haystackArg.EnumerateArray())
+            {
+                haystackItems[i++] = sub;
+            }
+
+            RuleEvaluator needleExpr = operands[0];
+            return (in JsonElement data, JsonWorkspace workspace) =>
+            {
+                JsonElement needle = needleExpr(data, workspace).AsElement(workspace);
+                for (int j = 0; j < haystackItems.Length; j++)
+                {
+                    if (StrictEqualsElement(needle, haystackItems[j]))
+                    {
+                        return EvalResult.FromElement(JsonLogicHelpers.BooleanElement(true));
+                    }
+                }
+
+                return EvalResult.FromElement(JsonLogicHelpers.BooleanElement(false));
+            };
+        }
+
+        RuleEvaluator needleOp = operands[0];
+        RuleEvaluator haystackOp = operands[1];
         return (in JsonElement data, JsonWorkspace workspace) =>
         {
-            JsonElement needle = needleExpr(data, workspace).AsElement(workspace);
-            JsonElement haystack = haystackExpr(data, workspace).AsElement(workspace);
+            JsonElement needle = needleOp(data, workspace).AsElement(workspace);
+            JsonElement haystack = haystackOp(data, workspace).AsElement(workspace);
 
             if (haystack.ValueKind == JsonValueKind.String)
             {
@@ -1724,37 +1692,141 @@ internal static class FunctionalEvaluator
         };
     }
 
-    private static RuleEvaluator CompileMerge(RuleEvaluator[] operands)
+    private static RuleEvaluator CompileMerge(in JsonElement args)
     {
-        if (operands.Length == 0)
+        if (args.ValueKind != JsonValueKind.Array)
+        {
+            // Single non-array operand: merge(x) wraps x in an array
+            RuleEvaluator single = CompileExpression(args);
+            return (in JsonElement data, JsonWorkspace workspace) =>
+            {
+                JsonElement elem = single(data, workspace).AsElement(workspace);
+                if (elem.ValueKind == JsonValueKind.Array)
+                {
+                    return EvalResult.FromElement(elem);
+                }
+
+                var buf = default(ElementBuffer);
+                try
+                {
+                    buf.Add(elem);
+                    return EvalResult.FromElement(buf.ToArrayResult(workspace));
+                }
+                finally
+                {
+                    buf.Dispose();
+                }
+            };
+        }
+
+        if (args.GetArrayLength() == 0)
         {
             return static (in JsonElement data, JsonWorkspace workspace) =>
                 EvalResult.FromElement(JsonLogicHelpers.EmptyArray());
         }
 
-        return (in JsonElement data, JsonWorkspace workspace) =>
-        {
-            JsonDocumentBuilder<JsonElement.Mutable> doc =
-                JsonElement.CreateArrayBuilder(workspace, operands.Length * 4);
-            JsonElement.Mutable root = doc.RootElement;
+        // Build a flat list of compiled steps. For literal array operands
+        // whose sub-items are all constants (no operators), capture the
+        // JsonElement values directly — no delegate calls at runtime.
+        // If any sub-item is an operator, fall back to compiled delegates.
+        List<JsonElement> constantItems = [];
+        List<(int startIndex, int count)> constantRanges = [];
+        List<RuleEvaluator> dynamicOperands = [];
 
-            for (int i = 0; i < operands.Length; i++)
+        // Step kind: 0 = constants range, 1 = dynamic evaluate-and-flatten
+        List<(int kind, int index)> steps = [];
+
+        foreach (JsonElement operand in args.EnumerateArray())
+        {
+            if (operand.ValueKind == JsonValueKind.Array)
             {
-                JsonElement elem = operands[i](data, workspace).AsElement(workspace);
-                if (elem.ValueKind == JsonValueKind.Array)
+                // Literal array: check if all sub-items are constants
+                bool allConstants = true;
+                foreach (JsonElement sub in operand.EnumerateArray())
                 {
-                    foreach (JsonElement item in elem.EnumerateArray())
+                    if (sub.ValueKind == JsonValueKind.Object && sub.GetPropertyCount() > 0)
                     {
-                        root.AddItem(item);
+                        allConstants = false;
+                        break;
+                    }
+                }
+
+                if (allConstants)
+                {
+                    int start = constantItems.Count;
+                    int count = 0;
+                    foreach (JsonElement sub in operand.EnumerateArray())
+                    {
+                        constantItems.Add(sub);
+                        count++;
+                    }
+
+                    if (count > 0)
+                    {
+                        steps.Add((0, constantRanges.Count));
+                        constantRanges.Add((start, count));
                     }
                 }
                 else
                 {
-                    root.AddItem(elem);
+                    // Has operator sub-items — compile normally and flatten
+                    steps.Add((1, dynamicOperands.Count));
+                    dynamicOperands.Add(CompileArrayLiteral(operand));
                 }
             }
+            else
+            {
+                // Expression (operator or literal scalar): evaluate at runtime,
+                // flatten if it produces an array
+                steps.Add((1, dynamicOperands.Count));
+                dynamicOperands.Add(CompileExpression(operand));
+            }
+        }
 
-            return EvalResult.FromElement((JsonElement)root);
+        JsonElement[] constArr = [.. constantItems];
+        (int Start, int Count)[] rangesArr = [.. constantRanges];
+        RuleEvaluator[] dynamicArr = [.. dynamicOperands];
+        (int Kind, int Index)[] stepsArr = [.. steps];
+
+        return (in JsonElement data, JsonWorkspace workspace) =>
+        {
+            var buf = default(ElementBuffer);
+            try
+            {
+                for (int i = 0; i < stepsArr.Length; i++)
+                {
+                    (int kind, int idx) = stepsArr[i];
+                    if (kind == 0)
+                    {
+                        (int start, int count) = rangesArr[idx];
+                        for (int j = start; j < start + count; j++)
+                        {
+                            buf.Add(constArr[j]);
+                        }
+                    }
+                    else
+                    {
+                        JsonElement elem = dynamicArr[idx](data, workspace).AsElement(workspace);
+                        if (elem.ValueKind == JsonValueKind.Array)
+                        {
+                            foreach (JsonElement item in elem.EnumerateArray())
+                            {
+                                buf.Add(item);
+                            }
+                        }
+                        else
+                        {
+                            buf.Add(elem);
+                        }
+                    }
+                }
+
+                return EvalResult.FromElement(buf.ToArrayResult(workspace));
+            }
+            finally
+            {
+                buf.Dispose();
+            }
         };
     }
 
@@ -1778,16 +1850,20 @@ internal static class FunctionalEvaluator
                 return EvalResult.FromElement(JsonLogicHelpers.EmptyArray());
             }
 
-            JsonDocumentBuilder<JsonElement.Mutable> doc =
-                JsonElement.CreateArrayBuilder(workspace, arr.GetArrayLength());
-            JsonElement.Mutable root = doc.RootElement;
-
-            foreach (JsonElement item in arr.EnumerateArray())
+            var buf = default(ElementBuffer);
+            try
             {
-                root.AddItem(bodyExpr(item, workspace).AsElement(workspace));
-            }
+                foreach (JsonElement item in arr.EnumerateArray())
+                {
+                    buf.Add(bodyExpr(item, workspace).AsElement(workspace));
+                }
 
-            return EvalResult.FromElement((JsonElement)root);
+                return EvalResult.FromElement(buf.ToArrayResult(workspace));
+            }
+            finally
+            {
+                buf.Dispose();
+            }
         };
     }
 
@@ -1811,19 +1887,23 @@ internal static class FunctionalEvaluator
                 return EvalResult.FromElement(JsonLogicHelpers.EmptyArray());
             }
 
-            JsonDocumentBuilder<JsonElement.Mutable> doc =
-                JsonElement.CreateArrayBuilder(workspace, arr.GetArrayLength());
-            JsonElement.Mutable root = doc.RootElement;
-
-            foreach (JsonElement item in arr.EnumerateArray())
+            var buf = default(ElementBuffer);
+            try
             {
-                if (predicateExpr(item, workspace).IsTruthy())
+                foreach (JsonElement item in arr.EnumerateArray())
                 {
-                    root.AddItem(item);
+                    if (predicateExpr(item, workspace).IsTruthy())
+                    {
+                        buf.Add(item);
+                    }
                 }
-            }
 
-            return EvalResult.FromElement((JsonElement)root);
+                return EvalResult.FromElement(buf.ToArrayResult(workspace));
+            }
+            finally
+            {
+                buf.Dispose();
+            }
         };
     }
 
@@ -2024,35 +2104,39 @@ internal static class FunctionalEvaluator
     {
         return (in JsonElement data, JsonWorkspace workspace) =>
         {
-            JsonDocumentBuilder<JsonElement.Mutable> doc =
-                JsonElement.CreateArrayBuilder(workspace, operands.Length);
-            JsonElement.Mutable root = doc.RootElement;
-
-            for (int i = 0; i < operands.Length; i++)
+            var buf = default(ElementBuffer);
+            try
             {
-                JsonElement path = operands[i](data, workspace).AsElement(workspace);
-                if (path.ValueKind == JsonValueKind.Array)
+                for (int i = 0; i < operands.Length; i++)
                 {
-                    foreach (JsonElement item in path.EnumerateArray())
+                    JsonElement path = operands[i](data, workspace).AsElement(workspace);
+                    if (path.ValueKind == JsonValueKind.Array)
                     {
-                        JsonElement resolved = ResolveVar(data, item);
+                        foreach (JsonElement item in path.EnumerateArray())
+                        {
+                            JsonElement resolved = ResolveVar(data, item);
+                            if (resolved.IsNullOrUndefined())
+                            {
+                                buf.Add(item);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        JsonElement resolved = ResolveVar(data, path);
                         if (resolved.IsNullOrUndefined())
                         {
-                            root.AddItem(item);
+                            buf.Add(path);
                         }
                     }
                 }
-                else
-                {
-                    JsonElement resolved = ResolveVar(data, path);
-                    if (resolved.IsNullOrUndefined())
-                    {
-                        root.AddItem(path);
-                    }
-                }
-            }
 
-            return EvalResult.FromElement((JsonElement)root);
+                return EvalResult.FromElement(buf.ToArrayResult(workspace));
+            }
+            finally
+            {
+                buf.Dispose();
+            }
         };
     }
 
@@ -2083,30 +2167,34 @@ internal static class FunctionalEvaluator
                 return EvalResult.FromElement(JsonLogicHelpers.EmptyArray());
             }
 
-            JsonDocumentBuilder<JsonElement.Mutable> doc =
-                JsonElement.CreateArrayBuilder(workspace, paths.GetArrayLength());
-            JsonElement.Mutable root = doc.RootElement;
-
-            int found = 0;
-            foreach (JsonElement path in paths.EnumerateArray())
+            var buf = default(ElementBuffer);
+            try
             {
-                JsonElement resolved = ResolveVar(data, path);
-                if (resolved.IsNullOrUndefined())
+                int found = 0;
+                foreach (JsonElement path in paths.EnumerateArray())
                 {
-                    root.AddItem(path);
+                    JsonElement resolved = ResolveVar(data, path);
+                    if (resolved.IsNullOrUndefined())
+                    {
+                        buf.Add(path);
+                    }
+                    else
+                    {
+                        found++;
+                    }
                 }
-                else
-                {
-                    found++;
-                }
-            }
 
-            if (found >= needed)
+                if (found >= needed)
+                {
+                    return EvalResult.FromElement(JsonLogicHelpers.EmptyArray());
+                }
+
+                return EvalResult.FromElement(buf.ToArrayResult(workspace));
+            }
+            finally
             {
-                return EvalResult.FromElement(JsonLogicHelpers.EmptyArray());
+                buf.Dispose();
             }
-
-            return EvalResult.FromElement((JsonElement)root);
         };
     }
 

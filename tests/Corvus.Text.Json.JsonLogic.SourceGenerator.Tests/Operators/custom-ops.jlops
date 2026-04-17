@@ -1,2 +1,2 @@
 // Custom operators for testing
-op double_it(x) => BigNumberToElement(CoerceToBigNumber(x) * (BigNumber)2, workspace);
+op double_it(x) => JsonLogicHelpers.BigNumberToElement(JsonLogicHelpers.CoerceToBigNumber(x) * (BigNumber)2, workspace);

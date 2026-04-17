@@ -10,6 +10,7 @@
     <Platforms>AnyCPU</Platforms>
     <LangVersion>Preview</LangVersion>
     <PreserveCompilationContext>true</PreserveCompilationContext>
+    <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
   </PropertyGroup>
 
   <ItemGroup>
@@ -25,6 +26,19 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\Corvus.Text.Json.JsonLogic\Corvus.Text.Json.JsonLogic.csproj" />
     <ProjectReference Include="..\..\src\Corvus.Text.Json\Corvus.Text.Json.csproj" />
+  </ItemGroup>
+
+  <!-- Source generator reference (analyzer-only, no runtime DLL) -->
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Corvus.Text.Json.JsonLogic.SourceGenerator\Corvus.Text.Json.JsonLogic.SourceGenerator.csproj"
+                      PrivateAssets="all"
+                      ReferenceOutputAssembly="false"
+                      OutputItemType="Analyzer" />
+  </ItemGroup>
+
+  <!-- JSON rule files for source-generated evaluators -->
+  <ItemGroup>
+    <AdditionalFiles Include="Rules\*.json" />
   </ItemGroup>
 
 </Project>

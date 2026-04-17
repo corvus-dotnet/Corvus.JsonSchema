@@ -6,8 +6,6 @@ using System.Text;
 
 using BenchmarkDotNet.Attributes;
 
-using CorvusJsonElement = Corvus.Text.Json.JsonElement;
-
 namespace Corvus.Text.Json.JsonLogic.Benchmarks;
 
 /// <summary>
