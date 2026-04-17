@@ -16,7 +16,7 @@ Three evaluation modes are available:
 | **Source generator** | Rules are known at build time, embedded in your project | `Corvus.Text.Json.JsonLogic.SourceGenerator` |
 | **CLI code generation** | Rules are known ahead of time, generated outside the build | `Corvus.Json.CodeGenerator` (the `jsonlogic` command) |
 
-The source generator and CLI tool produce optimized static C# that eliminates delegate dispatch and can constant-fold literal expressions. Benchmarks show generated code is **60–95% faster** than interpreted evaluation and **60–95% faster** than JsonEverything.
+The source generator and CLI tool produce optimized static C# that eliminates delegate dispatch and can constant-fold literal expressions. Benchmarks show generated code is typically **70–98% faster** than JsonEverything across 19 scenarios, with zero or near-zero allocations (see [benchmark summary](#benchmark-summary)).
 
 **Requirements:** The runtime packages target `net9.0`, `net10.0`, `netstandard2.0`, and `netstandard2.1`. The source generator is an analyzer package and does not impose additional runtime requirements.
 
@@ -750,18 +750,61 @@ The Corvus JsonLogic implementation is designed for high-throughput scenarios wh
 
 ### Benchmark summary
 
-Measured on .NET 10.0 (13th Gen Intel Core i7-13800H) across 9 representative scenarios:
+Measured on .NET 10.0 (13th Gen Intel Core i7-13800H) across 19 scenarios. **RT** = Corvus runtime (interpreted), **CG** = Corvus code-gen (source generator), **JE** = JsonEverything. Ratios < 1 mean faster than JE; lower is better.
 
-| Scenario | Corvus (interpreted) | Corvus (code-gen) | JsonEverything | Corvus alloc | JE alloc |
-|----------|---------------------|-------------------|----------------|-------------|----------|
-| Simple var access | 115 ns | 62 ns | 189 ns | 0 B | 248 B |
-| Arithmetic | 870 ns | 269 ns | 970 ns | 0 B | 656 B |
-| Comparison | 571 ns | 75 ns | 629 ns | 0 B | 512 B |
-| String concatenation | 499 ns | 205 ns | 560 ns | 0 B | 728 B |
-| Logic short-circuit | 1,493 ns | 292 ns | 1,666 ns | 0 B | 1,304 B |
-| Missing data | 1,909 ns | 803 ns | 2,183 ns | 120 B | 2,184 B |
-| Complex rule | 2,939 ns | 481 ns | 2,296 ns | 0 B | 2,040 B |
-| Array filter | 2,390 ns | 1,873 ns | 5,189 ns | 120 B | 4,032 B |
-| Array map/reduce | 2,616 ns | 725 ns | 14,124 ns | 0 B | 12,856 B |
+#### Time comparison
 
-Code-generated evaluators are **60–95% faster** than JsonEverything across all scenarios, with **zero or near-zero allocations**. The interpreted evaluator is comparable to or faster than JsonEverything in most scenarios, with consistently lower memory usage. JsonEverything allocates 248 B–12,856 B per evaluation, while both Corvus modes allocate 0 B in 7 of 9 scenarios (the two that allocate 120 B involve array construction in `missing` and `filter` results).
+| Scenario | JE (ns) | RT (ns) | CG (ns) | RT/JE | CG/JE |
+|---|---:|---:|---:|---:|---:|
+| Simple var | 64 | 18 | 16 | 0.29 | 0.25 |
+| Comparison | 223 | 65 | 34 | 0.29 | 0.15 |
+| Arithmetic | 332 | 113 | 98 | 0.34 | 0.30 |
+| String cat | 244 | 129 | 115 | 0.53 | 0.47 |
+| Substr | 305 | 94 | 93 | 0.31 | 0.30 |
+| Min/max | 48 | 668 | 405 | **14.0** | **8.5** |
+| In (array) | 457 | 115 | 106 | 0.25 | 0.23 |
+| Logic short-circuit | 620 | 306 | 226 | 0.49 | 0.36 |
+| Quantifier (all) | 1,179 | 227 | 190 | 0.19 | 0.16 |
+| Complex rule | 828 | 219 | 160 | 0.26 | 0.19 |
+| Deep nested | 4,936 | 110 | 103 | 0.02 | 0.02 |
+| Missing data | 1,361 | 218 | 184 | 0.16 | 0.14 |
+| Merge (constant) | 1,725 | 390 | 12 | 0.23 | **0.007** |
+| Merge (mixed) | 1,604 | 462 | 509 | 0.29 | 0.32 |
+| Reduce (strings) | 2,640 | 2,058 | 2,811 | 0.78 | 1.06 |
+| Array filter | 1,839 | 758 | 386 | 0.41 | 0.21 |
+| Object filter | 2,359 | 644 | 543 | 0.27 | 0.23 |
+| Map (strings) | 1,726 | 735 | 710 | 0.43 | 0.41 |
+| Array map/reduce | 5,227 | 563 | 278 | 0.11 | 0.05 |
+
+#### Memory comparison
+
+| Scenario | JE (B) | RT (B) | CG (B) |
+|---|---:|---:|---:|
+| Simple var | 248 | 0 | 0 |
+| Comparison | 512 | 0 | 0 |
+| Arithmetic | 656 | 0 | 0 |
+| String cat | 728 | 0 | 0 |
+| Substr | 560 | 0 | 0 |
+| Min/max | 136 | 0 | 0 |
+| In (array) | 1,472 | 0 | 0 |
+| Logic short-circuit | 1,304 | 0 | 0 |
+| Quantifier (all) | 2,776 | 0 | 0 |
+| Complex rule | 2,040 | 0 | 0 |
+| Deep nested | 10,120 | 0 | 0 |
+| Missing data | 2,184 | 0 | 0 |
+| Merge (constant) | 4,376 | 120 | 0 |
+| Merge (mixed) | 3,800 | 120 | 120 |
+| Reduce (strings) | 9,368 | 120 | 120 |
+| Array filter | 4,032 | 120 | 120 |
+| Object filter | 6,280 | 120 | 120 |
+| Map (strings) | 2,912 | 120 | 120 |
+| Array map/reduce | 12,856 | 0 | 0 |
+
+#### Summary
+
+- **RT is faster than JE in 18/19 scenarios** (0.02×–0.78× JE), with a geometric mean of **0.22× JE** across those 18.
+- **CG is faster than JE in 17/19 scenarios** (0.007×–0.47× JE), with a geometric mean of **0.16× JE** across those 17.
+- **Min/max** is the notable outlier where JE is faster: JE's `JsonNode` stores pre-parsed `double` values, while Corvus's `JsonElement` re-parses UTF-8 bytes to `double` on each call. Both RT and CG still allocate 0 B vs JE's 136 B.
+- **Reduce (strings)** is at parity for CG (1.06× JE); RT is faster at 0.78×.
+- **Memory**: RT allocates 0 B in 13/19 scenarios, CG in 14/19. The remaining scenarios allocate exactly 120 B (a single `ElementBuffer` array). JE allocates 136–12,856 B in every scenario.
+- **Merge (constant)** showcases compile-time constant folding: CG evaluates at 12 ns (0.007× JE) by pre-computing the entire merged array as a static field.
