@@ -36,6 +36,15 @@ public static class JMESPathCodeGenHelpers
     /// <returns>The resulting JSON element.</returns>
     public delegate JsonElement ExpressionEvaluator(in JsonElement data, JsonWorkspace workspace);
 
+    /// <summary>
+    /// A delegate that collects elements into a <see cref="JMESPathSequenceBuilder"/>.
+    /// Used by fused collect-and-sort operations in generated code.
+    /// </summary>
+    /// <typeparam name="TContext">The type of the context passed to the callback.</typeparam>
+    /// <param name="context">The context value (e.g., source element + workspace).</param>
+    /// <param name="builder">The sequence builder to add elements to.</param>
+    public delegate void CollectElements<TContext>(in TContext context, ref JMESPathSequenceBuilder builder);
+
     /// <summary>Gets a pre-parsed <c>null</c> element.</summary>
     public static readonly JsonElement NullElement = JsonElement.ParseValue("null"u8);
 
@@ -701,6 +710,62 @@ public static class JMESPathCodeGenHelpers
         }
     }
 
+    /// <summary>
+    /// Collects elements via a callback, then sorts the collected elements (same semantics as <c>sort()</c>).
+    /// Used by fused projection+sort operations to avoid materializing an intermediate document.
+    /// </summary>
+    /// <typeparam name="TContext">The type of the context passed to the collect callback.</typeparam>
+    /// <param name="context">The context value (e.g., source element + workspace).</param>
+    /// <param name="collect">The callback that fills the builder with elements to sort.</param>
+    /// <param name="workspace">The workspace for document allocation.</param>
+    /// <returns>A sorted array element.</returns>
+    public static JsonElement CollectAndSort<TContext>(
+        in TContext context,
+        CollectElements<TContext> collect,
+        JsonWorkspace workspace)
+    {
+        JMESPathSequenceBuilder builder = default;
+        try
+        {
+            collect(context, ref builder);
+
+            int len = builder.Count;
+            if (len == 0)
+            {
+                return EmptyArrayElement;
+            }
+
+            JsonValueKind kind = builder[0].ValueKind;
+            if (kind != JsonValueKind.Number && kind != JsonValueKind.String)
+            {
+                throw new JMESPathException("invalid-type: sort() expects an array of numbers or strings.");
+            }
+
+            for (int i = 1; i < len; i++)
+            {
+                if (builder[i].ValueKind != kind)
+                {
+                    throw new JMESPathException("invalid-type: sort() requires all elements to be the same type.");
+                }
+            }
+
+            if (kind == JsonValueKind.Number)
+            {
+                InsertionSortNumber(ref builder, len);
+            }
+            else
+            {
+                InsertionSortString(ref builder, len);
+            }
+
+            return builder.ToElement(workspace);
+        }
+        finally
+        {
+            builder.ReturnArray();
+        }
+    }
+
     /// <summary>Computes <c>sort_by(array, &amp;expr)</c>.</summary>
     public static JsonElement SortBy(in JsonElement array, ExpressionEvaluator expr, JsonWorkspace workspace)
     {
@@ -1319,6 +1384,22 @@ public static class JMESPathCodeGenHelpers
 
             builder[j + 1] = elem;
             keys[j + 1] = keyElem;
+        }
+    }
+
+    /// <summary>
+    /// Dispatches to the appropriate insertion sort based on the element kind.
+    /// Used by fused projection+sort in the RT compiler.
+    /// </summary>
+    internal static void InsertionSortByKind(ref JMESPathSequenceBuilder builder, int len, JsonValueKind kind)
+    {
+        if (kind == JsonValueKind.Number)
+        {
+            InsertionSortNumber(ref builder, len);
+        }
+        else
+        {
+            InsertionSortString(ref builder, len);
         }
     }
 

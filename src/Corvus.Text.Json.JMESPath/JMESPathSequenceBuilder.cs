@@ -33,7 +33,7 @@ namespace Corvus.Text.Json.JMESPath;
 /// </code>
 /// </para>
 /// </remarks>
-internal ref struct JMESPathSequenceBuilder
+public ref struct JMESPathSequenceBuilder
 {
     private JsonElement[]? array;
     private int count;

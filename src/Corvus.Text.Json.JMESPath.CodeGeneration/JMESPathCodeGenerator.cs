@@ -391,8 +391,60 @@ public static class JMESPathCodeGenerator
 
         private string EmitPipe(StringBuilder body, PipeNode node, string indent, string inputVar)
         {
+            // Fused path: ListProjection | sort(@) — use CollectAndSort to avoid
+            // materializing the intermediate projection array.
+            if (node.Right is FunctionCallNode { Arguments: [CurrentNode] } sortCall
+                && sortCall.Name.AsSpan().SequenceEqual("sort"u8)
+                && node.Left is ListProjectionNode listProj)
+            {
+                return EmitFusedProjectionSort(body, listProj, indent, inputVar);
+            }
+
             string leftVar = EmitExpression(body, node.Left, indent, inputVar);
             return EmitExpression(body, node.Right, indent, leftVar);
+        }
+
+        private string EmitFusedProjectionSort(
+            StringBuilder body,
+            ListProjectionNode listProj,
+            string indent,
+            string inputVar)
+        {
+            // Emit the outer source (e.g., data.people)
+            string outerSrcVar = EmitExpression(body, listProj.Left, indent, inputVar);
+
+            string resultVar = NextVar();
+            L(body, indent, $"JsonElement {resultVar} = default;");
+            L(body, indent, $"if ({outerSrcVar}.ValueKind == JsonValueKind.Array)");
+            L(body, indent, "{");
+
+            string innerIndent = indent + "    ";
+
+            // Use CollectAndSort: a single callback fills the SequenceBuilder with projected
+            // elements, then the helper validates types, sorts, and materializes once.
+            L(body, innerIndent, $"{resultVar} = {H}.CollectAndSort(({outerSrcVar}, workspace), static (in (JsonElement __src, JsonWorkspace workspace) __ctx, ref JMESPathSequenceBuilder __b) =>");
+            L(body, innerIndent, "{");
+
+            string cbIndent = innerIndent + "    ";
+            L(body, cbIndent, "JsonWorkspace workspace = __ctx.workspace;");
+            string itemVar = $"item_{resultVar}";
+            L(body, cbIndent, $"foreach (JsonElement {itemVar} in __ctx.__src.EnumerateArray())");
+            L(body, cbIndent, "{");
+
+            string itemBodyIndent = cbIndent + "    ";
+            string projectedVar = EmitExpression(body, listProj.Right, itemBodyIndent, itemVar);
+
+            L(body, itemBodyIndent, $"if (!{projectedVar}.IsNullOrUndefined())");
+            L(body, itemBodyIndent, "{");
+            L(body, itemBodyIndent, $"    __b.Add({projectedVar});");
+            L(body, itemBodyIndent, "}");
+
+            L(body, cbIndent, "}");
+            L(body, innerIndent, "}, workspace);");
+
+            L(body, indent, "}");
+            Blank(body);
+            return resultVar;
         }
 
         private string EmitOr(StringBuilder body, OrNode node, string indent, string inputVar)
@@ -662,6 +714,14 @@ public static class JMESPathCodeGenerator
 
         private string EmitFlattenProjection(StringBuilder body, FlattenProjectionNode node, string indent, string inputVar)
         {
+            // Fused path: when left is a ListProjection, iterate the outer source
+            // directly, evaluate the inner projection, flatten, and optionally project
+            // — all in a single CreateBuilder callback (one document instead of two).
+            if (node.Left is ListProjectionNode outerProj)
+            {
+                return EmitFusedProjectionFlatten(body, outerProj, node.Right, indent, inputVar);
+            }
+
             string leftVar = EmitExpression(body, node.Left, indent, inputVar);
             string resultVar = NextVar();
             L(body, indent, $"JsonElement {resultVar} = default;");
@@ -734,6 +794,96 @@ public static class JMESPathCodeGenerator
                 L(body, innerIndent, $"}}, {leftVar}.GetArrayLength() + 2);");
                 L(body, innerIndent, $"{resultVar} = (JsonElement)doc_{resultVar}.RootElement;");
             }
+
+            L(body, indent, "}");
+            Blank(body);
+            return resultVar;
+        }
+
+        private string EmitFusedProjectionFlatten(
+            StringBuilder body,
+            ListProjectionNode outerProj,
+            JMESPathNode flattenRight,
+            string indent,
+            string inputVar)
+        {
+            // Emit the outer source (e.g., data.reservations)
+            string outerSrcVar = EmitExpression(body, outerProj.Left, indent, inputVar);
+
+            string resultVar = NextVar();
+            L(body, indent, $"JsonElement {resultVar} = default;");
+            L(body, indent, $"if ({outerSrcVar}.ValueKind == JsonValueKind.Array)");
+            L(body, indent, "{");
+
+            string innerIndent = indent + "    ";
+
+            // Single CreateBuilder: iterate outer source, evaluate inner projection per item,
+            // flatten the result, then optionally project with flattenRight.
+            L(body, innerIndent, $"var doc_{resultVar} = JsonElement.CreateBuilder(workspace, ({outerSrcVar}, workspace), static (in (JsonElement __src, JsonWorkspace workspace) __ctx, ref JsonElement.ArrayBuilder __b) =>");
+            L(body, innerIndent, "{");
+
+            string cbIndent = innerIndent + "    ";
+            L(body, cbIndent, "JsonWorkspace workspace = __ctx.workspace;");
+            string outerItemVar = $"outer_{resultVar}";
+            L(body, cbIndent, $"foreach (JsonElement {outerItemVar} in __ctx.__src.EnumerateArray())");
+            L(body, cbIndent, "{");
+
+            string outerBodyIndent = cbIndent + "    ";
+
+            // Evaluate the inner projection (e.g., outerItem.instances or outerItem.instances[*])
+            string innerResultVar = EmitExpression(body, outerProj.Right, outerBodyIndent, outerItemVar);
+
+            L(body, outerBodyIndent, $"if ({innerResultVar}.IsNullOrUndefined())");
+            L(body, outerBodyIndent, "{");
+            L(body, outerBodyIndent, "    continue;");
+            L(body, outerBodyIndent, "}");
+
+            // Flatten: if the inner result is an array, iterate its elements
+            L(body, outerBodyIndent, $"if ({innerResultVar}.ValueKind == JsonValueKind.Array)");
+            L(body, outerBodyIndent, "{");
+
+            string flattenIndent = outerBodyIndent + "    ";
+            string flatItemVar = $"flatItem_{resultVar}";
+            L(body, flattenIndent, $"foreach (JsonElement {flatItemVar} in {innerResultVar}.EnumerateArray())");
+            L(body, flattenIndent, "{");
+
+            if (flattenRight is CurrentNode)
+            {
+                // Identity: just add the flattened element directly.
+                L(body, flattenIndent, $"    __b.AddItem({flatItemVar});");
+            }
+            else
+            {
+                // Project each flattened element.
+                string projVar = EmitExpression(body, flattenRight, flattenIndent + "    ", flatItemVar);
+                L(body, flattenIndent, $"    if (!{projVar}.IsNullOrUndefined())");
+                L(body, flattenIndent, "    {");
+                L(body, flattenIndent, $"        __b.AddItem({projVar});");
+                L(body, flattenIndent, "    }");
+            }
+
+            L(body, flattenIndent, "}");
+            L(body, outerBodyIndent, "}");
+            L(body, outerBodyIndent, "else");
+            L(body, outerBodyIndent, "{");
+
+            if (flattenRight is CurrentNode)
+            {
+                L(body, outerBodyIndent, $"    __b.AddItem({innerResultVar});");
+            }
+            else
+            {
+                string projVar2 = EmitExpression(body, flattenRight, outerBodyIndent + "    ", innerResultVar);
+                L(body, outerBodyIndent, $"    if (!{projVar2}.IsNullOrUndefined())");
+                L(body, outerBodyIndent, "    {");
+                L(body, outerBodyIndent, $"        __b.AddItem({projVar2});");
+                L(body, outerBodyIndent, "    }");
+            }
+
+            L(body, outerBodyIndent, "}");
+            L(body, cbIndent, "}");
+            L(body, innerIndent, $"}}, {outerSrcVar}.GetArrayLength() + 2);");
+            L(body, innerIndent, $"{resultVar} = (JsonElement)doc_{resultVar}.RootElement;");
 
             L(body, indent, "}");
             Blank(body);
