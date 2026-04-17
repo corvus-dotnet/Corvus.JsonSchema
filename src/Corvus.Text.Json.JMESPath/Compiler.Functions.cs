@@ -21,6 +21,7 @@ internal static partial class Compiler
     private static readonly JsonElement EmptyArrayElement = JsonElement.ParseValue("[]"u8);
     private static readonly JsonElement ZeroElement = JsonElement.ParseValue("0"u8);
     private static readonly JsonElement EmptyStringElement = JsonElement.ParseValue("\"\""u8);
+    private static readonly JsonElement[] SmallIntegers = JMESPathCodeGenHelpers.SmallIntegers;
 
     private static readonly JsonElement TypeString = JsonElement.ParseValue("\"string\""u8);
     private static readonly JsonElement TypeNumber = JsonElement.ParseValue("\"number\""u8);
@@ -715,61 +716,7 @@ internal static partial class Compiler
         return (in JsonElement data, JsonWorkspace ws) =>
         {
             JsonElement val = evalArg(data, ws);
-            RequireArray("sort", val);
-            int len = val.GetArrayLength();
-            if (len == 0)
-            {
-                return EmptyArrayElement;
-            }
-
-            // Rent array from pool
-            JsonElement[] elements = ArrayPool<JsonElement>.Shared.Rent(len);
-            try
-            {
-                int idx = 0;
-                foreach (JsonElement item in val.EnumerateArray())
-                {
-                    elements[idx++] = item;
-                }
-
-                JsonValueKind kind = elements[0].ValueKind;
-                if (kind != JsonValueKind.Number && kind != JsonValueKind.String)
-                {
-                    throw new JMESPathException("invalid-type: sort() expects an array of numbers or strings.");
-                }
-
-                // Verify homogeneous types
-                for (int i = 1; i < len; i++)
-                {
-                    if (elements[i].ValueKind != kind)
-                    {
-                        throw new JMESPathException("invalid-type: sort() requires all elements to be the same type.");
-                    }
-                }
-
-                // Stable sort: use index tiebreaker
-                StableSort(elements.AsSpan(0, len), kind);
-
-                JMESPathSequenceBuilder builder = default;
-                try
-                {
-                    for (int i = 0; i < len; i++)
-                    {
-                        builder.Add(elements[i]);
-                    }
-
-                    return builder.ToElement(ws);
-                }
-                finally
-                {
-                    builder.ReturnArray();
-                }
-            }
-            finally
-            {
-                elements.AsSpan(0, len).Clear();
-                ArrayPool<JsonElement>.Shared.Return(elements);
-            }
+            return JMESPathCodeGenHelpers.Sort(val, ws);
         };
     }
 
@@ -841,20 +788,20 @@ internal static partial class Compiler
                 return EmptyArrayElement;
             }
 
-            // Rent array for (index, element, key) triples
-            var pairs = ArrayPool<(int Index, JsonElement Element, JsonElement Key)>.Shared.Rent(len);
+            // Collect elements into builder and keys into a rented array.
+            JMESPathSequenceBuilder builder = default;
+            JsonElement[] keys = ArrayPool<JsonElement>.Shared.Rent(len);
             try
             {
                 int idx = 0;
                 foreach (JsonElement item in arr.EnumerateArray())
                 {
-                    JsonElement key = exprFn(item, ws);
-                    pairs[idx] = (idx, item, key);
+                    builder.Add(item);
+                    keys[idx] = exprFn(item, ws);
                     idx++;
                 }
 
-                // Verify homogeneous key types
-                JsonValueKind keyKind = pairs[0].Key.ValueKind;
+                JsonValueKind keyKind = keys[0].ValueKind;
                 if (keyKind != JsonValueKind.Number && keyKind != JsonValueKind.String)
                 {
                     throw new JMESPathException("invalid-type: sort_by() expression must return numbers or strings.");
@@ -862,33 +809,21 @@ internal static partial class Compiler
 
                 for (int i = 1; i < len; i++)
                 {
-                    if (pairs[i].Key.ValueKind != keyKind)
+                    if (keys[i].ValueKind != keyKind)
                     {
                         throw new JMESPathException("invalid-type: sort_by() expression must return consistent types.");
                     }
                 }
 
-                StableSortBy(pairs, len, keyKind);
-
-                JMESPathSequenceBuilder builder = default;
-                try
-                {
-                    for (int i = 0; i < len; i++)
-                    {
-                        builder.Add(pairs[i].Element);
-                    }
-
-                    return builder.ToElement(ws);
-                }
-                finally
-                {
-                    builder.ReturnArray();
-                }
+                // Insertion sort by key — stable and zero-allocation.
+                JMESPathCodeGenHelpers.InsertionSortByKeys(ref builder, keys, len, keyKind);
+                return builder.ToElement(ws);
             }
             finally
             {
-                pairs.AsSpan(0, len).Clear();
-                ArrayPool<(int, JsonElement, JsonElement)>.Shared.Return(pairs);
+                builder.ReturnArray();
+                keys.AsSpan(0, len).Clear();
+                ArrayPool<JsonElement>.Shared.Return(keys);
             }
         };
     }
@@ -981,6 +916,12 @@ internal static partial class Compiler
     // ─── ELEMENT CREATION HELPERS ───────────────────────────────────
     private static JsonElement DoubleToElement(double value, JsonWorkspace workspace)
     {
+        // Fast path: return cached element for small non-negative integers.
+        if (value >= 0 && value < SmallIntegers.Length && value == Math.Truncate(value))
+        {
+            return SmallIntegers[(int)value];
+        }
+
         Span<byte> buffer = stackalloc byte[32];
         if (Utf8Formatter.TryFormat(value, buffer, out int bytesWritten))
         {
@@ -1202,109 +1143,5 @@ internal static partial class Compiler
         }
 
         return bestElement;
-    }
-
-    /// <summary>
-    /// Performs a stable sort of <see cref="JsonElement"/> values, using an
-    /// index-based tiebreaker to preserve original order for equal keys.
-    /// </summary>
-    private static void StableSort(Span<JsonElement> elements, JsonValueKind kind)
-    {
-        int len = elements.Length;
-
-        // Build (index, element) pairs for stable tiebreaker
-        (int Index, JsonElement Element)[] pairs = ArrayPool<(int, JsonElement)>.Shared.Rent(len);
-        try
-        {
-            for (int i = 0; i < len; i++)
-            {
-                pairs[i] = (i, elements[i]);
-            }
-
-            if (kind == JsonValueKind.Number)
-            {
-                Array.Sort(pairs, 0, len, StableNumberComparer.Instance);
-            }
-            else
-            {
-                Array.Sort(pairs, 0, len, StableStringComparer.Instance);
-            }
-
-            for (int i = 0; i < len; i++)
-            {
-                elements[i] = pairs[i].Element;
-            }
-        }
-        finally
-        {
-            pairs.AsSpan(0, len).Clear();
-            ArrayPool<(int, JsonElement)>.Shared.Return(pairs);
-        }
-    }
-
-    /// <summary>
-    /// Performs a stable sort of keyed pairs, using an index-based tiebreaker.
-    /// </summary>
-    private static void StableSortBy(
-        (int Index, JsonElement Element, JsonElement Key)[] pairs,
-        int len,
-        JsonValueKind keyKind)
-    {
-        if (keyKind == JsonValueKind.Number)
-        {
-            Array.Sort(pairs, 0, len, StableKeyedNumberComparer.Instance);
-        }
-        else
-        {
-            Array.Sort(pairs, 0, len, StableKeyedStringComparer.Instance);
-        }
-    }
-
-    private sealed class StableNumberComparer : IComparer<(int Index, JsonElement Element)>
-    {
-        public static readonly StableNumberComparer Instance = new();
-
-        public int Compare((int Index, JsonElement Element) a, (int Index, JsonElement Element) b)
-        {
-            int cmp = a.Element.GetDouble().CompareTo(b.Element.GetDouble());
-            return cmp != 0 ? cmp : a.Index.CompareTo(b.Index);
-        }
-    }
-
-    private sealed class StableStringComparer : IComparer<(int Index, JsonElement Element)>
-    {
-        public static readonly StableStringComparer Instance = new();
-
-        public int Compare((int Index, JsonElement Element) a, (int Index, JsonElement Element) b)
-        {
-            using UnescapedUtf8JsonString aStr = a.Element.GetUtf8String();
-            using UnescapedUtf8JsonString bStr = b.Element.GetUtf8String();
-            int cmp = aStr.Span.SequenceCompareTo(bStr.Span);
-            return cmp != 0 ? cmp : a.Index.CompareTo(b.Index);
-        }
-    }
-
-    private sealed class StableKeyedNumberComparer : IComparer<(int Index, JsonElement Element, JsonElement Key)>
-    {
-        public static readonly StableKeyedNumberComparer Instance = new();
-
-        public int Compare((int Index, JsonElement Element, JsonElement Key) a, (int Index, JsonElement Element, JsonElement Key) b)
-        {
-            int cmp = a.Key.GetDouble().CompareTo(b.Key.GetDouble());
-            return cmp != 0 ? cmp : a.Index.CompareTo(b.Index);
-        }
-    }
-
-    private sealed class StableKeyedStringComparer : IComparer<(int Index, JsonElement Element, JsonElement Key)>
-    {
-        public static readonly StableKeyedStringComparer Instance = new();
-
-        public int Compare((int Index, JsonElement Element, JsonElement Key) a, (int Index, JsonElement Element, JsonElement Key) b)
-        {
-            using UnescapedUtf8JsonString aStr = a.Key.GetUtf8String();
-            using UnescapedUtf8JsonString bStr = b.Key.GetUtf8String();
-            int cmp = aStr.Span.SequenceCompareTo(bStr.Span);
-            return cmp != 0 ? cmp : a.Index.CompareTo(b.Index);
-        }
     }
 }

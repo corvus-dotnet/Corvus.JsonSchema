@@ -54,6 +54,8 @@ public static class JMESPathCodeGenHelpers
     /// <summary>Gets a pre-parsed empty string element.</summary>
     public static readonly JsonElement EmptyStringElement = JsonElement.ParseValue("\"\""u8);
 
+    internal static readonly JsonElement[] SmallIntegers = CreateSmallIntegerCache();
+
     /// <summary>Gets a pre-parsed <c>"string"</c> type element.</summary>
     public static readonly JsonElement TypeString = JsonElement.ParseValue("\"string\""u8);
 
@@ -169,6 +171,12 @@ public static class JMESPathCodeGenHelpers
     /// <returns>A JSON number element.</returns>
     public static JsonElement DoubleToElement(double value, JsonWorkspace workspace)
     {
+        // Fast path: return cached element for small non-negative integers.
+        if (value >= 0 && value < SmallIntegers.Length && value == Math.Truncate(value))
+        {
+            return SmallIntegers[(int)value];
+        }
+
         Span<byte> buffer = stackalloc byte[32];
         if (Utf8Formatter.TryFormat(value, buffer, out int bytesWritten))
         {
@@ -653,16 +661,15 @@ public static class JMESPathCodeGenHelpers
             return EmptyArrayElement;
         }
 
-        JsonElement[] elements = ArrayPool<JsonElement>.Shared.Rent(len);
+        JMESPathSequenceBuilder builder = default;
         try
         {
-            int idx = 0;
             foreach (JsonElement item in array.EnumerateArray())
             {
-                elements[idx++] = item;
+                builder.Add(item);
             }
 
-            JsonValueKind kind = elements[0].ValueKind;
+            JsonValueKind kind = builder[0].ValueKind;
             if (kind != JsonValueKind.Number && kind != JsonValueKind.String)
             {
                 throw new JMESPathException("invalid-type: sort() expects an array of numbers or strings.");
@@ -670,33 +677,27 @@ public static class JMESPathCodeGenHelpers
 
             for (int i = 1; i < len; i++)
             {
-                if (elements[i].ValueKind != kind)
+                if (builder[i].ValueKind != kind)
                 {
                     throw new JMESPathException("invalid-type: sort() requires all elements to be the same type.");
                 }
             }
 
-            StableSort(elements.AsSpan(0, len), kind);
-
-            JMESPathSequenceBuilder builder = default;
-            try
+            // Insertion sort is inherently stable and zero-allocation.
+            if (kind == JsonValueKind.Number)
             {
-                for (int i = 0; i < len; i++)
-                {
-                    builder.Add(elements[i]);
-                }
-
-                return builder.ToElement(workspace);
+                InsertionSortNumber(ref builder, len);
             }
-            finally
+            else
             {
-                builder.ReturnArray();
+                InsertionSortString(ref builder, len);
             }
+
+            return builder.ToElement(workspace);
         }
         finally
         {
-            elements.AsSpan(0, len).Clear();
-            ArrayPool<JsonElement>.Shared.Return(elements);
+            builder.ReturnArray();
         }
     }
 
@@ -710,18 +711,20 @@ public static class JMESPathCodeGenHelpers
             return EmptyArrayElement;
         }
 
-        (int Index, JsonElement Element, JsonElement Key)[] pairs =
-            ArrayPool<(int, JsonElement, JsonElement)>.Shared.Rent(len);
+        // Collect elements into builder and keys into a rented array.
+        JMESPathSequenceBuilder builder = default;
+        JsonElement[] keys = ArrayPool<JsonElement>.Shared.Rent(len);
         try
         {
             int idx = 0;
             foreach (JsonElement item in array.EnumerateArray())
             {
-                pairs[idx] = (idx, item, expr(item, workspace));
+                builder.Add(item);
+                keys[idx] = expr(item, workspace);
                 idx++;
             }
 
-            JsonValueKind keyKind = pairs[0].Key.ValueKind;
+            JsonValueKind keyKind = keys[0].ValueKind;
             if (keyKind != JsonValueKind.Number && keyKind != JsonValueKind.String)
             {
                 throw new JMESPathException("invalid-type: sort_by() expression must return numbers or strings.");
@@ -729,33 +732,29 @@ public static class JMESPathCodeGenHelpers
 
             for (int i = 1; i < len; i++)
             {
-                if (pairs[i].Key.ValueKind != keyKind)
+                if (keys[i].ValueKind != keyKind)
                 {
                     throw new JMESPathException("invalid-type: sort_by() expression must return consistent types.");
                 }
             }
 
-            StableSortBy(pairs.AsSpan(0, len), keyKind);
-
-            JMESPathSequenceBuilder builder = default;
-            try
+            // Insertion sort by key, swapping both builder elements and keys in parallel.
+            if (keyKind == JsonValueKind.Number)
             {
-                for (int i = 0; i < len; i++)
-                {
-                    builder.Add(pairs[i].Element);
-                }
-
-                return builder.ToElement(workspace);
+                InsertionSortByNumber(ref builder, keys, len);
             }
-            finally
+            else
             {
-                builder.ReturnArray();
+                InsertionSortByString(ref builder, keys, len);
             }
+
+            return builder.ToElement(workspace);
         }
         finally
         {
-            pairs.AsSpan(0, len).Clear();
-            ArrayPool<(int, JsonElement, JsonElement)>.Shared.Return(pairs);
+            builder.ReturnArray();
+            keys.AsSpan(0, len).Clear();
+            ArrayPool<JsonElement>.Shared.Return(keys);
         }
     }
 
@@ -1237,115 +1236,105 @@ public static class JMESPathCodeGenHelpers
         buffer = newBuffer;
     }
 
-    private static void StableSort(Span<JsonElement> elements, JsonValueKind kind)
+    private static void InsertionSortNumber(ref JMESPathSequenceBuilder builder, int len)
     {
-        int len = elements.Length;
-
-        (int Index, JsonElement Element)[] pairs = ArrayPool<(int, JsonElement)>.Shared.Rent(len);
-        try
+        for (int i = 1; i < len; i++)
         {
-            for (int i = 0; i < len; i++)
+            JsonElement key = builder[i];
+            double keyVal = key.GetDouble();
+            int j = i - 1;
+            while (j >= 0 && builder[j].GetDouble() > keyVal)
             {
-                pairs[i] = (i, elements[i]);
+                builder[j + 1] = builder[j];
+                j--;
             }
 
-            IComparer<(int Index, JsonElement Element)> comparer = kind == JsonValueKind.Number
-                ? StableNumberComparer.Instance
-                : StableStringComparer.Instance;
-
-            Array.Sort(pairs, 0, len, comparer);
-
-            for (int i = 0; i < len; i++)
-            {
-                elements[i] = pairs[i].Element;
-            }
-        }
-        finally
-        {
-            pairs.AsSpan(0, len).Clear();
-            ArrayPool<(int, JsonElement)>.Shared.Return(pairs);
+            builder[j + 1] = key;
         }
     }
 
-    private static void StableSortBy(
-        Span<(int Index, JsonElement Element, JsonElement Key)> pairs,
-        JsonValueKind keyKind)
+    private static void InsertionSortString(ref JMESPathSequenceBuilder builder, int len)
     {
-        int len = pairs.Length;
-
-        IComparer<(int Index, JsonElement Element, JsonElement Key)> comparer = keyKind == JsonValueKind.Number
-            ? StableKeyedNumberComparer.Instance
-            : StableKeyedStringComparer.Instance;
-
-        // Copy to an array for Array.Sort (Span doesn't support IComparer overload)
-        (int Index, JsonElement Element, JsonElement Key)[] sortArray =
-            ArrayPool<(int, JsonElement, JsonElement)>.Shared.Rent(len);
-        try
+        for (int i = 1; i < len; i++)
         {
-            for (int i = 0; i < len; i++)
+            JsonElement key = builder[i];
+            int j = i - 1;
+            while (j >= 0)
             {
-                sortArray[i] = pairs[i];
+                using UnescapedUtf8JsonString jStr = builder[j].GetUtf8String();
+                using UnescapedUtf8JsonString keyStr = key.GetUtf8String();
+                if (jStr.Span.SequenceCompareTo(keyStr.Span) <= 0)
+                {
+                    break;
+                }
+
+                builder[j + 1] = builder[j];
+                j--;
             }
 
-            Array.Sort(sortArray, 0, len, comparer);
+            builder[j + 1] = key;
+        }
+    }
 
-            for (int i = 0; i < len; i++)
+    private static void InsertionSortByNumber(ref JMESPathSequenceBuilder builder, JsonElement[] keys, int len)
+    {
+        for (int i = 1; i < len; i++)
+        {
+            JsonElement elem = builder[i];
+            JsonElement keyElem = keys[i];
+            double keyVal = keyElem.GetDouble();
+            int j = i - 1;
+            while (j >= 0 && keys[j].GetDouble() > keyVal)
             {
-                pairs[i] = sortArray[i];
+                builder[j + 1] = builder[j];
+                keys[j + 1] = keys[j];
+                j--;
             }
-        }
-        finally
-        {
-            sortArray.AsSpan(0, len).Clear();
-            ArrayPool<(int, JsonElement, JsonElement)>.Shared.Return(sortArray);
+
+            builder[j + 1] = elem;
+            keys[j + 1] = keyElem;
         }
     }
 
-    private sealed class StableNumberComparer : IComparer<(int Index, JsonElement Element)>
+    private static void InsertionSortByString(ref JMESPathSequenceBuilder builder, JsonElement[] keys, int len)
     {
-        public static readonly StableNumberComparer Instance = new();
-
-        public int Compare((int Index, JsonElement Element) x, (int Index, JsonElement Element) y)
+        for (int i = 1; i < len; i++)
         {
-            int cmp = x.Element.GetDouble().CompareTo(y.Element.GetDouble());
-            return cmp != 0 ? cmp : x.Index.CompareTo(y.Index);
+            JsonElement elem = builder[i];
+            JsonElement keyElem = keys[i];
+            int j = i - 1;
+            while (j >= 0)
+            {
+                using UnescapedUtf8JsonString jStr = keys[j].GetUtf8String();
+                using UnescapedUtf8JsonString keyStr = keyElem.GetUtf8String();
+                if (jStr.Span.SequenceCompareTo(keyStr.Span) <= 0)
+                {
+                    break;
+                }
+
+                builder[j + 1] = builder[j];
+                keys[j + 1] = keys[j];
+                j--;
+            }
+
+            builder[j + 1] = elem;
+            keys[j + 1] = keyElem;
         }
     }
 
-    private sealed class StableStringComparer : IComparer<(int Index, JsonElement Element)>
+    /// <summary>
+    /// Dispatches to the appropriate keyed insertion sort based on the key kind.
+    /// Used by both CG helpers and the RT compiler.
+    /// </summary>
+    internal static void InsertionSortByKeys(ref JMESPathSequenceBuilder builder, JsonElement[] keys, int len, JsonValueKind keyKind)
     {
-        public static readonly StableStringComparer Instance = new();
-
-        public int Compare((int Index, JsonElement Element) x, (int Index, JsonElement Element) y)
+        if (keyKind == JsonValueKind.Number)
         {
-            using UnescapedUtf8JsonString xStr = x.Element.GetUtf8String();
-            using UnescapedUtf8JsonString yStr = y.Element.GetUtf8String();
-            int cmp = xStr.Span.SequenceCompareTo(yStr.Span);
-            return cmp != 0 ? cmp : x.Index.CompareTo(y.Index);
+            InsertionSortByNumber(ref builder, keys, len);
         }
-    }
-
-    private sealed class StableKeyedNumberComparer : IComparer<(int Index, JsonElement Element, JsonElement Key)>
-    {
-        public static readonly StableKeyedNumberComparer Instance = new();
-
-        public int Compare((int Index, JsonElement Element, JsonElement Key) x, (int Index, JsonElement Element, JsonElement Key) y)
+        else
         {
-            int cmp = x.Key.GetDouble().CompareTo(y.Key.GetDouble());
-            return cmp != 0 ? cmp : x.Index.CompareTo(y.Index);
-        }
-    }
-
-    private sealed class StableKeyedStringComparer : IComparer<(int Index, JsonElement Element, JsonElement Key)>
-    {
-        public static readonly StableKeyedStringComparer Instance = new();
-
-        public int Compare((int Index, JsonElement Element, JsonElement Key) x, (int Index, JsonElement Element, JsonElement Key) y)
-        {
-            using UnescapedUtf8JsonString xStr = x.Key.GetUtf8String();
-            using UnescapedUtf8JsonString yStr = y.Key.GetUtf8String();
-            int cmp = xStr.Span.SequenceCompareTo(yStr.Span);
-            return cmp != 0 ? cmp : x.Index.CompareTo(y.Index);
+            InsertionSortByString(ref builder, keys, len);
         }
     }
 
@@ -1359,5 +1348,19 @@ public static class JMESPathCodeGenHelpers
             using UnescapedUtf8JsonString yStr = y.GetUtf8String();
             return xStr.Span.SequenceCompareTo(yStr.Span);
         }
+    }
+
+    private static JsonElement[] CreateSmallIntegerCache()
+    {
+        const int CacheSize = 256;
+        JsonElement[] cache = new JsonElement[CacheSize];
+        Span<byte> buffer = stackalloc byte[4];
+        for (int i = 0; i < CacheSize; i++)
+        {
+            Utf8Formatter.TryFormat(i, buffer, out int bytesWritten);
+            cache[i] = JsonElement.ParseValue(buffer.Slice(0, bytesWritten));
+        }
+
+        return cache;
     }
 }

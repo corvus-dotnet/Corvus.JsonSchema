@@ -41,11 +41,14 @@ internal ref struct JMESPathSequenceBuilder
     /// <summary>Gets the current count of values added.</summary>
     public readonly int Count => this.count;
 
-    /// <summary>Gets the element at the specified index.</summary>
-    public readonly JsonElement this[int index]
+    /// <summary>Gets or sets the element at the specified index.</summary>
+    public JsonElement this[int index]
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        get => this.array![index];
+        readonly get => this.array![index];
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        set => this.array![index] = value;
     }
 
     /// <summary>

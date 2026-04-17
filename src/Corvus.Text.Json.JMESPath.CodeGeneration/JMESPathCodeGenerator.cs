@@ -581,23 +581,33 @@ public static class JMESPathCodeGenerator
         private string EmitListProjection(StringBuilder body, ListProjectionNode node, string indent, string inputVar)
         {
             string leftVar = EmitExpression(body, node.Left, indent, inputVar);
-            string resultVar = NextVar();
-            L(body, indent, $"JsonElement {resultVar} = default;");
+
+            // Identity projection: right side is @, so just return the left array directly.
+            if (node.Right is CurrentNode)
+            {
+                string resultVar = NextVar();
+                L(body, indent, $"JsonElement {resultVar} = {leftVar}.ValueKind == JsonValueKind.Array ? {leftVar} : default;");
+                Blank(body);
+                return resultVar;
+            }
+
+            string resultVar2 = NextVar();
+            L(body, indent, $"JsonElement {resultVar2} = default;");
             L(body, indent, $"if ({leftVar}.ValueKind == JsonValueKind.Array)");
             L(body, indent, "{");
 
             string innerIndent = indent + "    ";
-            L(body, innerIndent, $"int len_{resultVar} = {leftVar}.GetArrayLength();");
-            L(body, innerIndent, $"if (len_{resultVar} == 0)");
+            L(body, innerIndent, $"int len_{resultVar2} = {leftVar}.GetArrayLength();");
+            L(body, innerIndent, $"if (len_{resultVar2} == 0)");
             L(body, innerIndent, "{");
-            L(body, innerIndent, $"    {resultVar} = {leftVar};");
+            L(body, innerIndent, $"    {resultVar2} = {leftVar};");
             L(body, innerIndent, "}");
             L(body, innerIndent, "else");
             L(body, innerIndent, "{");
 
             string loopIndent = innerIndent + "    ";
-            string itemVar = $"item_{resultVar}";
-            L(body, loopIndent, $"var doc_{resultVar} = JsonElement.CreateBuilder(workspace, ({leftVar}, workspace), static (in (JsonElement __src, JsonWorkspace workspace) __ctx, ref JsonElement.ArrayBuilder __b) =>");
+            string itemVar = $"item_{resultVar2}";
+            L(body, loopIndent, $"var doc_{resultVar2} = JsonElement.CreateBuilder(workspace, ({leftVar}, workspace), static (in (JsonElement __src, JsonWorkspace workspace) __ctx, ref JsonElement.ArrayBuilder __b) =>");
             L(body, loopIndent, "{");
 
             string cbIndent = loopIndent + "    ";
@@ -610,13 +620,13 @@ public static class JMESPathCodeGenerator
             L(body, cbIndent, $"        __b.AddItem({projectedVar});");
             L(body, cbIndent, "    }");
             L(body, cbIndent, "}");
-            L(body, loopIndent, $"}}, len_{resultVar} + 2);");
-            L(body, loopIndent, $"{resultVar} = (JsonElement)doc_{resultVar}.RootElement;");
+            L(body, loopIndent, $"}}, len_{resultVar2} + 2);");
+            L(body, loopIndent, $"{resultVar2} = (JsonElement)doc_{resultVar2}.RootElement;");
             L(body, innerIndent, "}");
 
             L(body, indent, "}");
             Blank(body);
-            return resultVar;
+            return resultVar2;
         }
 
         private string EmitValueProjection(StringBuilder body, ValueProjectionNode node, string indent, string inputVar)
@@ -660,55 +670,70 @@ public static class JMESPathCodeGenerator
 
             string innerIndent = indent + "    ";
 
-            // Flatten step via CVB
-            string flatVar = $"flat_{resultVar}";
-            L(body, innerIndent, $"var flatDoc_{resultVar} = JsonElement.CreateBuilder(workspace, {leftVar}, static (in JsonElement __src, ref JsonElement.ArrayBuilder __b) =>");
-            L(body, innerIndent, "{");
-            string flatCbIndent = innerIndent + "    ";
-            L(body, flatCbIndent, $"foreach (JsonElement flatItem in __src.EnumerateArray())");
-            L(body, flatCbIndent, "{");
-            L(body, flatCbIndent, "    if (flatItem.ValueKind == JsonValueKind.Array)");
-            L(body, flatCbIndent, "    {");
-            L(body, flatCbIndent, "        foreach (JsonElement nested in flatItem.EnumerateArray())");
-            L(body, flatCbIndent, "        {");
-            L(body, flatCbIndent, "            __b.AddItem(nested);");
-            L(body, flatCbIndent, "        }");
-            L(body, flatCbIndent, "    }");
-            L(body, flatCbIndent, "    else");
-            L(body, flatCbIndent, "    {");
-            L(body, flatCbIndent, "        __b.AddItem(flatItem);");
-            L(body, flatCbIndent, "    }");
-            L(body, flatCbIndent, "}");
-            L(body, innerIndent, $"}}, {leftVar}.GetArrayLength() + 2);");
-            L(body, innerIndent, $"JsonElement {flatVar} = (JsonElement)flatDoc_{resultVar}.RootElement;");
+            if (node.Right is CurrentNode)
+            {
+                // Identity projection: just flatten, no projection step needed.
+                L(body, innerIndent, $"var flatDoc_{resultVar} = JsonElement.CreateBuilder(workspace, {leftVar}, static (in JsonElement __src, ref JsonElement.ArrayBuilder __b) =>");
+                L(body, innerIndent, "{");
+                string flatCbIndent = innerIndent + "    ";
+                L(body, flatCbIndent, $"foreach (JsonElement flatItem in __src.EnumerateArray())");
+                L(body, flatCbIndent, "{");
+                L(body, flatCbIndent, "    if (flatItem.ValueKind == JsonValueKind.Array)");
+                L(body, flatCbIndent, "    {");
+                L(body, flatCbIndent, "        foreach (JsonElement nested in flatItem.EnumerateArray())");
+                L(body, flatCbIndent, "        {");
+                L(body, flatCbIndent, "            __b.AddItem(nested);");
+                L(body, flatCbIndent, "        }");
+                L(body, flatCbIndent, "    }");
+                L(body, flatCbIndent, "    else");
+                L(body, flatCbIndent, "    {");
+                L(body, flatCbIndent, "        __b.AddItem(flatItem);");
+                L(body, flatCbIndent, "    }");
+                L(body, flatCbIndent, "}");
+                L(body, innerIndent, $"}}, {leftVar}.GetArrayLength() + 2);");
+                L(body, innerIndent, $"{resultVar} = (JsonElement)flatDoc_{resultVar}.RootElement;");
+            }
+            else
+            {
+                // Fused flatten+project in a single CVB callback.
+                string itemVar = $"item_{resultVar}";
+                L(body, innerIndent, $"var doc_{resultVar} = JsonElement.CreateBuilder(workspace, ({leftVar}, workspace), static (in (JsonElement __src, JsonWorkspace workspace) __ctx, ref JsonElement.ArrayBuilder __b) =>");
+                L(body, innerIndent, "{");
 
-            // Project step via CVB
-            L(body, innerIndent, $"int len_{resultVar} = {flatVar}.GetArrayLength();");
-            L(body, innerIndent, $"if (len_{resultVar} == 0)");
-            L(body, innerIndent, "{");
-            L(body, innerIndent, $"    {resultVar} = {flatVar};");
-            L(body, innerIndent, "}");
-            L(body, innerIndent, "else");
-            L(body, innerIndent, "{");
+                string cbIndent = innerIndent + "    ";
+                L(body, cbIndent, "JsonWorkspace workspace = __ctx.workspace;");
+                L(body, cbIndent, $"foreach (JsonElement flatItem in __ctx.__src.EnumerateArray())");
+                L(body, cbIndent, "{");
 
-            string loopIndent = innerIndent + "    ";
-            string itemVar = $"item_{resultVar}";
-            L(body, loopIndent, $"var doc_{resultVar} = JsonElement.CreateBuilder(workspace, ({flatVar}, workspace), static (in (JsonElement __src, JsonWorkspace workspace) __ctx, ref JsonElement.ArrayBuilder __b) =>");
-            L(body, loopIndent, "{");
+                string innerCbIndent = cbIndent + "    ";
+                L(body, innerCbIndent, "if (flatItem.ValueKind == JsonValueKind.Array)");
+                L(body, innerCbIndent, "{");
 
-            string cbIndent = loopIndent + "    ";
-            L(body, cbIndent, "JsonWorkspace workspace = __ctx.workspace;");
-            L(body, cbIndent, $"foreach (JsonElement {itemVar} in __ctx.__src.EnumerateArray())");
-            L(body, cbIndent, "{");
-            string projectedVar = EmitExpression(body, node.Right, cbIndent + "    ", itemVar);
-            L(body, cbIndent, $"    if (!{projectedVar}.IsNullOrUndefined())");
-            L(body, cbIndent, "    {");
-            L(body, cbIndent, $"        __b.AddItem({projectedVar});");
-            L(body, cbIndent, "    }");
-            L(body, cbIndent, "}");
-            L(body, loopIndent, $"}}, len_{resultVar} + 2);");
-            L(body, loopIndent, $"{resultVar} = (JsonElement)doc_{resultVar}.RootElement;");
-            L(body, innerIndent, "}");
+                string nestedIndent = innerCbIndent + "    ";
+                L(body, nestedIndent, $"foreach (JsonElement {itemVar} in flatItem.EnumerateArray())");
+                L(body, nestedIndent, "{");
+                string projectedVar = EmitExpression(body, node.Right, nestedIndent + "    ", itemVar);
+                L(body, nestedIndent, $"    if (!{projectedVar}.IsNullOrUndefined())");
+                L(body, nestedIndent, "    {");
+                L(body, nestedIndent, $"        __b.AddItem({projectedVar});");
+                L(body, nestedIndent, "    }");
+                L(body, nestedIndent, "}");
+
+                L(body, innerCbIndent, "}");
+                L(body, innerCbIndent, "else");
+                L(body, innerCbIndent, "{");
+
+                string projectedVar2 = EmitExpression(body, node.Right, innerCbIndent + "    ", "flatItem");
+                L(body, innerCbIndent, $"    if (!{projectedVar2}.IsNullOrUndefined())");
+                L(body, innerCbIndent, "    {");
+                L(body, innerCbIndent, $"        __b.AddItem({projectedVar2});");
+                L(body, innerCbIndent, "    }");
+
+                L(body, innerCbIndent, "}");
+                L(body, cbIndent, "}");
+                L(body, innerIndent, $"}}, {leftVar}.GetArrayLength() + 2);");
+                L(body, innerIndent, $"{resultVar} = (JsonElement)doc_{resultVar}.RootElement;");
+            }
 
             L(body, indent, "}");
             Blank(body);

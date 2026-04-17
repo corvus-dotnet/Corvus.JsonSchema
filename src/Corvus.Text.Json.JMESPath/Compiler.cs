@@ -338,6 +338,23 @@ internal static partial class Compiler
     private static JMESPathEval CompileListProjection(ListProjectionNode node)
     {
         JMESPathEval left = CompileNode(node.Left);
+
+        // Identity projection: right side is just @, so the result is the left array
+        // with null elements filtered out. For non-sparse arrays this is a no-op.
+        if (node.Right is CurrentNode)
+        {
+            return (in JsonElement data, JsonWorkspace workspace) =>
+            {
+                JsonElement arr = left(data, workspace);
+                if (arr.ValueKind != JsonValueKind.Array)
+                {
+                    return default;
+                }
+
+                return arr;
+            };
+        }
+
         JMESPathEval right = CompileNode(node.Right);
 
         return (in JsonElement data, JsonWorkspace workspace) =>
@@ -412,6 +429,45 @@ internal static partial class Compiler
     private static JMESPathEval CompileFlattenProjection(FlattenProjectionNode node)
     {
         JMESPathEval left = CompileNode(node.Left);
+
+        // Identity projection: right side is @, so just flatten without projecting.
+        if (node.Right is CurrentNode)
+        {
+            return (in JsonElement data, JsonWorkspace workspace) =>
+            {
+                JsonElement arr = left(data, workspace);
+                if (arr.ValueKind != JsonValueKind.Array)
+                {
+                    return default;
+                }
+
+                JMESPathSequenceBuilder builder = default;
+                try
+                {
+                    foreach (JsonElement item in arr.EnumerateArray())
+                    {
+                        if (item.ValueKind == JsonValueKind.Array)
+                        {
+                            foreach (JsonElement nested in item.EnumerateArray())
+                            {
+                                builder.Add(nested);
+                            }
+                        }
+                        else
+                        {
+                            builder.Add(item);
+                        }
+                    }
+
+                    return builder.ToElement(workspace);
+                }
+                finally
+                {
+                    builder.ReturnArray();
+                }
+            };
+        }
+
         JMESPathEval right = CompileNode(node.Right);
 
         return (in JsonElement data, JsonWorkspace workspace) =>
