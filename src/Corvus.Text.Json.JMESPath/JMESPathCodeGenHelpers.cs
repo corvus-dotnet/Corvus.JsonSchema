@@ -605,37 +605,23 @@ public static class JMESPathCodeGenHelpers
             return EmptyArrayElement;
         }
 
-        JsonElement[] keys = ArrayPool<JsonElement>.Shared.Rent(count);
+        // Collect key string elements into a SequenceBuilder and insertion-sort
+        // in place. This avoids the 64B delegate allocation from Array.Sort.
+        JMESPathSequenceBuilder builder = default;
         try
         {
-            int idx = 0;
             foreach (JsonProperty<JsonElement> prop in obj.EnumerateObject())
             {
                 using UnescapedUtf8JsonString name = prop.Utf8NameSpan;
-                keys[idx++] = StringElementFromUnescapedUtf8(name.Span, workspace);
+                builder.Add(StringElementFromUnescapedUtf8(name.Span, workspace));
             }
 
-            Array.Sort(keys, 0, count, Utf8StringElementComparer.Instance);
-
-            JMESPathSequenceBuilder builder = default;
-            try
-            {
-                for (int i = 0; i < count; i++)
-                {
-                    builder.Add(keys[i]);
-                }
-
-                return builder.ToElement(workspace);
-            }
-            finally
-            {
-                builder.ReturnArray();
-            }
+            InsertionSortByKind(ref builder, count, JsonValueKind.String);
+            return builder.ToElement(workspace);
         }
         finally
         {
-            keys.AsSpan(0, count).Clear();
-            ArrayPool<JsonElement>.Shared.Return(keys);
+            builder.ReturnArray();
         }
     }
 
@@ -823,6 +809,77 @@ public static class JMESPathCodeGenHelpers
         }
     }
 
+    /// <summary>Fused filter + sort_by: filter elements, extract sort keys, insertion sort, materialize once.</summary>
+    public static JsonElement FilterAndSortBy(
+        in JsonElement source,
+        ExpressionEvaluator condition,
+        ExpressionEvaluator? projection,
+        ExpressionEvaluator sortExpr,
+        JsonWorkspace workspace)
+    {
+        if (source.ValueKind != JsonValueKind.Array)
+        {
+            // Preserve sort_by's RequireArray semantics.
+            RequireArray("sort_by", default);
+            return default; // unreachable
+        }
+
+        int len = source.GetArrayLength();
+        if (len == 0)
+        {
+            return EmptyArrayElement;
+        }
+
+        JMESPathSequenceBuilder builder = default;
+        JsonElement[] keys = ArrayPool<JsonElement>.Shared.Rent(len);
+        try
+        {
+            int count = 0;
+            foreach (JsonElement item in source.EnumerateArray())
+            {
+                JsonElement condResult = condition(item, workspace);
+                if (IsTruthy(condResult))
+                {
+                    JsonElement projected = projection is null ? item : projection(item, workspace);
+                    if (!projected.IsNullOrUndefined())
+                    {
+                        builder.Add(projected);
+                        keys[count] = sortExpr(projected, workspace);
+                        count++;
+                    }
+                }
+            }
+
+            if (count == 0)
+            {
+                return EmptyArrayElement;
+            }
+
+            JsonValueKind keyKind = keys[0].ValueKind;
+            if (keyKind != JsonValueKind.Number && keyKind != JsonValueKind.String)
+            {
+                throw new JMESPathException("invalid-type: sort_by() expression must return numbers or strings.");
+            }
+
+            for (int i = 1; i < count; i++)
+            {
+                if (keys[i].ValueKind != keyKind)
+                {
+                    throw new JMESPathException("invalid-type: sort_by() expression must return consistent types.");
+                }
+            }
+
+            InsertionSortByKeys(ref builder, keys, count, keyKind);
+            return builder.ToElement(workspace);
+        }
+        finally
+        {
+            builder.ReturnArray();
+            keys.AsSpan(0, len).Clear();
+            ArrayPool<JsonElement>.Shared.Return(keys);
+        }
+    }
+
     /// <summary>Computes <c>map(&amp;expr, array)</c>.</summary>
     public static JsonElement Map(ExpressionEvaluator expr, in JsonElement array, JsonWorkspace workspace)
     {
@@ -880,6 +937,36 @@ public static class JMESPathCodeGenHelpers
                         using UnescapedUtf8JsonString name = prop.Utf8NameSpan;
                         builder.AddProperty(name.Span, prop.Value, escapeName: false, nameRequiresUnescaping: false);
                     }
+                }
+            },
+            estimatedMemberCount: estimatedCount);
+
+        return (JsonElement)doc.RootElement;
+    }
+
+    /// <summary>Computes <c>merge(obj1, obj2)</c> for exactly 2 arguments, avoiding heap array allocation.</summary>
+    public static JsonElement Merge(in JsonElement obj1, in JsonElement obj2, JsonWorkspace workspace)
+    {
+        RequireObject("merge", obj1);
+        RequireObject("merge", obj2);
+
+        int estimatedCount = obj1.GetPropertyCount() + obj2.GetPropertyCount();
+
+        JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateBuilder(
+            workspace,
+            (obj1, obj2),
+            static (in (JsonElement Obj1, JsonElement Obj2) ctx, ref JsonElement.ObjectBuilder builder) =>
+            {
+                foreach (JsonProperty<JsonElement> prop in ctx.Obj1.EnumerateObject())
+                {
+                    using UnescapedUtf8JsonString name = prop.Utf8NameSpan;
+                    builder.AddProperty(name.Span, prop.Value, escapeName: false, nameRequiresUnescaping: false);
+                }
+
+                foreach (JsonProperty<JsonElement> prop in ctx.Obj2.EnumerateObject())
+                {
+                    using UnescapedUtf8JsonString name = prop.Utf8NameSpan;
+                    builder.AddProperty(name.Span, prop.Value, escapeName: false, nameRequiresUnescaping: false);
                 }
             },
             estimatedMemberCount: estimatedCount);

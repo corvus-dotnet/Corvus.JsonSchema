@@ -597,39 +597,23 @@ internal static partial class Compiler
                 return JMESPathCodeGenHelpers.EmptyArrayElement;
             }
 
-            // Create key elements and sort by their UTF-8 content (ordinal sort)
-            JsonElement[] keys = ArrayPool<JsonElement>.Shared.Rent(count);
+            // Collect key string elements into a SequenceBuilder and insertion-sort
+            // in place. This avoids the 64B delegate allocation from Array.Sort.
+            JMESPathSequenceBuilder builder = default;
             try
             {
-                int idx = 0;
                 foreach (JsonProperty<JsonElement> prop in val.EnumerateObject())
                 {
                     using UnescapedUtf8JsonString name = prop.Utf8NameSpan;
-                    keys[idx++] = StringElementFromUnescapedUtf8(name.Span, ws);
+                    builder.Add(StringElementFromUnescapedUtf8(name.Span, ws));
                 }
 
-                // Sort using UTF-8 ordinal comparison of the unescaped string content
-                Array.Sort(keys, 0, count, Utf8StringElementComparer.Instance);
-
-                JMESPathSequenceBuilder builder = default;
-                try
-                {
-                    for (int i = 0; i < count; i++)
-                    {
-                        builder.Add(keys[i]);
-                    }
-
-                    return builder.ToElement(ws);
-                }
-                finally
-                {
-                    builder.ReturnArray();
-                }
+                JMESPathCodeGenHelpers.InsertionSortByKind(ref builder, count, JsonValueKind.String);
+                return builder.ToElement(ws);
             }
             finally
             {
-                keys.AsSpan(0, count).Clear();
-                ArrayPool<JsonElement>.Shared.Return(keys);
+                builder.ReturnArray();
             }
         };
     }

@@ -393,11 +393,25 @@ public static class JMESPathCodeGenerator
         {
             // Fused path: ListProjection | sort(@) — use CollectAndSort to avoid
             // materializing the intermediate projection array.
-            if (node.Right is FunctionCallNode { Arguments: [CurrentNode] } sortCall
+            if (node.Right is FunctionCallNode sortCall
+                && sortCall.Arguments.Length == 1
+                && sortCall.Arguments[0] is CurrentNode
                 && sortCall.Name.AsSpan().SequenceEqual("sort"u8)
                 && node.Left is ListProjectionNode listProj)
             {
                 return EmitFusedProjectionSort(body, listProj, indent, inputVar);
+            }
+
+            // Fused path: FilterProjection | sort_by(@, &expr) — filter, collect + sort
+            // keys in one pass, materialize once (one doc instead of two).
+            if (node.Right is FunctionCallNode sortByCall
+                && sortByCall.Arguments.Length == 2
+                && sortByCall.Arguments[0] is CurrentNode
+                && sortByCall.Arguments[1] is ExpressionRefNode sortByExprRef
+                && sortByCall.Name.AsSpan().SequenceEqual("sort_by"u8)
+                && node.Left is FilterProjectionNode filter)
+            {
+                return EmitFusedFilterSortBy(body, filter, sortByExprRef, indent, inputVar);
             }
 
             string leftVar = EmitExpression(body, node.Left, indent, inputVar);
@@ -444,6 +458,37 @@ public static class JMESPathCodeGenerator
 
             L(body, indent, "}");
             Blank(body);
+            return resultVar;
+        }
+
+        private string EmitFusedFilterSortBy(
+            StringBuilder body,
+            FilterProjectionNode filter,
+            ExpressionRefNode sortByExprRef,
+            string indent,
+            string inputVar)
+        {
+            // Emit the filter source (e.g., data.people)
+            string srcVar = EmitExpression(body, filter.Left, indent, inputVar);
+
+            // Emit expression refs for the condition and sort key
+            string condMethod = EmitAsStaticMethod(filter.Condition);
+            string sortExprMethod = EmitAsStaticMethod(sortByExprRef.Expression);
+
+            // Emit projection expression ref if non-identity
+            string projectionArg;
+            if (filter.Right is CurrentNode)
+            {
+                projectionArg = "null";
+            }
+            else
+            {
+                string projMethod = EmitAsStaticMethod(filter.Right);
+                projectionArg = projMethod;
+            }
+
+            string resultVar = NextVar();
+            L(body, indent, $"JsonElement {resultVar} = {H}.FilterAndSortBy({srcVar}, {condMethod}, {projectionArg}, {sortExprMethod}, workspace);");
             return resultVar;
         }
 
@@ -643,6 +688,17 @@ public static class JMESPathCodeGenerator
                 return resultVar;
             }
 
+            // Fused: right is a MultiSelectHash — build the array with inline objects
+            // in a single CreateBuilder, avoiding N+1 document realizations.
+            // The parser wraps .{...} as SubExpressionNode(CurrentNode, MultiSelectHashNode),
+            // so we unwrap that here.
+            MultiSelectHashNode? hashNode = node.Right as MultiSelectHashNode
+                ?? (node.Right is SubExpressionNode { Left: CurrentNode, Right: MultiSelectHashNode inner } ? inner : null);
+            if (hashNode is not null)
+            {
+                return EmitFusedListProjectionHash(body, hashNode, leftVar, indent);
+            }
+
             string resultVar2 = NextVar();
             L(body, indent, $"JsonElement {resultVar2} = default;");
             L(body, indent, $"if ({leftVar}.ValueKind == JsonValueKind.Array)");
@@ -679,6 +735,97 @@ public static class JMESPathCodeGenerator
             L(body, indent, "}");
             Blank(body);
             return resultVar2;
+        }
+
+        private string EmitFusedListProjectionHash(
+            StringBuilder body,
+            MultiSelectHashNode hashNode,
+            string leftVar,
+            string indent)
+        {
+            int n = hashNode.Pairs.Length;
+
+            // Register static key fields
+            string[] keyFields = new string[n];
+            for (int i = 0; i < n; i++)
+            {
+                keyFields[i] = $"s_name{nameCounter++}";
+                NameFields.Add((keyFields[i], $"private static readonly byte[] {keyFields[i]} = {Utf8Literal(hashNode.Pairs[i].Key)};"));
+            }
+
+            string resultVar = NextVar();
+            L(body, indent, $"JsonElement {resultVar} = default;");
+            L(body, indent, $"if ({leftVar}.ValueKind == JsonValueKind.Array)");
+            L(body, indent, "{");
+
+            string innerIndent = indent + "    ";
+            L(body, innerIndent, $"int len_{resultVar} = {leftVar}.GetArrayLength();");
+            L(body, innerIndent, $"if (len_{resultVar} == 0)");
+            L(body, innerIndent, "{");
+            L(body, innerIndent, $"    {resultVar} = {leftVar};");
+            L(body, innerIndent, "}");
+            L(body, innerIndent, "else");
+            L(body, innerIndent, "{");
+
+            string loopIndent = innerIndent + "    ";
+            string itemVar = $"item_{resultVar}";
+
+            // Single CreateBuilder with ArrayBuilder callback
+            L(body, loopIndent, $"var doc_{resultVar} = JsonElement.CreateBuilder(workspace, ({leftVar}, workspace), static (in (JsonElement __src, JsonWorkspace workspace) __ctx, ref JsonElement.ArrayBuilder __b) =>");
+            L(body, loopIndent, "{");
+
+            string cbIndent = loopIndent + "    ";
+            L(body, cbIndent, "JsonWorkspace workspace = __ctx.workspace;");
+            L(body, cbIndent, $"foreach (JsonElement {itemVar} in __ctx.__src.EnumerateArray())");
+            L(body, cbIndent, "{");
+
+            string itemBodyIndent = cbIndent + "    ";
+            L(body, itemBodyIndent, $"if (!{itemVar}.IsNullOrUndefined())");
+            L(body, itemBodyIndent, "{");
+
+            string objBodyIndent = itemBodyIndent + "    ";
+
+            // Emit each value expression inline
+            string[] valVars = new string[n];
+            for (int i = 0; i < n; i++)
+            {
+                valVars[i] = EmitExpression(body, hashNode.Pairs[i].Value, objBodyIndent, itemVar);
+            }
+
+            // Coerce null/undefined values
+            string[] coercedVars = new string[n];
+            for (int i = 0; i < n; i++)
+            {
+                coercedVars[i] = NextVar();
+                L(body, objBodyIndent, $"JsonElement {coercedVars[i]} = {valVars[i]}.IsNullOrUndefined() ? {H}.NullElement : {valVars[i]};");
+            }
+
+            // Build context tuple of coerced values for the ObjectBuilder callback
+            string ctxExpr = n == 1
+                ? $"ValueTuple.Create({coercedVars[0]})"
+                : $"({string.Join(", ", coercedVars)})";
+            string ctxType = n == 1
+                ? "ValueTuple<JsonElement>"
+                : $"({string.Join(", ", Enumerable.Range(0, n).Select(_ => "JsonElement"))})";
+
+            L(body, objBodyIndent, $"__b.AddItem({ctxExpr}, static (in {ctxType} __ic, ref JsonElement.ObjectBuilder __ob) =>");
+            L(body, objBodyIndent, "{");
+            for (int i = 0; i < n; i++)
+            {
+                string itemRef = n == 1 ? "__ic.Item1" : $"__ic.Item{i + 1}";
+                L(body, objBodyIndent, $"    __ob.AddProperty({keyFields[i]}, {itemRef});");
+            }
+
+            L(body, objBodyIndent, "});");
+            L(body, itemBodyIndent, "}");
+            L(body, cbIndent, "}");
+            L(body, loopIndent, $"}}, len_{resultVar} + 2);");
+            L(body, loopIndent, $"{resultVar} = (JsonElement)doc_{resultVar}.RootElement;");
+            L(body, innerIndent, "}");
+
+            L(body, indent, "}");
+            Blank(body);
+            return resultVar;
         }
 
         private string EmitValueProjection(StringBuilder body, ValueProjectionNode node, string indent, string inputVar)
@@ -720,6 +867,12 @@ public static class JMESPathCodeGenerator
             if (node.Left is ListProjectionNode outerProj)
             {
                 return EmitFusedProjectionFlatten(body, outerProj, node.Right, indent, inputVar);
+            }
+
+            // Fused path: when left is a FlattenProjection, double-flatten in one pass.
+            if (node.Left is FlattenProjectionNode innerFlatten)
+            {
+                return EmitFusedDoubleFlatten(body, innerFlatten, node.Right, indent, inputVar);
             }
 
             string leftVar = EmitExpression(body, node.Left, indent, inputVar);
@@ -890,6 +1043,119 @@ public static class JMESPathCodeGenerator
             return resultVar;
         }
 
+        private string EmitFusedDoubleFlatten(
+            StringBuilder body,
+            FlattenProjectionNode innerFlatten,
+            JMESPathNode outerRight,
+            string indent,
+            string inputVar)
+        {
+            // Emit the inner flatten's left source
+            string innerSrcVar = EmitExpression(body, innerFlatten.Left, indent, inputVar);
+
+            string resultVar = NextVar();
+            L(body, indent, $"JsonElement {resultVar} = default;");
+            L(body, indent, $"if ({innerSrcVar}.ValueKind == JsonValueKind.Array)");
+            L(body, indent, "{");
+
+            string innerIndent = indent + "    ";
+
+            // Single CreateBuilder: iterate the inner source, apply inner flatten, evaluate
+            // inner right, apply outer flatten, and optionally project with outerRight.
+            L(body, innerIndent, $"var doc_{resultVar} = JsonElement.CreateBuilder(workspace, ({innerSrcVar}, workspace), static (in (JsonElement __src, JsonWorkspace workspace) __ctx, ref JsonElement.ArrayBuilder __b) =>");
+            L(body, innerIndent, "{");
+
+            string cbIndent = innerIndent + "    ";
+            L(body, cbIndent, "JsonWorkspace workspace = __ctx.workspace;");
+            string outerItemVar = $"outer_{resultVar}";
+            L(body, cbIndent, $"foreach (JsonElement {outerItemVar} in __ctx.__src.EnumerateArray())");
+            L(body, cbIndent, "{");
+
+            string outerBodyIndent = cbIndent + "    ";
+
+            // Inner flatten: if item is array, expand one level
+            string expandedVar = $"exp_{resultVar}";
+            L(body, outerBodyIndent, $"if ({outerItemVar}.ValueKind == JsonValueKind.Array)");
+            L(body, outerBodyIndent, "{");
+            string expandIndent = outerBodyIndent + "    ";
+            L(body, expandIndent, $"foreach (JsonElement {expandedVar} in {outerItemVar}.EnumerateArray())");
+            L(body, expandIndent, "{");
+            EmitInnerFlattenAndProject(body, innerFlatten.Right, outerRight, expandIndent + "    ", expandedVar);
+            L(body, expandIndent, "}");
+            L(body, outerBodyIndent, "}");
+            L(body, outerBodyIndent, "else");
+            L(body, outerBodyIndent, "{");
+            EmitInnerFlattenAndProject(body, innerFlatten.Right, outerRight, outerBodyIndent + "    ", outerItemVar);
+            L(body, outerBodyIndent, "}");
+
+            L(body, cbIndent, "}");
+            L(body, innerIndent, $"}}, {innerSrcVar}.GetArrayLength() + 2);");
+            L(body, innerIndent, $"{resultVar} = (JsonElement)doc_{resultVar}.RootElement;");
+
+            L(body, indent, "}");
+            Blank(body);
+            return resultVar;
+        }
+
+        private void EmitInnerFlattenAndProject(
+            StringBuilder body,
+            JMESPathNode innerRight,
+            JMESPathNode outerRight,
+            string indent,
+            string itemVar)
+        {
+            // Evaluate inner right (e.g., .teams)
+            string innerResultVar = EmitExpression(body, innerRight, indent, itemVar);
+
+            L(body, indent, $"if (!{innerResultVar}.IsNullOrUndefined())");
+            L(body, indent, "{");
+
+            string innerIndent = indent + "    ";
+
+            // Outer flatten: if inner result is array, expand and project each element
+            L(body, innerIndent, $"if ({innerResultVar}.ValueKind == JsonValueKind.Array)");
+            L(body, innerIndent, "{");
+
+            string flatIndent = innerIndent + "    ";
+            string flatItemVar = $"flatItem_{innerResultVar}";
+            L(body, flatIndent, $"foreach (JsonElement {flatItemVar} in {innerResultVar}.EnumerateArray())");
+            L(body, flatIndent, "{");
+
+            if (outerRight is CurrentNode)
+            {
+                L(body, flatIndent, $"    __b.AddItem({flatItemVar});");
+            }
+            else
+            {
+                string projVar = EmitExpression(body, outerRight, flatIndent + "    ", flatItemVar);
+                L(body, flatIndent, $"    if (!{projVar}.IsNullOrUndefined())");
+                L(body, flatIndent, "    {");
+                L(body, flatIndent, $"        __b.AddItem({projVar});");
+                L(body, flatIndent, "    }");
+            }
+
+            L(body, flatIndent, "}");
+            L(body, innerIndent, "}");
+            L(body, innerIndent, "else");
+            L(body, innerIndent, "{");
+
+            if (outerRight is CurrentNode)
+            {
+                L(body, innerIndent, $"    __b.AddItem({innerResultVar});");
+            }
+            else
+            {
+                string projVar2 = EmitExpression(body, outerRight, innerIndent + "    ", innerResultVar);
+                L(body, innerIndent, $"    if (!{projVar2}.IsNullOrUndefined())");
+                L(body, innerIndent, "    {");
+                L(body, innerIndent, $"        __b.AddItem({projVar2});");
+                L(body, innerIndent, "    }");
+            }
+
+            L(body, innerIndent, "}");
+            L(body, indent, "}");
+        }
+
         private string EmitFilterProjection(StringBuilder body, FilterProjectionNode node, string indent, string inputVar)
         {
             string leftVar = EmitExpression(body, node.Left, indent, inputVar);
@@ -1052,8 +1318,18 @@ public static class JMESPathCodeGenerator
             }
 
             string resultVar = NextVar();
-            string argsArray = string.Join(", ", argVars);
-            L(body, indent, $"JsonElement {resultVar} = {H}.Merge(new JsonElement[] {{ {argsArray} }}, workspace);");
+
+            if (args.Length == 2)
+            {
+                // Use the 2-arg overload to avoid heap-allocating a new JsonElement[]
+                L(body, indent, $"JsonElement {resultVar} = {H}.Merge({argVars[0]}, {argVars[1]}, workspace);");
+            }
+            else
+            {
+                string argsArray = string.Join(", ", argVars);
+                L(body, indent, $"JsonElement {resultVar} = {H}.Merge(new JsonElement[] {{ {argsArray} }}, workspace);");
+            }
+
             return resultVar;
         }
 
@@ -1083,6 +1359,11 @@ public static class JMESPathCodeGenerator
                 throw new JMESPathException("invalid-type: Expected an expression reference (&expr).");
             }
 
+            return EmitAsStaticMethod(exprRef.Expression);
+        }
+
+        private string EmitAsStaticMethod(JMESPathNode expression)
+        {
             int refIdx = exprRefCounter++;
             string methodName = $"ExprRef{refIdx}";
 
@@ -1096,7 +1377,7 @@ public static class JMESPathCodeGenerator
             };
 
             StringBuilder innerBody = new(512);
-            string innerResult = innerEmitter.EmitExpression(innerBody, exprRef.Expression, "        ", "data");
+            string innerResult = innerEmitter.EmitExpression(innerBody, expression, "        ", "data");
 
             // Merge inner emitter's fields into ours
             StaticFields.AddRange(innerEmitter.StaticFields);

@@ -161,7 +161,9 @@ internal static partial class Compiler
     {
         // Fused path: ListProjection | sort(@) — collect projected elements directly
         // into a SequenceBuilder, sort in-place, materialize once (one doc instead of two).
-        if (node.Right is FunctionCallNode { Arguments: [CurrentNode] } sortCall
+        if (node.Right is FunctionCallNode sortCall
+            && sortCall.Arguments.Length == 1
+            && sortCall.Arguments[0] is CurrentNode
             && sortCall.Name.AsSpan().SequenceEqual("sort"u8)
             && node.Left is ListProjectionNode listProj)
         {
@@ -215,6 +217,88 @@ internal static partial class Compiler
                 finally
                 {
                     builder.ReturnArray();
+                }
+            };
+        }
+
+        // Fused path: FilterProjection | sort_by(@, &expr) — filter, collect + extract sort
+        // keys in one pass, sort in-place, materialize once (one doc instead of two).
+        if (node.Right is FunctionCallNode sortByCall
+            && sortByCall.Arguments.Length == 2
+            && sortByCall.Arguments[0] is CurrentNode
+            && sortByCall.Arguments[1] is ExpressionRefNode sortByExprRef
+            && sortByCall.Name.AsSpan().SequenceEqual("sort_by"u8)
+            && node.Left is FilterProjectionNode filter)
+        {
+            JMESPathEval filterLeft = CompileNode(filter.Left);
+            JMESPathEval filterCond = CompileNode(filter.Condition);
+            JMESPathEval filterRight = CompileNode(filter.Right);
+            JMESPathEval sortExpr = CompileNode(sortByExprRef.Expression);
+            bool isIdentity = filter.Right is CurrentNode;
+
+            return (in JsonElement data, JsonWorkspace workspace) =>
+            {
+                JsonElement arr = filterLeft(data, workspace);
+                if (arr.ValueKind != JsonValueKind.Array)
+                {
+                    // Preserve sort_by's RequireArray throw when filter source is not an array.
+                    RequireArray("sort_by", default);
+                    return default; // unreachable
+                }
+
+                int len = arr.GetArrayLength();
+                if (len == 0)
+                {
+                    return EmptyArrayElement;
+                }
+
+                JMESPathSequenceBuilder builder = default;
+                JsonElement[] keys = ArrayPool<JsonElement>.Shared.Rent(len);
+                try
+                {
+                    int count = 0;
+                    foreach (JsonElement item in arr.EnumerateArray())
+                    {
+                        JsonElement condResult = filterCond(item, workspace);
+                        if (IsTruthy(condResult))
+                        {
+                            JsonElement projected = isIdentity ? item : filterRight(item, workspace);
+                            if (!projected.IsNullOrUndefined())
+                            {
+                                builder.Add(projected);
+                                keys[count] = sortExpr(projected, workspace);
+                                count++;
+                            }
+                        }
+                    }
+
+                    if (count == 0)
+                    {
+                        return EmptyArrayElement;
+                    }
+
+                    JsonValueKind keyKind = keys[0].ValueKind;
+                    if (keyKind != JsonValueKind.Number && keyKind != JsonValueKind.String)
+                    {
+                        throw new JMESPathException("invalid-type: sort_by() expression must return numbers or strings.");
+                    }
+
+                    for (int i = 1; i < count; i++)
+                    {
+                        if (keys[i].ValueKind != keyKind)
+                        {
+                            throw new JMESPathException("invalid-type: sort_by() expression must return consistent types.");
+                        }
+                    }
+
+                    JMESPathCodeGenHelpers.InsertionSortByKeys(ref builder, keys, count, keyKind);
+                    return builder.ToElement(workspace);
+                }
+                finally
+                {
+                    builder.ReturnArray();
+                    keys.AsSpan(0, len).Clear();
+                    ArrayPool<JsonElement>.Shared.Return(keys);
                 }
             };
         }
@@ -415,6 +499,66 @@ internal static partial class Compiler
             };
         }
 
+        // Fused: right is a MultiSelectHash — build the array with inline objects
+        // in a single CreateBuilder, avoiding N+1 document realizations.
+        // The parser wraps .{...} as SubExpressionNode(CurrentNode, MultiSelectHashNode),
+        // so we unwrap that here.
+        MultiSelectHashNode? hashNode = node.Right as MultiSelectHashNode
+            ?? (node.Right is SubExpressionNode { Left: CurrentNode, Right: MultiSelectHashNode inner } ? inner : null);
+        if (hashNode is not null)
+        {
+            (byte[] key, JMESPathEval value)[] pairs =
+                new (byte[], JMESPathEval)[hashNode.Pairs.Length];
+            for (int i = 0; i < hashNode.Pairs.Length; i++)
+            {
+                pairs[i] = (hashNode.Pairs[i].Key, CompileNode(hashNode.Pairs[i].Value));
+            }
+
+            return (in JsonElement data, JsonWorkspace workspace) =>
+            {
+                JsonElement arr = left(data, workspace);
+                if (arr.ValueKind != JsonValueKind.Array)
+                {
+                    return default;
+                }
+
+                int len = arr.GetArrayLength();
+                if (len == 0)
+                {
+                    return arr;
+                }
+
+                JsonDocumentBuilder<JsonElement.Mutable> doc =
+                    JsonElement.CreateBuilder(
+                        workspace,
+                        (arr, pairs, workspace),
+                        static (in (JsonElement Arr, (byte[] key, JMESPathEval value)[] Pairs, JsonWorkspace Ws) ctx, ref JsonElement.ArrayBuilder ab) =>
+                        {
+                            foreach (JsonElement item in ctx.Arr.EnumerateArray())
+                            {
+                                if (item.IsNullOrUndefined())
+                                {
+                                    continue;
+                                }
+
+                                ab.AddItem(
+                                    (item, ctx.Pairs, ctx.Ws),
+                                    static (in (JsonElement Item, (byte[] key, JMESPathEval value)[] Pairs, JsonWorkspace Ws) ic, ref JsonElement.ObjectBuilder ob) =>
+                                    {
+                                        for (int i = 0; i < ic.Pairs.Length; i++)
+                                        {
+                                            JsonElement val = ic.Pairs[i].value(ic.Item, ic.Ws);
+                                            ob.AddProperty(ic.Pairs[i].key, val.IsNullOrUndefined() ? NullElement : val);
+                                        }
+                                    });
+                            }
+                        },
+                        len + 2);
+
+                return (JsonElement)doc.RootElement;
+            };
+        }
+
         JMESPathEval right = CompileNode(node.Right);
 
         return (in JsonElement data, JsonWorkspace workspace) =>
@@ -538,6 +682,74 @@ internal static partial class Compiler
                 };
             }
 
+            // Fused: left is a FlattenProjection — double flatten in one pass.
+            if (node.Left is FlattenProjectionNode innerFlattenId)
+            {
+                JMESPathEval innerLeft = CompileNode(innerFlattenId.Left);
+                JMESPathEval innerRight = CompileNode(innerFlattenId.Right);
+
+                return (in JsonElement data, JsonWorkspace workspace) =>
+                {
+                    JsonElement outerArr = innerLeft(data, workspace);
+                    if (outerArr.ValueKind != JsonValueKind.Array)
+                    {
+                        return default;
+                    }
+
+                    JMESPathSequenceBuilder builder = default;
+                    try
+                    {
+                        foreach (JsonElement outerItem in outerArr.EnumerateArray())
+                        {
+                            // Inner flatten step
+                            if (outerItem.ValueKind == JsonValueKind.Array)
+                            {
+                                foreach (JsonElement expanded in outerItem.EnumerateArray())
+                                {
+                                    FlattenIdentityInner(innerRight, expanded, workspace, ref builder);
+                                }
+                            }
+                            else
+                            {
+                                FlattenIdentityInner(innerRight, outerItem, workspace, ref builder);
+                            }
+                        }
+
+                        return builder.ToElement(workspace);
+                    }
+                    finally
+                    {
+                        builder.ReturnArray();
+                    }
+                };
+
+                static void FlattenIdentityInner(
+                    JMESPathEval innerRight,
+                    in JsonElement item,
+                    JsonWorkspace workspace,
+                    ref JMESPathSequenceBuilder builder)
+                {
+                    JsonElement innerResult = innerRight(item, workspace);
+                    if (innerResult.IsNullOrUndefined())
+                    {
+                        return;
+                    }
+
+                    // Outer flatten (identity): expand arrays, keep non-arrays
+                    if (innerResult.ValueKind == JsonValueKind.Array)
+                    {
+                        foreach (JsonElement nested in innerResult.EnumerateArray())
+                        {
+                            builder.Add(nested);
+                        }
+                    }
+                    else
+                    {
+                        builder.Add(innerResult);
+                    }
+                }
+            }
+
             JMESPathEval left = CompileNode(node.Left);
 
             return (in JsonElement data, JsonWorkspace workspace) =>
@@ -629,6 +841,84 @@ internal static partial class Compiler
                     builder.ReturnArray();
                 }
             };
+        }
+
+        // Fused: left is a FlattenProjection — double flatten+project in one pass.
+        if (node.Left is FlattenProjectionNode innerFlatten2)
+        {
+            JMESPathEval innerLeft = CompileNode(innerFlatten2.Left);
+            JMESPathEval innerRight = CompileNode(innerFlatten2.Right);
+            JMESPathEval right = CompileNode(node.Right);
+
+            return (in JsonElement data, JsonWorkspace workspace) =>
+            {
+                JsonElement outerArr = innerLeft(data, workspace);
+                if (outerArr.ValueKind != JsonValueKind.Array)
+                {
+                    return default;
+                }
+
+                JMESPathSequenceBuilder builder = default;
+                try
+                {
+                    foreach (JsonElement outerItem in outerArr.EnumerateArray())
+                    {
+                        // Inner flatten step
+                        if (outerItem.ValueKind == JsonValueKind.Array)
+                        {
+                            foreach (JsonElement expanded in outerItem.EnumerateArray())
+                            {
+                                FlattenAndProjectInner(innerRight, right, expanded, workspace, ref builder);
+                            }
+                        }
+                        else
+                        {
+                            FlattenAndProjectInner(innerRight, right, outerItem, workspace, ref builder);
+                        }
+                    }
+
+                    return builder.ToElement(workspace);
+                }
+                finally
+                {
+                    builder.ReturnArray();
+                }
+            };
+
+            static void FlattenAndProjectInner(
+                JMESPathEval innerRight,
+                JMESPathEval outerRight,
+                in JsonElement item,
+                JsonWorkspace workspace,
+                ref JMESPathSequenceBuilder builder)
+            {
+                JsonElement innerResult = innerRight(item, workspace);
+                if (innerResult.IsNullOrUndefined())
+                {
+                    return;
+                }
+
+                // Outer flatten: expand arrays, project each element
+                if (innerResult.ValueKind == JsonValueKind.Array)
+                {
+                    foreach (JsonElement nested in innerResult.EnumerateArray())
+                    {
+                        JsonElement projected = outerRight(nested, workspace);
+                        if (!projected.IsNullOrUndefined())
+                        {
+                            builder.Add(projected);
+                        }
+                    }
+                }
+                else
+                {
+                    JsonElement projected = outerRight(innerResult, workspace);
+                    if (!projected.IsNullOrUndefined())
+                    {
+                        builder.Add(projected);
+                    }
+                }
+            }
         }
 
         {
