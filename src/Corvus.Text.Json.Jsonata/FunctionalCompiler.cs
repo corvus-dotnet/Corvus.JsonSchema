@@ -1018,6 +1018,8 @@ internal static class FunctionalCompiler
                     {
                         builder.AddRange(result);
                     }
+
+                    result.ReturnBackingArray();
                 }
 
                 return builder.ToSequence();
@@ -1542,6 +1544,8 @@ internal static class FunctionalCompiler
                         {
                             builder.AddRange(result);
                         }
+
+                        result.ReturnBackingArray();
                     }
                     else
                     {
@@ -1594,6 +1598,8 @@ internal static class FunctionalCompiler
                                 {
                                     builder.AddRange(result);
                                 }
+
+                                result.ReturnBackingArray();
                             }
                             else
                             {
@@ -1617,6 +1623,8 @@ internal static class FunctionalCompiler
                                             {
                                                 builder.AddRange(result);
                                             }
+
+                                            result.ReturnBackingArray();
                                         }
                                         else
                                         {
@@ -1637,6 +1645,8 @@ internal static class FunctionalCompiler
                                         {
                                             builder.AddRange(result);
                                         }
+
+                                        result.ReturnBackingArray();
                                     }
                                     else
                                     {
@@ -1669,6 +1679,8 @@ internal static class FunctionalCompiler
                     {
                         builder.AddRange(inner);
                     }
+
+                    inner.ReturnBackingArray();
                 }
             }
 
@@ -1678,10 +1690,12 @@ internal static class FunctionalCompiler
                 int idx = constantIndices[step];
                 if (idx >= builder.Count)
                 {
+                    builder.ReturnArray();
                     return Sequence.Undefined;
                 }
 
                 JsonElement indexed = builder[idx];
+                builder.ReturnArray();
 
                 if (step + 1 >= utf8Names.Length)
                 {
@@ -1702,8 +1716,11 @@ internal static class FunctionalCompiler
                     {
                         resultBuilder.AddRange(result);
                     }
+
+                    result.ReturnBackingArray();
                 }
 
+                builder.ReturnArray();
                 return resultBuilder.ToSequence();
             }
 
@@ -3711,7 +3728,9 @@ internal static class FunctionalCompiler
                                 var sb = default(SequenceBuilder);
                                 foreach (var child in elem.EnumerateArray())
                                 {
-                                    sb.AddRange(steps[s](child, env));
+                                    var stepRes = steps[s](child, env);
+                                    sb.AddRange(stepRes);
+                                    stepRes.ReturnBackingArray();
                                 }
 
                                 intResult = sb.ToSequence();
@@ -3910,6 +3929,7 @@ internal static class FunctionalCompiler
 
                     var subResult = EvalPathFrom(new Sequence(finalElements[i]), sortStepIdx + 1, env);
                     builder.AddRange(subResult);
+                    subResult.ReturnBackingArray();
                 }
 
                 finalElements.ReturnArray();
@@ -4072,9 +4092,11 @@ internal static class FunctionalCompiler
                     for (int i = 0; i < inputContext.Count; i++)
                     {
                         var el = inputContext[i];
-                        sb.AddRange((el.ValueKind == JsonValueKind.Array && shouldFlatten)
+                        var stepRes = (el.ValueKind == JsonValueKind.Array && shouldFlatten)
                             ? FlattenArrayStep(el, step, env, isConsArrayStep[stepIdx])
-                            : step(el, env));
+                            : step(el, env);
+                        sb.AddRange(stepRes);
+                        stepRes.ReturnBackingArray();
                     }
 
                     stepResult = sb.ToSequence();
@@ -4125,12 +4147,16 @@ internal static class FunctionalCompiler
                             {
                                 foreach (var child in item.EnumerateArray())
                                 {
-                                    intResult.AddRange(steps[s](child, env));
+                                    var stepRes = steps[s](child, env);
+                                    intResult.AddRange(stepRes);
+                                    stepRes.ReturnBackingArray();
                                 }
                             }
                             else
                             {
-                                intResult.AddRange(steps[s](item, env));
+                                var stepRes = steps[s](item, env);
+                                intResult.AddRange(stepRes);
+                                stepRes.ReturnBackingArray();
                             }
                         }
 
@@ -4238,6 +4264,7 @@ internal static class FunctionalCompiler
 
                     var subResult = EvalPathFrom(new Sequence(finalElements[i]), sortStepIdx + 1, env);
                     builder.AddRange(subResult);
+                    subResult.ReturnBackingArray();
                 }
 
                 groupIndices.Dispose();
@@ -5591,6 +5618,8 @@ internal static class FunctionalCompiler
             {
                 builder.AddRange(result);
             }
+
+            result.ReturnBackingArray();
         }
 
         return builder.ToSequence();
