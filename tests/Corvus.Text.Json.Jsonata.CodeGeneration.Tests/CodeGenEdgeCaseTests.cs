@@ -157,6 +157,12 @@ public class CodeGenEdgeCaseTests : IClassFixture<CodeGenConformanceFixture>
     [InlineData("items[0]", """{"items":[10,20,30]}""", "10")]
     // Filter predicate in path
     [InlineData("items[val > 1].name", """{"items":[{"val":1,"name":"a"},{"val":2,"name":"b"},{"val":3,"name":"c"}]}""", """["b","c"]""")]
+    // Filter predicate with post-predicate array flattening
+    [InlineData("""items[type="a"].products.name""", """{"items":[{"type":"a","products":[{"name":"x"},{"name":"y"}]},{"type":"b","products":[{"name":"z"}]}]}""", """["x","y"]""")]
+    // Equality predicate with nested array — multiple matches
+    [InlineData("""items[type="a"].tags""", """{"items":[{"type":"a","tags":[1,2]},{"type":"a","tags":[3]},{"type":"b","tags":[4]}]}""", """[[1,2],[3]]""")]
+    // Equality predicate with nested array then property — deep chain
+    [InlineData("""orders[status="shipped"].lines.product.sku""", """{"orders":[{"status":"shipped","lines":[{"product":{"sku":"A1"}},{"product":{"sku":"A2"}}]},{"status":"pending","lines":[{"product":{"sku":"B1"}}]}]}""", """["A1","A2"]""")]
     // $$ reference inside filter predicate
     [InlineData("items[val > $$.min].name", """{"items":[{"val":1,"name":"a"},{"val":2,"name":"b"},{"val":3,"name":"c"}],"min":1}""", """["b","c"]""")]
     // $sum over property

@@ -1354,7 +1354,7 @@ public static class JsonataCodeGenerator
                 string i1 = indent + "    ";
                 string i2 = i1 + "    ";
 
-                EmitInlinePredicateHandling(sb, i1, i2, predArrayVar, pred, propertyNames, predStepIdx, resultVar, wsVar);
+                EmitInlinePredicateHandling(sb, i1, i2, predArrayVar, pred, propertyNames, predStepIdx, resultVar, wsVar, pathField);
 
                 L(sb, indent, "}");
             }
@@ -1387,7 +1387,7 @@ public static class JsonataCodeGenerator
                 L(sb, indent, "{");
                 string i1 = indent + "    ";
 
-                EmitInlinePredicateHandling(sb, i1, i1 + "    ", predArrayVar, pred, propertyNames, predStepIdx, resultVar, wsVar);
+                EmitInlinePredicateHandling(sb, i1, i1 + "    ", predArrayVar, pred, propertyNames, predStepIdx, resultVar, wsVar, pathField);
 
                 L(sb, indent, "}");
             }
@@ -1405,7 +1405,7 @@ public static class JsonataCodeGenerator
         /// Emits the predicate handling (array filter or singleton check) for the predicate
         /// step variable. Used for both the direct (Object source) and outer-array cases.
         /// </summary>
-        private void EmitInlinePredicateHandling(
+        private static void EmitInlinePredicateHandling(
             StringBuilder sb,
             string indent,
             string innerIndent,
@@ -1414,13 +1414,14 @@ public static class JsonataCodeGenerator
             string[] propertyNames,
             int predStepIdx,
             string resultVar,
-            string wsVar)
+            string wsVar,
+            string pathField)
         {
             // Array case: filter loop
             L(sb, indent, $"if ({predArrayVar}.ValueKind == JsonValueKind.Array)");
             L(sb, indent, "{");
 
-            EmitInlineFilterLoop(sb, innerIndent, predArrayVar, pred, propertyNames, predStepIdx, resultVar, wsVar);
+            EmitInlineFilterLoop(sb, innerIndent, predArrayVar, pred, propertyNames, predStepIdx, resultVar, wsVar, pathField);
 
             L(sb, indent, "}");
 
@@ -1428,204 +1429,9 @@ public static class JsonataCodeGenerator
             L(sb, indent, $"else if ({predArrayVar}.ValueKind == JsonValueKind.Object)");
             L(sb, indent, "{");
 
-            EmitInlineSingletonCheck(sb, innerIndent, predArrayVar, pred, propertyNames, predStepIdx, resultVar);
+            EmitInlineSingletonCheck(sb, innerIndent, predArrayVar, pred, propertyNames, predStepIdx, resultVar, wsVar, pathField);
 
             L(sb, indent, "}");
-        }
-
-        /// <summary>
-        /// Emits an outer loop over an array source for the predicate step.
-        /// When a pre-predicate step returns an array (e.g., Contact is array of 3 contacts),
-        /// iterates each element, navigates to the predicate step's property, and applies the
-        /// predicate filter + post-predicate chain inline, collecting all results across all
-        /// outer elements using the same first-match-direct / ElementBuffer pattern.
-        /// </summary>
-        private void EmitInlineOuterArrayLoop(
-            StringBuilder sb,
-            string indent,
-            string outerArrayVar,
-            string predStepEscapedName,
-            (string PropName, string[] ExpectedValues) pred,
-            string[] propertyNames,
-            int predStepIdx,
-            string resultVar,
-            string wsVar)
-        {
-            L(sb, indent, "JsonElement __ipFirst = default;");
-            L(sb, indent, "int __ipMc = 0;");
-            L(sb, indent, "var __ipBuf = default(ElementBuffer);");
-            L(sb, indent, "try");
-            L(sb, indent, "{");
-            string i1 = indent + "    ";
-
-            L(sb, i1, $"foreach (var __ipOuter in {outerArrayVar}.EnumerateArray())");
-            L(sb, i1, "{");
-            string i2 = i1 + "    ";
-
-            L(sb, i2, $"if (__ipOuter.ValueKind == JsonValueKind.Object && __ipOuter.TryGetProperty(\"{predStepEscapedName}\"u8, out var __ipInner))");
-            L(sb, i2, "{");
-            string i3 = i2 + "    ";
-
-            // Inner: __ipInner might be Array (filter loop) or Object (singleton check)
-            L(sb, i3, "if (__ipInner.ValueKind == JsonValueKind.Array)");
-            L(sb, i3, "{");
-            string i4 = i3 + "    ";
-
-            // Inline filter loop body (reusing shared accumulation variables)
-            EmitInlineFilterLoopBody(sb, i4, pred, propertyNames, predStepIdx);
-
-            L(sb, i3, "}");
-            L(sb, i3, "else if (__ipInner.ValueKind == JsonValueKind.Object)");
-            L(sb, i3, "{");
-
-            // Singleton check body (reusing shared accumulation variables)
-            EmitInlineSingletonCheckBody(sb, i4, pred, propertyNames, predStepIdx);
-
-            L(sb, i3, "}");
-            L(sb, i2, "}");
-            L(sb, i1, "}");
-
-            // Materialize result from shared accumulation
-            L(sb, i1, $"{resultVar} = __ipMc == 0 ? default : __ipMc == 1 ? __ipFirst : __ipBuf.ToResult({wsVar});");
-
-            L(sb, indent, "}");
-            L(sb, indent, "finally");
-            L(sb, indent, "{");
-            L(sb, indent + "    ", "__ipBuf.Dispose();");
-            L(sb, indent, "}");
-        }
-
-        /// <summary>
-        /// Emits the body of the inline filter loop (the foreach over the array + predicate check
-        /// + collect), using shared accumulation variables (__ipFirst, __ipMc, __ipBuf).
-        /// The caller must have already declared these variables.
-        /// </summary>
-        private void EmitInlineFilterLoopBody(
-            StringBuilder sb,
-            string indent,
-            (string PropName, string[] ExpectedValues) pred,
-            string[] propertyNames,
-            int predStepIdx)
-        {
-            string i1 = indent + "    ";
-
-            L(sb, indent, "foreach (var __ipEl in __ipInner.EnumerateArray())");
-            L(sb, indent, "{");
-
-            var condParts = BuildPredicateConditionParts(pred, propertyNames, predStepIdx, "__ipEl", out string matchResultVar);
-
-            L(sb, i1, $"if ({string.Join($"\n{i1}    && ", condParts)})");
-            L(sb, i1, "{");
-            string i2 = i1 + "    ";
-            L(sb, i2, $"if (__ipMc == 0) {{ __ipFirst = {matchResultVar}; __ipMc = 1; }}");
-            L(sb, i2, $"else {{ if (__ipMc == 1) {{ __ipBuf.Add(__ipFirst); }} __ipBuf.Add({matchResultVar}); __ipMc++; }}");
-            L(sb, i1, "}");
-
-            L(sb, indent, "}");
-        }
-
-        /// <summary>
-        /// Emits the body of the singleton predicate check, using shared accumulation
-        /// variables (__ipFirst, __ipMc, __ipBuf).
-        /// </summary>
-        private void EmitInlineSingletonCheckBody(
-            StringBuilder sb,
-            string indent,
-            (string PropName, string[] ExpectedValues) pred,
-            string[] propertyNames,
-            int predStepIdx)
-        {
-            string i1 = indent + "    ";
-
-            var condParts = BuildSingletonPredicateConditionParts(pred, propertyNames, predStepIdx, "__ipInner", out string matchResultVar);
-
-            L(sb, indent, $"if ({string.Join($"\n{indent}    && ", condParts)})");
-            L(sb, indent, "{");
-            L(sb, i1, $"if (__ipMc == 0) {{ __ipFirst = {matchResultVar}; __ipMc = 1; }}");
-            L(sb, i1, $"else {{ if (__ipMc == 1) {{ __ipBuf.Add(__ipFirst); }} __ipBuf.Add({matchResultVar}); __ipMc++; }}");
-            L(sb, indent, "}");
-        }
-
-        /// <summary>
-        /// Builds the condition parts for checking the predicate and navigating post-predicate
-        /// steps on an array element. Used by both the filter loop and the outer array loop.
-        /// </summary>
-        private List<string> BuildPredicateConditionParts(
-            (string PropName, string[] ExpectedValues) pred,
-            string[] propertyNames,
-            int predStepIdx,
-            string elementVar,
-            out string matchResultVar)
-        {
-            var condParts = new List<string>();
-            string escapedPred = EscapeStringLiteral(pred.PropName);
-            condParts.Add($"{elementVar}.ValueKind == JsonValueKind.Object");
-            condParts.Add($"{elementVar}.TryGetProperty(\"{escapedPred}\"u8, out var __ipPv)");
-            condParts.Add("__ipPv.ValueKind == JsonValueKind.String");
-
-            AddExpectedValueChecks(condParts, pred, "__ipPv");
-
-            // Post-predicate chain
-            int postSteps = propertyNames.Length - predStepIdx - 1;
-            if (postSteps == 0)
-            {
-                matchResultVar = elementVar;
-            }
-            else
-            {
-                string prevPost = elementVar;
-                for (int i = predStepIdx + 1; i < propertyNames.Length; i++)
-                {
-                    string escaped = EscapeStringLiteral(propertyNames[i]);
-                    string postVar = i == propertyNames.Length - 1 ? "__ipR" : $"__ipP{i}";
-                    condParts.Add($"{prevPost}.TryGetProperty(\"{escaped}\"u8, out var {postVar})");
-                    prevPost = postVar;
-                }
-
-                matchResultVar = prevPost;
-            }
-
-            return condParts;
-        }
-
-        /// <summary>
-        /// Builds the condition parts for the singleton predicate check.
-        /// </summary>
-        private List<string> BuildSingletonPredicateConditionParts(
-            (string PropName, string[] ExpectedValues) pred,
-            string[] propertyNames,
-            int predStepIdx,
-            string objectVar,
-            out string matchResultVar)
-        {
-            var condParts = new List<string>();
-            string escapedPred = EscapeStringLiteral(pred.PropName);
-            condParts.Add($"{objectVar}.TryGetProperty(\"{escapedPred}\"u8, out var __ipSPv)");
-            condParts.Add("__ipSPv.ValueKind == JsonValueKind.String");
-
-            AddExpectedValueChecks(condParts, pred, "__ipSPv");
-
-            // Post-predicate chain
-            int postSteps = propertyNames.Length - predStepIdx - 1;
-            if (postSteps == 0)
-            {
-                matchResultVar = objectVar;
-            }
-            else
-            {
-                string prevPost = objectVar;
-                for (int i = predStepIdx + 1; i < propertyNames.Length; i++)
-                {
-                    string escaped = EscapeStringLiteral(propertyNames[i]);
-                    string postVar = $"__ipSR{i}";
-                    condParts.Add($"{prevPost}.TryGetProperty(\"{escaped}\"u8, out var {postVar})");
-                    prevPost = postVar;
-                }
-
-                matchResultVar = prevPost;
-            }
-
-            return condParts;
         }
 
         /// <summary>
@@ -1653,11 +1459,159 @@ public static class JsonataCodeGenerator
         }
 
         /// <summary>
-        /// Emits the inline filter loop for the array case of a predicate step.
-        /// For 0 or 1 matches: no ElementBuffer, direct element assignment.
-        /// For 2+ matches: uses ElementBuffer (threaded), materializes only at the end.
+        /// Builds predicate-only condition parts (no post-predicate navigation).
+        /// Checks: element is Object, TryGetProperty for predicate prop, is String, matches expected value(s).
         /// </summary>
-        private void EmitInlineFilterLoop(
+        private static List<string> BuildPredicateOnlyCondition(
+            (string PropName, string[] ExpectedValues) pred,
+            string elementVar,
+            string predicateVar,
+            bool includeObjectCheck)
+        {
+            var condParts = new List<string>();
+            if (includeObjectCheck)
+            {
+                condParts.Add($"{elementVar}.ValueKind == JsonValueKind.Object");
+            }
+
+            string escapedPred = EscapeStringLiteral(pred.PropName);
+            condParts.Add($"{elementVar}.TryGetProperty(\"{escapedPred}\"u8, out var {predicateVar})");
+            condParts.Add($"{predicateVar}.ValueKind == JsonValueKind.String");
+            AddExpectedValueChecks(condParts, pred, predicateVar);
+            return condParts;
+        }
+
+        /// <summary>
+        /// Emits the <c>__ipFirst/__ipMc/__ipBuf</c> accumulation code for a single element.
+        /// The caller must have declared these variables in an enclosing scope.
+        /// </summary>
+        private static void EmitCollectElement(StringBuilder sb, string indent, string varName)
+        {
+            L(sb, indent, $"if (__ipMc == 0) {{ __ipFirst = {varName}; __ipMc = 1; }}");
+            L(sb, indent, $"else {{ if (__ipMc == 1) {{ __ipBuf.Add(__ipFirst); }} __ipBuf.Add({varName}); __ipMc++; }}");
+        }
+
+        /// <summary>
+        /// Emits collection with auto-flatten: if the value is an array, collects each child
+        /// element individually; otherwise collects the value directly. Skips undefined.
+        /// Used when navigating through an array intermediate (auto-map path).
+        /// </summary>
+        private static void EmitCollectElementFlatten(StringBuilder sb, string indent, string varName, int depth)
+        {
+            string flatVar = $"__ppF{depth}";
+            L(sb, indent, $"if ({varName}.ValueKind == JsonValueKind.Array)");
+            L(sb, indent, "{");
+            string i1 = indent + "    ";
+            L(sb, i1, $"foreach (var {flatVar} in {varName}.EnumerateArray())");
+            L(sb, i1, "{");
+            EmitCollectElement(sb, i1 + "    ", flatVar);
+            L(sb, i1, "}");
+            L(sb, indent, "}");
+            L(sb, indent, $"else if ({varName}.ValueKind != JsonValueKind.Undefined)");
+            L(sb, indent, "{");
+            EmitCollectElement(sb, i1, varName);
+            L(sb, indent, "}");
+        }
+
+        /// <summary>
+        /// Emits inline post-predicate property navigation from a source element known to be Object.
+        /// Handles array intermediates by emitting inline iteration (auto-map) with correct
+        /// terminal flatten semantics. Nested arrays within auto-map use a helper call.
+        /// </summary>
+        /// <param name="sb">The string builder.</param>
+        /// <param name="indent">Current indentation.</param>
+        /// <param name="sourceVar">Variable name of the source element (must be Object).</param>
+        /// <param name="propertyNames">All property names in the chain.</param>
+        /// <param name="stepIdx">Index of the current post-predicate step.</param>
+        /// <param name="depth">Recursion depth for unique variable naming.</param>
+        /// <param name="inAutoMap">Whether we entered an array iteration (determines terminal flatten).</param>
+        /// <param name="pathField">Name of the byte[][] static field for helper fallback.</param>
+        private static void EmitPostPredicateNavigation(
+            StringBuilder sb,
+            string indent,
+            string sourceVar,
+            string[] propertyNames,
+            int stepIdx,
+            int depth,
+            bool inAutoMap,
+            string pathField)
+        {
+            string escaped = EscapeStringLiteral(propertyNames[stepIdx]);
+            bool isTerminal = stepIdx == propertyNames.Length - 1;
+            string propVar = $"__pp{depth}";
+
+            L(sb, indent, $"if ({sourceVar}.TryGetProperty(\"{escaped}\"u8, out var {propVar}))");
+            L(sb, indent, "{");
+            string i1 = indent + "    ";
+
+            if (isTerminal)
+            {
+                if (inAutoMap)
+                {
+                    EmitCollectElementFlatten(sb, i1, propVar, depth);
+                }
+                else
+                {
+                    EmitCollectElement(sb, i1, propVar);
+                }
+            }
+            else
+            {
+                // Object fast path: continue inline navigation
+                L(sb, i1, $"if ({propVar}.ValueKind == JsonValueKind.Object)");
+                L(sb, i1, "{");
+                EmitPostPredicateNavigation(sb, i1 + "    ", propVar, propertyNames, stepIdx + 1, depth + 1, inAutoMap, pathField);
+                L(sb, i1, "}");
+
+                // Array intermediate: inline iteration with auto-map
+                string elVar = $"__pp{depth}e";
+                L(sb, i1, $"else if ({propVar}.ValueKind == JsonValueKind.Array)");
+                L(sb, i1, "{");
+                string i2 = i1 + "    ";
+                L(sb, i2, $"foreach (var {elVar} in {propVar}.EnumerateArray())");
+                L(sb, i2, "{");
+                string i3 = i2 + "    ";
+
+                // Object elements: recurse with inAutoMap=true
+                L(sb, i3, $"if ({elVar}.ValueKind == JsonValueKind.Object)");
+                L(sb, i3, "{");
+                EmitPostPredicateNavigation(sb, i3 + "    ", elVar, propertyNames, stepIdx + 1, depth + 1, inAutoMap: true, pathField);
+                L(sb, i3, "}");
+
+                // Nested array elements: helper call (handles recursive flattening)
+                string amBuf = $"__ppAm{depth}";
+                L(sb, i3, $"else if ({elVar}.ValueKind == JsonValueKind.Array)");
+                L(sb, i3, "{");
+                string i4 = i3 + "    ";
+                L(sb, i4, $"var {amBuf} = default(ElementBuffer);");
+                L(sb, i4, "try");
+                L(sb, i4, "{");
+                string i5 = i4 + "    ";
+                L(sb, i5, $"{H}.NavigatePropertyChainInto({elVar}, {pathField}, {stepIdx + 1}, ref {amBuf});");
+                L(sb, i5, $"for (int __ppI{depth} = 0; __ppI{depth} < {amBuf}.Count; __ppI{depth}++)");
+                L(sb, i5, "{");
+                EmitCollectElement(sb, i5 + "    ", $"{amBuf}[__ppI{depth}]");
+                L(sb, i5, "}");
+                L(sb, i4, "}");
+                L(sb, i4, "finally");
+                L(sb, i4, "{");
+                L(sb, i4 + "    ", $"{amBuf}.Dispose();");
+                L(sb, i4, "}");
+                L(sb, i3, "}");
+
+                L(sb, i2, "}");
+                L(sb, i1, "}");
+            }
+
+            L(sb, indent, "}");
+        }
+
+        /// <summary>
+        /// Emits the inline filter loop for the array case of a predicate step.
+        /// Uses predicate-only conditions and delegates post-predicate navigation
+        /// to <see cref="EmitPostPredicateNavigation"/> which handles array intermediates.
+        /// </summary>
+        private static void EmitInlineFilterLoop(
             StringBuilder sb,
             string indent,
             string arrayVar,
@@ -1665,7 +1619,8 @@ public static class JsonataCodeGenerator
             string[] propertyNames,
             int predStepIdx,
             string resultVar,
-            string wsVar)
+            string wsVar,
+            string pathField)
         {
             L(sb, indent, "JsonElement __ipFirst = default;");
             L(sb, indent, "int __ipMc = 0;");
@@ -1678,58 +1633,21 @@ public static class JsonataCodeGenerator
             L(sb, i1, "{");
             string i2 = i1 + "    ";
 
-            // Build the predicate + post-predicate condition
-            var condParts = new List<string>();
-            string escapedPred = EscapeStringLiteral(pred.PropName);
-            condParts.Add("__ipEl.ValueKind == JsonValueKind.Object");
-            condParts.Add($"__ipEl.TryGetProperty(\"{escapedPred}\"u8, out var __ipPv)");
-            condParts.Add("__ipPv.ValueKind == JsonValueKind.String");
-
-            // Expected values: single or OR'd
-            if (pred.ExpectedValues.Length == 1)
-            {
-                condParts.Add($"__ipPv.ValueEquals(\"{EscapeStringLiteral(pred.ExpectedValues[0])}\"u8)");
-            }
-            else
-            {
-                var checks = new string[pred.ExpectedValues.Length];
-                for (int i = 0; i < checks.Length; i++)
-                {
-                    checks[i] = $"__ipPv.ValueEquals(\"{EscapeStringLiteral(pred.ExpectedValues[i])}\"u8)";
-                }
-
-                condParts.Add($"({string.Join(" || ", checks)})");
-            }
-
-            // Post-predicate chain: TryGetProperty for each remaining step
-            int postSteps = propertyNames.Length - predStepIdx - 1;
-            string matchResultVar;
-
-            if (postSteps == 0)
-            {
-                matchResultVar = "__ipEl";
-            }
-            else
-            {
-                string prevPost = "__ipEl";
-                for (int i = predStepIdx + 1; i < propertyNames.Length; i++)
-                {
-                    string escaped = EscapeStringLiteral(propertyNames[i]);
-                    string postVar = i == propertyNames.Length - 1 ? "__ipR" : $"__ipP{i}";
-                    condParts.Add($"{prevPost}.TryGetProperty(\"{escaped}\"u8, out var {postVar})");
-                    prevPost = postVar;
-                }
-
-                matchResultVar = prevPost;
-            }
+            var condParts = BuildPredicateOnlyCondition(pred, "__ipEl", "__ipPv", includeObjectCheck: true);
 
             L(sb, i2, $"if ({string.Join($"\n{i2}    && ", condParts)})");
             L(sb, i2, "{");
             string i3 = i2 + "    ";
 
-            // Collect: first match directly, 2+ via ElementBuffer
-            L(sb, i3, $"if (__ipMc == 0) {{ __ipFirst = {matchResultVar}; __ipMc = 1; }}");
-            L(sb, i3, $"else {{ if (__ipMc == 1) {{ __ipBuf.Add(__ipFirst); }} __ipBuf.Add({matchResultVar}); __ipMc++; }}");
+            int postSteps = propertyNames.Length - predStepIdx - 1;
+            if (postSteps == 0)
+            {
+                EmitCollectElement(sb, i3, "__ipEl");
+            }
+            else
+            {
+                EmitPostPredicateNavigation(sb, i3, "__ipEl", propertyNames, predStepIdx + 1, 0, inAutoMap: false, pathField);
+            }
 
             L(sb, i2, "}");
             L(sb, i1, "}");
@@ -1747,7 +1665,8 @@ public static class JsonataCodeGenerator
         /// <summary>
         /// Emits the inline singleton object check for the predicate step.
         /// When the predicate step's value is a single object (not an array),
-        /// checks the predicate and navigates post-predicate steps directly.
+        /// checks the predicate and navigates post-predicate steps. Uses buffer
+        /// pattern when post-predicate steps exist (array intermediates can fan out).
         /// </summary>
         private static void EmitInlineSingletonCheck(
             StringBuilder sb,
@@ -1756,55 +1675,47 @@ public static class JsonataCodeGenerator
             (string PropName, string[] ExpectedValues) pred,
             string[] propertyNames,
             int predStepIdx,
-            string resultVar)
+            string resultVar,
+            string wsVar,
+            string pathField)
         {
-            var condParts = new List<string>();
-            string escapedPred = EscapeStringLiteral(pred.PropName);
-            condParts.Add($"{objectVar}.TryGetProperty(\"{escapedPred}\"u8, out var __ipSPv)");
-            condParts.Add("__ipSPv.ValueKind == JsonValueKind.String");
-
-            // Expected values
-            if (pred.ExpectedValues.Length == 1)
-            {
-                condParts.Add($"__ipSPv.ValueEquals(\"{EscapeStringLiteral(pred.ExpectedValues[0])}\"u8)");
-            }
-            else
-            {
-                var checks = new string[pred.ExpectedValues.Length];
-                for (int i = 0; i < checks.Length; i++)
-                {
-                    checks[i] = $"__ipSPv.ValueEquals(\"{EscapeStringLiteral(pred.ExpectedValues[i])}\"u8)";
-                }
-
-                condParts.Add($"({string.Join(" || ", checks)})");
-            }
-
-            // Post-predicate chain
+            var condParts = BuildPredicateOnlyCondition(pred, objectVar, "__ipSPv", includeObjectCheck: false);
             int postSteps = propertyNames.Length - predStepIdx - 1;
-            string matchResultVar;
 
             if (postSteps == 0)
             {
-                matchResultVar = objectVar;
+                // No post-predicate steps: single result
+                L(sb, indent, $"if ({string.Join($"\n{indent}    && ", condParts)})");
+                L(sb, indent, "{");
+                L(sb, indent + "    ", $"{resultVar} = {objectVar};");
+                L(sb, indent, "}");
             }
             else
             {
-                string prevPost = objectVar;
-                for (int i = predStepIdx + 1; i < propertyNames.Length; i++)
-                {
-                    string escaped = EscapeStringLiteral(propertyNames[i]);
-                    string postVar = $"__ipSR{i}";
-                    condParts.Add($"{prevPost}.TryGetProperty(\"{escaped}\"u8, out var {postVar})");
-                    prevPost = postVar;
-                }
+                // Post-predicate steps may fan out via array intermediates
+                L(sb, indent, "JsonElement __ipFirst = default;");
+                L(sb, indent, "int __ipMc = 0;");
+                L(sb, indent, "var __ipBuf = default(ElementBuffer);");
+                L(sb, indent, "try");
+                L(sb, indent, "{");
+                string i1 = indent + "    ";
 
-                matchResultVar = prevPost;
+                L(sb, i1, $"if ({string.Join($"\n{i1}    && ", condParts)})");
+                L(sb, i1, "{");
+                string i2 = i1 + "    ";
+
+                EmitPostPredicateNavigation(sb, i2, objectVar, propertyNames, predStepIdx + 1, 0, inAutoMap: false, pathField);
+
+                L(sb, i1, "}");
+
+                L(sb, i1, $"{resultVar} = __ipMc == 0 ? default : __ipMc == 1 ? __ipFirst : __ipBuf.ToResult({wsVar});");
+
+                L(sb, indent, "}");
+                L(sb, indent, "finally");
+                L(sb, indent, "{");
+                L(sb, indent + "    ", "__ipBuf.Dispose();");
+                L(sb, indent, "}");
             }
-
-            L(sb, indent, $"if ({string.Join($"\n{indent}    && ", condParts)})");
-            L(sb, indent, "{");
-            L(sb, indent + "    ", $"{resultVar} = {matchResultVar};");
-            L(sb, indent, "}");
         }
 
         private static bool HasStages(JsonataNode node)
