@@ -1471,8 +1471,10 @@ internal static class FunctionalCompiler
                         var pred = equalityPredicates[step];
                         if (current.ValueKind == JsonValueKind.Array)
                         {
-                            // Filter array elements matching the predicate
-                            return FilterAndContinue(current, utf8Names, constantIndices, equalityPredicates, step, pred.PropName, pred.ExpectedValues);
+                            // Into pattern: filter directly into shared builder
+                            var filterBuilder = default(SequenceBuilder);
+                            FilterAndContinueInto(current, utf8Names, constantIndices, equalityPredicates, step, pred.PropName, pred.ExpectedValues, ref filterBuilder);
+                            return filterBuilder.ToSequence();
                         }
                         else if (current.ValueKind == JsonValueKind.Object)
                         {
@@ -1490,8 +1492,16 @@ internal static class FunctionalCompiler
                 }
                 else if (current.ValueKind == JsonValueKind.Array)
                 {
-                    // Array input: collect-then-predicate semantics
-                    return CollectAndContinue(current, utf8Names, constantIndices, equalityPredicates, step);
+                    // Global index at step 0 requires collect-first semantics
+                    if (constantIndices[step] >= 0 && step == 0)
+                    {
+                        return CollectAndContinue(current, utf8Names, constantIndices, equalityPredicates, step);
+                    }
+
+                    // Into pattern: collect leaf elements directly into a shared builder
+                    var builder = default(SequenceBuilder);
+                    CollectAndContinueInto(current, utf8Names, constantIndices, equalityPredicates, step, ref builder);
+                    return builder.ToSequence();
                 }
                 else
                 {
@@ -1528,33 +1538,6 @@ internal static class FunctionalCompiler
             }
 
             return false;
-        }
-
-        static Sequence FilterAndContinue(in JsonElement array, Utf8Name[] utf8Names, int[] constantIndices, (byte[] PropName, byte[][] ExpectedValues)[]? equalityPredicates, int step, byte[] propName, byte[][] expectedValues)
-        {
-            var builder = default(SequenceBuilder);
-            foreach (var item in array.EnumerateArray())
-            {
-                if (MatchesEqualityPredicate(item, propName, expectedValues))
-                {
-                    if (step + 1 < utf8Names.Length)
-                    {
-                        var result = EvalFromStep(item, utf8Names, constantIndices, equalityPredicates, step + 1);
-                        if (!result.IsUndefined)
-                        {
-                            builder.AddRange(result);
-                        }
-
-                        result.ReturnBackingArray();
-                    }
-                    else
-                    {
-                        builder.Add(item);
-                    }
-                }
-            }
-
-            return builder.ToSequence();
         }
 
         static Sequence CollectAndContinue(in JsonElement array, Utf8Name[] utf8Names, int[] constantIndices, (byte[] PropName, byte[][] ExpectedValues)[]? equalityPredicates, int step)
@@ -1725,6 +1708,246 @@ internal static class FunctionalCompiler
             }
 
             return builder.ToSequence();
+        }
+
+        // Fused variant: writes leaf elements directly into a shared SequenceBuilder,
+        // avoiding intermediate Sequence allocations.
+        static void EvalFromStepInto(in JsonElement input, Utf8Name[] utf8Names, int[] constantIndices, (byte[] PropName, byte[][] ExpectedValues)[]? equalityPredicates, int startStep, ref SequenceBuilder output)
+        {
+            JsonElement current = input;
+
+            for (int step = startStep; step < utf8Names.Length; step++)
+            {
+                if (current.ValueKind == JsonValueKind.Object)
+                {
+                    if (!current.TryGetProperty(utf8Names[step].Span, out current))
+                    {
+                        return;
+                    }
+
+                    // Apply constant index if present for this step
+                    if (constantIndices[step] >= 0)
+                    {
+                        if (current.ValueKind == JsonValueKind.Array)
+                        {
+                            int idx = constantIndices[step];
+                            if (idx < current.GetArrayLength())
+                            {
+                                current = current[idx];
+                            }
+                            else
+                            {
+                                return;
+                            }
+                        }
+                        else
+                        {
+                            // Singleton: index 0 returns the value itself
+                            if (constantIndices[step] != 0)
+                            {
+                                return;
+                            }
+                        }
+                    }
+
+                    // Apply equality predicate if present for this step
+                    else if (equalityPredicates?.Length > step && equalityPredicates[step].PropName is not null)
+                    {
+                        var pred = equalityPredicates[step];
+                        if (current.ValueKind == JsonValueKind.Array)
+                        {
+                            FilterAndContinueInto(current, utf8Names, constantIndices, equalityPredicates, step, pred.PropName, pred.ExpectedValues, ref output);
+                            return;
+                        }
+                        else if (current.ValueKind == JsonValueKind.Object)
+                        {
+                            if (!MatchesEqualityPredicate(current, pred.PropName, pred.ExpectedValues))
+                            {
+                                return;
+                            }
+                        }
+                        else
+                        {
+                            return;
+                        }
+                    }
+                }
+                else if (current.ValueKind == JsonValueKind.Array)
+                {
+                    CollectAndContinueInto(current, utf8Names, constantIndices, equalityPredicates, step, ref output);
+                    return;
+                }
+                else
+                {
+                    return;
+                }
+            }
+
+            // Terminal: add the final element
+            output.Add(current);
+        }
+
+        // Fused variant: writes directly into a shared SequenceBuilder,
+        // eliminating intermediate builder allocations.
+        // The globalIndex case (step 0 with constant index) is NOT handled here.
+        static void CollectAndContinueInto(in JsonElement array, Utf8Name[] utf8Names, int[] constantIndices, (byte[] PropName, byte[][] ExpectedValues)[]? equalityPredicates, int step, ref SequenceBuilder output)
+        {
+            bool hasIndexThisStep = constantIndices[step] >= 0;
+            bool hasEqPredThisStep = equalityPredicates?.Length > step && equalityPredicates[step].PropName is not null;
+            bool perElementIndex = hasIndexThisStep && step > 0;
+
+            // Build property maps for O(1) lookups when traversing large arrays of large objects.
+            // GetPropertyCount() is O(1); EnsurePropertyMap() persists in the document.
+            int remainingSteps = utf8Names.Length - step;
+            int arrayLen = array.GetArrayLength();
+            if (arrayLen * remainingSteps > 10 && arrayLen > 0)
+            {
+                foreach (var probe in array.EnumerateArray())
+                {
+                    if (probe.ValueKind == JsonValueKind.Object && probe.GetPropertyCount() > 6)
+                    {
+                        // Build property maps for all objects in the array
+                        foreach (var obj in array.EnumerateArray())
+                        {
+                            if (obj.ValueKind == JsonValueKind.Object)
+                            {
+                                obj.EnsurePropertyMap();
+                            }
+                        }
+
+                        break;
+                    }
+
+                    break;
+                }
+            }
+
+            foreach (var item in array.EnumerateArray())
+            {
+                if (item.ValueKind == JsonValueKind.Object)
+                {
+                    if (item.TryGetProperty(utf8Names[step].Span, out var propValue))
+                    {
+                        if (perElementIndex)
+                        {
+                            // Per-element index (step > 0): apply index inline, then continue
+                            if (propValue.ValueKind == JsonValueKind.Array)
+                            {
+                                int idx = constantIndices[step];
+                                if (idx < propValue.GetArrayLength())
+                                {
+                                    propValue = propValue[idx];
+                                }
+                                else
+                                {
+                                    continue;
+                                }
+                            }
+                            else if (constantIndices[step] != 0)
+                            {
+                                continue;
+                            }
+
+                            if (step + 1 < utf8Names.Length)
+                            {
+                                EvalFromStepInto(propValue, utf8Names, constantIndices, equalityPredicates, step + 1, ref output);
+                            }
+                            else
+                            {
+                                output.Add(propValue);
+                            }
+                        }
+                        else if (hasEqPredThisStep)
+                        {
+                            // Per-element equality predicate
+                            var pred = equalityPredicates![step];
+                            if (propValue.ValueKind == JsonValueKind.Array)
+                            {
+                                foreach (var child in propValue.EnumerateArray())
+                                {
+                                    if (MatchesEqualityPredicate(child, pred.PropName, pred.ExpectedValues))
+                                    {
+                                        if (step + 1 < utf8Names.Length)
+                                        {
+                                            EvalFromStepInto(child, utf8Names, constantIndices, equalityPredicates, step + 1, ref output);
+                                        }
+                                        else
+                                        {
+                                            output.Add(child);
+                                        }
+                                    }
+                                }
+                            }
+                            else if (propValue.ValueKind == JsonValueKind.Object)
+                            {
+                                if (MatchesEqualityPredicate(propValue, pred.PropName, pred.ExpectedValues))
+                                {
+                                    if (step + 1 < utf8Names.Length)
+                                    {
+                                        EvalFromStepInto(propValue, utf8Names, constantIndices, equalityPredicates, step + 1, ref output);
+                                    }
+                                    else
+                                    {
+                                        output.Add(propValue);
+                                    }
+                                }
+                            }
+                        }
+                        else
+                        {
+                            // No per-element index or predicate: auto-flatten and continue
+                            if (propValue.ValueKind == JsonValueKind.Array)
+                            {
+                                foreach (var child in propValue.EnumerateArray())
+                                {
+                                    if (step + 1 < utf8Names.Length)
+                                    {
+                                        EvalFromStepInto(child, utf8Names, constantIndices, equalityPredicates, step + 1, ref output);
+                                    }
+                                    else
+                                    {
+                                        output.Add(child);
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                if (step + 1 < utf8Names.Length)
+                                {
+                                    EvalFromStepInto(propValue, utf8Names, constantIndices, equalityPredicates, step + 1, ref output);
+                                }
+                                else
+                                {
+                                    output.Add(propValue);
+                                }
+                            }
+                        }
+                    }
+                }
+                else if (item.ValueKind == JsonValueKind.Array)
+                {
+                    CollectAndContinueInto(item, utf8Names, constantIndices, equalityPredicates, step, ref output);
+                }
+            }
+        }
+
+        // Fused variant: writes matching elements directly into a shared SequenceBuilder.
+        static void FilterAndContinueInto(in JsonElement array, Utf8Name[] utf8Names, int[] constantIndices, (byte[] PropName, byte[][] ExpectedValues)[]? equalityPredicates, int step, byte[] propName, byte[][] expectedValues, ref SequenceBuilder output)
+        {
+            foreach (var item in array.EnumerateArray())
+            {
+                if (MatchesEqualityPredicate(item, propName, expectedValues))
+                {
+                    if (step + 1 < utf8Names.Length)
+                    {
+                        EvalFromStepInto(item, utf8Names, constantIndices, equalityPredicates, step + 1, ref output);
+                    }
+                    else
+                    {
+                        output.Add(item);
+                    }
+                }
+            }
         }
     }
 
