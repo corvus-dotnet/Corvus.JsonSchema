@@ -108,4 +108,39 @@ public class JMESPathCodeGeneratorTests
         Assert.Contains("ObjectBuilder", result);
         Assert.Contains("AddProperty", result);
     }
+
+    [Fact]
+    public void Generate_SumMultiSelect_InlinesSumWithoutArray()
+    {
+        string result = JMESPathCodeGenerator.Generate(
+            "sum([a, b, c])",
+            "SumInlineExpr",
+            "Test.Generated");
+
+        // Should inline the sum as double accumulation, not create an array.
+        Assert.Contains("__sum_", result);
+        Assert.Contains("GetDouble", result);
+        Assert.DoesNotContain("CreateBuilder", result);
+    }
+
+    [Fact]
+    public void Generate_NestedSumMultiSelect_SingleDoubleToElement()
+    {
+        string result = JMESPathCodeGenerator.Generate(
+            "sum([c, sum([b, a])])",
+            "NestedSumExpr",
+            "Test.Generated");
+
+        // Recursive fusion: only one DoubleToElement for the outermost sum.
+        int count = 0;
+        int idx = 0;
+        while ((idx = result.IndexOf("DoubleToElement", idx, StringComparison.Ordinal)) >= 0)
+        {
+            count++;
+            idx += "DoubleToElement".Length;
+        }
+
+        Assert.Equal(1, count);
+        Assert.DoesNotContain("CreateBuilder", result);
+    }
 }

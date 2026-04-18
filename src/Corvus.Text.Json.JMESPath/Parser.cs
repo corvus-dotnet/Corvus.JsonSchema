@@ -54,7 +54,7 @@ internal ref struct Parser
         if (parser.current.Type != TokenType.Eof)
         {
             throw new JMESPathException(
-                $"Unexpected token '{parser.current.Type}' at position {parser.current.Position}.");
+                $"Unexpected token '{parser.current.Type}' at position {parser.current.Position}.", parser.current.Position);
         }
 
         return ast;
@@ -104,7 +104,7 @@ internal ref struct Parser
             {
                 // Bare number is invalid in NUD position in JMESPath
                 throw new JMESPathException(
-                    $"Unexpected number token at position {token.Position}.");
+                    $"Unexpected number token at position {token.Position}.", token.Position);
             }
 
             case TokenType.RawString:
@@ -164,7 +164,7 @@ internal ref struct Parser
 
             default:
                 throw new JMESPathException(
-                    $"Unexpected token '{token.Type}' at position {token.Position}.");
+                    $"Unexpected token '{token.Type}' at position {token.Position}.", token.Position);
         }
     }
 
@@ -211,7 +211,7 @@ internal ref struct Parser
 
             default:
                 throw new JMESPathException(
-                    $"Unexpected token '{token.Type}' at position {token.Position}.");
+                    $"Unexpected token '{token.Type}' at position {token.Position}.", token.Position);
         }
     }
 
@@ -270,7 +270,7 @@ internal ref struct Parser
 
             default:
                 throw new JMESPathException(
-                    $"Expected identifier, '*', '[', or '{{' after '.' at position {rhs.Position}.");
+                    $"Expected identifier, '*', '[', or '{{' after '.' at position {rhs.Position}.", rhs.Position);
         }
     }
 
@@ -368,7 +368,7 @@ internal ref struct Parser
         // In LED bracket position, only number, colon (slice), and star are valid.
         // Flatten [] and filter [? are separate tokens handled elsewhere.
         throw new JMESPathException(
-            $"Unexpected token '{this.current.Type}' in bracket expression at position {bracketToken.Position}.");
+            $"Unexpected token '{this.current.Type}' in bracket expression at position {bracketToken.Position}.", bracketToken.Position);
     }
 
     private JMESPathNode ParseIndexOrSlice(int position)
@@ -493,7 +493,7 @@ internal ref struct Parser
         else
         {
             throw new JMESPathException(
-                $"Expected identifier for hash key at position {this.current.Position}.");
+                $"Expected identifier for hash key at position {this.current.Position}.", this.current.Position);
         }
 
         this.Expect(TokenType.Colon);
@@ -562,7 +562,7 @@ internal ref struct Parser
             TokenType.GreaterThanOrEqual => CompareOp.GreaterThanOrEqual,
             TokenType.GreaterThan => CompareOp.GreaterThan,
             TokenType.NotEqual => CompareOp.NotEqual,
-            _ => throw new JMESPathException($"Unexpected comparison operator at position {opToken.Position}."),
+            _ => throw new JMESPathException($"Unexpected comparison operator at position {opToken.Position}.", opToken.Position),
         };
 
         this.Advance();
@@ -619,7 +619,7 @@ internal ref struct Parser
         if (this.current.Type != type)
         {
             throw new JMESPathException(
-                $"Expected '{type}' but found '{this.current.Type}' at position {this.current.Position}.");
+                $"Expected '{type}' but found '{this.current.Type}' at position {this.current.Position}.", this.current.Position);
         }
 
         this.Advance();

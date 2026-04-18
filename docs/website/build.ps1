@@ -790,6 +790,17 @@ Write-StepDuration "JSONata Playground build" $sw
 Write-Host "`n[9c/10] Building JMESPath Playground..." -ForegroundColor Cyan
 $sw = [System.Diagnostics.Stopwatch]::StartNew()
 
+# Bundle monaco-jmespath (npm)
+$jmespathPlaygroundRoot = Join-Path $repoRoot "docs\playground-jmespath"
+Push-Location $jmespathPlaygroundRoot
+try {
+    & npm ci --ignore-scripts --no-audit --no-fund 2>&1 | Out-Null
+    & node esbuild.mjs
+    if ($LASTEXITCODE -ne 0) { throw "monaco-jmespath bundle failed" }
+} finally {
+    Pop-Location
+}
+
 $jmespathProject = Join-Path $repoRoot "docs\playground-jmespath\src\Corvus.Text.Json.JMESPath.Playground\Corvus.Text.Json.JMESPath.Playground.csproj"
 $jmespathPublishDir = Join-Path $here ".playground-jmespath-publish"
 $jmespathOutputDir = Join-Path $outputDir "playground-jmespath"

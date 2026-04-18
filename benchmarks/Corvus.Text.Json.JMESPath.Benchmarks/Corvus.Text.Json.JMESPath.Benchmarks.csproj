@@ -41,4 +41,11 @@
     <AdditionalFiles Include="Expressions\*.jmespath" />
   </ItemGroup>
 
+  <!-- Copy long expressions to output directory for runtime file access in benchmarks -->
+  <ItemGroup>
+    <Content Include="Expressions\conformance-deep-projection.jmespath" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="Expressions\conformance-long-string.jmespath" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="Expressions\conformance-nested-sum.jmespath" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
 </Project>

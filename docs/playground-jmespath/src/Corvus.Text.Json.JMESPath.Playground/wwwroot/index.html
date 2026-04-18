@@ -40,10 +40,17 @@
         });
     </script>
     <script src="_content/BlazorMonaco/jsInterop.js"></script>
+    <!-- monaco-jmespath bundle (IIFE → window.MonacoJMESPath) — must load after Monaco -->
+    <script src="js/monaco-jmespath-bundle.js"></script>
     <script src="js/playground-interop.js"></script>
     <script src="_framework/blazor.webassembly.js" autostart="false"></script>
     <script>
         window.monacoReady.then(function () {
+            // Register JMESPath language support (syntax highlighting)
+            if (window.MonacoJMESPath && window.MonacoJMESPath.registerJMESPathLanguage) {
+                window.MonacoJMESPath.registerJMESPathLanguage(monaco);
+            }
+
             var loaded = 0;
             var total = 0;
             var statusEl = document.getElementById('boot-status');

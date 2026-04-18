@@ -6,7 +6,7 @@
 
 `Corvus.Text.Json.JMESPath` implements [JMESPath](https://jmespath.org/) for the Corvus.Text.Json document model — a high-performance query language that evaluates JMESPath expressions against JSON data with compiled delegate trees, pipe fusion, and pooled workspace memory.
 
-[JMESPath](https://jmespath.org/) is a query language for JSON. It supports path navigation, sub-expressions, index access, slicing, list and object projections, flatten, filter expressions, multiselect lists and hashes, pipe expressions, comparisons, and a full set of built-in functions. The Corvus implementation passes **all 892** tests in the official [JMESPath Compliance Test Suite](https://github.com/jmespath/jmespath.test) (100% conformance, excluding benchmark-only entries).
+[JMESPath](https://jmespath.org/) is a query language for JSON. It supports path navigation, sub-expressions, index access, slicing, list and object projections, flatten, filter expressions, multiselect lists and hashes, pipe expressions, comparisons, and a full set of built-in functions. The Corvus implementation passes **all 892** conformance test cases in the official [JMESPath Compliance Test Suite](https://github.com/jmespath/jmespath.test) (100% conformance). The test suite also contains 16 benchmark-only entries (used for performance measurement, not conformance); these are not test cases and are excluded from the count.
 
 Three evaluation modes are available:
 
@@ -25,8 +25,9 @@ The source generator and CLI tool produce optimized static C# that eliminates de
 ## Conformance
 
 ![JMESPath Runtime Conformance](https://img.shields.io/badge/JMESPath_Runtime-892%2F892_(100%25)-brightgreen)
+![JMESPath CodeGen Conformance](https://img.shields.io/badge/JMESPath_CodeGen-892%2F892_(100%25)-brightgreen)
 
-The runtime evaluator passes all **892** official JMESPath compliance test cases (100% conformance) on .NET 10.0. The code generation pipeline supports a curated subset of the specification; expressions that use features not yet supported by the code generator fall back to the interpreted evaluator at runtime.
+Both the runtime evaluator and the code generation pipeline pass all **892** official JMESPath compliance test cases (100% conformance) on .NET 10.0.
 
 ## Quick start
 
@@ -616,9 +617,9 @@ Console.WriteLine(result.GetRawText()); // safe
 |---------|--------------------------|--------------|
 | Evaluation model | Compiled delegate tree (cached) | Direct interpretation |
 | Code generation | Source generator + CLI tool | Not available |
-| JSON document model | `Corvus.Text.Json` (zero-copy, pooled) | `System.Text.Json` |
+| JSON document model | `Corvus.Text.Json` (pooled, zero-copy, over `System.Text.Json`) | `Newtonsoft.Json` |
 | Memory model | Pooled (`JsonWorkspace`, `ArrayPool`) | GC-allocated |
 | Zero-allocation hot path | Yes (with workspace) | No |
-| Conformance (official suite) | 892 / 892 (100%) | Partial |
+| Conformance (official suite) | 892 / 892 (100%) | 100% |
 | .NET Framework support | net9.0+, netstandard2.0/2.1 | net6.0+ |
 | Pipe fusion optimization | Yes (multi-stage pipe chains fused into single pass) | No |

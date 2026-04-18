@@ -220,7 +220,6 @@ public static class JMESPathCodeGenerator
         {
             string resultVar = NextVar();
             string nameField = $"s_name{nameCounter++}";
-            string nameStr = Encoding.UTF8.GetString(node.Name);
 
             NameFields.Add((nameField, $"private static readonly byte[] {nameField} = {Utf8Literal(node.Name)};"));
 
@@ -1088,7 +1087,7 @@ public static class JMESPathCodeGenerator
             L(body, cbIndent, "JsonWorkspace workspace = __ctx.workspace;");
             L(body, cbIndent, $"foreach (JsonElement {itemVar} in __ctx.__src.EnumerateArray())");
             L(body, cbIndent, "{");
-            string projectedVar = EmitExpression(body, node.Right, cbIndent + "    ", itemVar);
+            string projectedVar = EmitProjectionRight(body, node.Right, cbIndent + "    ", itemVar);
             L(body, cbIndent, $"    if (!{projectedVar}.IsNullOrUndefined())");
             L(body, cbIndent, "    {");
             L(body, cbIndent, $"        __b.AddItem({projectedVar});");
@@ -1211,7 +1210,7 @@ public static class JMESPathCodeGenerator
             L(body, cbIndent, "JsonWorkspace workspace = __ctx.workspace;");
             L(body, cbIndent, $"foreach (JsonProperty<JsonElement> {propVar} in __ctx.__src.EnumerateObject())");
             L(body, cbIndent, "{");
-            string projectedVar = EmitExpression(body, node.Right, cbIndent + "    ", $"{propVar}.Value");
+            string projectedVar = EmitProjectionRight(body, node.Right, cbIndent + "    ", $"{propVar}.Value");
             L(body, cbIndent, $"    if (!{projectedVar}.IsNullOrUndefined())");
             L(body, cbIndent, "    {");
             L(body, cbIndent, $"        __b.AddItem({projectedVar});");
@@ -1291,7 +1290,7 @@ public static class JMESPathCodeGenerator
                 string nestedIndent = innerCbIndent + "    ";
                 L(body, nestedIndent, $"foreach (JsonElement {itemVar} in flatItem.EnumerateArray())");
                 L(body, nestedIndent, "{");
-                string projectedVar = EmitExpression(body, node.Right, nestedIndent + "    ", itemVar);
+                string projectedVar = EmitProjectionRight(body, node.Right, nestedIndent + "    ", itemVar);
                 L(body, nestedIndent, $"    if (!{projectedVar}.IsNullOrUndefined())");
                 L(body, nestedIndent, "    {");
                 L(body, nestedIndent, $"        __b.AddItem({projectedVar});");
@@ -1302,7 +1301,7 @@ public static class JMESPathCodeGenerator
                 L(body, innerCbIndent, "else");
                 L(body, innerCbIndent, "{");
 
-                string projectedVar2 = EmitExpression(body, node.Right, innerCbIndent + "    ", "flatItem");
+                string projectedVar2 = EmitProjectionRight(body, node.Right, innerCbIndent + "    ", "flatItem");
                 L(body, innerCbIndent, $"    if (!{projectedVar2}.IsNullOrUndefined())");
                 L(body, innerCbIndent, "    {");
                 L(body, innerCbIndent, $"        __b.AddItem({projectedVar2});");
@@ -1350,7 +1349,7 @@ public static class JMESPathCodeGenerator
             string outerBodyIndent = cbIndent + "    ";
 
             // Evaluate the inner projection (e.g., outerItem.instances or outerItem.instances[*])
-            string innerResultVar = EmitExpression(body, outerProj.Right, outerBodyIndent, outerItemVar);
+            string innerResultVar = EmitProjectionRight(body, outerProj.Right, outerBodyIndent, outerItemVar);
 
             L(body, outerBodyIndent, $"if ({innerResultVar}.IsNullOrUndefined())");
             L(body, outerBodyIndent, "{");
@@ -1374,7 +1373,7 @@ public static class JMESPathCodeGenerator
             else
             {
                 // Project each flattened element.
-                string projVar = EmitExpression(body, flattenRight, flattenIndent + "    ", flatItemVar);
+                string projVar = EmitProjectionRight(body, flattenRight, flattenIndent + "    ", flatItemVar);
                 L(body, flattenIndent, $"    if (!{projVar}.IsNullOrUndefined())");
                 L(body, flattenIndent, "    {");
                 L(body, flattenIndent, $"        __b.AddItem({projVar});");
@@ -1392,7 +1391,7 @@ public static class JMESPathCodeGenerator
             }
             else
             {
-                string projVar2 = EmitExpression(body, flattenRight, outerBodyIndent + "    ", innerResultVar);
+                string projVar2 = EmitProjectionRight(body, flattenRight, outerBodyIndent + "    ", innerResultVar);
                 L(body, outerBodyIndent, $"    if (!{projVar2}.IsNullOrUndefined())");
                 L(body, outerBodyIndent, "    {");
                 L(body, outerBodyIndent, $"        __b.AddItem({projVar2});");
@@ -1471,7 +1470,7 @@ public static class JMESPathCodeGenerator
             string itemVar)
         {
             // Evaluate inner right (e.g., .teams)
-            string innerResultVar = EmitExpression(body, innerRight, indent, itemVar);
+            string innerResultVar = EmitProjectionRight(body, innerRight, indent, itemVar);
 
             L(body, indent, $"if (!{innerResultVar}.IsNullOrUndefined())");
             L(body, indent, "{");
@@ -1493,7 +1492,7 @@ public static class JMESPathCodeGenerator
             }
             else
             {
-                string projVar = EmitExpression(body, outerRight, flatIndent + "    ", flatItemVar);
+                string projVar = EmitProjectionRight(body, outerRight, flatIndent + "    ", flatItemVar);
                 L(body, flatIndent, $"    if (!{projVar}.IsNullOrUndefined())");
                 L(body, flatIndent, "    {");
                 L(body, flatIndent, $"        __b.AddItem({projVar});");
@@ -1511,7 +1510,7 @@ public static class JMESPathCodeGenerator
             }
             else
             {
-                string projVar2 = EmitExpression(body, outerRight, innerIndent + "    ", innerResultVar);
+                string projVar2 = EmitProjectionRight(body, outerRight, innerIndent + "    ", innerResultVar);
                 L(body, innerIndent, $"    if (!{projVar2}.IsNullOrUndefined())");
                 L(body, innerIndent, "    {");
                 L(body, innerIndent, $"        __b.AddItem({projVar2});");
@@ -1543,7 +1542,7 @@ public static class JMESPathCodeGenerator
             string condVar = EmitExpression(body, node.Condition, cbIndent + "    ", itemVar);
             L(body, cbIndent, $"    if ({H}.IsTruthy({condVar}))");
             L(body, cbIndent, "    {");
-            string projectedVar = EmitExpression(body, node.Right, cbIndent + "        ", itemVar);
+            string projectedVar = EmitProjectionRight(body, node.Right, cbIndent + "        ", itemVar);
             L(body, cbIndent, $"        if (!{projectedVar}.IsNullOrUndefined())");
             L(body, cbIndent, "        {");
             L(body, cbIndent, $"            __b.AddItem({projectedVar});");
@@ -1561,39 +1560,145 @@ public static class JMESPathCodeGenerator
 
         private string EmitFunctionCall(StringBuilder body, FunctionCallNode node, string indent, string inputVar)
         {
-            string funcName = Encoding.UTF8.GetString(node.Name);
+            ReadOnlySpan<byte> name = node.Name;
             JMESPathNode[] args = node.Arguments;
 
-            return funcName switch
+            if (name.SequenceEqual("abs"u8))
             {
-                "abs" => EmitUnaryFunc(body, "Abs", args, indent, inputVar, needsWorkspace: true),
-                "avg" => EmitUnaryFunc(body, "Avg", args, indent, inputVar, needsWorkspace: true),
-                "ceil" => EmitUnaryFunc(body, "Ceil", args, indent, inputVar, needsWorkspace: true),
-                "contains" => EmitBinaryFunc(body, "Contains", args, indent, inputVar, needsWorkspace: false),
-                "ends_with" => EmitBinaryFunc(body, "EndsWith", args, indent, inputVar, needsWorkspace: false),
-                "floor" => EmitUnaryFunc(body, "Floor", args, indent, inputVar, needsWorkspace: true),
-                "join" => EmitBinaryFunc(body, "Join", args, indent, inputVar, needsWorkspace: true),
-                "keys" => EmitUnaryFunc(body, "Keys", args, indent, inputVar, needsWorkspace: true),
-                "length" => EmitUnaryFunc(body, "Length", args, indent, inputVar, needsWorkspace: true),
-                "map" => EmitMapFunc(body, args, indent, inputVar),
-                "max" => EmitUnaryFunc(body, "Max", args, indent, inputVar, needsWorkspace: false),
-                "max_by" => EmitExprRefBinaryFunc(body, "MaxBy", args, indent, inputVar),
-                "merge" => EmitMergeFunc(body, args, indent, inputVar),
-                "min" => EmitUnaryFunc(body, "Min", args, indent, inputVar, needsWorkspace: false),
-                "min_by" => EmitExprRefBinaryFunc(body, "MinBy", args, indent, inputVar),
-                "not_null" => EmitNotNullFunc(body, args, indent, inputVar),
-                "reverse" => EmitUnaryFunc(body, "Reverse", args, indent, inputVar, needsWorkspace: true),
-                "sort" => EmitUnaryFunc(body, "Sort", args, indent, inputVar, needsWorkspace: true),
-                "sort_by" => EmitSortByFunc(body, args, indent, inputVar),
-                "starts_with" => EmitBinaryFunc(body, "StartsWith", args, indent, inputVar, needsWorkspace: false),
-                "sum" => EmitUnaryFunc(body, "Sum", args, indent, inputVar, needsWorkspace: true),
-                "to_array" => EmitUnaryFunc(body, "ToArray", args, indent, inputVar, needsWorkspace: true),
-                "to_number" => EmitUnaryFunc(body, "ToNumber", args, indent, inputVar, needsWorkspace: true),
-                "to_string" => EmitUnaryFunc(body, "ToString", args, indent, inputVar, needsWorkspace: true),
-                "type" => EmitUnaryFunc(body, "TypeOf", args, indent, inputVar, needsWorkspace: false),
-                "values" => EmitUnaryFunc(body, "Values", args, indent, inputVar, needsWorkspace: true),
-                _ => throw new JMESPathException($"Unknown function: {funcName}()"),
-            };
+                return EmitUnaryFunc(body, "Abs", args, indent, inputVar, needsWorkspace: true);
+            }
+
+            if (name.SequenceEqual("avg"u8))
+            {
+                return EmitUnaryFunc(body, "Avg", args, indent, inputVar, needsWorkspace: true);
+            }
+
+            if (name.SequenceEqual("ceil"u8))
+            {
+                return EmitUnaryFunc(body, "Ceil", args, indent, inputVar, needsWorkspace: true);
+            }
+
+            if (name.SequenceEqual("contains"u8))
+            {
+                return EmitBinaryFunc(body, "Contains", args, indent, inputVar, needsWorkspace: false);
+            }
+
+            if (name.SequenceEqual("ends_with"u8))
+            {
+                return EmitBinaryFunc(body, "EndsWith", args, indent, inputVar, needsWorkspace: false);
+            }
+
+            if (name.SequenceEqual("floor"u8))
+            {
+                return EmitUnaryFunc(body, "Floor", args, indent, inputVar, needsWorkspace: true);
+            }
+
+            if (name.SequenceEqual("join"u8))
+            {
+                return EmitBinaryFunc(body, "Join", args, indent, inputVar, needsWorkspace: true);
+            }
+
+            if (name.SequenceEqual("keys"u8))
+            {
+                return EmitUnaryFunc(body, "Keys", args, indent, inputVar, needsWorkspace: true);
+            }
+
+            if (name.SequenceEqual("length"u8))
+            {
+                return EmitUnaryFunc(body, "Length", args, indent, inputVar, needsWorkspace: true);
+            }
+
+            if (name.SequenceEqual("map"u8))
+            {
+                return EmitMapFunc(body, args, indent, inputVar);
+            }
+
+            if (name.SequenceEqual("max"u8))
+            {
+                return EmitUnaryFunc(body, "Max", args, indent, inputVar, needsWorkspace: false);
+            }
+
+            if (name.SequenceEqual("max_by"u8))
+            {
+                return EmitExprRefBinaryFunc(body, "MaxBy", args, indent, inputVar);
+            }
+
+            if (name.SequenceEqual("merge"u8))
+            {
+                return EmitMergeFunc(body, args, indent, inputVar);
+            }
+
+            if (name.SequenceEqual("min"u8))
+            {
+                return EmitUnaryFunc(body, "Min", args, indent, inputVar, needsWorkspace: false);
+            }
+
+            if (name.SequenceEqual("min_by"u8))
+            {
+                return EmitExprRefBinaryFunc(body, "MinBy", args, indent, inputVar);
+            }
+
+            if (name.SequenceEqual("not_null"u8))
+            {
+                return EmitNotNullFunc(body, args, indent, inputVar);
+            }
+
+            if (name.SequenceEqual("reverse"u8))
+            {
+                return EmitUnaryFunc(body, "Reverse", args, indent, inputVar, needsWorkspace: true);
+            }
+
+            if (name.SequenceEqual("sort"u8))
+            {
+                return EmitUnaryFunc(body, "Sort", args, indent, inputVar, needsWorkspace: true);
+            }
+
+            if (name.SequenceEqual("sort_by"u8))
+            {
+                return EmitSortByFunc(body, args, indent, inputVar);
+            }
+
+            if (name.SequenceEqual("starts_with"u8))
+            {
+                return EmitBinaryFunc(body, "StartsWith", args, indent, inputVar, needsWorkspace: false);
+            }
+
+            if (name.SequenceEqual("sum"u8))
+            {
+                if (args.Length == 1 && args[0] is MultiSelectListNode msl)
+                {
+                    return EmitSumMultiSelectInline(body, msl, indent, inputVar);
+                }
+
+                return EmitUnaryFunc(body, "Sum", args, indent, inputVar, needsWorkspace: true);
+            }
+
+            if (name.SequenceEqual("to_array"u8))
+            {
+                return EmitUnaryFunc(body, "ToArray", args, indent, inputVar, needsWorkspace: true);
+            }
+
+            if (name.SequenceEqual("to_number"u8))
+            {
+                return EmitUnaryFunc(body, "ToNumber", args, indent, inputVar, needsWorkspace: true);
+            }
+
+            if (name.SequenceEqual("to_string"u8))
+            {
+                return EmitUnaryFunc(body, "ToString", args, indent, inputVar, needsWorkspace: true);
+            }
+
+            if (name.SequenceEqual("type"u8))
+            {
+                return EmitUnaryFunc(body, "TypeOf", args, indent, inputVar, needsWorkspace: false);
+            }
+
+            if (name.SequenceEqual("values"u8))
+            {
+                return EmitUnaryFunc(body, "Values", args, indent, inputVar, needsWorkspace: true);
+            }
+
+        throw new JMESPathException($"Unknown function: {Encoding.UTF8.GetString(node.Name)}()");
         }
 
         private string EmitUnaryFunc(StringBuilder body, string helperName, JMESPathNode[] args, string indent, string inputVar, bool needsWorkspace)
@@ -1623,6 +1728,59 @@ public static class JMESPathCodeGenerator
             string wsArg = needsWorkspace ? ", workspace" : string.Empty;
             L(body, indent, $"JsonElement {resultVar} = {H}.{helperName}({arg0Var}, {arg1Var}{wsArg});");
             return resultVar;
+        }
+
+        /// <summary>
+        /// Fuses <c>sum(MultiSelectList)</c> into inline summation, avoiding the
+        /// intermediate array document that <see cref="EmitMultiSelectList"/> would create.
+        /// Nested <c>sum(MultiSelectList)</c> children are recursively flattened into
+        /// a single <c>double</c> accumulation so only the outermost sum calls
+        /// <see cref="JMESPathCodeGenHelpers.DoubleToElement"/>.
+        /// </summary>
+        private string EmitSumMultiSelectInline(StringBuilder body, MultiSelectListNode msl, string indent, string inputVar)
+        {
+            string resultVar = NextVar();
+            L(body, indent, $"JsonElement {resultVar} = default;");
+            L(body, indent, $"if (!{inputVar}.IsNullOrUndefined())");
+            L(body, indent, "{");
+
+            string innerIndent = indent + "    ";
+            string sumVar = $"__sum_{resultVar}";
+            L(body, innerIndent, $"double {sumVar} = 0;");
+
+            EmitSumMultiSelectElements(body, msl, innerIndent, inputVar, sumVar);
+
+            L(body, innerIndent, $"{resultVar} = {H}.DoubleToElement({sumVar}, workspace);");
+            L(body, indent, "}");
+            Blank(body);
+            return resultVar;
+        }
+
+        /// <summary>
+        /// Emits the element accumulations for a <c>sum(MultiSelectList)</c> into the
+        /// target <paramref name="sumVar"/>. If a child element is itself
+        /// <c>sum(MultiSelectList)</c>, it is recursively flattened to avoid an
+        /// intermediate <c>DoubleToElement</c> call.
+        /// </summary>
+        private void EmitSumMultiSelectElements(StringBuilder body, MultiSelectListNode msl, string indent, string inputVar, string sumVar)
+        {
+            for (int i = 0; i < msl.Expressions.Length; i++)
+            {
+                // Recursive fusion: sum(multiselect) child → accumulate directly as double.
+                if (msl.Expressions[i] is FunctionCallNode innerSum &&
+                    innerSum.Name.AsSpan().SequenceEqual("sum"u8) &&
+                    innerSum.Arguments.Length == 1 &&
+                    innerSum.Arguments[0] is MultiSelectListNode innerMsl)
+                {
+                    EmitSumMultiSelectElements(body, innerMsl, indent, inputVar, sumVar);
+                }
+                else
+                {
+                    string elemVar = EmitExpression(body, msl.Expressions[i], indent, inputVar);
+                    L(body, indent, $"{H}.RequireNumber(\"sum\", {elemVar});");
+                    L(body, indent, $"{sumVar} += {elemVar}.GetDouble();");
+                }
+            }
         }
 
         private string EmitExprRefBinaryFunc(StringBuilder body, string helperName, JMESPathNode[] args, string indent, string inputVar)
@@ -1726,6 +1884,26 @@ public static class JMESPathCodeGenerator
             }
 
             return EmitAsStaticMethod(exprRef.Expression);
+        }
+
+        /// <summary>
+        /// Emits the right-side expression of a projection as a separate static helper
+        /// method. This prevents deeply nested lambdas that overflow the C# compiler stack
+        /// when projections are chained (e.g., <c>a[*].b[*].c[*]...</c>). The AST nests
+        /// projections inside SubExpressionNodes, so checking the immediate node type is
+        /// insufficient — we unconditionally extract to guarantee flat method structure.
+        /// </summary>
+        private string EmitProjectionRight(StringBuilder body, JMESPathNode right, string indent, string itemVar)
+        {
+            if (right is CurrentNode)
+            {
+                return itemVar;
+            }
+
+            string helperName = EmitAsStaticMethod(right);
+            string resultVar = NextVar();
+            L(body, indent, $"JsonElement {resultVar} = {helperName}({itemVar}, workspace);");
+            return resultVar;
         }
 
         private string EmitAsStaticMethod(JMESPathNode expression)

@@ -70,7 +70,7 @@ internal ref struct Lexer
             >= (byte)'A' and <= (byte)'Z' => this.ScanIdentifier(),
             (byte)'_' => this.ScanIdentifier(),
             _ => throw new JMESPathException(
-                $"Unexpected character '{(char)c}' at position {this.position}."),
+                $"Unexpected character '{(char)c}' at position {this.position}.", this.position),
         };
     }
 
@@ -140,7 +140,7 @@ internal ref struct Lexer
                 || this.source[this.position] > (byte)'9')
             {
                 throw new JMESPathException(
-                    $"Expected digit after '-' at position {start}.");
+                    $"Expected digit after '-' at position {start}.", start);
             }
         }
 
@@ -188,7 +188,7 @@ internal ref struct Lexer
                 if (this.position >= this.source.Length)
                 {
                     throw new JMESPathException(
-                        $"Unexpected end of expression in raw string starting at position {start}.");
+                        $"Unexpected end of expression in raw string starting at position {start}.", start);
                 }
 
                 // In raw strings, only \' is a meaningful escape.
@@ -206,7 +206,7 @@ internal ref struct Lexer
         if (this.position >= this.source.Length)
         {
             throw new JMESPathException(
-                $"Unterminated raw string starting at position {start}.");
+                $"Unterminated raw string starting at position {start}.", start);
         }
 
         // Materialized path: rebuild without escapes
@@ -300,7 +300,7 @@ internal ref struct Lexer
                 if (this.position >= this.source.Length)
                 {
                     throw new JMESPathException(
-                        $"Unexpected end of expression in quoted identifier starting at position {start}.");
+                        $"Unexpected end of expression in quoted identifier starting at position {start}.", start);
                 }
             }
 
@@ -310,7 +310,7 @@ internal ref struct Lexer
         if (this.position >= this.source.Length)
         {
             throw new JMESPathException(
-                $"Unterminated quoted identifier starting at position {start}.");
+                $"Unterminated quoted identifier starting at position {start}.", start);
         }
 
         return this.MaterializeQuotedIdentifier(start, contentStart);
@@ -346,7 +346,7 @@ internal ref struct Lexer
                         continue;
                     default:
                         throw new JMESPathException(
-                            $"Invalid escape '\\{(char)esc}' in quoted identifier at position {this.position - 1}.");
+                            $"Invalid escape '\\{(char)esc}' in quoted identifier at position {this.position - 1}.", this.position - 1);
                 }
             }
 
@@ -371,7 +371,7 @@ internal ref struct Lexer
         if (position + 4 > source.Length)
         {
             throw new JMESPathException(
-                $"Invalid unicode escape at position {position - 2}.");
+                $"Invalid unicode escape at position {position - 2}.", position - 2);
         }
 
         int codePoint = ParseHex4(source.Slice(position, 4));
@@ -394,13 +394,13 @@ internal ref struct Lexer
                 else
                 {
                     throw new JMESPathException(
-                        $"Invalid surrogate pair at position {position - 6}.");
+                        $"Invalid surrogate pair at position {position - 6}.", position - 6);
                 }
             }
             else
             {
                 throw new JMESPathException(
-                    $"Unpaired surrogate at position {position - 6}.");
+                    $"Unpaired surrogate at position {position - 6}.", position - 6);
             }
         }
 
@@ -484,7 +484,7 @@ internal ref struct Lexer
         }
 
         throw new JMESPathException(
-            $"Unterminated literal starting at position {start}.");
+            $"Unterminated literal starting at position {start}.", start);
     }
 
     private Token ScanAmpersand()
@@ -569,7 +569,7 @@ internal ref struct Lexer
         }
 
         throw new JMESPathException(
-            $"Unexpected '=' at position {start}. Did you mean '=='?");
+            $"Unexpected '=' at position {start}. Did you mean '=='?", start);
     }
 
     private Token ScanLeftBracket()

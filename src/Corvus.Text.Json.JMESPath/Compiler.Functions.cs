@@ -95,6 +95,35 @@ internal static partial class Compiler
     private static JMESPathEval CompileSum(JMESPathNode[] args)
     {
         ValidateArity("sum", args, 1);
+
+        // Fuse sum(MultiSelectList) to avoid materializing an intermediate array.
+        if (args[0] is MultiSelectListNode msl)
+        {
+            // Collect all leaf expressions, recursively flattening nested sum(MultiSelectList).
+            List<JMESPathEval> leafExprs = [];
+            CollectSumLeaves(msl, leafExprs);
+
+            JMESPathEval[] exprs = leafExprs.ToArray();
+
+            return (in JsonElement data, JsonWorkspace ws) =>
+            {
+                if (data.IsNullOrUndefined())
+                {
+                    return default;
+                }
+
+                double sum = 0;
+                for (int i = 0; i < exprs.Length; i++)
+                {
+                    JsonElement item = exprs[i](data, ws);
+                    RequireNumber("sum", item);
+                    sum += item.GetDouble();
+                }
+
+                return DoubleToElement(sum, ws);
+            };
+        }
+
         JMESPathEval evalArg = CompileNode(args[0]);
         return (in JsonElement data, JsonWorkspace ws) =>
         {
@@ -109,6 +138,29 @@ internal static partial class Compiler
 
             return DoubleToElement(sum, ws);
         };
+    }
+
+    /// <summary>
+    /// Recursively collects leaf expressions from nested <c>sum(MultiSelectList)</c> patterns.
+    /// If a multiselect element is itself <c>sum(MultiSelectList)</c>, its children are
+    /// flattened into <paramref name="leaves"/> instead of compiling an intermediate sum.
+    /// </summary>
+    private static void CollectSumLeaves(MultiSelectListNode msl, List<JMESPathEval> leaves)
+    {
+        for (int i = 0; i < msl.Expressions.Length; i++)
+        {
+            if (msl.Expressions[i] is FunctionCallNode innerSum &&
+                innerSum.Name.AsSpan().SequenceEqual("sum"u8) &&
+                innerSum.Arguments.Length == 1 &&
+                innerSum.Arguments[0] is MultiSelectListNode innerMsl)
+            {
+                CollectSumLeaves(innerMsl, leaves);
+            }
+            else
+            {
+                leaves.Add(CompileNode(msl.Expressions[i]));
+            }
+        }
     }
 
     private static JMESPathEval CompileMax(JMESPathNode[] args)
@@ -906,13 +958,12 @@ internal static partial class Compiler
             return SmallIntegers[(int)value];
         }
 
-        Span<byte> buffer = stackalloc byte[32];
-        if (Utf8Formatter.TryFormat(value, buffer, out int bytesWritten))
-        {
-            return JsonElement.ParseValue(buffer.Slice(0, bytesWritten));
-        }
-
-        return ZeroElement;
+        JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateBuilder(
+            workspace,
+            (JsonElement.Source)value,
+            estimatedMemberCount: 1,
+            initialValueBufferSize: 32);
+        return (JsonElement)doc.RootElement;
     }
 
     private static JsonElement BoolElement(bool value) => value ? TrueElement : FalseElement;

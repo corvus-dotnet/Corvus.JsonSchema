@@ -21,7 +21,7 @@ public static class JsonWorkspaceWriterRentalTests
             writer.WriteEndObject();
             writer.Flush();
 
-            string json = Encoding.UTF8.GetString(bufferWriter.WrittenSpan);
+            string json = Encoding.UTF8.GetString(bufferWriter.WrittenSpan.ToArray());
 
             // Default workspace options are compact (Indented = false)
             Assert.Equal("""{"key":"value"}""", json);
@@ -49,7 +49,7 @@ public static class JsonWorkspaceWriterRentalTests
             writer.WriteEndObject();
             writer.Flush();
 
-            string json = Encoding.UTF8.GetString(bufferWriter.WrittenSpan);
+            string json = Encoding.UTF8.GetString(bufferWriter.WrittenSpan.ToArray());
 
             // Must be compact despite workspace being configured for indented
             Assert.Equal("""{"key":"value"}""", json);
@@ -76,7 +76,7 @@ public static class JsonWorkspaceWriterRentalTests
             writer.WriteEndObject();
             writer.Flush();
 
-            string json = Encoding.UTF8.GetString(bufferWriter.WrittenSpan);
+            string json = Encoding.UTF8.GetString(bufferWriter.WrittenSpan.ToArray());
 
             // Must be indented despite workspace being configured for compact
             Assert.Contains("\n", json);
@@ -103,7 +103,7 @@ public static class JsonWorkspaceWriterRentalTests
             writer1.WriteNumberValue(1);
             writer1.WriteEndArray();
             writer1.Flush();
-            Assert.Equal("[1]", Encoding.UTF8.GetString(buffer1.WrittenSpan));
+            Assert.Equal("[1]", Encoding.UTF8.GetString(buffer1.WrittenSpan.ToArray()));
         }
         finally
         {
@@ -118,7 +118,7 @@ public static class JsonWorkspaceWriterRentalTests
             writer2.WriteNumberValue(1);
             writer2.WriteEndArray();
             writer2.Flush();
-            string json2 = Encoding.UTF8.GetString(buffer2.WrittenSpan);
+            string json2 = Encoding.UTF8.GetString(buffer2.WrittenSpan.ToArray());
 
             // Workspace options are indented, so this should contain newlines
             Assert.Contains("\n", json2);

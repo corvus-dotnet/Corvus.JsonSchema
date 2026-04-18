@@ -186,13 +186,12 @@ public static class JMESPathCodeGenHelpers
             return SmallIntegers[(int)value];
         }
 
-        Span<byte> buffer = stackalloc byte[32];
-        if (Utf8Formatter.TryFormat(value, buffer, out int bytesWritten))
-        {
-            return JsonElement.ParseValue(buffer.Slice(0, bytesWritten));
-        }
-
-        return ZeroElement;
+        JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateBuilder(
+            workspace,
+            (JsonElement.Source)value,
+            estimatedMemberCount: 1,
+            initialValueBufferSize: 32);
+        return (JsonElement)doc.RootElement;
     }
 
     /// <summary>
@@ -1678,7 +1677,7 @@ public static class JMESPathCodeGenHelpers
 
     private static JsonElement[] CreateSmallIntegerCache()
     {
-        const int CacheSize = 256;
+        const int CacheSize = 512;
         JsonElement[] cache = new JsonElement[CacheSize];
         Span<byte> buffer = stackalloc byte[4];
         for (int i = 0; i < CacheSize; i++)

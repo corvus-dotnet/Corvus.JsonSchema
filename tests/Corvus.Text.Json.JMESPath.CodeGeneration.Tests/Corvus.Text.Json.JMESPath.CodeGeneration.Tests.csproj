@@ -8,6 +8,7 @@
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <PreserveCompilationContext>true</PreserveCompilationContext>
     <WarningsNotAsErrors>$(WarningsNotAsErrors);NU1901;NU1902;NU1903;NU1904</WarningsNotAsErrors>
     <NoWarn>$(NoWarn);JSON001;xUnit1031;xUnit2013;xUnit1026</NoWarn>
   </PropertyGroup>
@@ -17,6 +18,8 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="5.3.0" />
+    <PackageReference Include="Microsoft.Extensions.DependencyModel" Version="9.0.5" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.3.0" />
     <PackageReference Include="xunit" Version="2.9.3" />
     <PackageReference Include="xunit.runner.visualstudio" Version="3.1.5">
@@ -27,6 +30,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Corvus.Text.Json.JMESPath.CodeGeneration\Corvus.Text.Json.JMESPath.CodeGeneration.csproj" />
+    <ProjectReference Include="..\..\src\Corvus.Text.Json.JMESPath\Corvus.Text.Json.JMESPath.csproj" />
+    <ProjectReference Include="..\..\src\Corvus.Text.Json\Corvus.Text.Json.csproj" />
   </ItemGroup>
 
 </Project>

@@ -176,7 +176,7 @@
 
     private StandaloneEditorConstructionOptions ExpressionEditorOptions(StandaloneCodeEditor editor) => new()
     {
-        Language = "plaintext",
+        Language = "jmespath",
         Theme = resolvedTheme == "light" ? "vs" : "vs-dark",
         Value = initialExpression,
         AutomaticLayout = true,
@@ -460,6 +460,7 @@
             if (lastResult.Success)
             {
                 await ClearDataMarkers();
+                await ClearExpressionMarkers();
                 if (outputEditor is not null)
                 {
                     await outputEditor.SetValue(lastResult.ResultJson ?? "");
@@ -470,10 +471,16 @@
                 switch (lastResult.ErrorSource)
                 {
                     case ErrorSource.Data:
+                        await ClearExpressionMarkers();
                         await SetDataMarkers(lastResult);
+                        break;
+                    case ErrorSource.Expression:
+                        await ClearDataMarkers();
+                        await SetExpressionMarkers(lastResult);
                         break;
                     default:
                         await ClearDataMarkers();
+                        await ClearExpressionMarkers();
                         break;
                 }
             }
@@ -672,6 +679,42 @@
     private async Task ClearAllMarkers()
     {
         await ClearDataMarkers();
+        await ClearExpressionMarkers();
+    }
+
+    private async Task SetExpressionMarkers(EvaluationResult result)
+    {
+        var model = await expressionEditor.GetModel();
+        if (model is null || result.ErrorLine is not int line || result.ErrorColumn is not int col)
+        {
+            return;
+        }
+
+        var markers = new List<MarkerData>
+        {
+            new MarkerData
+            {
+                Message = result.ErrorMessage ?? "Error",
+                Severity = MarkerSeverity.Error,
+                StartLineNumber = line,
+                StartColumn = col,
+                EndLineNumber = line,
+                EndColumn = col + 1,
+            },
+        };
+
+        await BlazorMonaco.Editor.Global.SetModelMarkers(
+            JSRuntime, model, "expression-errors", markers);
+    }
+
+    private async Task ClearExpressionMarkers()
+    {
+        var model = await expressionEditor.GetModel();
+        if (model is not null)
+        {
+            await BlazorMonaco.Editor.Global.SetModelMarkers(
+                JSRuntime, model, "expression-errors", []);
+        }
     }
 
     // ── Dispose ──

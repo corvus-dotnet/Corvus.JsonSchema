@@ -1554,39 +1554,140 @@ internal static partial class Compiler
 
     private static JMESPathEval CompileFunctionCall(FunctionCallNode node)
     {
-        string name = Encoding.UTF8.GetString(node.Name);
+        ReadOnlySpan<byte> name = node.Name;
         JMESPathNode[] args = node.Arguments;
 
-        return name switch
+        if (name.SequenceEqual("abs"u8))
         {
-            "abs" => CompileAbs(args),
-            "avg" => CompileAvg(args),
-            "ceil" => CompileCeil(args),
-            "contains" => CompileContains(args),
-            "ends_with" => CompileEndsWith(args),
-            "floor" => CompileFloor(args),
-            "join" => CompileJoin(args),
-            "keys" => CompileKeys(args),
-            "length" => CompileLength(args),
-            "map" => CompileMap(args),
-            "max" => CompileMax(args),
-            "max_by" => CompileMaxBy(args),
-            "merge" => CompileMerge(args),
-            "min" => CompileMin(args),
-            "min_by" => CompileMinBy(args),
-            "not_null" => CompileNotNull(args),
-            "reverse" => CompileReverse(args),
-            "sort" => CompileSort(args),
-            "sort_by" => CompileSortBy(args),
-            "starts_with" => CompileStartsWith(args),
-            "sum" => CompileSum(args),
-            "to_array" => CompileToArray(args),
-            "to_number" => CompileToNumber(args),
-            "to_string" => CompileToString(args),
-            "type" => CompileType(args),
-            "values" => CompileValues(args),
-            _ => throw new JMESPathException($"Unknown function: {name}()"),
-        };
+            return CompileAbs(args);
+        }
+
+        if (name.SequenceEqual("avg"u8))
+        {
+            return CompileAvg(args);
+        }
+
+        if (name.SequenceEqual("ceil"u8))
+        {
+            return CompileCeil(args);
+        }
+
+        if (name.SequenceEqual("contains"u8))
+        {
+            return CompileContains(args);
+        }
+
+        if (name.SequenceEqual("ends_with"u8))
+        {
+            return CompileEndsWith(args);
+        }
+
+        if (name.SequenceEqual("floor"u8))
+        {
+            return CompileFloor(args);
+        }
+
+        if (name.SequenceEqual("join"u8))
+        {
+            return CompileJoin(args);
+        }
+
+        if (name.SequenceEqual("keys"u8))
+        {
+            return CompileKeys(args);
+        }
+
+        if (name.SequenceEqual("length"u8))
+        {
+            return CompileLength(args);
+        }
+
+        if (name.SequenceEqual("map"u8))
+        {
+            return CompileMap(args);
+        }
+
+        if (name.SequenceEqual("max"u8))
+        {
+            return CompileMax(args);
+        }
+
+        if (name.SequenceEqual("max_by"u8))
+        {
+            return CompileMaxBy(args);
+        }
+
+        if (name.SequenceEqual("merge"u8))
+        {
+            return CompileMerge(args);
+        }
+
+        if (name.SequenceEqual("min"u8))
+        {
+            return CompileMin(args);
+        }
+
+        if (name.SequenceEqual("min_by"u8))
+        {
+            return CompileMinBy(args);
+        }
+
+        if (name.SequenceEqual("not_null"u8))
+        {
+            return CompileNotNull(args);
+        }
+
+        if (name.SequenceEqual("reverse"u8))
+        {
+            return CompileReverse(args);
+        }
+
+        if (name.SequenceEqual("sort"u8))
+        {
+            return CompileSort(args);
+        }
+
+        if (name.SequenceEqual("sort_by"u8))
+        {
+            return CompileSortBy(args);
+        }
+
+        if (name.SequenceEqual("starts_with"u8))
+        {
+            return CompileStartsWith(args);
+        }
+
+        if (name.SequenceEqual("sum"u8))
+        {
+            return CompileSum(args);
+        }
+
+        if (name.SequenceEqual("to_array"u8))
+        {
+            return CompileToArray(args);
+        }
+
+        if (name.SequenceEqual("to_number"u8))
+        {
+            return CompileToNumber(args);
+        }
+
+        if (name.SequenceEqual("to_string"u8))
+        {
+            return CompileToString(args);
+        }
+
+        if (name.SequenceEqual("type"u8))
+        {
+            return CompileType(args);
+        }
+
+        if (name.SequenceEqual("values"u8))
+        {
+            return CompileValues(args);
+        }
+
+        throw new JMESPathException($"Unknown function: {Encoding.UTF8.GetString(node.Name)}()");
     }
 
     /// <summary>

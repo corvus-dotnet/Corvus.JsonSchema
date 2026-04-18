@@ -99,11 +99,24 @@ public sealed class EvaluationService
             catch (JMESPathException jex)
             {
                 sw.Stop();
+
+                // Convert byte offset to 1-based line and column
+                int? errorLine = null;
+                int? errorColumn = null;
+                if (jex.Position >= 0)
+                {
+                    PositionToLineColumn(expression, jex.Position, out int line, out int col);
+                    errorLine = line;
+                    errorColumn = col;
+                }
+
                 return new EvaluationResult
                 {
                     Success = false,
-                    ErrorMessage = FixBrokenSRFormat(jex.Message),
+                    ErrorMessage = FormatExpressionError(jex.Message, errorLine, errorColumn),
                     ErrorSource = ErrorSource.Expression,
+                    ErrorLine = errorLine,
+                    ErrorColumn = errorColumn,
                     ElapsedMs = sw.Elapsed.TotalMilliseconds,
                 };
             }
@@ -201,5 +214,42 @@ public sealed class EvaluationService
         }
 
         return Encoding.UTF8.GetString(stream.ToArray());
+    }
+
+    /// <summary>
+    /// Converts a 0-based byte offset in a string to 1-based line and column numbers.
+    /// </summary>
+    private static void PositionToLineColumn(string text, int byteOffset, out int line, out int column)
+    {
+        // The expression is UTF-8 encoded by the JMESPath lexer, but the playground
+        // receives it as a .NET string. Convert to UTF-8 to find the correct line/column.
+        byte[] utf8 = Encoding.UTF8.GetBytes(text);
+        int clampedOffset = Math.Min(byteOffset, utf8.Length);
+
+        line = 1;
+        int lineStart = 0;
+        for (int i = 0; i < clampedOffset; i++)
+        {
+            if (utf8[i] == (byte)'\n')
+            {
+                line++;
+                lineStart = i + 1;
+            }
+        }
+
+        column = clampedOffset - lineStart + 1;
+    }
+
+    /// <summary>
+    /// Formats an expression error message with line and column information.
+    /// </summary>
+    private static string FormatExpressionError(string message, int? line, int? column)
+    {
+        if (line is int l && column is int c)
+        {
+            return $"Ln {l}, Col {c}: {message}";
+        }
+
+        return message;
     }
 }
