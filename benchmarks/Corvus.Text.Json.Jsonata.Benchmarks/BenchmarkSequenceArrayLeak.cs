@@ -79,15 +79,13 @@ public class BenchmarkSequenceArrayLeak
         this.evaluator.Evaluate(ExprContinuationUtf8, this.dataContinuation, this.workspace, cacheKey: ExprContinuation);
         this.workspace.Reset();
 
-        // Pre-warm CG expressions (some patterns may not be supported by CG yet)
-        try { IndexedChainCodeGen.Evaluate(this.dataIndexed, this.workspace); this.workspace.Reset(); }
-        catch { this.workspace.Reset(); }
-
-        try { FilteredChainCodeGen.Evaluate(this.dataFiltered, this.workspace); this.workspace.Reset(); }
-        catch { this.workspace.Reset(); }
-
-        try { ContinuationChainCodeGen.Evaluate(this.dataContinuation, this.workspace); this.workspace.Reset(); }
-        catch { this.workspace.Reset(); }
+        // Pre-warm CG expressions
+        IndexedChainCodeGen.Evaluate(this.dataIndexed, this.workspace);
+        this.workspace.Reset();
+        FilteredChainCodeGen.Evaluate(this.dataFiltered, this.workspace);
+        this.workspace.Reset();
+        ContinuationChainCodeGen.Evaluate(this.dataContinuation, this.workspace);
+        this.workspace.Reset();
 
 #if !NETFRAMEWORK
         this.nativeDataIndexed = JToken.Parse(indexedJson);
