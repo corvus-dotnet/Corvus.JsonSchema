@@ -391,105 +391,471 @@ public static class JMESPathCodeGenerator
 
         private string EmitPipe(StringBuilder body, PipeNode node, string indent, string inputVar)
         {
-            // Fused path: ListProjection | sort(@) — use CollectAndSort to avoid
-            // materializing the intermediate projection array.
-            if (node.Right is FunctionCallNode sortCall
-                && sortCall.Arguments.Length == 1
-                && sortCall.Arguments[0] is CurrentNode
-                && sortCall.Name.AsSpan().SequenceEqual("sort"u8)
-                && node.Left is ListProjectionNode listProj)
+            // Try general n-stage pipe fusion.
+            if (FusedPipePlanner.TryBuildPlan(node, out JMESPathNode source, out PipeStage[] stages))
             {
-                return EmitFusedProjectionSort(body, listProj, indent, inputVar);
-            }
-
-            // Fused path: FilterProjection | sort_by(@, &expr) — filter, collect + sort
-            // keys in one pass, materialize once (one doc instead of two).
-            if (node.Right is FunctionCallNode sortByCall
-                && sortByCall.Arguments.Length == 2
-                && sortByCall.Arguments[0] is CurrentNode
-                && sortByCall.Arguments[1] is ExpressionRefNode sortByExprRef
-                && sortByCall.Name.AsSpan().SequenceEqual("sort_by"u8)
-                && node.Left is FilterProjectionNode filter)
-            {
-                return EmitFusedFilterSortBy(body, filter, sortByExprRef, indent, inputVar);
+                return EmitFusedPipeline(body, source, stages, indent, inputVar);
             }
 
             string leftVar = EmitExpression(body, node.Left, indent, inputVar);
             return EmitExpression(body, node.Right, indent, leftVar);
         }
 
-        private string EmitFusedProjectionSort(
+        private string EmitFusedPipeline(
             StringBuilder body,
-            ListProjectionNode listProj,
+            JMESPathNode sourceNode,
+            PipeStage[] stages,
             string indent,
             string inputVar)
         {
-            // Emit the outer source (e.g., data.people)
-            string outerSrcVar = EmitExpression(body, listProj.Left, indent, inputVar);
+            // Emit source evaluation.
+            string srcVar = EmitExpression(body, sourceNode, indent, inputVar);
 
             string resultVar = NextVar();
             L(body, indent, $"JsonElement {resultVar} = default;");
-            L(body, indent, $"if ({outerSrcVar}.ValueKind == JsonValueKind.Array)");
+            L(body, indent, $"if ({srcVar}.ValueKind == JsonValueKind.Array)");
             L(body, indent, "{");
 
-            string innerIndent = indent + "    ";
+            string inner = indent + "    ";
+            string builderVar = $"__b{varCounter++}";
+            L(body, inner, $"JMESPathSequenceBuilder {builderVar} = default;");
+            L(body, inner, "try");
+            L(body, inner, "{");
 
-            // Use CollectAndSort: a single callback fills the SequenceBuilder with projected
-            // elements, then the helper validates types, sorts, and materializes once.
-            L(body, innerIndent, $"{resultVar} = {H}.CollectAndSort(({outerSrcVar}, workspace), static (in (JsonElement __src, JsonWorkspace workspace) __ctx, ref JMESPathSequenceBuilder __b) =>");
-            L(body, innerIndent, "{");
+            string tryInner = inner + "    ";
 
-            string cbIndent = innerIndent + "    ";
-            L(body, cbIndent, "JsonWorkspace workspace = __ctx.workspace;");
-            string itemVar = $"item_{resultVar}";
-            L(body, cbIndent, $"foreach (JsonElement {itemVar} in __ctx.__src.EnumerateArray())");
-            L(body, cbIndent, "{");
+            // Walk through phases: alternating streaming groups and barriers.
+            int stageIdx = 0;
 
-            string itemBodyIndent = cbIndent + "    ";
-            string projectedVar = EmitExpression(body, listProj.Right, itemBodyIndent, itemVar);
+            // Phase 1: Collect from source enumerator.
+            EmitCollectFromSource(body, stages, ref stageIdx, tryInner, srcVar, builderVar);
+            Blank(body);
 
-            L(body, itemBodyIndent, $"if (!{projectedVar}.IsNullOrUndefined())");
-            L(body, itemBodyIndent, "{");
-            L(body, itemBodyIndent, $"    __b.Add({projectedVar});");
-            L(body, itemBodyIndent, "}");
+            // Check if we have a terminal hash project (last streaming stage).
+            int lastStreamingIdx = -1;
+            for (int i = stages.Length - 1; i >= 0; i--)
+            {
+                if (!stages[i].IsBarrier)
+                {
+                    lastStreamingIdx = i;
+                    break;
+                }
+            }
 
-            L(body, cbIndent, "}");
-            L(body, innerIndent, "}, workspace);");
+            bool hasTerminalHash = lastStreamingIdx >= 0 && stages[lastStreamingIdx] is PipeStage.HashProject;
+
+            // Process remaining barriers and streaming phases.
+            while (stageIdx < stages.Length)
+            {
+                if (stages[stageIdx].IsBarrier)
+                {
+                    EmitBarrierInline(body, stages[stageIdx], tryInner, builderVar);
+                    stageIdx++;
+                    Blank(body);
+                }
+                else
+                {
+                    // Streaming stages after a barrier — check if terminal hash project.
+                    int firstStreaming = stageIdx;
+                    while (stageIdx < stages.Length && !stages[stageIdx].IsBarrier)
+                    {
+                        stageIdx++;
+                    }
+
+                    int endStreaming = stageIdx;
+
+                    if (hasTerminalHash && firstStreaming == lastStreamingIdx && firstStreaming == endStreaming - 1)
+                    {
+                        // Terminal hash project — materialize directly.
+                        EmitTerminalHashProject(body, (PipeStage.HashProject)stages[firstStreaming], tryInner, builderVar, resultVar);
+                        goto doneBody;
+                    }
+
+                    // Collect from builder to new builder.
+                    EmitCollectFromBuilder(body, stages, firstStreaming, endStreaming, tryInner, builderVar);
+                    Blank(body);
+                }
+            }
+
+            // Final materialization.
+            string countVar = NextVar();
+            L(body, tryInner, $"int {countVar} = {builderVar}.Count;");
+            L(body, tryInner, $"if ({countVar} == 0)");
+            L(body, tryInner, "{");
+            L(body, tryInner, $"    {resultVar} = {H}.EmptyArrayElement;");
+            L(body, tryInner, "}");
+            L(body, tryInner, "else");
+            L(body, tryInner, "{");
+            L(body, tryInner, $"    {resultVar} = {builderVar}.ToElement(workspace);");
+            L(body, tryInner, "}");
+
+            doneBody:
+            L(body, inner, "}");
+            L(body, inner, "finally");
+            L(body, inner, "{");
+            L(body, inner, $"    {builderVar}.ReturnArray();");
+            L(body, inner, "}");
 
             L(body, indent, "}");
             Blank(body);
             return resultVar;
         }
 
-        private string EmitFusedFilterSortBy(
+        /// <summary>
+        /// Emits the initial collection phase from the source array enumerator.
+        /// </summary>
+        private void EmitCollectFromSource(
             StringBuilder body,
-            FilterProjectionNode filter,
-            ExpressionRefNode sortByExprRef,
+            PipeStage[] stages,
+            ref int stageIdx,
             string indent,
-            string inputVar)
+            string srcVar,
+            string builderVar)
         {
-            // Emit the filter source (e.g., data.people)
-            string srcVar = EmitExpression(body, filter.Left, indent, inputVar);
-
-            // Emit expression refs for the condition and sort key
-            string condMethod = EmitAsStaticMethod(filter.Condition);
-            string sortExprMethod = EmitAsStaticMethod(sortByExprRef.Expression);
-
-            // Emit projection expression ref if non-identity
-            string projectionArg;
-            if (filter.Right is CurrentNode)
+            int firstStreaming = stageIdx;
+            while (stageIdx < stages.Length && !stages[stageIdx].IsBarrier)
             {
-                projectionArg = "null";
+                stageIdx++;
+            }
+
+            int endStreaming = stageIdx;
+
+            string itemVar = NextVar();
+            L(body, indent, $"foreach (JsonElement {itemVar} in {srcVar}.EnumerateArray())");
+            L(body, indent, "{");
+
+            if (firstStreaming < endStreaming)
+            {
+                EmitStreamingStages(body, stages, firstStreaming, endStreaming, indent + "    ", itemVar, builderVar);
             }
             else
             {
-                string projMethod = EmitAsStaticMethod(filter.Right);
-                projectionArg = projMethod;
+                L(body, indent, $"    {builderVar}.Add({itemVar});");
             }
 
-            string resultVar = NextVar();
-            L(body, indent, $"JsonElement {resultVar} = {H}.FilterAndSortBy({srcVar}, {condMethod}, {projectionArg}, {sortExprMethod}, workspace);");
-            return resultVar;
+            L(body, indent, "}");
+        }
+
+        /// <summary>
+        /// Emits code to iterate the current builder through streaming stages into a new builder,
+        /// then swap.
+        /// </summary>
+        private void EmitCollectFromBuilder(
+            StringBuilder body,
+            PipeStage[] stages,
+            int firstStreaming,
+            int endStreaming,
+            string indent,
+            string builderVar)
+        {
+            string countVar = NextVar();
+            string newBuilderVar = $"__b{varCounter++}";
+            string idxVar = NextVar();
+
+            L(body, indent, $"int {countVar} = {builderVar}.Count;");
+            L(body, indent, $"JMESPathSequenceBuilder {newBuilderVar} = default;");
+            L(body, indent, $"for (int {idxVar} = 0; {idxVar} < {countVar}; {idxVar}++)");
+            L(body, indent, "{");
+
+            string itemVar = NextVar();
+            string loopIndent = indent + "    ";
+            L(body, loopIndent, $"JsonElement {itemVar} = {builderVar}[{idxVar}];");
+
+            EmitStreamingStages(body, stages, firstStreaming, endStreaming, loopIndent, itemVar, newBuilderVar);
+
+            L(body, indent, "}");
+
+            // Swap builders.
+            L(body, indent, $"{builderVar}.ReturnArray();");
+            L(body, indent, $"{builderVar} = {newBuilderVar};");
+        }
+
+        /// <summary>
+        /// Recursively emits streaming stages for a single element, with fan-out for Flatten.
+        /// </summary>
+        private void EmitStreamingStages(
+            StringBuilder body,
+            PipeStage[] stages,
+            int idx,
+            int end,
+            string indent,
+            string elementVar,
+            string builderVar)
+        {
+            if (idx >= end)
+            {
+                L(body, indent, $"{builderVar}.Add({elementVar});");
+                return;
+            }
+
+            PipeStage stage = stages[idx];
+
+            switch (stage)
+            {
+                case PipeStage.Filter filter:
+                {
+                    string condVar = EmitExpression(body, filter.Condition, indent, elementVar);
+                    L(body, indent, $"if ({H}.IsTruthy({condVar}))");
+                    L(body, indent, "{");
+
+                    string innerIndent = indent + "    ";
+                    if (filter.Projection is not null)
+                    {
+                        string projVar = EmitExpression(body, filter.Projection, innerIndent, elementVar);
+                        L(body, innerIndent, $"if (!{projVar}.IsNullOrUndefined())");
+                        L(body, innerIndent, "{");
+                        EmitStreamingStages(body, stages, idx + 1, end, innerIndent + "    ", projVar, builderVar);
+                        L(body, innerIndent, "}");
+                    }
+                    else
+                    {
+                        EmitStreamingStages(body, stages, idx + 1, end, innerIndent, elementVar, builderVar);
+                    }
+
+                    L(body, indent, "}");
+                    break;
+                }
+
+                case PipeStage.Project project:
+                {
+                    string projVar = EmitExpression(body, project.Expression, indent, elementVar);
+                    L(body, indent, $"if (!{projVar}.IsNullOrUndefined())");
+                    L(body, indent, "{");
+                    EmitStreamingStages(body, stages, idx + 1, end, indent + "    ", projVar, builderVar);
+                    L(body, indent, "}");
+                    break;
+                }
+
+                case PipeStage.Flatten flatten:
+                {
+                    if (flatten.Projection is not null)
+                    {
+                        string flatProjVar = EmitExpression(body, flatten.Projection, indent, elementVar);
+                        L(body, indent, $"if (!{flatProjVar}.IsNullOrUndefined())");
+                        L(body, indent, "{");
+
+                        string fi = indent + "    ";
+                        L(body, fi, $"if ({flatProjVar}.ValueKind == JsonValueKind.Array)");
+                        L(body, fi, "{");
+
+                        string innerVar = NextVar();
+                        string fi2 = fi + "    ";
+                        L(body, fi2, $"foreach (JsonElement {innerVar} in {flatProjVar}.EnumerateArray())");
+                        L(body, fi2, "{");
+                        EmitStreamingStages(body, stages, idx + 1, end, fi2 + "    ", innerVar, builderVar);
+                        L(body, fi2, "}");
+
+                        L(body, fi, "}");
+                        L(body, fi, "else");
+                        L(body, fi, "{");
+                        EmitStreamingStages(body, stages, idx + 1, end, fi + "    ", flatProjVar, builderVar);
+                        L(body, fi, "}");
+
+                        L(body, indent, "}");
+                    }
+                    else
+                    {
+                        L(body, indent, $"if ({elementVar}.ValueKind == JsonValueKind.Array)");
+                        L(body, indent, "{");
+
+                        string innerVar = NextVar();
+                        string fi = indent + "    ";
+                        L(body, fi, $"foreach (JsonElement {innerVar} in {elementVar}.EnumerateArray())");
+                        L(body, fi, "{");
+                        EmitStreamingStages(body, stages, idx + 1, end, fi + "    ", innerVar, builderVar);
+                        L(body, fi, "}");
+
+                        L(body, indent, "}");
+                        L(body, indent, "else");
+                        L(body, indent, "{");
+                        EmitStreamingStages(body, stages, idx + 1, end, indent + "    ", elementVar, builderVar);
+                        L(body, indent, "}");
+                    }
+
+                    break;
+                }
+
+                case PipeStage.MapExpr mapExpr:
+                {
+                    string mapResultVar = EmitExpression(body, mapExpr.Expression, indent, elementVar);
+                    string mappedVar = NextVar();
+                    L(body, indent, $"JsonElement {mappedVar} = {mapResultVar}.IsNullOrUndefined() ? {H}.NullElement : {mapResultVar};");
+                    EmitStreamingStages(body, stages, idx + 1, end, indent, mappedVar, builderVar);
+                    break;
+                }
+
+                case PipeStage.HashProject hashProject:
+                {
+                    // Non-terminal hash project — build inline object.
+                    string objVar = EmitInlineHashObject(body, hashProject.Hash, indent, elementVar);
+                    EmitStreamingStages(body, stages, idx + 1, end, indent, objVar, builderVar);
+                    break;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Emits inline code for a barrier stage.
+        /// </summary>
+        private void EmitBarrierInline(
+            StringBuilder body,
+            PipeStage stage,
+            string indent,
+            string builderVar)
+        {
+            switch (stage)
+            {
+                case PipeStage.Sort:
+                    L(body, indent, $"{H}.ApplySortBarrier(ref {builderVar});");
+                    break;
+
+                case PipeStage.SortBy sortBy:
+                {
+                    string keyMethod = EmitAsStaticMethod(sortBy.KeyExpression);
+                    L(body, indent, $"{H}.ApplySortByBarrier(ref {builderVar}, {keyMethod}, workspace);");
+                    break;
+                }
+
+                case PipeStage.Reverse:
+                    L(body, indent, $"{H}.ApplyReverseBarrier(ref {builderVar});");
+                    break;
+
+                case PipeStage.Slice slice:
+                {
+                    string startArg = slice.Start.HasValue ? slice.Start.Value.ToString() : "null";
+                    string stopArg = slice.Stop.HasValue ? slice.Stop.Value.ToString() : "null";
+                    L(body, indent, $"{H}.ApplySliceBarrier(ref {builderVar}, {startArg}, {stopArg}, {slice.Step});");
+                    break;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Emits a terminal hash project: copies builder to rented array, then uses CreateBuilder
+        /// with inline object construction.
+        /// </summary>
+        private void EmitTerminalHashProject(
+            StringBuilder body,
+            PipeStage.HashProject hashProject,
+            string indent,
+            string builderVar,
+            string resultVar)
+        {
+            MultiSelectHashNode hashNode = hashProject.Hash;
+            int n = hashNode.Pairs.Length;
+
+            // Register static key fields.
+            string[] keyFields = new string[n];
+            for (int i = 0; i < n; i++)
+            {
+                keyFields[i] = $"s_name{nameCounter++}";
+                NameFields.Add((keyFields[i], $"private static readonly byte[] {keyFields[i]} = {Utf8Literal(hashNode.Pairs[i].Key)};"));
+            }
+
+            string countVar = NextVar();
+            L(body, indent, $"int {countVar} = {builderVar}.Count;");
+            L(body, indent, $"if ({countVar} == 0)");
+            L(body, indent, "{");
+            L(body, indent, $"    {resultVar} = {H}.EmptyArrayElement;");
+            L(body, indent, "}");
+            L(body, indent, "else");
+            L(body, indent, "{");
+
+            string elseIndent = indent + "    ";
+            string itemsVar = $"__items{varCounter++}";
+            string idxVar = NextVar();
+
+            // Copy builder to rented array (builder is ref struct, can't capture in tuple).
+            L(body, elseIndent, $"JsonElement[] {itemsVar} = System.Buffers.ArrayPool<JsonElement>.Shared.Rent({countVar});");
+            L(body, elseIndent, $"for (int {idxVar} = 0; {idxVar} < {countVar}; {idxVar}++)");
+            L(body, elseIndent, "{");
+            L(body, elseIndent, $"    {itemsVar}[{idxVar}] = {builderVar}[{idxVar}];");
+            L(body, elseIndent, "}");
+            Blank(body);
+
+            L(body, elseIndent, "try");
+            L(body, elseIndent, "{");
+
+            string tryIndent = elseIndent + "    ";
+            string docVar = $"__doc{varCounter++}";
+            string itemVar = NextVar();
+
+            // CreateBuilder with ArrayBuilder callback.
+            L(body, tryIndent, $"var {docVar} = JsonElement.CreateBuilder(workspace, ({itemsVar}, {countVar}, workspace), static (in (JsonElement[] __items, int __count, JsonWorkspace workspace) __ctx, ref JsonElement.ArrayBuilder __ab) =>");
+            L(body, tryIndent, "{");
+
+            string cbIndent = tryIndent + "    ";
+            L(body, cbIndent, "JsonWorkspace workspace = __ctx.workspace;");
+            string loopIdxVar = NextVar();
+            L(body, cbIndent, $"for (int {loopIdxVar} = 0; {loopIdxVar} < __ctx.__count; {loopIdxVar}++)");
+            L(body, cbIndent, "{");
+
+            string itemBodyIndent = cbIndent + "    ";
+            L(body, itemBodyIndent, $"JsonElement {itemVar} = __ctx.__items[{loopIdxVar}];");
+            L(body, itemBodyIndent, $"if (!{itemVar}.IsNullOrUndefined())");
+            L(body, itemBodyIndent, "{");
+
+            string objBodyIndent = itemBodyIndent + "    ";
+
+            // Emit value expressions inline.
+            string[] valVars = new string[n];
+            for (int i = 0; i < n; i++)
+            {
+                valVars[i] = EmitExpression(body, hashNode.Pairs[i].Value, objBodyIndent, itemVar);
+            }
+
+            // Coerce null/undefined values.
+            string[] coercedVars = new string[n];
+            for (int i = 0; i < n; i++)
+            {
+                coercedVars[i] = NextVar();
+                L(body, objBodyIndent, $"JsonElement {coercedVars[i]} = {valVars[i]}.IsNullOrUndefined() ? {H}.NullElement : {valVars[i]};");
+            }
+
+            // Build context tuple for ObjectBuilder callback.
+            string ctxExpr = n == 1
+                ? $"ValueTuple.Create({coercedVars[0]})"
+                : $"({string.Join(", ", coercedVars)})";
+            string ctxType = n == 1
+                ? "ValueTuple<JsonElement>"
+                : $"({string.Join(", ", Enumerable.Range(0, n).Select(_ => "JsonElement"))})";
+
+            L(body, objBodyIndent, $"__ab.AddItem({ctxExpr}, static (in {ctxType} __ic, ref JsonElement.ObjectBuilder __ob) =>");
+            L(body, objBodyIndent, "{");
+            for (int i = 0; i < n; i++)
+            {
+                string itemRef = n == 1 ? "__ic.Item1" : $"__ic.Item{i + 1}";
+                L(body, objBodyIndent, $"    __ob.AddProperty({keyFields[i]}, {itemRef});");
+            }
+
+            L(body, objBodyIndent, "});");
+            L(body, itemBodyIndent, "}");
+            L(body, cbIndent, "}");
+            L(body, tryIndent, $"}}, {countVar} + 2);");
+            L(body, tryIndent, $"{resultVar} = (JsonElement){docVar}.RootElement;");
+
+            L(body, elseIndent, "}");
+            L(body, elseIndent, "finally");
+            L(body, elseIndent, "{");
+            L(body, elseIndent, $"    {itemsVar}.AsSpan(0, {countVar}).Clear();");
+            L(body, elseIndent, $"    System.Buffers.ArrayPool<JsonElement>.Shared.Return({itemsVar});");
+            L(body, elseIndent, "}");
+
+            L(body, indent, "}");
+        }
+
+        /// <summary>
+        /// Emits an inline hash object (for non-terminal HashProject in streaming).
+        /// Returns the variable name holding the constructed object element.
+        /// </summary>
+        private string EmitInlineHashObject(
+            StringBuilder body,
+            MultiSelectHashNode hashNode,
+            string indent,
+            string elementVar)
+        {
+            // Reuse the existing EmitMultiSelectHash logic for a single object.
+            return EmitMultiSelectHash(body, hashNode, indent, elementVar);
         }
 
         private string EmitOr(StringBuilder body, OrNode node, string indent, string inputVar)

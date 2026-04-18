@@ -1475,6 +1475,164 @@ public static class JMESPathCodeGenHelpers
     }
 
     /// <summary>
+    /// Applies a <c>sort()</c> barrier to a pipeline builder: validates types and sorts in-place.
+    /// Called by CG-generated fused pipeline code.
+    /// </summary>
+    /// <param name="builder">The builder to sort.</param>
+    public static void ApplySortBarrier(ref JMESPathSequenceBuilder builder)
+    {
+        int count = builder.Count;
+        if (count == 0)
+        {
+            return;
+        }
+
+        JsonValueKind kind = builder[0].ValueKind;
+        if (kind != JsonValueKind.Number && kind != JsonValueKind.String)
+        {
+            throw new JMESPathException("invalid-type: sort() expects an array of numbers or strings.");
+        }
+
+        for (int i = 1; i < count; i++)
+        {
+            if (builder[i].ValueKind != kind)
+            {
+                throw new JMESPathException("invalid-type: sort() requires all elements to be the same type.");
+            }
+        }
+
+        InsertionSortByKind(ref builder, count, kind);
+    }
+
+    /// <summary>
+    /// Applies a <c>sort_by()</c> barrier to a pipeline builder: extracts keys, validates,
+    /// and sorts in-place. Called by CG-generated fused pipeline code.
+    /// </summary>
+    /// <param name="builder">The builder to sort.</param>
+    /// <param name="keyExpr">The key expression evaluator.</param>
+    /// <param name="workspace">The workspace for evaluation.</param>
+    public static void ApplySortByBarrier(ref JMESPathSequenceBuilder builder, ExpressionEvaluator keyExpr, JsonWorkspace workspace)
+    {
+        int count = builder.Count;
+        if (count == 0)
+        {
+            return;
+        }
+
+        JsonElement[] keys = ArrayPool<JsonElement>.Shared.Rent(count);
+        try
+        {
+            for (int i = 0; i < count; i++)
+            {
+                keys[i] = keyExpr(builder[i], workspace);
+            }
+
+            JsonValueKind keyKind = keys[0].ValueKind;
+            if (keyKind != JsonValueKind.Number && keyKind != JsonValueKind.String)
+            {
+                throw new JMESPathException("invalid-type: sort_by() expression must return numbers or strings.");
+            }
+
+            for (int i = 1; i < count; i++)
+            {
+                if (keys[i].ValueKind != keyKind)
+                {
+                    throw new JMESPathException("invalid-type: sort_by() expression must return consistent types.");
+                }
+            }
+
+            InsertionSortByKeys(ref builder, keys, count, keyKind);
+        }
+        finally
+        {
+            keys.AsSpan(0, count).Clear();
+            ArrayPool<JsonElement>.Shared.Return(keys);
+        }
+    }
+
+    /// <summary>
+    /// Applies a <c>reverse()</c> barrier to a pipeline builder: reverses elements in-place.
+    /// Called by CG-generated fused pipeline code.
+    /// </summary>
+    /// <param name="builder">The builder to reverse.</param>
+    public static void ApplyReverseBarrier(ref JMESPathSequenceBuilder builder)
+    {
+        int count = builder.Count;
+        for (int i = 0, j = count - 1; i < j; i++, j--)
+        {
+            JsonElement temp = builder[i];
+            builder[i] = builder[j];
+            builder[j] = temp;
+        }
+    }
+
+    /// <summary>
+    /// Applies a <c>[start:stop:step]</c> slice barrier to a pipeline builder.
+    /// Called by CG-generated fused pipeline code.
+    /// </summary>
+    /// <param name="builder">The builder to slice (replaced with a new builder containing the slice).</param>
+    /// <param name="start">Optional start index.</param>
+    /// <param name="stop">Optional stop index.</param>
+    /// <param name="step">The step value.</param>
+    public static void ApplySliceBarrier(ref JMESPathSequenceBuilder builder, int? start, int? stop, int step)
+    {
+        int len = builder.Count;
+        if (len == 0)
+        {
+            return;
+        }
+
+        int actualStart, actualStop;
+        if (step > 0)
+        {
+            actualStart = start.HasValue ? NormalizeSliceIndex(start.Value, len) : 0;
+            actualStop = stop.HasValue ? NormalizeSliceIndex(stop.Value, len) : len;
+        }
+        else
+        {
+            actualStart = start.HasValue ? NormalizeSliceIndex(start.Value, len) : len - 1;
+            actualStop = stop.HasValue ? NormalizeSliceIndex(stop.Value, len) : -1;
+        }
+
+        JMESPathSequenceBuilder sliced = default;
+        if (step > 0)
+        {
+            for (int i = actualStart; i < actualStop; i += step)
+            {
+                sliced.Add(builder[i]);
+            }
+        }
+        else
+        {
+            for (int i = actualStart; i > actualStop; i += step)
+            {
+                sliced.Add(builder[i]);
+            }
+        }
+
+        builder.ReturnArray();
+        builder = sliced;
+    }
+
+    private static int NormalizeSliceIndex(int index, int length)
+    {
+        if (index < 0)
+        {
+            index += length;
+            if (index < 0)
+            {
+                index = 0;
+            }
+        }
+        else if (index > length)
+        {
+            index = length;
+        }
+
+        return index;
+    }
+
+    /// <summary>
     /// Dispatches to the appropriate insertion sort based on the element kind.
     /// Used by fused projection+sort in the RT compiler.
     /// </summary>

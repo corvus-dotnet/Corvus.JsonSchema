@@ -159,148 +159,11 @@ internal static partial class Compiler
 
     private static JMESPathEval CompilePipe(PipeNode node)
     {
-        // Fused path: ListProjection | sort(@) — collect projected elements directly
-        // into a SequenceBuilder, sort in-place, materialize once (one doc instead of two).
-        if (node.Right is FunctionCallNode sortCall
-            && sortCall.Arguments.Length == 1
-            && sortCall.Arguments[0] is CurrentNode
-            && sortCall.Name.AsSpan().SequenceEqual("sort"u8)
-            && node.Left is ListProjectionNode listProj)
+        // Try general n-stage pipe fusion: flatten the entire chain and
+        // fuse all array→array stages into a single document materialization.
+        if (FusedPipePlanner.TryBuildPlan(node, out JMESPathNode source, out PipeStage[] stages))
         {
-            JMESPathEval outerLeft = CompileNode(listProj.Left);
-            JMESPathEval outerRight = CompileNode(listProj.Right);
-
-            return (in JsonElement data, JsonWorkspace workspace) =>
-            {
-                JsonElement outerArr = outerLeft(data, workspace);
-                if (outerArr.ValueKind != JsonValueKind.Array)
-                {
-                    return default;
-                }
-
-                JMESPathSequenceBuilder builder = default;
-                try
-                {
-                    foreach (JsonElement outerItem in outerArr.EnumerateArray())
-                    {
-                        JsonElement projected = outerRight(outerItem, workspace);
-                        if (!projected.IsNullOrUndefined())
-                        {
-                            builder.Add(projected);
-                        }
-                    }
-
-                    int len = builder.Count;
-                    if (len == 0)
-                    {
-                        return JMESPathCodeGenHelpers.EmptyArrayElement;
-                    }
-
-                    JsonValueKind kind = builder[0].ValueKind;
-                    if (kind != JsonValueKind.Number && kind != JsonValueKind.String)
-                    {
-                        throw new JMESPathException("invalid-type: sort() expects an array of numbers or strings.");
-                    }
-
-                    for (int i = 1; i < len; i++)
-                    {
-                        if (builder[i].ValueKind != kind)
-                        {
-                            throw new JMESPathException("invalid-type: sort() requires all elements to be the same type.");
-                        }
-                    }
-
-                    JMESPathCodeGenHelpers.InsertionSortByKind(ref builder, len, kind);
-
-                    return builder.ToElement(workspace);
-                }
-                finally
-                {
-                    builder.ReturnArray();
-                }
-            };
-        }
-
-        // Fused path: FilterProjection | sort_by(@, &expr) — filter, collect + extract sort
-        // keys in one pass, sort in-place, materialize once (one doc instead of two).
-        if (node.Right is FunctionCallNode sortByCall
-            && sortByCall.Arguments.Length == 2
-            && sortByCall.Arguments[0] is CurrentNode
-            && sortByCall.Arguments[1] is ExpressionRefNode sortByExprRef
-            && sortByCall.Name.AsSpan().SequenceEqual("sort_by"u8)
-            && node.Left is FilterProjectionNode filter)
-        {
-            JMESPathEval filterLeft = CompileNode(filter.Left);
-            JMESPathEval filterCond = CompileNode(filter.Condition);
-            JMESPathEval filterRight = CompileNode(filter.Right);
-            JMESPathEval sortExpr = CompileNode(sortByExprRef.Expression);
-            bool isIdentity = filter.Right is CurrentNode;
-
-            return (in JsonElement data, JsonWorkspace workspace) =>
-            {
-                JsonElement arr = filterLeft(data, workspace);
-                if (arr.ValueKind != JsonValueKind.Array)
-                {
-                    // Preserve sort_by's RequireArray throw when filter source is not an array.
-                    RequireArray("sort_by", default);
-                    return default; // unreachable
-                }
-
-                int len = arr.GetArrayLength();
-                if (len == 0)
-                {
-                    return EmptyArrayElement;
-                }
-
-                JMESPathSequenceBuilder builder = default;
-                JsonElement[] keys = ArrayPool<JsonElement>.Shared.Rent(len);
-                try
-                {
-                    int count = 0;
-                    foreach (JsonElement item in arr.EnumerateArray())
-                    {
-                        JsonElement condResult = filterCond(item, workspace);
-                        if (IsTruthy(condResult))
-                        {
-                            JsonElement projected = isIdentity ? item : filterRight(item, workspace);
-                            if (!projected.IsNullOrUndefined())
-                            {
-                                builder.Add(projected);
-                                keys[count] = sortExpr(projected, workspace);
-                                count++;
-                            }
-                        }
-                    }
-
-                    if (count == 0)
-                    {
-                        return EmptyArrayElement;
-                    }
-
-                    JsonValueKind keyKind = keys[0].ValueKind;
-                    if (keyKind != JsonValueKind.Number && keyKind != JsonValueKind.String)
-                    {
-                        throw new JMESPathException("invalid-type: sort_by() expression must return numbers or strings.");
-                    }
-
-                    for (int i = 1; i < count; i++)
-                    {
-                        if (keys[i].ValueKind != keyKind)
-                        {
-                            throw new JMESPathException("invalid-type: sort_by() expression must return consistent types.");
-                        }
-                    }
-
-                    JMESPathCodeGenHelpers.InsertionSortByKeys(ref builder, keys, count, keyKind);
-                    return builder.ToElement(workspace);
-                }
-                finally
-                {
-                    builder.ReturnArray();
-                    keys.AsSpan(0, len).Clear();
-                    ArrayPool<JsonElement>.Shared.Return(keys);
-                }
-            };
+            return CompileFusedPipeline(source, stages);
         }
 
         JMESPathEval left = CompileNode(node.Left);
@@ -310,6 +173,608 @@ internal static partial class Compiler
             JsonElement lhs = left(data, workspace);
             return right(lhs, workspace);
         };
+    }
+
+    private static JMESPathEval CompileFusedPipeline(JMESPathNode sourceNode, PipeStage[] stages)
+    {
+        JMESPathEval source = CompileNode(sourceNode);
+
+        // Compile all stage delegates upfront.
+        CompiledStage[] compiled = new CompiledStage[stages.Length];
+        for (int i = 0; i < stages.Length; i++)
+        {
+            compiled[i] = CompileStage(stages[i]);
+        }
+
+        // Find the last streaming stage index and check if it's a HashProject.
+        int lastStreamingIdx = -1;
+        for (int i = stages.Length - 1; i >= 0; i--)
+        {
+            if (!stages[i].IsBarrier)
+            {
+                lastStreamingIdx = i;
+                break;
+            }
+        }
+
+        bool hasTerminalHash = lastStreamingIdx >= 0 && stages[lastStreamingIdx] is PipeStage.HashProject;
+
+        return (in JsonElement data, JsonWorkspace workspace) =>
+        {
+            JsonElement arr = source(data, workspace);
+            if (arr.ValueKind != JsonValueKind.Array)
+            {
+                // Determine error behavior from the first barrier stage.
+                // Sort/sort_by/reverse throw on non-array; projections return default.
+                for (int i = 0; i < stages.Length; i++)
+                {
+                    if (stages[i] is PipeStage.Sort)
+                    {
+                        RequireArray("sort", arr);
+                    }
+                    else if (stages[i] is PipeStage.SortBy)
+                    {
+                        RequireArray("sort_by", arr);
+                    }
+                    else if (stages[i] is PipeStage.Reverse)
+                    {
+                        // reverse() throws on non-string/non-array
+                        throw new JMESPathException("invalid-type: reverse() expects a string or array argument.");
+                    }
+                }
+
+                return default;
+            }
+
+            JMESPathSequenceBuilder current = default;
+            JMESPathSequenceBuilder next = default;
+            JsonElement[]? sortKeys = null;
+            try
+            {
+                // Collect phase: stream source array through initial streaming stages.
+                int stageIdx = 0;
+                CollectFromEnumerable(arr.EnumerateArray(), compiled, stages, ref stageIdx, ref current, workspace);
+
+                // Process barriers and subsequent collect phases.
+                while (stageIdx < stages.Length)
+                {
+                    if (stages[stageIdx].IsBarrier)
+                    {
+                        ApplyBarrier(compiled[stageIdx], stages[stageIdx], ref current, ref sortKeys, workspace);
+                        stageIdx++;
+                    }
+                    else
+                    {
+                        // Streaming stages after a barrier: iterate current → next.
+                        int count = current.Count;
+
+                        // Check if this is the terminal hash project.
+                        if (hasTerminalHash && stageIdx == lastStreamingIdx)
+                        {
+                            // Materialize directly into CreateBuilder with ObjectBuilder.
+                            return MaterializeHashProject(
+                                ref current, count, compiled[stageIdx], workspace);
+                        }
+
+                        CollectFromBuilder(ref current, count, compiled, stages, ref stageIdx, ref next, workspace);
+
+                        // Swap: next becomes current for the next barrier.
+                        current.ReturnArray();
+                        current = next;
+                        next = default;
+                    }
+                }
+
+                // Final materialization.
+                if (current.Count == 0)
+                {
+                    return EmptyArrayElement;
+                }
+
+                return current.ToElement(workspace);
+            }
+            finally
+            {
+                current.ReturnArray();
+                next.ReturnArray();
+                if (sortKeys is not null)
+                {
+                    sortKeys.AsSpan().Clear();
+                    ArrayPool<JsonElement>.Shared.Return(sortKeys);
+                }
+            }
+        };
+    }
+
+    /// <summary>
+    /// Streams elements from an array enumerator through consecutive streaming stages,
+    /// collecting results into the builder. Advances stageIdx past all streaming stages.
+    /// </summary>
+    private static void CollectFromEnumerable(
+        ArrayEnumerator<JsonElement> enumerator,
+        CompiledStage[] compiled,
+        PipeStage[] stages,
+        ref int stageIdx,
+        ref JMESPathSequenceBuilder builder,
+        JsonWorkspace workspace)
+    {
+        // Find the range of consecutive streaming stages.
+        int firstStreaming = stageIdx;
+        while (stageIdx < stages.Length && !stages[stageIdx].IsBarrier)
+        {
+            stageIdx++;
+        }
+
+        int streamEnd = stageIdx; // exclusive
+
+        if (firstStreaming == streamEnd)
+        {
+            // No streaming stages — just collect all elements.
+            foreach (JsonElement item in enumerator)
+            {
+                builder.Add(item);
+            }
+
+            return;
+        }
+
+        foreach (JsonElement item in enumerator)
+        {
+            ApplyStreamingStages(item, compiled, stages, firstStreaming, streamEnd, ref builder, workspace);
+        }
+    }
+
+    /// <summary>
+    /// Streams elements from a builder through consecutive streaming stages,
+    /// collecting results into the next builder. Advances stageIdx past all streaming stages.
+    /// </summary>
+    private static void CollectFromBuilder(
+        ref JMESPathSequenceBuilder source,
+        int count,
+        CompiledStage[] compiled,
+        PipeStage[] stages,
+        ref int stageIdx,
+        ref JMESPathSequenceBuilder dest,
+        JsonWorkspace workspace)
+    {
+        int firstStreaming = stageIdx;
+        while (stageIdx < stages.Length && !stages[stageIdx].IsBarrier)
+        {
+            stageIdx++;
+        }
+
+        int streamEnd = stageIdx;
+
+        for (int i = 0; i < count; i++)
+        {
+            ApplyStreamingStages(source[i], compiled, stages, firstStreaming, streamEnd, ref dest, workspace);
+        }
+    }
+
+    /// <summary>
+    /// Applies a sequence of streaming stages to a single element, pushing
+    /// results into the builder. Handles fan-out (Flatten) and null-skipping.
+    /// </summary>
+    private static void ApplyStreamingStages(
+        in JsonElement element,
+        CompiledStage[] compiled,
+        PipeStage[] stages,
+        int first,
+        int end,
+        ref JMESPathSequenceBuilder builder,
+        JsonWorkspace workspace)
+    {
+        ApplyStreamingStagesCore(element, compiled, stages, first, end, ref builder, workspace);
+    }
+
+    private static void ApplyStreamingStagesCore(
+        in JsonElement element,
+        CompiledStage[] compiled,
+        PipeStage[] stages,
+        int idx,
+        int end,
+        ref JMESPathSequenceBuilder builder,
+        JsonWorkspace workspace)
+    {
+        if (idx >= end)
+        {
+            // Past the last streaming stage — add to builder.
+            builder.Add(element);
+            return;
+        }
+
+        PipeStage stage = stages[idx];
+
+        switch (stage)
+        {
+            case PipeStage.Filter filter:
+            {
+                JsonElement condResult = compiled[idx].Eval!(element, workspace);
+                if (!IsTruthy(condResult))
+                {
+                    return; // filtered out
+                }
+
+                JsonElement result = filter.Projection is not null
+                    ? compiled[idx].Eval2!(element, workspace)
+                    : element;
+
+                if (result.IsNullOrUndefined())
+                {
+                    return;
+                }
+
+                ApplyStreamingStagesCore(result, compiled, stages, idx + 1, end, ref builder, workspace);
+                break;
+            }
+
+            case PipeStage.Project:
+            {
+                JsonElement result = compiled[idx].Eval!(element, workspace);
+                if (result.IsNullOrUndefined())
+                {
+                    return;
+                }
+
+                ApplyStreamingStagesCore(result, compiled, stages, idx + 1, end, ref builder, workspace);
+                break;
+            }
+
+            case PipeStage.Flatten flatten:
+            {
+                if (flatten.Projection is not null)
+                {
+                    // Flatten with projection: project first, then flatten.
+                    JsonElement projected = compiled[idx].Eval!(element, workspace);
+                    if (projected.IsNullOrUndefined())
+                    {
+                        return;
+                    }
+
+                    if (projected.ValueKind == JsonValueKind.Array)
+                    {
+                        foreach (JsonElement inner in projected.EnumerateArray())
+                        {
+                            ApplyStreamingStagesCore(inner, compiled, stages, idx + 1, end, ref builder, workspace);
+                        }
+                    }
+                    else
+                    {
+                        ApplyStreamingStagesCore(projected, compiled, stages, idx + 1, end, ref builder, workspace);
+                    }
+                }
+                else
+                {
+                    // Flatten without projection: just expand arrays.
+                    if (element.ValueKind == JsonValueKind.Array)
+                    {
+                        foreach (JsonElement inner in element.EnumerateArray())
+                        {
+                            ApplyStreamingStagesCore(inner, compiled, stages, idx + 1, end, ref builder, workspace);
+                        }
+                    }
+                    else
+                    {
+                        ApplyStreamingStagesCore(element, compiled, stages, idx + 1, end, ref builder, workspace);
+                    }
+                }
+
+                break;
+            }
+
+            case PipeStage.MapExpr:
+            {
+                JsonElement result = compiled[idx].Eval!(element, workspace);
+
+                // Map preserves nulls as JSON null (unlike Project which skips them).
+                JsonElement mapped = result.IsNullOrUndefined() ? NullElement : result;
+                ApplyStreamingStagesCore(mapped, compiled, stages, idx + 1, end, ref builder, workspace);
+                break;
+            }
+
+            case PipeStage.HashProject:
+            {
+                // Hash project in a non-terminal position: build the object and continue.
+                JsonElement obj = BuildHashObject(element, compiled[idx], workspace);
+                ApplyStreamingStagesCore(obj, compiled, stages, idx + 1, end, ref builder, workspace);
+                break;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Applies a barrier operation to the builder in-place.
+    /// </summary>
+    private static void ApplyBarrier(
+        in CompiledStage compiled,
+        PipeStage stage,
+        ref JMESPathSequenceBuilder builder,
+        ref JsonElement[]? sortKeys,
+        JsonWorkspace workspace)
+    {
+        int count = builder.Count;
+        if (count == 0)
+        {
+            return;
+        }
+
+        switch (stage)
+        {
+            case PipeStage.Sort:
+            {
+                JsonValueKind kind = builder[0].ValueKind;
+                if (kind != JsonValueKind.Number && kind != JsonValueKind.String)
+                {
+                    throw new JMESPathException("invalid-type: sort() expects an array of numbers or strings.");
+                }
+
+                for (int i = 1; i < count; i++)
+                {
+                    if (builder[i].ValueKind != kind)
+                    {
+                        throw new JMESPathException("invalid-type: sort() requires all elements to be the same type.");
+                    }
+                }
+
+                JMESPathCodeGenHelpers.InsertionSortByKind(ref builder, count, kind);
+                break;
+            }
+
+            case PipeStage.SortBy sortBy:
+            {
+                // Two-pass: extract keys after collection (handles post-flatten fan-out).
+                if (sortKeys is not null)
+                {
+                    sortKeys.AsSpan().Clear();
+                    ArrayPool<JsonElement>.Shared.Return(sortKeys);
+                }
+
+                sortKeys = ArrayPool<JsonElement>.Shared.Rent(count);
+
+                JMESPathEval keyExpr = compiled.Eval!;
+                for (int i = 0; i < count; i++)
+                {
+                    sortKeys[i] = keyExpr(builder[i], workspace);
+                }
+
+                JsonValueKind keyKind = sortKeys[0].ValueKind;
+                if (keyKind != JsonValueKind.Number && keyKind != JsonValueKind.String)
+                {
+                    throw new JMESPathException("invalid-type: sort_by() expression must return numbers or strings.");
+                }
+
+                for (int i = 1; i < count; i++)
+                {
+                    if (sortKeys[i].ValueKind != keyKind)
+                    {
+                        throw new JMESPathException("invalid-type: sort_by() expression must return consistent types.");
+                    }
+                }
+
+                JMESPathCodeGenHelpers.InsertionSortByKeys(ref builder, sortKeys, count, keyKind);
+                break;
+            }
+
+            case PipeStage.Reverse:
+            {
+                // Reverse the builder in-place.
+                for (int i = 0, j = count - 1; i < j; i++, j--)
+                {
+                    JsonElement temp = builder[i];
+                    builder[i] = builder[j];
+                    builder[j] = temp;
+                }
+
+                break;
+            }
+
+            case PipeStage.Slice slice:
+            {
+                // Compute actual indices.
+                int step = slice.Step;
+                int len = count;
+
+                int start, stop;
+                if (step > 0)
+                {
+                    start = slice.Start.HasValue ? NormalizeSliceIndex(slice.Start.Value, len) : 0;
+                    stop = slice.Stop.HasValue ? NormalizeSliceIndex(slice.Stop.Value, len) : len;
+                }
+                else
+                {
+                    start = slice.Start.HasValue ? NormalizeSliceIndex(slice.Start.Value, len) : len - 1;
+                    stop = slice.Stop.HasValue ? NormalizeSliceIndex(slice.Stop.Value, len) : -1;
+                }
+
+                // Collect sliced elements into a new builder, then swap.
+                JMESPathSequenceBuilder sliced = default;
+                if (step > 0)
+                {
+                    for (int i = start; i < stop; i += step)
+                    {
+                        sliced.Add(builder[i]);
+                    }
+                }
+                else
+                {
+                    for (int i = start; i > stop; i += step)
+                    {
+                        sliced.Add(builder[i]);
+                    }
+                }
+
+                builder.ReturnArray();
+                builder = sliced;
+                break;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Materializes the final result as a hash project: builds a single document
+    /// with an array of objects using CreateBuilder + ObjectBuilder.
+    /// </summary>
+    private static JsonElement MaterializeHashProject(
+        ref JMESPathSequenceBuilder builder,
+        int count,
+        in CompiledStage compiled,
+        JsonWorkspace workspace)
+    {
+        if (count == 0)
+        {
+            return EmptyArrayElement;
+        }
+
+        (byte[] Key, JMESPathEval Value)[] pairs = compiled.HashPairs!;
+
+        // Copy builder contents to a rented array: JMESPathSequenceBuilder is a
+        // ref struct and cannot be captured in the CreateBuilder context tuple.
+        JsonElement[] items = ArrayPool<JsonElement>.Shared.Rent(count);
+        for (int i = 0; i < count; i++)
+        {
+            items[i] = builder[i];
+        }
+
+        try
+        {
+            JsonDocumentBuilder<JsonElement.Mutable> doc =
+                JsonElement.CreateBuilder(
+                    workspace,
+                    (items, count, pairs, workspace),
+                    static (in (JsonElement[] Items, int Count, (byte[] Key, JMESPathEval Value)[] Pairs, JsonWorkspace Ws) ctx, ref JsonElement.ArrayBuilder ab) =>
+                    {
+                        for (int i = 0; i < ctx.Count; i++)
+                        {
+                            JsonElement item = ctx.Items[i];
+                            ab.AddItem(
+                                (item, ctx.Pairs, ctx.Ws),
+                                static (in (JsonElement Item, (byte[] Key, JMESPathEval Value)[] Pairs, JsonWorkspace Ws) ic, ref JsonElement.ObjectBuilder ob) =>
+                                {
+                                    for (int j = 0; j < ic.Pairs.Length; j++)
+                                    {
+                                        JsonElement val = ic.Pairs[j].Value(ic.Item, ic.Ws);
+                                        ob.AddProperty(ic.Pairs[j].Key, val.IsNullOrUndefined() ? NullElement : val);
+                                    }
+                                });
+                        }
+                    },
+                    count + 2);
+
+            return (JsonElement)doc.RootElement;
+        }
+        finally
+        {
+            items.AsSpan(0, count).Clear();
+            ArrayPool<JsonElement>.Shared.Return(items);
+        }
+    }
+
+    /// <summary>
+    /// Builds a single hash object from an element (for non-terminal HashProject stages).
+    /// </summary>
+    private static JsonElement BuildHashObject(
+        in JsonElement element,
+        in CompiledStage compiled,
+        JsonWorkspace workspace)
+    {
+        (byte[] Key, JMESPathEval Value)[] pairs = compiled.HashPairs!;
+
+        JsonDocumentBuilder<JsonElement.Mutable> doc =
+            JsonElement.CreateBuilder(
+                workspace,
+                (element, pairs, workspace),
+                static (in (JsonElement Item, (byte[] Key, JMESPathEval Value)[] Pairs, JsonWorkspace Ws) ctx, ref JsonElement.ObjectBuilder ob) =>
+                {
+                    for (int j = 0; j < ctx.Pairs.Length; j++)
+                    {
+                        JsonElement val = ctx.Pairs[j].Value(ctx.Item, ctx.Ws);
+                        ob.AddProperty(ctx.Pairs[j].Key, val.IsNullOrUndefined() ? NullElement : val);
+                    }
+                },
+                pairs.Length);
+
+        return (JsonElement)doc.RootElement;
+    }
+
+    private static int NormalizeSliceIndex(int index, int length)
+    {
+        if (index < 0)
+        {
+            index += length;
+            if (index < 0)
+            {
+                index = 0;
+            }
+        }
+        else if (index > length)
+        {
+            index = length;
+        }
+
+        return index;
+    }
+
+    /// <summary>
+    /// Pre-compiled delegates for a pipeline stage.
+    /// </summary>
+    private readonly struct CompiledStage
+    {
+        /// <summary>The primary evaluation delegate (condition for Filter, expression for Project/Map/SortBy, projection for Flatten).</summary>
+        public readonly JMESPathEval? Eval;
+
+        /// <summary>Secondary delegate (projection for Filter).</summary>
+        public readonly JMESPathEval? Eval2;
+
+        /// <summary>Hash pairs for HashProject stages.</summary>
+        public readonly (byte[] Key, JMESPathEval Value)[]? HashPairs;
+
+        public CompiledStage(JMESPathEval? eval = null, JMESPathEval? eval2 = null, (byte[] Key, JMESPathEval Value)[]? hashPairs = null)
+        {
+            this.Eval = eval;
+            this.Eval2 = eval2;
+            this.HashPairs = hashPairs;
+        }
+    }
+
+    private static CompiledStage CompileStage(PipeStage stage)
+    {
+        return stage switch
+        {
+            PipeStage.Filter f => new CompiledStage(
+                eval: CompileNode(f.Condition),
+                eval2: f.Projection is not null ? CompileNode(f.Projection) : null),
+
+            PipeStage.Project p => new CompiledStage(eval: CompileNode(p.Expression)),
+
+            PipeStage.Flatten f => new CompiledStage(
+                eval: f.Projection is not null ? CompileNode(f.Projection) : null),
+
+            PipeStage.MapExpr m => new CompiledStage(eval: CompileNode(m.Expression)),
+
+            PipeStage.Sort => default,
+
+            PipeStage.SortBy sb => new CompiledStage(eval: CompileNode(sb.KeyExpression)),
+
+            PipeStage.Reverse => default,
+
+            PipeStage.Slice => default,
+
+            PipeStage.HashProject hp => CompileHashProjectStage(hp),
+
+            _ => throw new JMESPathException($"Unsupported pipeline stage: {stage.GetType().Name}."),
+        };
+    }
+
+    private static CompiledStage CompileHashProjectStage(PipeStage.HashProject hp)
+    {
+        MultiSelectHashNode hash = hp.Hash;
+        (byte[] Key, JMESPathEval Value)[] pairs = new (byte[], JMESPathEval)[hash.Pairs.Length];
+        for (int i = 0; i < hash.Pairs.Length; i++)
+        {
+            pairs[i] = (hash.Pairs[i].Key, CompileNode(hash.Pairs[i].Value));
+        }
+
+        return new CompiledStage(hashPairs: pairs);
     }
 
     private static JMESPathEval CompileOr(OrNode node)
