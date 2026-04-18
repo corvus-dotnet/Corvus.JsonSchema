@@ -6,7 +6,7 @@
 
 `Corvus.Text.Json.JMESPath` implements [JMESPath](https://jmespath.org/) for the Corvus.Text.Json document model — a high-performance query language that evaluates JMESPath expressions against JSON data with compiled delegate trees, pipe fusion, and pooled workspace memory.
 
-[JMESPath](https://jmespath.org/) is a query language for JSON. It supports path navigation, sub-expressions, index access, slicing, list and object projections, flatten, filter expressions, multiselect lists and hashes, pipe expressions, comparisons, and a full set of built-in functions. The Corvus implementation passes **all 892** conformance test cases in the official [JMESPath Compliance Test Suite](https://github.com/jmespath/jmespath.test) (100% conformance). The test suite also contains 16 benchmark-only entries (used for performance measurement, not conformance); these are not test cases and are excluded from the count.
+[JMESPath](https://jmespath.org/) is a query language for JSON. It supports path navigation, sub-expressions, index access, slicing, list and object projections, flatten, filter expressions, multiselect lists and hashes, pipe expressions, comparisons, and a full set of built-in functions. The Corvus implementation passes **all 892** conformance test cases in the official [JMESPath Compliance Test Suite](https://github.com/jmespath/jmespath.test) (100% conformance). The test suite also contains 21 benchmark-only entries that are implemented as BenchmarkDotNet benchmarks with baseline comparison to JmesPath.Net; these are used for performance measurement, not conformance, and are excluded from the count.
 
 Three evaluation modes are available:
 
@@ -28,6 +28,36 @@ The source generator and CLI tool produce optimized static C# that eliminates de
 ![JMESPath CodeGen Conformance](https://img.shields.io/badge/JMESPath_CodeGen-892%2F892_(100%25)-brightgreen)
 
 Both the runtime evaluator and the code generation pipeline pass all **892** official JMESPath compliance test cases (100% conformance) on .NET 10.0.
+
+## Performance
+
+All benchmarks use [BenchmarkDotNet](https://benchmarkdotnet.org/) with [JmesPath.Net](https://github.com/jdevillard/JmesPath.Net) as the baseline. The **RT** column is the interpreted runtime evaluator; the **CG** column is the source-generated code. Measurements are from a single-threaded run on .NET 10.0.
+
+| Benchmark | Expression | JmesPath.Net | RT | CG | RT Alloc | CG Alloc |
+|-----------|-----------|-------------:|---:|---:|---------:|---------:|
+| SimpleField | `a` | 6,446 ns | 44 ns | 35 ns | 0 B | 0 B |
+| SimpleSubexpr | `a.b.c` | 6,659 ns | 51 ns | 49 ns | 0 B | 0 B |
+| SimpleOr | `a \|\| b` | 6,948 ns | 83 ns | 69 ns | 0 B | 0 B |
+| LongString | `foo` (1 KB value) | 3,874 ns | 54 ns | 11 ns | 0 B | 0 B |
+| ChainedFilter | `a[?b==\`1\`][?c==\`2\`]` | 2,697 ns | 18 ns | 11 ns | 0 B | 0 B |
+| Field50 | 50 chained fields | 21,692 ns | 563 ns | 80 ns | 0 B | 0 B |
+| Index50 | 50 chained indices | 21,668 ns | 588 ns | 79 ns | 0 B | 0 B |
+| Pipe50 | 50 chained pipes | 24,274 ns | 384 ns | 92 ns | 0 B | 0 B |
+| DeepAnds | Nested `&&` | 12,399 ns | 2,192 ns | 2,073 ns | 0 B | 0 B |
+| DeepOrs | Nested `\|\|` | 19,717 ns | 248 ns | 171 ns | 0 B | 0 B |
+| DeepMatch | Deep wildcard match | 8,305 ns | 287 ns | 439 ns | 0 B | 0 B |
+| DeepNoMatch | Deep wildcard miss | 13,838 ns | 498 ns | 386 ns | 0 B | 0 B |
+| DeepProjection | `[*].[*].[*]` | 82,276 ns | 148 ns | 18 ns | 0 B | 0 B |
+| MultiList | Multi-select list | 19,178 ns | 3,856 ns | 3,996 ns | 120 B | 120 B |
+| SumArray | `sum(values(@))` | 20,576 ns | 4,030 ns | 4,036 ns | 0 B | 0 B |
+| NestedSum | Nested `sum(...)` | 53,033 ns | 3,857 ns | 3,846 ns | 0 B | 0 B |
+| AvgArray | `avg(values(@))` | 6,764 ns | 1,155 ns | 1,119 ns | 240 B | 240 B |
+| MinArray | `min(values(@))` | 10,588 ns | 1,863 ns | 1,830 ns | 120 B | 120 B |
+| MaxArray | `max(values(@))` | 10,970 ns | 2,274 ns | 2,125 ns | 120 B | 120 B |
+| MinBy | `min_by(people, &age)` | 18,015 ns | 1,591 ns | 1,588 ns | 0 B | 0 B |
+| MaxBy | `max_by(people, &age)` | 18,107 ns | 1,866 ns | 2,305 ns | 0 B | 0 B |
+
+All allocations in the RT and CG columns come from `JsonDocumentBuilder` results returned from aggregate functions (`values()`, `avg()`). Navigation, projection, filtering, and arithmetic benchmarks are zero-allocation.
 
 ## Quick start
 
