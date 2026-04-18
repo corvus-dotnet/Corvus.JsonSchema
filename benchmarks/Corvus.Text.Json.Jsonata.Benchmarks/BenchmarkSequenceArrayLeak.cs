@@ -35,18 +35,22 @@ public class BenchmarkSequenceArrayLeak
     private ParsedJsonDocument<JsonElement>? docIndexed;
     private ParsedJsonDocument<JsonElement>? docFiltered;
     private ParsedJsonDocument<JsonElement>? docContinuation;
+    private ParsedJsonDocument<JsonElement>? docWideObject;
     private JsonElement dataIndexed;
     private JsonElement dataFiltered;
     private JsonElement dataContinuation;
+    private JsonElement dataWideObject;
     private JsonWorkspace workspace = null!;
 
 #if !NETFRAMEWORK
     private JsonataQuery nativeIndexed = null!;
     private JsonataQuery nativeFiltered = null!;
     private JsonataQuery nativeContinuation = null!;
+    private JsonataQuery nativeWideObject = null!;
     private JToken nativeDataIndexed = null!;
     private JToken nativeDataFiltered = null!;
     private JToken nativeDataContinuation = null!;
+    private JToken nativeDataWideObject = null!;
 #endif
 
     /// <summary>
@@ -61,6 +65,7 @@ public class BenchmarkSequenceArrayLeak
         string indexedJson = BuildIndexedData(itemCount: 20, productsPerOrder: 5);
         string filteredJson = BuildFilteredData(matchCount: 20, productsPerItem: 5);
         string continuationJson = BuildContinuationData(categoryCount: 5, itemsPerCategory: 4, productsPerItem: 5);
+        string wideObjectJson = BuildWideObjectData(categoryCount: 5, itemsPerCategory: 4, productsPerItem: 5, paddingProps: 11);
 
         this.docIndexed = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes(indexedJson));
         this.dataIndexed = this.docIndexed.RootElement;
@@ -71,12 +76,17 @@ public class BenchmarkSequenceArrayLeak
         this.docContinuation = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes(continuationJson));
         this.dataContinuation = this.docContinuation.RootElement;
 
+        this.docWideObject = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes(wideObjectJson));
+        this.dataWideObject = this.docWideObject.RootElement;
+
         // Pre-warm RT expressions
         this.evaluator.Evaluate(ExprIndexedUtf8, this.dataIndexed, this.workspace, cacheKey: ExprIndexed);
         this.workspace.Reset();
         this.evaluator.Evaluate(ExprFilteredUtf8, this.dataFiltered, this.workspace, cacheKey: ExprFiltered);
         this.workspace.Reset();
         this.evaluator.Evaluate(ExprContinuationUtf8, this.dataContinuation, this.workspace, cacheKey: ExprContinuation);
+        this.workspace.Reset();
+        this.evaluator.Evaluate(ExprContinuationUtf8, this.dataWideObject, this.workspace, cacheKey: "WideObject");
         this.workspace.Reset();
 
         // Pre-warm CG expressions
@@ -86,14 +96,18 @@ public class BenchmarkSequenceArrayLeak
         this.workspace.Reset();
         ContinuationChainCodeGen.Evaluate(this.dataContinuation, this.workspace);
         this.workspace.Reset();
+        ContinuationChainCodeGen.Evaluate(this.dataWideObject, this.workspace);
+        this.workspace.Reset();
 
 #if !NETFRAMEWORK
         this.nativeDataIndexed = JToken.Parse(indexedJson);
         this.nativeDataFiltered = JToken.Parse(filteredJson);
         this.nativeDataContinuation = JToken.Parse(continuationJson);
+        this.nativeDataWideObject = JToken.Parse(wideObjectJson);
         this.nativeIndexed = new JsonataQuery(ExprIndexed);
         this.nativeFiltered = new JsonataQuery(ExprFiltered);
         this.nativeContinuation = new JsonataQuery(ExprContinuation);
+        this.nativeWideObject = new JsonataQuery(ExprContinuation);
 #endif
     }
 
@@ -107,6 +121,7 @@ public class BenchmarkSequenceArrayLeak
         this.docIndexed?.Dispose();
         this.docFiltered?.Dispose();
         this.docContinuation?.Dispose();
+        this.docWideObject?.Dispose();
     }
 
     // ── IndexedChain ────────────────────────────────────────────────
@@ -211,6 +226,40 @@ public class BenchmarkSequenceArrayLeak
         return ContinuationChainCodeGen.Evaluate(this.dataContinuation, this.workspace);
     }
 
+    // ── WideObject: same expression as ContinuationChain, but objects have 12 properties ──
+
+    /// <summary>
+    /// Corvus RT: <c>root.groups[0].categories.items.products.name</c> on 12-property objects.
+    /// </summary>
+    [BenchmarkCategory("WideObject")]
+    [Benchmark]
+    public JsonElement Corvus_WideObject()
+    {
+        this.workspace.Reset();
+        return this.evaluator.Evaluate(ExprContinuationUtf8, this.dataWideObject, this.workspace, cacheKey: "WideObject");
+    }
+
+#if !NETFRAMEWORK
+    /// <summary>
+    /// Jsonata.Net.Native: <c>root.groups[0].categories.items.products.name</c> on 12-property objects.
+    /// </summary>
+    [BenchmarkCategory("WideObject")]
+    [Benchmark(Baseline = true)]
+    public JToken Native_WideObject() =>
+        this.nativeWideObject.Eval(this.nativeDataWideObject);
+#endif
+
+    /// <summary>
+    /// CodeGen: <c>root.groups[0].categories.items.products.name</c> on 12-property objects.
+    /// </summary>
+    [BenchmarkCategory("WideObject")]
+    [Benchmark]
+    public JsonElement Corvus_CodeGen_WideObject()
+    {
+        this.workspace.Reset();
+        return ContinuationChainCodeGen.Evaluate(this.dataWideObject, this.workspace);
+    }
+
     private static string BuildIndexedData(int itemCount, int productsPerOrder)
     {
         // { "items": [ { "orders": [ { "products": [ { "name": "p0" }, ... ] } ] }, ... ] }
@@ -310,5 +359,63 @@ public class BenchmarkSequenceArrayLeak
 
         sb.Append("]}]}}");
         return sb.ToString();
+    }
+
+    private static string BuildWideObjectData(int categoryCount, int itemsPerCategory, int productsPerItem, int paddingProps)
+    {
+        // Same structure as ContinuationData, but every object has paddingProps extra properties.
+        // This triggers EnsurePropertyMap (threshold: GetPropertyCount() > 6).
+        StringBuilder sb = new();
+        sb.Append("{\"root\":{\"groups\":[{");
+        AppendPadding(sb, paddingProps);
+        sb.Append("\"categories\":[");
+        for (int c = 0; c < categoryCount; c++)
+        {
+            if (c > 0)
+            {
+                sb.Append(',');
+            }
+
+            sb.Append('{');
+            AppendPadding(sb, paddingProps);
+            sb.Append("\"items\":[");
+            for (int i = 0; i < itemsPerCategory; i++)
+            {
+                if (i > 0)
+                {
+                    sb.Append(',');
+                }
+
+                sb.Append('{');
+                AppendPadding(sb, paddingProps);
+                sb.Append("\"products\":[");
+                for (int p = 0; p < productsPerItem; p++)
+                {
+                    if (p > 0)
+                    {
+                        sb.Append(',');
+                    }
+
+                    sb.Append('{');
+                    AppendPadding(sb, paddingProps);
+                    sb.Append($"\"name\":\"c{c}_i{i}_p{p}\"}}");
+                }
+
+                sb.Append("]}");
+            }
+
+            sb.Append("]}");
+        }
+
+        sb.Append("]}]}}");
+        return sb.ToString();
+    }
+
+    private static void AppendPadding(StringBuilder sb, int count)
+    {
+        for (int f = 0; f < count; f++)
+        {
+            sb.Append($"\"pad{f}\":\"x\",");
+        }
     }
 }
