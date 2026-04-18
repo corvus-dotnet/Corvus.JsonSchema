@@ -1301,15 +1301,18 @@ public static class JsonataCodeGenerator
             string predsExpr,
             out string resultVar)
         {
-            // Only inline when we have exactly one equality predicate and no constant indices
-            if (equalityPredicates is null)
+            bool hasConstIdx = constantIndices is not null && Array.Exists(constantIndices, i => i >= 0);
+            bool hasAnyEqPred = equalityPredicates is not null
+                                && Array.Exists(equalityPredicates, p => p.PropName is not null);
+
+            // Constant-index-only chains (no equality predicates): fully inline
+            if (hasConstIdx && !hasAnyEqPred)
             {
-                resultVar = default!;
-                return false;
+                return TryEmitInlineConstantIndexChain(sb, propertyNames, constantIndices!, indent, dataVar, wsVar, pathField, indicesExpr, out resultVar);
             }
 
-            bool hasConstIdx = constantIndices is not null && Array.Exists(constantIndices, i => i >= 0);
-            if (hasConstIdx)
+            // Equality predicate chains (no constant indices)
+            if (!hasAnyEqPred || hasConstIdx || equalityPredicates is null)
             {
                 resultVar = default!;
                 return false;
@@ -1396,6 +1399,141 @@ public static class JsonataCodeGenerator
             L(sb, indent, "else");
             L(sb, indent, "{");
             L(sb, indent + "    ", $"{resultVar} = {H}.NavigatePropertyChainWithPredicates({dataVar}, {pathField}, {indicesExpr}, {predsExpr}, {wsVar});");
+            L(sb, indent, "}");
+
+            return true;
+        }
+
+        /// <summary>
+        /// Emits an inline constant-index chain where all predicates are numeric indices
+        /// (e.g., <c>items.orders[0].products.name</c>). Navigates property steps with
+        /// index picks inline, then uses <see cref="EmitPostPredicateNavigation"/> for
+        /// any remaining steps after the last index (which may encounter array intermediates).
+        /// Falls back to the helper when the input is an array (auto-map at root).
+        /// </summary>
+        private bool TryEmitInlineConstantIndexChain(
+            StringBuilder sb,
+            string[] propertyNames,
+            int[] constantIndices,
+            string indent,
+            string dataVar,
+            string wsVar,
+            string pathField,
+            string indicesExpr,
+            out string resultVar)
+        {
+            // Find the last constant index position — everything after it needs
+            // post-navigation handling (may encounter arrays requiring auto-map).
+            int lastIdxStep = -1;
+            for (int i = constantIndices.Length - 1; i >= 0; i--)
+            {
+                if (constantIndices[i] >= 0)
+                {
+                    lastIdxStep = i;
+                    break;
+                }
+            }
+
+            if (lastIdxStep < 0)
+            {
+                resultVar = default!;
+                return false;
+            }
+
+            resultVar = NextVar();
+            L(sb, indent, $"JsonElement {resultVar} = default;");
+
+            // Use a unique prefix to avoid collisions when multiple constant-index
+            // chains appear in the same generated method.
+            string pfx = $"__ci{_varCounter}";
+
+            // Build inline conditions up to and including the last index pick.
+            // Steps between indices are pure Object→TryGetProperty (safe because
+            // each index pick yields exactly one element).
+            var condParts = new List<string>();
+            string prevVar = dataVar;
+
+            for (int i = 0; i <= lastIdxStep; i++)
+            {
+                string escaped = EscapeStringLiteral(propertyNames[i]);
+                string stepVar = $"{pfx}_{i}";
+
+                if (constantIndices[i] >= 0)
+                {
+                    // Property + index: navigate then pick from array
+                    string rawVar = $"{pfx}_{i}r";
+                    condParts.Add($"{prevVar}.ValueKind == JsonValueKind.Object && {prevVar}.TryGetProperty(\"{escaped}\"u8, out var {rawVar})");
+
+                    int idx = constantIndices[i];
+                    if (idx == 0)
+                    {
+                        // Index 0: array→first element, non-array→itself (autoboxing)
+                        condParts.Add($"(({rawVar}.ValueKind == JsonValueKind.Array ? {rawVar}.GetArrayLength() > 0 ? ({stepVar} = {rawVar}[0]).ValueKind >= 0 : false : ({stepVar} = {rawVar}).ValueKind >= 0))");
+                    }
+                    else
+                    {
+                        condParts.Add($"({rawVar}.ValueKind == JsonValueKind.Array && {idx} < {rawVar}.GetArrayLength() && ({stepVar} = {rawVar}[{idx}]).ValueKind >= 0)");
+                    }
+
+                    prevVar = stepVar;
+                }
+                else
+                {
+                    // Simple property navigation
+                    condParts.Add($"{prevVar}.ValueKind == JsonValueKind.Object && {prevVar}.TryGetProperty(\"{escaped}\"u8, out var {stepVar})");
+                    prevVar = stepVar;
+                }
+            }
+
+            string i1 = indent + "    ";
+
+            // Declare intermediate vars for index steps (out var handles the rest)
+            for (int i = 0; i <= lastIdxStep; i++)
+            {
+                if (constantIndices[i] >= 0)
+                {
+                    L(sb, indent, $"JsonElement {pfx}_{i} = default;");
+                }
+            }
+
+            int postSteps = propertyNames.Length - lastIdxStep - 1;
+
+            L(sb, indent, $"if ({string.Join($"\n{i1}&& ", condParts)})");
+            L(sb, indent, "{");
+
+            if (postSteps == 0)
+            {
+                // Terminal: the index pick result is the final value
+                L(sb, i1, $"{resultVar} = {prevVar};");
+            }
+            else
+            {
+                // Post-index steps may encounter arrays — use accumulation + post-predicate nav.
+                L(sb, i1, "JsonElement __ipFirst = default;");
+                L(sb, i1, "int __ipMc = 0;");
+                L(sb, i1, "var __ipBuf = default(ElementBuffer);");
+                L(sb, i1, "try");
+                L(sb, i1, "{");
+                string i2 = i1 + "    ";
+
+                EmitPostPredicateNavigation(sb, i2, prevVar, propertyNames, lastIdxStep + 1, 0, inAutoMap: false, pathField);
+
+                EmitMaterializeResult(sb, i2, resultVar, wsVar);
+
+                L(sb, i1, "}");
+                L(sb, i1, "finally");
+                L(sb, i1, "{");
+                L(sb, i1 + "    ", "__ipBuf.Dispose();");
+                L(sb, i1, "}");
+            }
+
+            L(sb, indent, "}");
+
+            // Fallback for any case the inline path doesn't handle
+            // (array input, array at intermediate step, etc.)
+            L(sb, indent, "else");
+            L(sb, indent, "{");
+            L(sb, i1, $"{resultVar} = {H}.NavigatePropertyChainWithPredicates({dataVar}, {pathField}, {indicesExpr}, null, {wsVar});");
             L(sb, indent, "}");
 
             return true;
@@ -1653,7 +1791,7 @@ public static class JsonataCodeGenerator
             L(sb, i1, "}");
 
             // Materialize result
-            L(sb, i1, $"{resultVar} = __ipMc == 0 ? default : __ipMc == 1 ? __ipFirst : __ipBuf.ToResult({wsVar});");
+            EmitMaterializeResult(sb, i1, resultVar, wsVar);
 
             L(sb, indent, "}");
             L(sb, indent, "finally");
@@ -1708,7 +1846,7 @@ public static class JsonataCodeGenerator
 
                 L(sb, i1, "}");
 
-                L(sb, i1, $"{resultVar} = __ipMc == 0 ? default : __ipMc == 1 ? __ipFirst : __ipBuf.ToResult({wsVar});");
+                EmitMaterializeResult(sb, i1, resultVar, wsVar);
 
                 L(sb, indent, "}");
                 L(sb, indent, "finally");
@@ -1716,6 +1854,19 @@ public static class JsonataCodeGenerator
                 L(sb, indent + "    ", "__ipBuf.Dispose();");
                 L(sb, indent, "}");
             }
+        }
+
+        /// <summary>
+        /// Emits the standard accumulator materialization: converts the
+        /// <c>__ipFirst/__ipMc/__ipBuf</c> triple into a final result element.
+        /// </summary>
+        private static void EmitMaterializeResult(
+            StringBuilder sb,
+            string indent,
+            string resultVar,
+            string wsVar)
+        {
+            L(sb, indent, $"{resultVar} = __ipMc == 0 ? default : __ipMc == 1 ? __ipFirst : __ipBuf.ToResult({wsVar});");
         }
 
         private static bool HasStages(JsonataNode node)

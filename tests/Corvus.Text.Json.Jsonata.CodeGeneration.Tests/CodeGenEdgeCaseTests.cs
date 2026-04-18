@@ -155,6 +155,13 @@ public class CodeGenEdgeCaseTests : IClassFixture<CodeGenConformanceFixture>
     [InlineData("items.name", """{"items":[{"name":"x"},{"name":"y"}]}""", """["x","y"]""")]
     // Numeric index in path
     [InlineData("items[0]", """{"items":[10,20,30]}""", "10")]
+    // Constant index with post-index navigation (benchmark: indexed-chain pattern)
+    [InlineData("items.orders[0].products.name", """{"items":{"orders":[{"products":[{"name":"x"},{"name":"y"}]}]}}""", """["x","y"]""")]
+    // Constant index 0 on singleton (autoboxing: non-array treated as single-element)
+    [InlineData("data.value[0].name", """{"data":{"value":{"name":"hello"}}}""", "\"hello\"")]
+    // Constant index out of range returns undefined — tested in undefined section
+    // Deep constant index chain with multiple indices
+    [InlineData("a.b[0].c[0].d", """{"a":{"b":[{"c":[{"d":42}]}]}}""", "42")]
     // Filter predicate in path
     [InlineData("items[val > 1].name", """{"items":[{"val":1,"name":"a"},{"val":2,"name":"b"},{"val":3,"name":"c"}]}""", """["b","c"]""")]
     // Filter predicate with post-predicate array flattening
@@ -267,6 +274,8 @@ public class CodeGenEdgeCaseTests : IClassFixture<CodeGenConformanceFixture>
     [InlineData("data.missing[]", """{"data":{"name":"Alice"}}""")]
     // Post-predicate: singleton source object with equality predicate mismatch
     [InlineData("""item[type="b"].name""", """{"item":{"type":"a","name":"found"}}""")]
+    // Constant index out of range in chain
+    [InlineData("items.orders[5].name", """{"items":{"orders":[{"name":"x"}]}}""")]
     public void EvaluateExpressionReturnsUndefined(string expression, string inputJson)
     {
         CompiledExpression compiled = this.fixture.GetOrCompile(expression);
