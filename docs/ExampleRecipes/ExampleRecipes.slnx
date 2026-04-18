@@ -77,4 +77,7 @@
   <Folder Name="/025-JSONata/">
     <Project Path="025-JSONata\JSONata.csproj" />
   </Folder>
+  <Folder Name="/026-JMESPath/">
+    <Project Path="026-JMESPath\JMESPath.csproj" />
+  </Folder>
 </Solution>

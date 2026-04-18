@@ -786,6 +786,37 @@ $jsonataSize = (Get-ChildItem $jsonataOutputDir -Recurse -File | Measure-Object 
 Write-Host "  JSONata Playground: $([math]::Round($jsonataSize/1MB, 1)) MB" -ForegroundColor Gray
 Write-StepDuration "JSONata Playground build" $sw
 
+# -- Step 9c: Build JMESPath Playground (Blazor WASM) ---------------------------
+Write-Host "`n[9c/10] Building JMESPath Playground..." -ForegroundColor Cyan
+$sw = [System.Diagnostics.Stopwatch]::StartNew()
+
+$jmespathProject = Join-Path $repoRoot "docs\playground-jmespath\src\Corvus.Text.Json.JMESPath.Playground\Corvus.Text.Json.JMESPath.Playground.csproj"
+$jmespathPublishDir = Join-Path $here ".playground-jmespath-publish"
+$jmespathOutputDir = Join-Path $outputDir "playground-jmespath"
+
+& dotnet publish $jmespathProject -c Release -o $jmespathPublishDir --nologo
+if ($LASTEXITCODE -ne 0) { throw "JMESPath Playground publish failed" }
+
+$jmespathWwwroot = Join-Path $jmespathPublishDir "wwwroot"
+if (!(Test-Path $jmespathWwwroot)) {
+    throw "JMESPath Playground wwwroot not found at $jmespathWwwroot"
+}
+Copy-Item -Path $jmespathWwwroot -Destination $jmespathOutputDir -Recurse -Force
+
+$jmespathIndex = Join-Path $jmespathOutputDir "index.html"
+if (Test-Path $jmespathIndex) {
+    $indexContent = [System.IO.File]::ReadAllText($jmespathIndex)
+    $indexContent = $indexContent -replace '<base href="/" />', "<base href=`"$BasePathPrefix/playground-jmespath/`" />"
+    [System.IO.File]::WriteAllText($jmespathIndex, $indexContent)
+    Write-Host "  Updated base href to $BasePathPrefix/playground-jmespath/" -ForegroundColor Gray
+}
+
+Remove-Item $jmespathPublishDir -Recurse -Force -ErrorAction SilentlyContinue
+
+$jmespathSize = (Get-ChildItem $jmespathOutputDir -Recurse -File | Measure-Object -Property Length -Sum).Sum
+Write-Host "  JMESPath Playground: $([math]::Round($jmespathSize/1MB, 1)) MB" -ForegroundColor Gray
+Write-StepDuration "JMESPath Playground build" $sw
+
 # Tell Jekyll to include _-prefixed directories needed by the Blazor playground.
 # We cannot use .nojekyll (which bypasses Jekyll entirely) because the resulting
 # unprocessed artifact exceeds GitHub Pages deployment limits.
@@ -839,6 +870,7 @@ $lycheeArgs = @(
     "--exclude-path", "api[/\\]v4"
     "--exclude-path", "playground"
     "--exclude-path", "playground-jsonata"
+    "--exclude-path", "playground-jmespath"
     "."
 )
 
@@ -862,7 +894,7 @@ if ($BasePathPrefix) {
 
     # Rewrite HTML files (excluding playgrounds which use <base href>)
     $htmlFiles = Get-ChildItem $outputDir -Filter "*.html" -Recurse -File |
-        Where-Object { $_.FullName -notlike "*\playground\*" -and $_.FullName -notlike "*\playground-jsonata\*" }
+        Where-Object { $_.FullName -notlike "*\playground\*" -and $_.FullName -notlike "*\playground-jsonata\*" -and $_.FullName -notlike "*\playground-jmespath\*" }
     $rewriteCount = 0
     foreach ($htmlFile in $htmlFiles) {
         $content = [System.IO.File]::ReadAllText($htmlFile.FullName)
@@ -886,7 +918,7 @@ if ($BasePathPrefix) {
         $original = $content
 
         # Rewrite string literals containing root-relative paths: '/api/', '/search-index.json', etc.
-        $content = $content -replace "(['""])(/(?!/)(?:api|search|docs|examples|getting-started|assets|playground|playground-jsonata))", "`$1$BasePathPrefix`$2"
+        $content = $content -replace "(['""])(/(?!/)(?:api|search|docs|examples|getting-started|assets|playground|playground-jsonata|playground-jmespath))", "`$1$BasePathPrefix`$2"
 
         if ($content -ne $original) {
             [System.IO.File]::WriteAllText($jsFile.FullName, $content)
@@ -928,7 +960,7 @@ $defaultGitHubUrl = "https://github.com/corvus-dotnet/Corvus.JsonSchema"
 if ($canonicalRepoUrl -ne $defaultGitHubUrl) {
     Write-Host "`n  Rewriting GitHub URLs: $defaultGitHubUrl -> $canonicalRepoUrl" -ForegroundColor Cyan
     $htmlFiles = Get-ChildItem $outputDir -Filter "*.html" -Recurse -File |
-        Where-Object { $_.FullName -notlike "*\playground\*" -and $_.FullName -notlike "*\playground-jsonata\*" }
+        Where-Object { $_.FullName -notlike "*\playground\*" -and $_.FullName -notlike "*\playground-jsonata\*" -and $_.FullName -notlike "*\playground-jmespath\*" }
     $ghRewriteCount = 0
     foreach ($htmlFile in $htmlFiles) {
         $content = [System.IO.File]::ReadAllText($htmlFile.FullName)
