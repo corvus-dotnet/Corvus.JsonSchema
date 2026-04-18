@@ -1409,7 +1409,9 @@ public static class JsonataCodeGenerator
         /// (e.g., <c>items.orders[0].products.name</c>). Navigates property steps with
         /// index picks inline, then uses <see cref="EmitPostPredicateNavigation"/> for
         /// any remaining steps after the last index (which may encounter array intermediates).
-        /// Falls back to the helper when the input is an array (auto-map at root).
+        /// Handles pre-index auto-mapping (when an intermediate step returns an Array) by
+        /// emitting an iteration loop that collects all results into a single accumulator.
+        /// Falls back to the helper only for nested array edge cases.
         /// </summary>
         private bool TryEmitInlineConstantIndexChain(
             StringBuilder sb,
@@ -1440,16 +1442,13 @@ public static class JsonataCodeGenerator
                 return false;
             }
 
-            resultVar = NextVar();
-            L(sb, indent, $"JsonElement {resultVar} = default;");
-
             // Use a unique prefix to avoid collisions when multiple constant-index
             // chains appear in the same generated method.
             string pfx = $"__ci{_varCounter}";
+            resultVar = NextVar();
+            L(sb, indent, $"JsonElement {resultVar} = default;");
 
-            // Build inline conditions up to and including the last index pick.
-            // Steps between indices are pure Object→TryGetProperty (safe because
-            // each index pick yields exactly one element).
+            // Build inline conditions for the all-Object fast path (no auto-mapping).
             var condParts = new List<string>();
             string prevVar = dataVar;
 
@@ -1460,14 +1459,12 @@ public static class JsonataCodeGenerator
 
                 if (constantIndices[i] >= 0)
                 {
-                    // Property + index: navigate then pick from array
                     string rawVar = $"{pfx}_{i}r";
                     condParts.Add($"{prevVar}.ValueKind == JsonValueKind.Object && {prevVar}.TryGetProperty(\"{escaped}\"u8, out var {rawVar})");
 
                     int idx = constantIndices[i];
                     if (idx == 0)
                     {
-                        // Index 0: array→first element, non-array→itself (autoboxing)
                         condParts.Add($"(({rawVar}.ValueKind == JsonValueKind.Array ? {rawVar}.GetArrayLength() > 0 ? ({stepVar} = {rawVar}[0]).ValueKind >= 0 : false : ({stepVar} = {rawVar}).ValueKind >= 0))");
                     }
                     else
@@ -1479,13 +1476,13 @@ public static class JsonataCodeGenerator
                 }
                 else
                 {
-                    // Simple property navigation
                     condParts.Add($"{prevVar}.ValueKind == JsonValueKind.Object && {prevVar}.TryGetProperty(\"{escaped}\"u8, out var {stepVar})");
                     prevVar = stepVar;
                 }
             }
 
             string i1 = indent + "    ";
+            int postSteps = propertyNames.Length - lastIdxStep - 1;
 
             // Declare intermediate vars for index steps (out var handles the rest)
             for (int i = 0; i <= lastIdxStep; i++)
@@ -1496,47 +1493,210 @@ public static class JsonataCodeGenerator
                 }
             }
 
-            int postSteps = propertyNames.Length - lastIdxStep - 1;
-
+            // Fast path: all pre-index steps are Objects — no auto-mapping needed.
             L(sb, indent, $"if ({string.Join($"\n{i1}&& ", condParts)})");
             L(sb, indent, "{");
 
             if (postSteps == 0)
             {
-                // Terminal: the index pick result is the final value
                 L(sb, i1, $"{resultVar} = {prevVar};");
             }
             else
             {
-                // Post-index steps may encounter arrays — use accumulation + post-predicate nav.
-                L(sb, i1, "JsonElement __ipFirst = default;");
-                L(sb, i1, "int __ipMc = 0;");
-                L(sb, i1, "var __ipBuf = default(ElementBuffer);");
-                L(sb, i1, "try");
-                L(sb, i1, "{");
-                string i2 = i1 + "    ";
-
-                EmitPostPredicateNavigation(sb, i2, prevVar, propertyNames, lastIdxStep + 1, 0, inAutoMap: false, pathField);
-
-                EmitMaterializeResult(sb, i2, resultVar, wsVar);
-
-                L(sb, i1, "}");
-                L(sb, i1, "finally");
-                L(sb, i1, "{");
-                L(sb, i1 + "    ", "__ipBuf.Dispose();");
-                L(sb, i1, "}");
+                EmitAccumulatedPostNavigation(sb, i1, prevVar, propertyNames, lastIdxStep + 1, resultVar, wsVar, pathField);
             }
 
             L(sb, indent, "}");
 
-            // Fallback for any case the inline path doesn't handle
-            // (array input, array at intermediate step, etc.)
+            // Auto-map path: data is still Object but a pre-index step returned an Array.
+            // This avoids intermediate document allocations by collecting all leaf results
+            // into a single accumulator.
+            L(sb, indent, $"else if ({dataVar}.ValueKind == JsonValueKind.Object)");
+            L(sb, indent, "{");
+
+            EmitPreIndexAutoMapBlock(sb, i1, dataVar, propertyNames, constantIndices, lastIdxStep, postSteps, pfx, resultVar, wsVar, pathField, indicesExpr);
+
+            L(sb, indent, "}");
+
+            // Fallback for root-level arrays and other edge cases (root arrays have
+            // global index semantics that require collecting before indexing).
             L(sb, indent, "else");
             L(sb, indent, "{");
             L(sb, i1, $"{resultVar} = {H}.NavigatePropertyChainWithPredicates({dataVar}, {pathField}, {indicesExpr}, null, {wsVar});");
             L(sb, indent, "}");
 
             return true;
+        }
+
+        /// <summary>
+        /// Emits the auto-mapping block for pre-index steps when the fast path fails.
+        /// Uses the accumulator pattern and recursively handles Object/Array at each
+        /// pre-index step, then emits the index pick + post-index navigation.
+        /// </summary>
+        private static void EmitPreIndexAutoMapBlock(
+            StringBuilder sb,
+            string indent,
+            string dataVar,
+            string[] propertyNames,
+            int[] constantIndices,
+            int lastIdxStep,
+            int postSteps,
+            string pfx,
+            string resultVar,
+            string wsVar,
+            string pathField,
+            string indicesExpr)
+        {
+            L(sb, indent, "JsonElement __ipFirst = default;");
+            L(sb, indent, "int __ipMc = 0;");
+            L(sb, indent, "var __ipBuf = default(ElementBuffer);");
+            L(sb, indent, "try");
+            L(sb, indent, "{");
+            string i1 = indent + "    ";
+
+            // Navigate pre-index steps recursively
+            EmitPreIndexStep(sb, i1, dataVar, propertyNames, constantIndices, 0, lastIdxStep, postSteps, pfx, wsVar, pathField);
+
+            EmitMaterializeResult(sb, i1, resultVar, wsVar);
+
+            L(sb, indent, "}");
+            L(sb, indent, "finally");
+            L(sb, indent, "{");
+            L(sb, indent + "    ", "__ipBuf.Dispose();");
+            L(sb, indent, "}");
+        }
+
+        /// <summary>
+        /// Recursively emits pre-index step navigation handling both Object and Array
+        /// intermediate results. At the index step, emits the index pick + post-index nav.
+        /// </summary>
+        private static void EmitPreIndexStep(
+            StringBuilder sb,
+            string indent,
+            string sourceVar,
+            string[] propertyNames,
+            int[] constantIndices,
+            int currentStep,
+            int lastIdxStep,
+            int postSteps,
+            string pfx,
+            string wsVar,
+            string pathField)
+        {
+            string escaped = EscapeStringLiteral(propertyNames[currentStep]);
+            string propVar = $"{pfx}_am{currentStep}";
+
+            if (constantIndices[currentStep] >= 0)
+            {
+                // This IS the index step — do property nav + index pick
+                EmitIndexPickAndPost(sb, indent, sourceVar, escaped, constantIndices[currentStep], propVar, pfx, propertyNames, lastIdxStep, postSteps, wsVar, pathField);
+            }
+            else
+            {
+                // Pre-index step: TryGetProperty, then handle Object/Array
+                L(sb, indent, $"if ({sourceVar}.ValueKind == JsonValueKind.Object && {sourceVar}.TryGetProperty(\"{escaped}\"u8, out var {propVar}))");
+                L(sb, indent, "{");
+                string i1 = indent + "    ";
+
+                if (currentStep + 1 <= lastIdxStep)
+                {
+                    // More pre-index steps to go — handle Object/Array at this level
+                    L(sb, i1, $"if ({propVar}.ValueKind == JsonValueKind.Object)");
+                    L(sb, i1, "{");
+                    EmitPreIndexStep(sb, i1 + "    ", propVar, propertyNames, constantIndices, currentStep + 1, lastIdxStep, postSteps, pfx, wsVar, pathField);
+                    L(sb, i1, "}");
+
+                    string elVar = $"{pfx}_el{currentStep}";
+                    L(sb, i1, $"else if ({propVar}.ValueKind == JsonValueKind.Array)");
+                    L(sb, i1, "{");
+                    string i2 = i1 + "    ";
+                    L(sb, i2, $"foreach (var {elVar} in {propVar}.EnumerateArray())");
+                    L(sb, i2, "{");
+                    string i3 = i2 + "    ";
+                    L(sb, i3, $"if ({elVar}.ValueKind == JsonValueKind.Object)");
+                    L(sb, i3, "{");
+                    EmitPreIndexStep(sb, i3 + "    ", elVar, propertyNames, constantIndices, currentStep + 1, lastIdxStep, postSteps, pfx, wsVar, pathField);
+                    L(sb, i3, "}");
+                    L(sb, i2, "}");
+                    L(sb, i1, "}");
+                }
+                else
+                {
+                    // Next step is the index step
+                    EmitPreIndexStep(sb, i1, propVar, propertyNames, constantIndices, currentStep + 1, lastIdxStep, postSteps, pfx, wsVar, pathField);
+                }
+
+                L(sb, indent, "}");
+            }
+        }
+
+        /// <summary>
+        /// Emits the index pick (TryGetProperty + array element access) followed by
+        /// post-index navigation using <see cref="EmitPostPredicateNavigation"/>.
+        /// Collects results into the surrounding <c>__ipFirst/__ipMc/__ipBuf</c> accumulator.
+        /// </summary>
+        private static void EmitIndexPickAndPost(
+            StringBuilder sb,
+            string indent,
+            string sourceVar,
+            string escapedPropName,
+            int idx,
+            string propVar,
+            string pfx,
+            string[] propertyNames,
+            int lastIdxStep,
+            int postSteps,
+            string wsVar,
+            string pathField)
+        {
+            string rawVar = $"{pfx}_ir";
+            string pickedVar = $"{pfx}_ip";
+
+            // Navigate to the index property and pick the element in a single condition.
+            if (idx == 0)
+            {
+                // Index 0: array→first element, non-array→itself (autoboxing)
+                L(sb, indent, $"if ({sourceVar}.TryGetProperty(\"{escapedPropName}\"u8, out var {rawVar}))");
+                L(sb, indent, "{");
+                string i1 = indent + "    ";
+
+                L(sb, i1, $"var {pickedVar} = {rawVar}.ValueKind == JsonValueKind.Array ? ({rawVar}.GetArrayLength() > 0 ? {rawVar}[0] : default) : {rawVar};");
+                L(sb, i1, $"if ({rawVar}.ValueKind != JsonValueKind.Array || {rawVar}.GetArrayLength() > 0)");
+                L(sb, i1, "{");
+                string i2 = i1 + "    ";
+
+                if (postSteps == 0)
+                {
+                    EmitCollectElement(sb, i2, pickedVar);
+                }
+                else
+                {
+                    EmitPostPredicateNavigation(sb, i2, pickedVar, propertyNames, lastIdxStep + 1, 0, inAutoMap: false, pathField);
+                }
+
+                L(sb, i1, "}");
+                L(sb, indent, "}");
+            }
+            else
+            {
+                // Index > 0: must be an array with sufficient length
+                L(sb, indent, $"if ({sourceVar}.TryGetProperty(\"{escapedPropName}\"u8, out var {rawVar}) && {rawVar}.ValueKind == JsonValueKind.Array && {idx} < {rawVar}.GetArrayLength())");
+                L(sb, indent, "{");
+                string i1 = indent + "    ";
+
+                L(sb, i1, $"var {pickedVar} = {rawVar}[{idx}];");
+
+                if (postSteps == 0)
+                {
+                    EmitCollectElement(sb, i1, pickedVar);
+                }
+                else
+                {
+                    EmitPostPredicateNavigation(sb, i1, pickedVar, propertyNames, lastIdxStep + 1, 0, inAutoMap: false, pathField);
+                }
+
+                L(sb, indent, "}");
+            }
         }
 
         /// <summary>
@@ -1860,6 +2020,37 @@ public static class JsonataCodeGenerator
         /// Emits the standard accumulator materialization: converts the
         /// <c>__ipFirst/__ipMc/__ipBuf</c> triple into a final result element.
         /// </summary>
+        /// <summary>
+        /// Emits post-index navigation wrapped in an accumulator pattern (try/finally).
+        /// Used when post-index steps may encounter arrays requiring auto-map.
+        /// </summary>
+        private static void EmitAccumulatedPostNavigation(
+            StringBuilder sb,
+            string indent,
+            string sourceVar,
+            string[] propertyNames,
+            int startStep,
+            string resultVar,
+            string wsVar,
+            string pathField)
+        {
+            L(sb, indent, "JsonElement __ipFirst = default;");
+            L(sb, indent, "int __ipMc = 0;");
+            L(sb, indent, "var __ipBuf = default(ElementBuffer);");
+            L(sb, indent, "try");
+            L(sb, indent, "{");
+            string i1 = indent + "    ";
+
+            EmitPostPredicateNavigation(sb, i1, sourceVar, propertyNames, startStep, 0, inAutoMap: false, pathField);
+            EmitMaterializeResult(sb, i1, resultVar, wsVar);
+
+            L(sb, indent, "}");
+            L(sb, indent, "finally");
+            L(sb, indent, "{");
+            L(sb, indent + "    ", "__ipBuf.Dispose();");
+            L(sb, indent, "}");
+        }
+
         private static void EmitMaterializeResult(
             StringBuilder sb,
             string indent,
