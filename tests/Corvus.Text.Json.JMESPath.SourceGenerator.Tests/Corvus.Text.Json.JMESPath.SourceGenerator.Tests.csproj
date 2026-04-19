@@ -34,12 +34,16 @@
     <ProjectReference Include="..\..\src\Corvus.Text.Json.JMESPath\Corvus.Text.Json.JMESPath.csproj" />
   </ItemGroup>
 
-  <!-- Source generator reference (analyzer-only, no runtime DLL) -->
+  <!-- Source generator reference: acts as analyzer for integration tests AND regular reference for diagnostic tests -->
   <ItemGroup>
     <ProjectReference Include="..\..\src\Corvus.Text.Json.JMESPath.SourceGenerator\Corvus.Text.Json.JMESPath.SourceGenerator.csproj"
-                      PrivateAssets="all"
-                      ReferenceOutputAssembly="false"
-                      OutputItemType="Analyzer" />
+                      OutputItemType="Analyzer"
+                      ReferenceOutputAssembly="true" />
+  </ItemGroup>
+
+  <!-- Roslyn API for CSharpGeneratorDriver-based diagnostic tests -->
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.12.0" />
   </ItemGroup>
 
   <!-- JMESPath expression files as AdditionalFiles for the source generator -->
