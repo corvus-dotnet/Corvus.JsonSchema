@@ -25,6 +25,7 @@
 
   <ItemGroup>
     <Compile Include="..\Common\JsonConstants.cs" Link="Common\JsonConstants.cs" />
+    <Compile Include="..\Common\Utf8KeyHashSet.cs" Link="Common\Utf8KeyHashSet.cs" />
   </ItemGroup>
 
   <ItemGroup>

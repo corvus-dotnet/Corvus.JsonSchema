@@ -707,35 +707,15 @@ internal static partial class Compiler
 
         return (in JsonElement data, JsonWorkspace ws) =>
         {
-            // Evaluate all args first (also validates they're objects)
             JsonElement[] vals = ArrayPool<JsonElement>.Shared.Rent(evalArgs.Length);
             try
             {
-                int estimatedCount = 0;
                 for (int i = 0; i < evalArgs.Length; i++)
                 {
                     vals[i] = evalArgs[i](data, ws);
-                    RequireObject("merge", vals[i]);
-                    estimatedCount += vals[i].GetPropertyCount();
                 }
 
-                JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateBuilder(
-                    ws,
-                    (vals, evalArgs.Length),
-                    static (in (JsonElement[] Vals, int Count) ctx, ref JsonElement.ObjectBuilder builder) =>
-                    {
-                        for (int i = 0; i < ctx.Count; i++)
-                        {
-                            foreach (JsonProperty<JsonElement> prop in ctx.Vals[i].EnumerateObject())
-                            {
-                                using UnescapedUtf8JsonString name = prop.Utf8NameSpan;
-                                builder.AddProperty(name.Span, prop.Value, escapeName: false, nameRequiresUnescaping: false);
-                            }
-                        }
-                    },
-                    estimatedMemberCount: estimatedCount);
-
-                return (JsonElement)doc.RootElement;
+                return JMESPathCodeGenHelpers.MergeRT(vals, evalArgs.Length, ws);
             }
             finally
             {

@@ -8,7 +8,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Corvus.Text.Json.Internal;
 
-namespace Corvus.Text.Json.Jsonata;
+namespace Corvus.Text.Json.Internal;
 
 #pragma warning disable CS9191 // The 'ref' modifier for argument corresponding to 'in' parameter is equivalent to 'in'. Consider using 'in' instead.
 

@@ -210,6 +210,25 @@ public class CodeGenHelpersTests
         Assert.Equal(3, result.GetProperty("c"u8).GetDouble());
     }
 
+    [Fact]
+    public void Merge_ArrayOverload_OverlappingKeys_LastWins()
+    {
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+        JsonElement[] objects =
+        [
+            JsonElement.ParseValue("""{"a":1,"b":10}"""u8),
+            JsonElement.ParseValue("""{"b":2}"""u8),
+            JsonElement.ParseValue("""{"b":99,"c":3}"""u8),
+        ];
+
+        JsonElement result = JMESPathCodeGenHelpers.Merge(objects, workspace);
+
+        Assert.Equal(1, result.GetProperty("a"u8).GetDouble());
+        Assert.Equal(99, result.GetProperty("b"u8).GetDouble());
+        Assert.Equal(3, result.GetProperty("c"u8).GetDouble());
+        Assert.Equal(3, result.GetPropertyCount());
+    }
+
     // ----- IsTruthy -----
 
     [Theory]

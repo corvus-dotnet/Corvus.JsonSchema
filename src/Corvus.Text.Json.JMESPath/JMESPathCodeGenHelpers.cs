@@ -924,23 +924,149 @@ public static class JMESPathCodeGenHelpers
             estimatedCount += val.GetPropertyCount();
         }
 
+#if NET
+        Span<int> buckets = stackalloc int[Utf8KeyHashSet.StackAllocBucketSize];
+        Span<byte> entries = stackalloc byte[Utf8KeyHashSet.StackAllocEntrySize];
+        Span<byte> keyBuf = stackalloc byte[Utf8KeyHashSet.StackAllocKeyBufferSize];
+
+        var ctx = new MergeDedupArrayContext(objects, objects.Length, estimatedCount, buckets, entries, keyBuf);
         JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateBuilder(
             workspace,
-            (objects, objects.Length),
-            static (in (JsonElement[] Vals, int Count) ctx, ref JsonElement.ObjectBuilder builder) =>
+            ctx,
+            static (in MergeDedupArrayContext c, ref JsonElement.ObjectBuilder builder) =>
             {
-                for (int i = 0; i < ctx.Count; i++)
+                using var hashSet = new Utf8KeyHashSet(c.EstimatedCount, c.Buckets, c.Entries, c.KeyBuffer);
+                for (int i = c.Count - 1; i >= 0; i--)
                 {
-                    foreach (JsonProperty<JsonElement> prop in ctx.Vals[i].EnumerateObject())
+                    foreach (JsonProperty<JsonElement> prop in c.Vals[i].EnumerateObject())
                     {
                         using UnescapedUtf8JsonString name = prop.Utf8NameSpan;
-                        builder.AddProperty(name.Span, prop.Value, escapeName: false, nameRequiresUnescaping: false);
+                        if (hashSet.AddIfNotExists(name.Span))
+                        {
+                            builder.AddProperty(name.Span, prop.Value, escapeName: false, nameRequiresUnescaping: false);
+                        }
                     }
                 }
             },
             estimatedMemberCount: estimatedCount);
 
         return (JsonElement)doc.RootElement;
+#else
+        int[] rentedBuckets = ArrayPool<int>.Shared.Rent(Utf8KeyHashSet.StackAllocBucketSize);
+        byte[] rentedEntries = ArrayPool<byte>.Shared.Rent(Utf8KeyHashSet.StackAllocEntrySize);
+        byte[] rentedKeyBuf = ArrayPool<byte>.Shared.Rent(Utf8KeyHashSet.StackAllocKeyBufferSize);
+
+        try
+        {
+            var ctx = new MergeDedupRentedArrayContext(objects, objects.Length, estimatedCount, rentedBuckets, rentedEntries, rentedKeyBuf);
+            JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateBuilder(
+                workspace,
+                ctx,
+                static (in MergeDedupRentedArrayContext c, ref JsonElement.ObjectBuilder builder) =>
+                {
+                    using var hashSet = new Utf8KeyHashSet(c.EstimatedCount, c.Buckets, c.Entries, c.KeyBuffer);
+                    for (int i = c.Count - 1; i >= 0; i--)
+                    {
+                        foreach (JsonProperty<JsonElement> prop in c.Vals[i].EnumerateObject())
+                        {
+                            using UnescapedUtf8JsonString name = prop.Utf8NameSpan;
+                            if (hashSet.AddIfNotExists(name.Span))
+                            {
+                                builder.AddProperty(name.Span, prop.Value, escapeName: false, nameRequiresUnescaping: false);
+                            }
+                        }
+                    }
+                },
+                estimatedMemberCount: estimatedCount);
+
+            return (JsonElement)doc.RootElement;
+        }
+        finally
+        {
+            ArrayPool<int>.Shared.Return(rentedBuckets);
+            ArrayPool<byte>.Shared.Return(rentedEntries);
+            ArrayPool<byte>.Shared.Return(rentedKeyBuf);
+        }
+#endif
+    }
+
+    /// <summary>
+    /// Internal merge used by the RT path with a rented array and explicit count.
+    /// Validates inputs and delegates to the same dedup logic as the public <see cref="Merge(JsonElement[], JsonWorkspace)"/>.
+    /// </summary>
+    internal static JsonElement MergeRT(JsonElement[] objects, int count, JsonWorkspace workspace)
+    {
+        int estimatedCount = 0;
+        for (int i = 0; i < count; i++)
+        {
+            RequireObject("merge", objects[i]);
+            estimatedCount += objects[i].GetPropertyCount();
+        }
+
+#if NET
+        Span<int> buckets = stackalloc int[Utf8KeyHashSet.StackAllocBucketSize];
+        Span<byte> entries = stackalloc byte[Utf8KeyHashSet.StackAllocEntrySize];
+        Span<byte> keyBuf = stackalloc byte[Utf8KeyHashSet.StackAllocKeyBufferSize];
+
+        var ctx = new MergeDedupArrayContext(objects, count, estimatedCount, buckets, entries, keyBuf);
+        JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateBuilder(
+            workspace,
+            ctx,
+            static (in MergeDedupArrayContext c, ref JsonElement.ObjectBuilder builder) =>
+            {
+                using var hashSet = new Utf8KeyHashSet(c.EstimatedCount, c.Buckets, c.Entries, c.KeyBuffer);
+                for (int i = c.Count - 1; i >= 0; i--)
+                {
+                    foreach (JsonProperty<JsonElement> prop in c.Vals[i].EnumerateObject())
+                    {
+                        using UnescapedUtf8JsonString name = prop.Utf8NameSpan;
+                        if (hashSet.AddIfNotExists(name.Span))
+                        {
+                            builder.AddProperty(name.Span, prop.Value, escapeName: false, nameRequiresUnescaping: false);
+                        }
+                    }
+                }
+            },
+            estimatedMemberCount: estimatedCount);
+
+        return (JsonElement)doc.RootElement;
+#else
+        int[] rentedBuckets = ArrayPool<int>.Shared.Rent(Utf8KeyHashSet.StackAllocBucketSize);
+        byte[] rentedEntries = ArrayPool<byte>.Shared.Rent(Utf8KeyHashSet.StackAllocEntrySize);
+        byte[] rentedKeyBuf = ArrayPool<byte>.Shared.Rent(Utf8KeyHashSet.StackAllocKeyBufferSize);
+
+        try
+        {
+            var ctx = new MergeDedupRentedArrayContext(objects, count, estimatedCount, rentedBuckets, rentedEntries, rentedKeyBuf);
+            JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateBuilder(
+                workspace,
+                ctx,
+                static (in MergeDedupRentedArrayContext c, ref JsonElement.ObjectBuilder builder) =>
+                {
+                    using var hashSet = new Utf8KeyHashSet(c.EstimatedCount, c.Buckets, c.Entries, c.KeyBuffer);
+                    for (int i = c.Count - 1; i >= 0; i--)
+                    {
+                        foreach (JsonProperty<JsonElement> prop in c.Vals[i].EnumerateObject())
+                        {
+                            using UnescapedUtf8JsonString name = prop.Utf8NameSpan;
+                            if (hashSet.AddIfNotExists(name.Span))
+                            {
+                                builder.AddProperty(name.Span, prop.Value, escapeName: false, nameRequiresUnescaping: false);
+                            }
+                        }
+                    }
+                },
+                estimatedMemberCount: estimatedCount);
+
+            return (JsonElement)doc.RootElement;
+        }
+        finally
+        {
+            ArrayPool<int>.Shared.Return(rentedBuckets);
+            ArrayPool<byte>.Shared.Return(rentedEntries);
+            ArrayPool<byte>.Shared.Return(rentedKeyBuf);
+        }
+#endif
     }
 
     /// <summary>Computes <c>merge(obj1, obj2)</c> for exactly 2 arguments, avoiding heap array allocation.</summary>
@@ -951,26 +1077,85 @@ public static class JMESPathCodeGenHelpers
 
         int estimatedCount = obj1.GetPropertyCount() + obj2.GetPropertyCount();
 
+#if NET
+        Span<int> buckets = stackalloc int[Utf8KeyHashSet.StackAllocBucketSize];
+        Span<byte> entries = stackalloc byte[Utf8KeyHashSet.StackAllocEntrySize];
+        Span<byte> keyBuf = stackalloc byte[Utf8KeyHashSet.StackAllocKeyBufferSize];
+
+        var ctx = new MergeDedup2Context(obj1, obj2, estimatedCount, buckets, entries, keyBuf);
         JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateBuilder(
             workspace,
-            (obj1, obj2),
-            static (in (JsonElement Obj1, JsonElement Obj2) ctx, ref JsonElement.ObjectBuilder builder) =>
+            ctx,
+            static (in MergeDedup2Context c, ref JsonElement.ObjectBuilder builder) =>
             {
-                foreach (JsonProperty<JsonElement> prop in ctx.Obj1.EnumerateObject())
+                using var hashSet = new Utf8KeyHashSet(c.EstimatedCount, c.Buckets, c.Entries, c.KeyBuffer);
+
+                // Reverse order: obj2 properties first (last wins)
+                foreach (JsonProperty<JsonElement> prop in c.Obj2.EnumerateObject())
                 {
                     using UnescapedUtf8JsonString name = prop.Utf8NameSpan;
-                    builder.AddProperty(name.Span, prop.Value, escapeName: false, nameRequiresUnescaping: false);
+                    if (hashSet.AddIfNotExists(name.Span))
+                    {
+                        builder.AddProperty(name.Span, prop.Value, escapeName: false, nameRequiresUnescaping: false);
+                    }
                 }
 
-                foreach (JsonProperty<JsonElement> prop in ctx.Obj2.EnumerateObject())
+                foreach (JsonProperty<JsonElement> prop in c.Obj1.EnumerateObject())
                 {
                     using UnescapedUtf8JsonString name = prop.Utf8NameSpan;
-                    builder.AddProperty(name.Span, prop.Value, escapeName: false, nameRequiresUnescaping: false);
+                    if (hashSet.AddIfNotExists(name.Span))
+                    {
+                        builder.AddProperty(name.Span, prop.Value, escapeName: false, nameRequiresUnescaping: false);
+                    }
                 }
             },
             estimatedMemberCount: estimatedCount);
 
         return (JsonElement)doc.RootElement;
+#else
+        int[] rentedBuckets = ArrayPool<int>.Shared.Rent(Utf8KeyHashSet.StackAllocBucketSize);
+        byte[] rentedEntries = ArrayPool<byte>.Shared.Rent(Utf8KeyHashSet.StackAllocEntrySize);
+        byte[] rentedKeyBuf = ArrayPool<byte>.Shared.Rent(Utf8KeyHashSet.StackAllocKeyBufferSize);
+
+        try
+        {
+            var ctx = new MergeDedupRented2Context(obj1, obj2, estimatedCount, rentedBuckets, rentedEntries, rentedKeyBuf);
+            JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateBuilder(
+                workspace,
+                ctx,
+                static (in MergeDedupRented2Context c, ref JsonElement.ObjectBuilder builder) =>
+                {
+                    using var hashSet = new Utf8KeyHashSet(c.EstimatedCount, c.Buckets, c.Entries, c.KeyBuffer);
+
+                    foreach (JsonProperty<JsonElement> prop in c.Obj2.EnumerateObject())
+                    {
+                        using UnescapedUtf8JsonString name = prop.Utf8NameSpan;
+                        if (hashSet.AddIfNotExists(name.Span))
+                        {
+                            builder.AddProperty(name.Span, prop.Value, escapeName: false, nameRequiresUnescaping: false);
+                        }
+                    }
+
+                    foreach (JsonProperty<JsonElement> prop in c.Obj1.EnumerateObject())
+                    {
+                        using UnescapedUtf8JsonString name = prop.Utf8NameSpan;
+                        if (hashSet.AddIfNotExists(name.Span))
+                        {
+                            builder.AddProperty(name.Span, prop.Value, escapeName: false, nameRequiresUnescaping: false);
+                        }
+                    }
+                },
+                estimatedMemberCount: estimatedCount);
+
+            return (JsonElement)doc.RootElement;
+        }
+        finally
+        {
+            ArrayPool<int>.Shared.Return(rentedBuckets);
+            ArrayPool<byte>.Shared.Return(rentedEntries);
+            ArrayPool<byte>.Shared.Return(rentedKeyBuf);
+        }
+#endif
     }
 
     /// <summary>Computes <c>not_null(arg1, arg2, ...)</c>.</summary>
@@ -1688,4 +1873,46 @@ public static class JMESPathCodeGenHelpers
 
         return cache;
     }
+
+#if NET
+    private readonly ref struct MergeDedupArrayContext(JsonElement[] vals, int count, int estimatedCount, Span<int> buckets, Span<byte> entries, Span<byte> keyBuffer)
+    {
+        public readonly JsonElement[] Vals = vals;
+        public readonly int Count = count;
+        public readonly int EstimatedCount = estimatedCount;
+        public readonly Span<int> Buckets = buckets;
+        public readonly Span<byte> Entries = entries;
+        public readonly Span<byte> KeyBuffer = keyBuffer;
+    }
+
+    private readonly ref struct MergeDedup2Context(JsonElement obj1, JsonElement obj2, int estimatedCount, Span<int> buckets, Span<byte> entries, Span<byte> keyBuffer)
+    {
+        public readonly JsonElement Obj1 = obj1;
+        public readonly JsonElement Obj2 = obj2;
+        public readonly int EstimatedCount = estimatedCount;
+        public readonly Span<int> Buckets = buckets;
+        public readonly Span<byte> Entries = entries;
+        public readonly Span<byte> KeyBuffer = keyBuffer;
+    }
+#else
+    private readonly struct MergeDedupRentedArrayContext(JsonElement[] vals, int count, int estimatedCount, int[] buckets, byte[] entries, byte[] keyBuffer)
+    {
+        public readonly JsonElement[] Vals = vals;
+        public readonly int Count = count;
+        public readonly int EstimatedCount = estimatedCount;
+        public readonly int[] Buckets = buckets;
+        public readonly byte[] Entries = entries;
+        public readonly byte[] KeyBuffer = keyBuffer;
+    }
+
+    private readonly struct MergeDedupRented2Context(JsonElement obj1, JsonElement obj2, int estimatedCount, int[] buckets, byte[] entries, byte[] keyBuffer)
+    {
+        public readonly JsonElement Obj1 = obj1;
+        public readonly JsonElement Obj2 = obj2;
+        public readonly int EstimatedCount = estimatedCount;
+        public readonly int[] Buckets = buckets;
+        public readonly byte[] Entries = entries;
+        public readonly byte[] KeyBuffer = keyBuffer;
+    }
+#endif
 }
