@@ -3491,40 +3491,6 @@ internal static class BuiltInFunctions
         };
     }
 
-    private static string RegexReplaceWithString(string str, Regex regex, string replacement, int limit)
-    {
-        if (limit <= 0)
-        {
-            return str;
-        }
-
-        int count = 0;
-        int searchStart = 0;
-        var sb = new StringBuilder();
-
-        while (count < limit && searchStart <= str.Length)
-        {
-            Match m = regex.Match(str, searchStart);
-            if (!m.Success)
-            {
-                break;
-            }
-
-            if (m.Length == 0)
-            {
-                throw new JsonataException("D1004", SR.D1004_RegularExpressionMatchesZeroLengthString, 0);
-            }
-
-            sb.Append(str, searchStart, m.Index - searchStart);
-            sb.Append(ApplyJsonataBackreferences(replacement, m));
-            searchStart = m.Index + m.Length;
-            count++;
-        }
-
-        sb.Append(str, searchStart, str.Length - searchStart);
-        return sb.ToString();
-    }
-
     private static string RegexReplaceWithFunction(
         string str,
         Regex regex,
@@ -3577,86 +3543,6 @@ internal static class BuiltInFunctions
         }
 
         sb.Append(str, searchStart, str.Length - searchStart);
-        return sb.ToString();
-    }
-
-    private static string ApplyJsonataBackreferences(string replacement, Match match)
-    {
-        int numGroups = match.Groups.Count - 1;
-        var sb = new StringBuilder(replacement.Length);
-
-        for (int i = 0; i < replacement.Length; i++)
-        {
-            if (replacement[i] != '$')
-            {
-                sb.Append(replacement[i]);
-                continue;
-            }
-
-            // At '$'
-            if (i + 1 >= replacement.Length)
-            {
-                // $ at end of string → literal $
-                sb.Append('$');
-                continue;
-            }
-
-            char next = replacement[i + 1];
-
-            if (next == '$')
-            {
-                // $$ → literal $
-                sb.Append('$');
-                i++;
-            }
-            else if (next >= '0' && next <= '9')
-            {
-                // Read all following digits
-                int digitStart = i + 1;
-                int digitEnd = digitStart;
-                while (digitEnd < replacement.Length && replacement[digitEnd] >= '0' && replacement[digitEnd] <= '9')
-                {
-                    digitEnd++;
-                }
-
-                string allDigits = replacement.Substring(digitStart, digitEnd - digitStart);
-
-                // Try longest valid prefix (shorten from the right)
-                int consumed = allDigits.Length;
-                bool found = false;
-                while (consumed > 0)
-                {
-                    int groupNum = int.Parse(allDigits.Substring(0, consumed), CultureInfo.InvariantCulture);
-                    if (groupNum <= numGroups)
-                    {
-                        sb.Append(match.Groups[groupNum].Value);
-
-                        // Remaining digits become literal
-                        sb.Append(allDigits, consumed, allDigits.Length - consumed);
-                        found = true;
-                        break;
-                    }
-
-                    consumed--;
-                }
-
-                if (!found)
-                {
-                    // No valid group reference; remaining digits after the single invalid digit are literal
-                    sb.Append(allDigits, 1, allDigits.Length - 1);
-                }
-
-                i = digitEnd - 1;
-            }
-            else
-            {
-                // $ followed by non-digit → literal $<char>
-                sb.Append('$');
-                sb.Append(next);
-                i++;
-            }
-        }
-
         return sb.ToString();
     }
 

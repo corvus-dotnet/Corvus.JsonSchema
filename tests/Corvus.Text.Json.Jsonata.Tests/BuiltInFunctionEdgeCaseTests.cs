@@ -494,4 +494,289 @@ public class BuiltInFunctionEdgeCaseTests
         string result = Eval("""$shuffle([])""");
         Assert.True(result == "[]" || result == "undefined");
     }
+
+    // ─── CompileFilter standalone (FunctionalCompiler lines 7944-8012) ───
+
+    [Fact]
+    public void Filter_BooleanPredicate_True()
+    {
+        // Boolean filter: true keeps element
+        Assert.Equal("42", Eval("""42[true]"""));
+    }
+
+    [Fact]
+    public void Filter_BooleanPredicate_False()
+    {
+        // Boolean filter: false drops element
+        Assert.Equal("undefined", Eval("""42[false]"""));
+    }
+
+    [Fact]
+    public void Filter_NumericIndex_OnArray()
+    {
+        // Numeric filter = index access
+        Assert.Equal("20", Eval("""$[1]""", """[10,20,30]"""));
+    }
+
+    [Fact]
+    public void Filter_NegativeIndex_OnArray()
+    {
+        // Negative numeric index wraps from end
+        Assert.Equal("30", Eval("""$[-1]""", """[10,20,30]"""));
+    }
+
+    [Fact]
+    public void Filter_OutOfBounds_ReturnsUndefined()
+    {
+        Assert.Equal("undefined", Eval("""$[99]""", """[10,20,30]"""));
+    }
+
+    [Fact]
+    public void Filter_GeneralTruthiness_String()
+    {
+        // Non-boolean, non-numeric: general truthiness (non-empty string is truthy)
+        Assert.Equal("42", Eval("""42["yes"]"""));
+    }
+
+    [Fact]
+    public void Filter_GeneralTruthiness_EmptyString()
+    {
+        // Empty string is falsy
+        Assert.Equal("undefined", Eval("""42[""]"""));
+    }
+
+    // ─── CompileFocusSortStage (FunctionalCompiler lines 8098-8153) ───
+
+    [Fact]
+    public void FocusSort_ByFocusVariable()
+    {
+        // Focus variable sort: Employee@$e^($e.age)
+        string data = """[{"name":"C","age":30},{"name":"A","age":10},{"name":"B","age":20}]""";
+        Assert.Equal(
+            """[{"name":"A","age":10},{"name":"B","age":20},{"name":"C","age":30}]""",
+            Eval("""$@$e^($e.age)""", data));
+    }
+
+    [Fact]
+    public void FocusSort_Descending()
+    {
+        string data = """[{"name":"C","age":30},{"name":"A","age":10},{"name":"B","age":20}]""";
+        Assert.Equal(
+            """[{"name":"C","age":30},{"name":"B","age":20},{"name":"A","age":10}]""",
+            Eval("""$@$e^(>$e.age)""", data));
+    }
+
+    [Fact]
+    public void FocusSort_SingleElement_PassesThrough()
+    {
+        // Single element: sort returns the item itself (unwrapped)
+        string data = """[{"name":"A","age":10}]""";
+        Assert.Equal(
+            """{"name":"A","age":10}""",
+            Eval("""$@$e^($e.age)""", data));
+    }
+
+    // ─── $match with capture groups (BuiltInFunctions lines 3255-3328) ───
+
+    [Fact]
+    public void Match_DatePattern_WithGroups()
+    {
+        string result = Eval("""$match("2026-04-19", /(\d{4})-(\d{2})-(\d{2})/)""");
+        Assert.Contains("\"match\":\"2026-04-19\"", result);
+        Assert.Contains("\"groups\":[\"2026\",\"04\",\"19\"]", result);
+    }
+
+    [Fact]
+    public void Match_NoCaptureGroups_FirstWord()
+    {
+        string result = Eval("""$match("hello world", /\w+/)""");
+        Assert.Contains("\"match\":\"hello\"", result);
+    }
+
+    [Fact]
+    public void Match_NoMatch_ReturnsUndefined()
+    {
+        Assert.Equal("undefined", Eval("""$match("hello", /xyz/)"""));
+    }
+
+    // ─── $spread multi-element sequences (BuiltInFunctions lines 2632-2701) ───
+
+    [Fact]
+    public void Spread_SingleObjectIntoKeyValuePairs()
+    {
+        string result = Eval("""$spread({"a":1,"b":2})""");
+        Assert.Equal("""[{"a":1},{"b":2}]""", result);
+    }
+
+    // ─── $formatNumber: exponent, grouping, subpicture ───
+
+    [Fact]
+    public void FormatNumber_NegativeWithSubpicture()
+    {
+        // Two-part picture: positive;negative — returns a string
+        Assert.Equal("\"(1,234.56)\"", Eval("""$formatNumber(-1234.56, "#,##0.00;(#,##0.00)")"""));
+    }
+
+    [Fact]
+    public void FormatNumber_IrregularGrouping()
+    {
+        // Irregular grouping: ##,##,##0
+        string result = Eval("""$formatNumber(123456789, "##,##,##0")""");
+        // Verify it's a valid formatted string
+        Assert.StartsWith("\"", result);
+        Assert.Contains(",", result);
+    }
+
+    // ─── $fromMillis/$toMillis with custom picture and timezone ───
+
+    [Fact]
+    public void FromMillis_CustomPicture_YearMonthDay()
+    {
+        // 2021-01-01 00:00:00 UTC = 1609459200000
+        Assert.Equal("\"2021-01-01\"", Eval("""$fromMillis(1609459200000, "[Y0001]-[M01]-[D01]")"""));
+    }
+
+    [Fact]
+    public void FromMillis_WithTimezone()
+    {
+        // UTC+5:30 -> 2021-01-01T05:30:00
+        string result = Eval("""$fromMillis(1609459200000, "[Y0001]-[M01]-[D01]T[H01]:[m01]:[s01]", "+05:30")""");
+        Assert.Equal("\"2021-01-01T05:30:00\"", result);
+    }
+
+    [Fact]
+    public void ToMillis_CustomPicture()
+    {
+        Assert.Equal("1609459200000", Eval("""$toMillis("2021-01-01", "[Y0001]-[M01]-[D01]")"""));
+    }
+
+    [Fact]
+    public void FromMillis_DayOfWeek()
+    {
+        // 2021-01-01 was a Friday
+        string result = Eval("""$fromMillis(1609459200000, "[FNn]")""");
+        Assert.Equal("\"Friday\"", result);
+    }
+
+    [Fact]
+    public void FromMillis_MonthName()
+    {
+        string result = Eval("""$fromMillis(1609459200000, "[MNn]")""");
+        Assert.Equal("\"January\"", result);
+    }
+
+    [Fact]
+    public void FromMillis_MonthAbbrev()
+    {
+        string result = Eval("""$fromMillis(1609459200000, "[MNn,3-3]")""");
+        Assert.Equal("\"Jan\"", result);
+    }
+
+    [Fact]
+    public void FromMillis_WeekNumber()
+    {
+        // 2021-01-01 is in ISO week 53 of 2020 (Friday)
+        string result = Eval("""$fromMillis(1609459200000, "[W01]")""");
+        // Week 53 of 2020 or week 01 of 2021 depending on convention
+        Assert.Matches(@"^\""[0-9]+\""$", result);
+    }
+
+    [Fact]
+    public void FromMillis_NegativeTimezone()
+    {
+        // UTC-5:00 -> 2020-12-31T19:00:00
+        string result = Eval("""$fromMillis(1609459200000, "[Y0001]-[M01]-[D01]T[H01]:[m01]:[s01]", "-05:00")""");
+        Assert.Equal("\"2020-12-31T19:00:00\"", result);
+    }
+
+    // ─── $formatInteger ───
+
+    [Fact]
+    public void FormatInteger_Words()
+    {
+        Assert.Equal("\"forty-two\"", Eval("""$formatInteger(42, "w")"""));
+    }
+
+    [Fact]
+    public void FormatInteger_Ordinal()
+    {
+        Assert.Equal("\"first\"", Eval("""$formatInteger(1, "w;o")"""));
+    }
+
+    [Fact]
+    public void FormatInteger_RomanUpper()
+    {
+        Assert.Equal("\"XLII\"", Eval("""$formatInteger(42, "I")"""));
+    }
+
+    [Fact]
+    public void FormatInteger_RomanLower()
+    {
+        Assert.Equal("\"xlii\"", Eval("""$formatInteger(42, "i")"""));
+    }
+
+    // ─── FormatNumberLikeJavaScript (FunctionalCompiler) ───
+
+    [Fact]
+    public void String_SmallExponent_CoercionPath()
+    {
+        // $string of very small number — JSONata preserves scientific notation
+        Assert.Equal("\"1e-7\"", Eval("""$string(1e-7)"""));
+    }
+
+    [Fact]
+    public void String_LargeNumber_CoercionPath()
+    {
+        Assert.Equal("\"100000000000000000000\"", Eval("""$string(1e20)"""));
+    }
+
+    // ─── Coalesce operator ───
+
+    [Fact]
+    public void Coalesce_MissingProperty_FallsToDefault()
+    {
+        string expr = "missing ?? \"default\"";
+        string data = """{"existing":"value"}""";
+        Assert.Equal("\"default\"", Eval(expr, data));
+    }
+
+    [Fact]
+    public void Coalesce_ExistingProperty_ReturnsValue()
+    {
+        string expr = "existing ?? \"default\"";
+        string data = """{"existing":"value"}""";
+        Assert.Equal("\"value\"", Eval(expr, data));
+    }
+
+    // ─── Path chain over nested arrays ───
+
+    [Fact]
+    public void DeepPathChain_NestedArrays()
+    {
+        string data = """{"data":[{"items":[{"tag":"a"},{"tag":"b"}]},{"items":[{"tag":"c"}]}]}""";
+        Assert.Equal("""["a","b","c"]""", Eval("data.items.tag", data));
+    }
+
+    // ─── Equality predicate on array property ───
+
+    [Fact]
+    public void EqualityPredicate_FiltersArray()
+    {
+        string data = """{"users":[{"name":"Alice","email":"a@test.com"},{"name":"Bob","email":"b@test.com"}]}""";
+        Assert.Equal("\"a@test.com\"", Eval("""users[name="Alice"].email""", data));
+    }
+
+    // ─── $replace with function ───
+
+    [Fact]
+    public void Replace_WithFunction()
+    {
+        Assert.Equal("\"HELLO world\"", Eval("""$replace("hello world", /\w+/, function($m) { $uppercase($m.match) }, 1)"""));
+    }
+
+    [Fact]
+    public void Replace_WithFunction_AllMatches()
+    {
+        Assert.Equal("\"HELLO WORLD\"", Eval("""$replace("hello world", /\w+/, function($m) { $uppercase($m.match) })"""));
+    }
 }

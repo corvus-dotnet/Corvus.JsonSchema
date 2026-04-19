@@ -140,13 +140,13 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
 
     [Theory]
     [Trait("category", "codegen-coverage")]
-    [InlineData("$encodeUrlComponent(\"hello world\")", "null")]
-    [InlineData("$decodeUrlComponent(\"hello%20world\")", "null")]
-    [InlineData("$encodeUrl(\"https://example.com/path\")", "null")]
-    [InlineData("$decodeUrl(\"https%3A%2F%2Fexample.com\")", "null")]
-    public void UrlEncoding(string expression, string data)
+    [InlineData("$encodeUrlComponent(\"hello world\")", "null", "\"hello%20world\"")]
+    [InlineData("$decodeUrlComponent(\"hello%20world\")", "null", "\"hello world\"")]
+    [InlineData("$encodeUrl(\"https://example.com/path\")", "null", "\"https://example.com/path\"")]
+    [InlineData("$decodeUrl(\"https%3A%2F%2Fexample.com\")", "null", "\"https://example.com\"")]
+    public void UrlEncoding(string expression, string data, string expected)
     {
-        this.AssertCgAndRtMatchNoExpected(expression, data);
+        this.AssertCgAndRtMatch(expression, data, expected);
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -301,13 +301,14 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
 
     [Theory]
     [Trait("category", "codegen-coverage")]
-    [InlineData("$flatten([[1,2],[3,[4,5]]])", "null")]
-    [InlineData("$flatten([1,[2,[3,[4]]]])", "null")]
+    [InlineData("$flatten([[1,2],[3,[4,5]]])", "null", "[1,2,3,4,5]")]
+    [InlineData("$flatten([1,[2,[3,[4]]]])", "null", "[1,2,3,4]")]
     [InlineData("$flatten(items.tags)",
-        "{\"items\":[{\"tags\":[\"a\",\"b\"]},{\"tags\":[\"c\"]}]}")]
-    public void FlattenOperations(string expression, string data)
+        "{\"items\":[{\"tags\":[\"a\",\"b\"]},{\"tags\":[\"c\"]}]}",
+        "[\"a\",\"b\",\"c\"]")]
+    public void FlattenOperations(string expression, string data, string expected)
     {
-        this.AssertCgAndRtMatchNoExpected(expression, data);
+        this.AssertCgAndRtMatch(expression, data, expected);
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -316,20 +317,15 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
 
     [Theory]
     [Trait("category", "codegen-coverage")]
-    [InlineData("$match(\"hello world\", /wo/)", "null")]
-    [InlineData("$match(\"abc123\", /([a-z]+)(\\d+)/)", "null")]
+    [InlineData("$match(\"hello world\", /wo/)", "null",
+        "{\"match\":\"wo\",\"index\":6,\"groups\":[]}")]
+    [InlineData("$match(\"abc123\", /([a-z]+)(\\d+)/)", "null",
+        "{\"match\":\"abc123\",\"index\":0,\"groups\":[\"abc\",\"123\"]}")]
     [InlineData("$contains(\"test123\", /\\d+/)", "null", "true")]
     [InlineData("$replace(\"hello\", /l/, \"r\")", "null", "\"herro\"")]
-    public void RegexOperations(string expression, string data, string? expected = null)
+    public void RegexOperations(string expression, string data, string expected)
     {
-        if (expected != null)
-        {
-            this.AssertCgAndRtMatch(expression, data, expected);
-        }
-        else
-        {
-            this.AssertCgAndRtMatchNoExpected(expression, data);
-        }
+        this.AssertCgAndRtMatch(expression, data, expected);
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -340,20 +336,13 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     [Theory]
     [Trait("category", "codegen-coverage")]
     [InlineData("*", "{\"a\":1,\"b\":2,\"c\":3}", "[1,2,3]")]
-    [InlineData("**.v", "{\"a\":{\"v\":1},\"b\":{\"c\":{\"v\":2}}}")]
+    [InlineData("**.v", "{\"a\":{\"v\":1},\"b\":{\"c\":{\"v\":2}}}", "[1,2]")]
     [InlineData("items.*",
         "{\"items\":{\"x\":1,\"y\":2,\"z\":3}}",
         "[1,2,3]")]
-    public void WildcardAndDescendant(string expression, string data, string? expected = null)
+    public void WildcardAndDescendant(string expression, string data, string expected)
     {
-        if (expected != null)
-        {
-            this.AssertCgAndRtMatch(expression, data, expected);
-        }
-        else
-        {
-            this.AssertCgAndRtMatchNoExpected(expression, data);
-        }
+        this.AssertCgAndRtMatch(expression, data, expected);
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -362,18 +351,11 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
 
     [Theory]
     [Trait("category", "codegen-coverage")]
-    [InlineData("$base64encode(\"hello\")", "null")]
+    [InlineData("$base64encode(\"hello\")", "null", "\"aGVsbG8=\"")]
     [InlineData("$base64decode(\"aGVsbG8=\")", "null", "\"hello\"")]
-    public void Base64Operations(string expression, string data, string? expected = null)
+    public void Base64Operations(string expression, string data, string expected)
     {
-        if (expected != null)
-        {
-            this.AssertCgAndRtMatch(expression, data, expected);
-        }
-        else
-        {
-            this.AssertCgAndRtMatchNoExpected(expression, data);
-        }
+        this.AssertCgAndRtMatch(expression, data, expected);
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -402,20 +384,13 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
 
     [Theory]
     [Trait("category", "codegen-coverage")]
-    [InlineData("$string({\"a\":1,\"b\":[2,3]})", "null")]
-    [InlineData("$string([1,2,3])", "null")]
+    [InlineData("$string({\"a\":1,\"b\":[2,3]})", "null", "\"{\\\"a\\\":1,\\\"b\\\":[2,3]}\"")]
+    [InlineData("$string([1,2,3])", "null", "\"[1,2,3]\"")]
     [InlineData("$string(null)", "null", "\"null\"")]
     [InlineData("$string(true)", "null", "\"true\"")]
-    public void StringifyComplex(string expression, string data, string? expected = null)
+    public void StringifyComplex(string expression, string data, string expected)
     {
-        if (expected != null)
-        {
-            this.AssertCgAndRtMatch(expression, data, expected);
-        }
-        else
-        {
-            this.AssertCgAndRtMatchNoExpected(expression, data);
-        }
+        this.AssertCgAndRtMatch(expression, data, expected);
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -587,17 +562,11 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
         "{\"items\":[{\"name\":\"a\"},{\"name\":\"b\"}]}",
         "[\"a\",\"b\"]")]
     [InlineData("data.*[]",
-        "{\"data\":{\"x\":[1,2],\"y\":[3,4]}}")]
-    public void ChainWithKeepArray(string expression, string data, string? expected = null)
+        "{\"data\":{\"x\":[1,2],\"y\":[3,4]}}",
+        "[1,2,3,4]")]
+    public void ChainWithKeepArray(string expression, string data, string expected)
     {
-        if (expected != null)
-        {
-            this.AssertCgAndRtMatch(expression, data, expected);
-        }
-        else
-        {
-            this.AssertCgAndRtMatchNoExpected(expression, data);
-        }
+        this.AssertCgAndRtMatch(expression, data, expected);
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -758,12 +727,14 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     [Theory]
     [Trait("category", "codegen-coverage")]
     [InlineData("items.{category: value}",
-        "{\"items\":[{\"category\":\"A\",\"value\":1},{\"category\":\"B\",\"value\":2},{\"category\":\"A\",\"value\":3}]}")]
+        "{\"items\":[{\"category\":\"A\",\"value\":1},{\"category\":\"B\",\"value\":2},{\"category\":\"A\",\"value\":3}]}",
+        "[{\"A\":1},{\"B\":2},{\"A\":3}]")]
     [InlineData("items.{type: name}",
-        "{\"items\":[{\"type\":\"x\",\"name\":\"foo\"},{\"type\":\"y\",\"name\":\"bar\"},{\"type\":\"x\",\"name\":\"baz\"}]}")]
-    public void SimpleGroupByPerElement(string expression, string data)
+        "{\"items\":[{\"type\":\"x\",\"name\":\"foo\"},{\"type\":\"y\",\"name\":\"bar\"},{\"type\":\"x\",\"name\":\"baz\"}]}",
+        "[{\"x\":\"foo\"},{\"y\":\"bar\"},{\"x\":\"baz\"}]")]
+    public void SimpleGroupByPerElement(string expression, string data, string expected)
     {
-        this.AssertCgAndRtMatchNoExpected(expression, data);
+        this.AssertCgAndRtMatch(expression, data, expected);
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -774,12 +745,14 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     [Theory]
     [Trait("category", "codegen-coverage")]
     [InlineData("data.items{category: value}",
-        "{\"data\":{\"items\":[{\"category\":\"A\",\"value\":1},{\"category\":\"B\",\"value\":2},{\"category\":\"A\",\"value\":3}]}}")]
+        "{\"data\":{\"items\":[{\"category\":\"A\",\"value\":1},{\"category\":\"B\",\"value\":2},{\"category\":\"A\",\"value\":3}]}}",
+        "{\"A\":[1,3],\"B\":2}")]
     [InlineData("store.products{brand: price}",
-        "{\"store\":{\"products\":[{\"brand\":\"X\",\"price\":10},{\"brand\":\"Y\",\"price\":20},{\"brand\":\"X\",\"price\":30}]}}")]
-    public void FusedChainGroupByPerElement(string expression, string data)
+        "{\"store\":{\"products\":[{\"brand\":\"X\",\"price\":10},{\"brand\":\"Y\",\"price\":20},{\"brand\":\"X\",\"price\":30}]}}",
+        "{\"X\":[10,30],\"Y\":20}")]
+    public void FusedChainGroupByPerElement(string expression, string data, string expected)
     {
-        this.AssertCgAndRtMatchNoExpected(expression, data);
+        this.AssertCgAndRtMatch(expression, data, expected);
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -916,13 +889,15 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     [Trait("category", "codegen-coverage")]
     // 2-param on data property
     [InlineData("$each(obj, function($v, $k){ $k & \":\" & $string($v) })",
-        "{\"obj\":{\"x\":1,\"y\":2,\"z\":3}}")]
+        "{\"obj\":{\"x\":1,\"y\":2,\"z\":3}}",
+        "[\"x:1\",\"y:2\",\"z:3\"]")]
     // 1-param $each — just values
     [InlineData("$each(obj, function($v){ $v * 2 })",
-        "{\"obj\":{\"a\":1,\"b\":2,\"c\":3}}")]
-    public void EachPropertyOnData(string expression, string data)
+        "{\"obj\":{\"a\":1,\"b\":2,\"c\":3}}",
+        "[2,4,6]")]
+    public void EachPropertyOnData(string expression, string data, string expected)
     {
-        this.AssertCgAndRtMatchNoExpected(expression, data);
+        this.AssertCgAndRtMatch(expression, data, expected);
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -935,12 +910,14 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     [Theory]
     [Trait("category", "codegen-coverage")]
     [InlineData("[data.items.profiles.{\"fullName\": name, \"years\": age}]",
-        "{\"data\":{\"items\":[{\"profiles\":[{\"name\":\"Alice\",\"age\":30},{\"name\":\"Bob\",\"age\":25}]}]}}")]
+        "{\"data\":{\"items\":[{\"profiles\":[{\"name\":\"Alice\",\"age\":30},{\"name\":\"Bob\",\"age\":25}]}]}}",
+        "[{\"fullName\":\"Alice\",\"years\":30},{\"fullName\":\"Bob\",\"years\":25}]")]
     [InlineData("[store.dept.employees.{\"id\": empId, \"title\": role}]",
-        "{\"store\":{\"dept\":[{\"employees\":[{\"empId\":1,\"role\":\"dev\"},{\"empId\":2,\"role\":\"qa\"}]}]}}")]
-    public void FusedChainBuildArray(string expression, string data)
+        "{\"store\":{\"dept\":[{\"employees\":[{\"empId\":1,\"role\":\"dev\"},{\"empId\":2,\"role\":\"qa\"}]}]}}",
+        "[{\"id\":1,\"title\":\"dev\"},{\"id\":2,\"title\":\"qa\"}]")]
+    public void FusedChainBuildArray(string expression, string data, string expected)
     {
-        this.AssertCgAndRtMatchNoExpected(expression, data);
+        this.AssertCgAndRtMatch(expression, data, expected);
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -1212,8 +1189,8 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     [Trait("category", "codegen-coverage")]
     public void ShuffleFromBufferViaCg()
     {
-        // Can't assert exact order, just verify count and elements
-        this.AssertCgAndRtMatchNoExpected("$count($shuffle(items))", "{\"items\":[1,2,3,4,5]}");
+        // $shuffle randomizes order, but $count is deterministic
+        this.AssertCgAndRtMatch("$count($shuffle(items))", "{\"items\":[1,2,3,4,5]}", "5");
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -1261,7 +1238,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     [Trait("category", "codegen-coverage")]
     public void DescendantEnumeration()
     {
-        this.AssertCgAndRtMatchNoExpected("data.**", "{\"data\":{\"a\":{\"x\":1},\"b\":2}}");
+        this.AssertCgAndRtMatch("data.**", "{\"data\":{\"a\":{\"x\":1},\"b\":2}}", "[{\"a\":{\"x\":1},\"b\":2},{\"x\":1},1,2]");
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -1392,50 +1369,6 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
         Assert.Null(rtResult);
     }
 
-    private void AssertCgAndRtMatchNoExpected(string expression, string data)
-    {
-        // === CG path ===
-        CompiledExpression compiled = this.fixture.GetOrCompile(expression);
-
-        this.output.WriteLine($"Expression: {expression}");
-        this.output.WriteLine($"Inlined:    {compiled.IsInlined}");
-
-        if (compiled.Error is not null)
-        {
-            Assert.Fail($"CG compilation failed: {compiled.Error}");
-        }
-
-        Assert.NotNull(compiled.Method);
-
-        using var inputDoc = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes(data));
-        using JsonWorkspace workspace = JsonWorkspace.Create();
-
-        JsonElement cgResult = InvokeCg(compiled.Method, inputDoc.RootElement, workspace);
-        string cgJson = cgResult.ValueKind == JsonValueKind.Undefined ? "undefined" : cgResult.GetRawText();
-
-        // === RT path ===
-        string? rtResult = JsonataEvaluator.Default.EvaluateToString(expression, data);
-        string rtJson = rtResult ?? "undefined";
-
-        this.output.WriteLine($"CG: {cgJson}");
-        this.output.WriteLine($"RT: {rtJson}");
-
-        // Assert CG and RT produce the same output
-        if (cgJson == "undefined" && rtJson == "undefined")
-        {
-            return;
-        }
-
-        if (cgJson == "undefined" || rtJson == "undefined")
-        {
-            Assert.Fail($"Mismatch: CG={cgJson}, RT={rtJson}");
-        }
-
-        using var cgDoc = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes(cgJson));
-        using var rtDoc = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes(rtJson));
-        AssertJsonEqual(rtDoc.RootElement, cgDoc.RootElement);
-    }
-
     private static JsonElement InvokeCg(MethodInfo method, JsonElement data, JsonWorkspace workspace)
     {
         object?[] args = [data, workspace];
@@ -1500,5 +1433,462 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
         }
 
         Assert.Equal(expected.GetRawText(), actual.GetRawText());
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // $zip — multiple overloads (JsonataCodeGenHelpers lines 6528-6888)
+    // ═══════════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void Zip_SingleArg()
+    {
+        AssertCgAndRtMatch(
+            """$zip([1,2,3])""",
+            "null",
+            """[[1],[2],[3]]""");
+    }
+
+    [Fact]
+    public void Zip_TwoLiteralArrays()
+    {
+        AssertCgAndRtMatch(
+            """$zip([1,2,3],[4,5,6])""",
+            "null",
+            """[[1,4],[2,5],[3,6]]""");
+    }
+
+    [Fact]
+    public void Zip_ThreeArrays()
+    {
+        AssertCgAndRtMatch(
+            """$zip([1,2],[3,4],[5,6])""",
+            "null",
+            """[[1,3,5],[2,4,6]]""");
+    }
+
+    [Fact]
+    public void Zip_FourArrays_Variadic()
+    {
+        AssertCgAndRtMatch(
+            """$zip([1,2],[3,4],[5,6],[7,8])""",
+            "null",
+            """[[1,3,5,7],[2,4,6,8]]""");
+    }
+
+    [Fact]
+    public void Zip_MismatchedLengths()
+    {
+        // Shorter arrays truncate to shortest
+        AssertCgAndRtMatch(
+            """$zip([1,2,3],[4,5])""",
+            "null",
+            """[[1,4],[2,5]]""");
+    }
+
+    [Fact]
+    public void Zip_TwoChains_FromBuffers()
+    {
+        AssertCgAndRtMatch(
+            """$zip(data.prices, data.quantities)""",
+            """{"data":{"prices":[10,20,30],"quantities":[2,3,4]}}""",
+            """[[10,2],[20,3],[30,4]]""");
+    }
+
+    [Fact]
+    public void Zip_ThreeChains_FromBuffers()
+    {
+        AssertCgAndRtMatch(
+            """$zip(data.a, data.b, data.c)""",
+            """{"data":{"a":[1,2],"b":[3,4],"c":[5,6]}}""",
+            """[[1,3,5],[2,4,6]]""");
+    }
+
+    [Fact]
+    public void Zip_ChainAndLiteral_Mixed()
+    {
+        // Chain first, literal second → ZipBufferAndElement
+        AssertCgAndRtMatch(
+            """$zip(data.items, [10,20,30])""",
+            """{"data":{"items":[1,2,3]}}""",
+            """[[1,10],[2,20],[3,30]]""");
+    }
+
+    [Fact]
+    public void Zip_LiteralAndChain_Mixed()
+    {
+        // Literal first, chain second → ZipElementAndBuffer
+        AssertCgAndRtMatch(
+            """$zip([10,20,30], data.items)""",
+            """{"data":{"items":[1,2,3]}}""",
+            """[[10,1],[20,2],[30,3]]""");
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // ChainDistinct (JsonataCodeGenHelpers lines 4567-4601)
+    // ═══════════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void ChainDistinct_DuplicateStrings()
+    {
+        AssertCgAndRtMatch(
+            """$distinct(items.category)""",
+            """{"items":[{"category":"A"},{"category":"B"},{"category":"A"},{"category":"C"}]}""",
+            """["A","B","C"]""");
+    }
+
+    [Fact]
+    public void ChainDistinct_DuplicateNumbers()
+    {
+        AssertCgAndRtMatch(
+            """$distinct(orders.id)""",
+            """{"orders":[{"id":1},{"id":2},{"id":1},{"id":3}]}""",
+            """[1,2,3]""");
+    }
+
+    [Fact]
+    public void ChainDistinct_DeepChain()
+    {
+        AssertCgAndRtMatch(
+            """$distinct(data.nested.value)""",
+            """{"data":[{"nested":{"value":"X"}},{"nested":{"value":"Y"}},{"nested":{"value":"X"}}]}""",
+            """["X","Y"]""");
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // ChainKeepSingletonArray (JsonataCodeGenHelpers lines 4612-4646)
+    // ═══════════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void ChainKeepSingletonArray_MultipleItems()
+    {
+        AssertCgAndRtMatch(
+            """items.prices[]""",
+            """{"items":[{"prices":[1,2]},{"prices":[3]}]}""",
+            """[1,2,3]""");
+    }
+
+    [Fact]
+    public void ChainKeepSingletonArray_SingleValues()
+    {
+        AssertCgAndRtMatch(
+            """items.value[]""",
+            """{"items":[{"value":10},{"value":20}]}""",
+            """[10,20]""");
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // ChainMerge (JsonataCodeGenHelpers lines 4657-4691)
+    // ═══════════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void ChainMerge_OverlappingKeys()
+    {
+        AssertCgAndRtMatch(
+            """$merge(items.tags)""",
+            """{"items":[{"tags":{"a":1,"b":2}},{"tags":{"b":3,"c":4}}]}""",
+            """{"a":1,"b":3,"c":4}""");
+    }
+
+    [Fact]
+    public void ChainMerge_NoOverlap()
+    {
+        AssertCgAndRtMatch(
+            """$merge(data.config)""",
+            """{"data":[{"config":{"debug":true}},{"config":{"verbose":true}}]}""",
+            """{"debug":true,"verbose":true}""");
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // FusedChainGroupByPerElement (JsonataCodeGenHelpers lines 304-365)
+    // ═══════════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void FusedChainGroupByPerElement_Basic()
+    {
+        AssertCgAndRtMatch(
+            """data.items.{category: value}""",
+            """{"data":{"items":[{"category":"A","value":1},{"category":"B","value":2},{"category":"A","value":3}]}}""",
+            """[{"A":1},{"B":2},{"A":3}]""");
+    }
+
+    [Fact]
+    public void FusedChainGroupByPerElement_AllUnique()
+    {
+        AssertCgAndRtMatch(
+            """data.items.{name: score}""",
+            """{"data":{"items":[{"name":"x","score":10},{"name":"y","score":20}]}}""",
+            """[{"x":10},{"y":20}]""");
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // $formatNumber via CG (exponent, percent, per-mille, grouping)
+    // ═══════════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void CG_FormatNumber_Percent()
+    {
+        AssertCgAndRtMatch(
+            """$formatNumber(0.1234, "#0.##%")""",
+            "null",
+            "\"12.34%\"");
+    }
+
+    [Fact]
+    public void CG_FormatNumber_PerMille()
+    {
+        AssertCgAndRtMatch(
+            """$formatNumber(0.1234, "#0.#‰")""",
+            "null",
+            "\"123.4‰\"");
+    }
+
+    [Fact]
+    public void CG_FormatNumber_NegativeSubpicture()
+    {
+        AssertCgAndRtMatch(
+            """$formatNumber(-1234.56, "#,##0.00;(#,##0.00)")""",
+            "null",
+            "\"(1,234.56)\"");
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // $fromMillis/$toMillis via CG with custom pictures
+    // ═══════════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void CG_FromMillis_CustomPicture()
+    {
+        AssertCgAndRtMatch(
+            """$fromMillis(1609459200000, "[Y0001]-[M01]-[D01]")""",
+            "null",
+            "\"2021-01-01\"");
+    }
+
+    [Fact]
+    public void CG_FromMillis_WithTimezone()
+    {
+        AssertCgAndRtMatch(
+            """$fromMillis(1609459200000, "[Y0001]-[M01]-[D01]T[H01]:[m01]:[s01]", "+05:30")""",
+            "null",
+            "\"2021-01-01T05:30:00\"");
+    }
+
+    [Fact]
+    public void CG_ToMillis_CustomPicture()
+    {
+        AssertCgAndRtMatch(
+            """$toMillis("2021-01-01", "[Y0001]-[M01]-[D01]")""",
+            "null",
+            "1609459200000");
+    }
+
+    [Fact]
+    public void CG_FromMillis_MonthName()
+    {
+        AssertCgAndRtMatch(
+            """$fromMillis(1609459200000, "[MNn]")""",
+            "null",
+            "\"January\"");
+    }
+
+    [Fact]
+    public void CG_FromMillis_DayOfWeek()
+    {
+        AssertCgAndRtMatch(
+            """$fromMillis(1609459200000, "[FNn]")""",
+            "null",
+            "\"Friday\"");
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // $formatInteger via CG (word, ordinal, roman)
+    // ═══════════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void CG_FormatInteger_Words()
+    {
+        AssertCgAndRtMatch(
+            """$formatInteger(42, "w")""",
+            "null",
+            "\"forty-two\"");
+    }
+
+    [Fact]
+    public void CG_FormatInteger_Ordinal()
+    {
+        AssertCgAndRtMatch(
+            """$formatInteger(1, "w;o")""",
+            "null",
+            "\"first\"");
+    }
+
+    [Fact]
+    public void CG_FormatInteger_RomanUpper()
+    {
+        AssertCgAndRtMatch(
+            """$formatInteger(42, "I")""",
+            "null",
+            "\"XLII\"");
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // Focus sort via CG
+    // ═══════════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void CG_FocusSort_ByVariable()
+    {
+        AssertCgAndRtMatch(
+            """$@$e^($e.age)""",
+            """[{"name":"C","age":30},{"name":"A","age":10},{"name":"B","age":20}]""",
+            """[{"name":"A","age":10},{"name":"B","age":20},{"name":"C","age":30}]""");
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // $match via CG with capture groups
+    // ═══════════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void CG_Match_WithGroups()
+    {
+        AssertCgAndRtMatch(
+            """$match("2026-04-19", /(\d{4})-(\d{2})-(\d{2})/)""",
+            "null",
+            """{"match":"2026-04-19","index":0,"groups":["2026","04","19"]}""");
+    }
+
+    [Fact]
+    public void CG_Match_NoMatch()
+    {
+        AssertCgAndRtBothUndefined(
+            """$match("hello", /xyz/)""",
+            "null");
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // Coalesce operator via CG
+    // ═══════════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void CG_Coalesce_MissingFallback()
+    {
+        AssertCgAndRtMatch(
+            "missing ?? \"default\"",
+            """{"existing":"value"}""",
+            "\"default\"");
+    }
+
+    [Fact]
+    public void CG_Coalesce_ExistingValue()
+    {
+        AssertCgAndRtMatch(
+            "existing ?? \"default\"",
+            """{"existing":"value"}""",
+            "\"value\"");
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // $spread via CG
+    // ═══════════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void CG_Spread_ArrayOfObjects()
+    {
+        AssertCgAndRtMatch(
+            """$spread([{"a":1},{"b":2}])""",
+            "null",
+            """[{"a":1},{"b":2}]""");
+    }
+
+    [Fact]
+    public void CG_Spread_SingleObjectMultipleKeys()
+    {
+        AssertCgAndRtMatch(
+            """$spread({"a":1,"b":2})""",
+            "null",
+            """[{"a":1},{"b":2}]""");
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // $replace with function via CG
+    // ═══════════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void CG_Replace_WithFunction()
+    {
+        AssertCgAndRtMatch(
+            """$replace("hello world", /\w+/, function($m) { $uppercase($m.match) }, 1)""",
+            "null",
+            "\"HELLO world\"");
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // $string coercion of small exponent numbers
+    // ═══════════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void CG_String_SmallExponent()
+    {
+        AssertCgAndRtMatch(
+            """$string(1e-7)""",
+            "null",
+            "\"1e-7\"");
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // Deep path chain over nested arrays via CG
+    // ═══════════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void CG_DeepPathChain_NestedArrays()
+    {
+        AssertCgAndRtMatch(
+            "data.items.tag",
+            """{"data":[{"items":[{"tag":"a"},{"tag":"b"}]},{"items":[{"tag":"c"}]}]}""",
+            """["a","b","c"]""");
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // Equality predicate filtering via CG
+    // ═══════════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void CG_EqualityPredicate_FilterArray()
+    {
+        AssertCgAndRtMatch(
+            """users[name="Alice"].email""",
+            """{"users":[{"name":"Alice","email":"a@test.com"},{"name":"Bob","email":"b@test.com"}]}""",
+            "\"a@test.com\"");
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // $number hex/binary/octal via CG
+    // ═══════════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void CG_Number_Hex()
+    {
+        AssertCgAndRtMatch(
+            """$number("0xFF")""",
+            "null",
+            "255");
+    }
+
+    [Fact]
+    public void CG_Number_Binary()
+    {
+        AssertCgAndRtMatch(
+            """$number("0b101")""",
+            "null",
+            "5");
+    }
+
+    [Fact]
+    public void CG_Number_Octal()
+    {
+        AssertCgAndRtMatch(
+            """$number("0o777")""",
+            "null",
+            "511");
     }
 }
