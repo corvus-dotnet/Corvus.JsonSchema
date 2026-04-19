@@ -34,12 +34,16 @@
     <ProjectReference Include="..\..\src\Corvus.Text.Json.JsonLogic\Corvus.Text.Json.JsonLogic.csproj" />
   </ItemGroup>
 
-  <!-- Source generator reference (analyzer-only, no runtime DLL) -->
+  <!-- Source generator reference: acts as analyzer for integration tests AND regular reference for diagnostic tests -->
   <ItemGroup>
     <ProjectReference Include="..\..\src\Corvus.Text.Json.JsonLogic.SourceGenerator\Corvus.Text.Json.JsonLogic.SourceGenerator.csproj"
-                      PrivateAssets="all"
-                      ReferenceOutputAssembly="false"
-                      OutputItemType="Analyzer" />
+                      OutputItemType="Analyzer"
+                      ReferenceOutputAssembly="true" />
+  </ItemGroup>
+
+  <!-- Roslyn API for CSharpGeneratorDriver-based diagnostic tests -->
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.12.0" />
   </ItemGroup>
 
   <!-- JSON rule files as AdditionalFiles for the source generator -->

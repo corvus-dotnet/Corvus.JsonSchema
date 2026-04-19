@@ -27,7 +27,12 @@ namespace Corvus.Numerics;
 /// similar to how <see cref="BigInteger"/> extends integer arithmetic beyond fixed sizes.
 /// </para>
 /// </remarks>
-public readonly partial struct BigNumber :
+#if BUILDING_SOURCE_GENERATOR
+internal
+#else
+public
+#endif
+readonly partial struct BigNumber :
     IEquatable<BigNumber>,
     IComparable<BigNumber>,
     IComparable,

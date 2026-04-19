@@ -18,7 +18,12 @@ namespace Corvus.Numerics;
 /// <summary>
 /// Zero-allocation formatting methods for <see cref="BigNumber"/>.
 /// </summary>
-public readonly partial struct BigNumber
+#if BUILDING_SOURCE_GENERATOR
+internal
+#else
+public
+#endif
+readonly partial struct BigNumber
 {
     /// <summary>
     /// Tries to format this instance into the provided UTF-16 span with zero allocations.
