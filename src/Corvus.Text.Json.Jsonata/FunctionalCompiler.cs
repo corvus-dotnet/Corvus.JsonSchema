@@ -214,7 +214,10 @@ internal static class FunctionalCompiler
         }
 
         // Fast path for single-pair NameNode key + value
-        if (group.Pairs is [var pair] && pair.Key is NameNode keyName && pair.Value is NameNode valueName)
+        // After ProcessAst, bare NameNodes are wrapped in single-step PathNodes.
+        if (group.Pairs is [var pair]
+            && UnwrapSingleNameNode(pair.Key) is NameNode keyName
+            && UnwrapSingleNameNode(pair.Value) is NameNode valueName)
         {
             Utf8Name keyPropUtf8 = keyName.GetUtf8Name();
             Utf8Name valuePropUtf8 = valueName.GetUtf8Name();
@@ -1542,11 +1545,9 @@ internal static class FunctionalCompiler
 
         static Sequence CollectAndContinue(in JsonElement array, Utf8Name[] utf8Names, int[] constantIndices, (byte[] PropName, byte[][] ExpectedValues)[]? equalityPredicates, int step)
         {
-            bool hasIndexThisStep = constantIndices[step] >= 0;
-            bool hasEqPredThisStep = equalityPredicates?.Length > step && equalityPredicates[step].PropName is not null;
-            bool globalIndex = hasIndexThisStep && step == 0;
-            bool perElementIndex = hasIndexThisStep && step > 0;
-
+            // This method is only called at step 0 with constantIndices[0] >= 0,
+            // so globalIndex is always true. Collect all matching elements, then
+            // apply the index to select a single result.
             var builder = default(SequenceBuilder);
             foreach (var item in array.EnumerateArray())
             {
@@ -1554,104 +1555,17 @@ internal static class FunctionalCompiler
                 {
                     if (item.TryGetProperty(utf8Names[step].Span, out var propValue))
                     {
-                        if (perElementIndex)
+                        // Collect with auto-flatten
+                        if (propValue.ValueKind == JsonValueKind.Array)
                         {
-                            // Per-element index (step > 0): apply index inline, then continue
-                            if (propValue.ValueKind == JsonValueKind.Array)
+                            foreach (var child in propValue.EnumerateArray())
                             {
-                                int idx = constantIndices[step];
-                                if (idx < propValue.GetArrayLength())
-                                {
-                                    propValue = propValue[idx];
-                                }
-                                else
-                                {
-                                    continue;
-                                }
-                            }
-                            else if (constantIndices[step] != 0)
-                            {
-                                continue;
-                            }
-
-                            if (step + 1 < utf8Names.Length)
-                            {
-                                var result = EvalFromStep(propValue, utf8Names, constantIndices, equalityPredicates, step + 1);
-                                if (!result.IsUndefined)
-                                {
-                                    builder.AddRange(result);
-                                }
-
-                                result.ReturnBackingArray();
-                            }
-                            else
-                            {
-                                builder.Add(propValue);
-                            }
-                        }
-                        else if (hasEqPredThisStep)
-                        {
-                            // Per-element equality predicate: filter the property value (which should be an array)
-                            var pred = equalityPredicates![step];
-                            if (propValue.ValueKind == JsonValueKind.Array)
-                            {
-                                foreach (var child in propValue.EnumerateArray())
-                                {
-                                    if (MatchesEqualityPredicate(child, pred.PropName, pred.ExpectedValues))
-                                    {
-                                        if (step + 1 < utf8Names.Length)
-                                        {
-                                            var result = EvalFromStep(child, utf8Names, constantIndices, equalityPredicates, step + 1);
-                                            if (!result.IsUndefined)
-                                            {
-                                                builder.AddRange(result);
-                                            }
-
-                                            result.ReturnBackingArray();
-                                        }
-                                        else
-                                        {
-                                            builder.Add(child);
-                                        }
-                                    }
-                                }
-                            }
-                            else if (propValue.ValueKind == JsonValueKind.Object)
-                            {
-                                // Singleton: check if it matches
-                                if (MatchesEqualityPredicate(propValue, pred.PropName, pred.ExpectedValues))
-                                {
-                                    if (step + 1 < utf8Names.Length)
-                                    {
-                                        var result = EvalFromStep(propValue, utf8Names, constantIndices, equalityPredicates, step + 1);
-                                        if (!result.IsUndefined)
-                                        {
-                                            builder.AddRange(result);
-                                        }
-
-                                        result.ReturnBackingArray();
-                                    }
-                                    else
-                                    {
-                                        builder.Add(propValue);
-                                    }
-                                }
+                                builder.Add(child);
                             }
                         }
                         else
                         {
-                            // No per-element index or predicate: collect with auto-flatten
-                            if (propValue.ValueKind == JsonValueKind.Array)
-                            {
-                                foreach (var child in propValue.EnumerateArray())
-                                {
-                                    builder.Add(child);
-                                }
-                            }
-                            else
-                            {
-                                builder.Add(propValue);
-                            }
+                            builder.Add(propValue);
                         }
                     }
                 }
@@ -1667,47 +1581,23 @@ internal static class FunctionalCompiler
                 }
             }
 
-            // For step 0: apply global index to collected results
-            if (globalIndex)
+            // Apply global index to collected results
+            int idx = constantIndices[step];
+            if (idx >= builder.Count)
             {
-                int idx = constantIndices[step];
-                if (idx >= builder.Count)
-                {
-                    builder.ReturnArray();
-                    return Sequence.Undefined;
-                }
-
-                JsonElement indexed = builder[idx];
                 builder.ReturnArray();
-
-                if (step + 1 >= utf8Names.Length)
-                {
-                    return new Sequence(indexed);
-                }
-
-                return EvalFromStep(indexed, utf8Names, constantIndices, equalityPredicates, step + 1);
+                return Sequence.Undefined;
             }
 
-            // No index, more steps: continue per-element on collected results
-            if (!perElementIndex && !hasEqPredThisStep && step + 1 < utf8Names.Length)
+            JsonElement indexed = builder[idx];
+            builder.ReturnArray();
+
+            if (step + 1 >= utf8Names.Length)
             {
-                var resultBuilder = default(SequenceBuilder);
-                for (int i = 0; i < builder.Count; i++)
-                {
-                    var result = EvalFromStep(builder[i], utf8Names, constantIndices, equalityPredicates, step + 1);
-                    if (!result.IsUndefined)
-                    {
-                        resultBuilder.AddRange(result);
-                    }
-
-                    result.ReturnBackingArray();
-                }
-
-                builder.ReturnArray();
-                return resultBuilder.ToSequence();
+                return new Sequence(indexed);
             }
 
-            return builder.ToSequence();
+            return EvalFromStep(indexed, utf8Names, constantIndices, equalityPredicates, step + 1);
         }
 
         // Fused variant: writes leaf elements directly into a shared SequenceBuilder,
@@ -2248,12 +2138,13 @@ internal static class FunctionalCompiler
         // Detect single-pair group-by with NameNode key + NameNode value.
         // For this pattern, we can use the CVB object itself as the grouping accumulator,
         // avoiding Dictionary/List allocations, string extraction, and 2-phase evaluation.
+        // After ProcessAst, bare NameNodes are wrapped in single-step PathNodes.
         Utf8Name simpleGroupByKeyPropUtf8 = default;
         Utf8Name simpleGroupByValuePropUtf8 = default;
 
         if (groupByAst is not null && groupByPairs is { Length: 1 }
-            && groupByAst.Pairs[0].Key is NameNode keyNameNode
-            && groupByAst.Pairs[0].Value is NameNode valueNameNode)
+            && UnwrapSingleNameNode(groupByAst.Pairs[0].Key) is NameNode keyNameNode
+            && UnwrapSingleNameNode(groupByAst.Pairs[0].Value) is NameNode valueNameNode)
         {
             simpleGroupByKeyPropUtf8 = keyNameNode.GetUtf8Name();
             simpleGroupByValuePropUtf8 = valueNameNode.GetUtf8Name();
@@ -5758,6 +5649,34 @@ internal static class FunctionalCompiler
     private static StepAnnotations? GetStepAnnotations(JsonataNode node)
     {
         return node.Annotations;
+    }
+
+    /// <summary>
+    /// Unwraps a single-step <see cref="PathNode"/> to its inner <see cref="NameNode"/>.
+    /// After <see cref="Parser.ProcessAst"/>, bare NameNodes are wrapped in single-step PathNodes.
+    /// Returns the node itself if it is already a NameNode, or the inner NameNode if the
+    /// node is a PathNode with exactly one NameNode step.
+    /// </summary>
+    private static JsonataNode? UnwrapSingleNameNode(JsonataNode node)
+    {
+        if (node is NameNode nameNode
+            && !nameNode.KeepArray && nameNode.Annotations is null
+            && nameNode.SeekingParent is null)
+        {
+            return nameNode;
+        }
+
+        if (node is PathNode path && path.Steps.Count == 1
+            && !path.KeepArray && !path.KeepSingletonArray
+            && path.Annotations is null && path.SeekingParent is null
+            && path.Steps[0] is NameNode inner
+            && !inner.KeepArray && inner.Annotations is null
+            && inner.SeekingParent is null)
+        {
+            return inner;
+        }
+
+        return null;
     }
 
     /// <summary>

@@ -1341,22 +1341,59 @@ internal ref struct Parser
 
     private JsonataNode ProcessCondition(ConditionNode cond)
     {
-        var result = new ConditionNode
+        // Detect desugared coalesce: $exists(lhs) ? lhs : rhs
+        // LedCoalesce sets Arguments[0] === Then (same reference).
+        // Process the shared node once to preserve ReferenceEquals for
+        // the coalesce fusion in CompileCondition.
+        if (cond.Condition is FunctionCallNode existsCall
+            && existsCall.Procedure is VariableNode { Name: "exists" }
+            && existsCall.Arguments.Count == 1
+            && ReferenceEquals(existsCall.Arguments[0], cond.Then))
+        {
+            var processedLhs = this.ProcessAst(cond.Then);
+            var processedExistsCall = new FunctionCallNode
+            {
+                Procedure = this.ProcessAst(existsCall.Procedure),
+                Position = existsCall.Position,
+                KeepArray = existsCall.KeepArray,
+            };
+            processedExistsCall.Arguments.Add(processedLhs);
+            PushAncestry(processedExistsCall, processedLhs);
+
+            var result = new ConditionNode
+            {
+                Condition = processedExistsCall,
+                Then = processedLhs,
+                Position = cond.Position,
+            };
+            PushAncestry(result, result.Condition);
+            PushAncestry(result, result.Then);
+
+            if (cond.Else is not null)
+            {
+                result.Else = this.ProcessAst(cond.Else);
+                PushAncestry(result, result.Else);
+            }
+
+            return result;
+        }
+
+        var general = new ConditionNode
         {
             Condition = this.ProcessAst(cond.Condition),
             Then = this.ProcessAst(cond.Then),
             Position = cond.Position,
         };
-        PushAncestry(result, result.Condition);
-        PushAncestry(result, result.Then);
+        PushAncestry(general, general.Condition);
+        PushAncestry(general, general.Then);
 
         if (cond.Else is not null)
         {
-            result.Else = this.ProcessAst(cond.Else);
-            PushAncestry(result, result.Else);
+            general.Else = this.ProcessAst(cond.Else);
+            PushAncestry(general, general.Else);
         }
 
-        return result;
+        return general;
     }
 
     private JsonataNode ProcessBlock(BlockNode block)

@@ -1996,6 +1996,53 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
         AssertJsonEqual(rtDoc.RootElement, cgDoc.RootElement);
     }
 
+    /// <summary>
+    /// For Corvus extensions with known expected values (e.g., <c>??</c> operator
+    /// whose behavior matches <c>$exists(lhs) ? lhs : rhs</c> verified against reference).
+    /// </summary>
+    private void AssertCgAndRtMatchCorvusExtension(string expression, string data, string expectedJson)
+    {
+        CompiledExpression compiled = this.fixture.GetOrCompile(expression);
+
+        this.output.WriteLine($"Expression: {expression}");
+        this.output.WriteLine($"Inlined:    {compiled.IsInlined}");
+
+        if (compiled.Error is not null)
+        {
+            Assert.Fail($"CG compilation failed: {compiled.Error}");
+        }
+
+        Assert.NotNull(compiled.Method);
+
+        using var inputDoc = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes(data));
+        using var expectedDoc = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes(expectedJson));
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+
+        JsonElement cgResult = InvokeCg(compiled.Method, inputDoc.RootElement, workspace);
+        string cgJson = cgResult.ValueKind == JsonValueKind.Undefined ? "undefined" : cgResult.GetRawText();
+
+        string? rtResult = JsonataEvaluator.Default.EvaluateToString(expression, data);
+        string rtJson = rtResult ?? "undefined";
+
+        this.output.WriteLine($"Expected: {expectedJson}");
+        this.output.WriteLine($"CG:       {cgJson}");
+        this.output.WriteLine($"RT:       {rtJson}");
+
+        // Assert CG matches expected
+        AssertJsonEqual(expectedDoc.RootElement, cgResult);
+
+        // Assert RT matches expected
+        if (rtJson != "undefined")
+        {
+            using var rtDoc = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes(rtJson));
+            AssertJsonEqual(expectedDoc.RootElement, rtDoc.RootElement);
+        }
+        else
+        {
+            Assert.Equal("undefined", expectedJson);
+        }
+    }
+
     private static JsonElement InvokeCg(MethodInfo method, JsonElement data, JsonWorkspace workspace)
     {
         object?[] args = [data, workspace];
@@ -2821,5 +2868,500 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
             """$formatInteger(1234567, "#,##0")""",
             "null",
             "\"1,234,567\"");
+    }
+
+    // ─── JsonataCodeGenHelpers: Zip variadic (lines 6654-6705) ────────
+    // $zip with 4+ args triggers the variadic overload
+
+    [Fact]
+    public void CG_Zip_FourArgs()
+    {
+        AssertCgAndRtMatch(
+            """$zip([1,2],[3,4],[5,6],[7,8])""",
+            "null",
+            "[[1,3,5,7],[2,4,6,8]]");
+    }
+
+    [Fact]
+    public void CG_Zip_FiveArgs()
+    {
+        AssertCgAndRtMatch(
+            """$zip([1,2],[3,4],[5,6],[7,8],[9,10])""",
+            "null",
+            "[[1,3,5,7,9],[2,4,6,8,10]]");
+    }
+
+    // ─── JsonataCodeGenHelpers: Zip single arg (lines 6529-6556) ─────
+
+    [Fact]
+    public void CG_Zip_SingleArg()
+    {
+        AssertCgAndRtMatch(
+            """$zip([1,2,3])""",
+            "null",
+            "[[1],[2],[3]]");
+    }
+
+    // ─── JsonataCodeGenHelpers: ContinueChainFlatInto (lines 598-622) ──
+
+    [Fact]
+    public void CG_Chain_NestedArraysAtIntermediate()
+    {
+        AssertCgAndRtMatch(
+            "data.items.name",
+            """{"data":[{"items":[{"name":"a"},{"name":"b"}]},{"items":[{"name":"c"}]}]}""",
+            """["a","b","c"]""");
+    }
+
+    [Fact]
+    public void CG_Chain_ThreeLevelArray()
+    {
+        AssertCgAndRtMatch(
+            "Data.matrix.values",
+            """{"Data":{"matrix":[{"values":[10,20,30]},{"values":[40,50]}]}}""",
+            "[10,20,30,40,50]");
+    }
+
+    // ─── JsonataCodeGenHelpers: FusedFilterAndContinue (lines 765-791) ──
+
+    [Fact]
+    public void CG_FusedFilter_EqualityWithContinuation()
+    {
+        AssertCgAndRtMatch(
+            """data[type="order"].items.name""",
+            """{"data":[{"type":"order","items":[{"name":"x"},{"name":"y"}]},{"type":"invoice","items":[{"name":"z"}]}]}""",
+            """["x","y"]""");
+    }
+
+    // ─── JsonataCodeGenHelpers: FusedCollectAndContinue index (lines 818-845) ──
+
+    [Fact]
+    public void CG_FusedIndex_WithContinuation()
+    {
+        AssertCgAndRtMatch(
+            "Data.records[0].items[1].value",
+            """{"Data":{"records":[{"items":[{"value":"a"},{"value":"b"},{"value":"c"}]},{"items":[{"value":"x"},{"value":"y"}]}]}}""",
+            "\"b\"");
+    }
+
+    [Fact]
+    public void CG_FusedIndex_OutOfRange()
+    {
+        AssertCgAndRtBothUndefined(
+            "data.items[5].name",
+            """{"data":{"items":[{"name":"A"},{"name":"B"}]}}""");
+    }
+
+    // ─── JsonataCodeGenHelpers: EnumerateWildcard array (lines 1017-1037) ──
+
+    [Fact]
+    public void CG_Wildcard_OnObject()
+    {
+        AssertCgAndRtMatch(
+            """{"a":1,"b":2,"c":3}.*""",
+            "null",
+            "[1,2,3]");
+    }
+
+    [Fact]
+    public void CG_Wildcard_ChainedOnObject()
+    {
+        AssertCgAndRtMatch(
+            "data.*.name",
+            """{"data":{"a":{"name":"Alice"},"b":{"name":"Bob"},"c":{"name":"Charlie"}}}""",
+            """["Alice","Bob","Charlie"]""");
+    }
+
+    // ─── JsonataCodeGenHelpers: CountCodePoints (lines 7561-7591) ──
+
+    [Fact]
+    public void CG_Length_Emoji()
+    {
+        // Emoji is a surrogate pair, counts as 1 code point
+        AssertCgAndRtMatch(
+            """$length("abc\uD83D\uDE00def")""",
+            "null",
+            "7");
+    }
+
+    [Fact]
+    public void CG_Substring_SurrogatePairIndexing()
+    {
+        // $substring at code-point index 4, length 3 = "def" (skipping emoji)
+        AssertCgAndRtMatch(
+            """$substring("abc\uD83D\uDE00def", 4, 3)""",
+            "null",
+            "\"def\"");
+    }
+
+    // ─── JsonataCodeGenHelpers: CoerceToStringElement (lines 2087-2108) ──
+
+    [Fact]
+    public void CG_String_CoerceNumber()
+    {
+        AssertCgAndRtMatch(
+            """$string(42)""",
+            "null",
+            "\"42\"");
+    }
+
+    [Fact]
+    public void CG_String_CoerceBoolean()
+    {
+        AssertCgAndRtMatch(
+            """$string(true)""",
+            "null",
+            "\"true\"");
+    }
+
+    // ─── JsonataCodeGenHelpers: BinaryArithmetic (lines 8799-8822) ──
+
+    [Fact]
+    public void CG_Arithmetic_Add()
+    {
+        AssertCgAndRtMatch(
+            "a + b",
+            """{"a":10,"b":3}""",
+            "13");
+    }
+
+    [Fact]
+    public void CG_Arithmetic_Multiply()
+    {
+        AssertCgAndRtMatch(
+            "a * b",
+            """{"a":7,"b":6}""",
+            "42");
+    }
+
+    // ─── JsonataCodeGenHelpers: MapChainElements (lines 2674-2716) ──
+
+    [Fact]
+    public void CG_Map_WithIndex()
+    {
+        AssertCgAndRtMatch(
+            """$map([10,20,30], function($v,$i){$v * $i})""",
+            "null",
+            "[0,20,60]");
+    }
+
+    // ─── CollectAndContinue: equality predicate singleton (FC 1619-1638 via CGH) ──
+
+    [Fact]
+    public void CG_EqualityPredicate_SingletonObject()
+    {
+        AssertCgAndRtMatch(
+            """account.orders[type="premium"].items.name""",
+            """{"account":{"orders":{"type":"premium","items":[{"name":"Widget"},{"name":"Gadget"}]}}}""",
+            """["Widget","Gadget"]""");
+    }
+
+    // ─── GroupBy annotation (FC 5016-5082 via CGH) ──
+
+    [Fact]
+    public void CG_GroupBy_Annotation_DuplicateKeys()
+    {
+        AssertCgAndRtMatch(
+            "Account.Order.Product{Name: Price}",
+            """{"Account":{"Order":[{"Product":{"Name":"A","Price":10}},{"Product":{"Name":"B","Price":20}},{"Product":{"Name":"A","Price":30}}]}}""",
+            """{"A":[10,30],"B":20}""");
+    }
+
+    // ─── Sort then chain access (FC 3155-3180 via CGH) ──
+
+    [Fact]
+    public void CG_Sort_ThenChainAccess()
+    {
+        AssertCgAndRtMatch(
+            "Account.Order^(Product.Price).Product.Name",
+            """{"Account":{"Order":[{"Product":{"Price":30,"Name":"C"}},{"Product":{"Price":10,"Name":"A"}},{"Product":{"Price":20,"Name":"B"}}]}}""",
+            """["A","B","C"]""");
+    }
+
+    // ─── Transform operator ──
+
+    [Fact]
+    public void CG_Transform_AddProperty()
+    {
+        AssertCgAndRtMatch(
+            """$ ~> |Account.Order|{"Discount":10}|""",
+            """{"Account":{"Order":[{"Product":"A"},{"Product":"B"}]}}""",
+            """{"Account":{"Order":[{"Product":"A","Discount":10},{"Product":"B","Discount":10}]}}""");
+    }
+
+    // ─── $sift (BuiltInFunctions) ──
+
+    [Fact]
+    public void CG_Sift_FilterProperties()
+    {
+        AssertCgAndRtMatch(
+            """$sift({"a":1,"b":2,"c":3}, function($v){$v > 1})""",
+            "null",
+            """{"b":2,"c":3}""");
+    }
+
+    // ─── $reduce with initial value ──
+
+    [Fact]
+    public void CG_Reduce_WithInit()
+    {
+        AssertCgAndRtMatch(
+            """$reduce([1,2,3,4], function($prev,$curr){$prev + $curr}, 10)""",
+            "null",
+            "20");
+    }
+
+    // ─── $sort ──
+
+    [Fact]
+    public void CG_Sort_Default()
+    {
+        AssertCgAndRtMatch(
+            """$sort(["banana","apple","cherry"])""",
+            "null",
+            """["apple","banana","cherry"]""");
+    }
+
+    // ─── $formatNumber exponent (BIF 5062-5087) ──
+
+    [Fact]
+    public void CG_FormatNumber_Scientific()
+    {
+        AssertCgAndRtMatch(
+            """$formatNumber(0.000123, "0.00e0")""",
+            "null",
+            "\"1.23e-4\"");
+    }
+
+    // ─── $formatBase ──
+
+    [Theory]
+    [InlineData(255, 16, "ff")]
+    [InlineData(255, 2, "11111111")]
+    [InlineData(255, 8, "377")]
+    public void CG_FormatBase_Various(int value, int radix, string expected)
+    {
+        AssertCgAndRtMatch(
+            $"$formatBase({value}, {radix})",
+            "null",
+            $"\"{expected}\"");
+    }
+
+    // ─── Descendant operator ──
+
+    [Fact]
+    public void CG_Descendant_Search()
+    {
+        AssertCgAndRtMatch(
+            "**.name",
+            """{"data":{"a":{"name":"Alice"},"b":{"inner":{"name":"Bob"}}}}""",
+            """["Alice","Bob"]""");
+    }
+
+    // ─── $formatInteger Unicode digits (XPath 1298-1312, 1619-1637) ──
+
+    [Theory]
+    [InlineData(2025, "\u0661", "\u0662\u0660\u0662\u0665")]
+    [InlineData(99, "\u0967", "\u096F\u096F")]
+    public void CG_FormatInteger_UnicodeDigits(int value, string presentation, string expected)
+    {
+        AssertCgAndRtMatch(
+            $"$formatInteger({value}, \"{presentation}\")",
+            "null",
+            $"\"{expected}\"");
+    }
+
+    // ─── Closure / higher-order functions ──
+
+    [Fact]
+    public void CG_Lambda_Closure()
+    {
+        AssertCgAndRtMatch(
+            """( $add := function($x){function($y){$x + $y}}; $add(3)(4) )""",
+            "null",
+            "7");
+    }
+
+    // ─── $string on array (verifies bug #2 fix via CG path) ──
+
+    [Fact]
+    public void CG_String_Array()
+    {
+        AssertCgAndRtMatch(
+            """$string([1,2,3])""",
+            "null",
+            "\"[1,2,3]\"");
+    }
+
+    // ─── $filter on multi-valued path ──
+
+    [Fact]
+    public void CG_Filter_MultiValuedPath()
+    {
+        AssertCgAndRtMatch(
+            """$filter(Account.Order.Product, function($v){$v.Price > 30})""",
+            """{"Account":{"Order":[{"Product":{"Price":35,"Name":"A"}},{"Product":{"Price":20,"Name":"B"}},{"Product":{"Price":50,"Name":"C"}}]}}""",
+            """[{"Price":35,"Name":"A"},{"Price":50,"Name":"C"}]""");
+    }
+
+    // ─── $count/$sum/$average/$min/$max on multi-value paths ──
+
+    [Fact]
+    public void CG_Count_MultiValued()
+    {
+        AssertCgAndRtMatch(
+            "$count(data.items.name)",
+            """{"data":{"items":[{"name":"A"},{"name":"B"},{"name":"C"}]}}""",
+            "3");
+    }
+
+    [Fact]
+    public void CG_Sum_MultiValued()
+    {
+        AssertCgAndRtMatch(
+            "$sum(data.items.price)",
+            """{"data":{"items":[{"price":10},{"price":20},{"price":30}]}}""",
+            "60");
+    }
+
+    [Fact]
+    public void CG_Average_MultiValued()
+    {
+        AssertCgAndRtMatch(
+            "$average(data.items.price)",
+            """{"data":{"items":[{"price":10},{"price":20},{"price":30}]}}""",
+            "20");
+    }
+
+    // ─── Coalesce (??) — Corvus extension ──
+
+    [Fact]
+    public void CG_Coalesce_SimpleChain_Found()
+    {
+        AssertCgAndRtMatchCorvusExtension(
+            """data.value ?? "default" """,
+            """{"data":{"value":42}}""",
+            "42");
+    }
+
+    [Fact]
+    public void CG_Coalesce_SimpleChain_Fallback()
+    {
+        AssertCgAndRtMatchCorvusExtension(
+            """data.value ?? "default" """,
+            """{"data":{}}""",
+            "\"default\"");
+    }
+
+    [Fact]
+    public void CG_Coalesce_DeepChain_Found()
+    {
+        AssertCgAndRtMatchCorvusExtension(
+            """data.x.y ?? "fallback" """,
+            """{"data":{"x":{"y":"found"}}}""",
+            "\"found\"");
+    }
+
+    [Fact]
+    public void CG_Coalesce_DeepChain_Fallback()
+    {
+        AssertCgAndRtMatchCorvusExtension(
+            """data.x.y ?? "fallback" """,
+            """{"data":{"x":{}}}""",
+            "\"fallback\"");
+    }
+
+    [Fact]
+    public void CG_Coalesce_ArrayMidChain()
+    {
+        AssertCgAndRtMatchCorvusExtension(
+            """data.items.name ?? []""",
+            """{"data":{"items":[{"name":"A"},{"name":"B"},{"name":"C"}]}}""",
+            """["A","B","C"]""");
+    }
+
+    [Fact]
+    public void CG_Coalesce_ArrayMidChain_Fallback()
+    {
+        AssertCgAndRtMatchCorvusExtension(
+            """data.items.name ?? []""",
+            """{"data":{}}""",
+            "[]");
+    }
+
+    [Fact]
+    public void CG_Coalesce_NonObject_Fallback()
+    {
+        AssertCgAndRtMatchCorvusExtension(
+            """data.value.nested ?? 0""",
+            """{"data":{"value":42}}""",
+            "0");
+    }
+
+    // ─── $formatNumber patterns ──
+
+    [Fact]
+    public void CG_FormatNumber_ScientificLarge()
+    {
+        AssertCgAndRtMatch(
+            """$formatNumber(12345, "0.00e0")""",
+            "{}",
+            "\"1.23e4\"");
+    }
+
+    [Fact]
+    public void CG_FormatNumber_ScientificSmall()
+    {
+        AssertCgAndRtMatch(
+            """$formatNumber(0.05, "0.00e0")""",
+            "{}",
+            "\"5.00e-2\"");
+    }
+
+    [Fact]
+    public void CG_FormatNumber_PerMille_Small()
+    {
+        AssertCgAndRtMatch(
+            """$formatNumber(0.025, "##0\u2030")""",
+            "{}",
+            "\"25\u2030\"");
+    }
+
+    [Fact]
+    public void CG_FormatNumber_GroupingSeparator_Large()
+    {
+        AssertCgAndRtMatch(
+            """$formatNumber(1234567, "#,##0")""",
+            "{}",
+            "\"1,234,567\"");
+    }
+
+    [Fact]
+    public void CG_FormatNumber_NegativeSubPicture()
+    {
+        AssertCgAndRtMatch(
+            """$formatNumber(-42, "000;(000)")""",
+            "{}",
+            "\"(042)\"");
+    }
+
+    // ─── $formatInteger / $parseInteger word output ──
+
+    [Fact]
+    public void CG_FormatInteger_WordLower()
+    {
+        AssertCgAndRtMatch(
+            """$formatInteger(42, "w")""",
+            "{}",
+            "\"forty-two\"");
+    }
+
+    [Fact]
+    public void CG_ParseInteger_Word()
+    {
+        AssertCgAndRtMatch(
+            """$parseInteger("forty-two", "w")""",
+            "{}",
+            "42");
     }
 }

@@ -1253,4 +1253,400 @@ public class BuiltInFunctionEdgeCaseTests
     {
         Assert.Equal("\"45%\"", Eval("""$formatNumber(0.45, "##0%")"""));
     }
+
+    // ─── FunctionalCompiler: CollectAndContinue (lines 1558-1640) ─────────
+    // Equality predicate on singleton object (not array) with continuation
+
+    [Fact]
+    public void Chain_EqualityPredicateOnSingleton_WithContinuation()
+    {
+        // account.orders is a singleton object, not an array. The equality predicate
+        // should match and continue the chain to items.name.
+        string data = """{"account":{"orders":{"type":"premium","items":[{"name":"Widget"},{"name":"Gadget"}]}}}""";
+        Assert.Equal(
+            """["Widget","Gadget"]""",
+            Eval("""account.orders[type="premium"].items.name""", data));
+    }
+
+    [Fact]
+    public void Chain_PerElementIndex_WithContinuation()
+    {
+        // records is an array, [0] selects first, then items[1] selects second item
+        string data = """{"Data":{"records":[{"items":[{"value":"a"},{"value":"b"},{"value":"c"}]},{"items":[{"value":"x"},{"value":"y"}]}]}}""";
+        Assert.Equal(
+            "\"b\"",
+            Eval("Data.records[0].items[1].value", data));
+    }
+
+    // ─── FunctionalCompiler: EvalChainOverArrayIntoStatic (lines 2033-2109) ──
+
+    [Fact]
+    public void Chain_NestedArrayAtIntermediateLevel()
+    {
+        // matrix is an array; .values on each element produces flattened result
+        string data = """{"Data":{"matrix":[{"values":[10,20,30]},{"values":[40,50]}]}}""";
+        Assert.Equal(
+            "[10,20,30,40,50]",
+            Eval("Data.matrix.values", data));
+    }
+
+    [Fact]
+    public void Chain_ThreeLevelNestedArray()
+    {
+        string data = """{"a":[{"b":{"c":{"d":1}}},{"b":{"c":{"d":2}}}]}""";
+        Assert.Equal("[1,2]", Eval("a.b.c.d", data));
+    }
+
+    // ─── FunctionalCompiler: CompileFilter standalone (lines 7945-8012) ───
+
+    [Fact]
+    public void Filter_OnMultiValuedPath()
+    {
+        // Account.Order.Product is a multi-valued sequence (not a single array)
+        string data = """{"Account":{"Order":[{"Product":{"Price":35,"Name":"A"}},{"Product":{"Price":20,"Name":"B"}},{"Product":{"Price":50,"Name":"C"}}]}}""";
+        Assert.Equal(
+            """[{"Price":35,"Name":"A"},{"Price":50,"Name":"C"}]""",
+            Eval("""$filter(Account.Order.Product, function($v){$v.Price > 30})""", data));
+    }
+
+    [Fact]
+    public void Filter_ConditionalPredicate()
+    {
+        // Predicate returns boolean per element
+        string data = """{"data":{"items":[{"price":10,"name":"A"},{"price":30,"name":"B"},{"price":50,"name":"C"}]}}""";
+        Assert.Equal(
+            """["B","C"]""",
+            Eval("""data.items[price>20].name""", data));
+    }
+
+    // ─── FunctionalCompiler: ApplySimpleNamePairGroupBy (lines 4984-5082) ──
+
+    [Fact]
+    public void GroupBy_AnnotationSyntax_DuplicateKeys()
+    {
+        // GroupBy annotation {Name: Price} merges duplicate keys into arrays
+        string data = """{"Account":{"Order":[{"Product":{"Name":"A","Price":10}},{"Product":{"Name":"B","Price":20}},{"Product":{"Name":"A","Price":30}}]}}""";
+        Assert.Equal(
+            """{"A":[10,30],"B":20}""",
+            Eval("Account.Order.Product{Name: Price}", data));
+    }
+
+    // ─── FunctionalCompiler: CompilePath sort result expansion (lines 3155-3180) ──
+
+    [Fact]
+    public void Sort_ThenChainAccess()
+    {
+        // Sort first, then access properties from sorted results
+        string data = """{"Account":{"Order":[{"Product":{"Price":30,"Name":"C"}},{"Product":{"Price":10,"Name":"A"}},{"Product":{"Price":20,"Name":"B"}}]}}""";
+        Assert.Equal(
+            """["A","B","C"]""",
+            Eval("Account.Order^(Product.Price).Product.Name", data));
+    }
+
+    // ─── FunctionalCompiler: CompileArrayConstructor (lines 6866-6901) ──
+
+    [Fact]
+    public void ArrayConstructor_MixedTypes()
+    {
+        Assert.Equal(
+            """[1,"hello",true,null,[2,3]]""",
+            Eval("""[1, "hello", true, null, [2,3]]"""));
+    }
+
+    // ─── FunctionalCompiler: Transform operator ──
+
+    [Fact]
+    public void Transform_AddPropertyToArrayElements()
+    {
+        string data = """{"Account":{"Order":[{"Product":"A"},{"Product":"B"}]}}""";
+        Assert.Equal(
+            """{"Account":{"Order":[{"Product":"A","Discount":10},{"Product":"B","Discount":10}]}}""",
+            Eval("""$ ~> |Account.Order|{"Discount":10}|""", data));
+    }
+
+    // ─── BuiltInFunctions: $sift, $reduce, $map with index ──
+
+    [Fact]
+    public void Sift_FilterObjectProperties()
+    {
+        Assert.Equal(
+            """{"b":2,"c":3}""",
+            Eval("""$sift({"a":1,"b":2,"c":3}, function($v){$v > 1})"""));
+    }
+
+    [Fact]
+    public void Reduce_WithInitialValue()
+    {
+        Assert.Equal("20", Eval("""$reduce([1,2,3,4], function($prev,$curr){$prev + $curr}, 10)"""));
+    }
+
+    [Fact]
+    public void Map_WithIndex()
+    {
+        Assert.Equal("[0,20,60]", Eval("""$map([10,20,30], function($v,$i){$v * $i})"""));
+    }
+
+    // ─── BuiltInFunctions: $spread on multi-key objects ──
+
+    [Fact]
+    public void Spread_ArrayOfMultiKeyObjects_Flattened()
+    {
+        Assert.Equal(
+            """[{"a":1},{"b":2},{"c":3}]""",
+            Eval("""$spread([{"a":1,"b":2},{"c":3}])"""));
+    }
+
+    // ─── BuiltInFunctions: $formatNumber exponent (lines 5062-5087) ──
+
+    [Fact]
+    public void FormatNumber_ScientificSmallNumber()
+    {
+        Assert.Equal("\"1.23e-4\"", Eval("""$formatNumber(0.000123, "0.00e0")"""));
+    }
+
+    // ─── BuiltInFunctions: $formatBase ──
+
+    [Theory]
+    [InlineData(255, 16, "ff")]
+    [InlineData(255, 2, "11111111")]
+    [InlineData(255, 8, "377")]
+    public void FormatBase_Various(int value, int radix, string expected)
+    {
+        Assert.Equal($"\"{expected}\"", Eval($"$formatBase({value}, {radix})"));
+    }
+
+    // ─── BuiltInFunctions: $type ──
+
+    [Fact]
+    public void Type_AllTypes()
+    {
+        Assert.Equal(
+            """["number","string","boolean","null","array","object"]""",
+            Eval("""[$type(1), $type("s"), $type(true), $type(null), $type([]), $type({})]"""));
+    }
+
+    // ─── XPathDateTimeFormatter: Unicode digits (lines 1298-1312, 1619-1637) ──
+
+    [Theory]
+    [InlineData(2025, "\u0661", "\u0662\u0660\u0662\u0665")]
+    [InlineData(99, "\u0967", "\u096F\u096F")]
+    public void FormatInteger_UnicodeDigits(int value, string presentation, string expected)
+    {
+        Assert.Equal($"\"{expected}\"", Eval($"$formatInteger({value}, \"{presentation}\")"));
+    }
+
+    // ─── Wildcard and descendant paths ──
+
+    [Fact]
+    public void Wildcard_OnObject()
+    {
+        Assert.Equal("[1,2,3]", Eval("""{"a":1,"b":2,"c":3}.*"""));
+    }
+
+    [Fact]
+    public void Wildcard_ChainedOnObject()
+    {
+        string data = """{"data":{"a":{"name":"Alice"},"b":{"name":"Bob"},"c":{"name":"Charlie"}}}""";
+        Assert.Equal(
+            """["Alice","Bob","Charlie"]""",
+            Eval("data.*.name", data));
+    }
+
+    [Fact]
+    public void Descendant_Search()
+    {
+        string data = """{"data":{"a":{"name":"Alice"},"b":{"inner":{"name":"Bob"}}}}""";
+        Assert.Equal(
+            """["Alice","Bob"]""",
+            Eval("**.name", data));
+    }
+
+    // ─── String concat with multi-valued sequence ──
+    // Note: $string & on multi-valued sequences has edge cases - RT coerces to first element.
+    // Reference: "[\"A\",\"B\"] test" — this is a known behavioral difference, not tested here.
+
+    // ─── Closure / higher-order functions ──
+
+    [Fact]
+    public void Lambda_Closure()
+    {
+        Assert.Equal("7", Eval("""( $add := function($x){function($y){$x + $y}}; $add(3)(4) )"""));
+    }
+
+    // ─── $sort with custom comparator ──
+
+    [Fact]
+    public void Sort_DefaultAlphabetical()
+    {
+        Assert.Equal(
+            """["apple","banana","cherry"]""",
+            Eval("""$sort(["banana","apple","cherry"])"""));
+    }
+
+    [Fact]
+    public void Sort_CustomDescending()
+    {
+        Assert.Equal(
+            "[5,4,3,1,1]",
+            Eval("""$sort([3,1,4,1,5], function($a,$b){$b - $a})"""));
+    }
+
+    // ─── Coalesce operator (??) — Corvus extension ──
+    // Desugars to $exists(lhs) ? lhs : rhs with ReferenceEquals,
+    // triggers coalesce fusion path (EvalSimplePropertyChainStatic).
+
+    [Fact]
+    public void Coalesce_SimpleChain_Found()
+    {
+        // Reference: $exists(data.value) ? data.value : "default" → 42
+        Assert.Equal("42", Eval("""data.value ?? "default" """, """{"data":{"value":42}}"""));
+    }
+
+    [Fact]
+    public void Coalesce_SimpleChain_Fallback()
+    {
+        // Reference: $exists(data.value) ? data.value : "default" → "default"
+        Assert.Equal("\"default\"", Eval("""data.value ?? "default" """, """{"data":{}}"""));
+    }
+
+    [Fact]
+    public void Coalesce_DeepChain_Found()
+    {
+        Assert.Equal("\"found\"", Eval("""data.x.y ?? "fallback" """, """{"data":{"x":{"y":"found"}}}"""));
+    }
+
+    [Fact]
+    public void Coalesce_DeepChain_Fallback()
+    {
+        Assert.Equal("\"fallback\"", Eval("""data.x.y ?? "fallback" """, """{"data":{"x":{}}}"""));
+    }
+
+    [Fact]
+    public void Coalesce_VeryDeep_Found()
+    {
+        Assert.Equal("99", Eval("""data.a.b.c ?? 0""", """{"data":{"a":{"b":{"c":99}}}}"""));
+    }
+
+    [Fact]
+    public void Coalesce_VeryDeep_Fallback()
+    {
+        Assert.Equal("0", Eval("""data.a.b.c ?? 0""", """{"data":{}}"""));
+    }
+
+    [Fact]
+    public void Coalesce_ArrayMidChain()
+    {
+        // data.items is an array → triggers EvalChainOverArrayStatic
+        Assert.Equal(
+            """["A","B","C"]""",
+            Eval("""data.items.name ?? []""", """{"data":{"items":[{"name":"A"},{"name":"B"},{"name":"C"}]}}"""));
+    }
+
+    [Fact]
+    public void Coalesce_ArrayMidChain_Fallback()
+    {
+        Assert.Equal("[]", Eval("""data.items.name ?? []""", """{"data":{}}"""));
+    }
+
+    [Fact]
+    public void Coalesce_NonObject_Fallback()
+    {
+        // data.value is a number, not an object → returns undefined → fallback
+        Assert.Equal("0", Eval("""data.value.nested ?? 0""", """{"data":{"value":42}}"""));
+    }
+
+    // ─── $formatInteger word output ──
+
+    [Fact]
+    public void FormatInteger_WordLower()
+    {
+        // Reference: "forty-two"
+        Assert.Equal("\"forty-two\"", Eval("""$formatInteger(42, "w")"""));
+    }
+
+    [Fact]
+    public void FormatInteger_WordUpper()
+    {
+        // Reference: "FORTY-TWO"
+        Assert.Equal("\"FORTY-TWO\"", Eval("""$formatInteger(42, "W")"""));
+    }
+
+    [Fact]
+    public void FormatInteger_WordTitle()
+    {
+        // Reference: "Forty-Two"
+        Assert.Equal("\"Forty-Two\"", Eval("""$formatInteger(42, "Ww")"""));
+    }
+
+    [Fact]
+    public void ParseInteger_Word()
+    {
+        // Reference: 42
+        Assert.Equal("42", Eval("""$parseInteger("forty-two", "w")"""));
+    }
+
+    [Fact]
+    public void ParseInteger_WordUpper()
+    {
+        // Reference: 100
+        Assert.Equal("100", Eval("""$parseInteger("ONE HUNDRED", "W")"""));
+    }
+
+    [Fact]
+    public void ParseInteger_WordTitle()
+    {
+        // Reference: 99
+        Assert.Equal("99", Eval("""$parseInteger("Ninety-Nine", "Ww")"""));
+    }
+
+    // ─── $formatNumber scientific/engineering ──
+
+    [Fact]
+    public void FormatNumber_ScientificLarge()
+    {
+        // Reference: "1.23e4"
+        Assert.Equal("\"1.23e4\"", Eval("""$formatNumber(12345, "0.00e0")"""));
+    }
+
+    [Fact]
+    public void FormatNumber_ScientificSmall()
+    {
+        // Reference: "5.00e-2"
+        Assert.Equal("\"5.00e-2\"", Eval("""$formatNumber(0.05, "0.00e0")"""));
+    }
+
+    [Fact]
+    public void FormatNumber_Engineering()
+    {
+        // Reference: "10.0e1"
+        Assert.Equal("\"10.0e1\"", Eval("""$formatNumber(100, "##0.0e0")"""));
+    }
+
+    [Fact]
+    public void FormatNumber_PerMille_Small()
+    {
+        // Reference: "25‰"
+        Assert.Equal("\"25\u2030\"", Eval("""$formatNumber(0.025, "##0\u2030")"""));
+    }
+
+    [Fact]
+    public void FormatNumber_GroupingSeparator_Large()
+    {
+        // Reference: "1,234,567"
+        Assert.Equal("\"1,234,567\"", Eval("""$formatNumber(1234567, "#,##0")"""));
+    }
+
+    [Fact]
+    public void FormatNumber_OptionalDecimalDigits()
+    {
+        // Reference: "0.5"
+        Assert.Equal("\"0.5\"", Eval("""$formatNumber(0.5, "#0.###")"""));
+    }
+
+    [Fact]
+    public void FormatNumber_NegativeSubPicture()
+    {
+        // Reference: "(042)"
+        Assert.Equal("\"(042)\"", Eval("""$formatNumber(-42, "000;(000)")"""));
+    }
 }
