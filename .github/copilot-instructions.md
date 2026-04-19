@@ -143,6 +143,7 @@ Rules to follow:
 - **JSON Schema test suite** — `JSON-Schema-Test-Suite/` is a git submodule. The `Corvus.JsonSchemaTestSuite.CodeGenerator` project regenerates the xUnit test classes from it; re-run it after updating the submodule.
 - **`BigNumber`** — the custom arbitrary-precision decimal struct lives in `Corvus.Numerics`. Prefer it over `decimal` when the JSON value may have precision beyond 28 significant digits.
 - **Test-first bug fixes** — never implement a fix for a suspected bug without first writing a test that reproduces the problem. The test must fail before the fix and pass after. If you cannot reproduce the bug with a test, do not change production code.
+- **Data-driven coverage improvement** — when working to improve code coverage, ONLY write tests that target specific uncovered branches/lines identified in Cobertura XML coverage reports. Never write generic tests for already-covered functions hoping they might help. The process is: (1) collect coverage with `--collect:"XPlat Code Coverage"`, (2) merge reports with `reportgenerator`, (3) parse the Cobertura XML to find exact uncovered line ranges, (4) read the actual source code at those lines to understand the uncovered logic, (5) devise expressions/inputs that exercise those specific code paths, (6) verify with the reference implementation where applicable. The coverage report is the sole source of truth for what needs testing — not guesswork about what "might" be uncovered.
 
 ## JsonWorkspace and Mutable Documents
 

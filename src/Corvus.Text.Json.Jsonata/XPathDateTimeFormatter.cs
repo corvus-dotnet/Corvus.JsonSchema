@@ -562,42 +562,6 @@ internal static class XPathDateTimeFormatter
     }
 
     /// <summary>
-    /// Parses an integer from a UTF-8 byte span using an XPath integer picture string.
-    /// </summary>
-    /// <param name="utf8">The UTF-8 bytes to parse.</param>
-    /// <param name="picture">The XPath integer picture string.</param>
-    /// <param name="value">The parsed value.</param>
-    /// <returns><see langword="true"/> if the string was successfully parsed; otherwise <see langword="false"/>.</returns>
-    public static bool TryParseInteger(ReadOnlySpan<byte> utf8, ReadOnlySpan<byte> picture, out long value)
-    {
-        value = 0;
-
-        ReadOnlySpan<byte> primary;
-        bool isOrdinal = false;
-        int semiIdx = picture.IndexOf((byte)';');
-        if (semiIdx >= 0)
-        {
-            primary = picture.Slice(0, semiIdx);
-            ReadOnlySpan<byte> modifier = picture.Slice(semiIdx + 1);
-            if (modifier.IndexOf((byte)'o') >= 0)
-            {
-                isOrdinal = true;
-            }
-        }
-        else
-        {
-            primary = picture;
-        }
-
-        if (primary.Length == 0)
-        {
-            primary = "0"u8;
-        }
-
-        return TryParseIntegerWithPresentation(utf8, primary, isOrdinal, out value);
-    }
-
-    /// <summary>
     /// Parses an integer from a UTF-8 byte span using an XPath integer picture string, returning a double
     /// to handle values outside the range of <see cref="long"/>.
     /// </summary>

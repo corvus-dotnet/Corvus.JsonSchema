@@ -25,6 +25,37 @@ public class BuiltInFunctionEdgeCaseTests
         Assert.Equal(expectedCode, ex.Code);
     }
 
+    // ─── BUG: $each 3-param callback — RT returns [] instead of correct values ──
+    // Reference: $each({"x":1,"y":2}, function($v,$k,$o){$type($o)}) => ["object","object"]
+
+    [Fact]
+    public void Each_ThreeParam_ObjectArg_Bug()
+    {
+        // The 3rd callback parameter ($o) should receive the whole object.
+        // RT currently returns [] because lambdaArgs is only rented with size 2.
+        Assert.Equal(
+            """["object","object"]""",
+            Eval("""$each({"x":1,"y":2}, function($v,$k,$o){$type($o)})"""));
+    }
+
+    // ─── BUG: $string on multi-valued sequence — returns first element only ──
+    // Reference: $string(data.items.name) on multi-valued => "[\"Alice\",\"Bob\",\"Charlie\"]"
+
+    [Fact]
+    public void String_MultiValuedSequence_Bug()
+    {
+        // $string() of a multi-valued sequence should produce the JSON array string,
+        // not just the first element's string.
+        string data = """{"data":{"items":[{"name":"Alice"},{"name":"Bob"},{"name":"Charlie"}]}}""";
+        // Reference: the JS string value is ["Alice","Bob","Charlie"]
+        // EvaluateToString returns GetRawText(), so the JSON-encoded string is expected.
+        Assert.Equal(
+            """"
+            "[\"Alice\",\"Bob\",\"Charlie\"]"
+            """",
+            Eval("$string(data.items.name)", data));
+    }
+
     // ─── $number: hex/binary/octal conversion (lines 540-565) ───────
 
     [Fact]
@@ -778,5 +809,448 @@ public class BuiltInFunctionEdgeCaseTests
     public void Replace_WithFunction_AllMatches()
     {
         Assert.Equal("\"HELLO WORLD\"", Eval("""$replace("hello world", /\w+/, function($m) { $uppercase($m.match) })"""));
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // FunctionalCompiler coverage — RT-only tests for uncovered blocks
+    // ═══════════════════════════════════════════════════════════════════
+
+    // Lines 5016-5082: ApplySimpleNamePairGroupBy — duplicate key groupby
+    [Fact]
+    public void GroupByAnnotation_DuplicateKeys()
+    {
+        string data = """{"items":[{"cat":"fruit","val":"apple"},{"cat":"veg","val":"carrot"},{"cat":"fruit","val":"banana"}]}""";
+        Assert.Equal("""{"fruit":["apple","banana"],"veg":"carrot"}""", Eval("""items{cat: val}""", data));
+    }
+
+    // Lines 1558-1640: CollectAndContinue — equality predicate + continue chain
+    [Fact]
+    public void EqualityPredicate_WithContinuation()
+    {
+        string data = """{"orders":[{"status":"shipped","items":[{"name":"Widget"},{"name":"Gadget"}]},{"status":"pending","items":[{"name":"Thing"}]}]}""";
+        Assert.Equal("""["Widget","Gadget"]""", Eval("""orders[status="shipped"].items.name""", data));
+    }
+
+    // Lines 2033-2109: EvalChainOverArrayIntoStatic — array descent through nested arrays
+    [Fact]
+    public void ArrayDescent_DeepNested()
+    {
+        string data = """{"Account":{"Order":[{"Product":[{"Price":10},{"Price":20}]},{"Product":[{"Price":30}]}]}}""";
+        Assert.Equal("[10,20,30]", Eval("Account.Order.Product.Price", data));
+    }
+
+    // Lines 8091-8153: CompileFocusSortStage — sort with comparator function
+    [Fact]
+    public void SortWithComparator_ByProperty()
+    {
+        string data = """{"items":[{"name":"c","priority":3},{"name":"a","priority":1},{"name":"b","priority":2}]}""";
+        string result = Eval("""$sort(items, function($l,$r){$l.priority > $r.priority})""", data);
+        Assert.Equal("""[{"name":"a","priority":1},{"name":"b","priority":2},{"name":"c","priority":3}]""", result);
+    }
+
+    // Lines 598-622: ContinueChainFlatInto — chain flattening through nested arrays
+    [Fact]
+    public void ChainFlattening_NestedArrays()
+    {
+        string data = """{"data":{"items":[{"values":[1,2]},{"values":[3,4]}]}}""";
+        Assert.Equal("[1,2,3,4]", Eval("data.items.values", data));
+    }
+
+    // Lines 4315-4343: encodeUrl non-string path
+    [Fact]
+    public void EncodeUrl_StringInput()
+    {
+        Assert.Equal("\"hello%20world/path\"", Eval("""$encodeUrl("hello world/path")"""));
+    }
+
+    // Lines 572-598: formatInteger ordinal
+    [Theory]
+    [InlineData(1, "1st")]
+    [InlineData(2, "2nd")]
+    [InlineData(3, "3rd")]
+    [InlineData(11, "11th")]
+    [InlineData(12, "12th")]
+    [InlineData(13, "13th")]
+    [InlineData(21, "21st")]
+    [InlineData(101, "101st")]
+    public void FormatInteger_OrdinalSuffix(int value, string expected)
+    {
+        Assert.Equal($"\"{expected}\"", Eval($"""$formatInteger({value}, "1;o")"""));
+    }
+
+    // Lines 2849-2860: parseInteger with sign prefix
+    [Fact]
+    public void ParseInteger_PlusSign()
+    {
+        Assert.Equal("42", Eval("""$parseInteger("+42", "0")"""));
+    }
+
+    [Fact]
+    public void ParseInteger_MinusSign()
+    {
+        Assert.Equal("-99", Eval("""$parseInteger("-99", "0")"""));
+    }
+
+    // Lines 2712-2725: parseInteger with grouping separators
+    [Fact]
+    public void ParseInteger_GroupingSeparators()
+    {
+        Assert.Equal("1234567", Eval("""$parseInteger("1,234,567", "#,##0")"""));
+    }
+
+    // Lines 5047-5072, 4899-4919: formatNumber with exponent pattern
+    [Fact]
+    public void FormatNumber_ExponentPattern()
+    {
+        string result = Eval("""$formatNumber(12345, "0.00e0")""");
+        Assert.StartsWith("\"", result);
+        Assert.Contains("e", result);
+    }
+
+    [Fact]
+    public void FormatNumber_SmallExponent()
+    {
+        string result = Eval("""$formatNumber(0.00123, "0.00e0")""");
+        Assert.StartsWith("\"", result);
+        Assert.Contains("e", result);
+    }
+
+    // Lines 7561-7591: Unicode surrogate handling in $length/$substring
+    [Fact]
+    public void Length_WithSurrogatePairs()
+    {
+        // "abc😀def" is 7 code points (emoji is 1 code point, 2 UTF-16 chars)
+        Assert.Equal("7", Eval("""$length("abc\uD83D\uDE00def")"""));
+    }
+
+    [Fact]
+    public void Substring_WithSurrogatePairs()
+    {
+        // Substring starting after emoji (code point 4) for 3 chars
+        Assert.Equal("\"def\"", Eval("""$substring("abc\uD83D\uDE00def", 4, 3)"""));
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // FunctionalCompiler targeted coverage — RT-only tests
+    // These target specific uncovered branches identified from Cobertura XML
+    // ═══════════════════════════════════════════════════════════════════
+
+    // Lines 5016-5082: ApplySimpleNamePairGroupBy — duplicate key merging
+    // Key requirement: multiple items MUST share the same groupby key
+    [Fact]
+    public void GroupByAnnotation_DuplicateKeysMerge()
+    {
+        string data = """{"items":[{"cat":"A","val":1},{"cat":"A","val":2},{"cat":"B","val":3},{"cat":"A","val":4}]}""";
+        Assert.Equal("""{"A":[1,2,4],"B":3}""", Eval("items{cat: val}", data));
+    }
+
+    // Lines 2033-2109: EvalChainOverArrayIntoStatic — multi-level nested array descent
+    // Requires arrays at MULTIPLE intermediate levels of the chain
+    [Fact]
+    public void ArrayDescent_MultiLevelNested()
+    {
+        string data = """{"orders":{"items":[{"tags":[{"name":"foo"},{"name":"bar"}]},{"tags":[{"name":"baz"}]}]}}""";
+        Assert.Equal("""["foo","bar","baz"]""", Eval("orders.items.tags.name", data));
+    }
+
+    [Fact]
+    public void ArrayDescent_FourLevelChain()
+    {
+        string data = """{"company":{"departments":[{"teams":[{"members":[{"name":"Alice"}]},{"members":[{"name":"Bob"}]}]},{"teams":[{"members":[{"name":"Carol"}]}]}]}}""";
+        Assert.Equal("""["Alice","Bob","Carol"]""", Eval("company.departments.teams.members.name", data));
+    }
+
+    // Lines 1558-1640: CollectAndContinue — per-element index + equality predicate
+    [Fact]
+    public void PerElementIndex_InChain()
+    {
+        string data = """{"data":{"items":[{"name":"first"},{"name":"second"}]}}""";
+        Assert.Equal("\"first\"", Eval("data.items[0].name", data));
+    }
+
+    [Fact]
+    public void NegativeIndex_InChain()
+    {
+        string data = """{"data":{"items":[{"name":"first"},{"name":"second"}]}}""";
+        Assert.Equal("\"second\"", Eval("data.items[-1].name", data));
+    }
+
+    // Lines 7945-8012: CompileFilter — various filter patterns
+    [Fact]
+    public void Filter_BooleanPredicate()
+    {
+        string data = """{"items":[1,2,3,4,5]}""";
+        Assert.Equal("[4,5]", Eval("items[$>3]", data));
+    }
+
+    [Fact]
+    public void Filter_NumericIndex()
+    {
+        string data = """{"items":["a","b","c","d","e"]}""";
+        Assert.Equal("\"b\"", Eval("items[1]", data));
+    }
+
+    [Fact]
+    public void Filter_NegativeIndex()
+    {
+        string data = """{"items":["a","b","c","d","e"]}""";
+        Assert.Equal("\"e\"", Eval("items[-1]", data));
+    }
+
+    // Lines 2234-2256: CompileFilterFunc — multi-valued sequence flattening
+    [Fact]
+    public void FilterFunc_WithIndex()
+    {
+        string data = """[1,2,3,4,5]""";
+        Assert.Equal("[3,4,5]", Eval("$filter($, function($v,$i){$i > 1})", data));
+    }
+
+    // Lines 4315-4343: $encodeUrl non-string path (coercion)
+    [Fact]
+    public void EncodeUrl_NonStringPath()
+    {
+        Assert.Equal("\"hello%20world\"", Eval("""$encodeUrl("hello world")"""));
+    }
+
+    // Lines 1558-1640: Equality predicate filtering on nested chain
+    [Fact]
+    public void EqualityPredicateOnNestedChain()
+    {
+        string data = """{"records":[{"status":"active","items":[{"id":1},{"id":2}]},{"status":"closed","items":[{"id":3}]}]}""";
+        Assert.Equal("[1,2]", Eval("""records[status="active"].items.id""", data));
+    }
+
+    // Lines 598-622 (CG): Array in middle of property chain
+    [Fact]
+    public void ChainFlat_ArrayInMiddle()
+    {
+        string data = """{"data":{"nested":[{"items":[{"name":"a"}]},{"items":[{"name":"b"},{"name":"c"}]}]}}""";
+        Assert.Equal("""["a","b","c"]""", Eval("data.nested.items.name", data));
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // FunctionalCompiler lines 5641-5739: Filter with array of numeric indices
+    // ═══════════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void Filter_ArrayOfNumericIndices()
+    {
+        // Tests the array-of-indices branch at lines 5655-5691
+        Assert.Equal("""["a","c","e"]""", Eval("data[[0,2,4]]", """{"data":["a","b","c","d","e"]}"""));
+    }
+
+    [Fact]
+    public void Filter_ArrayOfNegativeIndices()
+    {
+        // Negative indices in filter array — tests idx < 0 adjustment at line 5671
+        Assert.Equal("""["d","e"]""", Eval("data[[-1,-2]]", """{"data":["a","b","c","d","e"]}"""));
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // FunctionalCompiler lines 2065-2109: EvalChainOverArrayIntoStatic
+    // Property chain traversal through arrays at 3+ intermediate levels
+    // ═══════════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void DeepChain_ThreeLevelArrayDescent()
+    {
+        // Arrays at levels a, b.c triggering recursive EvalChainOverArrayIntoStatic
+        string data = """{"a":[{"b":[{"c":[{"d":"x"},{"d":"y"}]},{"c":{"d":"z"}}]},{"b":{"c":{"d":"w"}}}]}""";
+        Assert.Equal("""["x","y","z","w"]""", Eval("a.b.c.d", data));
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // FunctionalCompiler lines 6866-6901: Tuple array constructor
+    // Array ctor with multi-valued sub-expressions
+    // ═══════════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void ArrayConstructor_WithMultiValuedItems()
+    {
+        // [data.items.name, "extra"] — first item is multi-valued sequence, second is scalar
+        string data = """{"data":{"items":[{"name":"x"},{"name":"y"}]}}""";
+        Assert.Equal("""["x","y","extra"]""", Eval("""[data.items.name, "extra"]""", data));
+    }
+
+    [Fact]
+    public void ArrayConstructor_WithRange()
+    {
+        // Range expression in array constructor
+        Assert.Equal("[1,2,3,4,5]", Eval("[1..5]"));
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // FunctionalCompiler lines 5559-5594: Sort stage array flattening
+    // Sort preceded by array-producing step requiring flatten
+    // ═══════════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void Sort_AfterArrayFlatten()
+    {
+        // $sort($append(data.a, data.b)) — flattened array then sorted
+        string data = """{"data":{"a":[3,1,5],"b":[2,4]}}""";
+        Assert.Equal("[1,2,3,4,5]", Eval("$sort($append(data.a, data.b))", data));
+    }
+
+    [Fact]
+    public void Sort_ThenPropertyAccess()
+    {
+        // items^(price).name — sort then continue chain with property access
+        string data = """{"items":[{"price":30,"name":"c"},{"price":10,"name":"a"},{"price":20,"name":"b"}]}""";
+        Assert.Equal("""["a","b","c"]""", Eval("items^(price).name", data));
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // BuiltInFunctions lines 5047-5072: FormatNumber exponent normalization
+    // ═══════════════════════════════════════════════════════════════════
+
+    [Theory]
+    [InlineData(12345, "0.00e0", "1.23e4")]
+    [InlineData(0.00123, "0.00e0", "1.23e-3")]
+    [InlineData(100, "0.0e0", "10.0e1")]
+    [InlineData(1, "0.00e0", "1.00e0")]
+    [InlineData(9876543, "0.000e0", "9.877e6")]
+    public void FormatNumber_ExponentNormalization(double value, string picture, string expected)
+    {
+        string expr = $"""$formatNumber({value.ToString(System.Globalization.CultureInfo.InvariantCulture)}, "{picture}")""";
+        Assert.Equal($"\"{expected}\"", Eval(expr));
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // BuiltInFunctions lines 4811-4853: FormatNumber grouping positions
+    // ═══════════════════════════════════════════════════════════════════
+
+    [Theory]
+    [InlineData(1234567, "#,##0", "1,234,567")]
+    [InlineData(1234567.89, "#,##0.00", "1,234,567.89")]
+    [InlineData(123, "#,##0", "123")]
+    public void FormatNumber_Grouping(double value, string picture, string expected)
+    {
+        string expr = $"""$formatNumber({value.ToString(System.Globalization.CultureInfo.InvariantCulture)}, "{picture}")""";
+        Assert.Equal($"\"{expected}\"", Eval(expr));
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // BuiltInFunctions lines 2234-2256: CompileFilterFunc flatten
+    // Multi-valued sequence containing arrays that need flattening
+    // ═══════════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void FilterFunc_NestedArrayFlatten_Uppercase()
+    {
+        // Nested arrays producing multi-valued seq with array elements — triggers flatten at 2234
+        string data = """{"Account":{"Order":[{"Product":[{"Description":{"Colour":"red"}},{"Description":{"Colour":"blue"}}]},{"Product":[{"Description":{"Colour":"green"}}]}]}}""";
+        Assert.Equal("""["RED","BLUE","GREEN"]""", Eval("Account.Order.Product.$uppercase(Description.Colour)", data));
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // BuiltInFunctions lines 4315-4343: $encodeUrl non-string input
+    // Corvus extension: coerces non-string to string before encoding
+    // ═══════════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void EncodeUrl_NumberInput_CorvusExtension()
+    {
+        // Reference jsonata throws T0410 for non-string; Corvus coerces to string
+        Assert.Equal("\"42\"", Eval("$encodeUrl(42)"));
+    }
+
+    [Fact]
+    public void EncodeUrl_BooleanInput_CorvusExtension()
+    {
+        Assert.Equal("\"true\"", Eval("$encodeUrl(true)"));
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // BuiltInFunctions lines 4414-4429: HasInvalidPercentEncoding
+    // $decodeUrl with malformed percent encoding
+    // ═══════════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void DecodeUrl_MalformedPercent_Throws()
+    {
+        // "hello%2world" — incomplete percent encoding (only 1 hex digit after %)
+        var ex = Assert.Throws<JsonataException>(() => Eval("""$decodeUrl("hello%2world")"""));
+        Assert.Equal("D3140", ex.Code);
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // BuiltInFunctions lines 2644-2660: $spread array property counting
+    // ═══════════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void Spread_ArrayOfMultiKeyObjects()
+    {
+        // Each multi-key object is split into single-key objects
+        Assert.Equal("""[{"a":1},{"b":2},{"c":3}]""", Eval("""$spread({"a":1,"b":2,"c":3})"""));
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // $each with 3 parameters (key, value, object)
+    // Reference: ["a=1","b=2"]
+    // ═══════════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void Each_ThreeParam_KeyValueConcat()
+    {
+        Assert.Equal("""["a=1","b=2"]""", Eval("""$each({"a":1,"b":2}, function($v,$k,$o){$k & "=" & $string($v)})"""));
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // $formatInteger with grouping separator (XPathDateTimeFormatter)
+    // ═══════════════════════════════════════════════════════════════════
+
+    [Theory]
+    [InlineData(1234567, "#,##0", "1,234,567")]
+    [InlineData(42, "w", "forty-two")]
+    [InlineData(42, "W", "FORTY-TWO")]
+    [InlineData(1001, "w", "one thousand and one")]
+    public void FormatInteger_Various(int value, string picture, string expected)
+    {
+        string expr = $"""$formatInteger({value}, "{picture}")""";
+        Assert.Equal($"\"{expected}\"", Eval(expr));
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // $length and $substring with surrogate pairs (code point counting)
+    // CGH lines 7561-7591: CountCodePoints
+    // ═══════════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void Length_CodePointCounting()
+    {
+        // "Hello😊World" = 11 code points (😊 is 1 code point)
+        Assert.Equal("11", Eval("""$length("Hello\ud83d\ude0aWorld")"""));
+    }
+
+    [Fact]
+    public void Length_AllEmoji()
+    {
+        // Three emoji = 3 code points
+        Assert.Equal("3", Eval("""$length("\ud83d\ude0a\ud83d\ude0a\ud83d\ude0a")"""));
+    }
+
+    [Fact]
+    public void Substring_CodePointIndexing()
+    {
+        // Get the emoji at code point index 5
+        Assert.Equal("\"\ud83d\ude0a\"", Eval("""$substring("Hello\ud83d\ude0aWorld", 5, 1)"""));
+    }
+
+    [Fact]
+    public void Substring_AfterSurrogate()
+    {
+        // Get "World" starting at code point index 6
+        Assert.Equal("\"World\"", Eval("""$substring("Hello\ud83d\ude0aWorld", 6)"""));
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // $formatNumber percent
+    // ═══════════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void FormatNumber_PercentPicture()
+    {
+        Assert.Equal("\"45%\"", Eval("""$formatNumber(0.45, "##0%")"""));
     }
 }

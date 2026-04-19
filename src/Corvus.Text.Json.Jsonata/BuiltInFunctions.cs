@@ -322,6 +322,36 @@ internal static class BuiltInFunctions
                 throw new JsonataException("D3001", SR.D3001_AttemptingToInvokeStringFunctionOnInfinityOrNan, 0);
             }
 
+            bool prettyPrint = false;
+            if (prettyArg is not null)
+            {
+                var prettySeq = prettyArg(input, env);
+                if (!prettySeq.IsUndefined)
+                {
+                    var prettyElem = prettySeq.FirstOrDefault;
+                    if (prettyElem.ValueKind is not JsonValueKind.True and not JsonValueKind.False)
+                    {
+                        throw new JsonataException("T0410", SR.T0410_SecondArgumentOfStringMustBeABoolean, 0);
+                    }
+
+                    prettyPrint = prettyElem.ValueKind == JsonValueKind.True;
+                }
+            }
+
+            // Multi-valued sequences are materialized as a JSON array and stringified.
+            if (seq.Count > 1)
+            {
+                var arrDoc = JsonElement.CreateArrayBuilder(env.Workspace, seq.Count);
+                var arrRoot = arrDoc.RootElement;
+                for (int i = 0; i < seq.Count; i++)
+                {
+                    arrRoot.AddItem(seq[i]);
+                }
+
+                string arrJson = StringifyElement((JsonElement)arrRoot, prettyPrint);
+                return new Sequence(JsonataHelpers.StringFromString(arrJson, env.Workspace));
+            }
+
             var element = seq.FirstOrDefault;
 
             // When the context itself is undefined (e.g. $string() with no data),
@@ -338,22 +368,6 @@ internal static class BuiltInFunctions
                 if (double.IsNaN(d) || double.IsInfinity(d))
                 {
                     throw new JsonataException("D3001", SR.D3001_AttemptingToInvokeStringFunctionOnInfinityOrNan, 0);
-                }
-            }
-
-            bool prettyPrint = false;
-            if (prettyArg is not null)
-            {
-                var prettySeq = prettyArg(input, env);
-                if (!prettySeq.IsUndefined)
-                {
-                    var prettyElem = prettySeq.FirstOrDefault;
-                    if (prettyElem.ValueKind is not JsonValueKind.True and not JsonValueKind.False)
-                    {
-                        throw new JsonataException("T0410", SR.T0410_SecondArgumentOfStringMustBeABoolean, 0);
-                    }
-
-                    prettyPrint = prettyElem.ValueKind == JsonValueKind.True;
                 }
             }
 
@@ -2517,7 +2531,7 @@ internal static class BuiltInFunctions
             JsonElement.Mutable arrayRoot = arrayDoc.RootElement;
 
             Environment reuseEnv = lambda.CreateInvokeEnv(env);
-            Sequence[] lambdaArgs = ArrayPool<Sequence>.Shared.Rent(2);
+            Sequence[] lambdaArgs = ArrayPool<Sequence>.Shared.Rent(3);
             try
             {
                 foreach (var prop in obj.EnumerateObject())
@@ -2525,6 +2539,7 @@ internal static class BuiltInFunctions
                     lambdaArgs[0] = new Sequence(prop.Value);
                     using UnescapedUtf8JsonString nameUtf8 = prop.Utf8NameSpan;
                     lambdaArgs[1] = new Sequence(JsonataHelpers.StringFromUnescapedUtf8(nameUtf8.Span, env.Workspace));
+                    lambdaArgs[2] = new Sequence(obj);
                     var result = lambda.InvokeReusing(lambdaArgs, input, reuseEnv, env);
                     if (!result.IsUndefined)
                     {

@@ -8869,41 +8869,6 @@ internal static class FunctionalCompiler
     }
 #endif
 
-    internal static string CoerceToString(Sequence seq)
-    {
-        if (seq.IsUndefined)
-        {
-            return string.Empty;
-        }
-
-        // Multi-valued sequences are stringified as JSON arrays
-        if (seq.Count > 1)
-        {
-            return BuildArrayRawText(seq);
-        }
-
-        return CoerceElementToString(seq.FirstOrDefault);
-    }
-
-    private static string BuildArrayRawText(Sequence seq)
-    {
-        // Build raw JSON text directly: [elem1,elem2,...]
-        var sb = new System.Text.StringBuilder(seq.Count * 16);
-        sb.Append('[');
-        for (int i = 0; i < seq.Count; i++)
-        {
-            if (i > 0)
-            {
-                sb.Append(',');
-            }
-
-            sb.Append(seq[i].GetRawText());
-        }
-
-        sb.Append(']');
-        return sb.ToString();
-    }
-
     internal static string CoerceElementToString(JsonElement element)
     {
         return element.ValueKind switch

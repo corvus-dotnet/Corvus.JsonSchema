@@ -1305,6 +1305,594 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     }
 
     // ═══════════════════════════════════════════════════════════════
+    // $zip variadic (4+ args) — exercises Zip(JsonElement[], workspace)
+    // Lines 6654-6705 in JsonataCodeGenHelpers.cs (52 uncovered lines)
+    // ═══════════════════════════════════════════════════════════════
+
+    [Theory]
+    [Trait("category", "codegen-coverage")]
+    [InlineData("$zip([1,2],[3,4],[5,6],[7,8],[9,10])", "null",
+        "[[1,3,5,7,9],[2,4,6,8,10]]")]
+    [InlineData("$zip([\"a\"],[\"b\"],[\"c\"],[\"d\"])", "null",
+        "[[\"a\",\"b\",\"c\",\"d\"]]")]
+    public void ZipVariadic(string expression, string data, string expected)
+    {
+        this.AssertCgAndRtMatch(expression, data, expected);
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // $zip single arg — exercises Zip(JsonElement, workspace)
+    // Lines 6529-6556 in JsonataCodeGenHelpers.cs (28 uncovered lines)
+    // ═══════════════════════════════════════════════════════════════
+
+    [Theory]
+    [Trait("category", "codegen-coverage")]
+    [InlineData("$zip([1,2,3])", "null", "[[1],[2],[3]]")]
+    [InlineData("$zip([\"a\",\"b\"])", "null", "[[\"a\"],[\"b\"]]")]
+    public void ZipSingleArg(string expression, string data, string expected)
+    {
+        this.AssertCgAndRtMatch(expression, data, expected);
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // $split with empty separator — exercises Split empty separator path
+    // Lines 4024-4046 in JsonataCodeGenHelpers.cs (23 uncovered lines)
+    // ═══════════════════════════════════════════════════════════════
+
+    [Theory]
+    [Trait("category", "codegen-coverage")]
+    [InlineData("$split(\"hello\", \"\")", "null",
+        "[\"h\",\"e\",\"l\",\"l\",\"o\"]")]
+    [InlineData("$split(\"hello\", \"\", 3)", "null",
+        "[\"h\",\"e\",\"l\"]")]
+    public void SplitEmptySeparator(string expression, string data, string expected)
+    {
+        this.AssertCgAndRtMatch(expression, data, expected);
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // $formatNumber with grouping separators
+    // Lines 4811-4853 in BuiltInFunctions.cs (ComputeRegularGrouping, 32 uncovered)
+    // ═══════════════════════════════════════════════════════════════
+
+    [Theory]
+    [Trait("category", "codegen-coverage")]
+    [InlineData("$formatNumber(1234567, \"#,##0\")", "null", "\"1,234,567\"")]
+    [InlineData("$formatNumber(1234567.89, \"#,##0.00\")", "null", "\"1,234,567.89\"")]
+    public void FormatNumberGrouping(string expression, string data, string expected)
+    {
+        this.AssertCgAndRtMatch(expression, data, expected);
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // $formatNumber with exponent pattern
+    // Lines 4899-4919, 5047-5072 in BuiltInFunctions.cs (~47 uncovered lines)
+    // Note: reference jsonata 1.8.7 hangs on exponent patterns
+    // ═══════════════════════════════════════════════════════════════
+
+    [Theory]
+    [Trait("category", "codegen-coverage")]
+    [InlineData("$formatNumber(12345, \"0.00e0\")", "null")]
+    [InlineData("$formatNumber(0.00123, \"0.00e0\")", "null")]
+    [InlineData("$formatNumber(-42.5, \"0.0e0\")", "null")]
+    [InlineData("$formatNumber(999, \"0.0e0\")", "null")]
+    public void FormatNumberExponent(string expression, string data)
+    {
+        // Reference jsonata 1.8.7 hangs on exponent patterns — verify CG == RT
+        this.AssertCgAndRtMatchCorvusExtension(expression, data);
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // $formatInteger with word/roman — exercises XPathDateTimeFormatter
+    // Lines 1655-1673 (Unicode digit + grouping), 533-540 (ordinal modifier)
+    // ═══════════════════════════════════════════════════════════════
+
+    [Theory]
+    [Trait("category", "codegen-coverage")]
+    [InlineData("$formatInteger(42, \"w\")", "null", "\"forty-two\"")]
+    [InlineData("$formatInteger(42, \"W\")", "null", "\"FORTY-TWO\"")]
+    [InlineData("$formatInteger(42, \"Ww\")", "null", "\"Forty-Two\"")]
+    [InlineData("$formatInteger(5, \"I\")", "null", "\"V\"")]
+    [InlineData("$formatInteger(1999, \"I\")", "null", "\"MCMXCIX\"")]
+    [InlineData("$formatInteger(100, \"w\")", "null", "\"one hundred\"")]
+    [InlineData("$formatInteger(0, \"w\")", "null", "\"zero\"")]
+    [InlineData("$formatInteger(1234, \"#,##0\")", "null")]
+    public void FormatIntegerViaCg(string expression, string data, string? expected = null)
+    {
+        if (expected != null)
+        {
+            this.AssertCgAndRtMatch(expression, data, expected);
+        }
+        else
+        {
+            this.AssertCgAndRtMatchCorvusExtension(expression, data);
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // $parseInteger — exercises XPathDateTimeFormatter parsing paths
+    // Lines 2712-2737 (grouping skip), 2849-2860 (plus sign),
+    // 2444-2452 (scale words)
+    // ═══════════════════════════════════════════════════════════════
+
+    [Theory]
+    [Trait("category", "codegen-coverage")]
+    [InlineData("$parseInteger(\"42\", \"0\")", "null", "42")]
+    [InlineData("$parseInteger(\"1,234\", \"#,##0\")", "null", "1234")]
+    [InlineData("$parseInteger(\"forty-two\", \"w\")", "null", "42")]
+    [InlineData("$parseInteger(\"XLII\", \"I\")", "null", "42")]
+    [InlineData("$parseInteger(\"one hundred\", \"w\")", "null", "100")]
+    [InlineData("$parseInteger(\"one thousand\", \"w\")", "null", "1000")]
+    [InlineData("$parseInteger(\"five thousand two hundred\", \"w\")", "null", "5200")]
+    public void ParseIntegerCoverage(string expression, string data, string expected)
+    {
+        this.AssertCgAndRtMatch(expression, data, expected);
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // $fromMillis/$toMillis with picture strings — exercises XPathDateTimeFormatter
+    // Lines 572-598 (TryParseInteger), 1104-1114 (timezone 2-3 char),
+    // 3015-3026 (literal bracket), 3540-3553 (skip word)
+    // ═══════════════════════════════════════════════════════════════
+
+    [Theory]
+    [Trait("category", "codegen-coverage")]
+    [InlineData("$fromMillis(1704067200000, \"[Y0001]-[M01]-[D01]\")", "null", "\"2024-01-01\"")]
+    [InlineData("$fromMillis(1704067200000, \"[H01]:[m01]:[s01]\")", "null", "\"00:00:00\"")]
+    [InlineData("$toMillis(\"2024-01-01\", \"[Y]-[M01]-[D01]\")", "null", "1704067200000")]
+    // Day-of-week name, ordinal day, month name — exercises FormatComponent branches
+    [InlineData("$fromMillis(1704067200000, \"[FNn], [D1o] [MNn] [Y]\")", "null")]
+    // AM/PM marker — exercises [P] component
+    [InlineData("$fromMillis(1704067200000, \"[Y]-[M]-[D] [P]\")", "null")]
+    // Timezone with colon — exercises timezone formatting
+    [InlineData("$fromMillis(1704067200000, \"[Y]-[M]-[D]T[H]:[m]:[s][Z01:01]\")", "null")]
+    public void FromToMillisPictures(string expression, string data, string? expected = null)
+    {
+        if (expected != null)
+        {
+            this.AssertCgAndRtMatch(expression, data, expected);
+        }
+        else
+        {
+            this.AssertCgAndRtMatchCorvusExtension(expression, data);
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // Wildcard on arrays — exercises EnumerateWildcard array branch
+    // Lines 1017-1037 in JsonataCodeGenHelpers.cs (21 uncovered lines)
+    // ═══════════════════════════════════════════════════════════════
+
+    [Theory]
+    [Trait("category", "codegen-coverage")]
+    [InlineData("[{\"a\":1},{\"b\":2}].*", "null", "[1,2]")]
+    public void WildcardOnArrays(string expression, string data, string expected)
+    {
+        this.AssertCgAndRtMatch(expression, data, expected);
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // CoerceToStringElement — exercises non-string type coercion path
+    // Lines 2087-2108 in JsonataCodeGenHelpers.cs (22 uncovered lines)
+    // The CG path calls this when $string() is applied to non-strings
+    // ═══════════════════════════════════════════════════════════════
+
+    [Theory]
+    [Trait("category", "codegen-coverage")]
+    [InlineData("$string(42)", "null", "\"42\"")]
+    [InlineData("$string(true)", "null", "\"true\"")]
+    [InlineData("$string(null)", "null", "\"null\"")]
+    [InlineData("$string({\"a\":1})", "null", "\"{\\\"a\\\":1}\"")]
+    [InlineData("$string([1,2])", "null", "\"[1,2]\"")]
+    public void CoerceToString(string expression, string data, string expected)
+    {
+        this.AssertCgAndRtMatch(expression, data, expected);
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // Deep chain navigation through nested arrays
+    // Lines 2033-2109 in FunctionalCompiler.cs (77 uncovered lines)
+    // Exercises EvalChainOverArrayIntoStatic — recursive array descent
+    // ═══════════════════════════════════════════════════════════════
+
+    [Theory]
+    [Trait("category", "codegen-coverage")]
+    [InlineData("store.departments.employees.name",
+        "{\"store\":{\"departments\":[{\"employees\":[{\"name\":\"Alice\"},{\"name\":\"Bob\"}]},{\"employees\":[{\"name\":\"Carol\"}]}]}}",
+        "[\"Alice\",\"Bob\",\"Carol\"]")]
+    [InlineData("org.teams.members.skills",
+        "{\"org\":{\"teams\":[{\"members\":[{\"skills\":[\"js\",\"py\"]},{\"skills\":[\"go\"]}]},{\"members\":[{\"skills\":[\"rust\"]}]}]}}",
+        "[\"js\",\"py\",\"go\",\"rust\"]")]
+    [InlineData("Account.Order.Product.Price",
+        "{\"Account\":{\"Order\":[{\"Product\":[{\"Price\":10},{\"Price\":20}]},{\"Product\":[{\"Price\":30}]}]}}",
+        "[10,20,30]")]
+    public void DeepChainThroughNestedArrays(string expression, string data, string expected)
+    {
+        this.AssertCgAndRtMatch(expression, data, expected);
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // $encodeUrlComponent with special chars — exercises encodeUrl string path
+    // Lines 4315-4343 in BuiltInFunctions.cs (29 uncovered lines)
+    // ═══════════════════════════════════════════════════════════════
+
+    [Theory]
+    [Trait("category", "codegen-coverage")]
+    [InlineData("$encodeUrlComponent(\"a=1&b=2\")", "null", "\"a%3D1%26b%3D2\"")]
+    [InlineData("$encodeUrlComponent(\"hello world!\")", "null", "\"hello%20world%21\"")]
+    public void EncodeUrlSpecialChars(string expression, string data, string expected)
+    {
+        this.AssertCgAndRtMatch(expression, data, expected);
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // GroupBy annotation with duplicate keys
+    // Lines 5016-5082 in FunctionalCompiler.cs (67 uncovered lines)
+    // Exercises ApplySimpleNamePairGroupBy — singleton vs array merging
+    // ═══════════════════════════════════════════════════════════════
+
+    [Theory]
+    [Trait("category", "codegen-coverage")]
+    [InlineData(
+        "items{category: value}",
+        "{\"items\":[{\"category\":\"fruit\",\"value\":\"apple\"},{\"category\":\"veg\",\"value\":\"carrot\"},{\"category\":\"fruit\",\"value\":\"banana\"}]}",
+        "{\"fruit\":[\"apple\",\"banana\"],\"veg\":\"carrot\"}")]
+    public void GroupByAnnotationDuplicateKeys(string expression, string data, string expected)
+    {
+        this.AssertCgAndRtMatch(expression, data, expected);
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // Equality predicate filter + continue chain
+    // Lines 1558-1640 in FunctionalCompiler.cs (83 uncovered lines)
+    // Lines 765-791 in JsonataCodeGenHelpers.cs (27 uncovered lines)
+    // Exercises CollectAndContinue / FusedFilterAndContinue
+    // ═══════════════════════════════════════════════════════════════
+
+    [Theory]
+    [Trait("category", "codegen-coverage")]
+    [InlineData(
+        "orders[status=\"shipped\"].items.name",
+        "{\"orders\":[{\"status\":\"shipped\",\"items\":[{\"name\":\"Widget\"},{\"name\":\"Gadget\"}]},{\"status\":\"pending\",\"items\":[{\"name\":\"Thing\"}]}]}",
+        "[\"Widget\",\"Gadget\"]")]
+    [InlineData(
+        "data[status=\"approved\"].value",
+        "{\"data\":[{\"status\":\"approved\",\"value\":10},{\"status\":\"pending\",\"value\":20},{\"status\":\"approved\",\"value\":30}]}",
+        "[10,30]")]
+    public void EqualityPredicateFilterChain(string expression, string data, string expected)
+    {
+        this.AssertCgAndRtMatch(expression, data, expected);
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // Index in property chain path
+    // Lines 818-845 in JsonataCodeGenHelpers.cs (28 uncovered lines)
+    // Exercises FusedEvalFromStep with constant index + array value
+    // ═══════════════════════════════════════════════════════════════
+
+    [Theory]
+    [Trait("category", "codegen-coverage")]
+    [InlineData(
+        "data[0].tags",
+        "{\"data\":[{\"tags\":[\"a\",\"b\"]},{\"tags\":[\"c\"]}]}",
+        "[\"a\",\"b\"]")]
+    [InlineData(
+        "data[-1].tags",
+        "{\"data\":[{\"tags\":[\"a\",\"b\"]},{\"tags\":[\"c\"]}]}",
+        "[\"c\"]")]
+    public void IndexInPropertyChain(string expression, string data, string expected)
+    {
+        this.AssertCgAndRtMatch(expression, data, expected);
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // Sort with comparator function
+    // Lines 8091-8153 in FunctionalCompiler.cs (63 uncovered lines)
+    // Exercises CompileFocusSortStage — sort with focus variable
+    // ═══════════════════════════════════════════════════════════════
+
+    [Theory]
+    [Trait("category", "codegen-coverage")]
+    [InlineData(
+        "$sort(items, function($l,$r){$l.priority > $r.priority})",
+        "{\"items\":[{\"name\":\"c\",\"priority\":3},{\"name\":\"a\",\"priority\":1},{\"name\":\"b\",\"priority\":2}]}",
+        "[{\"name\":\"a\",\"priority\":1},{\"name\":\"b\",\"priority\":2},{\"name\":\"c\",\"priority\":3}]")]
+    public void SortWithComparator(string expression, string data, string expected)
+    {
+        this.AssertCgAndRtMatch(expression, data, expected);
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // $filter with 2-arg callback (value + index)
+    // Lines 2234-2256 in BuiltInFunctions.cs (23 uncovered lines)
+    // Exercises CompileFilterFunc — multi-valued sequence flattening with arrays
+    // ═══════════════════════════════════════════════════════════════
+
+    [Theory]
+    [Trait("category", "codegen-coverage")]
+    [InlineData(
+        "$filter([1,2,3,4,5], function($v){$v > 3})",
+        "null",
+        "[4,5]")]
+    public void FilterWithCallback(string expression, string data, string expected)
+    {
+        this.AssertCgAndRtMatch(expression, data, expected);
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // $spread multi-element (object → array of single-key objects)
+    // Lines 2644-2660 in BuiltInFunctions.cs (17 uncovered lines)
+    // Exercises CompileSpread multi-element array path
+    // ═══════════════════════════════════════════════════════════════
+
+    [Theory]
+    [Trait("category", "codegen-coverage")]
+    [InlineData(
+        "$spread({\"a\":1,\"b\":2})",
+        "null",
+        "[{\"a\":1},{\"b\":2}]")]
+    public void SpreadObjectToArray(string expression, string data, string expected)
+    {
+        this.AssertCgAndRtMatch(expression, data, expected);
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // $length / $substring with Unicode surrogate pairs (emoji)
+    // Lines 7561-7591 in JsonataCodeGenHelpers.cs (31 uncovered lines)
+    // Exercises CountCodePoints / CodePointToCharIndex
+    // ═══════════════════════════════════════════════════════════════
+
+    [Theory]
+    [Trait("category", "codegen-coverage")]
+    [InlineData("$length(\"abc\\uD83D\\uDE00def\")", "null", "7")]
+    [InlineData("$substring(\"abc\\uD83D\\uDE00def\", 4, 3)", "null", "\"def\"")]
+    public void UnicodeSurrogateHandling(string expression, string data, string expected)
+    {
+        this.AssertCgAndRtMatch(expression, data, expected);
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // $encodeUrl with string (non-UTF8 path)
+    // Lines 4315-4343 in BuiltInFunctions.cs (29 uncovered lines)
+    // Exercises the string coercion fallback in CompileEncodeUrl
+    // ═══════════════════════════════════════════════════════════════
+
+    [Theory]
+    [Trait("category", "codegen-coverage")]
+    [InlineData("$encodeUrl(\"hello world/path\")", "null", "\"hello%20world/path\"")]
+    public void EncodeUrlStringPath(string expression, string data, string expected)
+    {
+        this.AssertCgAndRtMatch(expression, data, expected);
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // $formatInteger with ordinal modifier
+    // Lines 572-598 in XPathDateTimeFormatter.cs (27 uncovered lines)
+    // Exercises TryParseInteger ordinal format picture
+    // ═══════════════════════════════════════════════════════════════
+
+    [Theory]
+    [Trait("category", "codegen-coverage")]
+    [InlineData("$formatInteger(1, \"1;o\")", "null", "\"1st\"")]
+    [InlineData("$formatInteger(2, \"1;o\")", "null", "\"2nd\"")]
+    [InlineData("$formatInteger(3, \"1;o\")", "null", "\"3rd\"")]
+    [InlineData("$formatInteger(11, \"1;o\")", "null", "\"11th\"")]
+    [InlineData("$formatInteger(12, \"1;o\")", "null", "\"12th\"")]
+    [InlineData("$formatInteger(13, \"1;o\")", "null", "\"13th\"")]
+    [InlineData("$formatInteger(21, \"1;o\")", "null", "\"21st\"")]
+    [InlineData("$formatInteger(101, \"1;o\")", "null", "\"101st\"")]
+    public void FormatIntegerOrdinal(string expression, string data, string expected)
+    {
+        this.AssertCgAndRtMatch(expression, data, expected);
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // $parseInteger with sign prefix
+    // Lines 2849-2860 in XPathDateTimeFormatter.cs (12 uncovered lines)
+    // Exercises plus/minus sign parsing in ASCII integer
+    // ═══════════════════════════════════════════════════════════════
+
+    [Theory]
+    [Trait("category", "codegen-coverage")]
+    [InlineData("$parseInteger(\"+42\", \"0\")", "null", "42")]
+    [InlineData("$parseInteger(\"-99\", \"0\")", "null", "-99")]
+    public void ParseIntegerWithSign(string expression, string data, string expected)
+    {
+        this.AssertCgAndRtMatch(expression, data, expected);
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // $parseInteger with grouping separators
+    // Lines 2712-2725 in XPathDateTimeFormatter.cs (14 uncovered lines)
+    // Exercises single-byte grouping separator handling
+    // ═══════════════════════════════════════════════════════════════
+
+    [Theory]
+    [Trait("category", "codegen-coverage")]
+    [InlineData("$parseInteger(\"1,234,567\", \"#,##0\")", "null", "1234567")]
+    public void ParseIntegerGrouping(string expression, string data, string expected)
+    {
+        this.AssertCgAndRtMatch(expression, data, expected);
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // $each with 3-parameter callback ($value, $key, $object)
+    // Lines 9185-9215 in JsonataCodeGenHelpers.cs (31 uncovered lines)
+    // NOTE: RT has a bug where 3-param $each returns [] — CG is correct
+    // per reference jsonata. Test CG against expected, RT separately.
+    // ═══════════════════════════════════════════════════════════════
+
+    [Fact]
+    [Trait("category", "codegen-coverage")]
+    public void EachThreeParamCallback()
+    {
+        // Reference jsonata returns ["object","object"]
+        // CG returns ["object","object"] — correct
+        // RT returns [] — RT bug (3-param $each not supported)
+        string expression = "$each({\"x\":1,\"y\":2}, function($v,$k,$o){$type($o)})";
+        string data = "null";
+        string expectedJson = "[\"object\",\"object\"]";
+
+        CompiledExpression compiled = this.fixture.GetOrCompile(expression);
+        Assert.Null(compiled.Error);
+        Assert.NotNull(compiled.Method);
+
+        using var inputDoc = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes(data));
+        using var expectedDoc = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes(expectedJson));
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+
+        JsonElement cgResult = InvokeCg(compiled.Method, inputDoc.RootElement, workspace);
+        string cgJson = cgResult.ValueKind == JsonValueKind.Undefined ? "undefined" : cgResult.GetRawText();
+        this.output.WriteLine($"CG: {cgJson}");
+        AssertJsonEqual(expectedDoc.RootElement, cgResult);
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // $map over chain property — exercises MapChainElements
+    // Lines 2674-2716 in JsonataCodeGenHelpers.cs (43 uncovered lines)
+    // ═══════════════════════════════════════════════════════════════
+
+    [Theory]
+    [Trait("category", "codegen-coverage")]
+    [InlineData(
+        "$map(items, function($v){$v.nested.value})",
+        "{\"items\":[{\"nested\":{\"value\":10}},{\"nested\":{\"value\":20}}]}",
+        "[10,20]")]
+    public void MapOverChainProperty(string expression, string data, string expected)
+    {
+        this.AssertCgAndRtMatch(expression, data, expected);
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // Chain flattening through nested arrays
+    // Lines 598-622 in JsonataCodeGenHelpers.cs (25 uncovered lines)
+    // Exercises ContinueChainFlatInto — when chain encounters arrays mid-path
+    // ═══════════════════════════════════════════════════════════════
+
+    [Theory]
+    [Trait("category", "codegen-coverage")]
+    [InlineData(
+        "data.items.name",
+        "{\"data\":[{\"items\":[{\"name\":\"a\"},{\"name\":\"b\"}]},{\"items\":[{\"name\":\"c\"}]}]}",
+        "[\"a\",\"b\",\"c\"]")]
+    [InlineData(
+        "data.items.values",
+        "{\"data\":{\"items\":[{\"values\":[1,2]},{\"values\":[3,4]}]}}",
+        "[1,2,3,4]")]
+    public void ChainFlattenThroughArrays(string expression, string data, string expected)
+    {
+        this.AssertCgAndRtMatch(expression, data, expected);
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // Deep multi-level chain through nested arrays
+    // Targets ContinueChainFlatInto (lines 598-622) — array in middle of chain
+    // Also targets CollectChainFlatInto (lines 560-591)
+    // ═══════════════════════════════════════════════════════════════
+
+    [Theory]
+    [Trait("category", "codegen-coverage")]
+    [InlineData(
+        "orders.items.tags.name",
+        "{\"orders\":{\"items\":[{\"tags\":[{\"name\":\"foo\"},{\"name\":\"bar\"}]},{\"tags\":[{\"name\":\"baz\"}]}]}}",
+        "[\"foo\",\"bar\",\"baz\"]")]
+    [InlineData(
+        "data.nested.items.name",
+        "{\"data\":{\"nested\":[{\"items\":[{\"name\":\"a\"}]},{\"items\":[{\"name\":\"b\"},{\"name\":\"c\"}]}]}}",
+        "[\"a\",\"b\",\"c\"]")]
+    [InlineData(
+        "company.departments.teams.members.name",
+        "{\"company\":{\"departments\":[{\"teams\":[{\"members\":[{\"name\":\"Alice\"}]},{\"members\":[{\"name\":\"Bob\"}]}]},{\"teams\":[{\"members\":[{\"name\":\"Carol\"}]}]}]}}",
+        "[\"Alice\",\"Bob\",\"Carol\"]")]
+    public void DeepMultiLevelChainFlatten(string expression, string data, string expected)
+    {
+        this.AssertCgAndRtMatch(expression, data, expected);
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // Equality predicate filter in fused chain (CG path)
+    // Targets FusedFilterAndContinue (lines 765-791)
+    // Data must be array of objects with string predicate then continuation
+    // ═══════════════════════════════════════════════════════════════
+
+    [Theory]
+    [Trait("category", "codegen-coverage")]
+    [InlineData(
+        "data[type=\"order\"].items.name",
+        "{\"data\":[{\"type\":\"order\",\"items\":[{\"name\":\"x\"},{\"name\":\"y\"}]},{\"type\":\"invoice\",\"items\":[{\"name\":\"z\"}]}]}",
+        "[\"x\",\"y\"]")]
+    public void FusedFilterContinueChain(string expression, string data, string expected)
+    {
+        this.AssertCgAndRtMatch(expression, data, expected);
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // Index in middle of chain (per-element constant index)
+    // Targets FusedEvalFromStep with constantIndices (lines 818-845)
+    // The index must be on a non-first step of the chain
+    // ═══════════════════════════════════════════════════════════════
+
+    [Theory]
+    [Trait("category", "codegen-coverage")]
+    [InlineData(
+        "data.items[0].name",
+        "{\"data\":{\"items\":[{\"name\":\"first\"},{\"name\":\"second\"}]}}",
+        "\"first\"")]
+    public void IndexInMiddleOfChain(string expression, string data, string expected)
+    {
+        this.AssertCgAndRtMatch(expression, data, expected);
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // Wildcard on data reference (array of objects)
+    // Targets EnumerateWildcard when source is data-bound array
+    // ═══════════════════════════════════════════════════════════════
+
+    [Theory]
+    [Trait("category", "codegen-coverage")]
+    [InlineData(
+        "data.*",
+        "{\"data\":[{\"a\":1},{\"b\":2},{\"c\":3}]}",
+        "[1,2,3]")]
+    public void WildcardOnDataArray(string expression, string data, string expected)
+    {
+        this.AssertCgAndRtMatch(expression, data, expected);
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // $spread on array of multi-key objects
+    // Targets CompileSpread multi-element array (BI lines 2644-2660)
+    // ═══════════════════════════════════════════════════════════════
+
+    [Theory]
+    [Trait("category", "codegen-coverage")]
+    [InlineData(
+        "$spread([{\"a\":1,\"b\":2},{\"c\":3}])",
+        "null",
+        "[{\"a\":1},{\"b\":2},{\"c\":3}]")]
+    public void SpreadArrayOfMultiKeyObjects(string expression, string data, string expected)
+    {
+        this.AssertCgAndRtMatch(expression, data, expected);
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // GroupBy annotation with actual duplicate keys
+    // Targets ApplySimpleNamePairGroupBy duplicate branch (FC lines 5046-5068)
+    // Key requirement: multiple items MUST share the same key value
+    // ═══════════════════════════════════════════════════════════════
+
+    [Theory]
+    [Trait("category", "codegen-coverage")]
+    [InlineData(
+        "items{cat: val}",
+        "{\"items\":[{\"cat\":\"A\",\"val\":1},{\"cat\":\"A\",\"val\":2},{\"cat\":\"B\",\"val\":3}]}",
+        "{\"A\":[1,2],\"B\":3}")]
+    public void GroupByDuplicateKeys(string expression, string data, string expected)
+    {
+        this.AssertCgAndRtMatch(expression, data, expected);
+    }
+
+    // ═══════════════════════════════════════════════════════════════
     // Helper methods
     // ═══════════════════════════════════════════════════════════════
 
@@ -1367,6 +1955,45 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
 
         string? rtResult = JsonataEvaluator.Default.EvaluateToString(expression, data);
         Assert.Null(rtResult);
+    }
+
+    /// <summary>
+    /// For Corvus extensions (not in reference JSONata) or cases where
+    /// the reference implementation differs by design: asserts CG and RT
+    /// produce identical non-undefined results.
+    /// </summary>
+    private void AssertCgAndRtMatchCorvusExtension(string expression, string data)
+    {
+        CompiledExpression compiled = this.fixture.GetOrCompile(expression);
+
+        this.output.WriteLine($"Expression: {expression}");
+        this.output.WriteLine($"Inlined:    {compiled.IsInlined}");
+
+        if (compiled.Error is not null)
+        {
+            Assert.Fail($"CG compilation failed: {compiled.Error}");
+        }
+
+        Assert.NotNull(compiled.Method);
+
+        using var inputDoc = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes(data));
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+
+        JsonElement cgResult = InvokeCg(compiled.Method, inputDoc.RootElement, workspace);
+        string cgJson = cgResult.ValueKind == JsonValueKind.Undefined ? "undefined" : cgResult.GetRawText();
+
+        string? rtResult = JsonataEvaluator.Default.EvaluateToString(expression, data);
+        string rtJson = rtResult ?? "undefined";
+
+        this.output.WriteLine($"CG: {cgJson}");
+        this.output.WriteLine($"RT: {rtJson}");
+
+        Assert.NotEqual("undefined", cgJson);
+        Assert.NotEqual("undefined", rtJson);
+
+        using var cgDoc = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes(cgJson));
+        using var rtDoc = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes(rtJson));
+        AssertJsonEqual(rtDoc.RootElement, cgDoc.RootElement);
     }
 
     private static JsonElement InvokeCg(MethodInfo method, JsonElement data, JsonWorkspace workspace)
@@ -1890,5 +2517,309 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
             """$number("0o777")""",
             "null",
             "511");
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // CGH lines 598-622: ContinueChainFlatInto
+    // Property chain through nested arrays at multiple levels
+    // ═══════════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void CG_DeepChain_ThreeLevelArray()
+    {
+        AssertCgAndRtMatch(
+            "a.b.c.d",
+            """{"a":[{"b":[{"c":[{"d":"x"},{"d":"y"}]},{"c":{"d":"z"}}]},{"b":{"c":{"d":"w"}}}]}""",
+            """["x","y","z","w"]""");
+    }
+
+    [Fact]
+    public void CG_NestedArrayChain_AccountOrder()
+    {
+        AssertCgAndRtMatch(
+            "Account.Order.Product.Description.Colour",
+            """{"Account":{"Order":[{"Product":[{"Description":{"Colour":"red"}},{"Description":{"Colour":"blue"}}]},{"Product":[{"Description":{"Colour":"green"}}]}]}}""",
+            """["red","blue","green"]""");
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // CGH lines 765-791: FusedFilterAndContinue
+    // Equality predicate filter then property continuation
+    // ═══════════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void CG_FusedFilter_EqualityPredicate()
+    {
+        AssertCgAndRtMatch(
+            """data[type="active"].name""",
+            """{"data":[{"type":"active","name":"a"},{"type":"inactive","name":"b"},{"type":"active","name":"c"}]}""",
+            """["a","c"]""");
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // CGH lines 818-845: FusedEvalFromStep with per-element index
+    // Property chain with constant index at a step
+    // ═══════════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void CG_FusedEval_IndexInChain()
+    {
+        AssertCgAndRtMatch(
+            "data.items[0].name",
+            """{"data":{"items":[{"name":"first"},{"name":"second"}]}}""",
+            "\"first\"");
+    }
+
+    [Fact]
+    public void CG_FusedEval_LastIndex()
+    {
+        AssertCgAndRtMatch(
+            "data.items[-1].name",
+            """{"data":{"items":[{"name":"first"},{"name":"second"},{"name":"last"}]}}""",
+            "\"last\"");
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // CGH lines 693-712: FusedEvalFromStep equality predicate
+    // Equality predicate in middle of chain
+    // ═══════════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void CG_FusedEval_EqualityInChain()
+    {
+        AssertCgAndRtMatch(
+            """data.tags[value="important"].label""",
+            """{"data":{"tags":[{"value":"important","label":"X"},{"value":"minor","label":"Y"},{"value":"important","label":"Z"}]}}""",
+            """["X","Z"]""");
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // CGH lines 850-866: FusedEvalFromStep nested array filter
+    // Equality predicate on nested array property
+    // ═══════════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void CG_FusedEval_NestedArrayFilter()
+    {
+        AssertCgAndRtMatch(
+            """orders[status="shipped"].items.name""",
+            """{"orders":[{"status":"shipped","items":[{"name":"Widget"},{"name":"Gadget"}]},{"status":"pending","items":[{"name":"Thing"}]}]}""",
+            """["Widget","Gadget"]""");
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // CGH lines 7561-7591: CountCodePoints
+    // String functions on surrogate-pair strings via CG
+    // ═══════════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void CG_Length_WithSurrogates()
+    {
+        AssertCgAndRtMatch(
+            """$length("Hello\ud83d\ude0aWorld")""",
+            "null",
+            "11");
+    }
+
+    [Fact]
+    public void CG_Substring_SurrogatePair()
+    {
+        AssertCgAndRtMatch(
+            """$substring("Hello\ud83d\ude0aWorld", 5, 1)""",
+            "null",
+            "\"\ud83d\ude0a\"");
+    }
+
+    [Fact]
+    public void CG_Substring_AfterSurrogate()
+    {
+        AssertCgAndRtMatch(
+            """$substring("Hello\ud83d\ude0aWorld", 6)""",
+            "null",
+            "\"World\"");
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // BIF lines 5047-5072 via CG: FormatNumber exponent
+    // ═══════════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void CG_FormatNumber_Exponent()
+    {
+        AssertCgAndRtMatch(
+            """$formatNumber(12345, "0.00e0")""",
+            "null",
+            "\"1.23e4\"");
+    }
+
+    [Fact]
+    public void CG_FormatNumber_SmallExponent()
+    {
+        AssertCgAndRtMatch(
+            """$formatNumber(0.00123, "0.00e0")""",
+            "null",
+            "\"1.23e-3\"");
+    }
+
+    [Fact]
+    public void CG_FormatNumber_ExpZero()
+    {
+        AssertCgAndRtMatch(
+            """$formatNumber(1, "0.00e0")""",
+            "null",
+            "\"1.00e0\"");
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // BIF lines 4811-4853 via CG: FormatNumber grouping
+    // ═══════════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void CG_FormatNumber_Grouping()
+    {
+        AssertCgAndRtMatch(
+            """$formatNumber(1234567, "#,##0")""",
+            "null",
+            "\"1,234,567\"");
+    }
+
+    [Fact]
+    public void CG_FormatNumber_GroupingWithDecimals()
+    {
+        AssertCgAndRtMatch(
+            """$formatNumber(1234567.89, "#,##0.00")""",
+            "null",
+            "\"1,234,567.89\"");
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // BIF lines 4315-4343 via CG: $encodeUrl non-string (Corvus extension)
+    // ═══════════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void CG_EncodeUrl_NumberInput()
+    {
+        // Corvus extension: coerces non-string to string before URL encoding
+        AssertCgAndRtMatchCorvusExtension(
+            "$encodeUrl(42)",
+            "null");
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // Filter with array of numeric indices via CG
+    // FC lines 5641-5739
+    // ═══════════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void CG_Filter_ArrayOfIndices()
+    {
+        AssertCgAndRtMatch(
+            "data[[0,2,4]]",
+            """{"data":["a","b","c","d","e"]}""",
+            """["a","c","e"]""");
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // GroupBy with duplicate keys via CG
+    // FC lines 5016-5082: ApplySimpleNamePairGroupBy
+    // ═══════════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void CG_GroupBy_DuplicateKeys()
+    {
+        AssertCgAndRtMatch(
+            "items{cat: val}",
+            """{"items":[{"cat":"A","val":10},{"cat":"B","val":20},{"cat":"A","val":30}]}""",
+            """{"A":[10,30],"B":20}""");
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // Array constructor with multi-valued items via CG
+    // FC lines 6866-6901: Tuple array constructor
+    // ═══════════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void CG_ArrayConstructor_MultiValuedItems()
+    {
+        AssertCgAndRtMatch(
+            """[data.items.name, "extra"]""",
+            """{"data":{"items":[{"name":"x"},{"name":"y"}]}}""",
+            """["x","y","extra"]""");
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // $each with 3 parameters via CG
+    // ═══════════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void CG_Each_ThreeParam()
+    {
+        AssertCgAndRtMatch(
+            """$each({"a":1,"b":2}, function($v,$k,$o){$k & "=" & $string($v)})""",
+            "null",
+            """["a=1","b=2"]""");
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // $spread with multi-key objects via CG
+    // BIF lines 2644-2660: CompileSpread property counting
+    // ═══════════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void CG_Spread_MultiKeyObject()
+    {
+        AssertCgAndRtMatch(
+            """$spread({"a":1,"b":2,"c":3})""",
+            "null",
+            """[{"a":1},{"b":2},{"c":3}]""");
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // Sort then continue chain via CG
+    // FC lines 3155-3180 and 5559-5594
+    // ═══════════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void CG_Sort_ThenPropertyAccess()
+    {
+        AssertCgAndRtMatch(
+            "items^(price).name",
+            """{"items":[{"price":30,"name":"c"},{"price":10,"name":"a"},{"price":20,"name":"b"}]}""",
+            """["a","b","c"]""");
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // $formatNumber percent via CG
+    // ═══════════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void CG_FormatNumber_PercentPicture()
+    {
+        AssertCgAndRtMatch(
+            """$formatNumber(0.45, "##0%")""",
+            "null",
+            "\"45%\"");
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // $formatInteger via CG
+    // ═══════════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void CG_FormatInteger_Words_Large()
+    {
+        AssertCgAndRtMatch(
+            """$formatInteger(1001, "w")""",
+            "null",
+            "\"one thousand and one\"");
+    }
+
+    [Fact]
+    public void CG_FormatInteger_Grouping()
+    {
+        AssertCgAndRtMatch(
+            """$formatInteger(1234567, "#,##0")""",
+            "null",
+            "\"1,234,567\"");
     }
 }
