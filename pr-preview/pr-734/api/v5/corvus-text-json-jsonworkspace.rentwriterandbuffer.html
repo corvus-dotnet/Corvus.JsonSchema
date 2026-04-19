@@ -98,9 +98,28 @@
             <h1>JsonWorkspace.RentWriterAndBuffer Method</h1>
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Text.Json<br />
-<strong>Assembly:</strong> Corvus.Text.Json.dll<br />
-<strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/v5/src/Corvus.Text.Json/Corvus/Text/Json/DocumentBuilder/JsonWorkspace.cs#L74">JsonWorkspace.cs</a></p>
+<strong>Assembly:</strong> Corvus.Text.Json.dll</p>
+<h2 id="overloads">Overloads</h2>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="#rentwriterandbuffer-int-ref-ibytebufferwriter">RentWriterAndBuffer(int, ref IByteBufferWriter)</a></td>
+<td>Rents a UTF-8 JSON writer and associated buffer writer from the pool.</td>
+</tr>
+<tr>
+<td><a href="#rentwriterandbuffer-jsonwriteroptions-int-ref-ibytebufferwriter">RentWriterAndBuffer(JsonWriterOptions, int, ref IByteBufferWriter)</a></td>
+<td>Rents a UTF-8 JSON writer and associated buffer writer from the pool, using the specified writer options instead of the workspace defaults.</td>
+</tr>
+</tbody>
+</table>
 <h2 id="rentwriterandbuffer-int-ref-ibytebufferwriter">RentWriterAndBuffer(int, ref IByteBufferWriter)</h2>
+<p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/v5/src/Corvus.Text.Json/Corvus/Text/Json/DocumentBuilder/JsonWorkspace.cs#L74">JsonWorkspace.cs</a></p>
 <p>Rents a UTF-8 JSON writer and associated buffer writer from the pool.</p>
 <pre><code class="language-csharp">public Utf8JsonWriter RentWriterAndBuffer(int defaultBufferSize, ref IByteBufferWriter bufferWriter)
 </code></pre>
@@ -148,6 +167,62 @@
 </tr>
 </tbody>
 </table>
+<hr />
+<h2 id="rentwriterandbuffer-jsonwriteroptions-int-ref-ibytebufferwriter">RentWriterAndBuffer(JsonWriterOptions, int, ref IByteBufferWriter)</h2>
+<p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/v5/src/Corvus.Text.Json/Corvus/Text/Json/DocumentBuilder/JsonWorkspace.cs#L89">JsonWorkspace.cs</a></p>
+<p>Rents a UTF-8 JSON writer and associated buffer writer from the pool, using the specified writer options instead of the workspace defaults.</p>
+<pre><code class="language-csharp">public Utf8JsonWriter RentWriterAndBuffer(JsonWriterOptions options, int defaultBufferSize, ref IByteBufferWriter bufferWriter)
+</code></pre>
+<h3 id="parameters-1">Parameters</h3>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>options</code></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonwriteroptions.html"><code>JsonWriterOptions</code></a></td>
+<td>The writer options to configure the returned writer instance.</td>
+</tr>
+<tr>
+<td><code>defaultBufferSize</code></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>int</code></a></td>
+<td>The default buffer size to use for the buffer writer.</td>
+</tr>
+<tr>
+<td><code>bufferWriter</code></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-ibytebufferwriter.html"><code>ref IByteBufferWriter</code></a></td>
+<td>When this method returns, contains the rented buffer writer.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="returns-1">Returns</h3>
+<p><a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-utf8jsonwriter.html"><code>Utf8JsonWriter</code></a></p>
+<p>A rented UTF-8 JSON writer configured with the specified options.</p>
+<h2 id="applies-to-1">Applies To</h2>
+<table>
+<thead>
+<tr>
+<th>Product</th>
+<th>Versions</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>.NET</td>
+<td>9, 10</td>
+</tr>
+<tr>
+<td>.NET Standard</td>
+<td>2.0, 2.1</td>
+</tr>
+</tbody>
+</table>
+<hr />
         </div>
         <div class="api-feedback">
             <div class="api-feedback__inner">

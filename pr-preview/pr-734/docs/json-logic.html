@@ -134,6 +134,9 @@
                             <li class="sidebar__item">
                                 <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/docs/jsonata.html">JSONata Query Language</a>
                             </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/docs/jmes-path.html">JMESPath Query Language</a>
+                            </li>
                 </ul>
             </div>
         </div>
@@ -214,7 +217,10 @@
                                 <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/json-logic.html">JsonLogic Rule Evaluation</a>
                             </li>
                             <li class="sidebar__item">
-                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/jso-nata.html">JSONata Expression Evaluation</a>
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/jsonata.html">JSONata Expression Evaluation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/jmespath.html">JMESPath Query Evaluation</a>
                             </li>
                 </ul>
             </div>
@@ -258,7 +264,7 @@
 </tr>
 </tbody>
 </table>
-<p>The source generator and CLI tool produce optimized static C# that eliminates delegate dispatch and can constant-fold literal expressions. Benchmarks show generated code is <strong>60–95% faster</strong> than interpreted evaluation and <strong>60–95% faster</strong> than JsonEverything.</p>
+<p>The source generator and CLI tool produce optimized static C# that eliminates delegate dispatch and can constant-fold literal expressions. Benchmarks show generated code is typically <strong>70–98% faster</strong> than JsonEverything across 19 scenarios, with zero or near-zero allocations (see <a href="#benchmark-summary">benchmark summary</a>).</p>
 <p><strong>Requirements:</strong> The runtime packages target <code>net9.0</code>, <code>net10.0</code>, <code>netstandard2.0</code>, and <code>netstandard2.1</code>. The source generator is an analyzer package and does not impose additional runtime requirements.</p>
 <h2 id="quick-start">Quick start</h2>
 <p>Install the packages:</p>
@@ -1200,94 +1206,310 @@ Console.WriteLine(result.GetRawText()); // safe
 </tbody>
 </table>
 <h3 id="benchmark-summary">Benchmark summary</h3>
-<p>Measured on .NET 10.0 (13th Gen Intel Core i7-13800H) across 9 representative scenarios:</p>
+<p>Measured on .NET 10.0 (13th Gen Intel Core i7-13800H) across 19 scenarios. <strong>RT</strong> = Corvus runtime (interpreted), <strong>CG</strong> = Corvus code-gen (source generator), <strong>JE</strong> = JsonEverything. Ratios &lt; 1 mean faster than JE; lower is better.</p>
+<h4 id="time-comparison">Time comparison</h4>
 <table>
 <thead>
 <tr>
 <th>Scenario</th>
-<th>Corvus (interpreted)</th>
-<th>Corvus (code-gen)</th>
-<th>JsonEverything</th>
-<th>Corvus alloc</th>
-<th>JE alloc</th>
+<th style="text-align: right;">JE (ns)</th>
+<th style="text-align: right;">RT (ns)</th>
+<th style="text-align: right;">CG (ns)</th>
+<th style="text-align: right;">RT/JE</th>
+<th style="text-align: right;">CG/JE</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Simple var access</td>
-<td>115 ns</td>
-<td>62 ns</td>
-<td>189 ns</td>
-<td>0 B</td>
-<td>248 B</td>
-</tr>
-<tr>
-<td>Arithmetic</td>
-<td>870 ns</td>
-<td>269 ns</td>
-<td>970 ns</td>
-<td>0 B</td>
-<td>656 B</td>
+<td>Simple var</td>
+<td style="text-align: right;">64</td>
+<td style="text-align: right;">18</td>
+<td style="text-align: right;">16</td>
+<td style="text-align: right;">0.29</td>
+<td style="text-align: right;">0.25</td>
 </tr>
 <tr>
 <td>Comparison</td>
-<td>571 ns</td>
-<td>75 ns</td>
-<td>629 ns</td>
-<td>0 B</td>
-<td>512 B</td>
+<td style="text-align: right;">223</td>
+<td style="text-align: right;">65</td>
+<td style="text-align: right;">34</td>
+<td style="text-align: right;">0.29</td>
+<td style="text-align: right;">0.15</td>
 </tr>
 <tr>
-<td>String concatenation</td>
-<td>499 ns</td>
-<td>205 ns</td>
-<td>560 ns</td>
-<td>0 B</td>
-<td>728 B</td>
+<td>Arithmetic</td>
+<td style="text-align: right;">332</td>
+<td style="text-align: right;">113</td>
+<td style="text-align: right;">98</td>
+<td style="text-align: right;">0.34</td>
+<td style="text-align: right;">0.30</td>
+</tr>
+<tr>
+<td>String cat</td>
+<td style="text-align: right;">244</td>
+<td style="text-align: right;">129</td>
+<td style="text-align: right;">115</td>
+<td style="text-align: right;">0.53</td>
+<td style="text-align: right;">0.47</td>
+</tr>
+<tr>
+<td>Substr</td>
+<td style="text-align: right;">305</td>
+<td style="text-align: right;">94</td>
+<td style="text-align: right;">93</td>
+<td style="text-align: right;">0.31</td>
+<td style="text-align: right;">0.30</td>
+</tr>
+<tr>
+<td>Min/max</td>
+<td style="text-align: right;">48</td>
+<td style="text-align: right;">668</td>
+<td style="text-align: right;">405</td>
+<td style="text-align: right;"><strong>14.0</strong></td>
+<td style="text-align: right;"><strong>8.5</strong></td>
+</tr>
+<tr>
+<td>In (array)</td>
+<td style="text-align: right;">457</td>
+<td style="text-align: right;">115</td>
+<td style="text-align: right;">106</td>
+<td style="text-align: right;">0.25</td>
+<td style="text-align: right;">0.23</td>
 </tr>
 <tr>
 <td>Logic short-circuit</td>
-<td>1,493 ns</td>
-<td>292 ns</td>
-<td>1,666 ns</td>
-<td>0 B</td>
-<td>1,304 B</td>
+<td style="text-align: right;">620</td>
+<td style="text-align: right;">306</td>
+<td style="text-align: right;">226</td>
+<td style="text-align: right;">0.49</td>
+<td style="text-align: right;">0.36</td>
 </tr>
 <tr>
-<td>Missing data</td>
-<td>1,909 ns</td>
-<td>803 ns</td>
-<td>2,183 ns</td>
-<td>120 B</td>
-<td>2,184 B</td>
+<td>Quantifier (all)</td>
+<td style="text-align: right;">1,179</td>
+<td style="text-align: right;">227</td>
+<td style="text-align: right;">190</td>
+<td style="text-align: right;">0.19</td>
+<td style="text-align: right;">0.16</td>
 </tr>
 <tr>
 <td>Complex rule</td>
-<td>2,939 ns</td>
-<td>481 ns</td>
-<td>2,296 ns</td>
-<td>0 B</td>
-<td>2,040 B</td>
+<td style="text-align: right;">828</td>
+<td style="text-align: right;">219</td>
+<td style="text-align: right;">160</td>
+<td style="text-align: right;">0.26</td>
+<td style="text-align: right;">0.19</td>
+</tr>
+<tr>
+<td>Deep nested</td>
+<td style="text-align: right;">4,936</td>
+<td style="text-align: right;">110</td>
+<td style="text-align: right;">103</td>
+<td style="text-align: right;">0.02</td>
+<td style="text-align: right;">0.02</td>
+</tr>
+<tr>
+<td>Missing data</td>
+<td style="text-align: right;">1,361</td>
+<td style="text-align: right;">218</td>
+<td style="text-align: right;">184</td>
+<td style="text-align: right;">0.16</td>
+<td style="text-align: right;">0.14</td>
+</tr>
+<tr>
+<td>Merge (constant)</td>
+<td style="text-align: right;">1,725</td>
+<td style="text-align: right;">390</td>
+<td style="text-align: right;">12</td>
+<td style="text-align: right;">0.23</td>
+<td style="text-align: right;"><strong>0.007</strong></td>
+</tr>
+<tr>
+<td>Merge (mixed)</td>
+<td style="text-align: right;">1,604</td>
+<td style="text-align: right;">462</td>
+<td style="text-align: right;">509</td>
+<td style="text-align: right;">0.29</td>
+<td style="text-align: right;">0.32</td>
+</tr>
+<tr>
+<td>Reduce (strings)</td>
+<td style="text-align: right;">2,640</td>
+<td style="text-align: right;">2,058</td>
+<td style="text-align: right;">2,811</td>
+<td style="text-align: right;">0.78</td>
+<td style="text-align: right;">1.06</td>
 </tr>
 <tr>
 <td>Array filter</td>
-<td>2,390 ns</td>
-<td>1,873 ns</td>
-<td>5,189 ns</td>
-<td>120 B</td>
-<td>4,032 B</td>
+<td style="text-align: right;">1,839</td>
+<td style="text-align: right;">758</td>
+<td style="text-align: right;">386</td>
+<td style="text-align: right;">0.41</td>
+<td style="text-align: right;">0.21</td>
+</tr>
+<tr>
+<td>Object filter</td>
+<td style="text-align: right;">2,359</td>
+<td style="text-align: right;">644</td>
+<td style="text-align: right;">543</td>
+<td style="text-align: right;">0.27</td>
+<td style="text-align: right;">0.23</td>
+</tr>
+<tr>
+<td>Map (strings)</td>
+<td style="text-align: right;">1,726</td>
+<td style="text-align: right;">735</td>
+<td style="text-align: right;">710</td>
+<td style="text-align: right;">0.43</td>
+<td style="text-align: right;">0.41</td>
 </tr>
 <tr>
 <td>Array map/reduce</td>
-<td>2,616 ns</td>
-<td>725 ns</td>
-<td>14,124 ns</td>
-<td>0 B</td>
-<td>12,856 B</td>
+<td style="text-align: right;">5,227</td>
+<td style="text-align: right;">563</td>
+<td style="text-align: right;">278</td>
+<td style="text-align: right;">0.11</td>
+<td style="text-align: right;">0.05</td>
 </tr>
 </tbody>
 </table>
-<p>Code-generated evaluators are <strong>60–95% faster</strong> than JsonEverything across all scenarios, with <strong>zero or near-zero allocations</strong>. The interpreted evaluator is comparable to or faster than JsonEverything in most scenarios, with consistently lower memory usage. JsonEverything allocates 248 B–12,856 B per evaluation, while both Corvus modes allocate 0 B in 7 of 9 scenarios (the two that allocate 120 B involve array construction in <code>missing</code> and <code>filter</code> results).</p>
+<h4 id="memory-comparison">Memory comparison</h4>
+<table>
+<thead>
+<tr>
+<th>Scenario</th>
+<th style="text-align: right;">JE (B)</th>
+<th style="text-align: right;">RT (B)</th>
+<th style="text-align: right;">CG (B)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Simple var</td>
+<td style="text-align: right;">248</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td>Comparison</td>
+<td style="text-align: right;">512</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td>Arithmetic</td>
+<td style="text-align: right;">656</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td>String cat</td>
+<td style="text-align: right;">728</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td>Substr</td>
+<td style="text-align: right;">560</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td>Min/max</td>
+<td style="text-align: right;">136</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td>In (array)</td>
+<td style="text-align: right;">1,472</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td>Logic short-circuit</td>
+<td style="text-align: right;">1,304</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td>Quantifier (all)</td>
+<td style="text-align: right;">2,776</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td>Complex rule</td>
+<td style="text-align: right;">2,040</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td>Deep nested</td>
+<td style="text-align: right;">10,120</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td>Missing data</td>
+<td style="text-align: right;">2,184</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td>Merge (constant)</td>
+<td style="text-align: right;">4,376</td>
+<td style="text-align: right;">120</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td>Merge (mixed)</td>
+<td style="text-align: right;">3,800</td>
+<td style="text-align: right;">120</td>
+<td style="text-align: right;">120</td>
+</tr>
+<tr>
+<td>Reduce (strings)</td>
+<td style="text-align: right;">9,368</td>
+<td style="text-align: right;">120</td>
+<td style="text-align: right;">120</td>
+</tr>
+<tr>
+<td>Array filter</td>
+<td style="text-align: right;">4,032</td>
+<td style="text-align: right;">120</td>
+<td style="text-align: right;">120</td>
+</tr>
+<tr>
+<td>Object filter</td>
+<td style="text-align: right;">6,280</td>
+<td style="text-align: right;">120</td>
+<td style="text-align: right;">120</td>
+</tr>
+<tr>
+<td>Map (strings)</td>
+<td style="text-align: right;">2,912</td>
+<td style="text-align: right;">120</td>
+<td style="text-align: right;">120</td>
+</tr>
+<tr>
+<td>Array map/reduce</td>
+<td style="text-align: right;">12,856</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+</tr>
+</tbody>
+</table>
+<h4 id="summary">Summary</h4>
+<ul>
+<li><strong>RT is faster than JE in 18/19 scenarios</strong> (0.02×–0.78× JE), with a geometric mean of <strong>0.22× JE</strong> across those 18.</li>
+<li><strong>CG is faster than JE in 17/19 scenarios</strong> (0.007×–0.47× JE), with a geometric mean of <strong>0.16× JE</strong> across those 17.</li>
+<li><strong>Min/max</strong> is the notable outlier where JE is faster: JE's <code>JsonNode</code> stores pre-parsed <code>double</code> values, while Corvus's <code>JsonElement</code> re-parses UTF-8 bytes to <code>double</code> on each call. Both RT and CG still allocate 0 B vs JE's 136 B.</li>
+<li><strong>Reduce (strings)</strong> is at parity for CG (1.06× JE); RT is faster at 0.78×.</li>
+<li><strong>Memory</strong>: RT allocates 0 B in 13/19 scenarios, CG in 14/19. The remaining scenarios allocate exactly 120 B (a single <code>ElementBuffer</code> array). JE allocates 136–12,856 B in every scenario.</li>
+<li><strong>Merge (constant)</strong> showcases compile-time constant folding: CG evaluates at 12 ns (0.007× JE) by pre-computing the entire merged array as a static field.</li>
+</ul>
         </div>
     </main>
 </div>
