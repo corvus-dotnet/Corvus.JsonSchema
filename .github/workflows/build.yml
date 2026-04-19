@@ -123,6 +123,7 @@ jobs:
             Solutions
             solutions
             JSON-Schema-Test-Suite
+            JMESPath-Test-Suite
             Jsonata-Test-Suite
             tests/json-patch-tests
             docs/website/.endjin
@@ -157,6 +158,7 @@ jobs:
             Solutions
             solutions
             JSON-Schema-Test-Suite
+            JMESPath-Test-Suite
             Jsonata-Test-Suite
             tests/json-patch-tests
             docs/website/.endjin
