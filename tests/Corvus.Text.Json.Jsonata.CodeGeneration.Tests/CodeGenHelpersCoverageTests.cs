@@ -725,6 +725,609 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     }
 
     // ═══════════════════════════════════════════════════════════════
+    // NavigatePropertyChain FALLBACK — array at intermediate level
+    // (lines 2312-2360: else branches in nested TryGetProperty)
+    // ═══════════════════════════════════════════════════════════════
+
+    [Theory]
+    [Trait("category", "codegen-coverage")]
+    // Root is array → i==0 fallback (line 2328)
+    [InlineData("a.b.c",
+        "[{\"a\":{\"b\":{\"c\":1}}},{\"a\":{\"b\":{\"c\":2}}}]",
+        "[1,2]")]
+    // 4-step chain where 2nd step yields array → middle fallback (line 2356)
+    [InlineData("a.b.c.d",
+        "{\"a\":[{\"b\":{\"c\":{\"d\":10}}},{\"b\":{\"c\":{\"d\":20}}}]}",
+        "[10,20]")]
+    // 5-step chain with array at step 2
+    [InlineData("a.b.c.d.e",
+        "{\"a\":{\"b\":[{\"c\":{\"d\":{\"e\":99}}}]}}",
+        "99")]
+    public void NavigatePropertyChainFallback(string expression, string data, string expected)
+    {
+        this.AssertCgAndRtMatch(expression, data, expected);
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // SimpleGroupByPerElement — .{keyName: valueName} as path step
+    // (line 2499: single-pair NameNode key/value)
+    // Note: items{...} = annotation (SimpleGroupByAnnotation)
+    //       items.{...} = path step (SimpleGroupByPerElement)
+    // ═══════════════════════════════════════════════════════════════
+
+    [Theory]
+    [Trait("category", "codegen-coverage")]
+    [InlineData("items.{category: value}",
+        "{\"items\":[{\"category\":\"A\",\"value\":1},{\"category\":\"B\",\"value\":2},{\"category\":\"A\",\"value\":3}]}")]
+    [InlineData("items.{type: name}",
+        "{\"items\":[{\"type\":\"x\",\"name\":\"foo\"},{\"type\":\"y\",\"name\":\"bar\"},{\"type\":\"x\",\"name\":\"baz\"}]}")]
+    public void SimpleGroupByPerElement(string expression, string data)
+    {
+        this.AssertCgAndRtMatchNoExpected(expression, data);
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // FusedChainGroupByPerElement — chain + {keyName: valueName}
+    // (line 2762: 2+ NameNode chain + single-pair NameNode groupby)
+    // ═══════════════════════════════════════════════════════════════
+
+    [Theory]
+    [Trait("category", "codegen-coverage")]
+    [InlineData("data.items{category: value}",
+        "{\"data\":{\"items\":[{\"category\":\"A\",\"value\":1},{\"category\":\"B\",\"value\":2},{\"category\":\"A\",\"value\":3}]}}")]
+    [InlineData("store.products{brand: price}",
+        "{\"store\":{\"products\":[{\"brand\":\"X\",\"price\":10},{\"brand\":\"Y\",\"price\":20},{\"brand\":\"X\",\"price\":30}]}}")]
+    public void FusedChainGroupByPerElement(string expression, string data)
+    {
+        this.AssertCgAndRtMatchNoExpected(expression, data);
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // ZipFromBuffers — $zip where ALL args are property chains
+    // (line 6835: 2-arg, line 6839: 3-arg)
+    // ═══════════════════════════════════════════════════════════════
+
+    [Theory]
+    [Trait("category", "codegen-coverage")]
+    // 2-arg: both are 2-step chains
+    [InlineData("$zip(data.prices, data.quantities)",
+        "{\"data\":{\"prices\":[10,20,30],\"quantities\":[2,3,4]}}",
+        "[[10,2],[20,3],[30,4]]")]
+    // 3-arg: all three are chains
+    [InlineData("$zip(data.a, data.b, data.c)",
+        "{\"data\":{\"a\":[1,2],\"b\":[3,4],\"c\":[5,6]}}",
+        "[[1,3,5],[2,4,6]]")]
+    public void ZipFromBuffers(string expression, string data, string expected)
+    {
+        this.AssertCgAndRtMatch(expression, data, expected);
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // ZipBufferAndElement / ZipElementAndBuffer — mixed chain+literal
+    // (line 6847: chain first, line 6851: literal first)
+    // ═══════════════════════════════════════════════════════════════
+
+    [Theory]
+    [Trait("category", "codegen-coverage")]
+    // chain + literal → ZipBufferAndElement
+    [InlineData("$zip(data.items, [10,20,30])",
+        "{\"data\":{\"items\":[1,2,3]}}",
+        "[[1,10],[2,20],[3,30]]")]
+    // literal + chain → ZipElementAndBuffer
+    [InlineData("$zip([10,20,30], data.items)",
+        "{\"data\":{\"items\":[1,2,3]}}",
+        "[[10,1],[20,2],[30,3]]")]
+    // chain + computed expression → ZipBufferAndElement
+    [InlineData("$zip(data.values, $reverse([7,8,9]))",
+        "{\"data\":{\"values\":[1,2,3]}}",
+        "[[1,9],[2,8],[3,7]]")]
+    public void ZipMixedBufferAndElement(string expression, string data, string expected)
+    {
+        this.AssertCgAndRtMatch(expression, data, expected);
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // MapElementsDouble — $map with arithmetic lambda body (non-chain)
+    // (line 5640: MapElementsDouble specialization)
+    // ═══════════════════════════════════════════════════════════════
+
+    [Theory]
+    [Trait("category", "codegen-coverage")]
+    [InlineData("$map([1,2,3,4,5], function($v){$v * 2})",
+        "null",
+        "[2,4,6,8,10]")]
+    [InlineData("$map([10,20,30], function($v){$v + 5})",
+        "null",
+        "[15,25,35]")]
+    [InlineData("$map([100,200], function($v){$v / 4})",
+        "null",
+        "[25,50]")]
+    [InlineData("$map(items, function($v){$v - 1})",
+        "{\"items\":[5,10,15]}",
+        "[4,9,14]")]
+    public void MapElementsDouble(string expression, string data, string expected)
+    {
+        this.AssertCgAndRtMatch(expression, data, expected);
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // MapChainDouble — chain + arithmetic computed step
+    // (line 2741: data.items.($ * 2))
+    // ═══════════════════════════════════════════════════════════════
+
+    [Theory]
+    [Trait("category", "codegen-coverage")]
+    [InlineData("data.items.($ * 2)",
+        "{\"data\":{\"items\":[1,2,3,4]}}",
+        "[2,4,6,8]")]
+    [InlineData("data.values.($ + 10)",
+        "{\"data\":{\"values\":[5,15,25]}}",
+        "[15,25,35]")]
+    [InlineData("data.prices.($ / 100)",
+        "{\"data\":{\"prices\":[150,250,350]}}",
+        "[1.5,2.5,3.5]")]
+    public void MapChainDouble(string expression, string data, string expected)
+    {
+        this.AssertCgAndRtMatch(expression, data, expected);
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // SumOverChainDoubleRaw — $sum(chain.(arithmetic))
+    // (line 4725: prefix is simple chain + last step arithmetic)
+    // ═══════════════════════════════════════════════════════════════
+
+    [Theory]
+    [Trait("category", "codegen-coverage")]
+    [InlineData("$sum(data.items.(price * quantity))",
+        "{\"data\":{\"items\":[{\"price\":10,\"quantity\":2},{\"price\":20,\"quantity\":3}]}}",
+        "80")]
+    [InlineData("$sum(data.values.($ + 1))",
+        "{\"data\":{\"values\":[1,2,3]}}",
+        "9")]
+    public void SumOverChainDoubleRaw(string expression, string data, string expected)
+    {
+        this.AssertCgAndRtMatch(expression, data, expected);
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // SumOverElementsDoubleRaw — $sum(filtered.(arithmetic))
+    // (line 4740: prefix is NOT simple chain → fallback path)
+    // ═══════════════════════════════════════════════════════════════
+
+    [Theory]
+    [Trait("category", "codegen-coverage")]
+    [InlineData("$sum(items[type=\"A\"].(price * qty))",
+        "{\"items\":[{\"type\":\"A\",\"price\":10,\"qty\":2},{\"type\":\"B\",\"price\":5,\"qty\":1},{\"type\":\"A\",\"price\":7,\"qty\":3}]}",
+        "41")]
+    [InlineData("$sum(items[active=true].(value + bonus))",
+        "{\"items\":[{\"active\":true,\"value\":10,\"bonus\":5},{\"active\":false,\"value\":100,\"bonus\":50},{\"active\":true,\"value\":20,\"bonus\":3}]}",
+        "38")]
+    public void SumOverElementsDoubleRaw(string expression, string data, string expected)
+    {
+        this.AssertCgAndRtMatch(expression, data, expected);
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // EachProperty — $each with 2-param and 3-param lambdas on data
+    // (line 6305: 3-param, line 6309: 2-param)
+    // ═══════════════════════════════════════════════════════════════
+
+    [Theory]
+    [Trait("category", "codegen-coverage")]
+    // 2-param on data property
+    [InlineData("$each(obj, function($v, $k){ $k & \":\" & $string($v) })",
+        "{\"obj\":{\"x\":1,\"y\":2,\"z\":3}}")]
+    // 1-param $each — just values
+    [InlineData("$each(obj, function($v){ $v * 2 })",
+        "{\"obj\":{\"a\":1,\"b\":2,\"c\":3}}")]
+    public void EachPropertyOnData(string expression, string data)
+    {
+        this.AssertCgAndRtMatchNoExpected(expression, data);
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // FusedChainBuildArray — [chain.chain.chain.{"key": expr, ...}]
+    // (line 4254: array wrapping chain + StringNode-keyed object ctor)
+    // Requires: ArrayConstructor(1 expr) → PathNode(3+ steps)
+    //   where last step is ObjectConstructor with all StringNode keys
+    // ═══════════════════════════════════════════════════════════════
+
+    [Theory]
+    [Trait("category", "codegen-coverage")]
+    [InlineData("[data.items.profiles.{\"fullName\": name, \"years\": age}]",
+        "{\"data\":{\"items\":[{\"profiles\":[{\"name\":\"Alice\",\"age\":30},{\"name\":\"Bob\",\"age\":25}]}]}}")]
+    [InlineData("[store.dept.employees.{\"id\": empId, \"title\": role}]",
+        "{\"store\":{\"dept\":[{\"employees\":[{\"empId\":1,\"role\":\"dev\"},{\"empId\":2,\"role\":\"qa\"}]}]}}")]
+    public void FusedChainBuildArray(string expression, string data)
+    {
+        this.AssertCgAndRtMatchNoExpected(expression, data);
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // AverageOverChain via ~> pipe (line 2895)
+    // Also: SumOverChain, CountOverChain, MaxOverChain, MinOverChain
+    // These use EmitApply → TryGetFusedChainAggregateHelper
+    // ═══════════════════════════════════════════════════════════════
+
+    [Theory]
+    [Trait("category", "codegen-coverage")]
+    [InlineData("data.scores ~> $average",
+        "{\"data\":{\"scores\":[10,20,30]}}",
+        "20")]
+    [InlineData("data.values ~> $sum",
+        "{\"data\":{\"values\":[1,2,3,4]}}",
+        "10")]
+    [InlineData("data.items ~> $count",
+        "{\"data\":{\"items\":[\"a\",\"b\",\"c\"]}}",
+        "3")]
+    [InlineData("data.nums ~> $max",
+        "{\"data\":{\"nums\":[3,7,1,9,2]}}",
+        "9")]
+    [InlineData("data.nums ~> $min",
+        "{\"data\":{\"nums\":[3,7,1,9,2]}}",
+        "1")]
+    public void AggregateOverChainViaPipe(string expression, string data, string expected)
+    {
+        this.AssertCgAndRtMatch(expression, data, expected);
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // Sort — chain-fused with comparator (line 6069)
+    // $sort(chain, comparator) where first arg is 2+ step chain
+    // ═══════════════════════════════════════════════════════════════
+
+    [Theory]
+    [Trait("category", "codegen-coverage")]
+    // Chain-fused sort with comparator
+    [InlineData("$sort(data.items, function($a, $b) { $a > $b })",
+        "{\"data\":{\"items\":[3,1,4,1,5]}}",
+        "[1,1,3,4,5]")]
+    // Chain-fused sort by property
+    [InlineData("$sort(data.records, function($a, $b) { $a.score > $b.score })",
+        "{\"data\":{\"records\":[{\"score\":30},{\"score\":10},{\"score\":20}]}}",
+        "[{\"score\":10},{\"score\":20},{\"score\":30}]")]
+    // Chain-fused default sort (no comparator)
+    [InlineData("$sort(data.values)",
+        "{\"data\":{\"values\":[5,2,8,1,9]}}",
+        "[1,2,5,8,9]")]
+    public void SortChainFused(string expression, string data, string expected)
+    {
+        this.AssertCgAndRtMatch(expression, data, expected);
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // AverageOverChainDouble — $average(chain.(arithmetic))
+    // Uses TryEmitAggregationChainFusion with "AverageOverChainDouble"
+    // ═══════════════════════════════════════════════════════════════
+
+    [Theory]
+    [Trait("category", "codegen-coverage")]
+    [InlineData("$average(data.items.(price * quantity))",
+        "{\"data\":{\"items\":[{\"price\":10,\"quantity\":2},{\"price\":20,\"quantity\":3}]}}",
+        "40")]
+    public void AverageOverChainDouble(string expression, string data, string expected)
+    {
+        this.AssertCgAndRtMatch(expression, data, expected);
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // Concat with auto-map — chain property in string concat
+    // (lines 4595-4622: ConcatBuilder with AppendAutoMap)
+    // ═══════════════════════════════════════════════════════════════
+
+    [Theory]
+    [Trait("category", "codegen-coverage")]
+    // Single element from chain in concat
+    [InlineData("\"Prefix: \" & data.name",
+        "{\"data\":{\"name\":\"Alice\"}}",
+        "\"Prefix: Alice\"")]
+    [InlineData("data.label & \" suffix\"",
+        "{\"data\":{\"label\":\"hello\"}}",
+        "\"hello suffix\"")]
+    // Multi-step chain concat
+    [InlineData("\"v=\" & $string(data.info.value)",
+        "{\"data\":{\"info\":{\"value\":42}}}",
+        "\"v=42\"")]
+    public void ConcatWithChainProperty(string expression, string data, string expected)
+    {
+        this.AssertCgAndRtMatch(expression, data, expected);
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // SortBy with keys (line 2707: SortByKeys)
+    // Path step annotation with ^(>key) or ^(<key) syntax
+    // ═══════════════════════════════════════════════════════════════
+
+    [Theory]
+    [Trait("category", "codegen-coverage")]
+    [InlineData("items^(price)",
+        "{\"items\":[{\"name\":\"c\",\"price\":30},{\"name\":\"a\",\"price\":10},{\"name\":\"b\",\"price\":20}]}",
+        "[{\"name\":\"a\",\"price\":10},{\"name\":\"b\",\"price\":20},{\"name\":\"c\",\"price\":30}]")]
+    [InlineData("items^(>price)",
+        "{\"items\":[{\"name\":\"a\",\"price\":10},{\"name\":\"b\",\"price\":20},{\"name\":\"c\",\"price\":30}]}",
+        "[{\"name\":\"c\",\"price\":30},{\"name\":\"b\",\"price\":20},{\"name\":\"a\",\"price\":10}]")]
+    public void SortByKeys(string expression, string data, string expected)
+    {
+        this.AssertCgAndRtMatch(expression, data, expected);
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // String concatenation with 6+ operands (StringConcatMany)
+    // ═══════════════════════════════════════════════════════════════
+
+    [Theory]
+    [Trait("category", "codegen-coverage")]
+    [InlineData("\"a\" & \"b\" & \"c\" & \"d\" & \"e\" & \"f\"", "null", "\"abcdef\"")]
+    [InlineData("\"1\" & \"2\" & \"3\" & \"4\" & \"5\" & \"6\" & \"7\"", "null", "\"1234567\"")]
+    public void StringConcatMany(string expression, string data, string expected)
+    {
+        this.AssertCgAndRtMatch(expression, data, expected);
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // String concat with auto-mapped chain (BeginConcatRented + CoerceToStringElement)
+    // ═══════════════════════════════════════════════════════════════
+
+    [Theory]
+    [Trait("category", "codegen-coverage")]
+    [InlineData("\"prefix:\" & name",
+        "{\"name\":\"hello\"}",
+        "\"prefix:hello\"")]
+    [InlineData("\"val=\" & $string(num)",
+        "{\"num\":42}",
+        "\"val=42\"")]
+    public void StringConcatWithChain(string expression, string data, string expected)
+    {
+        this.AssertCgAndRtMatch(expression, data, expected);
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // $each with 2-parameter and 3-parameter functions
+    // ═══════════════════════════════════════════════════════════════
+
+    [Theory]
+    [Trait("category", "codegen-coverage")]
+    [InlineData("$each({\"a\":1,\"b\":2}, function($v,$k){$k & \"=\" & $string($v)})",
+        "null",
+        "[\"a=1\",\"b=2\"]")]
+    public void EachPropertyThreeParam(string expression, string data, string expected)
+    {
+        this.AssertCgAndRtMatch(expression, data, expected);
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // Chain operations: ChainDistinct, ChainKeepSingletonArray, ChainMerge
+    // ═══════════════════════════════════════════════════════════════
+
+    [Theory]
+    [Trait("category", "codegen-coverage")]
+    [InlineData("items.category",
+        "{\"items\":[{\"category\":\"a\"},{\"category\":\"b\"},{\"category\":\"a\"},{\"category\":\"c\"}]}",
+        "[\"a\",\"b\",\"a\",\"c\"]")]
+    public void ChainPropertyOverArray(string expression, string data, string expected)
+    {
+        this.AssertCgAndRtMatch(expression, data, expected);
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // $formatNumber via CG path (CreateFormatNumberPicture)
+    // ═══════════════════════════════════════════════════════════════
+
+    [Theory]
+    [Trait("category", "codegen-coverage")]
+    [InlineData("$formatNumber(num, \"#,##0.00\")",
+        "{\"num\":12345.6}",
+        "\"12,345.60\"")]
+    [InlineData("$formatNumber(val, \"000\")",
+        "{\"val\":7}",
+        "\"007\"")]
+    public void FormatNumberViaCg(string expression, string data, string expected)
+    {
+        this.AssertCgAndRtMatch(expression, data, expected);
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // $now and $millis (nullary builtins)
+    // ═══════════════════════════════════════════════════════════════
+
+    [Fact]
+    [Trait("category", "codegen-coverage")]
+    public void NowReturnsTimestamp()
+    {
+        // $now() and $millis() are time-sensitive — can't compare CG vs RT
+        CompiledExpression compiled = this.fixture.GetOrCompile("$now()");
+        Assert.Null(compiled.Error);
+        Assert.NotNull(compiled.Method);
+        using var inputDoc = ParsedJsonDocument<JsonElement>.Parse("null"u8.ToArray());
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+        JsonElement cgResult = InvokeCg(compiled.Method, inputDoc.RootElement, workspace);
+        Assert.Equal(JsonValueKind.String, cgResult.ValueKind);
+    }
+
+    [Fact]
+    [Trait("category", "codegen-coverage")]
+    public void MillisReturnsNumber()
+    {
+        CompiledExpression compiled = this.fixture.GetOrCompile("$millis()");
+        Assert.Null(compiled.Error);
+        Assert.NotNull(compiled.Method);
+        using var inputDoc = ParsedJsonDocument<JsonElement>.Parse("null"u8.ToArray());
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+        JsonElement cgResult = InvokeCg(compiled.Method, inputDoc.RootElement, workspace);
+        Assert.Equal(JsonValueKind.Number, cgResult.ValueKind);
+        Assert.True(cgResult.GetDouble() > 0);
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // $exists over chain (ExistsOverChain)
+    // ═══════════════════════════════════════════════════════════════
+
+    [Theory]
+    [Trait("category", "codegen-coverage")]
+    [InlineData("$exists(data.name)", "{\"data\":{\"name\":\"hello\"}}", "true")]
+    [InlineData("$exists(data.missing)", "{\"data\":{\"name\":\"hello\"}}", "false")]
+    public void ExistsOverChain(string expression, string data, string expected)
+    {
+        this.AssertCgAndRtMatch(expression, data, expected);
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // Comparison operators (CompareNumberGTE/LTE)
+    // ═══════════════════════════════════════════════════════════════
+
+    [Theory]
+    [Trait("category", "codegen-coverage")]
+    [InlineData("a >= b", "{\"a\":5,\"b\":3}", "true")]
+    [InlineData("a >= b", "{\"a\":3,\"b\":3}", "true")]
+    [InlineData("a >= b", "{\"a\":2,\"b\":3}", "false")]
+    [InlineData("a <= b", "{\"a\":2,\"b\":3}", "true")]
+    [InlineData("a <= b", "{\"a\":3,\"b\":3}", "true")]
+    [InlineData("a <= b", "{\"a\":5,\"b\":3}", "false")]
+    public void CompareNumberGteLte(string expression, string data, string expected)
+    {
+        this.AssertCgAndRtMatch(expression, data, expected);
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // Arithmetic operators (BinaryArithmetic)
+    // ═══════════════════════════════════════════════════════════════
+
+    [Theory]
+    [Trait("category", "codegen-coverage")]
+    [InlineData("a + b", "{\"a\":10,\"b\":3}", "13")]
+    [InlineData("a - b", "{\"a\":10,\"b\":3}", "7")]
+    [InlineData("a * b", "{\"a\":10,\"b\":3}", "30")]
+    [InlineData("a / b", "{\"a\":10,\"b\":2}", "5")]
+    [InlineData("a % b", "{\"a\":10,\"b\":3}", "1")]
+    public void BinaryArithmetic(string expression, string data, string expected)
+    {
+        this.AssertCgAndRtMatch(expression, data, expected);
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // $shuffle via CG (ShuffleFromBuffer)
+    // ═══════════════════════════════════════════════════════════════
+
+    [Fact]
+    [Trait("category", "codegen-coverage")]
+    public void ShuffleFromBufferViaCg()
+    {
+        // Can't assert exact order, just verify count and elements
+        this.AssertCgAndRtMatchNoExpected("$count($shuffle(items))", "{\"items\":[1,2,3,4,5]}");
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // $replace with regex backreference via CG
+    // ═══════════════════════════════════════════════════════════════
+
+    [Theory]
+    [Trait("category", "codegen-coverage")]
+    [InlineData("$replace(text, /(\\w+)\\s(\\w+)/, \"$2 $1\")",
+        "{\"text\":\"John Smith\"}",
+        "\"Smith John\"")]
+    public void ReplaceBackreferenceViaCg(string expression, string data, string expected)
+    {
+        this.AssertCgAndRtMatch(expression, data, expected);
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // $parseInteger with XPath picture via CG
+    // ═══════════════════════════════════════════════════════════════
+
+    [Theory]
+    [Trait("category", "codegen-coverage")]
+    [InlineData("$parseInteger(val, \"#0\")", "{\"val\":\"42\"}", "42")]
+    [InlineData("$parseInteger(val, \"#,##0\")", "{\"val\":\"1,234\"}", "1234")]
+    public void ParseIntegerViaCg(string expression, string data, string expected)
+    {
+        this.AssertCgAndRtMatch(expression, data, expected);
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // Wildcard and descendant enumeration (EnumerateWildcard)
+    // ═══════════════════════════════════════════════════════════════
+
+    [Theory]
+    [Trait("category", "codegen-coverage")]
+    [InlineData("data.*",
+        "{\"data\":{\"a\":1,\"b\":2,\"c\":3}}",
+        "[1,2,3]")]
+    public void WildcardEnumeration(string expression, string data, string expected)
+    {
+        this.AssertCgAndRtMatch(expression, data, expected);
+    }
+
+    [Fact]
+    [Trait("category", "codegen-coverage")]
+    public void DescendantEnumeration()
+    {
+        this.AssertCgAndRtMatchNoExpected("data.**", "{\"data\":{\"a\":{\"x\":1},\"b\":2}}");
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // FusedCollectAndContinue — chain with predicate filter
+    // ═══════════════════════════════════════════════════════════════
+
+    [Theory]
+    [Trait("category", "codegen-coverage")]
+    [InlineData("items[price > 20].name",
+        "{\"items\":[{\"name\":\"a\",\"price\":10},{\"name\":\"b\",\"price\":30},{\"name\":\"c\",\"price\":25}]}",
+        "[\"b\",\"c\"]")]
+    [InlineData("items[type=\"fruit\"].name",
+        "{\"items\":[{\"name\":\"apple\",\"type\":\"fruit\"},{\"name\":\"carrot\",\"type\":\"veg\"},{\"name\":\"banana\",\"type\":\"fruit\"}]}",
+        "[\"apple\",\"banana\"]")]
+    public void FusedCollectAndContinue(string expression, string data, string expected)
+    {
+        this.AssertCgAndRtMatch(expression, data, expected);
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // FusedEvalFromStep — chain with computed step
+    // ═══════════════════════════════════════════════════════════════
+
+    [Theory]
+    [Trait("category", "codegen-coverage")]
+    [InlineData("items.(name & \":\" & $string(price))",
+        "{\"items\":[{\"name\":\"a\",\"price\":10},{\"name\":\"b\",\"price\":20}]}",
+        "[\"a:10\",\"b:20\"]")]
+    public void FusedEvalFromStep(string expression, string data, string expected)
+    {
+        this.AssertCgAndRtMatch(expression, data, expected);
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // GroupBy annotation (SimpleGroupByAnnotation)
+    // ═══════════════════════════════════════════════════════════════
+
+    [Theory]
+    [Trait("category", "codegen-coverage")]
+    [InlineData("items{category: name}",
+        "{\"items\":[{\"name\":\"a\",\"category\":\"x\"},{\"name\":\"b\",\"category\":\"y\"},{\"name\":\"c\",\"category\":\"x\"}]}",
+        "{\"x\":[\"a\",\"c\"],\"y\":\"b\"}")]
+    public void SimpleGroupByAnnotation(string expression, string data, string expected)
+    {
+        this.AssertCgAndRtMatch(expression, data, expected);
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // GroupBy per-element via path step (SimpleGroupByPerElement + FusedChainGroupByPerElement)
+    // Uses dot before { to make it a path step rather than annotation
+    // ═══════════════════════════════════════════════════════════════
+
+    [Theory]
+    [Trait("category", "codegen-coverage")]
+    [InlineData("items.{category: name}",
+        "{\"items\":[{\"name\":\"a\",\"category\":\"x\"},{\"name\":\"b\",\"category\":\"y\"},{\"name\":\"c\",\"category\":\"x\"}]}",
+        "[{\"x\":\"a\"},{\"y\":\"b\"},{\"x\":\"c\"}]")]
+    [InlineData("data.items.{category: name}",
+        "{\"data\":{\"items\":[{\"name\":\"a\",\"category\":\"x\"},{\"name\":\"b\",\"category\":\"y\"}]}}",
+        "[{\"x\":\"a\"},{\"y\":\"b\"}]")]
+    public void GroupByPerElement(string expression, string data, string expected)
+    {
+        this.AssertCgAndRtMatch(expression, data, expected);
+    }
+
+    // ═══════════════════════════════════════════════════════════════
     // Helper methods
     // ═══════════════════════════════════════════════════════════════
 

@@ -468,4 +468,84 @@ public class JMESPathCodeGenHelpersDirectTests
         JsonElement result = JMESPathCodeGenHelpers.Values(obj, workspace);
         Assert.Equal(2, result.GetArrayLength());
     }
+
+    // ─── SequenceBuilder Grow: lines 119-134 (>8 items) ─────────────
+
+    [Fact]
+    public void ApplySortBarrier_MoreThan8Elements_TriggersGrow()
+    {
+        JMESPathSequenceBuilder builder = default;
+        try
+        {
+            // Add 10 elements to exceed initial capacity of 8 and trigger Grow()
+            for (int i = 9; i >= 0; i--)
+            {
+                builder.Add(JsonElement.ParseValue(System.Text.Encoding.UTF8.GetBytes(i.ToString())));
+            }
+
+            JMESPathCodeGenHelpers.ApplySortBarrier(ref builder);
+
+            Assert.Equal(10, builder.Count);
+            Assert.Equal(0, builder[0].GetDouble());
+            Assert.Equal(9, builder[9].GetDouble());
+        }
+        finally
+        {
+            builder.ReturnArray();
+        }
+    }
+
+    // ─── Lexer: exercise raw string and literal parsing edge cases ───
+
+    [Fact]
+    public void Evaluator_RawStringWithEscapes()
+    {
+        // Exercise Lexer raw string path with escape sequences
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+        JsonElement data = JsonElement.ParseValue("null"u8);
+        JsonElement result = JMESPathEvaluator.Default.Search("'hello\\nworld'", data, workspace);
+        Assert.Equal("hello\\nworld", result.GetString());
+    }
+
+    [Fact]
+    public void Evaluator_LiteralExpression()
+    {
+        // Exercise Lexer literal path
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+        JsonElement data = JsonElement.ParseValue("null"u8);
+        JsonElement result = JMESPathEvaluator.Default.Search("`{\"a\":1}`", data, workspace);
+        Assert.Equal(JsonValueKind.Object, result.ValueKind);
+    }
+
+    // ─── Compiler: fused pipeline stages ─────────────────────────────
+
+    [Fact]
+    public void Evaluator_FusedSortByPipeline()
+    {
+        // Exercise fused pipeline with sort_by
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+        JsonElement data = JsonElement.ParseValue("""[{"a":3,"n":"c"},{"a":1,"n":"a"},{"a":2,"n":"b"}]"""u8);
+        JsonElement result = JMESPathEvaluator.Default.Search("sort_by(@, &a)[*].n", data, workspace);
+        Assert.Equal("[\"a\",\"b\",\"c\"]", result.GetRawText());
+    }
+
+    [Fact]
+    public void Evaluator_FusedReversePipeline()
+    {
+        // Exercise fused pipeline with reverse
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+        JsonElement data = JsonElement.ParseValue("[1,2,3]"u8);
+        JsonElement result = JMESPathEvaluator.Default.Search("reverse(@)", data, workspace);
+        Assert.Equal("[3,2,1]", result.GetRawText());
+    }
+
+    [Fact]
+    public void Evaluator_FusedSlicePipeline()
+    {
+        // Exercise fused pipeline with slice
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+        JsonElement data = JsonElement.ParseValue("[0,1,2,3,4,5]"u8);
+        JsonElement result = JMESPathEvaluator.Default.Search("[1:5:2]", data, workspace);
+        Assert.Equal("[1,3]", result.GetRawText());
+    }
 }

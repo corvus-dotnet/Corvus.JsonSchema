@@ -7623,70 +7623,6 @@ public static class JsonataCodeGenHelpers
         return charIdx;
     }
 
-    /// <summary>
-    /// JSONata <c>$sort</c> function — sorts array elements using a comparator.
-    /// </summary>
-    public static JsonElement Sort(
-        in JsonElement input,
-        Func<JsonElement, JsonElement, JsonWorkspace, bool> comparator,
-        JsonWorkspace workspace)
-    {
-        if (input.IsNullOrUndefined())
-        {
-            return default;
-        }
-
-        if (input.ValueKind != JsonValueKind.Array)
-        {
-            return input;
-        }
-
-        int count = input.GetArrayLength();
-        if (count <= 1)
-        {
-            return input;
-        }
-
-        // Collect elements into a rented array
-        JsonElement[] elements = ArrayPool<JsonElement>.Shared.Rent(count);
-        try
-        {
-            int idx = 0;
-            foreach (JsonElement item in input.EnumerateArray())
-            {
-                elements[idx++] = item;
-            }
-
-            // Stable insertion sort: comparator returns true if a should be placed AFTER b
-            for (int i = 1; i < count; i++)
-            {
-                JsonElement key = elements[i];
-                int j = i - 1;
-                while (j >= 0 && comparator(elements[j], key, workspace))
-                {
-                    elements[j + 1] = elements[j];
-                    j--;
-                }
-
-                elements[j + 1] = key;
-            }
-
-            // Build result array
-            var doc = JsonElement.CreateArrayBuilder(workspace, count);
-            JsonElement.Mutable root = doc.RootElement;
-            for (int i = 0; i < count; i++)
-            {
-                root.AddItem(elements[i]);
-            }
-
-            return (JsonElement)root;
-        }
-        finally
-        {
-            ArrayPool<JsonElement>.Shared.Return(elements, clearArray: true);
-        }
-    }
-
     // ===== HOF Inline Helpers =====
 
     /// <summary>
@@ -8665,68 +8601,6 @@ public static class JsonataCodeGenHelpers
         return (JsonElement)root;
     }
 
-    // ===== Array Flattening =====
-
-    /// <summary>
-    /// Flattens one level of array nesting. Implements the JSONata <c>[]</c> flatten
-    /// operator when used as a path step: <c>expr.[]</c>.
-    /// For arrays of arrays, inner array elements are expanded into the outer array.
-    /// Non-array elements pass through unchanged.
-    /// </summary>
-    /// <param name="data">The input value.</param>
-    /// <param name="workspace">The workspace for intermediate allocations.</param>
-    /// <returns>The flattened result, or <c>default</c> if undefined.</returns>
-    public static JsonElement FlattenArray(in JsonElement data, JsonWorkspace workspace)
-    {
-        if (data.IsNullOrUndefined())
-        {
-            return default;
-        }
-
-        if (data.ValueKind != JsonValueKind.Array)
-        {
-            return data;
-        }
-
-        // Check if any element is an array — if not, return as-is
-        bool hasNestedArrays = false;
-        foreach (JsonElement item in data.EnumerateArray())
-        {
-            if (item.ValueKind == JsonValueKind.Array)
-            {
-                hasNestedArrays = true;
-                break;
-            }
-        }
-
-        if (!hasNestedArrays)
-        {
-            return data;
-        }
-
-        // Flatten one level: expand inner arrays into the result
-        int capacity = data.GetArrayLength();
-        var doc = JsonElement.CreateArrayBuilder(workspace, capacity * 2);
-        JsonElement.Mutable root = doc.RootElement;
-
-        foreach (JsonElement item in data.EnumerateArray())
-        {
-            if (item.ValueKind == JsonValueKind.Array)
-            {
-                foreach (JsonElement child in item.EnumerateArray())
-                {
-                    root.AddItem(child);
-                }
-            }
-            else
-            {
-                root.AddItem(item);
-            }
-        }
-
-        return (JsonElement)root;
-    }
-
     // ===== Fallback Evaluation =====
 
     /// <summary>
@@ -8751,49 +8625,6 @@ public static class JsonataCodeGenHelpers
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static JsonElement StringElement(string value, JsonWorkspace workspace) =>
         JsonataHelpers.StringFromString(value, workspace);
-
-    /// <summary>
-    /// Creates a JSON object from parallel arrays of keys and values.
-    /// </summary>
-    /// <param name="keys">The property names.</param>
-    /// <param name="values">The property values (undefined values are omitted).</param>
-    /// <param name="workspace">The workspace for intermediate allocations.</param>
-    /// <returns>A <see cref="JsonElement"/> of kind <see cref="JsonValueKind.Object"/>.</returns>
-    public static JsonElement CreateObject(string[] keys, JsonElement[] values, JsonWorkspace workspace)
-    {
-        var doc = JsonElement.CreateObjectBuilder(workspace, keys.Length);
-        JsonElement.Mutable root = doc.RootElement;
-        for (int i = 0; i < keys.Length; i++)
-        {
-            if (values[i].ValueKind != JsonValueKind.Undefined)
-            {
-                root.SetProperty(keys[i], values[i]);
-            }
-        }
-
-        return root.Clone();
-    }
-
-    /// <summary>
-    /// Creates a JSON array from an array of elements.
-    /// </summary>
-    /// <param name="elements">The array elements (undefined elements are omitted).</param>
-    /// <param name="workspace">The workspace for intermediate allocations.</param>
-    /// <returns>A <see cref="JsonElement"/> of kind <see cref="JsonValueKind.Array"/>.</returns>
-    public static JsonElement CreateArray(JsonElement[] elements, JsonWorkspace workspace)
-    {
-        var doc = JsonElement.CreateArrayBuilder(workspace, elements.Length);
-        JsonElement.Mutable root = doc.RootElement;
-        foreach (JsonElement el in elements)
-        {
-            if (el.ValueKind != JsonValueKind.Undefined)
-            {
-                root.AddItem(el);
-            }
-        }
-
-        return root.Clone();
-    }
 
     /// <summary>
     /// Creates a JSON array from elements, where some elements may need auto-flattening.
@@ -8838,83 +8669,6 @@ public static class JsonataCodeGenHelpers
         }
 
         return root.Clone();
-    }
-
-    /// <summary>
-    /// Collects results from an array element by applying the current property step
-    /// to each array item, then continuing the chain. All results are added to the
-    /// same <paramref name="root"/> builder — no nested builders are created.
-    /// </summary>
-    private static void CollectChainFlat(
-        in JsonElement array,
-        byte[][] names,
-        int stepIndex,
-        JsonElement.Mutable root,
-        ref int count)
-    {
-        byte[] name = names[stepIndex];
-        int nextStep = stepIndex + 1;
-        bool isLastStep = nextStep >= names.Length;
-
-        foreach (JsonElement item in array.EnumerateArray())
-        {
-            if (item.ValueKind == JsonValueKind.Object)
-            {
-                if (item.TryGetProperty((ReadOnlySpan<byte>)name, out var val))
-                {
-                    if (isLastStep)
-                    {
-                        count = AddResultWithFlatten(root, val, count);
-                    }
-                    else
-                    {
-                        ContinueChainFlat(val, names, nextStep, root, ref count);
-                    }
-                }
-            }
-            else if (item.ValueKind == JsonValueKind.Array)
-            {
-                // Nested array auto-flatten: apply same step to inner array
-                CollectChainFlat(item, names, stepIndex, root, ref count);
-            }
-        }
-    }
-
-    /// <summary>
-    /// Continues navigating remaining chain steps from a single value,
-    /// collecting all results into the shared <paramref name="root"/> builder.
-    /// </summary>
-    private static void ContinueChainFlat(
-        in JsonElement value,
-        byte[][] names,
-        int nextIndex,
-        JsonElement.Mutable root,
-        ref int count)
-    {
-        // Walk through object steps until we complete the chain or hit an array.
-        JsonElement current = value;
-
-        for (int i = nextIndex; i < names.Length; i++)
-        {
-            if (current.ValueKind == JsonValueKind.Object)
-            {
-                if (!current.TryGetProperty((ReadOnlySpan<byte>)names[i], out current))
-                {
-                    return;
-                }
-            }
-            else if (current.ValueKind == JsonValueKind.Array)
-            {
-                CollectChainFlat(current, names, i, root, ref count);
-                return;
-            }
-            else
-            {
-                return;
-            }
-        }
-
-        count = AddResultWithFlatten(root, current, count);
     }
 
     private static JsonElement NavigatePropertyOverArray(

@@ -250,4 +250,248 @@ public class BuiltInFunctionEdgeCaseTests
         Assert.Contains("\"match\"", result);
         Assert.Contains("\"groups\"", result);
     }
+
+    // ─── $formatNumber: XPath picture formatting (FormatNumberXPath, 486 lines) ──
+
+    [Fact]
+    public void FormatNumber_BasicDecimal()
+    {
+        Assert.Equal("\"12,345.60\"", Eval("""$formatNumber(12345.6, "#,##0.00")"""));
+    }
+
+    [Fact]
+    public void FormatNumber_IntegerOnly()
+    {
+        Assert.Equal("\"42\"", Eval("""$formatNumber(42, "0")"""));
+    }
+
+    [Fact]
+    public void FormatNumber_LeadingZeros()
+    {
+        Assert.Equal("\"007\"", Eval("""$formatNumber(7, "000")"""));
+    }
+
+    [Fact]
+    public void FormatNumber_Negative()
+    {
+        Assert.Equal("\"-42.50\"", Eval("""$formatNumber(-42.5, "#0.00")"""));
+    }
+
+    [Fact]
+    public void FormatNumber_NegativeWithSubPicture()
+    {
+        // Separate sub-picture for negatives
+        Assert.Equal("\"(42.50)\"", Eval("""$formatNumber(-42.5, "#0.00;(#0.00)")"""));
+    }
+
+    [Fact]
+    public void FormatNumber_Percent()
+    {
+        Assert.Equal("\"75%\"", Eval("""$formatNumber(0.75, "0%")"""));
+    }
+
+    [Fact]
+    public void FormatNumber_PerMille()
+    {
+        Assert.Equal("\"750\u2030\"", Eval("""$formatNumber(0.75, "0\u2030")"""));
+    }
+
+    [Fact]
+    public void FormatNumber_WithOptions_DecimalSeparator()
+    {
+        string data = """{"opts": {"decimal-separator": ",", "grouping-separator": "."}}""";
+        Assert.Equal("\"1,5\"", Eval("""$formatNumber(1.5, "0,0", opts)""", data));
+    }
+
+    [Fact]
+    public void FormatNumber_ScientificNotation()
+    {
+        Assert.Equal("\"1.23e2\"", Eval("""$formatNumber(123, "0.00e0")"""));
+    }
+
+    [Fact]
+    public void FormatNumber_Zero()
+    {
+        Assert.Equal("\"0.00\"", Eval("""$formatNumber(0, "0.00")"""));
+    }
+
+    [Fact]
+    public void FormatNumber_LargeNumber()
+    {
+        Assert.Equal("\"1,234,567.89\"", Eval("""$formatNumber(1234567.89, "#,##0.00")"""));
+    }
+
+    [Fact]
+    public void FormatNumber_NoFraction()
+    {
+        Assert.Equal("\"43\"", Eval("""$formatNumber(42.7, "#")"""));
+    }
+
+    [Fact]
+    public void FormatNumber_OnlyFraction()
+    {
+        Assert.Equal("\".5\"", Eval("""$formatNumber(0.5, ".0")"""));
+    }
+
+    // ─── $replace with regex backreferences (ApplyJsonataBackreferences, 55 lines) ──
+
+    [Fact]
+    public void Replace_RegexBackreference_Dollar1()
+    {
+        string result = Eval("""$replace("John Smith", /(\w+)\s(\w+)/, "$2 $1")""");
+        Assert.Equal("\"Smith John\"", result);
+    }
+
+    [Fact]
+    public void Replace_RegexBackreference_Dollar0()
+    {
+        string result = Eval("""$replace("abc", /(b)/, "[$0]")""");
+        Assert.Equal("\"a[b]c\"", result);
+    }
+
+    [Fact]
+    public void Replace_RegexBackreference_MultipleGroups()
+    {
+        string result = Eval("""$replace("2024-01-15", /(\d{4})-(\d{2})-(\d{2})/, "$3/$2/$1")""");
+        Assert.Equal("\"15/01/2024\"", result);
+    }
+
+    [Fact]
+    public void Replace_RegexWithStringAndLimit()
+    {
+        // RegexReplaceWithString with limit parameter
+        string result = Eval("""$replace("banana", /a/, "o", 2)""");
+        Assert.Equal("\"bonona\"", result);
+    }
+
+    // ─── $parseInteger with XPath picture (CompileParseInteger, 30 lines) ──
+
+    [Fact]
+    public void ParseInteger_BasicPicture()
+    {
+        Assert.Equal("42", Eval("""$parseInteger("42", "#0")"""));
+    }
+
+    [Fact]
+    public void ParseInteger_WithGroupingSeparator()
+    {
+        Assert.Equal("1234", Eval("""$parseInteger("1,234", "#,##0")"""));
+    }
+
+    // ─── Unicode $substring with surrogate pairs (CodePointToCharIndex) ──
+
+    [Fact]
+    public void Substring_WithEmoji()
+    {
+        // $substring on string with surrogate pair — triggers CodePointToCharIndex
+        Assert.Equal("\"😀\"", Eval("""$substring("\uD83D\uDE00hello", 0, 1)"""));
+    }
+
+    [Fact]
+    public void Substring_AfterEmoji()
+    {
+        Assert.Equal("\"he\"", Eval("""$substring("\uD83D\uDE00hello", 1, 2)"""));
+    }
+
+    // ─── $encodeUrl with special characters (ValidateNoUnpairedSurrogates, 16 lines) ──
+
+    [Fact]
+    public void EncodeUrlComponent_SpecialChars()
+    {
+        Assert.Equal("\"%2F%3F%23\"", Eval("""$encodeUrlComponent("/?#")"""));
+    }
+
+    [Fact]
+    public void EncodeUrl_PreservesPathChars()
+    {
+        Assert.Equal("\"http://example.com/path%20name\"", Eval("""$encodeUrl("http://example.com/path name")"""));
+    }
+
+    // ─── $spread: multi-item spread (CompileSpread, 34 uncovered lines) ──
+
+    [Fact]
+    public void Spread_SingleObject()
+    {
+        string data = """{"a": 1, "b": 2}""";
+        string result = Eval("$spread($)", data);
+        Assert.Contains("\"a\"", result);
+    }
+
+    [Fact]
+    public void Spread_ArrayOfObjects()
+    {
+        string data = """[{"a": 1}, {"b": 2}]""";
+        string result = Eval("$spread($)", data);
+        Assert.Contains("\"a\"", result);
+        Assert.Contains("\"b\"", result);
+    }
+
+    // ─── $decodeUrl with invalid percent-encoded edge cases ──
+
+    [Fact]
+    public void DecodeUrl_InvalidPercentEncoding_Throws()
+    {
+        var ex = Assert.ThrowsAny<Exception>(() =>
+            JsonataEvaluator.Default.EvaluateToString("""$decodeUrl("hello%GGworld")""", "null"));
+        Assert.NotNull(ex);
+    }
+
+    [Fact]
+    public void DecodeUrlComponent_IncompletePercent_Throws()
+    {
+        var ex = Assert.ThrowsAny<Exception>(() =>
+            JsonataEvaluator.Default.EvaluateToString("""$decodeUrlComponent("hello%2")""", "null"));
+        Assert.NotNull(ex);
+    }
+
+    // ─── $toMillis edge cases ──
+
+    [Fact]
+    public void ToMillis_DateString()
+    {
+        string result = Eval("""$toMillis("2024-01-01T00:00:00.000Z")""");
+        Assert.Equal("1704067200000", result);
+    }
+
+    [Fact]
+    public void ToMillis_WithPicture()
+    {
+        string result = Eval("""$toMillis("15/01/2024", "[D01]/[M01]/[Y0001]")""");
+        Assert.Equal("1705276800000", result);
+    }
+
+    // ─── $filter with function index parameter ──
+
+    [Fact]
+    public void Filter_WithIndexParam()
+    {
+        string data = """{"items": [10, 20, 30, 40, 50]}""";
+        string result = Eval("""$filter(items, function($v, $i) { $i >= 2 })""", data);
+        Assert.Equal("[30,40,50]", result);
+    }
+
+    // ─── $map with index parameter ──
+
+    [Fact]
+    public void Map_WithIndexParam()
+    {
+        string result = Eval("""$map([10, 20, 30], function($v, $i) { $i })""");
+        Assert.Equal("[0,1,2]", result);
+    }
+
+    // ─── $shuffle with single element ──
+
+    [Fact]
+    public void Shuffle_SingleElement()
+    {
+        Assert.Equal("[1]", Eval("""$shuffle([1])"""));
+    }
+
+    [Fact]
+    public void Shuffle_Empty()
+    {
+        // $shuffle of empty array may return empty array or undefined
+        string result = Eval("""$shuffle([])""");
+        Assert.True(result == "[]" || result == "undefined");
+    }
 }
