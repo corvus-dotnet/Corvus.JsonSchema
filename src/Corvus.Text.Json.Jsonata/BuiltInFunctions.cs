@@ -2576,55 +2576,16 @@ internal static class BuiltInFunctions
 
             if (seq.IsSingleton && seq.FirstOrDefault.ValueKind == JsonValueKind.Array)
             {
-                JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateBuilder(
-                    env.Workspace,
-                    seq.FirstOrDefault,
-                    static (in JsonElement ctx, ref JsonElement.ObjectBuilder builder) =>
-                    {
-                        foreach (var item in ctx.EnumerateArray())
-                        {
-                            if (item.ValueKind == JsonValueKind.Object)
-                            {
-                                foreach (var prop in item.EnumerateObject())
-                                {
-                                    using UnescapedUtf8JsonString nameUtf8 = prop.Utf8NameSpan;
-                                    builder.AddProperty(nameUtf8.Span, prop.Value, escapeName: false, nameRequiresUnescaping: false);
-                                }
-                            }
-                        }
-                    },
-                    estimatedMemberCount: 16);
-
+                var result = JsonataCodeGenHelpers.MergeArrayOfObjects(seq.FirstOrDefault, env.Workspace);
                 seq.ReturnBackingArray();
-                return new Sequence((JsonElement)doc.RootElement);
+                return new Sequence(result);
             }
 
             if (seq.Count > 1)
             {
-                // Multi-element sequence — build from first element that is an object,
-                // then overlay remaining. Use CVB with the first object as seed.
-                JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateBuilder(
-                    env.Workspace,
-                    seq,
-                    static (in Sequence ctx, ref JsonElement.ObjectBuilder builder) =>
-                    {
-                        for (int i = 0; i < ctx.Count; i++)
-                        {
-                            var item = ctx[i];
-                            if (item.ValueKind == JsonValueKind.Object)
-                            {
-                                foreach (var prop in item.EnumerateObject())
-                                {
-                                    using UnescapedUtf8JsonString nameUtf8 = prop.Utf8NameSpan;
-                                    builder.AddProperty(nameUtf8.Span, prop.Value, escapeName: false, nameRequiresUnescaping: false);
-                                }
-                            }
-                        }
-                    },
-                    estimatedMemberCount: 16);
-
+                var result = JsonataCodeGenHelpers.MergeSequenceOfObjects(seq, env.Workspace);
                 seq.ReturnBackingArray();
-                return new Sequence((JsonElement)doc.RootElement);
+                return new Sequence(result);
             }
 
             return Sequence.Undefined;

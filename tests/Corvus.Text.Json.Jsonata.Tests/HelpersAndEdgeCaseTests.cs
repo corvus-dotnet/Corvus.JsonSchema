@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Text;
 using Xunit;
 
 namespace Corvus.Text.Json.Jsonata.Tests;
@@ -214,15 +215,20 @@ public class HelpersAndEdgeCaseTests
     public void Merge_CombinesObjects()
     {
         string? result = Evaluator.EvaluateToString("""$merge([{"a":1},{"b":2}])""", "{}");
-        Assert.Equal("{\"a\":1,\"b\":2}", result);
+        // JSON objects are unordered; check semantic equality
+        Assert.NotNull(result);
+        using var parsed = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes(result));
+        var root = parsed.RootElement;
+        Assert.Equal(JsonValueKind.Object, root.ValueKind);
+        Assert.Equal(1, root.GetProperty("a").GetInt32());
+        Assert.Equal(2, root.GetProperty("b").GetInt32());
     }
 
     [Fact]
-    public void Merge_OverlappingKeys_KeepsBoth()
+    public void Merge_OverlappingKeys_LastWins()
     {
         string? result = Evaluator.EvaluateToString("""$merge([{"a":1},{"a":2}])""", "{}");
-        // JSONata $merge keeps all keys (including duplicates)
-        Assert.Equal("{\"a\":1,\"a\":2}", result);
+        Assert.Equal("{\"a\":2}", result);
     }
 
     // ─── TYPE FUNCTIONS ──────────────────────────────────────────────

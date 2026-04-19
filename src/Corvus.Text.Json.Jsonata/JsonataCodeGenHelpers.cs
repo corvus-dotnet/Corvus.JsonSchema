@@ -4736,19 +4736,29 @@ public static class JsonataCodeGenHelpers
             return buffer[0].ValueKind == JsonValueKind.Object ? buffer[0] : default;
         }
 
+#if NET
+        Span<int> buckets = stackalloc int[Utf8KeyHashSet.StackAllocBucketSize];
+        Span<byte> entries = stackalloc byte[Utf8KeyHashSet.StackAllocEntrySize];
+        Span<byte> keyBuf = stackalloc byte[Utf8KeyHashSet.StackAllocKeyBufferSize];
+
+        var ctx = new MergeDedupBufferContext(buffer, buffer.Count * 4, buckets, entries, keyBuf);
         JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateBuilder(
             workspace,
-            buffer,
-            static (in ElementBuffer ctx, ref JsonElement.ObjectBuilder builder) =>
+            ctx,
+            static (in MergeDedupBufferContext c, ref JsonElement.ObjectBuilder builder) =>
             {
-                for (int i = 0; i < ctx.Count; i++)
+                using var hashSet = new Utf8KeyHashSet(c.EstimatedCount, c.Buckets, c.Entries, c.KeyBuffer);
+                for (int i = c.Buffer.Count - 1; i >= 0; i--)
                 {
-                    if (ctx[i].ValueKind == JsonValueKind.Object)
+                    if (c.Buffer[i].ValueKind == JsonValueKind.Object)
                     {
-                        foreach (var prop in ctx[i].EnumerateObject())
+                        foreach (var prop in c.Buffer[i].EnumerateObject())
                         {
                             using UnescapedUtf8JsonString nameUtf8 = prop.Utf8NameSpan;
-                            builder.AddProperty(nameUtf8.Span, prop.Value, escapeName: false, nameRequiresUnescaping: false);
+                            if (hashSet.AddIfNotExists(nameUtf8.Span))
+                            {
+                                builder.AddProperty(nameUtf8.Span, prop.Value, escapeName: false, nameRequiresUnescaping: false);
+                            }
                         }
                     }
                 }
@@ -4756,6 +4766,46 @@ public static class JsonataCodeGenHelpers
             estimatedMemberCount: 16);
 
         return (JsonElement)doc.RootElement;
+#else
+        int[] rentedBuckets = ArrayPool<int>.Shared.Rent(Utf8KeyHashSet.StackAllocBucketSize);
+        byte[] rentedEntries = ArrayPool<byte>.Shared.Rent(Utf8KeyHashSet.StackAllocEntrySize);
+        byte[] rentedKeyBuf = ArrayPool<byte>.Shared.Rent(Utf8KeyHashSet.StackAllocKeyBufferSize);
+
+        try
+        {
+            var ctx = new MergeDedupArrayBufferContext(buffer, rentedBuckets, rentedEntries, rentedKeyBuf);
+            JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateBuilder(
+                workspace,
+                ctx,
+                static (in MergeDedupArrayBufferContext c, ref JsonElement.ObjectBuilder builder) =>
+                {
+                    using var hashSet = new Utf8KeyHashSet(c.Buffer.Count * 4, c.Buckets, c.Entries, c.KeyBuffer);
+                    for (int i = c.Buffer.Count - 1; i >= 0; i--)
+                    {
+                        if (c.Buffer[i].ValueKind == JsonValueKind.Object)
+                        {
+                            foreach (var prop in c.Buffer[i].EnumerateObject())
+                            {
+                                using UnescapedUtf8JsonString nameUtf8 = prop.Utf8NameSpan;
+                                if (hashSet.AddIfNotExists(nameUtf8.Span))
+                                {
+                                    builder.AddProperty(nameUtf8.Span, prop.Value, escapeName: false, nameRequiresUnescaping: false);
+                                }
+                            }
+                        }
+                    }
+                },
+                estimatedMemberCount: 16);
+
+            return (JsonElement)doc.RootElement;
+        }
+        finally
+        {
+            ArrayPool<int>.Shared.Return(rentedBuckets);
+            ArrayPool<byte>.Shared.Return(rentedEntries);
+            ArrayPool<byte>.Shared.Return(rentedKeyBuf);
+        }
+#endif
     }
 
     /// <summary>
@@ -4990,6 +5040,7 @@ public static class JsonataCodeGenHelpers
 
     /// <summary>
     /// JSONata <c>$merge</c> function — merges an array of objects.
+    /// Last-wins for duplicate property names.
     /// </summary>
     public static JsonElement Merge(in JsonElement input, JsonWorkspace workspace)
     {
@@ -5008,22 +5059,43 @@ public static class JsonataCodeGenHelpers
             return default;
         }
 
-        // Use CVB ObjectBuilder — AddProperty is forward-only append (no O(n) scan).
-        // Last-wins semantics are handled by the fact that the document builder
-        // keeps the last value for duplicate property names when serialised.
+        return MergeArrayOfObjects(input, workspace);
+    }
+
+    /// <summary>
+    /// Merges an array of objects into a single object with last-wins duplicate key semantics.
+    /// Iterates in reverse so that properties from later objects win. Uses <see cref="Utf8KeyHashSet"/>
+    /// for O(1) duplicate detection, and <see cref="JsonElement.ObjectBuilder.AddProperty{T}(ReadOnlySpan{byte}, T, bool, bool)"/>
+    /// for O(1) append — no O(n) property scan per insertion.
+    /// </summary>
+    internal static JsonElement MergeArrayOfObjects(in JsonElement input, JsonWorkspace workspace)
+    {
+#if NET
+        int arrayLen = input.GetArrayLength();
+        Span<int> buckets = stackalloc int[Utf8KeyHashSet.StackAllocBucketSize];
+        Span<byte> entries = stackalloc byte[Utf8KeyHashSet.StackAllocEntrySize];
+        Span<byte> keyBuf = stackalloc byte[Utf8KeyHashSet.StackAllocKeyBufferSize];
+
+        var ctx = new MergeDedupElementContext(input, arrayLen * 4, buckets, entries, keyBuf);
         JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateBuilder(
             workspace,
-            input,
-            static (in JsonElement ctx, ref JsonElement.ObjectBuilder builder) =>
+            ctx,
+            static (in MergeDedupElementContext c, ref JsonElement.ObjectBuilder builder) =>
             {
-                foreach (var item in ctx.EnumerateArray())
+                using var hashSet = new Utf8KeyHashSet(c.EstimatedCount, c.Buckets, c.Entries, c.KeyBuffer);
+                int len = c.Input.GetArrayLength();
+                for (int i = len - 1; i >= 0; i--)
                 {
+                    var item = c.Input[i];
                     if (item.ValueKind == JsonValueKind.Object)
                     {
                         foreach (var prop in item.EnumerateObject())
                         {
                             using UnescapedUtf8JsonString nameUtf8 = prop.Utf8NameSpan;
-                            builder.AddProperty(nameUtf8.Span, prop.Value, escapeName: false, nameRequiresUnescaping: false);
+                            if (hashSet.AddIfNotExists(nameUtf8.Span))
+                            {
+                                builder.AddProperty(nameUtf8.Span, prop.Value, escapeName: false, nameRequiresUnescaping: false);
+                            }
                         }
                     }
                 }
@@ -5031,7 +5103,184 @@ public static class JsonataCodeGenHelpers
             estimatedMemberCount: 16);
 
         return (JsonElement)doc.RootElement;
+#else
+        int arrayLen = input.GetArrayLength();
+        int[] rentedBuckets = ArrayPool<int>.Shared.Rent(Utf8KeyHashSet.StackAllocBucketSize);
+        byte[] rentedEntries = ArrayPool<byte>.Shared.Rent(Utf8KeyHashSet.StackAllocEntrySize);
+        byte[] rentedKeyBuf = ArrayPool<byte>.Shared.Rent(Utf8KeyHashSet.StackAllocKeyBufferSize);
+
+        try
+        {
+            var ctx = new MergeDedupArrayElementContext(input, rentedBuckets, rentedEntries, rentedKeyBuf, arrayLen);
+            JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateBuilder(
+                workspace,
+                ctx,
+                static (in MergeDedupArrayElementContext c, ref JsonElement.ObjectBuilder builder) =>
+                {
+                    using var hashSet = new Utf8KeyHashSet(c.ArrayLen * 4, c.Buckets, c.Entries, c.KeyBuffer);
+                    int len = c.Input.GetArrayLength();
+                    for (int i = len - 1; i >= 0; i--)
+                    {
+                        var item = c.Input[i];
+                        if (item.ValueKind == JsonValueKind.Object)
+                        {
+                            foreach (var prop in item.EnumerateObject())
+                            {
+                                using UnescapedUtf8JsonString nameUtf8 = prop.Utf8NameSpan;
+                                if (hashSet.AddIfNotExists(nameUtf8.Span))
+                                {
+                                    builder.AddProperty(nameUtf8.Span, prop.Value, escapeName: false, nameRequiresUnescaping: false);
+                                }
+                            }
+                        }
+                    }
+                },
+                estimatedMemberCount: 16);
+
+            return (JsonElement)doc.RootElement;
+        }
+        finally
+        {
+            ArrayPool<int>.Shared.Return(rentedBuckets);
+            ArrayPool<byte>.Shared.Return(rentedEntries);
+            ArrayPool<byte>.Shared.Return(rentedKeyBuf);
+        }
+#endif
     }
+
+    /// <summary>
+    /// Merges a <see cref="Sequence"/> of objects into a single object with last-wins semantics.
+    /// Used by the RT <c>$merge</c> path when the argument evaluates to a multi-element sequence.
+    /// </summary>
+    internal static JsonElement MergeSequenceOfObjects(in Sequence input, JsonWorkspace workspace)
+    {
+#if NET
+        Span<int> buckets = stackalloc int[Utf8KeyHashSet.StackAllocBucketSize];
+        Span<byte> entries = stackalloc byte[Utf8KeyHashSet.StackAllocEntrySize];
+        Span<byte> keyBuf = stackalloc byte[Utf8KeyHashSet.StackAllocKeyBufferSize];
+
+        var ctx = new MergeDedupSequenceContext(input, input.Count * 4, buckets, entries, keyBuf);
+        JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateBuilder(
+            workspace,
+            ctx,
+            static (in MergeDedupSequenceContext c, ref JsonElement.ObjectBuilder builder) =>
+            {
+                using var hashSet = new Utf8KeyHashSet(c.EstimatedCount, c.Buckets, c.Entries, c.KeyBuffer);
+                for (int i = c.Sequence.Count - 1; i >= 0; i--)
+                {
+                    var item = c.Sequence[i];
+                    if (item.ValueKind == JsonValueKind.Object)
+                    {
+                        foreach (var prop in item.EnumerateObject())
+                        {
+                            using UnescapedUtf8JsonString nameUtf8 = prop.Utf8NameSpan;
+                            if (hashSet.AddIfNotExists(nameUtf8.Span))
+                            {
+                                builder.AddProperty(nameUtf8.Span, prop.Value, escapeName: false, nameRequiresUnescaping: false);
+                            }
+                        }
+                    }
+                }
+            },
+            estimatedMemberCount: 16);
+
+        return (JsonElement)doc.RootElement;
+#else
+        int[] rentedBuckets = ArrayPool<int>.Shared.Rent(Utf8KeyHashSet.StackAllocBucketSize);
+        byte[] rentedEntries = ArrayPool<byte>.Shared.Rent(Utf8KeyHashSet.StackAllocEntrySize);
+        byte[] rentedKeyBuf = ArrayPool<byte>.Shared.Rent(Utf8KeyHashSet.StackAllocKeyBufferSize);
+
+        try
+        {
+            var ctx = new MergeDedupArraySequenceContext(input, rentedBuckets, rentedEntries, rentedKeyBuf);
+            JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateBuilder(
+                workspace,
+                ctx,
+                static (in MergeDedupArraySequenceContext c, ref JsonElement.ObjectBuilder builder) =>
+                {
+                    using var hashSet = new Utf8KeyHashSet(c.Sequence.Count * 4, c.Buckets, c.Entries, c.KeyBuffer);
+                    for (int i = c.Sequence.Count - 1; i >= 0; i--)
+                    {
+                        var item = c.Sequence[i];
+                        if (item.ValueKind == JsonValueKind.Object)
+                        {
+                            foreach (var prop in item.EnumerateObject())
+                            {
+                                using UnescapedUtf8JsonString nameUtf8 = prop.Utf8NameSpan;
+                                if (hashSet.AddIfNotExists(nameUtf8.Span))
+                                {
+                                    builder.AddProperty(nameUtf8.Span, prop.Value, escapeName: false, nameRequiresUnescaping: false);
+                                }
+                            }
+                        }
+                    }
+                },
+                estimatedMemberCount: 16);
+
+            return (JsonElement)doc.RootElement;
+        }
+        finally
+        {
+            ArrayPool<int>.Shared.Return(rentedBuckets);
+            ArrayPool<byte>.Shared.Return(rentedEntries);
+            ArrayPool<byte>.Shared.Return(rentedKeyBuf);
+        }
+#endif
+    }
+
+#if NET
+    private readonly ref struct MergeDedupElementContext(JsonElement input, int estimatedCount, Span<int> buckets, Span<byte> entries, Span<byte> keyBuffer)
+    {
+        public readonly JsonElement Input = input;
+        public readonly int EstimatedCount = estimatedCount;
+        public readonly Span<int> Buckets = buckets;
+        public readonly Span<byte> Entries = entries;
+        public readonly Span<byte> KeyBuffer = keyBuffer;
+    }
+
+    private readonly ref struct MergeDedupBufferContext(ElementBuffer buffer, int estimatedCount, Span<int> buckets, Span<byte> entries, Span<byte> keyBuffer)
+    {
+        public readonly ElementBuffer Buffer = buffer;
+        public readonly int EstimatedCount = estimatedCount;
+        public readonly Span<int> Buckets = buckets;
+        public readonly Span<byte> Entries = entries;
+        public readonly Span<byte> KeyBuffer = keyBuffer;
+    }
+
+    private readonly ref struct MergeDedupSequenceContext(Sequence sequence, int estimatedCount, Span<int> buckets, Span<byte> entries, Span<byte> keyBuffer)
+    {
+        public readonly Sequence Sequence = sequence;
+        public readonly int EstimatedCount = estimatedCount;
+        public readonly Span<int> Buckets = buckets;
+        public readonly Span<byte> Entries = entries;
+        public readonly Span<byte> KeyBuffer = keyBuffer;
+    }
+#else
+    private readonly struct MergeDedupArrayElementContext(JsonElement input, int[] buckets, byte[] entries, byte[] keyBuffer, int arrayLen)
+    {
+        public readonly JsonElement Input = input;
+        public readonly int[] Buckets = buckets;
+        public readonly byte[] Entries = entries;
+        public readonly byte[] KeyBuffer = keyBuffer;
+        public readonly int ArrayLen = arrayLen;
+    }
+
+    private readonly struct MergeDedupArrayBufferContext(ElementBuffer buffer, int[] buckets, byte[] entries, byte[] keyBuffer)
+    {
+        public readonly ElementBuffer Buffer = buffer;
+        public readonly int[] Buckets = buckets;
+        public readonly byte[] Entries = entries;
+        public readonly byte[] KeyBuffer = keyBuffer;
+    }
+
+    private readonly struct MergeDedupArraySequenceContext(Sequence sequence, int[] buckets, byte[] entries, byte[] keyBuffer)
+    {
+        public readonly Sequence Sequence = sequence;
+        public readonly int[] Buckets = buckets;
+        public readonly byte[] Entries = entries;
+        public readonly byte[] KeyBuffer = keyBuffer;
+    }
+#endif
 
     /// <summary>
     /// JSONata <c>$spread</c> function — expands each property into a single-property object.

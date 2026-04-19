@@ -681,7 +681,13 @@ public class EvaluatorTests
     public void MergeFunction()
     {
         var result = Evaluator.EvaluateToString("""$merge([{"a":1},{"b":2}])""", "{}");
-        Assert.Equal("""{"a":1,"b":2}""", result);
+        // JSON objects are unordered; check semantic equality
+        Assert.NotNull(result);
+        using var parsed = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes(result));
+        var root = parsed.RootElement;
+        Assert.Equal(JsonValueKind.Object, root.ValueKind);
+        Assert.Equal(1, root.GetProperty("a").GetInt32());
+        Assert.Equal(2, root.GetProperty("b").GetInt32());
     }
 
     [Fact]
