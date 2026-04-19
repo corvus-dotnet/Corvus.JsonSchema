@@ -5002,6 +5002,11 @@ internal static class FunctionalCompiler
             JsonElement[] valBuffer,
             ref int pairCount)
         {
+            if (element.ValueKind != JsonValueKind.Object)
+            {
+                return;
+            }
+
             if (!element.TryGetProperty(keyPropUtf8.Span, out JsonElement keyEl))
             {
                 return;

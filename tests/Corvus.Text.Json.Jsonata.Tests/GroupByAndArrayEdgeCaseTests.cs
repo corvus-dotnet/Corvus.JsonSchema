@@ -40,6 +40,19 @@ public class GroupByAndArrayEdgeCaseTests
     }
 
     [Fact]
+    public void GroupBy_NonObjectElementsInSequence_SkipsNonObjects()
+    {
+        // When the sequence contains a mix of objects and non-objects,
+        // the groupby should skip non-object elements gracefully.
+        string? result = Evaluator.EvaluateToString(
+            """items{name: value}""",
+            """{"items": [{"name": "a", "value": 1}, 42, {"name": "b", "value": 2}]}""");
+        Assert.NotNull(result);
+        Assert.Contains("a", result);
+        Assert.Contains("b", result);
+    }
+
+    [Fact]
     public void GroupBy_EmptyInput_ReturnsUndefined()
     {
         string? result = Evaluator.EvaluateToString(
