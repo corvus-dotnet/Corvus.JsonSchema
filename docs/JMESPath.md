@@ -647,9 +647,8 @@ Console.WriteLine(result.GetRawText()); // safe
 |---------|--------------------------|--------------|
 | Evaluation model | Compiled delegate tree (cached) | Direct interpretation |
 | Code generation | Source generator + CLI tool | Not available |
-| JSON document model | `Corvus.Text.Json` (pooled, zero-copy, over `System.Text.Json`) | `Newtonsoft.Json` |
+| JSON document model | `Corvus.Text.Json` (pooled, zero-copy) | `Newtonsoft.Json` |
 | Memory model | Pooled (`JsonWorkspace`, `ArrayPool`) | GC-allocated |
 | Zero-allocation hot path | Yes (with workspace) | No |
-| Conformance (official suite) | 892 / 892 (100%) | 100% |
-| .NET Framework support | net9.0+, netstandard2.0/2.1 | net6.0+ |
-| Pipe fusion optimization | Yes (multi-stage pipe chains fused into single pass) | No |
+| Conformance (official suite) | 100% | 100% |
+| Supported frameworks | net9.0+, netstandard2.0/2.1 | net45, net6.0+, netstandard2.0/2.1 |

@@ -16,6 +16,7 @@
             <a href="/getting-started/index.html" class="btn btn--primary btn--lg">Get Started</a>
             <a href="/playground/" class="btn btn--secondary btn--lg" target="_blank" rel="noopener noreferrer">Try the Playground</a>
             <a href="/playground-jsonata/" class="btn btn--secondary btn--lg" target="_blank" rel="noopener noreferrer">Try JSONata</a>
+            <a href="/playground-jmespath/" class="btn btn--secondary btn--lg" target="_blank" rel="noopener noreferrer">Try JMESPath</a>
             <a href="@ViewBag.GitHubUrl"
                class="btn btn--secondary btn--lg" target="_blank" rel="noopener noreferrer">View on GitHub</a>
         </div>
@@ -86,6 +87,11 @@
                 <div class="card__icon"><img src="/assets/images/logo-jsonata.png" alt="JSONata logo"></div>
                 <h3 class="card__title">JSONata</h3>
                 <p class="card__body">Full <a href="https://jsonata.org/">JSONata</a> query and transformation language. 100% test-suite conformance with both interpreted and code-generated evaluation modes. <a href="/docs/jsonata.html">Learn more &rarr;</a></p>
+            </div>
+            <div class="card">
+                <div class="card__icon">🔍</div>
+                <h3 class="card__title">JMESPath</h3>
+                <p class="card__body">Full <a href="https://jmespath.org/">JMESPath</a> query language. 100% conformance with the official test suite, with interpreted and code-generated evaluation modes. <a href="/docs/jmespath-query-language.html">Learn more &rarr;</a></p>
             </div>
             <div class="card">
                 <div class="card__icon"><img src="/assets/images/logo-jsonlogic.png" alt="JsonLogic logo" style="filter:invert(1);"></div>
@@ -202,6 +208,11 @@ root.SetAge(31);
                 <pre style="margin-top:var(--space-sm)"><code class="language-bash">dotnet add package Corvus.Text.Json.Jsonata</code></pre>
             </div>
             <div class="card">
+                <h3 class="card__title"><a href="/docs/jmespath-query-language.html" style="color:inherit">Corvus.Text.Json.JMESPath</a></h3>
+                <p class="card__body">JMESPath query language for extracting and reshaping JSON data. Interpreted and code-generated modes. <a href="/docs/jmespath-query-language.html">Read the docs &rarr;</a></p>
+                <pre style="margin-top:var(--space-sm)"><code class="language-bash">dotnet add package Corvus.Text.Json.JMESPath</code></pre>
+            </div>
+            <div class="card">
                 <h3 class="card__title"><a href="/docs/json-logic.html" style="color:inherit">Corvus.Text.Json.JsonLogic</a></h3>
                 <p class="card__body">JsonLogic rule engine for evaluating business rules against JSON data. <a href="/docs/json-logic.html">Read the docs &rarr;</a></p>
                 <pre style="margin-top:var(--space-sm)"><code class="language-bash">dotnet add package Corvus.Text.Json.JsonLogic</code></pre>
@@ -225,6 +236,7 @@ root.SetAge(31);
                 <a href="/getting-started/index.html" class="btn btn--primary btn--lg">Get Started</a>
                 <a href="/playground/" class="btn btn--secondary btn--lg" target="_blank" rel="noopener noreferrer">Try the Playground</a>
                 <a href="/playground-jsonata/" class="btn btn--secondary btn--lg" target="_blank" rel="noopener noreferrer">Try JSONata</a>
+                <a href="/playground-jmespath/" class="btn btn--secondary btn--lg" target="_blank" rel="noopener noreferrer">Try JMESPath</a>
                 <a href="/examples/index.html" class="btn btn--secondary btn--lg">Browse Examples</a>
             </div>
         </div>
