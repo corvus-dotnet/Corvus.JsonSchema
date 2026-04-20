@@ -339,7 +339,7 @@
     <Compile Include="..\Common\JsonConstants.cs" Link="Yaml\Common\JsonConstants.cs" />
     <Compile Include="..\Common\Utf8KeyHashSet.cs" Link="Yaml\Common\Utf8KeyHashSet.cs" />
     <Compile Include="$(CorvusTextJsonPath)Corvus\Text\Json\Internal\Utf8Hash.cs" Link="Yaml\Internal\Utf8Hash.cs" />
-    <Compile Include="..\Corvus.Yaml.SystemTextJson\Corvus\Yaml\Internal\ArrayPoolBufferWriter.cs" Link="Yaml\Internal\ArrayPoolBufferWriter.cs" />
+    <Compile Include="..\Corvus.Text.Json.Yaml\Corvus\Text\Json\Yaml\Internal\ArrayPoolBufferWriter.cs" Link="Yaml\Internal\ArrayPoolBufferWriter.cs" />
     <Compile Include="..\..\System.Private.CoreLib\src\System\Collections\Generic\ValueListBuilder.cs" Link="Yaml\Common\ValueListBuilder.cs" />
     <Compile Include="..\..\System.Private.CoreLib\src\System\Collections\Generic\ValueListBuilder.Pop.cs" Link="Yaml\Common\ValueListBuilder.Pop.cs" />
   </ItemGroup>

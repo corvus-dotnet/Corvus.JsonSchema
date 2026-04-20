@@ -187,7 +187,7 @@ dotnet run
 
 ## Related Patterns
 
-- [023-JsonPatch](../023-JsonPatch/README.md) — Apply RFC 6902 patches to JSON documents
-- [024-JsonLogic](../024-JsonLogic/README.md) — Evaluate JsonLogic rules against JSON data
-- [025-Jsonata](../025-Jsonata/README.md) — Query and transform JSON with JSONata expressions
-- [026-Jmespath](../026-Jmespath/README.md) — Query JSON with JMESPath expressions
+- [023-JsonPatch](../023-JsonPatch/) — Apply RFC 6902 patches to JSON documents
+- [024-JsonLogic](../024-JsonLogic/) — Evaluate JsonLogic rules against JSON data
+- [025-Jsonata](../025-Jsonata/) — Query and transform JSON with JSONata expressions
+- [026-Jmespath](../026-Jmespath/) — Query JSON with JMESPath expressions

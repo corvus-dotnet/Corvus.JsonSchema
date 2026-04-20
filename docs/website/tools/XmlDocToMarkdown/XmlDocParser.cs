@@ -429,6 +429,13 @@ public sealed partial class XmlDocParser(string xmlPath)
     /// </summary>
     internal static string GetMemberAnchor(string fullName, char memberType)
     {
+        // Constructor crefs: the display name resolves to the type name, but
+        // constructor pages use "ctor" as their slug.
+        if (fullName.Contains("#ctor", StringComparison.Ordinal))
+        {
+            return "ctor";
+        }
+
         string memberName = GetMemberDisplayName(fullName);
 
         // Lowercase and replace non-alphanumeric with hyphens (matching Markdig's auto-ID)

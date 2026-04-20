@@ -581,4 +581,4 @@ var config = deserializer.Deserialize<AppConfig>(yamlString);
 ## API reference
 
 - [`Corvus.Text.Json.Yaml` API docs](/api/v5/corvus-text-json-yaml.html)
-- [`Corvus.Yaml.SystemTextJson` API docs](/api/v5/corvus-yaml-system-text-json.html)
+- [`Corvus.Yaml.SystemTextJson` API docs](/api/v5/corvus-yaml.html)
