@@ -345,6 +345,131 @@ generatejsonschematypes schema.yaml \
 public partial class MySchema;
 ```
 
+## JSON to YAML Conversion
+
+In addition to YAML→JSON, the library converts JSON content to canonical YAML using the `Utf8YamlWriter` — a high-performance `ref struct` writer modelled on `Utf8JsonWriter`. Three input paths are available:
+
+| Input | Method | Notes |
+|---|---|---|
+| UTF-8 JSON bytes | `ConvertToYamlString(ReadOnlySpan<byte>)` | Tokenizes with `Utf8JsonReader` — fastest for raw bytes |
+| JSON string | `ConvertToYamlString(string)` | Encodes to UTF-8, then tokenizes |
+| Pre-parsed element | `ConvertToYamlString(JsonElement)` / `ConvertToYamlString<TElement>(in TElement)` | Walks the document tree — fastest when already parsed |
+
+### Quick start
+
+```csharp
+using Corvus.Text.Json.Yaml;
+
+// From a JSON string
+string yaml = YamlDocument.ConvertToYamlString("""{"name":"Alice","age":30}""");
+// name: Alice
+// age: 30
+
+// From a pre-parsed CTJ document
+using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(jsonBytes);
+JsonElement root = doc.RootElement;
+string yaml2 = YamlDocument.ConvertToYamlString(in root);
+```
+
+### Corvus.Yaml.SystemTextJson
+
+```csharp
+using Corvus.Yaml;
+
+// From a pre-parsed STJ document
+using JsonDocument doc = JsonDocument.Parse(jsonBytes);
+string yaml = YamlDocument.ConvertToYamlString(doc.RootElement);
+
+// From raw UTF-8 bytes
+string yaml2 = YamlDocument.ConvertToYamlString(jsonUtf8Bytes);
+```
+
+### Streaming to a buffer or stream
+
+For zero-copy output to an `IBufferWriter<byte>` or `Stream`:
+
+```csharp
+using var stream = new FileStream("output.yaml", FileMode.Create);
+using JsonDocument doc = JsonDocument.Parse(jsonBytes);
+
+YamlDocument.ConvertToYaml(doc.RootElement, stream);
+```
+
+Or write directly to a buffer:
+
+```csharp
+ArrayBufferWriter<byte> buffer = new(1024);
+YamlDocument.ConvertToYaml(doc.RootElement, buffer);
+ReadOnlySpan<byte> yamlBytes = buffer.WrittenSpan;
+```
+
+### Utf8YamlWriter
+
+For fine-grained control, use `Utf8YamlWriter` directly — it is a public `ref struct` that writes YAML to any `IBufferWriter<byte>` or `Stream`:
+
+```csharp
+ArrayBufferWriter<byte> output = new(256);
+Utf8YamlWriter writer = new(output);
+
+try
+{
+    writer.WriteStartMapping();
+    writer.WritePropertyName("name"u8);
+    writer.WriteStringValue("Alice"u8);
+    writer.WritePropertyName("scores"u8);
+    writer.WriteStartSequence();
+    writer.WriteNumberValue("95"u8);
+    writer.WriteNumberValue("87"u8);
+    writer.WriteEndSequence();
+    writer.WriteEndMapping();
+    writer.Flush();
+}
+finally
+{
+    writer.Dispose();
+}
+
+// output.WrittenSpan contains:
+// name: Alice
+// scores:
+//   - 95
+//   - 87
+```
+
+The writer validates structural correctness by default (e.g., property names must precede values in mappings, containers must be properly closed). Set `YamlWriterOptions.SkipValidation = true` to disable this for maximum throughput.
+
+> **Warning:** `Utf8YamlWriter` is a `ref struct`. Always pass by `ref` and dispose exactly once via a `using` declaration or explicit call to `Dispose()`.
+
+### YAML writer options
+
+```csharp
+var options = new YamlWriterOptions
+{
+    IndentSize = 2,          // Spaces per indent level (default: 2)
+    SkipValidation = false,  // Disable structural validation for max throughput
+};
+```
+
+### JSON→YAML benchmarks
+
+The following benchmarks compare JSON→YAML conversion across four paths: **YamlDotNet** (deserialize JSON string, serialize to YAML), **Corvus UTF-8** (raw byte tokenization), **Corvus CTJ Element** (pre-parsed `ParsedJsonDocument<JsonElement>` walk), and **Corvus STJ Element** (pre-parsed `System.Text.Json.JsonElement` walk).
+
+> Measured with BenchmarkDotNet on .NET 10.0, Intel i7-13800H. Full source and scenario files in [`benchmarks/Corvus.Text.Json.Yaml.Benchmarks/`](https://github.com/corvus-dotnet/Corvus.JsonSchema/tree/main/benchmarks/Corvus.Text.Json.Yaml.Benchmarks).
+
+| Scenario | YamlDotNet | Corvus UTF-8 | Corvus CTJ | Corvus STJ | Speedup | YDN Alloc | Corvus Alloc | Alloc Ratio |
+|---|---|---|---|---|---|---|---|---|
+| SimpleScalar | 8,679 ns | 167 ns | **132 ns** | 152 ns | **66×** | 24,766 B | 104 B | **238×** |
+| MultiDocument | 50,404 ns | 1,344 ns | **1,040 ns** | 1,160 ns | **48×** | 58,366 B | 432 B | **135×** |
+| SmallConfig | 64,602 ns | 1,777 ns | **1,393 ns** | 1,572 ns | **46×** | 67,946 B | 608 B | **112×** |
+| FlowStyle | 61,021 ns | 3,102 ns | **2,153 ns** | 2,499 ns | **28×** | 118,204 B | 728 B | **162×** |
+| NestedMapping | 82,649 ns | 2,435 ns | 2,082 ns | **1,990 ns** | **42×** | 100,463 B | 632 B | **159×** |
+| AnchorAlias | 90,398 ns | 2,943 ns | **2,296 ns** | 2,537 ns | **39×** | 158,201 B | 1,464 B | **108×** |
+| BlockScalar | 19,587 ns | 1,666 ns | **1,209 ns** | 1,730 ns | **16×** | 30,927 B | 1,264 B | **24×** |
+| ComplexMixed | 139,993 ns | 5,740 ns | **4,216 ns** | 5,355 ns | **33×** | 207,927 B | 3,544 B | **59×** |
+| LargeConfig | 725,990 ns | 22,561 ns | **16,001 ns** | 18,391 ns | **45×** | 646,559 B | 7,504 B | **86×** |
+
+**Summary:** Corvus JSON→YAML is **16–66× faster** than YamlDotNet with **24–238× less allocation**. The CTJ element walk is fastest in 8 of 9 scenarios; all three Corvus paths share identical allocation (the only allocation is the output string plus a pooled buffer writer object).
+
 ## Performance
 
 The converter is designed for zero-allocation operation on the hot path. The `Utf8YamlScanner` is a `ref struct` that operates on `ReadOnlySpan<byte>` with `stackalloc`-based scratch buffers. Temporary buffers follow the standard `stackalloc`/`ArrayPool` pattern using `JsonConstants.StackallocByteThreshold` (256 bytes).
@@ -398,9 +523,10 @@ The following benchmarks compare **Corvus event parsing** (`YamlDocument.Enumera
 | Feature | Corvus.Yaml | YamlDotNet |
 |---|---|---|
 | **YAML→JSON conversion** | ✅ Native, zero-copy | ⚠️ Via deserialize + `JsonCompatible()` serialize |
+| **JSON→YAML conversion** | ✅ Native, 16–66× faster than YamlDotNet | ⚠️ Via deserialize JSON + serialize YAML |
 | **YAML 1.2 conformance** | ✅ 100% of JSON-testable cases (373/402) | ⚠️ 68.9% JSON conformance (257/373) [*](#conformance-note) |
 | **YAML 1.1 support** | ✅ `YamlSchema.Yaml11` mode | ✅ Native |
-| **YAML emitting (C# → YAML)** | ❌ | ✅ Full emitter |
+| **YAML emitting (C# → YAML)** | ✅ `Utf8YamlWriter` for JSON→YAML; no general object emitter | ✅ Full emitter from any C# object |
 | **Object serialization/deserialization** | ❌ | ✅ `Serializer`/`Deserializer` with naming conventions, type converters, callbacks |
 | **Object model (DOM)** | ❌ | ✅ `YamlStream`/`YamlDocument`/`YamlNode` tree |
 | **Low-level event parser** | ✅ Zero-allocation `YamlEventParser` via `EnumerateEvents` | ✅ `IParser` with `StreamStart`, `DocumentStart`, `Scalar`, etc. |
@@ -423,13 +549,14 @@ The following benchmarks compare **Corvus event parsing** (`YamlDocument.Enumera
 ### When to use Corvus.Yaml
 
 - **YAML configuration → JSON pipeline:** You need to convert YAML files (Kubernetes manifests, CI configs, OpenAPI specs) into JSON for processing by `System.Text.Json`, JSON Schema validation, or the Corvus document model.
-- **High-throughput / low-allocation:** You're processing YAML in a hot path — an API server, a build tool, a code generator — where 7–20× speed and near-zero GC pressure matter.
+- **JSON→YAML output:** You need to convert JSON data to canonical YAML for configuration generation, API responses, or human-readable output — using `ConvertToYamlString` or the low-level `Utf8YamlWriter`.
+- **High-throughput / low-allocation:** You're processing YAML in a hot path — an API server, a build tool, a code generator — where 7–66× speed and near-zero GC pressure matter.
 - **Spec conformance:** You need accurate YAML 1.2 parsing with correct type resolution (Core schema) and strict error detection.
 - **Corvus ecosystem:** You're already using Corvus.Text.Json for JSON Schema, JSONata, JMESPath, or JSON Patch and want YAML input to flow into the same pipeline.
 
 ### When to use YamlDotNet
 
-- **YAML round-tripping:** You need to read YAML, modify it, and write it back as YAML — Corvus.Yaml is read-only (YAML→JSON only).
+- **YAML round-tripping:** You need to read YAML, modify it, and write it back as YAML preserving comments and formatting — Corvus.Yaml converts JSON→YAML as canonical block style only.
 - **Object serialization:** You need to serialize C# objects directly to/from YAML with naming conventions, type converters, and custom deserialization callbacks.
 - **YAML DOM manipulation:** You need to build or transform a YAML document tree (`YamlStream`, `YamlNode`) programmatically.
 - **Event-level parsing with allocation:** You need a materialized event stream you can store and replay — Corvus provides a zero-allocation callback-based parser, while YamlDotNet's `IParser` produces heap-allocated event objects.

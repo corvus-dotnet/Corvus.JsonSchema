@@ -167,5 +167,38 @@
   <data name="AliasCannotHaveProperties" xml:space="preserve">
     <value>An alias node must not have an anchor or tag at line {0}, column {1}.</value>
   </data>
+  <data name="StreamNotWritable" xml:space="preserve">
+    <value>The stream does not support writing.</value>
+  </data>
+  <data name="WriterContainerAsMappingKey" xml:space="preserve">
+    <value>Cannot write a container as a mapping key. Write a property name first.</value>
+  </data>
+  <data name="WriterEndMappingNoOpen" xml:space="preserve">
+    <value>Cannot end mapping: no mapping is open.</value>
+  </data>
+  <data name="WriterEndMappingValueExpected" xml:space="preserve">
+    <value>Cannot end mapping: expected a value after the property name.</value>
+  </data>
+  <data name="WriterEndMappingInSequence" xml:space="preserve">
+    <value>Cannot end mapping: the current container is a sequence.</value>
+  </data>
+  <data name="WriterEndSequenceNoOpen" xml:space="preserve">
+    <value>Cannot end sequence: no sequence is open.</value>
+  </data>
+  <data name="WriterEndSequenceInMapping" xml:space="preserve">
+    <value>Cannot end sequence: the current container is a mapping.</value>
+  </data>
+  <data name="WriterPropertyNameOutsideMapping" xml:space="preserve">
+    <value>Cannot write a property name outside a mapping.</value>
+  </data>
+  <data name="WriterPropertyNameValueExpected" xml:space="preserve">
+    <value>Cannot write a property name: expected a value.</value>
+  </data>
+  <data name="WriterValuePropertyNameExpected" xml:space="preserve">
+    <value>Cannot write a value: expected a property name.</value>
+  </data>
+  <data name="WriterMultipleRootValues" xml:space="preserve">
+    <value>A root value has already been written.</value>
+  </data>
 
 </root>

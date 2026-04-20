@@ -1,10 +1,10 @@
-# JSON Schema Patterns in .NET - YAML to JSON Conversion
+# JSON Schema Patterns in .NET - YAML Conversion
 
-This recipe demonstrates how to convert YAML content to JSON using the `Corvus.Text.Json.Yaml` library. It covers basic parsing, schema modes, multi-document handling, anchors and aliases, block scalars, and streaming conversion.
+This recipe demonstrates how to convert between YAML and JSON using the `Corvus.Text.Json.Yaml` library. It covers YAML→JSON parsing, JSON→YAML conversion, schema modes, multi-document handling, anchors and aliases, block scalars, streaming conversion, and the `Utf8YamlWriter`.
 
 ## The Pattern
 
-YAML is a human-friendly data serialization format commonly used for configuration files, CI pipelines, Kubernetes manifests, and API specifications. The `Corvus.Text.Json.Yaml` converter transforms YAML content into JSON with zero-allocation on the hot path, supporting all YAML 1.2 features and four schema modes.
+YAML is a human-friendly data serialization format commonly used for configuration files, CI pipelines, Kubernetes manifests, and API specifications. The `Corvus.Text.Json.Yaml` converter transforms YAML content into JSON with zero-allocation on the hot path, and converts JSON back to canonical YAML via the `Utf8YamlWriter`, supporting all YAML 1.2 features and four schema modes.
 
 ## Parsing YAML to a Document
 
@@ -103,6 +103,64 @@ name: second
 ```
 
 Use `YamlDocumentMode.MultiAsArray` to parse all documents into a JSON array.
+
+## JSON to YAML Conversion
+
+Convert JSON content to canonical YAML:
+
+```csharp
+string json = """{"name":"Alice","scores":[95,87,92]}""";
+string yaml = YamlDocument.ConvertToYamlString(json);
+// name: Alice
+// scores:
+//   - 95
+//   - 87
+//   - 92
+```
+
+### From a pre-parsed document
+
+When you already have a parsed document, the element walk avoids re-parsing:
+
+```csharp
+using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(jsonBytes);
+JsonElement root = doc.RootElement;
+string yaml = YamlDocument.ConvertToYamlString(in root);
+```
+
+### Streaming to an IBufferWriter
+
+For zero-allocation output (aside from the pooled buffer):
+
+```csharp
+ArrayBufferWriter<byte> buffer = new(1024);
+YamlDocument.ConvertToYaml(doc.RootElement, buffer);
+ReadOnlySpan<byte> yamlBytes = buffer.WrittenSpan;
+```
+
+### Using Utf8YamlWriter directly
+
+For fine-grained control over the YAML output:
+
+```csharp
+ArrayBufferWriter<byte> output = new(256);
+Utf8YamlWriter writer = new(output);
+
+try
+{
+    writer.WriteStartMapping();
+    writer.WritePropertyName("enabled"u8);
+    writer.WriteBooleanValue(true);
+    writer.WritePropertyName("count"u8);
+    writer.WriteNumberValue("42"u8);
+    writer.WriteEndMapping();
+    writer.Flush();
+}
+finally
+{
+    writer.Dispose();
+}
+```
 
 ## Event Parsing
 

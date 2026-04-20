@@ -5,7 +5,11 @@
 using System.Buffers;
 using System.Runtime.CompilerServices;
 
+#if STJ
 namespace Corvus.Yaml.Internal;
+#else
+namespace Corvus.Text.Json.Yaml.Internal;
+#endif
 
 /// <summary>
 /// A minimal <see cref="IBufferWriter{T}"/>-based writer backed by <see cref="ArrayPool{T}"/>.

@@ -37,6 +37,7 @@
   <!-- Shared public types from CTJ YAML project (with #if STJ namespace) -->
   <ItemGroup>
     <Compile Include="$(CtjYamlSourceDir)DuplicateKeyBehavior.cs" Link="Corvus\Yaml\DuplicateKeyBehavior.cs" />
+    <Compile Include="$(CtjYamlSourceDir)YamlCollectionStyle.cs" Link="Corvus\Yaml\YamlCollectionStyle.cs" />
     <Compile Include="$(CtjYamlSourceDir)YamlDocumentMode.cs" Link="Corvus\Yaml\YamlDocumentMode.cs" />
     <Compile Include="$(CtjYamlSourceDir)YamlEvent.cs" Link="Corvus\Yaml\YamlEvent.cs" />
     <Compile Include="$(CtjYamlSourceDir)YamlEventCallback.cs" Link="Corvus\Yaml\YamlEventCallback.cs" />
@@ -45,12 +46,17 @@
     <Compile Include="$(CtjYamlSourceDir)YamlReaderOptions.cs" Link="Corvus\Yaml\YamlReaderOptions.cs" />
     <Compile Include="$(CtjYamlSourceDir)YamlScalarStyle.cs" Link="Corvus\Yaml\YamlScalarStyle.cs" />
     <Compile Include="$(CtjYamlSourceDir)YamlSchema.cs" Link="Corvus\Yaml\YamlSchema.cs" />
+    <Compile Include="$(CtjYamlSourceDir)YamlWriterOptions.cs" Link="Corvus\Yaml\YamlWriterOptions.cs" />
     <Compile Include="$(CtjYamlSourceDir)YamlDocument.cs" Link="Corvus\Yaml\YamlDocument.cs" />
   </ItemGroup>
 
   <!-- Shared internal types from CTJ YAML project (with #if STJ namespace) -->
   <ItemGroup>
+    <Compile Include="$(CtjYamlInternalDir)ArrayPoolBufferWriter.cs" Link="Corvus\Yaml\Internal\ArrayPoolBufferWriter.cs" />
+    <Compile Include="$(CtjYamlInternalDir)JsonToYamlConverter.cs" Link="Corvus\Yaml\Internal\JsonToYamlConverter.cs" />
+    <Compile Include="$(CtjYamlInternalDir)ArrayBufferWriterPolyfill.cs" Link="Corvus\Yaml\Internal\ArrayBufferWriterPolyfill.cs" />
     <Compile Include="$(CtjYamlInternalDir)ScalarResolver.cs" Link="Corvus\Yaml\Internal\ScalarResolver.cs" />
+    <Compile Include="$(CtjYamlSourceDir)Utf8YamlWriter.cs" Link="Corvus\Yaml\Utf8YamlWriter.cs" />
     <Compile Include="$(CtjYamlInternalDir)YamlCharacters.cs" Link="Corvus\Yaml\Internal\YamlCharacters.cs" />
     <Compile Include="$(CtjYamlInternalDir)YamlConstants.cs" Link="Corvus\Yaml\Internal\YamlConstants.cs" />
     <Compile Include="$(CtjYamlInternalDir)YamlTokenType.cs" Link="Corvus\Yaml\Internal\YamlTokenType.cs" />
@@ -71,9 +77,6 @@
     <Compile Include="..\Corvus.Text.Json\Corvus\Text\Json\Internal\Utf8Hash.cs" Link="Corvus\Yaml\Internal\Utf8Hash.cs" />
   </ItemGroup>
 
-  <!-- STJ-only files (auto-included by SDK default globs) -->
-  <!-- ArrayPoolBufferWriter.cs is in Corvus\Yaml\Internal\ -->
-
   <!-- Polyfills for netstandard2.0 -->
   <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
     <Compile Include="$(CoreLibSharedDir)System\Runtime\CompilerServices\IsExternalInit.cs" />
@@ -91,7 +94,11 @@
     <PackageReference Include="System.Memory" Version="4.6.3" />
     <PackageReference Include="System.Buffers" Version="4.6.1" />
     <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="6.1.2" />
-    <PackageReference Include="System.Text.Json" Version="9.0.6" />
+  </ItemGroup>
+
+  <!-- STJ 10.0 for all TFMs below net10.0 (in-box STJ 9.0 lacks JsonMarshal.GetRawUtf8PropertyName) -->
+  <ItemGroup Condition="!$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net10.0'))">
+    <PackageReference Include="System.Text.Json" Version="10.0.6" />
   </ItemGroup>
 
   <!-- Internals visibility -->
