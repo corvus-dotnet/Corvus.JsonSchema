@@ -10,7 +10,20 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <WarningsNotAsErrors>$(WarningsNotAsErrors);NU1901;NU1902;NU1903;NU1904</WarningsNotAsErrors>
     <NoWarn>$(NoWarn);JSON001;xUnit1031;xUnit2013;xUnit1026</NoWarn>
+    <DefineConstants>$(DefineConstants);STJ</DefineConstants>
   </PropertyGroup>
+
+  <PropertyGroup>
+    <CtjTestDir>..\Corvus.Text.Json.Yaml.Tests\</CtjTestDir>
+  </PropertyGroup>
+
+  <!-- Shared test files from CTJ test project (with #if STJ) -->
+  <ItemGroup>
+    <Compile Include="$(CtjTestDir)YamlTestHelper.cs" Link="YamlTestHelper.cs" />
+    <Compile Include="$(CtjTestDir)YamlToJsonBasicTests.cs" Link="YamlToJsonBasicTests.cs" />
+    <Compile Include="$(CtjTestDir)ScalarTests.cs" Link="ScalarTests.cs" />
+    <Compile Include="$(CtjTestDir)CollectionTests.cs" Link="CollectionTests.cs" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="coverlet.collector" Version="8.0.0">
