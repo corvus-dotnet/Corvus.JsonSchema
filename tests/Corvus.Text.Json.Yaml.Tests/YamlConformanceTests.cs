@@ -153,17 +153,11 @@ public class YamlConformanceTests
             using ParsedJsonDocument<Corvus.Text.Json.JsonElement> doc = YamlDocument.Parse<JsonElement>(yamlBytes);
             string rawText = doc.RootElement.GetRawText();
             _output.WriteLine($"[{id}] {name}: Expected error but parsed OK: {rawText}");
-
-            // Some "error" cases are debatable — don't fail hard but record
-            // Assert.Fail($"[{id}] {name}: Expected YamlException but parsed successfully");
+            Assert.Fail($"[{id}] {name}: Expected YamlException but parsed successfully: {rawText}");
         }
         catch (YamlException)
         {
             // Expected
-        }
-        catch (Exception ex) when (ex is not YamlException)
-        {
-            _output.WriteLine($"[{id}] {name}: Got {ex.GetType().Name} instead of YamlException: {ex.Message}");
         }
     }
 

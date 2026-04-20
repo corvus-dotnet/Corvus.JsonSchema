@@ -81,6 +81,7 @@ internal ref struct YamlToJsonConverter
     private int _line;
     private int _column;
     private int _depth;
+    private int _flowMinIndent; // Min indentation for flow continuation lines (0 = no check)
 
     // Anchor table: stores anchor names and their JSON byte positions in the output buffer.
     private byte[]? _anchorNameBuffer;
@@ -101,6 +102,9 @@ internal ref struct YamlToJsonConverter
     // TAG directive tracking: when %TAG !! is redefined to a non-standard prefix,
     // !!name tags should not be classified as standard YAML types.
     private bool _secondaryTagRedefined;
+
+    // YAML directive tracking: %YAML may appear at most once per document.
+    private bool _hasYamlDirective;
 
     /// <summary>
     /// Initializes a new converter for the given YAML buffer.
@@ -132,6 +136,7 @@ internal ref struct YamlToJsonConverter
         _activeAnchorNameStart = -1;
         _activeAnchorNameLength = 0;
         _secondaryTagRedefined = false;
+        _hasYamlDirective = false;
     }
 
     /// <summary>
@@ -173,6 +178,7 @@ internal ref struct YamlToJsonConverter
             SkipDirectives();
             SkipWhitespaceAndComments();
 
+            int docStartLine = _line;
             bool hasDocStart = SkipDocumentStartMarker();
             SkipWhitespaceAndComments();
 
@@ -221,7 +227,11 @@ internal ref struct YamlToJsonConverter
             // There is content — parse a document
             // Reset anchor table for each document
             ResetAnchorTable();
-            ConvertNode(-1, false);
+
+            // Per YAML spec, block collections cannot start on the same line as ---
+            // (only flow content and properties are allowed).
+            bool sameLineAsDocStart = hasDocStart && _line == docStartLine;
+            ConvertNode(-1, false, sameLineValue: sameLineAsDocStart);
             wroteAnyDocument = true;
             SkipWhitespaceAndComments();
 
@@ -242,6 +252,7 @@ internal ref struct YamlToJsonConverter
         SkipWhitespaceAndComments();
         SkipDirectives();
         SkipWhitespaceAndComments();
+        int docStartLine = _line;
         bool hasDocStart = SkipDocumentStartMarker();
         SkipWhitespaceAndComments();
 
@@ -269,7 +280,9 @@ internal ref struct YamlToJsonConverter
         }
 
         // Parse the single document value
-        ConvertNode(-1, false);
+        // Per YAML spec, block collections cannot start on the same line as ---
+        bool sameLineAsDocStart = hasDocStart && _line == docStartLine;
+        ConvertNode(-1, false, sameLineValue: sameLineAsDocStart);
         SkipWhitespaceAndComments();
 
         // Handle document end marker
@@ -301,13 +314,16 @@ internal ref struct YamlToJsonConverter
         // Check for another document start
         if (SkipDocumentStartMarker())
         {
-            SkipWhitespaceAndComments();
+            // A second --- in single-document mode is always an error,
+            // even if the second document is empty.
+            ThrowMultipleDocuments();
+        }
 
-            // If there's actual content or another marker after ---, it's multi-doc
-            if (_pos < _buffer.Length)
-            {
-                ThrowMultipleDocuments();
-            }
+        // If there's still content remaining that isn't a document marker,
+        // it's invalid trailing content (e.g., "... invalid")
+        if (_pos < _buffer.Length)
+        {
+            ThrowContentAfterDocumentEnd();
         }
     }
 
@@ -316,7 +332,7 @@ internal ref struct YamlToJsonConverter
     /// </summary>
     /// <param name="parentIndent">The indentation level of the parent block context, or -1 for root.</param>
     /// <param name="inFlow">Whether we are inside a flow context (flow mapping or flow sequence).</param>
-    private void ConvertNode(int parentIndent, bool inFlow)
+    private void ConvertNode(int parentIndent, bool inFlow, bool sameLineValue = false)
     {
         SkipWhitespaceAndComments();
 
@@ -334,7 +350,8 @@ internal ref struct YamlToJsonConverter
         // Parse node properties (anchor and tag) in either order
         YamlTagKind tag = YamlTagKind.None;
         bool hasAnchor = false;
-        ParseNodeProperties(ref tag, ref hasAnchor);
+        int anchorCount = 0;
+        ParseNodeProperties(ref tag, ref hasAnchor, ref anchorCount, parentIndent);
 
         // Capture writer position before value for anchor storage
         long anchorStartPos = 0;
@@ -363,6 +380,16 @@ internal ref struct YamlToJsonConverter
                  && _buffer[_pos] == YamlConstants.Dash
                  && IsBlockSequenceEntry()))
         {
+            // If the under-indented continuation starts with a tag or anchor,
+            // it's an under-indented property continuation — error per spec
+            // (properties for a block collection require indent > parentIndent).
+            if (_pos < _buffer.Length
+                && (_buffer[_pos] == YamlConstants.Exclamation
+                    || _buffer[_pos] == YamlConstants.Ampersand))
+            {
+                ThrowFlowContentUnderindented();
+            }
+
             WriteEmptyNodeWithTag(tag);
             FinishAnchor(hasAnchor, anchorStartPos);
             return;
@@ -376,6 +403,11 @@ internal ref struct YamlToJsonConverter
         if (_line > nodeLine)
         {
             nodeColumn = _column;
+
+            // If we moved to a new line, block collections are now valid
+            // (the same-line restriction only applies when content is actually
+            // on the same line as the parent's value indicator).
+            sameLineValue = false;
         }
 
         // Check for empty node in flow context (e.g., !!str followed by , or } or ])
@@ -386,17 +418,41 @@ internal ref struct YamlToJsonConverter
             return;
         }
 
+        // A node can have at most one anchor. Block mappings are the exception:
+        // multiple anchors may split between the mapping and its first key.
+        // We defer this check: if the content is a block mapping, it is handled
+        // below. All other node types reject duplicate anchors here.
+        bool hasDuplicateAnchors = anchorCount > 1;
+
         // Flow collections
         if (c == YamlConstants.OpenBrace)
         {
+            if (hasDuplicateAnchors) { ThrowDuplicateAnchor(); }
+
+            int savedFlowMinIndent = _flowMinIndent;
+            if (!inFlow)
+            {
+                _flowMinIndent = Math.Max(0, parentIndent + 1);
+            }
+
             ConvertFlowMapping();
+            _flowMinIndent = savedFlowMinIndent;
             FinishAnchor(hasAnchor, anchorStartPos);
             return;
         }
 
         if (c == YamlConstants.OpenBracket)
         {
+            if (hasDuplicateAnchors) { ThrowDuplicateAnchor(); }
+
+            int savedFlowMinIndent = _flowMinIndent;
+            if (!inFlow)
+            {
+                _flowMinIndent = Math.Max(0, parentIndent + 1);
+            }
+
             ConvertFlowSequence();
+            _flowMinIndent = savedFlowMinIndent;
             FinishAnchor(hasAnchor, anchorStartPos);
             return;
         }
@@ -404,6 +460,8 @@ internal ref struct YamlToJsonConverter
         // Block scalar indicators
         if (c == YamlConstants.Pipe || c == YamlConstants.GreaterThan)
         {
+            if (hasDuplicateAnchors) { ThrowDuplicateAnchor(); }
+
             ConvertBlockScalar(parentIndent);
             FinishAnchor(hasAnchor, anchorStartPos);
             return;
@@ -420,15 +478,33 @@ internal ref struct YamlToJsonConverter
             }
             else
             {
+                // Alias nodes cannot have properties (anchor or tag).
+                // An alias used as a mapping key is valid (the properties apply
+                // to the mapping, not the alias).
+                if (hasAnchor || tag != YamlTagKind.None)
+                {
+                    ThrowUnexpectedCharacter();
+                }
+
                 ConvertAlias();
                 FinishAnchor(hasAnchor, anchorStartPos);
                 return;
             }
         }
 
-        // Block sequence indicator
-        if (c == YamlConstants.Dash && IsBlockSequenceEntry())
+        // Block sequence indicator — not allowed on same line as parent value
+        if (!sameLineValue && c == YamlConstants.Dash && IsBlockSequenceEntry())
         {
+            if (hasDuplicateAnchors) { ThrowDuplicateAnchor(); }
+
+            // Block collection properties must be followed by a line break per spec.
+            // Properties on the same line as '-' are invalid (unlike mappings which
+            // have special same-line-property handling for the first key).
+            if ((hasAnchor || tag != YamlTagKind.None) && _line == nodeLine)
+            {
+                ThrowUnexpectedCharacter();
+            }
+
             ConvertBlockSequence(parentIndent);
             FinishAnchor(hasAnchor, anchorStartPos);
             return;
@@ -437,7 +513,8 @@ internal ref struct YamlToJsonConverter
         // Check for block mapping by looking ahead for a mapping value indicator.
         // This must be checked BEFORE quoted scalars because a quoted string followed
         // by ': ' is a mapping key, not a standalone value.
-        if (IsBlockMappingStart(inFlow))
+        // Block mappings cannot start on the same line as a parent's value indicator.
+        if (!sameLineValue && IsBlockMappingStart(inFlow))
         {
             // In YAML, node properties on the same line as a block mapping's first key
             // belong to that key, not to the mapping itself.
@@ -463,6 +540,8 @@ internal ref struct YamlToJsonConverter
         // Quoted scalars (only reached when NOT a mapping key)
         if (c == YamlConstants.DoubleQuote)
         {
+            if (hasDuplicateAnchors) { ThrowDuplicateAnchor(); }
+
             ConvertDoubleQuotedScalar(parentIndent, inFlow, asValue: true);
             FinishAnchor(hasAnchor, anchorStartPos);
             return;
@@ -470,12 +549,16 @@ internal ref struct YamlToJsonConverter
 
         if (c == YamlConstants.SingleQuote)
         {
-            ConvertSingleQuotedScalar(asValue: true);
+            if (hasDuplicateAnchors) { ThrowDuplicateAnchor(); }
+
+            ConvertSingleQuotedScalar(parentIndent, asValue: true);
             FinishAnchor(hasAnchor, anchorStartPos);
             return;
         }
 
         // Plain scalar
+        if (hasDuplicateAnchors) { ThrowDuplicateAnchor(); }
+
         ConvertPlainScalar(parentIndent, inFlow, tag);
         FinishAnchor(hasAnchor, anchorStartPos);
     }
@@ -484,16 +567,25 @@ internal ref struct YamlToJsonConverter
     /// Parses node properties (anchor and tag) in any order.
     /// YAML allows both <c>&amp;anchor !!tag</c> and <c>!!tag &amp;anchor</c>.
     /// </summary>
-    private void ParseNodeProperties(ref YamlTagKind tag, ref bool hasAnchor)
+    private void ParseNodeProperties(ref YamlTagKind tag, ref bool hasAnchor, ref int anchorCount, int parentIndent = -1)
     {
         while (_pos < _buffer.Length)
         {
             byte c = _buffer[_pos];
 
+            // Properties on a continuation line must be indented more than
+            // the parent block context. A property at or below parentIndent
+            // belongs to a different node (e.g., a sibling mapping entry).
+            if (_column <= parentIndent)
+            {
+                break;
+            }
+
             if (c == YamlConstants.Ampersand)
             {
                 ReadAnchorName();
                 hasAnchor = true;
+                anchorCount++;
                 SkipWhitespaceAndComments();
                 continue;
             }
@@ -770,7 +862,13 @@ internal ref struct YamlToJsonConverter
                     {
                         break;
                     }
+
+                    // Key is at deeper indentation than established mapping — invalid
+                    ThrowUnexpectedCharacter();
                 }
+
+                // Reject tabs in the leading whitespace of block mapping keys
+                ValidateNoTabIndentation();
 
                 // Check for document markers
                 if (IsDocumentEndOrStart())
@@ -783,7 +881,8 @@ internal ref struct YamlToJsonConverter
                 // (these are same-line properties that belong to the first key).
                 YamlTagKind keyTag = first ? outerKeyTag : YamlTagKind.None;
                 bool keyHasAnchor = first && outerKeyHasAnchor;
-                ParseNodeProperties(ref keyTag, ref keyHasAnchor);
+                int keyAnchorCount = 0;
+                ParseNodeProperties(ref keyTag, ref keyHasAnchor, ref keyAnchorCount);
 
                 if (_pos >= _buffer.Length)
                 {
@@ -801,11 +900,14 @@ internal ref struct YamlToJsonConverter
                         Advance(1);
                         SkipWhitespaceAndComments();
 
+                        // YAML spec: tabs are not allowed for indentation
+                        ValidateNoTabIndentation();
+
                         // Parse properties that follow the explicit key indicator
                         // (e.g., "? !!str a" has the tag after the ?)
                         if (_pos < _buffer.Length)
                         {
-                            ParseNodeProperties(ref keyTag, ref keyHasAnchor);
+                            ParseNodeProperties(ref keyTag, ref keyHasAnchor, ref keyAnchorCount);
                         }
                     }
                 }
@@ -813,14 +915,14 @@ internal ref struct YamlToJsonConverter
                 // Read the key — handle alias keys (*alias) specially
                 if (_pos < _buffer.Length && _buffer[_pos] == YamlConstants.Asterisk)
                 {
+                    // Alias nodes cannot have properties (anchor or tag).
+                    if (keyHasAnchor || keyTag != YamlTagKind.None)
+                    {
+                        ThrowUnexpectedCharacter();
+                    }
+
                     // Alias as key
                     WriteAliasAsPropertyName();
-
-                    // If the key also has an anchor, clear it to avoid dangling state.
-                    if (keyHasAnchor)
-                    {
-                        _activeAnchorNameStart = -1;
-                    }
                 }
                 else
                 {
@@ -832,7 +934,14 @@ internal ref struct YamlToJsonConverter
                     }
                     else
                     {
+                        int keyStartLine = _line;
                         key = ReadMappingKey(out rentedKeyBuffer);
+
+                        // YAML spec: implicit keys must not span multiple lines
+                        if (_line > keyStartLine)
+                        {
+                            ThrowMultilineImplicitKey();
+                        }
                     }
 
                     try
@@ -910,8 +1019,10 @@ internal ref struct YamlToJsonConverter
                         }
                         else
                         {
-                            // Value on same line
-                            ConvertNode(mappingIndent, false);
+                            // Value on same line — for implicit keys, block collections
+                            // are not valid here (YAML spec: only flow-in-block allowed).
+                            // For explicit keys, s-l+block-indented allows same-line block collections.
+                            ConvertNode(mappingIndent, false, sameLineValue: !explicitKey);
                         }
                     }
                     else
@@ -1268,6 +1379,9 @@ internal ref struct YamlToJsonConverter
                 break;
             }
 
+            // Reject tabs in the leading whitespace of block sequence entries
+            ValidateNoTabIndentation();
+
             // Check for document markers
             if (IsDocumentEndOrStart())
             {
@@ -1329,14 +1443,53 @@ internal ref struct YamlToJsonConverter
         {
             SkipWhitespaceAndComments();
 
+            // Reject leading comma
+            if (_pos < _buffer.Length && _buffer[_pos] == YamlConstants.Comma)
+            {
+                ThrowMissingFlowSeparator();
+            }
+
+            bool needComma = false;
+
             while (_pos < _buffer.Length && _buffer[_pos] != YamlConstants.CloseBrace)
             {
                 int posBeforeEntry = _pos;
 
+                // After the first entry, require a comma separator
+                if (needComma)
+                {
+                    if (_buffer[_pos] != YamlConstants.Comma)
+                    {
+                        ThrowMissingFlowSeparator();
+                    }
+
+                    Advance(1);
+                    SkipWhitespaceAndComments();
+
+                    // Trailing comma before } is allowed
+                    if (_pos < _buffer.Length && _buffer[_pos] == YamlConstants.CloseBrace)
+                    {
+                        break;
+                    }
+
+                    // Double comma is invalid
+                    if (_pos < _buffer.Length && _buffer[_pos] == YamlConstants.Comma)
+                    {
+                        ThrowMissingFlowSeparator();
+                    }
+                }
+
+                // Document markers (--- or ...) are forbidden inside flow collections
+                if (IsDocumentEndOrStart())
+                {
+                    ThrowUnexpectedCharacter();
+                }
+
                 // Skip anchor/tag (in any order)
                 YamlTagKind flowKeyTag = YamlTagKind.None;
                 bool flowKeyHasAnchor = false;
-                ParseNodeProperties(ref flowKeyTag, ref flowKeyHasAnchor);
+                int flowKeyAnchorCount = 0;
+                ParseNodeProperties(ref flowKeyTag, ref flowKeyHasAnchor, ref flowKeyAnchorCount);
 
                 // Read key — handle alias keys
                 if (_pos < _buffer.Length && _buffer[_pos] == YamlConstants.Asterisk)
@@ -1395,11 +1548,7 @@ internal ref struct YamlToJsonConverter
                 }
 
                 SkipWhitespaceAndComments();
-                if (_pos < _buffer.Length && _buffer[_pos] == YamlConstants.Comma)
-                {
-                    Advance(1);
-                    SkipWhitespaceAndComments();
-                }
+                needComma = true;
 
                 if (_pos == posBeforeEntry)
                 {
@@ -1435,9 +1584,47 @@ internal ref struct YamlToJsonConverter
 
         SkipWhitespaceAndComments();
 
+        // Reject leading comma: [ , a ] is invalid
+        if (_pos < _buffer.Length && _buffer[_pos] == YamlConstants.Comma)
+        {
+            ThrowInvalidFlowSequenceEntry();
+        }
+
+        bool needComma = false;
+
         while (_pos < _buffer.Length && _buffer[_pos] != YamlConstants.CloseBracket)
         {
             int posBeforeEntry = _pos;
+
+            // After the first entry, require a comma separator
+            if (needComma)
+            {
+                if (_buffer[_pos] != YamlConstants.Comma)
+                {
+                    ThrowMissingFlowSeparator();
+                }
+
+                Advance(1);
+                SkipWhitespaceAndComments();
+
+                // Trailing comma before ] is allowed
+                if (_pos < _buffer.Length && _buffer[_pos] == YamlConstants.CloseBracket)
+                {
+                    break;
+                }
+
+                // Double comma [a, , b] is invalid
+                if (_pos < _buffer.Length && _buffer[_pos] == YamlConstants.Comma)
+                {
+                    ThrowInvalidFlowSequenceEntry();
+                }
+            }
+
+            // Document markers (--- or ...) are forbidden inside flow collections
+            if (IsDocumentEndOrStart())
+            {
+                ThrowUnexpectedCharacter();
+            }
 
             // Check for explicit key indicator '?' in flow sequence
             // Creates a single-pair mapping: [? key : value] → [{"key": "value"}]
@@ -1448,11 +1635,7 @@ internal ref struct YamlToJsonConverter
                 {
                     ConvertExplicitFlowMappingEntry();
                     SkipWhitespaceAndComments();
-                    if (_pos < _buffer.Length && _buffer[_pos] == YamlConstants.Comma)
-                    {
-                        Advance(1);
-                        SkipWhitespaceAndComments();
-                    }
+                    needComma = true;
 
                     if (_pos == posBeforeEntry)
                     {
@@ -1475,11 +1658,7 @@ internal ref struct YamlToJsonConverter
             }
 
             SkipWhitespaceAndComments();
-            if (_pos < _buffer.Length && _buffer[_pos] == YamlConstants.Comma)
-            {
-                Advance(1);
-                SkipWhitespaceAndComments();
-            }
+            needComma = true;
 
             // Safety: ensure we made progress to avoid infinite loops
             if (_pos == posBeforeEntry)
@@ -1662,7 +1841,8 @@ internal ref struct YamlToJsonConverter
         // Skip anchor/tag on key
         YamlTagKind implKeyTag = YamlTagKind.None;
         bool implKeyHasAnchor = false;
-        ParseNodeProperties(ref implKeyTag, ref implKeyHasAnchor);
+        int implKeyAnchorCount = 0;
+        ParseNodeProperties(ref implKeyTag, ref implKeyHasAnchor, ref implKeyAnchorCount);
 
         // Read the key
         byte[]? rentedKeyBuffer = null;
@@ -1910,11 +2090,38 @@ internal ref struct YamlToJsonConverter
     /// </summary>
     private ReadOnlySpan<byte> ReadPlainScalarValue(int parentIndent, bool inFlow, YamlTagKind tag = YamlTagKind.None)
     {
+        // Validate ns-plain-first(c): the first character of a plain scalar
+        // cannot be a c-indicator, EXCEPT "-", "?", or ":" when followed by
+        // an ns-plain-safe character.
+        if (_pos < _buffer.Length)
+        {
+            byte first = _buffer[_pos];
+            if (YamlCharacters.IsIndicator(first))
+            {
+                if (first == YamlConstants.Dash || first == YamlConstants.QuestionMark || first == YamlConstants.Colon)
+                {
+                    // These are allowed only when followed by ns-plain-safe(c)
+                    int next = _pos + 1;
+                    bool nextIsSafe = next < _buffer.Length
+                        && !YamlCharacters.IsWhitespaceOrLineBreak(_buffer[next])
+                        && (!inFlow || !YamlCharacters.IsFlowIndicator(_buffer[next]));
+                    if (!nextIsSafe)
+                    {
+                        ThrowUnexpectedCharacter();
+                    }
+                }
+                else
+                {
+                    ThrowUnexpectedCharacter();
+                }
+            }
+        }
+
         int start = _pos;
         int end = _pos;
 
-        // Read first line content
-        ReadPlainScalarLine(start, ref end, inFlow);
+        // Read first line content. A comment terminator prevents multi-line continuation.
+        bool commentTerminated = ReadPlainScalarLine(start, ref end, inFlow);
 
         // Trim trailing whitespace from the first line
         while (end > start && YamlCharacters.IsWhitespace(_buffer[end - 1]))
@@ -1922,8 +2129,8 @@ internal ref struct YamlToJsonConverter
             end--;
         }
 
-        // If not at a line break, return the single line
-        if (_pos >= _buffer.Length || !YamlCharacters.IsLineBreak(_buffer[_pos]))
+        // If not at a line break, or a comment terminated the line, return the single line
+        if (commentTerminated || _pos >= _buffer.Length || !YamlCharacters.IsLineBreak(_buffer[_pos]))
         {
             return _buffer.Slice(start, end - start);
         }
@@ -1987,7 +2194,7 @@ internal ref struct YamlToJsonConverter
                 // Read this continuation line
                 int lineStart = _pos;
                 int lineEnd = _pos;
-                ReadPlainScalarLine(lineStart, ref lineEnd, inFlow);
+                bool lineCommentTerminated = ReadPlainScalarLine(lineStart, ref lineEnd, inFlow);
 
                 // Trim trailing whitespace
                 while (lineEnd > lineStart && YamlCharacters.IsWhitespace(_buffer[lineEnd - 1]))
@@ -1999,6 +2206,12 @@ internal ref struct YamlToJsonConverter
                 EnsureRentedCapacity(ref rentedBuffer, ref output, written, lineContent.Length);
                 lineContent.CopyTo(output.Slice(written));
                 written += lineContent.Length;
+
+                // Comment terminates the multi-line plain scalar
+                if (lineCommentTerminated)
+                {
+                    break;
+                }
 
                 // Check for another continuation line
                 if (_pos >= _buffer.Length || !YamlCharacters.IsLineBreak(_buffer[_pos]))
@@ -2045,8 +2258,10 @@ internal ref struct YamlToJsonConverter
 
     /// <summary>
     /// Reads one line of a plain scalar, advancing _pos to the line break or terminator.
+    /// Returns <see langword="true"/> if the line was terminated by a comment, which prevents
+    /// multi-line continuation per the YAML spec.
     /// </summary>
-    private void ReadPlainScalarLine(int lineStart, ref int lineEnd, bool inFlow)
+    private bool ReadPlainScalarLine(int lineStart, ref int lineEnd, bool inFlow)
     {
         while (_pos < _buffer.Length)
         {
@@ -2067,7 +2282,7 @@ internal ref struct YamlToJsonConverter
             if (c == YamlConstants.Hash && _pos > lineStart && YamlCharacters.IsWhitespace(_buffer[_pos - 1]))
             {
                 SkipToEndOfLine();
-                break;
+                return true;
             }
 
             // Mapping value indicator in block context
@@ -2096,6 +2311,8 @@ internal ref struct YamlToJsonConverter
             _column++;
             lineEnd = _pos;
         }
+
+        return false;
     }
 
     /// <summary>
@@ -2389,7 +2606,8 @@ internal ref struct YamlToJsonConverter
     /// </summary>
     private void ConvertDoubleQuotedScalar(int parentIndent, bool inFlow, bool asValue)
     {
-        ReadOnlySpan<byte> value = ReadDoubleQuotedScalar(out byte[]? rentedBuffer);
+        int minIndent = Math.Max(0, parentIndent + 1);
+        ReadOnlySpan<byte> value = ReadDoubleQuotedScalar(out byte[]? rentedBuffer, minIndent);
         try
         {
             if (asValue)
@@ -2410,7 +2628,7 @@ internal ref struct YamlToJsonConverter
     /// Reads and processes a double-quoted scalar, returning the unescaped UTF-8 bytes.
     /// The caller must return <paramref name="rentedBuffer"/> to the pool after use.
     /// </summary>
-    private ReadOnlySpan<byte> ReadDoubleQuotedScalar(out byte[]? rentedBuffer)
+    private ReadOnlySpan<byte> ReadDoubleQuotedScalar(out byte[]? rentedBuffer, int minContinuationIndent = 0)
     {
         rentedBuffer = null;
         Advance(1); // skip opening '"'
@@ -2558,6 +2776,12 @@ internal ref struct YamlToJsonConverter
 
                         AdvanceLine();
                         SkipWhitespaceOnly();
+
+                        if (IsDocumentEndOrStart())
+                        {
+                            ThrowUnterminatedDoubleQuotedScalar();
+                        }
+
                         break;
                     default:
                         ThrowInvalidEscapeSequence(escaped);
@@ -2578,7 +2802,15 @@ internal ref struct YamlToJsonConverter
                 written = lastContentEnd;
 
                 SkipLineBreak();
+                ValidateFlowContinuationIndent(minContinuationIndent);
                 SkipWhitespaceOnly();
+
+                // Document markers (--- or ...) at column 0 terminate the document,
+                // even inside quoted scalars — the string is unterminated.
+                if (IsDocumentEndOrStart())
+                {
+                    ThrowUnterminatedDoubleQuotedScalar();
+                }
 
                 // Count blank lines
                 int blankLines = 0;
@@ -2586,7 +2818,13 @@ internal ref struct YamlToJsonConverter
                 {
                     blankLines++;
                     SkipLineBreak();
+                    ValidateFlowContinuationIndent(minContinuationIndent);
                     SkipWhitespaceOnly();
+
+                    if (IsDocumentEndOrStart())
+                    {
+                        ThrowUnterminatedDoubleQuotedScalar();
+                    }
                 }
 
                 EnsureRentedCapacity(ref rentedBuffer, ref output, written, blankLines + 1);
@@ -2628,9 +2866,10 @@ internal ref struct YamlToJsonConverter
     /// <summary>
     /// Converts a single-quoted scalar.
     /// </summary>
-    private void ConvertSingleQuotedScalar(bool asValue)
+    private void ConvertSingleQuotedScalar(int parentIndent, bool asValue)
     {
-        ReadOnlySpan<byte> value = ReadSingleQuotedScalar(out byte[]? rentedBuffer);
+        int minIndent = Math.Max(0, parentIndent + 1);
+        ReadOnlySpan<byte> value = ReadSingleQuotedScalar(out byte[]? rentedBuffer, minIndent);
         try
         {
             if (asValue)
@@ -2651,7 +2890,7 @@ internal ref struct YamlToJsonConverter
     /// Reads a single-quoted scalar. The only escape is '' → '.
     /// The caller must return <paramref name="rentedBuffer"/> to the pool after use.
     /// </summary>
-    private ReadOnlySpan<byte> ReadSingleQuotedScalar(out byte[]? rentedBuffer)
+    private ReadOnlySpan<byte> ReadSingleQuotedScalar(out byte[]? rentedBuffer, int minContinuationIndent = 0)
     {
         rentedBuffer = null;
         Advance(1); // skip opening '''
@@ -2740,14 +2979,28 @@ internal ref struct YamlToJsonConverter
                 }
 
                 SkipLineBreak();
+                ValidateFlowContinuationIndent(minContinuationIndent);
                 SkipWhitespaceOnly();
+
+                // Document markers at column 0 terminate the document,
+                // even inside quoted scalars.
+                if (IsDocumentEndOrStart())
+                {
+                    ThrowUnterminatedSingleQuotedScalar();
+                }
 
                 int blankLines = 0;
                 while (_pos < _buffer.Length && YamlCharacters.IsLineBreak(_buffer[_pos]))
                 {
                     blankLines++;
                     SkipLineBreak();
+                    ValidateFlowContinuationIndent(minContinuationIndent);
                     SkipWhitespaceOnly();
+
+                    if (IsDocumentEndOrStart())
+                    {
+                        ThrowUnterminatedSingleQuotedScalar();
+                    }
                 }
 
                 EnsureRentedCapacity(ref rentedBuffer, ref output, written, blankLines + 1);
@@ -2871,6 +3124,13 @@ internal ref struct YamlToJsonConverter
                 lineIndent++;
                 _pos++;
                 _column++;
+            }
+
+            // YAML spec: tabs are not allowed in block scalar indentation
+            if (_pos < _buffer.Length && _buffer[_pos] == YamlConstants.Tab
+                && lineIndent < contentIndent)
+            {
+                ThrowTabInIndentation();
             }
 
             if (_pos >= _buffer.Length || YamlCharacters.IsLineBreak(_buffer[_pos]))
@@ -3008,7 +3268,12 @@ internal ref struct YamlToJsonConverter
             }
             else if (c == YamlConstants.Hash)
             {
-                // Comment — skip to end of line
+                // YAML spec: # is only a comment when preceded by whitespace
+                if (_pos > 0 && !YamlCharacters.IsWhitespace(_buffer[_pos - 1]))
+                {
+                    ThrowCommentMustBePreceededByWhitespace();
+                }
+
                 SkipToEndOfLine();
                 break;
             }
@@ -3288,6 +3553,7 @@ internal ref struct YamlToJsonConverter
         int savedPos = _pos;
         int savedLine = _line;
         int savedColumn = _column;
+        int maxLeadingEmptyIndent = 0;
 
         while (_pos < _buffer.Length)
         {
@@ -3300,13 +3566,29 @@ internal ref struct YamlToJsonConverter
 
             if (_pos >= _buffer.Length || YamlCharacters.IsLineBreak(_buffer[_pos]))
             {
-                // Empty line — skip
+                // Empty line — track its indent for later validation
+                if (lineIndent > maxLeadingEmptyIndent)
+                {
+                    maxLeadingEmptyIndent = lineIndent;
+                }
+
                 if (_pos < _buffer.Length)
                 {
                     SkipLineBreak();
                 }
 
                 continue;
+            }
+
+            // YAML spec: tabs are not allowed in block scalar indentation.
+            // A tab at column 0 (no preceding spaces) cannot be part of s-indent.
+            if (_buffer[_pos] == YamlConstants.Tab && lineIndent == 0)
+            {
+                // Restore to saved state, then advance to the tab position for error reporting
+                _pos = savedPos;
+                _line = savedLine;
+                _column = savedColumn;
+                ValidateNoTabIndentation_BlockScalar();
             }
 
             // Document markers at column 0 are not block scalar content
@@ -3320,7 +3602,17 @@ internal ref struct YamlToJsonConverter
                 return -1;
             }
 
-            // Found a non-empty line — its indent is the content indent
+            // Found a non-empty line — its indent is the content indent.
+            // YAML spec §8.1.3: leading empty lines must not contain more
+            // spaces than the first non-empty line.
+            if (maxLeadingEmptyIndent > lineIndent)
+            {
+                _pos = savedPos;
+                _line = savedLine;
+                _column = savedColumn;
+                ThrowFlowContentUnderindented();
+            }
+
             _pos = savedPos;
             _line = savedLine;
             _column = savedColumn;
@@ -3533,11 +3825,19 @@ internal ref struct YamlToJsonConverter
             if (YamlCharacters.IsLineBreak(c))
             {
                 SkipLineBreak();
+                ValidateFlowContinuationIndent(_flowMinIndent);
                 continue;
             }
 
             if (c == YamlConstants.Hash)
             {
+                // YAML spec: # is only a comment indicator when preceded by whitespace
+                if (_pos > 0 && !YamlCharacters.IsWhitespace(_buffer[_pos - 1])
+                    && !YamlCharacters.IsLineBreak(_buffer[_pos - 1]))
+                {
+                    ThrowCommentMustBePreceededByWhitespace();
+                }
+
                 SkipToEndOfLine();
                 continue;
             }
@@ -3936,6 +4236,7 @@ internal ref struct YamlToJsonConverter
         _anchorCount = 0;
         _activeAnchorNameStart = -1;
         _secondaryTagRedefined = false;
+        _hasYamlDirective = false;
     }
 
     private void EnsureAnchorNameCapacity(int additional)
@@ -4192,6 +4493,64 @@ internal ref struct YamlToJsonConverter
 
         int directiveStart = _pos;
 
+        // Check for %YAML directive (must be exactly "%YAML" followed by whitespace)
+        ReadOnlySpan<byte> yamlDirective = "%YAML"u8;
+        if (_pos + yamlDirective.Length <= _buffer.Length
+            && _buffer.Slice(_pos, yamlDirective.Length).SequenceEqual(yamlDirective)
+            && (_pos + yamlDirective.Length >= _buffer.Length
+                || YamlCharacters.IsWhitespace(_buffer[_pos + yamlDirective.Length])))
+        {
+            if (_hasYamlDirective)
+            {
+                ThrowDuplicateYamlDirective();
+            }
+
+            _hasYamlDirective = true;
+
+            // Validate: %YAML must be followed by whitespace then version
+            int p = _pos + yamlDirective.Length;
+            if (p >= _buffer.Length || !YamlCharacters.IsWhitespace(_buffer[p]))
+            {
+                ThrowUnexpectedCharacter();
+            }
+
+            // Skip whitespace (space or tab)
+            while (p < _buffer.Length && YamlCharacters.IsWhitespace(_buffer[p]))
+            {
+                p++;
+            }
+
+            // Read version (e.g., "1.2") — stop at whitespace, linebreak, or #
+            int versionStart = p;
+            while (p < _buffer.Length && !YamlCharacters.IsWhitespaceOrLineBreak(_buffer[p])
+                && _buffer[p] != YamlConstants.Hash)
+            {
+                p++;
+            }
+
+            // If # follows immediately (no preceding space), it's not a valid comment
+            if (p < _buffer.Length && _buffer[p] == YamlConstants.Hash)
+            {
+                _pos = p;
+                ThrowCommentMustBePreceededByWhitespace();
+            }
+
+            // After the version, only whitespace, comment, or EOL/EOF is allowed
+            while (p < _buffer.Length && _buffer[p] == YamlConstants.Space)
+            {
+                p++;
+            }
+
+            if (p < _buffer.Length && !YamlCharacters.IsLineBreak(_buffer[p])
+                && _buffer[p] != YamlConstants.Hash)
+            {
+                // Extra content after %YAML version — e.g., "%YAML 1.2 foo"
+                _pos = p;
+                _column = p - directiveStart;
+                ThrowUnexpectedCharacter();
+            }
+        }
+
         // Check for %TAG !! with non-standard prefix using lookahead
         // without advancing position, then skip the whole line.
         ReadOnlySpan<byte> tagSecondary = "%TAG !!"u8;
@@ -4223,6 +4582,26 @@ internal ref struct YamlToJsonConverter
             }
         }
 
+        // Validate that the directive has a space after the name (not #)
+        // e.g., "%YAML 1.1#..." is invalid (MUS6/00)
+        {
+            int p = _pos + 1;
+
+            // Skip directive name
+            while (p < _buffer.Length && !YamlCharacters.IsWhitespaceOrLineBreak(_buffer[p])
+                && _buffer[p] != YamlConstants.Hash)
+            {
+                p++;
+            }
+
+            if (p < _buffer.Length && _buffer[p] == YamlConstants.Hash)
+            {
+                // # immediately after directive name without space — invalid
+                _pos = p;
+                ThrowCommentMustBePreceededByWhitespace();
+            }
+        }
+
         // Skip the entire directive line
         SkipToEndOfLine();
         if (_pos < _buffer.Length)
@@ -4233,13 +4612,23 @@ internal ref struct YamlToJsonConverter
 
     /// <summary>
     /// Skips all leading directives (%YAML, %TAG, etc.) and their line breaks.
+    /// If any directives were found, requires a document start marker (---) to follow.
     /// </summary>
     private void SkipDirectives()
     {
+        bool hadDirectives = false;
         while (_pos < _buffer.Length && _buffer[_pos] == YamlConstants.Percent)
         {
+            hadDirectives = true;
             SkipDirective();
             SkipWhitespaceAndComments();
+        }
+
+        // If directives were found, a document start marker (---) MUST follow.
+        // Bare directives without --- are invalid (9MMA — EOF, B63P — ... instead of ---).
+        if (hadDirectives && !IsDocumentStart())
+        {
+            ThrowDirectiveWithoutDocumentStart();
         }
     }
 
@@ -4415,5 +4804,233 @@ internal ref struct YamlToJsonConverter
             SR.Format(SR.InvalidBlockScalarHeader, _line, _column),
             _line,
             _column);
+    }
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private void ThrowDuplicateYamlDirective()
+    {
+        throw new YamlException(
+            SR.Format(SR.DuplicateYamlDirective, _line, _column),
+            _line,
+            _column);
+    }
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private void ThrowDirectiveWithoutDocumentStart()
+    {
+        throw new YamlException(
+            SR.Format(SR.DirectiveWithoutDocumentStart, _line, _column),
+            _line,
+            _column);
+    }
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private void ThrowTabInIndentation()
+    {
+        throw new YamlException(
+            SR.Format(SR.TabInIndentation, _line, _column),
+            _line,
+            _column);
+    }
+
+    /// <summary>
+    /// Checks that the leading whitespace on the current line (from line start to current position)
+    /// contains no tab characters. Call this when the current position establishes a block indentation
+    /// level (e.g., at a mapping key or sequence entry indicator).
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void ValidateNoTabIndentation()
+    {
+        // Scan backward from current position to find start of line
+        int p = _pos - 1;
+        while (p >= 0 && !YamlCharacters.IsLineBreak(_buffer[p]))
+        {
+            if (_buffer[p] == YamlConstants.Tab)
+            {
+                ThrowTabInIndentation();
+            }
+
+            if (!YamlCharacters.IsWhitespace(_buffer[p]))
+            {
+                // Hit non-whitespace content — no tabs in leading whitespace
+                return;
+            }
+
+            p--;
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private void ThrowTrailingContent()
+    {
+        throw new YamlException(
+            SR.Format(SR.TrailingContentAfterNode, _line, _column),
+            _line,
+            _column);
+    }
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private void ThrowInvalidFlowSequenceEntry()
+    {
+        throw new YamlException(
+            SR.Format(SR.InvalidFlowSequenceEntry, _line, _column),
+            _line,
+            _column);
+    }
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private void ThrowMissingFlowSeparator()
+    {
+        throw new YamlException(
+            SR.Format(SR.MissingFlowSeparator, _line, _column),
+            _line,
+            _column);
+    }
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private void ThrowMultipleAnchors()
+    {
+        throw new YamlException(
+            SR.Format(SR.MultipleAnchors, _line, _column),
+            _line,
+            _column);
+    }
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private void ThrowContentAfterDocumentEnd()
+    {
+        throw new YamlException(
+            SR.Format(SR.ContentAfterDocumentEndMarker, _line, _column),
+            _line,
+            _column);
+    }
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private void ThrowContentOnDocumentStartLine()
+    {
+        throw new YamlException(
+            SR.Format(SR.ContentOnDocumentStartLine, _line, _column),
+            _line,
+            _column);
+    }
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private void ThrowCommentMustBePreceededByWhitespace()
+    {
+        throw new YamlException(
+            SR.Format(SR.CommentMustBePreceededByWhitespace, _line, _column),
+            _line,
+            _column);
+    }
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private void ThrowMultilineImplicitKey()
+    {
+        throw new YamlException(
+            SR.Format(SR.MultilineImplicitKeyNotAllowed, _line, _column),
+            _line,
+            _column);
+    }
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private void ThrowDuplicateAnchor()
+    {
+        throw new YamlException(
+            SR.Format(SR.DuplicateAnchor, _line, _column),
+            _line,
+            _column);
+    }
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private void ThrowBlockCollectionOnSameLine()
+    {
+        throw new YamlException(
+            SR.Format(SR.BlockCollectionOnSameLine, _line, _column),
+            _line,
+            _column);
+    }
+
+    /// <summary>
+    /// Validates that a continuation line (after a line break in a flow/quoted scalar)
+    /// has sufficient space-based indentation. Call immediately after <see cref="SkipLineBreak"/>
+    /// and BEFORE <see cref="SkipWhitespaceOnly"/>.
+    /// </summary>
+    /// <param name="minContinuationIndent">
+    /// Minimum number of spaces required. When 0, no check is performed.
+    /// </param>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void ValidateFlowContinuationIndent(int minContinuationIndent)
+    {
+        if (minContinuationIndent <= 0 || _pos >= _buffer.Length)
+        {
+            return;
+        }
+
+        // Count only space characters (tabs are not indentation per YAML spec)
+        int spaces = 0;
+        while (_pos + spaces < _buffer.Length && _buffer[_pos + spaces] == YamlConstants.Space)
+        {
+            spaces++;
+        }
+
+        // Blank lines (only whitespace → line break) are always valid
+        int peek = _pos + spaces;
+        while (peek < _buffer.Length && _buffer[peek] == YamlConstants.Tab)
+        {
+            peek++;
+        }
+
+        if (peek >= _buffer.Length || YamlCharacters.IsLineBreak(_buffer[peek]))
+        {
+            return;
+        }
+
+        // Not a blank line — check indent
+        if (spaces < minContinuationIndent)
+        {
+            if (_buffer[_pos] == YamlConstants.Tab)
+            {
+                ThrowTabInIndentation();
+            }
+
+            ThrowFlowContentUnderindented();
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private void ThrowFlowContentUnderindented()
+    {
+        throw new YamlException(
+            SR.Format(SR.FlowContentUnderindented, _line, _column),
+            _line,
+            _column);
+    }
+
+    /// <summary>
+    /// Scans forward from the current position through blank lines until a tab is found
+    /// in the indentation of a block scalar, then throws.
+    /// Called from DetectBlockScalarIndent after restoring position.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private void ValidateNoTabIndentation_BlockScalar()
+    {
+        while (_pos < _buffer.Length)
+        {
+            if (_buffer[_pos] == YamlConstants.Tab)
+            {
+                ThrowTabInIndentation();
+            }
+            else if (YamlCharacters.IsLineBreak(_buffer[_pos]))
+            {
+                SkipLineBreak();
+            }
+            else
+            {
+                Advance(1);
+            }
+        }
+
+        // Should not reach here, but throw just in case
+        ThrowTabInIndentation();
     }
 }

@@ -8,6 +8,7 @@ using Corvus.Json.CodeGeneration;
 using Corvus.Json.CodeGeneration.DocumentResolvers;
 using Corvus.Json.SourceGenerator;
 using Corvus.Text.Json.CodeGeneration;
+using Corvus.Yaml;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Text;
 
@@ -169,28 +170,43 @@ public static class SourceGeneratorHelpers
                 return newResolver;
             }
 
-            string? json = additionalText.GetText(token)?.ToString();
-            if (json is string j)
-            {
-                try
-                {
-                    var doc = JsonDocument.Parse(j);
-                    if (SchemaReferenceNormalization.TryNormalizeSchemaReference(additionalText.Path, string.Empty, out string? normalizedReference))
-                    {
-                        newResolver.AddDocument(normalizedReference, doc);
-                    }
+            JsonDocument? doc;
 
-                    // Add the document by its $id if it has one.
-                    if (doc.RootElement.TryGetProperty("$id", out JsonElement idElement) &&
-                        idElement.ValueKind == JsonValueKind.String)
-                    {
-                        string id = idElement.GetString()!;
-                        newResolver.AddDocument(id, doc);
-                    }
-                }
-                catch (JsonException)
+            try
+            {
+                if (additionalText.Path.EndsWith(".yaml") || additionalText.Path.EndsWith(".yml"))
                 {
-                    // We just ignore bad JSON files.
+                    string? yaml = additionalText.GetText(token)?.ToString();
+                    doc = yaml is not null ? YamlDocument.Parse(yaml) : null;
+                }
+                else
+                {
+                    string? json = additionalText.GetText(token)?.ToString();
+                    doc = json is not null ? JsonDocument.Parse(json) : null;
+                }
+            }
+            catch (YamlException)
+            {
+                continue;
+            }
+            catch (JsonException)
+            {
+                continue;
+            }
+
+            if (doc is not null)
+            {
+                if (SchemaReferenceNormalization.TryNormalizeSchemaReference(additionalText.Path, string.Empty, out string? normalizedReference))
+                {
+                    newResolver.AddDocument(normalizedReference, doc);
+                }
+
+                // Add the document by its $id if it has one.
+                if (doc.RootElement.TryGetProperty("$id", out JsonElement idElement) &&
+                    idElement.ValueKind == JsonValueKind.String)
+                {
+                    string id = idElement.GetString()!;
+                    newResolver.AddDocument(id, doc);
                 }
             }
         }

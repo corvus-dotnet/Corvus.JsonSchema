@@ -42,6 +42,58 @@ public static class YamlDocument
     }
 
     /// <summary>
+    /// Parses a YAML string and returns a <see cref="JsonDocument"/> containing
+    /// the equivalent JSON representation.
+    /// </summary>
+    /// <param name="yaml">The YAML content as a string.</param>
+    /// <param name="options">Optional YAML reader options.</param>
+    /// <returns>A <see cref="JsonDocument"/> that must be disposed when no longer needed.</returns>
+    /// <exception cref="YamlException">The YAML content is invalid.</exception>
+    public static JsonDocument Parse(
+        string yaml,
+        YamlReaderOptions options = default)
+    {
+        int maxByteCount = Encoding.UTF8.GetMaxByteCount(yaml.Length);
+        byte[]? rentedArray = null;
+
+        Span<byte> utf8Buffer = maxByteCount <= JsonConstants.StackallocByteThreshold
+            ? stackalloc byte[JsonConstants.StackallocByteThreshold]
+            : (rentedArray = ArrayPool<byte>.Shared.Rent(maxByteCount));
+
+        try
+        {
+            int bytesWritten;
+#if NET
+            bytesWritten = Encoding.UTF8.GetBytes(yaml, utf8Buffer);
+#else
+            unsafe
+            {
+                fixed (char* pChars = yaml)
+                fixed (byte* pBytes = utf8Buffer)
+                {
+                    bytesWritten = Encoding.UTF8.GetBytes(pChars, yaml.Length, pBytes, utf8Buffer.Length);
+                }
+            }
+#endif
+            using ArrayPoolBufferWriter jsonBuffer = new(Math.Max(bytesWritten, 256));
+            using Utf8JsonWriter writer = new(jsonBuffer, WriterOptions);
+
+            YamlToJsonConverter converter = new(utf8Buffer.Slice(0, bytesWritten), writer, options, jsonBuffer);
+            converter.Convert();
+            writer.Flush();
+
+            return JsonDocument.Parse(jsonBuffer.WrittenMemory);
+        }
+        finally
+        {
+            if (rentedArray is not null)
+            {
+                ArrayPool<byte>.Shared.Return(rentedArray);
+            }
+        }
+    }
+
+    /// <summary>
     /// Converts UTF-8 YAML bytes to a JSON string.
     /// </summary>
     /// <param name="utf8Yaml">The UTF-8 encoded YAML bytes.</param>
@@ -91,6 +143,7 @@ public static class YamlDocument
 
 #else
 
+using System.Buffers;
 using System.Text;
 using Corvus.Text.Json.Internal;
 using Corvus.Text.Json.Yaml.Internal;
@@ -136,6 +189,70 @@ public static class YamlDocument
         finally
         {
             workspace.ReturnWriterAndBuffer(writer, bufferWriter);
+        }
+    }
+
+    /// <summary>
+    /// Parses a YAML string and returns a <see cref="ParsedJsonDocument{T}"/> containing
+    /// the equivalent JSON representation.
+    /// </summary>
+    /// <typeparam name="TElement">The type of the JSON element.</typeparam>
+    /// <param name="yaml">The YAML content as a string.</param>
+    /// <param name="options">Optional YAML reader options.</param>
+    /// <returns>A <see cref="ParsedJsonDocument{T}"/> that must be disposed when no longer needed.</returns>
+    /// <exception cref="YamlException">The YAML content is invalid.</exception>
+    public static ParsedJsonDocument<TElement> Parse<TElement>(
+        string yaml,
+        YamlReaderOptions options = default)
+        where TElement : struct, IJsonElement<TElement>
+    {
+        int maxByteCount = Encoding.UTF8.GetMaxByteCount(yaml.Length);
+        byte[]? rentedArray = null;
+
+        Span<byte> utf8Buffer = maxByteCount <= JsonConstants.StackallocByteThreshold
+            ? stackalloc byte[JsonConstants.StackallocByteThreshold]
+            : (rentedArray = ArrayPool<byte>.Shared.Rent(maxByteCount));
+
+        try
+        {
+            int bytesWritten;
+#if NET
+            bytesWritten = Encoding.UTF8.GetBytes(yaml, utf8Buffer);
+#else
+            unsafe
+            {
+                fixed (char* pChars = yaml)
+                fixed (byte* pBytes = utf8Buffer)
+                {
+                    bytesWritten = Encoding.UTF8.GetBytes(pChars, yaml.Length, pBytes, utf8Buffer.Length);
+                }
+            }
+#endif
+            using JsonWorkspace workspace = JsonWorkspace.Create();
+            Utf8JsonWriter writer = workspace.RentWriterAndBuffer(
+                WriterOptions,
+                Math.Max(bytesWritten, 256),
+                out IByteBufferWriter jsonBuffer);
+
+            try
+            {
+                YamlToJsonConverter converter = new(utf8Buffer.Slice(0, bytesWritten), writer, options, jsonBuffer);
+                converter.Convert();
+                writer.Flush();
+
+                return ParsedJsonDocument<TElement>.Parse(jsonBuffer.WrittenMemory);
+            }
+            finally
+            {
+                workspace.ReturnWriterAndBuffer(writer, jsonBuffer);
+            }
+        }
+        finally
+        {
+            if (rentedArray is not null)
+            {
+                ArrayPool<byte>.Shared.Return(rentedArray);
+            }
         }
     }
 

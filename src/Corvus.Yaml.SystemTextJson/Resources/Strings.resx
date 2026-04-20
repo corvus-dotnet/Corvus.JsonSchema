@@ -122,5 +122,47 @@
   <data name="ComplexKeysNotSupported" xml:space="preserve">
     <value>Complex (non-scalar) mapping keys are not supported in JSON conversion at line {0}, column {1}.</value>
   </data>
+  <data name="DuplicateYamlDirective" xml:space="preserve">
+    <value>Duplicate %YAML directive at line {0}, column {1}.</value>
+  </data>
+  <data name="DirectiveWithoutDocumentStart" xml:space="preserve">
+    <value>Directives must be followed by a document start marker (---) at line {0}, column {1}.</value>
+  </data>
+  <data name="TabInIndentation" xml:space="preserve">
+    <value>Tabs are not allowed for indentation in YAML at line {0}, column {1}.</value>
+  </data>
+  <data name="TrailingContentAfterNode" xml:space="preserve">
+    <value>Unexpected content after node at line {0}, column {1}.</value>
+  </data>
+  <data name="InvalidFlowSequenceEntry" xml:space="preserve">
+    <value>Invalid flow sequence entry at line {0}, column {1}.</value>
+  </data>
+  <data name="MissingFlowSeparator" xml:space="preserve">
+    <value>Missing comma separator in flow collection at line {0}, column {1}.</value>
+  </data>
+  <data name="MultipleAnchors" xml:space="preserve">
+    <value>A node may have at most one anchor at line {0}, column {1}.</value>
+  </data>
+  <data name="ContentAfterDocumentEndMarker" xml:space="preserve">
+    <value>Unexpected content after document end marker (...) at line {0}, column {1}.</value>
+  </data>
+  <data name="ContentOnDocumentStartLine" xml:space="preserve">
+    <value>Content is not allowed on the same line as the document start marker (---) at line {0}, column {1}.</value>
+  </data>
+  <data name="CommentMustBePreceededByWhitespace" xml:space="preserve">
+    <value>A comment (#) must be preceded by whitespace at line {0}, column {1}.</value>
+  </data>
+  <data name="MultilineImplicitKeyNotAllowed" xml:space="preserve">
+    <value>Implicit mapping keys must not span multiple lines at line {0}, column {1}.</value>
+  </data>
+  <data name="BlockCollectionOnSameLine" xml:space="preserve">
+    <value>A block collection must not appear on the same line as an implicit mapping value at line {0}, column {1}.</value>
+  </data>
+  <data name="FlowContentUnderindented" xml:space="preserve">
+    <value>Flow content continuation line is under-indented at line {0}, column {1}.</value>
+  </data>
+  <data name="DuplicateAnchor" xml:space="preserve">
+    <value>A node must not have more than one anchor at line {0}, column {1}.</value>
+  </data>
 
 </root>

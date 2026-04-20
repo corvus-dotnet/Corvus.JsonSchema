@@ -6,17 +6,19 @@
     <TargetFramework>netstandard2.0</TargetFramework>
     <Nullable>enable</Nullable>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
-    <NoWarn>$(NoWarn);nullable;IDE0007;NU5128;RS2008;SA0001;NU1504</NoWarn>
+    <NoWarn>$(NoWarn);nullable;IDE0007;NU5128;RS2008;SA0001;NU1504;CS3021</NoWarn>
     <CorvusTextJsonPath>..\Corvus.Text.Json\</CorvusTextJsonPath>
     <CorvusTextJsonCodeGenerationPath>..\Corvus.Text.Json.CodeGeneration\</CorvusTextJsonCodeGenerationPath>
     <CorvusV4Path>..\..\src-v4\</CorvusV4Path>
+    <CtjYamlSourceDir>..\Corvus.Text.Json.Yaml\Corvus\Text\Json\Yaml\</CtjYamlSourceDir>
+    <CtjYamlInternalDir>..\Corvus.Text.Json.Yaml\Corvus\Text\Json\Yaml\Internal\</CtjYamlInternalDir>
   </PropertyGroup>
 
   <PropertyGroup Label="SourceGenerator">
     <IsRoslynComponent>true</IsRoslynComponent>
     <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
     <IncludeSymbols>false</IncludeSymbols>
-    <DefineConstants>$(DefineConstants);BUILDING_SOURCE_GENERATOR</DefineConstants>
+    <DefineConstants>$(DefineConstants);BUILDING_SOURCE_GENERATOR;STJ</DefineConstants>
   </PropertyGroup>
 
   <PropertyGroup Label="Standard">
@@ -318,6 +320,28 @@
     <Compile Include="Corvus.UriTemplates\UriTemplateTable{TMatch}.cs" />
     <Compile Include="GeneratedTypeAccessibility.cs" />
     <Compile Include="IGlobalOptions.cs" />
+  </ItemGroup>
+
+  <!-- YAML converter source files (linked with STJ define) -->
+  <ItemGroup>
+    <Compile Include="$(CtjYamlSourceDir)DuplicateKeyBehavior.cs" Link="Yaml\DuplicateKeyBehavior.cs" />
+    <Compile Include="$(CtjYamlSourceDir)YamlDocumentMode.cs" Link="Yaml\YamlDocumentMode.cs" />
+    <Compile Include="$(CtjYamlSourceDir)YamlException.cs" Link="Yaml\YamlException.cs" />
+    <Compile Include="$(CtjYamlSourceDir)YamlReaderOptions.cs" Link="Yaml\YamlReaderOptions.cs" />
+    <Compile Include="$(CtjYamlSourceDir)YamlSchema.cs" Link="Yaml\YamlSchema.cs" />
+    <Compile Include="$(CtjYamlSourceDir)YamlDocument.cs" Link="Yaml\YamlDocument.cs" />
+    <Compile Include="$(CtjYamlInternalDir)ScalarResolver.cs" Link="Yaml\Internal\ScalarResolver.cs" />
+    <Compile Include="$(CtjYamlInternalDir)YamlCharacters.cs" Link="Yaml\Internal\YamlCharacters.cs" />
+    <Compile Include="$(CtjYamlInternalDir)YamlConstants.cs" Link="Yaml\Internal\YamlConstants.cs" />
+    <Compile Include="$(CtjYamlInternalDir)YamlScalarStyle.cs" Link="Yaml\Internal\YamlScalarStyle.cs" />
+    <Compile Include="$(CtjYamlInternalDir)YamlTokenType.cs" Link="Yaml\Internal\YamlTokenType.cs" />
+    <Compile Include="$(CtjYamlInternalDir)YamlToJsonConverter.cs" Link="Yaml\Internal\YamlToJsonConverter.cs" />
+    <Compile Include="..\Common\JsonConstants.cs" Link="Yaml\Common\JsonConstants.cs" />
+    <Compile Include="..\Common\Utf8KeyHashSet.cs" Link="Yaml\Common\Utf8KeyHashSet.cs" />
+    <Compile Include="$(CorvusTextJsonPath)Corvus\Text\Json\Internal\Utf8Hash.cs" Link="Yaml\Internal\Utf8Hash.cs" />
+    <Compile Include="..\Corvus.Yaml.SystemTextJson\Corvus\Yaml\Internal\ArrayPoolBufferWriter.cs" Link="Yaml\Internal\ArrayPoolBufferWriter.cs" />
+    <Compile Include="..\..\System.Private.CoreLib\src\System\Collections\Generic\ValueListBuilder.cs" Link="Yaml\Common\ValueListBuilder.cs" />
+    <Compile Include="..\..\System.Private.CoreLib\src\System\Collections\Generic\ValueListBuilder.Pop.cs" Link="Yaml\Common\ValueListBuilder.Pop.cs" />
   </ItemGroup>
 
   <ItemGroup>

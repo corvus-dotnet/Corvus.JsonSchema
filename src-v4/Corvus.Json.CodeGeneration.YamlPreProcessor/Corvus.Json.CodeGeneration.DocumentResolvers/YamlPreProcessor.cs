@@ -2,7 +2,8 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-using YamlDotNet.Serialization;
+using System.Text;
+using Corvus.Yaml;
 
 namespace Corvus.Json.CodeGeneration.DocumentResolvers;
 
@@ -14,26 +15,23 @@ public class YamlPreProcessor : IDocumentStreamPreProcessor
     /// <inheritdoc/>
     public Stream Process(Stream input)
     {
+        byte[] yamlBytes;
+        using (MemoryStream ms = new())
+        {
+            input.CopyTo(ms);
+            yamlBytes = ms.ToArray();
+        }
+
         try
         {
-            IDeserializer deserializer = new DeserializerBuilder().Build();
-            object? yamlObject = deserializer.Deserialize(new StreamReader(input));
-
-            MemoryStream jsonStream = new();
-            StreamWriter writer = new(jsonStream);
-            ISerializer serializer = new SerializerBuilder()
-               .JsonCompatible()
-               .Build();
-
-            serializer.Serialize(writer, yamlObject);
-            writer.Flush();
-            jsonStream.Position = 0;
-            return jsonStream;
+            string json = YamlDocument.ConvertToJsonString(yamlBytes);
+            return new MemoryStream(Encoding.UTF8.GetBytes(json));
         }
         catch (Exception)
         {
-            // We could not process the stream.
-            return input;
+            // We could not process the stream as YAML; return the
+            // buffered bytes so downstream can attempt JSON parsing.
+            return new MemoryStream(yamlBytes, writable: false);
         }
     }
 }

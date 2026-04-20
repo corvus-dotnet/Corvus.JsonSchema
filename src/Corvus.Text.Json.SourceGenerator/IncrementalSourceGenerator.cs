@@ -45,7 +45,7 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
 
         IncrementalValueProvider<GlobalOptions> globalOptions = initializationContext.AnalyzerConfigOptionsProvider.Select((provider, token) => GetGlobalOptions(VocabularyRegistry, provider, token));
 
-        IncrementalValuesProvider<AdditionalText> jsonSourceFiles = initializationContext.AdditionalTextsProvider.Where(p => p.Path.EndsWith(".json"));
+        IncrementalValuesProvider<AdditionalText> jsonSourceFiles = initializationContext.AdditionalTextsProvider.Where(static p => p.Path.EndsWith(".json") || p.Path.EndsWith(".yaml") || p.Path.EndsWith(".yml"));
 
         IncrementalValueProvider<PrepopulatedDocumentResolver> documentResolver = jsonSourceFiles.Collect().Select(SourceGeneratorHelpers.BuildDocumentResolver);
 
