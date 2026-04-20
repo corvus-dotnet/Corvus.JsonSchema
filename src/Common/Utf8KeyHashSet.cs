@@ -6,9 +6,12 @@ using System.Buffers;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using Corvus.Text.Json.Internal;
 
+#if STJ
+namespace Corvus.Yaml.Internal;
+#else
 namespace Corvus.Text.Json.Internal;
+#endif
 
 #pragma warning disable CS9191 // The 'ref' modifier for argument corresponding to 'in' parameter is equivalent to 'in'. Consider using 'in' instead.
 
@@ -146,6 +149,14 @@ internal ref struct Utf8KeyHashSet
         int keyOffset = _keyBufferUsed;
         _keyBufferUsed += key.Length;
 
+        if (_count >= _size)
+        {
+            Grow();
+
+            // Recompute bucket ref after grow (buckets array changed).
+            bucket = ref _buckets[(int)(hashCode % (ulong)_size)];
+        }
+
         int entryIndex = _count * EntrySize;
         WriteEntry(_entries.Slice(entryIndex, EntrySize), hashCode, bucket - 1, keyOffset, key.Length);
         _count++;
@@ -189,6 +200,49 @@ internal ref struct Utf8KeyHashSet
 
         // Beyond our small table, just use the value + 1 to make it odd
         return min | 1;
+    }
+
+    private void Grow()
+    {
+        int newSize = GetPrime(_size * 2);
+        int newEntriesSize = newSize * EntrySize;
+
+        // Allocate new buckets and entries
+        int[] newBucketsBacking = ArrayPool<int>.Shared.Rent(newSize);
+        Span<int> newBuckets = newBucketsBacking.AsSpan(0, newSize);
+        newBuckets.Clear();
+
+        byte[] newEntriesBacking = ArrayPool<byte>.Shared.Rent(newEntriesSize);
+        Span<byte> newEntries = newEntriesBacking.AsSpan(0, newEntriesSize);
+
+        // Copy existing entries and rehash into new buckets
+        ReadOnlySpan<byte> oldEntries = _entries;
+        for (int i = 0; i < _count; i++)
+        {
+            int offset = i * EntrySize;
+            ReadEntry(oldEntries.Slice(offset), out ulong entryHash, out _, out int bufOffset, out int bufLen);
+
+            ref int newBucket = ref newBuckets[(int)(entryHash % (ulong)newSize)];
+            WriteEntry(newEntries.Slice(offset, EntrySize), entryHash, newBucket - 1, bufOffset, bufLen);
+            newBucket = i + 1; // 1-based
+        }
+
+        // Return old rented arrays
+        if (_bucketsBacking is int[] oldBb)
+        {
+            ArrayPool<int>.Shared.Return(oldBb);
+        }
+
+        if (_entriesBacking is byte[] oldEb)
+        {
+            ArrayPool<byte>.Shared.Return(oldEb);
+        }
+
+        _bucketsBacking = newBucketsBacking;
+        _buckets = newBuckets;
+        _entriesBacking = newEntriesBacking;
+        _entries = newEntries;
+        _size = newSize;
     }
 
     private void EnsureKeyBufferCapacity(int additionalBytes)

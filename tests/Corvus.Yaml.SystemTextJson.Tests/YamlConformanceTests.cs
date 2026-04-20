@@ -3,13 +3,12 @@
 // </copyright>
 
 using System.Text;
-using global::System.Text.Json;
-using Corvus.Text.Json;
-using Corvus.Text.Json.Yaml;
+using System.Text.Json;
+using Corvus.Yaml;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace Corvus.Text.Json.Yaml.Tests;
+namespace Corvus.Yaml.SystemTextJson.Tests;
 
 /// <summary>
 /// Conformance tests driven by the yaml-test-suite (data branch).
@@ -68,23 +67,19 @@ public class YamlConformanceTests
         byte[] yamlBytes = File.ReadAllBytes(Path.Combine(dir, "in.yaml"));
         string expectedJson = File.ReadAllText(Path.Combine(dir, "in.json")).Trim();
 
-        // Use LastWins for duplicate keys (the test suite expects this behavior)
         YamlReaderOptions options = new()
         {
             DuplicateKeyBehavior = DuplicateKeyBehavior.LastWins,
         };
 
-        // Empty expected JSON means the stream has no documents — should produce null
         if (expectedJson.Length == 0)
         {
             expectedJson = "null";
         }
 
-        // Detect multi-document by checking if expected JSON has multiple root values
         bool isMultiDoc = IsMultiDocumentJson(expectedJson);
         if (isMultiDoc)
         {
-            // Multi-document: use MultiAsArray mode and compare all documents
             options = options with
             {
                 DocumentMode = YamlDocumentMode.MultiAsArray,
@@ -92,24 +87,16 @@ public class YamlConformanceTests
 
             try
             {
-                using ParsedJsonDocument<Corvus.Text.Json.JsonElement> doc = YamlDocument.Parse<JsonElement>(yamlBytes, options);
-                Corvus.Text.Json.JsonElement root = doc.RootElement;
+                using JsonDocument doc = YamlDocument.Parse(yamlBytes, options);
+                JsonElement root = doc.RootElement;
 
-                // The result should be a JSON array of documents
                 var expectedValues = ExtractAllJsonValues(expectedJson);
 
-                // Verify length matches
-                int actualLength = 0;
-                foreach (Corvus.Text.Json.JsonElement _ in root.EnumerateArray())
-                {
-                    actualLength++;
-                }
-
+                int actualLength = root.GetArrayLength();
                 Assert.Equal(expectedValues.Count, actualLength);
 
-                // Compare each document
                 int i = 0;
-                foreach (Corvus.Text.Json.JsonElement element in root.EnumerateArray())
+                foreach (JsonElement element in root.EnumerateArray())
                 {
                     string actual = element.GetRawText();
                     AssertJsonEquivalent(expectedValues[i], actual, id, $"{name} (doc {i})");
@@ -127,7 +114,7 @@ public class YamlConformanceTests
 
         try
         {
-            using ParsedJsonDocument<Corvus.Text.Json.JsonElement> doc = YamlDocument.Parse<JsonElement>(yamlBytes, options);
+            using JsonDocument doc = YamlDocument.Parse(yamlBytes, options);
             string actual = doc.RootElement.GetRawText();
             AssertJsonEquivalent(expectedJson, actual, id, name);
         }
@@ -150,12 +137,9 @@ public class YamlConformanceTests
 
         try
         {
-            using ParsedJsonDocument<Corvus.Text.Json.JsonElement> doc = YamlDocument.Parse<JsonElement>(yamlBytes);
+            using JsonDocument doc = YamlDocument.Parse(yamlBytes);
             string rawText = doc.RootElement.GetRawText();
             _output.WriteLine($"[{id}] {name}: Expected error but parsed OK: {rawText}");
-
-            // Some "error" cases are debatable — don't fail hard but record
-            // Assert.Fail($"[{id}] {name}: Expected YamlException but parsed successfully");
         }
         catch (YamlException)
         {
@@ -185,7 +169,6 @@ public class YamlConformanceTests
                 string nameFile = Path.Combine(testDir, "===");
                 if (!File.Exists(nameFile))
                 {
-                    // Subtest — look in parent
                     nameFile = Path.Combine(Path.GetDirectoryName(testDir)!, "===");
                 }
 
@@ -221,14 +204,10 @@ public class YamlConformanceTests
         }
     }
 
-    /// <summary>
-    /// Enumerates all test directories, including numeric subtests.
-    /// </summary>
     private static IEnumerable<string> EnumerateTestDirs()
     {
         foreach (string dir in Directory.GetDirectories(TestSuitePath))
         {
-            // Check for numeric subdirectories (subtests like "00", "01")
             string[] subDirs = Directory.GetDirectories(dir);
             bool hasSubtests = subDirs.Length > 0 && subDirs.Any(d => IsNumericName(Path.GetFileName(d)));
 
@@ -246,15 +225,11 @@ public class YamlConformanceTests
         }
     }
 
-    /// <summary>
-    /// Gets a display ID for a test directory (e.g. "229Q" or "VJP3/00").
-    /// </summary>
     private static string GetTestId(string testDir)
     {
         string dirName = Path.GetFileName(testDir);
         if (IsNumericName(dirName))
         {
-            // Subtest: include parent
             string parent = Path.GetFileName(Path.GetDirectoryName(testDir)!);
             return $"{parent}/{dirName}";
         }
@@ -269,17 +244,15 @@ public class YamlConformanceTests
 
     private static void AssertJsonEquivalent(string expected, string actual, string id, string name)
     {
-        // Normalize both JSON strings by parsing and re-serializing
         using JsonDocument expectedDoc = JsonDocument.Parse(expected);
         using JsonDocument actualDoc = JsonDocument.Parse(actual);
 
-        // Use deep comparison that is order-independent for object keys
         Assert.True(
             JsonElementDeepEquals(expectedDoc.RootElement, actualDoc.RootElement),
             $"[{id}] {name}:\n  Expected: {JsonSerializer.Serialize(expectedDoc.RootElement)}\n  Actual:   {JsonSerializer.Serialize(actualDoc.RootElement)}");
     }
 
-    private static bool JsonElementDeepEquals(System.Text.Json.JsonElement a, System.Text.Json.JsonElement b)
+    private static bool JsonElementDeepEquals(JsonElement a, JsonElement b)
     {
         if (a.ValueKind != b.ValueKind)
         {
@@ -288,16 +261,16 @@ public class YamlConformanceTests
 
         switch (a.ValueKind)
         {
-            case System.Text.Json.JsonValueKind.Object:
+            case JsonValueKind.Object:
                 int countA = 0;
                 foreach (var _ in a.EnumerateObject()) countA++;
                 int countB = 0;
                 foreach (var _ in b.EnumerateObject()) countB++;
                 if (countA != countB) return false;
 
-                foreach (System.Text.Json.JsonProperty prop in a.EnumerateObject())
+                foreach (JsonProperty prop in a.EnumerateObject())
                 {
-                    if (!b.TryGetProperty(prop.Name, out System.Text.Json.JsonElement bVal))
+                    if (!b.TryGetProperty(prop.Name, out JsonElement bVal))
                         return false;
                     if (!JsonElementDeepEquals(prop.Value, bVal))
                         return false;
@@ -305,7 +278,7 @@ public class YamlConformanceTests
 
                 return true;
 
-            case System.Text.Json.JsonValueKind.Array:
+            case JsonValueKind.Array:
                 int lenA = a.GetArrayLength();
                 int lenB = b.GetArrayLength();
                 if (lenA != lenB) return false;
@@ -320,65 +293,28 @@ public class YamlConformanceTests
 
                 return true;
 
-            case System.Text.Json.JsonValueKind.String:
+            case JsonValueKind.String:
                 return a.GetString() == b.GetString();
 
-            case System.Text.Json.JsonValueKind.Number:
+            case JsonValueKind.Number:
                 return a.GetRawText() == b.GetRawText();
 
             default:
-                return true; // True, False, Null
+                return true;
         }
     }
 
     private static bool IsMultiDocumentJson(string json)
     {
-        // Multi-document JSON has multiple root values on separate lines
-        // Try parsing as single value first
         try
         {
             using JsonDocument doc = JsonDocument.Parse(json);
             return false;
         }
-        catch (global::System.Text.Json.JsonException)
+        catch (JsonException)
         {
             return true;
         }
-    }
-
-    private static string ExtractFirstJsonValue(string json)
-    {
-        // Read the first complete JSON value from a multi-value string
-        var reader = new System.Text.Json.Utf8JsonReader(Encoding.UTF8.GetBytes(json));
-        if (!reader.Read())
-        {
-            return "null";
-        }
-
-        int start = (int)reader.TokenStartIndex;
-
-        // Skip to the end of this value
-        int depth = 0;
-        do
-        {
-            if (reader.TokenType == System.Text.Json.JsonTokenType.StartObject || reader.TokenType == System.Text.Json.JsonTokenType.StartArray)
-            {
-                depth++;
-            }
-            else if (reader.TokenType == System.Text.Json.JsonTokenType.EndObject || reader.TokenType == System.Text.Json.JsonTokenType.EndArray)
-            {
-                depth--;
-            }
-
-            if (depth == 0)
-            {
-                break;
-            }
-        }
-        while (reader.Read());
-
-        long end = reader.BytesConsumed;
-        return Encoding.UTF8.GetString(Encoding.UTF8.GetBytes(json), start, (int)(end - start));
     }
 
     private static List<string> ExtractAllJsonValues(string json)
@@ -389,7 +325,6 @@ public class YamlConformanceTests
 
         while (offset < bytes.Length)
         {
-            // Skip whitespace
             while (offset < bytes.Length && (bytes[offset] == (byte)' ' || bytes[offset] == (byte)'\n'
                 || bytes[offset] == (byte)'\r' || bytes[offset] == (byte)'\t'))
             {
@@ -401,7 +336,7 @@ public class YamlConformanceTests
                 break;
             }
 
-            var reader = new System.Text.Json.Utf8JsonReader(bytes.AsSpan(offset));
+            var reader = new Utf8JsonReader(bytes.AsSpan(offset));
             if (!reader.Read())
             {
                 break;
@@ -409,15 +344,14 @@ public class YamlConformanceTests
 
             int start = offset + (int)reader.TokenStartIndex;
 
-            // Skip to the end of this value
             int depth = 0;
             do
             {
-                if (reader.TokenType == System.Text.Json.JsonTokenType.StartObject || reader.TokenType == System.Text.Json.JsonTokenType.StartArray)
+                if (reader.TokenType == JsonTokenType.StartObject || reader.TokenType == JsonTokenType.StartArray)
                 {
                     depth++;
                 }
-                else if (reader.TokenType == System.Text.Json.JsonTokenType.EndObject || reader.TokenType == System.Text.Json.JsonTokenType.EndArray)
+                else if (reader.TokenType == JsonTokenType.EndObject || reader.TokenType == JsonTokenType.EndArray)
                 {
                     depth--;
                 }
@@ -436,5 +370,4 @@ public class YamlConformanceTests
 
         return values;
     }
-
 }

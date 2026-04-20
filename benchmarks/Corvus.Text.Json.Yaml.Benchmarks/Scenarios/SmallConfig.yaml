@@ -1,0 +1,24 @@
+app:
+  name: my-service
+  version: 1.2.3
+  debug: false
+
+server:
+  host: 0.0.0.0
+  port: 8080
+  workers: 4
+
+database:
+  url: postgresql://localhost:5432/mydb
+  pool_size: 10
+  timeout: 30
+
+logging:
+  level: info
+  format: json
+
+features:
+  - name: feature-a
+    enabled: true
+  - name: feature-b
+    enabled: false

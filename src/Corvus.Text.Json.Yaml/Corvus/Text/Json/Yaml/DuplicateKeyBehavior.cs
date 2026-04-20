@@ -2,7 +2,11 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+#if STJ
+namespace Corvus.Yaml;
+#else
 namespace Corvus.Text.Json.Yaml;
+#endif
 
 /// <summary>
 /// Specifies the behavior when duplicate mapping keys are encountered.

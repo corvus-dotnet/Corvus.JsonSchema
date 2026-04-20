@@ -2,7 +2,11 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+#if STJ
+namespace Corvus.Yaml;
+#else
 namespace Corvus.Text.Json.Yaml;
+#endif
 
 /// <summary>
 /// Specifies the YAML schema used for tag resolution and scalar type coercion.

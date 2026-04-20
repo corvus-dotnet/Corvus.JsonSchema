@@ -2,7 +2,11 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+#if STJ
+namespace Corvus.Yaml.Internal;
+#else
 namespace Corvus.Text.Json.Yaml.Internal;
+#endif
 
 /// <summary>
 /// The type of a YAML token produced by the scanner.

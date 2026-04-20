@@ -2,7 +2,11 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+#if STJ
+namespace Corvus.Yaml;
+#else
 namespace Corvus.Text.Json.Yaml;
+#endif
 
 /// <summary>
 /// Options for configuring the YAML to JSON converter.

@@ -5,7 +5,11 @@
 using System.Buffers;
 using System.Runtime.CompilerServices;
 
+#if STJ
+namespace Corvus.Yaml.Internal;
+#else
 namespace Corvus.Text.Json.Yaml.Internal;
+#endif
 
 /// <summary>
 /// Resolves plain scalar values to JSON types according to the selected YAML schema.

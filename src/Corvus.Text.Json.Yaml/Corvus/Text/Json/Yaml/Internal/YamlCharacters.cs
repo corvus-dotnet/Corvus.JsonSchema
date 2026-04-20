@@ -4,7 +4,11 @@
 
 using System.Runtime.CompilerServices;
 
+#if STJ
+namespace Corvus.Yaml.Internal;
+#else
 namespace Corvus.Text.Json.Yaml.Internal;
+#endif
 
 /// <summary>
 /// YAML character classification utilities operating on UTF-8 bytes.

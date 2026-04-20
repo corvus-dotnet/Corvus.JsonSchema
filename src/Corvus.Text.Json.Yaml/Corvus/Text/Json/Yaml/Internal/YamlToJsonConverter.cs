@@ -4,9 +4,17 @@
 
 using System.Buffers;
 using System.Runtime.CompilerServices;
+#if STJ
+using Corvus.Yaml.Internal;
+#else
 using Corvus.Text.Json.Internal;
+#endif
 
+#if STJ
+namespace Corvus.Yaml.Internal;
+#else
 namespace Corvus.Text.Json.Yaml.Internal;
+#endif
 
 /// <summary>
 /// A combined YAML scanner and JSON emitter that converts UTF-8 YAML bytes
@@ -64,7 +72,11 @@ internal ref struct YamlToJsonConverter
     private readonly ReadOnlySpan<byte> _buffer;
     private Utf8JsonWriter _writer;
     private readonly YamlReaderOptions _options;
+#if STJ
+    private readonly ArrayPoolBufferWriter? _bufferWriter;
+#else
     private readonly IByteBufferWriter? _bufferWriter;
+#endif
     private int _pos;
     private int _line;
     private int _column;
@@ -97,7 +109,11 @@ internal ref struct YamlToJsonConverter
     /// <param name="writer">The JSON writer to emit to.</param>
     /// <param name="options">The YAML reader options.</param>
     /// <param name="bufferWriter">Optional buffer writer for anchor/alias support.</param>
+#if STJ
+    public YamlToJsonConverter(ReadOnlySpan<byte> yaml, Utf8JsonWriter writer, YamlReaderOptions options, ArrayPoolBufferWriter? bufferWriter = null)
+#else
     public YamlToJsonConverter(ReadOnlySpan<byte> yaml, Utf8JsonWriter writer, YamlReaderOptions options, IByteBufferWriter? bufferWriter = null)
+#endif
     {
         _buffer = yaml;
         _writer = writer;

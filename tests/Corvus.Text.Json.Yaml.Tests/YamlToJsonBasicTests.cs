@@ -18,7 +18,7 @@ public class YamlToJsonBasicTests
     public void SimpleMapping()
     {
         byte[] yaml = "name: hello\nvalue: 42"u8.ToArray();
-        using ParsedJsonDocument<JsonElement> doc = YamlDocument.Parse(yaml);
+        using ParsedJsonDocument<JsonElement> doc = YamlDocument.Parse<JsonElement>(yaml);
         JsonElement root = doc.RootElement;
 
         Assert.Equal(JsonValueKind.Object, root.ValueKind);
@@ -30,7 +30,7 @@ public class YamlToJsonBasicTests
     public void SimpleSequence()
     {
         byte[] yaml = "- one\n- two\n- three"u8.ToArray();
-        using ParsedJsonDocument<JsonElement> doc = YamlDocument.Parse(yaml);
+        using ParsedJsonDocument<JsonElement> doc = YamlDocument.Parse<JsonElement>(yaml);
         JsonElement root = doc.RootElement;
 
         Assert.Equal(JsonValueKind.Array, root.ValueKind);
@@ -44,7 +44,7 @@ public class YamlToJsonBasicTests
     public void NullValues()
     {
         byte[] yaml = "a: null\nb: ~\nc:"u8.ToArray();
-        using ParsedJsonDocument<JsonElement> doc = YamlDocument.Parse(yaml);
+        using ParsedJsonDocument<JsonElement> doc = YamlDocument.Parse<JsonElement>(yaml);
         JsonElement root = doc.RootElement;
 
         Assert.Equal(JsonValueKind.Null, root.GetProperty("a"u8).ValueKind);
@@ -56,7 +56,7 @@ public class YamlToJsonBasicTests
     public void BooleanValues()
     {
         byte[] yaml = "a: true\nb: false"u8.ToArray();
-        using ParsedJsonDocument<JsonElement> doc = YamlDocument.Parse(yaml);
+        using ParsedJsonDocument<JsonElement> doc = YamlDocument.Parse<JsonElement>(yaml);
         JsonElement root = doc.RootElement;
 
         Assert.True(root.GetProperty("a"u8).GetBoolean());
@@ -67,7 +67,7 @@ public class YamlToJsonBasicTests
     public void NestedMapping()
     {
         byte[] yaml = "outer:\n  inner:\n    value: deep"u8.ToArray();
-        using ParsedJsonDocument<JsonElement> doc = YamlDocument.Parse(yaml);
+        using ParsedJsonDocument<JsonElement> doc = YamlDocument.Parse<JsonElement>(yaml);
         JsonElement root = doc.RootElement;
 
         Assert.Equal("deep", root.GetProperty("outer"u8).GetProperty("inner"u8).GetProperty("value"u8).GetString());
@@ -77,7 +77,7 @@ public class YamlToJsonBasicTests
     public void DoubleQuotedScalar()
     {
         byte[] yaml = "key: \"hello world\""u8.ToArray();
-        using ParsedJsonDocument<JsonElement> doc = YamlDocument.Parse(yaml);
+        using ParsedJsonDocument<JsonElement> doc = YamlDocument.Parse<JsonElement>(yaml);
         JsonElement root = doc.RootElement;
 
         Assert.Equal("hello world", root.GetProperty("key"u8).GetString());
@@ -87,7 +87,7 @@ public class YamlToJsonBasicTests
     public void SingleQuotedScalar()
     {
         byte[] yaml = "key: 'hello world'"u8.ToArray();
-        using ParsedJsonDocument<JsonElement> doc = YamlDocument.Parse(yaml);
+        using ParsedJsonDocument<JsonElement> doc = YamlDocument.Parse<JsonElement>(yaml);
         JsonElement root = doc.RootElement;
 
         Assert.Equal("hello world", root.GetProperty("key"u8).GetString());
@@ -97,7 +97,7 @@ public class YamlToJsonBasicTests
     public void FlowMapping()
     {
         byte[] yaml = "{a: 1, b: 2}"u8.ToArray();
-        using ParsedJsonDocument<JsonElement> doc = YamlDocument.Parse(yaml);
+        using ParsedJsonDocument<JsonElement> doc = YamlDocument.Parse<JsonElement>(yaml);
         JsonElement root = doc.RootElement;
 
         Assert.Equal(JsonValueKind.Object, root.ValueKind);
@@ -109,7 +109,7 @@ public class YamlToJsonBasicTests
     public void FlowSequence()
     {
         byte[] yaml = "[1, 2, 3]"u8.ToArray();
-        using ParsedJsonDocument<JsonElement> doc = YamlDocument.Parse(yaml);
+        using ParsedJsonDocument<JsonElement> doc = YamlDocument.Parse<JsonElement>(yaml);
         JsonElement root = doc.RootElement;
 
         Assert.Equal(JsonValueKind.Array, root.ValueKind);
@@ -123,7 +123,7 @@ public class YamlToJsonBasicTests
     public void DocumentStart()
     {
         byte[] yaml = "---\nkey: value"u8.ToArray();
-        using ParsedJsonDocument<JsonElement> doc = YamlDocument.Parse(yaml);
+        using ParsedJsonDocument<JsonElement> doc = YamlDocument.Parse<JsonElement>(yaml);
         JsonElement root = doc.RootElement;
 
         Assert.Equal("value", root.GetProperty("key"u8).GetString());
@@ -133,7 +133,7 @@ public class YamlToJsonBasicTests
     public void Comments()
     {
         byte[] yaml = "# comment\nkey: value # inline comment"u8.ToArray();
-        using ParsedJsonDocument<JsonElement> doc = YamlDocument.Parse(yaml);
+        using ParsedJsonDocument<JsonElement> doc = YamlDocument.Parse<JsonElement>(yaml);
         JsonElement root = doc.RootElement;
 
         Assert.Equal("value", root.GetProperty("key"u8).GetString());
@@ -143,7 +143,7 @@ public class YamlToJsonBasicTests
     public void IntegerFormats()
     {
         byte[] yaml = "dec: 123\nhex: 0xFF\noct: 0o77"u8.ToArray();
-        using ParsedJsonDocument<JsonElement> doc = YamlDocument.Parse(yaml);
+        using ParsedJsonDocument<JsonElement> doc = YamlDocument.Parse<JsonElement>(yaml);
         JsonElement root = doc.RootElement;
 
         Assert.Equal(123, root.GetProperty("dec"u8).GetInt32());
@@ -155,7 +155,7 @@ public class YamlToJsonBasicTests
     public void FloatValues()
     {
         byte[] yaml = "pi: 3.14\nneg: -1.5"u8.ToArray();
-        using ParsedJsonDocument<JsonElement> doc = YamlDocument.Parse(yaml);
+        using ParsedJsonDocument<JsonElement> doc = YamlDocument.Parse<JsonElement>(yaml);
         JsonElement root = doc.RootElement;
 
         Assert.Equal(3.14, root.GetProperty("pi"u8).GetDouble());
@@ -166,7 +166,7 @@ public class YamlToJsonBasicTests
     public void InfinityAndNan()
     {
         byte[] yaml = "inf: .inf\nninf: -.inf\nnan: .nan"u8.ToArray();
-        using ParsedJsonDocument<JsonElement> doc = YamlDocument.Parse(yaml);
+        using ParsedJsonDocument<JsonElement> doc = YamlDocument.Parse<JsonElement>(yaml);
         JsonElement root = doc.RootElement;
 
         // .inf/.nan have no JSON representation → mapped to null
@@ -179,7 +179,7 @@ public class YamlToJsonBasicTests
     public void EmptyDocument()
     {
         byte[] yaml = ""u8.ToArray();
-        using ParsedJsonDocument<JsonElement> doc = YamlDocument.Parse(yaml);
+        using ParsedJsonDocument<JsonElement> doc = YamlDocument.Parse<JsonElement>(yaml);
         JsonElement root = doc.RootElement;
 
         Assert.Equal(JsonValueKind.Null, root.ValueKind);
@@ -189,7 +189,7 @@ public class YamlToJsonBasicTests
     public void CompactNotation()
     {
         byte[] yaml = "- name: Alice\n  age: 30\n- name: Bob\n  age: 25"u8.ToArray();
-        using ParsedJsonDocument<JsonElement> doc = YamlDocument.Parse(yaml);
+        using ParsedJsonDocument<JsonElement> doc = YamlDocument.Parse<JsonElement>(yaml);
         JsonElement root = doc.RootElement;
 
         Assert.Equal(JsonValueKind.Array, root.ValueKind);

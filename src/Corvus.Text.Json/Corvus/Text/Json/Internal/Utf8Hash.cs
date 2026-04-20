@@ -5,7 +5,11 @@
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
+#if STJ
+namespace Corvus.Yaml.Internal;
+#else
 namespace Corvus.Text.Json.Internal;
+#endif
 
 /// <summary>
 /// Provides a fast hash function for short UTF-8 byte spans.
@@ -18,7 +22,11 @@ namespace Corvus.Text.Json.Internal;
 /// </para>
 /// </remarks>
 [CLSCompliant(false)]
+#if STJ
+internal static class Utf8Hash
+#else
 public static class Utf8Hash
+#endif
 {
     /// <summary>
     /// The number of bytes that are fully encoded in the hash. Keys shorter than
