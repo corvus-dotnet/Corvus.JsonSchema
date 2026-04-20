@@ -198,6 +198,119 @@ folded_strip: >-
 | `-` | Strip: no trailing newline |
 | `+` | Keep: all trailing newlines preserved |
 
+## Event parsing
+
+For advanced scenarios — building a custom YAML processor, collecting metadata, or feeding events into a non-JSON pipeline — the `YamlEventParser` provides zero-allocation, callback-based event enumeration over YAML content.
+
+### API
+
+```csharp
+// Enumerate events from UTF-8 bytes
+bool completed = YamlDocument.EnumerateEvents(
+    utf8Yaml,
+    (in YamlEvent e) =>
+    {
+        // Process the event...
+        return true; // return false to stop early
+    });
+
+// Enumerate events from a string
+bool completed = YamlDocument.EnumerateEvents(
+    yamlString,
+    (in YamlEvent e) =>
+    {
+        // Process the event...
+        return true;
+    });
+```
+
+The callback receives each `YamlEvent` by `in` reference. Return `true` to continue parsing or `false` to stop early. `EnumerateEvents` returns `true` if parsing completed normally, or `false` if the callback stopped it.
+
+### YamlEvent
+
+`YamlEvent` is a `ref struct` — its `ReadOnlySpan<byte>` fields point directly into the source buffer and are **only valid for the duration of the callback**. Copy any data you need to retain.
+
+| Property | Type | Description |
+|---|---|---|
+| `Type` | `YamlEventType` | The event type (see below) |
+| `Value` | `ReadOnlySpan<byte>` | Scalar value or alias name (UTF-8) |
+| `ScalarStyle` | `YamlScalarStyle` | `Plain`, `SingleQuoted`, `DoubleQuoted`, `Literal`, `Folded` |
+| `Anchor` | `ReadOnlySpan<byte>` | Anchor name (without `&`) if present |
+| `Tag` | `ReadOnlySpan<byte>` | Tag text (e.g. `!!str`) if present |
+| `Line` | `int` | 1-based line number |
+| `Column` | `int` | 1-based column number |
+| `IsImplicit` | `bool` | Whether a document boundary is implicit |
+| `IsFlowStyle` | `bool` | Whether a collection uses flow style (`{}` / `[]`) |
+
+### Event types
+
+| Event | Emitted when |
+|---|---|
+| `StreamStart` / `StreamEnd` | Beginning and end of the YAML stream |
+| `DocumentStart` / `DocumentEnd` | Beginning and end of each YAML document |
+| `MappingStart` / `MappingEnd` | Beginning and end of a mapping (block or flow) |
+| `SequenceStart` / `SequenceEnd` | Beginning and end of a sequence (block or flow) |
+| `Scalar` | A scalar value (any style) |
+| `Alias` | An alias reference (`*name`) |
+
+### Example: counting events
+
+```csharp
+int count = 0;
+
+YamlDocument.EnumerateEvents(
+    "items:\n  - one\n  - two",
+    (in YamlEvent e) =>
+    {
+        count++;
+        Console.WriteLine($"[{e.Line}:{e.Column}] {e.Type}");
+        return true;
+    });
+
+Console.WriteLine($"Total events: {count}");
+```
+
+Output:
+
+```
+[1:1] StreamStart
+[1:1] DocumentStart
+[1:1] MappingStart
+[1:1] Scalar
+[2:3] SequenceStart
+[2:5] Scalar
+[3:5] Scalar
+[3:8] SequenceEnd
+[3:8] MappingEnd
+[3:8] DocumentEnd
+[3:8] StreamEnd
+Total events: 11
+```
+
+### Example: extracting scalar values
+
+```csharp
+using System.Text;
+
+var scalars = new List<string>();
+
+YamlDocument.EnumerateEvents(
+    "name: Alice\nage: 30",
+    (in YamlEvent e) =>
+    {
+        if (e.Type == YamlEventType.Scalar)
+        {
+            scalars.Add(Encoding.UTF8.GetString(e.Value));
+        }
+
+        return true;
+    });
+
+// scalars = ["name", "Alice", "age", "30"]
+```
+
+> **Note:** The `YamlEvent` and its spans are only valid during the callback. If you need to retain scalar values, copy them (e.g. with `Encoding.UTF8.GetString()` or `e.Value.ToArray()`).
+
 ## Error handling
 
 All parsing errors are reported as `YamlException` with line and column information:
@@ -255,6 +368,26 @@ The following benchmarks compare **Corvus.Yaml** (both `Corvus.Text.Json.Yaml` a
 | LargeConfig | 6 KB | 413,192 ns | 30,478 ns | 31,268 ns | **14×** | 580,263 B | 136 B | **4,267×** |
 
 **Summary:** Corvus.Yaml is **7–20× faster** than YamlDotNet and allocates **182–4,267× less memory**. The Corvus CTJ and STJ variants perform nearly identically — choose based on whether you need the Corvus document model or just `System.Text.Json.JsonDocument`.
+
+### Event parsing benchmarks
+
+The following benchmarks compare **Corvus event parsing** (`YamlDocument.EnumerateEvents`) against **YamlDotNet's low-level `Parser`** (`MoveNext()` / `Current` iteration). Both enumerate all YAML events without building a document — this measures pure parsing throughput.
+
+> Note: The 88 B Corvus allocation is a one-time closure for the counting callback. Production code using a static method achieves zero allocation.
+
+| Scenario | Size | YamlDotNet | Corvus | Speedup | YDN Alloc | Corvus Alloc | Alloc Ratio |
+|---|---|---|---|---|---|---|---|
+| SimpleScalar | 24 B | 1,420 ns | 206 ns | **6.9×** | 8,160 B | 88 B | **93×** |
+| MultiDocument | 235 B | 8,870 ns | 1,152 ns | **7.7×** | 18,816 B | 88 B | **214×** |
+| SmallConfig | 339 B | 12,023 ns | 1,550 ns | **7.8×** | 21,064 B | 88 B | **239×** |
+| FlowStyle | 374 B | 19,731 ns | 2,647 ns | **7.5×** | 35,752 B | 88 B | **406×** |
+| NestedMapping | 540 B | 15,749 ns | 2,281 ns | **6.9×** | 28,968 B | 88 B | **329×** |
+| AnchorAlias | 604 B | 19,270 ns | 2,524 ns | **7.6×** | 29,656 B | 88 B | **337×** |
+| BlockScalar | 642 B | 4,741 ns | 1,389 ns | **3.4×** | 9,888 B | 88 B | **112×** |
+| ComplexMixed | 2.4 KB | 42,719 ns | 7,379 ns | **5.8×** | 56,248 B | 88 B | **639×** |
+| LargeConfig | 6 KB | 137,412 ns | 21,703 ns | **6.3×** | 172,568 B | 88 B | **1,961×** |
+
+**Summary:** Corvus event parsing is **3–8× faster** than YamlDotNet's `Parser` with **112–1,961× less allocation**. YamlDotNet allocates heap objects for every event; Corvus uses a zero-allocation callback with a `ref struct` event that points directly into the source buffer.
 
 ## Comparison with YamlDotNet
 

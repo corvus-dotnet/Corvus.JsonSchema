@@ -224,3 +224,40 @@ string serverYaml = """
 
 json = YamlDocument.ConvertToJsonString(serverYaml);
 Console.WriteLine(json);
+
+Console.WriteLine();
+
+// ------------------------------------------------------------------
+// 11. Event parsing — zero-allocation event enumeration
+// ------------------------------------------------------------------
+Console.WriteLine("=== Event parsing ===");
+Console.WriteLine();
+
+string eventYaml = """
+    items:
+      - name: Alice
+        age: 30
+      - name: Bob
+        age: 25
+    """;
+
+int eventCount = 0;
+int scalarCount = 0;
+
+YamlDocument.EnumerateEvents(
+    eventYaml,
+    (in YamlEvent e) =>
+    {
+        eventCount++;
+
+        if (e.Type == YamlEventType.Scalar)
+        {
+            scalarCount++;
+        }
+
+        Console.WriteLine($"  [{e.Line}:{e.Column}] {e.Type}");
+        return true;
+    });
+
+Console.WriteLine();
+Console.WriteLine($"Total events: {eventCount}, Scalars: {scalarCount}");

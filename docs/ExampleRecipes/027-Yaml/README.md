@@ -104,6 +104,22 @@ name: second
 
 Use `YamlDocumentMode.MultiAsArray` to parse all documents into a JSON array.
 
+## Event Parsing
+
+For advanced scenarios, `EnumerateEvents` provides zero-allocation, callback-based event enumeration:
+
+```csharp
+YamlDocument.EnumerateEvents(
+    "items:\n  - one\n  - two",
+    (in YamlEvent e) =>
+    {
+        Console.WriteLine($"[{e.Line}:{e.Column}] {e.Type}");
+        return true; // return false to stop early
+    });
+```
+
+The `YamlEvent` ref struct provides the event type, scalar value (UTF-8 bytes), anchor, tag, scalar style, and line/column position. Its spans point directly into the source buffer and are only valid during the callback.
+
 ## Running the Example
 
 ```bash
