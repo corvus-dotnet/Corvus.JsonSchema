@@ -38,8 +38,12 @@
   <ItemGroup>
     <Compile Include="$(CtjYamlSourceDir)DuplicateKeyBehavior.cs" Link="Corvus\Yaml\DuplicateKeyBehavior.cs" />
     <Compile Include="$(CtjYamlSourceDir)YamlDocumentMode.cs" Link="Corvus\Yaml\YamlDocumentMode.cs" />
+    <Compile Include="$(CtjYamlSourceDir)YamlEvent.cs" Link="Corvus\Yaml\YamlEvent.cs" />
+    <Compile Include="$(CtjYamlSourceDir)YamlEventCallback.cs" Link="Corvus\Yaml\YamlEventCallback.cs" />
+    <Compile Include="$(CtjYamlSourceDir)YamlEventType.cs" Link="Corvus\Yaml\YamlEventType.cs" />
     <Compile Include="$(CtjYamlSourceDir)YamlException.cs" Link="Corvus\Yaml\YamlException.cs" />
     <Compile Include="$(CtjYamlSourceDir)YamlReaderOptions.cs" Link="Corvus\Yaml\YamlReaderOptions.cs" />
+    <Compile Include="$(CtjYamlSourceDir)YamlScalarStyle.cs" Link="Corvus\Yaml\YamlScalarStyle.cs" />
     <Compile Include="$(CtjYamlSourceDir)YamlSchema.cs" Link="Corvus\Yaml\YamlSchema.cs" />
     <Compile Include="$(CtjYamlSourceDir)YamlDocument.cs" Link="Corvus\Yaml\YamlDocument.cs" />
   </ItemGroup>
@@ -49,9 +53,9 @@
     <Compile Include="$(CtjYamlInternalDir)ScalarResolver.cs" Link="Corvus\Yaml\Internal\ScalarResolver.cs" />
     <Compile Include="$(CtjYamlInternalDir)YamlCharacters.cs" Link="Corvus\Yaml\Internal\YamlCharacters.cs" />
     <Compile Include="$(CtjYamlInternalDir)YamlConstants.cs" Link="Corvus\Yaml\Internal\YamlConstants.cs" />
-    <Compile Include="$(CtjYamlInternalDir)YamlScalarStyle.cs" Link="Corvus\Yaml\Internal\YamlScalarStyle.cs" />
     <Compile Include="$(CtjYamlInternalDir)YamlTokenType.cs" Link="Corvus\Yaml\Internal\YamlTokenType.cs" />
     <Compile Include="$(CtjYamlInternalDir)YamlToJsonConverter.cs" Link="Corvus\Yaml\Internal\YamlToJsonConverter.cs" />
+    <Compile Include="$(CtjYamlInternalDir)YamlEventParser.cs" Link="Corvus\Yaml\Internal\YamlEventParser.cs" />
   </ItemGroup>
 
   <!-- Common files linked (with #if STJ namespace) -->

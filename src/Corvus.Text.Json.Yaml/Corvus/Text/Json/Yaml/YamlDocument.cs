@@ -145,6 +145,86 @@ public static class YamlDocument
 
         writer.WriteRawValue(bufferWriter.WrittenSpan, skipInputValidation: true);
     }
+
+    /// <summary>
+    /// Enumerates the YAML parse events from UTF-8 YAML bytes, invoking
+    /// the specified callback for each event.
+    /// </summary>
+    /// <param name="utf8Yaml">The UTF-8 encoded YAML bytes.</param>
+    /// <param name="callback">
+    /// A callback invoked for each YAML event. Return <see langword="true"/> to continue
+    /// parsing or <see langword="false"/> to stop early. The <see cref="YamlEvent"/>
+    /// and its spans are only valid for the duration of the callback.
+    /// </param>
+    /// <param name="options">Optional YAML reader options.</param>
+    /// <returns>
+    /// <see langword="true"/> if parsing completed normally;
+    /// <see langword="false"/> if the callback returned <see langword="false"/> to stop early.
+    /// </returns>
+    /// <exception cref="YamlException">The YAML content is invalid.</exception>
+    public static bool EnumerateEvents(
+        ReadOnlySpan<byte> utf8Yaml,
+        YamlEventCallback callback,
+        YamlReaderOptions options = default)
+    {
+        YamlEventParser parser = new(utf8Yaml, callback, options);
+        return parser.Parse();
+    }
+
+    /// <summary>
+    /// Enumerates the YAML parse events from a YAML string, invoking
+    /// the specified callback for each event.
+    /// </summary>
+    /// <param name="yaml">The YAML content as a string.</param>
+    /// <param name="callback">
+    /// A callback invoked for each YAML event. Return <see langword="true"/> to continue
+    /// parsing or <see langword="false"/> to stop early. The <see cref="YamlEvent"/>
+    /// and its spans are only valid for the duration of the callback.
+    /// </param>
+    /// <param name="options">Optional YAML reader options.</param>
+    /// <returns>
+    /// <see langword="true"/> if parsing completed normally;
+    /// <see langword="false"/> if the callback returned <see langword="false"/> to stop early.
+    /// </returns>
+    /// <exception cref="YamlException">The YAML content is invalid.</exception>
+    public static bool EnumerateEvents(
+        string yaml,
+        YamlEventCallback callback,
+        YamlReaderOptions options = default)
+    {
+        int maxByteCount = Encoding.UTF8.GetMaxByteCount(yaml.Length);
+        byte[]? rentedArray = null;
+
+        Span<byte> utf8Buffer = maxByteCount <= JsonConstants.StackallocByteThreshold
+            ? stackalloc byte[JsonConstants.StackallocByteThreshold]
+            : (rentedArray = ArrayPool<byte>.Shared.Rent(maxByteCount));
+
+        try
+        {
+            int bytesWritten;
+#if NET
+            bytesWritten = Encoding.UTF8.GetBytes(yaml, utf8Buffer);
+#else
+            unsafe
+            {
+                fixed (char* pChars = yaml)
+                fixed (byte* pBytes = utf8Buffer)
+                {
+                    bytesWritten = Encoding.UTF8.GetBytes(pChars, yaml.Length, pBytes, utf8Buffer.Length);
+                }
+            }
+#endif
+            YamlEventParser parser = new(utf8Buffer.Slice(0, bytesWritten), callback, options);
+            return parser.Parse();
+        }
+        finally
+        {
+            if (rentedArray is not null)
+            {
+                ArrayPool<byte>.Shared.Return(rentedArray);
+            }
+        }
+    }
 }
 
 #else
@@ -360,6 +440,86 @@ public static class YamlDocument
         finally
         {
             workspace.ReturnWriterAndBuffer(internalWriter, bufferWriter);
+        }
+    }
+
+    /// <summary>
+    /// Enumerates the YAML parse events from UTF-8 YAML bytes, invoking
+    /// the specified callback for each event.
+    /// </summary>
+    /// <param name="utf8Yaml">The UTF-8 encoded YAML bytes.</param>
+    /// <param name="callback">
+    /// A callback invoked for each YAML event. Return <see langword="true"/> to continue
+    /// parsing or <see langword="false"/> to stop early. The <see cref="YamlEvent"/>
+    /// and its spans are only valid for the duration of the callback.
+    /// </param>
+    /// <param name="options">Optional YAML reader options.</param>
+    /// <returns>
+    /// <see langword="true"/> if parsing completed normally;
+    /// <see langword="false"/> if the callback returned <see langword="false"/> to stop early.
+    /// </returns>
+    /// <exception cref="YamlException">The YAML content is invalid.</exception>
+    public static bool EnumerateEvents(
+        ReadOnlySpan<byte> utf8Yaml,
+        YamlEventCallback callback,
+        YamlReaderOptions options = default)
+    {
+        YamlEventParser parser = new(utf8Yaml, callback, options);
+        return parser.Parse();
+    }
+
+    /// <summary>
+    /// Enumerates the YAML parse events from a YAML string, invoking
+    /// the specified callback for each event.
+    /// </summary>
+    /// <param name="yaml">The YAML content as a string.</param>
+    /// <param name="callback">
+    /// A callback invoked for each YAML event. Return <see langword="true"/> to continue
+    /// parsing or <see langword="false"/> to stop early. The <see cref="YamlEvent"/>
+    /// and its spans are only valid for the duration of the callback.
+    /// </param>
+    /// <param name="options">Optional YAML reader options.</param>
+    /// <returns>
+    /// <see langword="true"/> if parsing completed normally;
+    /// <see langword="false"/> if the callback returned <see langword="false"/> to stop early.
+    /// </returns>
+    /// <exception cref="YamlException">The YAML content is invalid.</exception>
+    public static bool EnumerateEvents(
+        string yaml,
+        YamlEventCallback callback,
+        YamlReaderOptions options = default)
+    {
+        int maxByteCount = Encoding.UTF8.GetMaxByteCount(yaml.Length);
+        byte[]? rentedArray = null;
+
+        Span<byte> utf8Buffer = maxByteCount <= JsonConstants.StackallocByteThreshold
+            ? stackalloc byte[JsonConstants.StackallocByteThreshold]
+            : (rentedArray = ArrayPool<byte>.Shared.Rent(maxByteCount));
+
+        try
+        {
+            int bytesWritten;
+#if NET
+            bytesWritten = Encoding.UTF8.GetBytes(yaml, utf8Buffer);
+#else
+            unsafe
+            {
+                fixed (char* pChars = yaml)
+                fixed (byte* pBytes = utf8Buffer)
+                {
+                    bytesWritten = Encoding.UTF8.GetBytes(pChars, yaml.Length, pBytes, utf8Buffer.Length);
+                }
+            }
+#endif
+            YamlEventParser parser = new(utf8Buffer.Slice(0, bytesWritten), callback, options);
+            return parser.Parse();
+        }
+        finally
+        {
+            if (rentedArray is not null)
+            {
+                ArrayPool<byte>.Shared.Return(rentedArray);
+            }
         }
     }
 }

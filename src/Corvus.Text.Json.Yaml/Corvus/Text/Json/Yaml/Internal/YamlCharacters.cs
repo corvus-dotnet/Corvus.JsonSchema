@@ -48,6 +48,13 @@ internal static class YamlCharacters
         || c == YamlConstants.Comma;
 
     /// <summary>
+    /// Determines whether the byte is a flow indicator or whitespace/line-break character.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static bool IsFlowIndicatorOrWhitespace(byte c)
+        => IsFlowIndicator(c) || IsWhitespaceOrLineBreak(c);
+
+    /// <summary>
     /// Determines whether the byte is an ASCII digit (0-9).
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

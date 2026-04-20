@@ -3,15 +3,15 @@
 // </copyright>
 
 #if STJ
-namespace Corvus.Yaml.Internal;
+namespace Corvus.Yaml;
 #else
-namespace Corvus.Text.Json.Yaml.Internal;
+namespace Corvus.Text.Json.Yaml;
 #endif
 
 /// <summary>
 /// The style of a YAML scalar value.
 /// </summary>
-internal enum YamlScalarStyle
+public enum YamlScalarStyle
 {
     /// <summary>Plain (unquoted) scalar.</summary>
     Plain,
@@ -25,6 +25,6 @@ internal enum YamlScalarStyle
     /// <summary>Literal block scalar (|).</summary>
     Literal,
 
-    /// <summary>Folded block scalar (>).</summary>
+    /// <summary>Folded block scalar (&gt;).</summary>
     Folded,
 }

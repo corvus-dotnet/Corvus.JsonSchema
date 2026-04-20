@@ -164,5 +164,8 @@
   <data name="DuplicateAnchor" xml:space="preserve">
     <value>A node must not have more than one anchor at line {0}, column {1}.</value>
   </data>
+  <data name="AliasCannotHaveProperties" xml:space="preserve">
+    <value>An alias node must not have an anchor or tag at line {0}, column {1}.</value>
+  </data>
 
 </root>
