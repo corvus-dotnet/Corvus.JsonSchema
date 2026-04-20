@@ -36,8 +36,7 @@ Age:  30
 When you need the raw JSON text:
 
 ```csharp
-string json = YamlDocument.ConvertToJsonString(
-    Encoding.UTF8.GetBytes("key: value"));
+string json = YamlDocument.ConvertToJsonString("key: value");
 // {"key":"value"}
 ```
 

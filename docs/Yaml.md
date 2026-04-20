@@ -56,7 +56,7 @@ Console.WriteLine(root.GetProperty("age").GetInt32());    // 30
 **Convert YAML to a JSON string:**
 
 ```csharp
-string json = YamlDocument.ConvertToJsonString("key: value"u8.ToArray());
+string json = YamlDocument.ConvertToJsonString("key: value");
 Console.WriteLine(json); // {"key":"value"}
 ```
 
@@ -270,7 +270,7 @@ The following benchmarks compare **Corvus.Yaml** (both `Corvus.Text.Json.Yaml` a
 | **YAML emitting (C# → YAML)** | ❌ | ✅ Full emitter |
 | **Object serialization/deserialization** | ❌ | ✅ `Serializer`/`Deserializer` with naming conventions, type converters, callbacks |
 | **Object model (DOM)** | ❌ | ✅ `YamlStream`/`YamlDocument`/`YamlNode` tree |
-| **Low-level event parser** | ❌ | ✅ `IParser` with `StreamStart`, `DocumentStart`, `Scalar`, etc. |
+| **Low-level event parser** | ✅ Zero-allocation `YamlEventParser` via `EnumerateEvents` | ✅ `IParser` with `StreamStart`, `DocumentStart`, `Scalar`, etc. |
 | **Schema modes** | ✅ Core, JSON, Failsafe, YAML 1.1 | ⚠️ 1.1 by default; configurable |
 | **Duplicate key handling** | ✅ Configurable (`Error` / `LastWins`) | ✅ Configurable |
 | **Anchors & aliases** | ✅ With billion-laughs protection | ✅ |
@@ -299,7 +299,7 @@ The following benchmarks compare **Corvus.Yaml** (both `Corvus.Text.Json.Yaml` a
 - **YAML round-tripping:** You need to read YAML, modify it, and write it back as YAML — Corvus.Yaml is read-only (YAML→JSON only).
 - **Object serialization:** You need to serialize C# objects directly to/from YAML with naming conventions, type converters, and custom deserialization callbacks.
 - **YAML DOM manipulation:** You need to build or transform a YAML document tree (`YamlStream`, `YamlNode`) programmatically.
-- **Event-level parsing:** You need low-level control over the YAML parse stream (e.g., custom document handling, streaming large files node-by-node).
+- **Event-level parsing with allocation:** You need a materialized event stream you can store and replay — Corvus provides a zero-allocation callback-based parser, while YamlDotNet's `IParser` produces heap-allocated event objects.
 - **Ecosystem compatibility:** You're using a library that depends on YamlDotNet (e.g., KubernetesClient, NJsonSchema.Yaml).
 
 ### Using both together

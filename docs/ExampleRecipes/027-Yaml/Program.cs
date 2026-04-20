@@ -1,4 +1,3 @@
-using System.Text;
 using Corvus.Text.Json;
 using Corvus.Text.Json.Yaml;
 
@@ -32,8 +31,7 @@ Console.WriteLine();
 Console.WriteLine("=== Convert to JSON string ===");
 Console.WriteLine();
 
-string json = YamlDocument.ConvertToJsonString(
-    Encoding.UTF8.GetBytes("key: value"));
+string json = YamlDocument.ConvertToJsonString("key: value");
 Console.WriteLine($"JSON: {json}");
 
 Console.WriteLine();
@@ -55,7 +53,7 @@ string typesYaml = """
     boolean: true
     """;
 
-json = YamlDocument.ConvertToJsonString(Encoding.UTF8.GetBytes(typesYaml));
+json = YamlDocument.ConvertToJsonString(typesYaml);
 Console.WriteLine($"Types: {json}");
 
 Console.WriteLine();
@@ -74,7 +72,7 @@ string strictYaml = """
     """;
 
 json = YamlDocument.ConvertToJsonString(
-    Encoding.UTF8.GetBytes(strictYaml),
+    strictYaml,
     jsonSchemaOptions);
 Console.WriteLine($"JSON Schema: {json}");
 
@@ -202,7 +200,7 @@ string flowYaml = """
     nested: {items: [1, 2, {deep: true}]}
     """;
 
-json = YamlDocument.ConvertToJsonString(Encoding.UTF8.GetBytes(flowYaml));
+json = YamlDocument.ConvertToJsonString(flowYaml);
 Console.WriteLine($"Flow: {json}");
 
 Console.WriteLine();
@@ -224,5 +222,5 @@ string serverYaml = """
           handler: healthCheck
     """;
 
-json = YamlDocument.ConvertToJsonString(Encoding.UTF8.GetBytes(serverYaml));
+json = YamlDocument.ConvertToJsonString(serverYaml);
 Console.WriteLine(json);
