@@ -333,7 +333,7 @@
     <Compile Include="$(CtjYamlInternalDir)ScalarResolver.cs" Link="Yaml\Internal\ScalarResolver.cs" />
     <Compile Include="$(CtjYamlInternalDir)YamlCharacters.cs" Link="Yaml\Internal\YamlCharacters.cs" />
     <Compile Include="$(CtjYamlInternalDir)YamlConstants.cs" Link="Yaml\Internal\YamlConstants.cs" />
-    <Compile Include="$(CtjYamlInternalDir)YamlScalarStyle.cs" Link="Yaml\Internal\YamlScalarStyle.cs" />
+    <Compile Include="$(CtjYamlInternalDir)..\YamlScalarStyle.cs" Link="Yaml\YamlScalarStyle.cs" />
     <Compile Include="$(CtjYamlInternalDir)YamlTokenType.cs" Link="Yaml\Internal\YamlTokenType.cs" />
     <Compile Include="$(CtjYamlInternalDir)YamlToJsonConverter.cs" Link="Yaml\Internal\YamlToJsonConverter.cs" />
     <Compile Include="..\Common\JsonConstants.cs" Link="Yaml\Common\JsonConstants.cs" />

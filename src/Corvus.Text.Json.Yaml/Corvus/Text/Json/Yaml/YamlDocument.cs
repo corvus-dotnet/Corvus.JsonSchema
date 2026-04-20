@@ -190,6 +190,7 @@ public static class YamlDocument
         writer.WriteRawValue(bufferWriter.WrittenSpan, skipInputValidation: true);
     }
 
+#if !BUILDING_SOURCE_GENERATOR
     /// <summary>
     /// Enumerates the YAML parse events from UTF-8 YAML bytes, invoking
     /// the specified callback for each event.
@@ -269,6 +270,7 @@ public static class YamlDocument
             }
         }
     }
+#endif
 }
 
 #else
@@ -531,6 +533,7 @@ public static class YamlDocument
         }
     }
 
+#if !BUILDING_SOURCE_GENERATOR
     /// <summary>
     /// Enumerates the YAML parse events from UTF-8 YAML bytes, invoking
     /// the specified callback for each event.
@@ -610,6 +613,7 @@ public static class YamlDocument
             }
         }
     }
+#endif
 }
 
 #endif

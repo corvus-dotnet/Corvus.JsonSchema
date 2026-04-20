@@ -137,7 +137,7 @@ public class YamlEventConformanceTests
             YamlEventType.SequenceStart => FormatCollectionStart("+SEQ", evt.IsFlowStyle ? "[]" : null, evt.Anchor, evt.Tag),
             YamlEventType.SequenceEnd => "-SEQ",
             YamlEventType.Scalar => FormatScalar(in evt),
-            YamlEventType.Alias => $"=ALI *{Encoding.UTF8.GetString(evt.Value)}",
+            YamlEventType.Alias => $"=ALI *{Utf8ToString(evt.Value)}",
             _ => $"??? {evt.Type}",
         };
     }
@@ -156,13 +156,13 @@ public class YamlEventConformanceTests
         if (!anchor.IsEmpty)
         {
             sb.Append(" &");
-            sb.Append(Encoding.UTF8.GetString(anchor));
+            sb.Append(Utf8ToString(anchor));
         }
 
         if (!tag.IsEmpty)
         {
             sb.Append(" <");
-            sb.Append(Encoding.UTF8.GetString(tag));
+            sb.Append(Utf8ToString(tag));
             sb.Append('>');
         }
 
@@ -177,13 +177,13 @@ public class YamlEventConformanceTests
         if (!evt.Anchor.IsEmpty)
         {
             sb.Append(" &");
-            sb.Append(Encoding.UTF8.GetString(evt.Anchor));
+            sb.Append(Utf8ToString(evt.Anchor));
         }
 
         if (!evt.Tag.IsEmpty)
         {
             sb.Append(" <");
-            sb.Append(Encoding.UTF8.GetString(evt.Tag));
+            sb.Append(Utf8ToString(evt.Tag));
             sb.Append('>');
         }
 
@@ -210,7 +210,7 @@ public class YamlEventConformanceTests
     /// </summary>
     private static string EscapeEventValue(ReadOnlySpan<byte> utf8Value)
     {
-        string s = Encoding.UTF8.GetString(utf8Value);
+        string s = Utf8ToString(utf8Value);
         StringBuilder sb = new(s.Length);
 
         foreach (char c in s)
@@ -258,5 +258,14 @@ public class YamlEventConformanceTests
 
         return Path.GetFullPath(Path.Combine(
             AppContext.BaseDirectory, "..", "..", "..", "..", "..", "yaml-test-suite"));
+    }
+
+    private static string Utf8ToString(ReadOnlySpan<byte> utf8)
+    {
+#if NET
+        return Encoding.UTF8.GetString(utf8);
+#else
+        return utf8.IsEmpty ? string.Empty : Encoding.UTF8.GetString(utf8.ToArray());
+#endif
     }
 }
