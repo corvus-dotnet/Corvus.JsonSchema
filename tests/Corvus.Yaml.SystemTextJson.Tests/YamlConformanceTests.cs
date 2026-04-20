@@ -297,7 +297,10 @@ public class YamlConformanceTests
                 return a.GetString() == b.GetString();
 
             case JsonValueKind.Number:
-                return a.GetRawText() == b.GetRawText();
+                // Compare by value, not raw text. On .NET Framework,
+                // Utf8JsonWriter formats doubles with more digits
+                // (e.g. 0.27800000000000002 vs 0.278 on .NET Core).
+                return a.GetDouble() == b.GetDouble();
 
             default:
                 return true;

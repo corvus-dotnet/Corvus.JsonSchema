@@ -87,6 +87,7 @@ jobs:
         JSON-Schema-Test-Suite
         JMESPath-Test-Suite
         Jsonata-Test-Suite
+        yaml-test-suite
         tests/json-patch-tests
         docs/website/.endjin
         docs/website/.output
@@ -125,6 +126,7 @@ jobs:
             JSON-Schema-Test-Suite
             JMESPath-Test-Suite
             Jsonata-Test-Suite
+            yaml-test-suite
             tests/json-patch-tests
             docs/website/.endjin
             docs/website/.output
@@ -160,6 +162,7 @@ jobs:
             JSON-Schema-Test-Suite
             JMESPath-Test-Suite
             Jsonata-Test-Suite
+            yaml-test-suite
             tests/json-patch-tests
             docs/website/.endjin
             docs/website/.output
