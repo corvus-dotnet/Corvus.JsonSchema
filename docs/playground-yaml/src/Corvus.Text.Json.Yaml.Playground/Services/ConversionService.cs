@@ -187,11 +187,13 @@ public sealed class ConversionService
 
     private static string FormatYamlError(YamlException ex)
     {
+        string message = FixBrokenSRFormat(ex.Message);
+
         if (ex.Line > 0 && ex.Column > 0)
         {
-            return $"Ln {ex.Line}, Col {ex.Column}: {ex.Message}";
+            return $"Ln {ex.Line}, Col {ex.Column}: {message}";
         }
 
-        return ex.Message;
+        return message;
     }
 }
