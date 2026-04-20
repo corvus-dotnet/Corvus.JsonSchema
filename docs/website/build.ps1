@@ -84,15 +84,23 @@ if (-not $canonicalRepoUrl) {
 }
 
 # V5 paths
-$v5XmlPath = Join-Path $repoRoot "src\Corvus.Text.Json\bin\Release\net10.0\Corvus.Text.Json.xml"
-$v5AssemblyPath = Join-Path $repoRoot "src\Corvus.Text.Json\bin\Release\net10.0\Corvus.Text.Json.dll"
-$v5Ns20AssemblyPath = Join-Path $repoRoot "src\Corvus.Text.Json\bin\Release\netstandard2.0\Corvus.Text.Json.dll"
-$v5Ns21AssemblyPath = Join-Path $repoRoot "src\Corvus.Text.Json\bin\Release\netstandard2.1\Corvus.Text.Json.dll"
+$v5SrcDir = Join-Path $repoRoot "src"
 $v5ApiContentDir = Join-Path $siteDir "content\Api-v5"
 $v5ApiTaxonomyDir = Join-Path $siteDir "taxonomy\api-v5"
 $v5ApiViewsDir = Join-Path $siteDir "theme\corvus\views\api\v5"
 $v5NsDescriptionsDir = Join-Path $siteDir "content\Api-v5\namespaces"
 $v5TypeExamplesDir = Join-Path $siteDir "content\Api-v5\examples"
+
+# V5 consumer-facing libraries to document
+$v5Projects = @(
+    "Corvus.Text.Json",
+    "Corvus.Text.Json.Yaml",
+    "Corvus.Yaml.SystemTextJson",
+    "Corvus.Text.Json.Jsonata",
+    "Corvus.Text.Json.JMESPath",
+    "Corvus.Text.Json.JsonLogic",
+    "Corvus.Text.Json.Patch"
+)
 
 # V4 paths
 $v4SrcDir = Join-Path $repoRoot "src-v4"
@@ -198,17 +206,26 @@ if ($SkipDotNetBuild) {
     Write-Host "`n[1a/10] Skipping V5 build (-SkipDotNetBuild)." -ForegroundColor DarkGray
     Write-Host "[1b/10] Skipping V4 builds (-SkipDotNetBuild)." -ForegroundColor DarkGray
 } else {
-    # -- Step 1a: Build Corvus.Text.Json (V5) ------------------------------------
-    Write-Host "`n[1a/10] Building Corvus.Text.Json (V5)..." -ForegroundColor Cyan
+    # -- Step 1a: Build V5 libraries -----------------------------------------------
+    Write-Host "`n[1a/10] Building V5 libraries..." -ForegroundColor Cyan
     $sw = [System.Diagnostics.Stopwatch]::StartNew()
-    $mainProject = Join-Path $repoRoot "src\Corvus.Text.Json\Corvus.Text.Json.csproj"
-    & dotnet build $mainProject -c Release -f net10.0 /p:GenerateDocumentationFile=true --no-incremental -v q
-    if ($LASTEXITCODE -ne 0) { throw "Failed to build Corvus.Text.Json (net10.0)" }
-    & dotnet build $mainProject -c Release -f netstandard2.0 --no-incremental -v q
-    if ($LASTEXITCODE -ne 0) { throw "Failed to build Corvus.Text.Json (netstandard2.0)" }
-    & dotnet build $mainProject -c Release -f netstandard2.1 --no-incremental -v q
-    if ($LASTEXITCODE -ne 0) { throw "Failed to build Corvus.Text.Json (netstandard2.1)" }
-    Write-StepDuration "V5 build" $sw
+    $projIndex = 0
+    foreach ($proj in $v5Projects) {
+        $projIndex++
+        $projPath = Join-Path $v5SrcDir "$proj\$proj.csproj"
+        if (!(Test-Path $projPath)) {
+            Write-Warning "  V5 project not found: $projPath - skipping"
+            continue
+        }
+        Write-Host "  [$projIndex/$($v5Projects.Count)] Building $proj..." -ForegroundColor Gray
+        & dotnet build $projPath -c Release -f net10.0 /p:GenerateDocumentationFile=true --no-incremental -v q
+        if ($LASTEXITCODE -ne 0) { throw "Failed to build $proj (net10.0)" }
+        & dotnet build $projPath -c Release -f netstandard2.0 /p:GenerateDocumentationFile=true --no-incremental -v q
+        if ($LASTEXITCODE -ne 0) { throw "Failed to build $proj (netstandard2.0)" }
+        & dotnet build $projPath -c Release -f netstandard2.1 /p:GenerateDocumentationFile=true --no-incremental -v q
+        if ($LASTEXITCODE -ne 0) { throw "Failed to build $proj (netstandard2.1)" }
+    }
+    Write-StepDuration "V5 builds - $($v5Projects.Count) libraries" $sw
 
     # -- Step 1b: Build V4 libraries ---------------------------------------------
     Write-Host "`n[1b/10] Building V4 libraries..." -ForegroundColor Cyan
@@ -233,11 +250,30 @@ if ($SkipDotNetBuild) {
 # -- Step 2a: Generate V5 API markdown, taxonomy & views ---------------------
 Write-Host "`n[2a/10] Generating V5 API markdown, taxonomy & views..." -ForegroundColor Cyan
 $sw = [System.Diagnostics.Stopwatch]::StartNew()
+
+# Build the --xml / --assembly argument pairs for all V5 libraries
+$v5ToolArgs = @()
+foreach ($proj in $v5Projects) {
+    $binDir = Join-Path $v5SrcDir "$proj\bin\Release\net10.0"
+    $xmlFile = Join-Path $binDir "$proj.xml"
+    $dllFile = Join-Path $binDir "$proj.dll"
+    $ns20Dll = Join-Path $v5SrcDir "$proj\bin\Release\netstandard2.0\$proj.dll"
+    $ns21Dll = Join-Path $v5SrcDir "$proj\bin\Release\netstandard2.1\$proj.dll"
+    if ((Test-Path $xmlFile) -and (Test-Path $dllFile)) {
+        $v5ToolArgs += "--xml", $xmlFile, "--assembly", $dllFile
+        if (Test-Path $ns20Dll) {
+            $v5ToolArgs += "--ns20-assembly", $ns20Dll
+        }
+        if (Test-Path $ns21Dll) {
+            $v5ToolArgs += "--ns21-assembly", $ns21Dll
+        }
+    } else {
+        Write-Warning "  V5 XML/DLL not found for $proj - skipping"
+    }
+}
+
 & dotnet run --project $toolProject -c Release -- `
-    --xml $v5XmlPath `
-    --assembly $v5AssemblyPath `
-    --ns20-assembly $v5Ns20AssemblyPath `
-    --ns21-assembly $v5Ns21AssemblyPath `
+    @v5ToolArgs `
     --output $v5ApiContentDir `
     --taxonomy-output $v5ApiTaxonomyDir `
     --api-views-dir $v5ApiViewsDir `
@@ -828,6 +864,37 @@ $jmespathSize = (Get-ChildItem $jmespathOutputDir -Recurse -File | Measure-Objec
 Write-Host "  JMESPath Playground: $([math]::Round($jmespathSize/1MB, 1)) MB" -ForegroundColor Gray
 Write-StepDuration "JMESPath Playground build" $sw
 
+# -- Step 9d: Build YAML Playground (Blazor WASM) ------------------------------
+Write-Host "`n[9d/10] Building YAML Playground..." -ForegroundColor Cyan
+$sw = [System.Diagnostics.Stopwatch]::StartNew()
+
+$yamlProject = Join-Path $repoRoot "docs\playground-yaml\src\Corvus.Text.Json.Yaml.Playground\Corvus.Text.Json.Yaml.Playground.csproj"
+$yamlPublishDir = Join-Path $here ".playground-yaml-publish"
+$yamlOutputDir = Join-Path $outputDir "playground-yaml"
+
+& dotnet publish $yamlProject -c Release -o $yamlPublishDir --nologo
+if ($LASTEXITCODE -ne 0) { throw "YAML Playground publish failed" }
+
+$yamlWwwroot = Join-Path $yamlPublishDir "wwwroot"
+if (!(Test-Path $yamlWwwroot)) {
+    throw "YAML Playground wwwroot not found at $yamlWwwroot"
+}
+Copy-Item -Path $yamlWwwroot -Destination $yamlOutputDir -Recurse -Force
+
+$yamlIndex = Join-Path $yamlOutputDir "index.html"
+if (Test-Path $yamlIndex) {
+    $indexContent = [System.IO.File]::ReadAllText($yamlIndex)
+    $indexContent = $indexContent -replace '<base href="/" />', "<base href=`"$BasePathPrefix/playground-yaml/`" />"
+    [System.IO.File]::WriteAllText($yamlIndex, $indexContent)
+    Write-Host "  Updated base href to $BasePathPrefix/playground-yaml/" -ForegroundColor Gray
+}
+
+Remove-Item $yamlPublishDir -Recurse -Force -ErrorAction SilentlyContinue
+
+$yamlSize = (Get-ChildItem $yamlOutputDir -Recurse -File | Measure-Object -Property Length -Sum).Sum
+Write-Host "  YAML Playground: $([math]::Round($yamlSize/1MB, 1)) MB" -ForegroundColor Gray
+Write-StepDuration "YAML Playground build" $sw
+
 # Tell Jekyll to include _-prefixed directories needed by the Blazor playground.
 # We cannot use .nojekyll (which bypasses Jekyll entirely) because the resulting
 # unprocessed artifact exceeds GitHub Pages deployment limits.
@@ -882,6 +949,7 @@ $lycheeArgs = @(
     "--exclude-path", "playground"
     "--exclude-path", "playground-jsonata"
     "--exclude-path", "playground-jmespath"
+    "--exclude-path", "playground-yaml"
     "."
 )
 

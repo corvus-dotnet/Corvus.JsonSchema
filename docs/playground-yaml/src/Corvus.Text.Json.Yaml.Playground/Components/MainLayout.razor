@@ -1,0 +1,645 @@
+@inherits LayoutComponentBase
+@implements IDisposable
+@page "/"
+@inject ConversionService ConvertService
+@inject IJSRuntime JSRuntime
+
+<div class="playground-toolbar">
+    <h1>YAML → JSON Playground</h1>
+    <button class="toolbar-btn secondary" @onclick="NewProjectAsync" title="New blank project">📄 New</button>
+    <select class="toolbar-select" value="@(activeSampleId ?? "")" @onchange="OnSampleChanged">
+        @if (activeSampleId is null)
+        {
+            <option value="" disabled>— Custom —</option>
+        }
+        @foreach (var sample in SampleRegistry.All)
+        {
+            <option value="@sample.Id">@sample.DisplayName</option>
+        }
+    </select>
+    <div class="spacer"></div>
+    <div class="toolbar-options">
+        <label>Schema:
+            <select @bind="selectedSchema" @bind:after="OnOptionChanged">
+                <option value="@YamlSchema.Core">Core</option>
+                <option value="@YamlSchema.Json">JSON</option>
+                <option value="@YamlSchema.Failsafe">Failsafe</option>
+                <option value="@YamlSchema.Yaml11">YAML 1.1</option>
+            </select>
+        </label>
+        <label>Documents:
+            <select @bind="selectedDocMode" @bind:after="OnOptionChanged">
+                <option value="@YamlDocumentMode.SingleRequired">Single</option>
+                <option value="@YamlDocumentMode.MultiAsArray">Multi (Array)</option>
+            </select>
+        </label>
+        <label>Duplicate keys:
+            <select @bind="selectedDupeBehavior" @bind:after="OnOptionChanged">
+                <option value="@DuplicateKeyBehavior.Error">Error</option>
+                <option value="@DuplicateKeyBehavior.LastWins">Last Wins</option>
+            </select>
+        </label>
+    </div>
+    <button class="theme-toggle-btn" @onclick="CycleTheme" title="@themeTooltip">@themeIcon</button>
+</div>
+
+@if (activeSample is not null)
+{
+    <div class="sample-description">@activeSample.Description</div>
+}
+
+<div class="yaml-grid @(maximizedPanel is not null ? "has-maximized" : "")">
+    @* Left: YAML input *@
+    <div class="playground-panel panel-yaml @(GetPanelClass("yaml"))">
+        <div class="panel-header">
+            YAML Input
+            <div class="spacer"></div>
+            <button class="panel-copy-btn" @onclick="CopyYaml" title="Copy YAML">📋</button>
+            <button class="panel-maximize-btn" @onclick='() => ToggleMaximize("yaml")' title="@(maximizedPanel == "yaml" ? "Restore" : "Maximize")">
+                @(maximizedPanel == "yaml" ? "⊟" : "⊞")
+            </button>
+        </div>
+        <div class="panel-body">
+            <StandaloneCodeEditor @ref="yamlEditor"
+                                  Id="yaml-editor"
+                                  ConstructionOptions="YamlEditorOptions"
+                                  OnDidChangeModelContent="OnYamlChanged" />
+        </div>
+    </div>
+
+    @* Right: JSON output *@
+    <div class="playground-panel panel-output @(GetPanelClass("output"))">
+        <div class="panel-header">
+            JSON Output
+            <div class="spacer"></div>
+            @if (lastResult is not null)
+            {
+                <span style="font-weight:normal;text-transform:none;">
+                    @(lastResult.Success ? "✓" : "✗")
+                    @($"{lastResult.ElapsedMs:F1}ms")
+                </span>
+            }
+            <button class="panel-copy-btn" @onclick="CopyResult" title="Copy JSON">📋</button>
+            <button class="panel-maximize-btn" @onclick='() => ToggleMaximize("output")' title="@(maximizedPanel == "output" ? "Restore" : "Maximize")">
+                @(maximizedPanel == "output" ? "⊟" : "⊞")
+            </button>
+        </div>
+        <div class="panel-body" style="@(lastResult is not null && !lastResult.Success ? "display:none" : "")">
+            <StandaloneCodeEditor @ref="outputEditor"
+                                  Id="output-editor"
+                                  ConstructionOptions="OutputEditorOptions" />
+        </div>
+        @if (lastResult is not null && !lastResult.Success)
+        {
+            <div class="panel-body">
+                <div class="error-output">@lastResult.ErrorMessage</div>
+            </div>
+        }
+    </div>
+</div>
+
+@if (showDirtyConfirmation)
+{
+    <div class="modal-overlay" @onclick="CancelDirtyConfirmation">
+        <div class="modal-dialog" @onclick:stopPropagation="true">
+            <h3>Unsaved Changes</h3>
+            <p>Your YAML input has been modified. Do you want to discard these changes?</p>
+            <div class="modal-actions">
+                <button class="toolbar-btn secondary" @onclick="CancelDirtyConfirmation">Cancel</button>
+                <button class="toolbar-btn primary" @onclick="ConfirmDirtyAction">Discard Changes</button>
+            </div>
+        </div>
+    </div>
+}
+
+<div class="status-bar @(lastResult is not null && !lastResult.Success ? "error" : "")">
+    <span>Corvus.Yaml.SystemTextJson — YAML → JSON Converter</span>
+    <div class="spacer"></div>
+    @if (isConverting)
+    {
+        <span>Converting…</span>
+    }
+    else if (lastResult is not null)
+    {
+        <span>@(lastResult.Success ? "OK" : "Error") — @($"{lastResult.ElapsedMs:F1}ms")</span>
+    }
+    else
+    {
+        <span>Ready</span>
+    }
+</div>
+
+@code {
+    private StandaloneCodeEditor yamlEditor = null!;
+    private StandaloneCodeEditor outputEditor = null!;
+
+    private string? activeSampleId;
+    private Sample? activeSample;
+    private ConversionResult? lastResult;
+    private bool isConverting;
+    private bool isInitializing = true;
+    private bool isLoadingSample;
+    private string? maximizedPanel;
+
+    // Options
+    private YamlSchema selectedSchema = YamlSchema.Core;
+    private YamlDocumentMode selectedDocMode = YamlDocumentMode.SingleRequired;
+    private DuplicateKeyBehavior selectedDupeBehavior = DuplicateKeyBehavior.Error;
+
+    // Dirty checking
+    private bool showDirtyConfirmation;
+    private Func<Task>? pendingDirtyAction;
+    private string cleanYaml = "";
+
+    // Theme state
+    private string themePref = "auto";
+    private string resolvedTheme = "dark";
+    private string themeIcon = "🌙";
+    private string themeTooltip = "Toggle theme";
+    private DotNetObjectReference<MainLayout>? dotNetRef;
+
+    // Debounce
+    private CancellationTokenSource? convertDebounce;
+    private CancellationTokenSource? saveDebounce;
+
+    private const string YamlStorageKey = "yaml-playground-yaml";
+    private const string SchemaStorageKey = "yaml-playground-schema";
+    private const string DocModeStorageKey = "yaml-playground-docmode";
+    private const string DupeStorageKey = "yaml-playground-dupe";
+    private const string ThemeStorageKey = "yaml-playground-theme";
+
+    // ── Editor options ──
+
+    private StandaloneEditorConstructionOptions YamlEditorOptions(StandaloneCodeEditor editor) => new()
+    {
+        Language = "yaml",
+        Theme = resolvedTheme == "light" ? "vs" : "vs-dark",
+        Value = initialYaml,
+        AutomaticLayout = true,
+        Minimap = new EditorMinimapOptions { Enabled = false },
+        FontSize = 13,
+        TabSize = 2,
+        ScrollBeyondLastLine = false,
+    };
+
+    private StandaloneEditorConstructionOptions OutputEditorOptions(StandaloneCodeEditor editor) => new()
+    {
+        Language = "json",
+        Theme = resolvedTheme == "light" ? "vs" : "vs-dark",
+        Value = "",
+        AutomaticLayout = true,
+        Minimap = new EditorMinimapOptions { Enabled = false },
+        FontSize = 13,
+        TabSize = 2,
+        ReadOnly = true,
+        ScrollBeyondLastLine = false,
+    };
+
+    // ── Initial values ──
+    private string initialYaml = SampleRegistry.All[0].Yaml;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            dotNetRef = DotNetObjectReference.Create(this);
+            await JSRuntime.InvokeVoidAsync("registerPlaygroundShortcuts", dotNetRef);
+            await JSRuntime.InvokeVoidAsync("onSystemThemeChange", dotNetRef);
+
+            // Load saved theme preference
+            var savedTheme = await GetLocalStorage(ThemeStorageKey);
+            if (!string.IsNullOrEmpty(savedTheme))
+            {
+                themePref = savedTheme;
+            }
+
+            resolvedTheme = await JSRuntime.InvokeAsync<string>("getInitialTheme");
+            UpdateThemeIcon();
+
+            // Load saved options
+            var savedSchema = await GetLocalStorage(SchemaStorageKey);
+            if (!string.IsNullOrEmpty(savedSchema) && Enum.TryParse<YamlSchema>(savedSchema, out var s))
+            {
+                selectedSchema = s;
+            }
+
+            var savedDocMode = await GetLocalStorage(DocModeStorageKey);
+            if (!string.IsNullOrEmpty(savedDocMode) && Enum.TryParse<YamlDocumentMode>(savedDocMode, out var dm))
+            {
+                selectedDocMode = dm;
+            }
+
+            var savedDupe = await GetLocalStorage(DupeStorageKey);
+            if (!string.IsNullOrEmpty(savedDupe) && Enum.TryParse<DuplicateKeyBehavior>(savedDupe, out var db))
+            {
+                selectedDupeBehavior = db;
+            }
+
+            // Load saved YAML
+            var savedYaml = await GetLocalStorage(YamlStorageKey);
+
+            if (!string.IsNullOrEmpty(savedYaml))
+            {
+                activeSampleId = null;
+                activeSample = null;
+                await yamlEditor.SetValue(savedYaml);
+            }
+            else
+            {
+                activeSampleId = SampleRegistry.All[0].Id;
+                activeSample = SampleRegistry.All[0];
+            }
+
+            StateHasChanged();
+
+            isInitializing = false;
+            cleanYaml = await yamlEditor.GetValue();
+            await ConvertAsync();
+        }
+    }
+
+    // ── Event handlers ──
+
+    private void OnYamlChanged(ModelContentChangedEvent e)
+    {
+        if (isInitializing || isLoadingSample) { return; }
+
+        activeSampleId = null;
+        activeSample = null;
+        DebounceConvert();
+        DebounceSave();
+    }
+
+    private async Task OnOptionChanged()
+    {
+        if (isInitializing) { return; }
+
+        await SaveOptions();
+        await ConvertAsync();
+    }
+
+    private async Task OnSampleChanged(ChangeEventArgs e)
+    {
+        var sampleId = e.Value?.ToString();
+        var sample = SampleRegistry.All.FirstOrDefault(s => s.Id == sampleId);
+        if (sample is null)
+        {
+            return;
+        }
+
+        await CheckDirtyAndConfirm(async () =>
+        {
+            await LoadSample(sample);
+        });
+    }
+
+    private async Task NewProjectAsync()
+    {
+        await CheckDirtyAndConfirm(async () =>
+        {
+            isLoadingSample = true;
+            try
+            {
+                activeSampleId = null;
+                activeSample = null;
+                await yamlEditor.SetValue("# Enter your YAML here");
+            }
+            finally
+            {
+                isLoadingSample = false;
+            }
+
+            cleanYaml = await yamlEditor.GetValue();
+            await ClearLocalStorage();
+            await ClearYamlMarkers();
+            lastResult = null;
+            if (outputEditor is not null)
+            {
+                await outputEditor.SetValue("");
+            }
+
+            StateHasChanged();
+        });
+    }
+
+    private async Task LoadSample(Sample sample)
+    {
+        isLoadingSample = true;
+        try
+        {
+            activeSampleId = sample.Id;
+            activeSample = sample;
+
+            // Auto-select appropriate options for the sample
+            if (sample.Id == "multi-document")
+            {
+                selectedDocMode = YamlDocumentMode.MultiAsArray;
+            }
+            else if (sample.Id == "yaml11-compat")
+            {
+                selectedSchema = YamlSchema.Yaml11;
+                selectedDocMode = YamlDocumentMode.SingleRequired;
+            }
+            else
+            {
+                selectedSchema = YamlSchema.Core;
+                selectedDocMode = YamlDocumentMode.SingleRequired;
+            }
+
+            selectedDupeBehavior = DuplicateKeyBehavior.Error;
+            await yamlEditor.SetValue(sample.Yaml);
+        }
+        finally
+        {
+            isLoadingSample = false;
+        }
+
+        cleanYaml = await yamlEditor.GetValue();
+        await ClearLocalStorage();
+        await ClearYamlMarkers();
+        await ConvertAsync();
+    }
+
+    // ── Dirty checking ──
+
+    private async Task CheckDirtyAndConfirm(Func<Task> action)
+    {
+        var currentYaml = await yamlEditor.GetValue();
+
+        if (currentYaml == cleanYaml)
+        {
+            await action();
+            return;
+        }
+
+        pendingDirtyAction = action;
+        showDirtyConfirmation = true;
+        StateHasChanged();
+    }
+
+    private async Task ConfirmDirtyAction()
+    {
+        showDirtyConfirmation = false;
+        var action = pendingDirtyAction;
+        pendingDirtyAction = null;
+
+        if (action is not null)
+        {
+            await action();
+        }
+    }
+
+    private async Task CancelDirtyConfirmation()
+    {
+        showDirtyConfirmation = false;
+        pendingDirtyAction = null;
+
+        await JSRuntime.InvokeVoidAsync("resetSampleSelect", activeSampleId ?? "");
+    }
+
+    // ── Copy helpers ──
+
+    private async Task CopyYaml()
+    {
+        var text = await yamlEditor.GetValue();
+        await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", text);
+    }
+
+    private async Task CopyResult()
+    {
+        if (lastResult is not null && !lastResult.Success)
+        {
+            await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", lastResult.ErrorMessage ?? "");
+        }
+        else if (outputEditor is not null)
+        {
+            var text = await outputEditor.GetValue();
+            await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", text);
+        }
+    }
+
+    [JSInvokable]
+    public async Task OnConvertShortcut()
+    {
+        await ConvertAsync();
+    }
+
+    [JSInvokable]
+    public void OnSystemThemeChanged(string systemTheme)
+    {
+        if (themePref == "auto")
+        {
+            resolvedTheme = systemTheme;
+            UpdateThemeIcon();
+            _ = JSRuntime.InvokeVoidAsync("applyTheme", resolvedTheme);
+            StateHasChanged();
+        }
+    }
+
+    // ── Conversion ──
+
+    private async Task ConvertAsync()
+    {
+        if (isConverting)
+        {
+            return;
+        }
+
+        isConverting = true;
+        StateHasChanged();
+
+        try
+        {
+            var yamlInput = await yamlEditor.GetValue();
+
+            lastResult = await ConvertService.ConvertAsync(
+                yamlInput, selectedSchema, selectedDocMode, selectedDupeBehavior);
+
+            if (lastResult.Success)
+            {
+                await ClearYamlMarkers();
+                if (outputEditor is not null)
+                {
+                    await outputEditor.SetValue(lastResult.ResultJson ?? "");
+                }
+            }
+            else
+            {
+                if (lastResult.ErrorLine.HasValue)
+                {
+                    await SetYamlMarkers(lastResult);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            lastResult = new ConversionResult
+            {
+                Success = false,
+                ErrorMessage = ex.Message,
+                ElapsedMs = 0,
+            };
+        }
+        finally
+        {
+            isConverting = false;
+            StateHasChanged();
+        }
+    }
+
+    // ── Debounce ──
+
+    private void DebounceConvert()
+    {
+        convertDebounce?.Cancel();
+        convertDebounce = new CancellationTokenSource();
+        var token = convertDebounce.Token;
+        _ = Task.Delay(300, token).ContinueWith(async _ =>
+        {
+            if (!token.IsCancellationRequested)
+            {
+                await InvokeAsync(ConvertAsync);
+            }
+        }, token);
+    }
+
+    private void DebounceSave()
+    {
+        saveDebounce?.Cancel();
+        saveDebounce = new CancellationTokenSource();
+        var token = saveDebounce.Token;
+        _ = Task.Delay(1000, token).ContinueWith(async _ =>
+        {
+            if (!token.IsCancellationRequested)
+            {
+                await InvokeAsync(async () =>
+                {
+                    var yaml = await yamlEditor.GetValue();
+                    await SetLocalStorage(YamlStorageKey, yaml);
+                });
+            }
+        }, token);
+    }
+
+    // ── Monaco markers (error squiggles) ──
+
+    private async Task SetYamlMarkers(ConversionResult result)
+    {
+        if (result.ErrorLine is int line && result.ErrorColumn is int col)
+        {
+            await JSRuntime.InvokeVoidAsync("setEditorMarkers", "yaml-editor",
+                result.ErrorMessage ?? "Error", line, col, line, col + 1);
+        }
+    }
+
+    private async Task ClearYamlMarkers()
+    {
+        await JSRuntime.InvokeVoidAsync("clearEditorMarkers", "yaml-editor");
+    }
+
+    // ── Theme management ──
+
+    private async Task CycleTheme()
+    {
+        themePref = themePref switch
+        {
+            "auto" => "dark",
+            "dark" => "light",
+            "light" => "auto",
+            _ => "auto",
+        };
+
+        if (themePref == "auto")
+        {
+            resolvedTheme = await JSRuntime.InvokeAsync<string>("getSystemTheme");
+        }
+        else
+        {
+            resolvedTheme = themePref;
+        }
+
+        UpdateThemeIcon();
+        await JSRuntime.InvokeVoidAsync("applyTheme", resolvedTheme);
+        await SetLocalStorage(ThemeStorageKey, themePref);
+        StateHasChanged();
+    }
+
+    private void UpdateThemeIcon()
+    {
+        (themeIcon, themeTooltip) = themePref switch
+        {
+            "auto" => ("🖥️", "Theme: system (click for dark)"),
+            "dark" => ("🌙", "Theme: dark (click for light)"),
+            "light" => ("☀️", "Theme: light (click for system)"),
+            _ => ("🖥️", "Toggle theme"),
+        };
+    }
+
+    // ── Panel maximize ──
+
+    private void ToggleMaximize(string panel)
+    {
+        maximizedPanel = maximizedPanel == panel ? null : panel;
+    }
+
+    private string GetPanelClass(string panel)
+    {
+        if (maximizedPanel is null) return "";
+        return maximizedPanel == panel ? "maximized" : "minimized";
+    }
+
+    // ── Local storage ──
+
+    private async Task<string?> GetLocalStorage(string key)
+    {
+        try
+        {
+            return await JSRuntime.InvokeAsync<string?>("localStorage.getItem", key);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private async Task SetLocalStorage(string key, string value)
+    {
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("localStorage.setItem", key, value);
+        }
+        catch
+        {
+            // Ignore storage errors (e.g. private browsing)
+        }
+    }
+
+    private async Task ClearLocalStorage()
+    {
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("localStorage.removeItem", YamlStorageKey);
+            await JSRuntime.InvokeVoidAsync("localStorage.removeItem", SchemaStorageKey);
+            await JSRuntime.InvokeVoidAsync("localStorage.removeItem", DocModeStorageKey);
+            await JSRuntime.InvokeVoidAsync("localStorage.removeItem", DupeStorageKey);
+        }
+        catch
+        {
+            // Ignore
+        }
+    }
+
+    private async Task SaveOptions()
+    {
+        await SetLocalStorage(SchemaStorageKey, selectedSchema.ToString());
+        await SetLocalStorage(DocModeStorageKey, selectedDocMode.ToString());
+        await SetLocalStorage(DupeStorageKey, selectedDupeBehavior.ToString());
+    }
+
+    public void Dispose()
+    {
+        convertDebounce?.Dispose();
+        saveDebounce?.Dispose();
+        dotNetRef?.Dispose();
+    }
+}

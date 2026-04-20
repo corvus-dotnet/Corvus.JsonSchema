@@ -80,4 +80,7 @@
   <Folder Name="/026-JMESPath/">
     <Project Path="026-JMESPath\JMESPath.csproj" />
   </Folder>
+  <Folder Name="/027-Yaml/">
+    <Project Path="027-Yaml\Yaml.csproj" />
+  </Folder>
 </Solution>

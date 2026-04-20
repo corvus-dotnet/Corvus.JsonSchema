@@ -16,6 +16,7 @@ High-performance, source-generated, strongly-typed C# models from JSON Schema �
 - **[JMESPath](#jmespath)** — Full [JMESPath](https://jmespath.org/) query language with 100% conformance against the official test suite. Interpreted and code-generated evaluation modes.
 - **JsonLogic** — Complete [JsonLogic](https://jsonlogic.com/) rule engine for evaluating business rules against JSON data with interpreted and code-generated modes.
 - **JSON Patch** — RFC 6902 JSON Patch with pooled-memory operations on `JsonElement`.
+- **[YAML](#yaml)** — High-performance YAML 1.2 to JSON converter with 100% yaml-test-suite conformance. Zero-allocation `ref struct` tokenizer.
 
 ## Quick Start
 
@@ -71,6 +72,8 @@ Console.WriteLine(root.ToString());
 | **Corvus.Text.Json.JsonLogic** | JsonLogic rule engine — interpreted runtime evaluator. |
 | **Corvus.Text.Json.JsonLogic.SourceGenerator** | Roslyn source generator for compile-time JsonLogic code generation. |
 | **Corvus.Text.Json.Patch** | RFC 6902 JSON Patch with pooled-memory operations. |
+| **Corvus.Text.Json.Yaml** | YAML 1.2 to JSON converter with Corvus document model integration. |
+| **Corvus.Yaml.SystemTextJson** | YAML 1.2 to JSON converter using only System.Text.Json (no Corvus dependency). |
 
 ### Install
 
@@ -125,6 +128,7 @@ Then open http://localhost:5000.
 - [Dynamic Schema Validation](docs/Validator.md)
 - [JSONata Query & Transformation](docs/Jsonata.md)
 - [JMESPath Query Language](docs/JMESPath.md)
+- [YAML to JSON Converter](docs/Yaml.md)
 - [Migrating from V4](docs/MigratingFromV4ToV5.md)
 
 ## Building
@@ -200,6 +204,30 @@ Console.WriteLine(result); // {"WashingtonCities":"Bellevue, Olympia, Seattle"}
 ```
 
 See [JMESPath documentation](docs/JMESPath.md) for the full API, code generation, and performance benchmarks.
+
+## YAML
+
+`Corvus.Text.Json.Yaml` is a high-performance YAML 1.2 to JSON converter built on a custom `ref struct` tokenizer operating directly on UTF-8 bytes. It supports all YAML scalar styles, flow and block collections, anchors and aliases, multi-document streams, and four schema modes.
+
+- **100% conformance** — passes all 402 tests in the [yaml-test-suite](https://github.com/yaml/yaml-test-suite) (308 valid + 94 invalid)
+- **Zero-allocation** on the hot path with `stackalloc`/`ArrayPool` pattern
+- **Two packages**: `Corvus.Text.Json.Yaml` (full Corvus integration) and `Corvus.Yaml.SystemTextJson` (System.Text.Json only)
+
+```csharp
+using Corvus.Text.Json;
+using Corvus.Text.Json.Yaml;
+
+string yaml = """
+    name: Alice
+    age: 30
+    hobbies: [reading, cycling]
+    """;
+
+using ParsedJsonDocument<JsonElement> doc = YamlDocument.Parse<JsonElement>(yaml);
+Console.WriteLine(doc.RootElement.GetProperty("name").GetString()); // "Alice"
+```
+
+See [YAML documentation](docs/Yaml.md) for the full API, configuration options, and supported YAML features.
 
 ## Supported platforms
 
