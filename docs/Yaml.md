@@ -17,7 +17,7 @@ Both packages share the same tokenizer and converter implementation via conditio
 
 ## Conformance
 
-The converter passes **all 402 tests** in the [yaml-test-suite](https://github.com/yaml/yaml-test-suite) (308 valid + 94 invalid), achieving 100% conformance against the YAML 1.2 specification. One test case (`NHX8/01`) uses a non-standard implicit-key-with-empty-value pattern that is accepted rather than rejected — this is the only deviation, and is flagged as a known skip.
+The converter passes **all 373 tests** in the [yaml-test-suite](https://github.com/yaml/yaml-test-suite) that provide expected output (279 valid + 94 error), achieving 100% conformance against the YAML 1.2 specification. A further 29 test cases in the suite provide only parse-event data (no JSON reference output) and are not covered by the automated tests.
 
 ## Quick start
 
