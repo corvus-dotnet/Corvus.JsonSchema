@@ -125,6 +125,50 @@ public static class YamlDocument
     }
 
     /// <summary>
+    /// Converts a YAML string to a JSON string.
+    /// </summary>
+    /// <param name="yaml">The YAML content as a string.</param>
+    /// <param name="options">Optional YAML reader options.</param>
+    /// <returns>A string containing the JSON representation of the YAML content.</returns>
+    /// <exception cref="YamlException">The YAML content is invalid.</exception>
+    public static string ConvertToJsonString(
+        string yaml,
+        YamlReaderOptions options = default)
+    {
+        int maxByteCount = Encoding.UTF8.GetMaxByteCount(yaml.Length);
+        byte[]? rentedArray = null;
+
+        Span<byte> utf8Buffer = maxByteCount <= JsonConstants.StackallocByteThreshold
+            ? stackalloc byte[JsonConstants.StackallocByteThreshold]
+            : (rentedArray = ArrayPool<byte>.Shared.Rent(maxByteCount));
+
+        try
+        {
+            int bytesWritten;
+#if NET
+            bytesWritten = Encoding.UTF8.GetBytes(yaml, utf8Buffer);
+#else
+            unsafe
+            {
+                fixed (char* pChars = yaml)
+                fixed (byte* pBytes = utf8Buffer)
+                {
+                    bytesWritten = Encoding.UTF8.GetBytes(pChars, yaml.Length, pBytes, utf8Buffer.Length);
+                }
+            }
+#endif
+            return ConvertToJsonString(utf8Buffer.Slice(0, bytesWritten).ToArray(), options);
+        }
+        finally
+        {
+            if (rentedArray is not null)
+            {
+                ArrayPool<byte>.Shared.Return(rentedArray);
+            }
+        }
+    }
+
+    /// <summary>
     /// Converts UTF-8 YAML bytes to JSON, writing the output to the specified <see cref="Utf8JsonWriter"/>.
     /// </summary>
     /// <param name="utf8Yaml">The UTF-8 encoded YAML bytes.</param>
@@ -408,6 +452,50 @@ public static class YamlDocument
         finally
         {
             workspace.ReturnWriterAndBuffer(writer, bufferWriter);
+        }
+    }
+
+    /// <summary>
+    /// Converts a YAML string to a JSON string.
+    /// </summary>
+    /// <param name="yaml">The YAML content as a string.</param>
+    /// <param name="options">Optional YAML reader options.</param>
+    /// <returns>A string containing the JSON representation of the YAML content.</returns>
+    /// <exception cref="YamlException">The YAML content is invalid.</exception>
+    public static string ConvertToJsonString(
+        string yaml,
+        YamlReaderOptions options = default)
+    {
+        int maxByteCount = Encoding.UTF8.GetMaxByteCount(yaml.Length);
+        byte[]? rentedArray = null;
+
+        Span<byte> utf8Buffer = maxByteCount <= JsonConstants.StackallocByteThreshold
+            ? stackalloc byte[JsonConstants.StackallocByteThreshold]
+            : (rentedArray = ArrayPool<byte>.Shared.Rent(maxByteCount));
+
+        try
+        {
+            int bytesWritten;
+#if NET
+            bytesWritten = Encoding.UTF8.GetBytes(yaml, utf8Buffer);
+#else
+            unsafe
+            {
+                fixed (char* pChars = yaml)
+                fixed (byte* pBytes = utf8Buffer)
+                {
+                    bytesWritten = Encoding.UTF8.GetBytes(pChars, yaml.Length, pBytes, utf8Buffer.Length);
+                }
+            }
+#endif
+            return ConvertToJsonString(utf8Buffer.Slice(0, bytesWritten).ToArray(), options);
+        }
+        finally
+        {
+            if (rentedArray is not null)
+            {
+                ArrayPool<byte>.Shared.Return(rentedArray);
+            }
         }
     }
 
