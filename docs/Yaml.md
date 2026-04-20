@@ -236,6 +236,88 @@ public partial class MySchema;
 
 The converter is designed for zero-allocation operation on the hot path. The `Utf8YamlScanner` is a `ref struct` that operates on `ReadOnlySpan<byte>` with `stackalloc`-based scratch buffers. Temporary buffers follow the standard `stackalloc`/`ArrayPool` pattern using `JsonConstants.StackallocByteThreshold` (256 bytes).
 
+### Benchmarks vs YamlDotNet
+
+The following benchmarks compare **Corvus.Yaml** (both `Corvus.Text.Json.Yaml` and `Corvus.Yaml.SystemTextJson`) against **YamlDotNet 16.3** for YAML→JSON conversion across nine scenarios of varying size and complexity.
+
+> Measured with BenchmarkDotNet on .NET 10.0, Intel i7-13800H. YamlDotNet is configured with `JsonCompatible()` serialization. Full source and scenario files in [`benchmarks/Corvus.Text.Json.Yaml.Benchmarks/`](https://github.com/corvus-dotnet/Corvus.JsonSchema/tree/main/benchmarks/Corvus.Text.Json.Yaml.Benchmarks).
+
+| Scenario | Size | YamlDotNet | Corvus (CTJ) | Corvus (STJ) | Speedup | YDN Alloc | Corvus Alloc | Alloc Ratio |
+|---|---|---|---|---|---|---|---|---|
+| SimpleScalar | 24 B | 5,027 ns | 245 ns | 255 ns | **20×** | 24,741 B | 136 B | **182×** |
+| MultiDocument | 235 B | 31,097 ns | 1,800 ns | 1,879 ns | **17×** | 87,353 B | 136 B | **642×** |
+| SmallConfig | 339 B | 34,416 ns | 2,458 ns | 2,514 ns | **14×** | 70,034 B | 136 B | **515×** |
+| FlowStyle | 374 B | 61,161 ns | 3,859 ns | 3,953 ns | **16×** | 115,828 B | 136 B | **852×** |
+| NestedMapping | 540 B | 54,090 ns | 3,974 ns | 4,072 ns | **14×** | 97,739 B | 136 B | **719×** |
+| AnchorAlias | 604 B | 64,142 ns | 4,483 ns | 4,678 ns | **14×** | 106,984 B | 136 B | **787×** |
+| BlockScalar | 642 B | 16,651 ns | 2,240 ns | 2,149 ns | **7×** | 30,767 B | 136 B | **226×** |
+| ComplexMixed | 2.4 KB | 136,973 ns | 11,368 ns | 11,537 ns | **12×** | 186,505 B | 136 B | **1,372×** |
+| LargeConfig | 6 KB | 413,192 ns | 30,478 ns | 31,268 ns | **14×** | 580,263 B | 136 B | **4,267×** |
+
+**Summary:** Corvus.Yaml is **7–20× faster** than YamlDotNet and allocates **182–4,267× less memory**. The Corvus CTJ and STJ variants perform nearly identically — choose based on whether you need the Corvus document model or just `System.Text.Json.JsonDocument`.
+
+## Comparison with YamlDotNet
+
+[YamlDotNet](https://github.com/aaubry/YamlDotNet) is the established YAML library for .NET, with a large feature set and broad ecosystem adoption. Corvus.Yaml takes a different approach — it is a purpose-built, high-performance YAML→JSON converter rather than a general-purpose YAML toolkit.
+
+### Feature comparison
+
+| Feature | Corvus.Yaml | YamlDotNet |
+|---|---|---|
+| **YAML→JSON conversion** | ✅ Native, zero-copy | ⚠️ Via deserialize + `JsonCompatible()` serialize |
+| **YAML 1.2 conformance** | ✅ 100% of JSON-testable cases (373/402) | ⚠️ 68.9% JSON conformance (257/373) [*](#conformance-note) |
+| **YAML 1.1 support** | ✅ `YamlSchema.Yaml11` mode | ✅ Native |
+| **YAML emitting (C# → YAML)** | ❌ | ✅ Full emitter |
+| **Object serialization/deserialization** | ❌ | ✅ `Serializer`/`Deserializer` with naming conventions, type converters, callbacks |
+| **Object model (DOM)** | ❌ | ✅ `YamlStream`/`YamlDocument`/`YamlNode` tree |
+| **Low-level event parser** | ❌ | ✅ `IParser` with `StreamStart`, `DocumentStart`, `Scalar`, etc. |
+| **Schema modes** | ✅ Core, JSON, Failsafe, YAML 1.1 | ⚠️ 1.1 by default; configurable |
+| **Duplicate key handling** | ✅ Configurable (`Error` / `LastWins`) | ✅ Configurable |
+| **Anchors & aliases** | ✅ With billion-laughs protection | ✅ |
+| **Multi-document streams** | ✅ `MultiAsArray` mode | ✅ Via `IParser` iteration |
+| **Block scalars (`\|`, `>`)** | ✅ All chomping indicators | ✅ |
+| **Performance** | ✅ 7–20× faster, near-zero allocation | ⚠️ Higher allocation, string-based |
+| **`System.Text.Json` integration** | ✅ Direct `JsonDocument` / `ParsedJsonDocument` output | ❌ Separate ecosystem |
+| **Corvus document model** | ✅ `ParsedJsonDocument<T>`, JSON Schema validation | ❌ |
+| **Code generator integration** | ✅ YAML schemas in `generatejsonschematypes` | ❌ |
+| **Target frameworks** | net9.0, net10.0, netstandard2.0/2.1 | net8.0, net10.0, net47, netstandard2.0/2.1 |
+| **NuGet downloads** | New | ~350M+ |
+| **Unity support** | ❌ | ✅ Unity Asset Store |
+| **License** | Apache 2.0 | MIT |
+
+<a id="conformance-note"></a>*Conformance figures from the [yaml-test-matrix](https://matrix.yaml.info/) (Jan 2022 data). YamlDotNet may have improved since.*
+
+### When to use Corvus.Yaml
+
+- **YAML configuration → JSON pipeline:** You need to convert YAML files (Kubernetes manifests, CI configs, OpenAPI specs) into JSON for processing by `System.Text.Json`, JSON Schema validation, or the Corvus document model.
+- **High-throughput / low-allocation:** You're processing YAML in a hot path — an API server, a build tool, a code generator — where 7–20× speed and near-zero GC pressure matter.
+- **Spec conformance:** You need accurate YAML 1.2 parsing with correct type resolution (Core schema) and strict error detection.
+- **Corvus ecosystem:** You're already using Corvus.Text.Json for JSON Schema, JSONata, JMESPath, or JSON Patch and want YAML input to flow into the same pipeline.
+
+### When to use YamlDotNet
+
+- **YAML round-tripping:** You need to read YAML, modify it, and write it back as YAML — Corvus.Yaml is read-only (YAML→JSON only).
+- **Object serialization:** You need to serialize C# objects directly to/from YAML with naming conventions, type converters, and custom deserialization callbacks.
+- **YAML DOM manipulation:** You need to build or transform a YAML document tree (`YamlStream`, `YamlNode`) programmatically.
+- **Event-level parsing:** You need low-level control over the YAML parse stream (e.g., custom document handling, streaming large files node-by-node).
+- **Ecosystem compatibility:** You're using a library that depends on YamlDotNet (e.g., KubernetesClient, NJsonSchema.Yaml).
+
+### Using both together
+
+The two libraries are not mutually exclusive. A common pattern is to use YamlDotNet for its serialization/deserialization features and Corvus.Yaml for high-performance YAML→JSON conversion in the same project:
+
+```csharp
+// Use Corvus.Yaml for fast YAML→JSON conversion and schema validation
+using ParsedJsonDocument<JsonElement> doc = YamlDocument.Parse<JsonElement>(yamlBytes);
+bool isValid = doc.RootElement.IsValid(mySchema);
+
+// Use YamlDotNet for object deserialization with naming conventions
+var deserializer = new DeserializerBuilder()
+    .WithNamingConvention(CamelCaseNamingConvention.Instance)
+    .Build();
+var config = deserializer.Deserialize<AppConfig>(yamlString);
+```
+
 ## API reference
 
 - [`Corvus.Text.Json.Yaml` API docs](/api/v5/corvus-text-json-yaml.html)
