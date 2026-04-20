@@ -5,6 +5,7 @@
 using System;
 using System.Buffers;
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 
 #if STJ
 namespace Corvus.Yaml.Internal;
@@ -46,6 +47,9 @@ internal ref struct YamlEventParser
     // Track whether directives were seen in the current document
     private bool _hasDirectives;
     private bool _hasYamlDirective;
+
+    // Min indentation for flow continuation lines (0 = no check)
+    private int _flowMinIndent;
 
     // Set by SkipWhitespaceAndComments when tab is seen at line start
     private bool _tabSeenInLeadingWhitespace;
@@ -269,7 +273,7 @@ internal ref struct YamlEventParser
             // (e.g. !!str) on the content line still needs to be read.
             ReadOnlySpan<byte> extraAnchor = default;
             ReadOnlySpan<byte> extraTag = default;
-            ParseNodeProperties(ref extraAnchor, ref extraTag, ref resolvedTagBuffer, inFlow);
+            ParseNodeProperties(ref extraAnchor, ref extraTag, ref resolvedTagBuffer, inFlow, parentIndent);
 
             if (anchor.IsEmpty && !extraAnchor.IsEmpty)
             {
@@ -283,7 +287,7 @@ internal ref struct YamlEventParser
         }
         else
         {
-            ParseNodeProperties(ref anchor, ref tag, ref resolvedTagBuffer, inFlow);
+            ParseNodeProperties(ref anchor, ref tag, ref resolvedTagBuffer, inFlow, parentIndent);
         }
 
         try
@@ -303,6 +307,15 @@ internal ref struct YamlEventParser
             // sequence context (isSeqEntry), '-' at the parent indent IS a sibling.
             if ((!anchor.IsEmpty || !tag.IsEmpty) && _line != propsLine && parentIndent >= 0 && !isKey)
             {
+                // Under-indented continuation starting with an anchor or tag is an
+                // error — the property belongs to neither the current node (too far
+                // left) nor a sibling (sibling wouldn't have properties here).
+                if (_column <= parentIndent
+                    && (c == YamlConstants.Exclamation || c == YamlConstants.Ampersand))
+                {
+                    ThrowFlowContentUnderindented();
+                }
+
                 // Content strictly below parent indent — always an empty scalar
                 if (_column < parentIndent)
                 {
@@ -357,9 +370,23 @@ internal ref struct YamlEventParser
                 return ParseBlockMapping(parentIndent, nodeIndent, anchor, tag);
             }
 
-            if (c == YamlConstants.OpenBrace) { return ParseFlowMapping(anchor, tag); }
+            if (c == YamlConstants.OpenBrace)
+            {
+                int savedFlowMinIndent = _flowMinIndent;
+                if (!inFlow) { _flowMinIndent = Math.Max(0, parentIndent + 1); }
 
-            if (c == YamlConstants.OpenBracket) { return ParseFlowSequence(anchor, tag); }
+                try { return ParseFlowMapping(anchor, tag); }
+                finally { _flowMinIndent = savedFlowMinIndent; }
+            }
+
+            if (c == YamlConstants.OpenBracket)
+            {
+                int savedFlowMinIndent = _flowMinIndent;
+                if (!inFlow) { _flowMinIndent = Math.Max(0, parentIndent + 1); }
+
+                try { return ParseFlowSequence(anchor, tag); }
+                finally { _flowMinIndent = savedFlowMinIndent; }
+            }
 
             if (c == YamlConstants.Pipe || c == YamlConstants.GreaterThan)
             {
@@ -434,10 +461,18 @@ internal ref struct YamlEventParser
                 }
             }
 
+            // If we already have an anchor and content starts with '&', we have
+            // two anchors on the same non-mapping node — invalid per YAML spec.
+            // Block mappings handle this above by splitting anchors (container vs key).
+            if (c == YamlConstants.Ampersand && !anchor.IsEmpty)
+            {
+                ThrowDuplicateAnchor();
+            }
+
             if (c == YamlConstants.DoubleQuote)
             {
                 int sl = _line; int sc = _column;
-                ReadOnlySpan<byte> value = ReadDoubleQuotedScalar(out byte[]? rented, parentIndent);
+                ReadOnlySpan<byte> value = ReadDoubleQuotedScalar(out byte[]? rented, Math.Max(0, parentIndent + 1));
 
                 try { return EmitScalarEvent(sl + 1, sc + 1, value, YamlScalarStyle.DoubleQuoted, anchor, tag); }
                 finally { if (rented != null) { ArrayPool<byte>.Shared.Return(rented); } }
@@ -446,7 +481,7 @@ internal ref struct YamlEventParser
             if (c == YamlConstants.SingleQuote)
             {
                 int sl = _line; int sc = _column;
-                ReadOnlySpan<byte> value = ReadSingleQuotedScalar(out byte[]? rented, parentIndent);
+                ReadOnlySpan<byte> value = ReadSingleQuotedScalar(out byte[]? rented, Math.Max(0, parentIndent + 1));
 
                 try { return EmitScalarEvent(sl + 1, sc + 1, value, YamlScalarStyle.SingleQuoted, anchor, tag); }
                 finally { if (rented != null) { ArrayPool<byte>.Shared.Return(rented); } }
@@ -490,11 +525,23 @@ internal ref struct YamlEventParser
         }
     }
 
-    private void ParseNodeProperties(ref ReadOnlySpan<byte> anchor, ref ReadOnlySpan<byte> tag, ref byte[]? resolvedTagBuffer, bool inFlow = false)
+    private void ParseNodeProperties(ref ReadOnlySpan<byte> anchor, ref ReadOnlySpan<byte> tag, ref byte[]? resolvedTagBuffer, bool inFlow = false, int parentIndent = -1)
     {
+        int startLine = _line;
+
         while (_pos < _buffer.Length)
         {
             byte c = _buffer[_pos];
+
+            // Properties on a continuation line must be indented more than
+            // the parent block context. A property at or below parentIndent
+            // belongs to a different node (e.g., a sibling mapping entry).
+            // Only check once we've moved to a new line — on the first line,
+            // properties at parentIndent are valid (e.g., anchored mapping keys).
+            if (!inFlow && parentIndent >= 0 && _line > startLine && _column <= parentIndent)
+            {
+                break;
+            }
 
             if (c == YamlConstants.Ampersand)
             {
@@ -1198,6 +1245,7 @@ internal ref struct YamlEventParser
                     // Escaped line break: discard \ and line break, but KEEP trailing whitespace
                     Advance(1);
                     SkipLineBreak();
+                    ValidateQuotedScalarContinuationIndent(minIndent);
                     while (_pos < _buffer.Length && YamlCharacters.IsWhitespace(_buffer[_pos])) { Advance(1); }
 
                     continue;
@@ -1215,6 +1263,7 @@ internal ref struct YamlEventParser
                 while (written > 0 && (output[written - 1] == YamlConstants.Space || output[written - 1] == YamlConstants.Tab)) { written--; }
 
                 SkipLineBreak();
+                ValidateQuotedScalarContinuationIndent(minIndent);
 
                 // Document markers terminate the scalar (unterminated string)
                 if (IsDocumentEndOrStart()) { ThrowUnterminatedDoubleQuotedScalar(); }
@@ -1352,6 +1401,7 @@ internal ref struct YamlEventParser
                 while (written > 0 && (output[written - 1] == YamlConstants.Space || output[written - 1] == YamlConstants.Tab)) { written--; }
 
                 SkipLineBreak();
+                ValidateQuotedScalarContinuationIndent(minIndent);
 
                 // Document markers terminate the scalar (unterminated string)
                 if (IsDocumentEndOrStart()) { ThrowUnterminatedSingleQuotedScalar(); }
@@ -1658,7 +1708,13 @@ internal ref struct YamlEventParser
                 continue;
             }
 
-            if (YamlCharacters.IsLineBreak(c)) { SkipLineBreak(); atLineStart = true; continue; }
+            if (YamlCharacters.IsLineBreak(c))
+            {
+                SkipLineBreak();
+                ValidateFlowContinuationIndent();
+                atLineStart = true;
+                continue;
+            }
 
             if (c == YamlConstants.Hash)
             {
@@ -1679,7 +1735,75 @@ internal ref struct YamlEventParser
 
     private void SkipToEndOfLine() { while (_pos < _buffer.Length && !YamlCharacters.IsLineBreak(_buffer[_pos])) { Advance(1); } }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void ValidateFlowContinuationIndent()
+    {
+        if (_flowMinIndent <= 0 || _pos >= _buffer.Length)
+        {
+            return;
+        }
+
+        // Count only space characters (tabs are not indentation per YAML spec)
+        int spaces = 0;
+        while (_pos + spaces < _buffer.Length && _buffer[_pos + spaces] == YamlConstants.Space)
+        {
+            spaces++;
+        }
+
+        // Blank lines (only whitespace → line break or EOF) are always valid
+        int peek = _pos + spaces;
+        while (peek < _buffer.Length && _buffer[peek] == YamlConstants.Tab)
+        {
+            peek++;
+        }
+
+        if (peek >= _buffer.Length || YamlCharacters.IsLineBreak(_buffer[peek]))
+        {
+            return;
+        }
+
+        // Not a blank line — check indent
+        if (spaces < _flowMinIndent)
+        {
+            ThrowFlowContentUnderindented();
+        }
+    }
+
     private bool IsComment() { return _pos < _buffer.Length && _buffer[_pos] == YamlConstants.Hash; }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void ValidateQuotedScalarContinuationIndent(int minIndent)
+    {
+        if (minIndent <= 0 || _pos >= _buffer.Length)
+        {
+            return;
+        }
+
+        // Count only space characters (tabs are not indentation per YAML spec)
+        int spaces = 0;
+        while (_pos + spaces < _buffer.Length && _buffer[_pos + spaces] == YamlConstants.Space)
+        {
+            spaces++;
+        }
+
+        // Blank lines (only whitespace → line break or EOF) are always valid
+        int peek = _pos + spaces;
+        while (peek < _buffer.Length && _buffer[peek] == YamlConstants.Tab)
+        {
+            peek++;
+        }
+
+        if (peek >= _buffer.Length || YamlCharacters.IsLineBreak(_buffer[peek]))
+        {
+            return;
+        }
+
+        // Not a blank line — check indent
+        if (spaces < minIndent)
+        {
+            ThrowFlowContentUnderindented();
+        }
+    }
 
     private void SkipBom()
     {
@@ -2060,8 +2184,9 @@ internal ref struct YamlEventParser
             return buffer.AsSpan(0, 1 + decodedLen);
         }
 
-        // Unknown handle — return raw
-        return handle;
+        // Unknown handle — no default mapping and not in custom handles
+        ThrowInvalidTagHandle();
+        return default;
     }
 
     private static int CopyPercentDecoded(ReadOnlySpan<byte> source, Span<byte> destination)
@@ -2193,6 +2318,9 @@ internal ref struct YamlEventParser
     private void ThrowContentOnDocumentStartLine() { throw new YamlException(SR.Format(SR.ContentOnDocumentStartLine, _line + 1, _column + 1)); }
 
     private void ThrowInvalidBlockScalarIndent() { throw new YamlException(SR.Format(SR.FlowContentUnderindented, _line + 1, _column + 1)); }
+
+    [DoesNotReturn]
+    private void ThrowFlowContentUnderindented() { throw new YamlException(SR.Format(SR.FlowContentUnderindented, _line + 1, _column + 1)); }
 
     [DoesNotReturn]
     private void ThrowAliasCannotHaveProperties() { throw new YamlException(SR.Format(SR.AliasCannotHaveProperties, _line + 1, _column + 1)); }
