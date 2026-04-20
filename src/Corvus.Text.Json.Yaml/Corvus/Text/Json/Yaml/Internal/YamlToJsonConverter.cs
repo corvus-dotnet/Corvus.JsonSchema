@@ -25,13 +25,70 @@ namespace Corvus.Text.Json.Yaml.Internal;
 /// </remarks>
 internal ref struct YamlToJsonConverter
 {
+    /// <summary>
+    /// The resolved tag kind for a YAML node.
+    /// </summary>
+    private enum YamlTagKind : byte
+    {
+        /// <summary>No tag present.</summary>
+        None,
+
+        /// <summary>Non-specific tag '!' — forces string for plain scalars.</summary>
+        NonSpecific,
+
+        /// <summary>!!str or !&lt;tag:yaml.org,2002:str&gt;.</summary>
+        Str,
+
+        /// <summary>!!int or !&lt;tag:yaml.org,2002:int&gt;.</summary>
+        Int,
+
+        /// <summary>!!float or !&lt;tag:yaml.org,2002:float&gt;.</summary>
+        Float,
+
+        /// <summary>!!bool or !&lt;tag:yaml.org,2002:bool&gt;.</summary>
+        Bool,
+
+        /// <summary>!!null or !&lt;tag:yaml.org,2002:null&gt;.</summary>
+        Null,
+
+        /// <summary>!!seq or !&lt;tag:yaml.org,2002:seq&gt;.</summary>
+        Seq,
+
+        /// <summary>!!map or !&lt;tag:yaml.org,2002:map&gt;.</summary>
+        Map,
+
+        /// <summary>Any other tag (custom/local) — ignored for JSON.</summary>
+        Other,
+    }
+
     private readonly ReadOnlySpan<byte> _buffer;
-    private readonly Utf8JsonWriter _writer;
+    private Utf8JsonWriter _writer;
     private readonly YamlReaderOptions _options;
+    private readonly IByteBufferWriter? _bufferWriter;
     private int _pos;
     private int _line;
     private int _column;
     private int _depth;
+
+    // Anchor table: stores anchor names and their JSON byte positions in the output buffer.
+    private byte[]? _anchorNameBuffer;
+    private int _anchorNamesUsed;
+    private byte[]? _anchorDataBuffer;
+    private int _anchorDataUsed;
+    private int _anchorCount;
+
+    // Each anchor entry is 4 ints: (nameOffset, nameLength, dataOffset, dataLength) = 16 bytes
+    // Stored in _anchorEntries, max 64 inline
+    private const int AnchorEntrySize = 4;
+    private int[]? _anchorEntries;
+
+    // Active anchor tracking
+    private int _activeAnchorNameStart;
+    private int _activeAnchorNameLength;
+
+    // TAG directive tracking: when %TAG !! is redefined to a non-standard prefix,
+    // !!name tags should not be classified as standard YAML types.
+    private bool _secondaryTagRedefined;
 
     /// <summary>
     /// Initializes a new converter for the given YAML buffer.
@@ -39,15 +96,26 @@ internal ref struct YamlToJsonConverter
     /// <param name="yaml">The UTF-8 YAML bytes.</param>
     /// <param name="writer">The JSON writer to emit to.</param>
     /// <param name="options">The YAML reader options.</param>
-    public YamlToJsonConverter(ReadOnlySpan<byte> yaml, Utf8JsonWriter writer, YamlReaderOptions options)
+    /// <param name="bufferWriter">Optional buffer writer for anchor/alias support.</param>
+    public YamlToJsonConverter(ReadOnlySpan<byte> yaml, Utf8JsonWriter writer, YamlReaderOptions options, IByteBufferWriter? bufferWriter = null)
     {
         _buffer = yaml;
         _writer = writer;
         _options = options;
+        _bufferWriter = bufferWriter;
         _pos = 0;
         _line = 1;
         _column = 0;
         _depth = 0;
+        _anchorNameBuffer = null;
+        _anchorNamesUsed = 0;
+        _anchorDataBuffer = null;
+        _anchorDataUsed = 0;
+        _anchorCount = 0;
+        _anchorEntries = null;
+        _activeAnchorNameStart = -1;
+        _activeAnchorNameLength = 0;
+        _secondaryTagRedefined = false;
     }
 
     /// <summary>
@@ -55,8 +123,105 @@ internal ref struct YamlToJsonConverter
     /// </summary>
     public void Convert()
     {
-        SkipBom();
+        try
+        {
+            SkipBom();
 
+            if (_options.DocumentMode == YamlDocumentMode.MultiAsArray)
+            {
+                ConvertMultiDocumentStream();
+            }
+            else
+            {
+                ConvertSingleDocument();
+            }
+        }
+        finally
+        {
+            ReturnAnchorBuffers();
+        }
+    }
+
+    /// <summary>
+    /// Converts a YAML stream that may contain multiple documents, wrapping them in a JSON array.
+    /// </summary>
+    private void ConvertMultiDocumentStream()
+    {
+        _writer.WriteStartArray();
+
+        bool wroteAnyDocument = false;
+
+        while (true)
+        {
+            SkipWhitespaceAndComments();
+            SkipDirectives();
+            SkipWhitespaceAndComments();
+
+            bool hasDocStart = SkipDocumentStartMarker();
+            SkipWhitespaceAndComments();
+
+            if (_pos >= _buffer.Length)
+            {
+                // If we got an explicit --- with nothing after, that's an empty document
+                if (hasDocStart)
+                {
+                    _writer.WriteNullValue();
+                }
+                else if (!wroteAnyDocument)
+                {
+                    // Bare empty stream — single null document
+                    _writer.WriteNullValue();
+                }
+
+                break;
+            }
+
+            // Check for document end/start marker immediately (empty document)
+            if (IsDocumentEndOrStart())
+            {
+                if (hasDocStart)
+                {
+                    _writer.WriteNullValue();
+                    wroteAnyDocument = true;
+                }
+
+                // Could be ... or another --- — consume document end if present
+                if (IsDocumentEnd())
+                {
+                    SkipDocumentEndMarker();
+                    SkipWhitespaceAndComments();
+                    continue;
+                }
+
+                // Another --- means another document
+                if (IsDocumentStart())
+                {
+                    continue;
+                }
+
+                break;
+            }
+
+            // There is content — parse a document
+            // Reset anchor table for each document
+            ResetAnchorTable();
+            ConvertNode(-1, false);
+            wroteAnyDocument = true;
+            SkipWhitespaceAndComments();
+
+            // Consume document end marker if present
+            SkipDocumentEndMarker();
+            SkipWhitespaceAndComments();
+        }
+
+        _writer.WriteEndArray();
+    }
+
+    /// <summary>
+    /// Converts a single YAML document, throwing on multi-document content.
+    /// </summary>
+    private void ConvertSingleDocument()
+    {
         // Skip any leading whitespace, comments, directives, and document markers
         SkipWhitespaceAndComments();
         SkipDirectives();
@@ -75,6 +240,15 @@ internal ref struct YamlToJsonConverter
         if (IsDocumentEndOrStart())
         {
             _writer.WriteNullValue();
+
+            // Consume the marker and check for more docs
+            if (IsDocumentEnd())
+            {
+                SkipDocumentEndMarker();
+                SkipWhitespaceAndComments();
+            }
+
+            CheckForSecondDocument();
             return;
         }
 
@@ -86,31 +260,38 @@ internal ref struct YamlToJsonConverter
         SkipDocumentEndMarker();
         SkipWhitespaceAndComments();
 
-        // Skip any trailing directives and document start markers (second document)
-        if (_pos < _buffer.Length)
+        CheckForSecondDocument();
+    }
+
+    /// <summary>
+    /// Checks if there is a second document and throws if so.
+    /// </summary>
+    private void CheckForSecondDocument()
+    {
+        if (_pos >= _buffer.Length)
         {
-            // If there's another document, that's multi-doc
-            SkipDirectives();
+            return;
+        }
+
+        // Skip any trailing directives
+        SkipDirectives();
+        SkipWhitespaceAndComments();
+
+        if (_pos >= _buffer.Length)
+        {
+            return;
+        }
+
+        // Check for another document start
+        if (SkipDocumentStartMarker())
+        {
             SkipWhitespaceAndComments();
 
-            if (_pos < _buffer.Length && SkipDocumentStartMarker())
+            // If there's actual content or another marker after ---, it's multi-doc
+            if (_pos < _buffer.Length)
             {
-                SkipWhitespaceAndComments();
-
-                // If there's actual content after the second ---, it's truly multi-document
-                if (_pos < _buffer.Length && !IsDocumentEndOrStart())
-                {
-                    if (_options.DocumentMode == YamlDocumentMode.SingleRequired)
-                    {
-                        ThrowMultipleDocuments();
-                    }
-
-                    ThrowMultipleDocuments();
-                }
+                ThrowMultipleDocuments();
             }
-
-            // Any remaining non-whitespace after doc end is ignored (trailing content)
-            SkipWhitespaceAndComments();
         }
     }
 
@@ -129,30 +310,78 @@ internal ref struct YamlToJsonConverter
             return;
         }
 
-        // Skip anchor and tag annotations
-        SkipAnchor();
-        SkipWhitespaceAndComments();
-        SkipTag();
-        SkipWhitespaceAndComments();
+        // Save the column and line before parsing node properties (anchor/tag),
+        // because tags shift the position but the indent is anchored at the start.
+        int nodeColumn = _column;
+        int nodeLine = _line;
+
+        // Parse node properties (anchor and tag) in either order
+        YamlTagKind tag = YamlTagKind.None;
+        bool hasAnchor = false;
+        ParseNodeProperties(ref tag, ref hasAnchor);
+
+        // Capture writer position before value for anchor storage
+        long anchorStartPos = 0;
+        if (hasAnchor && _bufferWriter != null)
+        {
+            _writer.Flush();
+            anchorStartPos = _bufferWriter.WrittenSpan.Length;
+        }
 
         if (_pos >= _buffer.Length)
         {
-            _writer.WriteNullValue();
+            WriteEmptyNodeWithTag(tag);
+            FinishAnchor(hasAnchor, anchorStartPos);
+            return;
+        }
+
+        // If properties moved us to a new line, check that the following content is
+        // actually a child of this node and not a sibling at the same indent.
+        // An anchor/tag at end-of-line with no value means the node is empty.
+        // Exception: block sequences at the same indent as the parent mapping are
+        // valid values (YAML spec allows "key:\n- item").
+        if (!inFlow && (hasAnchor || tag != YamlTagKind.None)
+            && _line > nodeLine && parentIndent >= 0 && _column <= parentIndent
+            && !(_column == parentIndent
+                 && _pos < _buffer.Length
+                 && _buffer[_pos] == YamlConstants.Dash
+                 && IsBlockSequenceEntry()))
+        {
+            WriteEmptyNodeWithTag(tag);
+            FinishAnchor(hasAnchor, anchorStartPos);
             return;
         }
 
         byte c = _buffer[_pos];
 
+        // If properties moved us to a different line, the content column determines
+        // the node indent, not the property column (e.g., "--- !<tag>\ncontent"
+        // has the tag at column 4 but content at column 0).
+        if (_line > nodeLine)
+        {
+            nodeColumn = _column;
+        }
+
+        // Check for empty node in flow context (e.g., !!str followed by , or } or ])
+        if (inFlow && IsFlowEmptyNode(c))
+        {
+            WriteEmptyNodeWithTag(tag);
+            FinishAnchor(hasAnchor, anchorStartPos);
+            return;
+        }
+
         // Flow collections
         if (c == YamlConstants.OpenBrace)
         {
             ConvertFlowMapping();
+            FinishAnchor(hasAnchor, anchorStartPos);
             return;
         }
 
         if (c == YamlConstants.OpenBracket)
         {
             ConvertFlowSequence();
+            FinishAnchor(hasAnchor, anchorStartPos);
             return;
         }
 
@@ -160,32 +389,58 @@ internal ref struct YamlToJsonConverter
         if (c == YamlConstants.Pipe || c == YamlConstants.GreaterThan)
         {
             ConvertBlockScalar(parentIndent);
+            FinishAnchor(hasAnchor, anchorStartPos);
             return;
         }
 
-        // Alias
+        // Alias — standalone value or mapping key
         if (c == YamlConstants.Asterisk)
         {
-            // Alias expansion: for now, write null (phase 4 will implement full anchor/alias)
-            SkipAlias();
-            _writer.WriteNullValue();
-            return;
+            // In block context, check if the alias is used as a mapping key
+            // (e.g., "*alias : value" → {aliasValue: "value"})
+            if (!inFlow && IsAliasMappingKey())
+            {
+                // Fall through to block mapping handling below
+            }
+            else
+            {
+                ConvertAlias();
+                FinishAnchor(hasAnchor, anchorStartPos);
+                return;
+            }
         }
 
         // Block sequence indicator
         if (c == YamlConstants.Dash && IsBlockSequenceEntry())
         {
             ConvertBlockSequence(parentIndent);
+            FinishAnchor(hasAnchor, anchorStartPos);
             return;
         }
 
         // Check for block mapping by looking ahead for a mapping value indicator.
         // This must be checked BEFORE quoted scalars because a quoted string followed
         // by ': ' is a mapping key, not a standalone value.
-        int nodeColumn = _column;
         if (IsBlockMappingStart(inFlow))
         {
-            ConvertBlockMapping(parentIndent, nodeColumn);
+            // In YAML, node properties on the same line as a block mapping's first key
+            // belong to that key, not to the mapping itself.
+            // E.g., "&a key: value" anchors the key "key", not the mapping {key: value}.
+            // Properties on a different line anchor the mapping:
+            // "&a\n  key: value" anchors the mapping.
+            if ((hasAnchor || tag != YamlTagKind.None) && _line == nodeLine)
+            {
+                ConvertBlockMapping(parentIndent, nodeColumn, hasAnchor, tag);
+
+                // Anchor was consumed by StoreKeyAnchor inside the mapping
+                hasAnchor = false;
+            }
+            else
+            {
+                ConvertBlockMapping(parentIndent, nodeColumn);
+            }
+
+            FinishAnchor(hasAnchor, anchorStartPos);
             return;
         }
 
@@ -193,17 +448,109 @@ internal ref struct YamlToJsonConverter
         if (c == YamlConstants.DoubleQuote)
         {
             ConvertDoubleQuotedScalar(parentIndent, inFlow, asValue: true);
+            FinishAnchor(hasAnchor, anchorStartPos);
             return;
         }
 
         if (c == YamlConstants.SingleQuote)
         {
             ConvertSingleQuotedScalar(asValue: true);
+            FinishAnchor(hasAnchor, anchorStartPos);
             return;
         }
 
         // Plain scalar
-        ConvertPlainScalar(parentIndent, inFlow);
+        ConvertPlainScalar(parentIndent, inFlow, tag);
+        FinishAnchor(hasAnchor, anchorStartPos);
+    }
+
+    /// <summary>
+    /// Parses node properties (anchor and tag) in any order.
+    /// YAML allows both <c>&amp;anchor !!tag</c> and <c>!!tag &amp;anchor</c>.
+    /// </summary>
+    private void ParseNodeProperties(ref YamlTagKind tag, ref bool hasAnchor)
+    {
+        while (_pos < _buffer.Length)
+        {
+            byte c = _buffer[_pos];
+
+            if (c == YamlConstants.Ampersand)
+            {
+                ReadAnchorName();
+                hasAnchor = true;
+                SkipWhitespaceAndComments();
+                continue;
+            }
+
+            if (c == YamlConstants.Exclamation)
+            {
+                tag = ReadTag();
+                SkipWhitespaceAndComments();
+                continue;
+            }
+
+            break;
+        }
+    }
+
+    /// <summary>
+    /// Writes the appropriate value for an empty node based on its tag.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void WriteEmptyNodeWithTag(YamlTagKind tag)
+    {
+        if (tag == YamlTagKind.Str)
+        {
+            _writer.WriteStringValue(ReadOnlySpan<byte>.Empty);
+        }
+        else
+        {
+            _writer.WriteNullValue();
+        }
+    }
+
+    /// <summary>
+    /// Checks if the current character indicates an empty node in flow context.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static bool IsFlowEmptyNode(byte c)
+    {
+        return c == YamlConstants.Comma
+            || c == YamlConstants.CloseBrace
+            || c == YamlConstants.CloseBracket;
+    }
+
+    /// <summary>
+    /// Checks whether the current position is an alias (*name) followed by
+    /// a block mapping value indicator (": "), meaning the alias is a key.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private bool IsAliasMappingKey()
+    {
+        int p = _pos + 1; // skip '*'
+
+        // Skip alias name chars
+        while (p < _buffer.Length
+            && !YamlCharacters.IsWhitespaceOrLineBreak(_buffer[p])
+            && !YamlCharacters.IsFlowIndicator(_buffer[p]))
+        {
+            p++;
+        }
+
+        // Skip spaces (not newlines)
+        while (p < _buffer.Length && _buffer[p] == YamlConstants.Space)
+        {
+            p++;
+        }
+
+        // Check for ": " (colon followed by whitespace/end)
+        if (p < _buffer.Length && _buffer[p] == YamlConstants.Colon)
+        {
+            int next = p + 1;
+            return next >= _buffer.Length || YamlCharacters.IsWhitespaceOrLineBreak(_buffer[next]);
+        }
+
+        return false;
     }
 
     /// <summary>
@@ -361,7 +708,20 @@ internal ref struct YamlToJsonConverter
     /// <summary>
     /// Converts a block mapping to a JSON object.
     /// </summary>
-    private void ConvertBlockMapping(int parentIndent, int mappingIndent)
+    /// <param name="parentIndent">The indentation level of the parent node.</param>
+    /// <param name="mappingIndent">The indentation level of this mapping.</param>
+    /// <param name="outerKeyHasAnchor">
+    /// True if the parent ConvertNode read an anchor that belongs to the first key
+    /// (properties on the same line as the first key in YAML belong to the key, not the mapping).
+    /// </param>
+    /// <param name="outerKeyTag">
+    /// Tag read by the parent ConvertNode for the first key (same-line rule).
+    /// </param>
+    private void ConvertBlockMapping(
+        int parentIndent,
+        int mappingIndent,
+        bool outerKeyHasAnchor = false,
+        YamlTagKind outerKeyTag = YamlTagKind.None)
     {
         EnterDepth();
 
@@ -402,11 +762,12 @@ internal ref struct YamlToJsonConverter
                     break;
                 }
 
-                // Skip anchor/tag on key
-                SkipAnchor();
-                SkipWhitespaceAndComments();
-                SkipTag();
-                SkipWhitespaceAndComments();
+                // Skip anchor/tag on key (in any order).
+                // On the first iteration, merge any properties from the parent ConvertNode
+                // (these are same-line properties that belong to the first key).
+                YamlTagKind keyTag = first ? outerKeyTag : YamlTagKind.None;
+                bool keyHasAnchor = first && outerKeyHasAnchor;
+                ParseNodeProperties(ref keyTag, ref keyHasAnchor);
 
                 if (_pos >= _buffer.Length)
                 {
@@ -423,40 +784,67 @@ internal ref struct YamlToJsonConverter
                         explicitKey = true;
                         Advance(1);
                         SkipWhitespaceAndComments();
+
+                        // Parse properties that follow the explicit key indicator
+                        // (e.g., "? !!str a" has the tag after the ?)
+                        if (_pos < _buffer.Length)
+                        {
+                            ParseNodeProperties(ref keyTag, ref keyHasAnchor);
+                        }
                     }
                 }
 
-                // Read the key
-                ReadOnlySpan<byte> key;
-                byte[]? rentedKeyBuffer = null;
-                if (explicitKey)
+                // Read the key — handle alias keys (*alias) specially
+                if (_pos < _buffer.Length && _buffer[_pos] == YamlConstants.Asterisk)
                 {
-                    key = ReadExplicitKeyContent(mappingIndent, out rentedKeyBuffer);
+                    // Alias as key
+                    WriteAliasAsPropertyName();
+
+                    // If the key also has an anchor, clear it to avoid dangling state.
+                    if (keyHasAnchor)
+                    {
+                        _activeAnchorNameStart = -1;
+                    }
                 }
                 else
                 {
-                    key = ReadMappingKey(out rentedKeyBuffer);
-                }
-
-                try
-                {
-                    // Duplicate key check
-                    if (_options.DuplicateKeyBehavior == DuplicateKeyBehavior.Error)
+                    ReadOnlySpan<byte> key;
+                    byte[]? rentedKeyBuffer = null;
+                    if (explicitKey)
                     {
-                        if (!keySet.AddIfNotExists(key))
-                        {
-                            ThrowDuplicateKey();
-                        }
+                        key = ReadExplicitKeyContent(mappingIndent, out rentedKeyBuffer);
+                    }
+                    else
+                    {
+                        key = ReadMappingKey(out rentedKeyBuffer);
                     }
 
-                    // Write the property name (key is always a string in JSON)
-                    _writer.WritePropertyName(key);
-                }
-                finally
-                {
-                    if (rentedKeyBuffer != null)
+                    try
                     {
-                        ArrayPool<byte>.Shared.Return(rentedKeyBuffer);
+                        // Duplicate key check
+                        if (_options.DuplicateKeyBehavior == DuplicateKeyBehavior.Error)
+                        {
+                            if (!keySet.AddIfNotExists(key))
+                            {
+                                ThrowDuplicateKey();
+                            }
+                        }
+
+                        // Write the property name (key is always a string in JSON)
+                        _writer.WritePropertyName(key);
+
+                        // If the key had an anchor, store it as a JSON string value
+                        if (keyHasAnchor)
+                        {
+                            StoreKeyAnchor(key);
+                        }
+                    }
+                    finally
+                    {
+                        if (rentedKeyBuffer != null)
+                        {
+                            ArrayPool<byte>.Shared.Return(rentedKeyBuffer);
+                        }
                     }
                 }
 
@@ -929,32 +1317,38 @@ internal ref struct YamlToJsonConverter
             {
                 int posBeforeEntry = _pos;
 
-                // Skip anchor/tag
-                SkipAnchor();
-                SkipWhitespaceAndComments();
-                SkipTag();
-                SkipWhitespaceAndComments();
+                // Skip anchor/tag (in any order)
+                YamlTagKind flowKeyTag = YamlTagKind.None;
+                bool flowKeyHasAnchor = false;
+                ParseNodeProperties(ref flowKeyTag, ref flowKeyHasAnchor);
 
-                // Read key
-                ReadOnlySpan<byte> key = ReadFlowMappingKey(out byte[]? rentedKeyBuffer);
-                try
+                // Read key — handle alias keys
+                if (_pos < _buffer.Length && _buffer[_pos] == YamlConstants.Asterisk)
                 {
-                    // Duplicate key check
-                    if (_options.DuplicateKeyBehavior == DuplicateKeyBehavior.Error)
-                    {
-                        if (!keySet.AddIfNotExists(key))
-                        {
-                            ThrowDuplicateKey();
-                        }
-                    }
-
-                    _writer.WritePropertyName(key);
+                    WriteAliasAsPropertyName();
                 }
-                finally
+                else
                 {
-                    if (rentedKeyBuffer != null)
+                    ReadOnlySpan<byte> key = ReadFlowMappingKey(out byte[]? rentedKeyBuffer);
+                    try
                     {
-                        ArrayPool<byte>.Shared.Return(rentedKeyBuffer);
+                        // Duplicate key check
+                        if (_options.DuplicateKeyBehavior == DuplicateKeyBehavior.Error)
+                        {
+                            if (!keySet.AddIfNotExists(key))
+                            {
+                                ThrowDuplicateKey();
+                            }
+                        }
+
+                        _writer.WritePropertyName(key);
+                    }
+                    finally
+                    {
+                        if (rentedKeyBuffer != null)
+                        {
+                            ArrayPool<byte>.Shared.Return(rentedKeyBuffer);
+                        }
                     }
                 }
 
@@ -1133,6 +1527,14 @@ internal ref struct YamlToJsonConverter
             }
 
             c = _buffer[p];
+
+            // After the anchor, if the next thing is a flow collection or alias,
+            // it's not an implicit mapping entry (it's an anchored value)
+            if (c == YamlConstants.OpenBrace || c == YamlConstants.OpenBracket
+                || c == YamlConstants.Asterisk)
+            {
+                return false;
+            }
         }
 
         // Skip past a quoted key
@@ -1241,9 +1643,10 @@ internal ref struct YamlToJsonConverter
     {
         _writer.WriteStartObject();
 
-        // Skip anchor if present
-        SkipAnchor();
-        SkipWhitespaceOnly();
+        // Skip anchor/tag on key
+        YamlTagKind implKeyTag = YamlTagKind.None;
+        bool implKeyHasAnchor = false;
+        ParseNodeProperties(ref implKeyTag, ref implKeyHasAnchor);
 
         // Read the key
         byte[]? rentedKeyBuffer = null;
@@ -1392,11 +1795,11 @@ internal ref struct YamlToJsonConverter
 
     /// <summary>
     /// Converts a plain (unquoted) scalar, writing it to the JSON writer
-    /// with type resolution based on the configured schema.
+    /// with type resolution based on the configured schema and optional tag override.
     /// </summary>
-    private void ConvertPlainScalar(int parentIndent, bool inFlow)
+    private void ConvertPlainScalar(int parentIndent, bool inFlow, YamlTagKind tag = YamlTagKind.None)
     {
-        ReadOnlySpan<byte> value = ReadPlainScalarValue(parentIndent, inFlow);
+        ReadOnlySpan<byte> value = ReadPlainScalarValue(parentIndent, inFlow, tag);
 
         // If value is empty and we're past the start, ReadPlainScalarValue already wrote
         // (multi-line path writes directly)
@@ -1405,14 +1808,91 @@ internal ref struct YamlToJsonConverter
             return;
         }
 
-        ScalarResolver.ScalarType scalarType = ScalarResolver.Resolve(value, _options.Schema);
-        ScalarResolver.WriteScalar(_writer, value, scalarType);
+        WriteScalarWithTag(value, tag);
+    }
+
+    /// <summary>
+    /// Writes a scalar value with tag-based type override.
+    /// </summary>
+    private void WriteScalarWithTag(ReadOnlySpan<byte> value, YamlTagKind tag)
+    {
+        switch (tag)
+        {
+            case YamlTagKind.Str:
+            case YamlTagKind.NonSpecific:
+                _writer.WriteStringValue(value);
+                return;
+
+            case YamlTagKind.Null:
+                _writer.WriteNullValue();
+                return;
+
+            case YamlTagKind.Bool:
+            {
+                ScalarResolver.ScalarType st = ScalarResolver.Resolve(value, _options.Schema);
+                if (st == ScalarResolver.ScalarType.True)
+                {
+                    _writer.WriteBooleanValue(true);
+                }
+                else if (st == ScalarResolver.ScalarType.False)
+                {
+                    _writer.WriteBooleanValue(false);
+                }
+                else
+                {
+                    // Fall back to schema resolution
+                    ScalarResolver.WriteScalar(_writer, value, st);
+                }
+
+                return;
+            }
+
+            case YamlTagKind.Int:
+            {
+                ScalarResolver.ScalarType st = ScalarResolver.Resolve(value, _options.Schema);
+                if (st == ScalarResolver.ScalarType.Integer || st == ScalarResolver.ScalarType.HexInteger
+                    || st == ScalarResolver.ScalarType.OctalInteger)
+                {
+                    ScalarResolver.WriteScalar(_writer, value, st);
+                }
+                else
+                {
+                    // Force integer interpretation
+                    ScalarResolver.WriteScalar(_writer, value, ScalarResolver.ScalarType.Integer);
+                }
+
+                return;
+            }
+
+            case YamlTagKind.Float:
+            {
+                ScalarResolver.ScalarType st = ScalarResolver.Resolve(value, _options.Schema);
+                if (st == ScalarResolver.ScalarType.Float || st == ScalarResolver.ScalarType.InfinityOrNaN)
+                {
+                    ScalarResolver.WriteScalar(_writer, value, st);
+                }
+                else
+                {
+                    ScalarResolver.WriteScalar(_writer, value, ScalarResolver.ScalarType.Float);
+                }
+
+                return;
+            }
+
+            default:
+            {
+                // Normal schema resolution
+                ScalarResolver.ScalarType scalarType = ScalarResolver.Resolve(value, _options.Schema);
+                ScalarResolver.WriteScalar(_writer, value, scalarType);
+                return;
+            }
+        }
     }
 
     /// <summary>
     /// Reads a plain scalar value (potentially multi-line with line folding).
     /// </summary>
-    private ReadOnlySpan<byte> ReadPlainScalarValue(int parentIndent, bool inFlow)
+    private ReadOnlySpan<byte> ReadPlainScalarValue(int parentIndent, bool inFlow, YamlTagKind tag = YamlTagKind.None)
     {
         int start = _pos;
         int end = _pos;
@@ -1532,10 +2012,9 @@ internal ref struct YamlToJsonConverter
                 }
             }
 
-            // Write via the scalar resolver
+            // Write via the scalar resolver (tag-aware)
             ReadOnlySpan<byte> value = rentedBuffer.AsSpan(0, written);
-            ScalarResolver.ScalarType scalarType = ScalarResolver.Resolve(value, _options.Schema);
-            ScalarResolver.WriteScalar(_writer, value, scalarType);
+            WriteScalarWithTag(value, tag);
 
             return ReadOnlySpan<byte>.Empty; // Signal that we already wrote
         }
@@ -2628,6 +3107,15 @@ internal ref struct YamlToJsonConverter
                     break;
                 }
 
+                // Document markers (--- or ...) at column 0 always terminate block scalars,
+                // even when contentIndent is 0 and the marker chars would otherwise be valid content.
+                if (lineIndent == 0
+                    && (YamlCharacters.IsDocumentMarker(_buffer, _pos, _column, YamlConstants.DocumentStartMarker)
+                        || YamlCharacters.IsDocumentMarker(_buffer, _pos, _column, YamlConstants.DocumentEndMarker)))
+                {
+                    break;
+                }
+
                 int extra = lineIndent - contentIndent;
 
                 // A line is "more-indented" if it has extra indent spaces OR
@@ -2803,6 +3291,17 @@ internal ref struct YamlToJsonConverter
                 }
 
                 continue;
+            }
+
+            // Document markers at column 0 are not block scalar content
+            if (lineIndent == 0
+                && (YamlCharacters.IsDocumentMarker(_buffer, _pos, 0, YamlConstants.DocumentStartMarker)
+                    || YamlCharacters.IsDocumentMarker(_buffer, _pos, 0, YamlConstants.DocumentEndMarker)))
+            {
+                _pos = savedPos;
+                _line = savedLine;
+                _column = savedColumn;
+                return -1;
             }
 
             // Found a non-empty line — its indent is the content indent
@@ -3101,78 +3600,618 @@ internal ref struct YamlToJsonConverter
     /// </summary>
     private bool IsDocumentEndOrStart()
     {
-        return YamlCharacters.IsDocumentMarker(_buffer, _pos, _column, YamlConstants.DocumentEndMarker)
-            || YamlCharacters.IsDocumentMarker(_buffer, _pos, _column, YamlConstants.DocumentStartMarker);
+        return IsDocumentEnd() || IsDocumentStart();
     }
 
     /// <summary>
-    /// Skips an anchor (&amp;name) annotation.
+    /// Checks if the current position is at a document end (...) marker.
     /// </summary>
-    private void SkipAnchor()
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private bool IsDocumentEnd()
     {
-        if (_pos < _buffer.Length && _buffer[_pos] == YamlConstants.Ampersand)
+        return YamlCharacters.IsDocumentMarker(_buffer, _pos, _column, YamlConstants.DocumentEndMarker);
+    }
+
+    /// <summary>
+    /// Checks if the current position is at a document start (---) marker.
+    /// </summary>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private bool IsDocumentStart()
+    {
+        return YamlCharacters.IsDocumentMarker(_buffer, _pos, _column, YamlConstants.DocumentStartMarker);
+    }
+
+    /// <summary>
+    /// Reads an anchor (&amp;name) and stores its name for later association with a value.
+    /// </summary>
+    private void ReadAnchorName()
+    {
+        if (_pos >= _buffer.Length || _buffer[_pos] != YamlConstants.Ampersand)
+        {
+            return;
+        }
+
+        Advance(1); // skip '&'
+        int nameStart = _pos;
+
+        while (_pos < _buffer.Length
+            && !YamlCharacters.IsWhitespaceOrLineBreak(_buffer[_pos])
+            && !YamlCharacters.IsFlowIndicator(_buffer[_pos]))
         {
             Advance(1);
+        }
+
+        int nameLength = _pos - nameStart;
+
+        // Store the anchor name in the name buffer
+        EnsureAnchorNameCapacity(nameLength);
+        _buffer.Slice(nameStart, nameLength).CopyTo(_anchorNameBuffer.AsSpan(_anchorNamesUsed));
+        _activeAnchorNameStart = _anchorNamesUsed;
+        _activeAnchorNameLength = nameLength;
+        _anchorNamesUsed += nameLength;
+    }
+
+    /// <summary>
+    /// Reads an alias (*name) and writes the anchored value to the JSON writer.
+    /// </summary>
+    private void ConvertAlias()
+    {
+        if (_pos >= _buffer.Length || _buffer[_pos] != YamlConstants.Asterisk)
+        {
+            return;
+        }
+
+        Advance(1); // skip '*'
+        int nameStart = _pos;
+
+        while (_pos < _buffer.Length
+            && !YamlCharacters.IsWhitespaceOrLineBreak(_buffer[_pos])
+            && !YamlCharacters.IsFlowIndicator(_buffer[_pos]))
+        {
+            Advance(1);
+        }
+
+        ReadOnlySpan<byte> aliasName = _buffer.Slice(nameStart, _pos - nameStart);
+
+        // Look up the anchor in the table
+        if (TryGetAnchorData(aliasName, out ReadOnlySpan<byte> anchorData))
+        {
+            _writer.WriteRawValue(anchorData, skipInputValidation: true);
+        }
+        else
+        {
+            // Undefined alias — write null
+            _writer.WriteNullValue();
+        }
+    }
+
+    /// <summary>
+    /// Reads an alias name and writes the anchored value as a JSON property name.
+    /// </summary>
+    private void WriteAliasAsPropertyName()
+    {
+        Advance(1); // skip '*'
+        int nameStart = _pos;
+
+        while (_pos < _buffer.Length
+            && !YamlCharacters.IsWhitespaceOrLineBreak(_buffer[_pos])
+            && !YamlCharacters.IsFlowIndicator(_buffer[_pos]))
+        {
+            Advance(1);
+        }
+
+        ReadOnlySpan<byte> aliasName = _buffer.Slice(nameStart, _pos - nameStart);
+
+        if (TryGetAnchorData(aliasName, out ReadOnlySpan<byte> anchorData))
+        {
+            // The stored data is JSON. For a property name, we need the raw text.
+            // If it's a JSON string like "foo", strip the quotes to get foo.
+            // Otherwise (number, bool, null, object, array), use the raw JSON as key.
+            if (anchorData.Length >= 2 && anchorData[0] == (byte)'"' && anchorData[anchorData.Length - 1] == (byte)'"')
+            {
+                ReadOnlySpan<byte> inner = anchorData.Slice(1, anchorData.Length - 2);
+
+                // Check if the inner content has JSON escapes
+                if (inner.IndexOf((byte)'\\') < 0)
+                {
+                    // No escapes — use directly
+                    _writer.WritePropertyName(inner);
+                }
+                else
+                {
+                    // Has escapes — need to unescape. Write property name from the full
+                    // anchor data as raw value, letting the writer handle encoding.
+                    // For JSON-escaped strings, we decode inline.
+                    _writer.WritePropertyName(UnescapeJsonString(inner));
+                }
+            }
+            else
+            {
+                // Non-string value — use raw JSON as property name
+                _writer.WritePropertyName(anchorData);
+            }
+        }
+        else
+        {
+            // Undefined alias
+            _writer.WritePropertyName(ReadOnlySpan<byte>.Empty);
+        }
+    }
+
+    /// <summary>
+    /// Finishes anchor capture after the anchored value has been written.
+    /// </summary>
+    private void FinishAnchor(bool hasAnchor, long anchorStartPos)
+    {
+        if (!hasAnchor)
+        {
+            // No anchor on this node — do NOT clear _activeAnchorNameStart,
+            // because a parent ConvertNode may still be tracking its own anchor.
+            return;
+        }
+
+        if (_bufferWriter == null || _activeAnchorNameStart < 0)
+        {
+            _activeAnchorNameStart = -1;
+            return;
+        }
+
+        _writer.Flush();
+        long anchorEndPos = _bufferWriter.WrittenSpan.Length;
+        int dataStart = (int)anchorStartPos;
+        int dataLength = (int)(anchorEndPos - anchorStartPos);
+
+        if (dataLength > 0)
+        {
+            // The Utf8JsonWriter may have prepended a list separator (comma) before the value.
+            // Strip it so the anchor data contains only the pure JSON value.
+            ReadOnlySpan<byte> captured = _bufferWriter.WrittenSpan.Slice(dataStart, dataLength);
+            if (captured[0] == (byte)',')
+            {
+                dataStart++;
+                dataLength--;
+                captured = captured.Slice(1);
+            }
+
+            // Store the value data
+            EnsureAnchorDataCapacity(dataLength);
+            captured.CopyTo(_anchorDataBuffer.AsSpan(_anchorDataUsed));
+
+            // Store the entry
+            EnsureAnchorEntryCapacity();
+            int entryBase = _anchorCount * AnchorEntrySize;
+            _anchorEntries![entryBase] = _activeAnchorNameStart;
+            _anchorEntries[entryBase + 1] = _activeAnchorNameLength;
+            _anchorEntries[entryBase + 2] = _anchorDataUsed;
+            _anchorEntries[entryBase + 3] = dataLength;
+            _anchorCount++;
+            _anchorDataUsed += dataLength;
+        }
+        else
+        {
+            // Anchor on null/empty value — store "null"
+            ReadOnlySpan<byte> nullBytes = "null"u8;
+            EnsureAnchorDataCapacity(nullBytes.Length);
+            nullBytes.CopyTo(_anchorDataBuffer.AsSpan(_anchorDataUsed));
+
+            EnsureAnchorEntryCapacity();
+            int entryBase = _anchorCount * AnchorEntrySize;
+            _anchorEntries![entryBase] = _activeAnchorNameStart;
+            _anchorEntries[entryBase + 1] = _activeAnchorNameLength;
+            _anchorEntries[entryBase + 2] = _anchorDataUsed;
+            _anchorEntries[entryBase + 3] = nullBytes.Length;
+            _anchorCount++;
+            _anchorDataUsed += nullBytes.Length;
+        }
+
+        _activeAnchorNameStart = -1;
+    }
+
+    /// <summary>
+    /// Stores the current active anchor with a JSON string value derived from
+    /// the given key bytes. This is used for anchors on mapping keys, which
+    /// are not captured by the normal FinishAnchor mechanism (since keys are
+    /// written via WritePropertyName, not WriteStringValue).
+    /// </summary>
+    private void StoreKeyAnchor(ReadOnlySpan<byte> keyBytes)
+    {
+        if (_activeAnchorNameStart < 0)
+        {
+            return;
+        }
+
+        // Build the JSON string representation: "keyBytes" with escaping
+        // First, compute the needed length: 2 for quotes + escaped content
+        int escapedLength = 0;
+        for (int i = 0; i < keyBytes.Length; i++)
+        {
+            byte b = keyBytes[i];
+            if (b == (byte)'"' || b == (byte)'\\' || b < 0x20)
+            {
+                // Control chars use \uXXXX (6 bytes), " and \ use 2 bytes
+                escapedLength += b < 0x20 ? 6 : 2;
+            }
+            else
+            {
+                escapedLength++;
+            }
+        }
+
+        int totalLength = escapedLength + 2; // 2 for surrounding quotes
+        EnsureAnchorDataCapacity(totalLength);
+        Span<byte> dest = _anchorDataBuffer.AsSpan(_anchorDataUsed, totalLength);
+        dest[0] = (byte)'"';
+        int w = 1;
+        for (int i = 0; i < keyBytes.Length; i++)
+        {
+            byte b = keyBytes[i];
+            if (b == (byte)'"')
+            {
+                dest[w++] = (byte)'\\';
+                dest[w++] = (byte)'"';
+            }
+            else if (b == (byte)'\\')
+            {
+                dest[w++] = (byte)'\\';
+                dest[w++] = (byte)'\\';
+            }
+            else if (b < 0x20)
+            {
+                dest[w++] = (byte)'\\';
+                dest[w++] = (byte)'u';
+                dest[w++] = (byte)'0';
+                dest[w++] = (byte)'0';
+                dest[w++] = HexDigit(b >> 4);
+                dest[w++] = HexDigit(b & 0x0F);
+            }
+            else
+            {
+                dest[w++] = b;
+            }
+        }
+
+        dest[w] = (byte)'"';
+
+        EnsureAnchorEntryCapacity();
+        int entryBase = _anchorCount * AnchorEntrySize;
+        _anchorEntries![entryBase] = _activeAnchorNameStart;
+        _anchorEntries[entryBase + 1] = _activeAnchorNameLength;
+        _anchorEntries[entryBase + 2] = _anchorDataUsed;
+        _anchorEntries[entryBase + 3] = totalLength;
+        _anchorCount++;
+        _anchorDataUsed += totalLength;
+        _activeAnchorNameStart = -1;
+
+        static byte HexDigit(int v) => (byte)(v < 10 ? '0' + v : 'a' + v - 10);
+    }
+
+    /// <summary>
+    /// Looks up an anchor by name and returns its JSON value data.
+    /// </summary>
+    private bool TryGetAnchorData(ReadOnlySpan<byte> name, out ReadOnlySpan<byte> data)
+    {
+        // Search backwards to find the most recent definition (handles redefinition)
+        for (int i = _anchorCount - 1; i >= 0; i--)
+        {
+            int entryBase = i * AnchorEntrySize;
+            int nameOffset = _anchorEntries![entryBase];
+            int nameLength = _anchorEntries[entryBase + 1];
+            int dataOffset = _anchorEntries[entryBase + 2];
+            int dataLength = _anchorEntries[entryBase + 3];
+
+            if (name.SequenceEqual(_anchorNameBuffer.AsSpan(nameOffset, nameLength)))
+            {
+                data = _anchorDataBuffer.AsSpan(dataOffset, dataLength);
+                return true;
+            }
+        }
+
+        data = default;
+        return false;
+    }
+
+    /// <summary>
+    /// Resets the anchor table for a new document.
+    /// </summary>
+    private void ResetAnchorTable()
+    {
+        _anchorNamesUsed = 0;
+        _anchorDataUsed = 0;
+        _anchorCount = 0;
+        _activeAnchorNameStart = -1;
+        _secondaryTagRedefined = false;
+    }
+
+    private void EnsureAnchorNameCapacity(int additional)
+    {
+        int required = _anchorNamesUsed + additional;
+        if (_anchorNameBuffer == null || required > _anchorNameBuffer.Length)
+        {
+            byte[] newBuffer = ArrayPool<byte>.Shared.Rent(Math.Max(required, 256));
+            if (_anchorNameBuffer != null)
+            {
+                _anchorNameBuffer.AsSpan(0, _anchorNamesUsed).CopyTo(newBuffer);
+                ArrayPool<byte>.Shared.Return(_anchorNameBuffer);
+            }
+
+            _anchorNameBuffer = newBuffer;
+        }
+    }
+
+    private void EnsureAnchorDataCapacity(int additional)
+    {
+        int required = _anchorDataUsed + additional;
+        if (_anchorDataBuffer == null || required > _anchorDataBuffer.Length)
+        {
+            byte[] newBuffer = ArrayPool<byte>.Shared.Rent(Math.Max(required, 1024));
+            if (_anchorDataBuffer != null)
+            {
+                _anchorDataBuffer.AsSpan(0, _anchorDataUsed).CopyTo(newBuffer);
+                ArrayPool<byte>.Shared.Return(_anchorDataBuffer);
+            }
+
+            _anchorDataBuffer = newBuffer;
+        }
+    }
+
+    private void EnsureAnchorEntryCapacity()
+    {
+        int required = (_anchorCount + 1) * AnchorEntrySize;
+        if (_anchorEntries == null || required > _anchorEntries.Length)
+        {
+            int[] newEntries = ArrayPool<int>.Shared.Rent(Math.Max(required, 16 * AnchorEntrySize));
+            if (_anchorEntries != null)
+            {
+                _anchorEntries.AsSpan(0, _anchorCount * AnchorEntrySize).CopyTo(newEntries);
+                ArrayPool<int>.Shared.Return(_anchorEntries);
+            }
+
+            _anchorEntries = newEntries;
+        }
+    }
+
+    private void ReturnAnchorBuffers()
+    {
+        if (_anchorNameBuffer != null)
+        {
+            ArrayPool<byte>.Shared.Return(_anchorNameBuffer);
+            _anchorNameBuffer = null;
+        }
+
+        if (_anchorDataBuffer != null)
+        {
+            ArrayPool<byte>.Shared.Return(_anchorDataBuffer);
+            _anchorDataBuffer = null;
+        }
+
+        if (_anchorEntries != null)
+        {
+            ArrayPool<int>.Shared.Return(_anchorEntries);
+            _anchorEntries = null;
+        }
+    }
+
+    /// <summary>
+    /// Unescapes a JSON-encoded string (without surrounding quotes) by processing
+    /// backslash escape sequences.
+    /// </summary>
+    private static ReadOnlySpan<byte> UnescapeJsonString(ReadOnlySpan<byte> escaped)
+    {
+        // Fast path: no escapes
+        if (escaped.IndexOf((byte)'\\') < 0)
+        {
+            return escaped;
+        }
+
+        // Slow path: unescape into rented buffer
+        byte[] buffer = ArrayPool<byte>.Shared.Rent(escaped.Length);
+        int written = 0;
+
+        for (int i = 0; i < escaped.Length; i++)
+        {
+            if (escaped[i] == (byte)'\\' && i + 1 < escaped.Length)
+            {
+                i++;
+                switch (escaped[i])
+                {
+                    case (byte)'"': buffer[written++] = (byte)'"'; break;
+                    case (byte)'\\': buffer[written++] = (byte)'\\'; break;
+                    case (byte)'/': buffer[written++] = (byte)'/'; break;
+                    case (byte)'n': buffer[written++] = (byte)'\n'; break;
+                    case (byte)'t': buffer[written++] = (byte)'\t'; break;
+                    case (byte)'r': buffer[written++] = (byte)'\r'; break;
+                    case (byte)'b': buffer[written++] = (byte)'\b'; break;
+                    case (byte)'f': buffer[written++] = (byte)'\f'; break;
+                    default: buffer[written++] = escaped[i]; break;
+                }
+            }
+            else
+            {
+                buffer[written++] = escaped[i];
+            }
+        }
+
+        // Note: This returns a span into a rented array. The caller must use it before the array is returned.
+        // In practice, WritePropertyName copies the data immediately.
+        return buffer.AsSpan(0, written);
+    }
+
+    /// <summary>
+    /// Reads a tag annotation and returns the resolved tag kind.
+    /// </summary>
+    private YamlTagKind ReadTag()
+    {
+        if (_pos >= _buffer.Length || _buffer[_pos] != YamlConstants.Exclamation)
+        {
+            return YamlTagKind.None;
+        }
+
+        Advance(1); // skip first '!'
+
+        if (_pos >= _buffer.Length || YamlCharacters.IsWhitespaceOrLineBreak(_buffer[_pos]))
+        {
+            // Bare '!' — non-specific tag
+            return YamlTagKind.NonSpecific;
+        }
+
+        if (_buffer[_pos] == YamlConstants.Exclamation)
+        {
+            // Secondary tag handle: !!name
+            Advance(1);
+            int nameStart = _pos;
             while (_pos < _buffer.Length
                 && !YamlCharacters.IsWhitespaceOrLineBreak(_buffer[_pos])
                 && !YamlCharacters.IsFlowIndicator(_buffer[_pos]))
             {
                 Advance(1);
             }
-        }
-    }
 
-    /// <summary>
-    /// Skips an alias (*name) reference.
-    /// </summary>
-    private void SkipAlias()
-    {
-        if (_pos < _buffer.Length && _buffer[_pos] == YamlConstants.Asterisk)
+            // If %TAG !! was redefined to a non-standard prefix,
+            // !!name is NOT a standard YAML type.
+            if (_secondaryTagRedefined)
+            {
+                return YamlTagKind.Other;
+            }
+
+            return ClassifyStandardTag(_buffer.Slice(nameStart, _pos - nameStart));
+        }
+
+        if (_buffer[_pos] == (byte)'<')
+        {
+            // Verbatim tag: !<uri>
+            Advance(1); // skip '<'
+            int uriStart = _pos;
+            while (_pos < _buffer.Length && _buffer[_pos] != (byte)'>')
+            {
+                Advance(1);
+            }
+
+            ReadOnlySpan<byte> uri = _buffer.Slice(uriStart, _pos - uriStart);
+            if (_pos < _buffer.Length)
+            {
+                Advance(1); // skip '>'
+            }
+
+            return ClassifyVerbatimTag(uri);
+        }
+
+        // Local or named handle tag: !name or !prefix!suffix
+        while (_pos < _buffer.Length
+            && !YamlCharacters.IsWhitespaceOrLineBreak(_buffer[_pos])
+            && !YamlCharacters.IsFlowIndicator(_buffer[_pos]))
         {
             Advance(1);
-            while (_pos < _buffer.Length
-                && !YamlCharacters.IsWhitespaceOrLineBreak(_buffer[_pos])
-                && !YamlCharacters.IsFlowIndicator(_buffer[_pos]))
-            {
-                Advance(1);
-            }
         }
+
+        return YamlTagKind.Other;
     }
 
     /// <summary>
-    /// Skips a tag (!tag or !!tag) annotation.
+    /// Classifies a standard YAML tag name (after !!).
     /// </summary>
-    private void SkipTag()
+    private static YamlTagKind ClassifyStandardTag(ReadOnlySpan<byte> name)
     {
-        if (_pos < _buffer.Length && _buffer[_pos] == YamlConstants.Exclamation)
+        if (name.SequenceEqual("str"u8))
         {
-            Advance(1);
-            if (_pos < _buffer.Length && _buffer[_pos] == YamlConstants.Exclamation)
-            {
-                Advance(1);
-            }
-
-            while (_pos < _buffer.Length
-                && !YamlCharacters.IsWhitespaceOrLineBreak(_buffer[_pos])
-                && !YamlCharacters.IsFlowIndicator(_buffer[_pos]))
-            {
-                Advance(1);
-            }
+            return YamlTagKind.Str;
         }
+
+        if (name.SequenceEqual("int"u8))
+        {
+            return YamlTagKind.Int;
+        }
+
+        if (name.SequenceEqual("float"u8))
+        {
+            return YamlTagKind.Float;
+        }
+
+        if (name.SequenceEqual("bool"u8))
+        {
+            return YamlTagKind.Bool;
+        }
+
+        if (name.SequenceEqual("null"u8))
+        {
+            return YamlTagKind.Null;
+        }
+
+        if (name.SequenceEqual("seq"u8))
+        {
+            return YamlTagKind.Seq;
+        }
+
+        if (name.SequenceEqual("map"u8))
+        {
+            return YamlTagKind.Map;
+        }
+
+        return YamlTagKind.Other;
     }
 
     /// <summary>
-    /// Skips a %YAML or %TAG directive line.
+    /// Classifies a verbatim tag URI (e.g., tag:yaml.org,2002:str).
+    /// </summary>
+    private static YamlTagKind ClassifyVerbatimTag(ReadOnlySpan<byte> uri)
+    {
+        ReadOnlySpan<byte> prefix = "tag:yaml.org,2002:"u8;
+        if (uri.StartsWith(prefix))
+        {
+            return ClassifyStandardTag(uri.Slice(prefix.Length));
+        }
+
+        return YamlTagKind.Other;
+    }
+
+    /// <summary>
+    /// Parses a %YAML or %TAG directive line. Detects when %TAG redefines
+    /// the secondary tag handle (!!).
     /// </summary>
     private void SkipDirective()
     {
-        if (_pos < _buffer.Length && _buffer[_pos] == YamlConstants.Percent)
+        if (_pos >= _buffer.Length || _buffer[_pos] != YamlConstants.Percent)
         {
-            SkipToEndOfLine();
-            if (_pos < _buffer.Length)
+            return;
+        }
+
+        int directiveStart = _pos;
+
+        // Check for %TAG !! with non-standard prefix using lookahead
+        // without advancing position, then skip the whole line.
+        ReadOnlySpan<byte> tagSecondary = "%TAG !!"u8;
+        if (_pos + tagSecondary.Length <= _buffer.Length
+            && _buffer.Slice(_pos, tagSecondary.Length).SequenceEqual(tagSecondary))
+        {
+            // Found %TAG !! — check if the prefix is non-standard
+            int p = _pos + tagSecondary.Length;
+
+            // Skip whitespace
+            while (p < _buffer.Length && _buffer[p] == YamlConstants.Space)
             {
-                SkipLineBreak();
+                p++;
             }
+
+            // Read the prefix
+            int prefixStart = p;
+            while (p < _buffer.Length && !YamlCharacters.IsWhitespaceOrLineBreak(_buffer[p]))
+            {
+                p++;
+            }
+
+            ReadOnlySpan<byte> prefix = _buffer.Slice(prefixStart, p - prefixStart);
+            ReadOnlySpan<byte> standardPrefix = "tag:yaml.org,2002:"u8;
+
+            if (!prefix.SequenceEqual(standardPrefix))
+            {
+                _secondaryTagRedefined = true;
+            }
+        }
+
+        // Skip the entire directive line
+        SkipToEndOfLine();
+        if (_pos < _buffer.Length)
+        {
+            SkipLineBreak();
         }
     }
 

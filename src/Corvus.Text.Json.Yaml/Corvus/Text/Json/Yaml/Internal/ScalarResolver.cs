@@ -651,8 +651,20 @@ internal static class ScalarResolver
 
     private static void WriteFloat(Utf8JsonWriter writer, ReadOnlySpan<byte> value)
     {
-        // Write the raw decimal representation to avoid precision loss
-        writer.WriteRawValue(value, skipInputValidation: true);
+        // Parse as double to normalize the representation (e.g., 450.00 → 450).
+        // Use Utf8Parser for zero-allocation parsing from UTF-8 bytes.
+        if (System.Buffers.Text.Utf8Parser.TryParse(value, out double d, out int bytesConsumed)
+            && bytesConsumed == value.Length
+            && !double.IsInfinity(d)
+            && !double.IsNaN(d))
+        {
+            writer.WriteNumberValue(d);
+        }
+        else
+        {
+            // Fallback: write the raw decimal representation
+            writer.WriteRawValue(value, skipInputValidation: true);
+        }
     }
 
     private static void WriteHexInteger(Utf8JsonWriter writer, ReadOnlySpan<byte> value)

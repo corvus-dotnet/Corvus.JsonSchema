@@ -3,7 +3,7 @@
 // </copyright>
 
 using System.Text;
-using System.Text.Json;
+using global::System.Text.Json;
 using Corvus.Text.Json;
 using Corvus.Text.Json.Yaml;
 using Xunit;
@@ -84,13 +84,37 @@ public class YamlConformanceTests
         bool isMultiDoc = IsMultiDocumentJson(expectedJson);
         if (isMultiDoc)
         {
-            // Multi-document: parse first document only and compare to first JSON value
-            string firstExpected = ExtractFirstJsonValue(expectedJson);
+            // Multi-document: use MultiAsArray mode and compare all documents
+            options = options with
+            {
+                DocumentMode = YamlDocumentMode.MultiAsArray,
+            };
+
             try
             {
                 using ParsedJsonDocument<Corvus.Text.Json.JsonElement> doc = YamlDocument.Parse(yamlBytes, options);
-                string actual = doc.RootElement.GetRawText();
-                AssertJsonEquivalent(firstExpected, actual, id, name);
+                Corvus.Text.Json.JsonElement root = doc.RootElement;
+
+                // The result should be a JSON array of documents
+                var expectedValues = ExtractAllJsonValues(expectedJson);
+
+                // Verify length matches
+                int actualLength = 0;
+                foreach (Corvus.Text.Json.JsonElement _ in root.EnumerateArray())
+                {
+                    actualLength++;
+                }
+
+                Assert.Equal(expectedValues.Count, actualLength);
+
+                // Compare each document
+                int i = 0;
+                foreach (Corvus.Text.Json.JsonElement element in root.EnumerateArray())
+                {
+                    string actual = element.GetRawText();
+                    AssertJsonEquivalent(expectedValues[i], actual, id, $"{name} (doc {i})");
+                    i++;
+                }
             }
             catch (YamlException ex)
             {
@@ -316,7 +340,7 @@ public class YamlConformanceTests
             using JsonDocument doc = JsonDocument.Parse(json);
             return false;
         }
-        catch (JsonException)
+        catch (global::System.Text.Json.JsonException)
         {
             return true;
         }
@@ -355,6 +379,62 @@ public class YamlConformanceTests
 
         long end = reader.BytesConsumed;
         return Encoding.UTF8.GetString(Encoding.UTF8.GetBytes(json), start, (int)(end - start));
+    }
+
+    private static List<string> ExtractAllJsonValues(string json)
+    {
+        var values = new List<string>();
+        byte[] bytes = Encoding.UTF8.GetBytes(json);
+        int offset = 0;
+
+        while (offset < bytes.Length)
+        {
+            // Skip whitespace
+            while (offset < bytes.Length && (bytes[offset] == (byte)' ' || bytes[offset] == (byte)'\n'
+                || bytes[offset] == (byte)'\r' || bytes[offset] == (byte)'\t'))
+            {
+                offset++;
+            }
+
+            if (offset >= bytes.Length)
+            {
+                break;
+            }
+
+            var reader = new System.Text.Json.Utf8JsonReader(bytes.AsSpan(offset));
+            if (!reader.Read())
+            {
+                break;
+            }
+
+            int start = offset + (int)reader.TokenStartIndex;
+
+            // Skip to the end of this value
+            int depth = 0;
+            do
+            {
+                if (reader.TokenType == System.Text.Json.JsonTokenType.StartObject || reader.TokenType == System.Text.Json.JsonTokenType.StartArray)
+                {
+                    depth++;
+                }
+                else if (reader.TokenType == System.Text.Json.JsonTokenType.EndObject || reader.TokenType == System.Text.Json.JsonTokenType.EndArray)
+                {
+                    depth--;
+                }
+
+                if (depth == 0)
+                {
+                    break;
+                }
+            }
+            while (reader.Read());
+
+            int consumed = offset + (int)reader.BytesConsumed;
+            values.Add(Encoding.UTF8.GetString(bytes, start, consumed - start));
+            offset = consumed;
+        }
+
+        return values;
     }
 
 }

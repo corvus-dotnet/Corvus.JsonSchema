@@ -34,7 +34,7 @@ public static class YamlDocument
 
         try
         {
-            YamlToJsonConverter converter = new(utf8Yaml.Span, writer, options);
+            YamlToJsonConverter converter = new(utf8Yaml.Span, writer, options, bufferWriter);
             converter.Convert();
             writer.Flush();
 
@@ -58,7 +58,25 @@ public static class YamlDocument
         Utf8JsonWriter writer,
         YamlReaderOptions options = default)
     {
-        YamlToJsonConverter converter = new(utf8Yaml, writer, options);
-        converter.Convert();
+        // Use an internal buffer writer to enable anchor/alias support.
+        // The output is written to the internal buffer first, then replayed to the caller's writer.
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+        Utf8JsonWriter internalWriter = workspace.RentWriterAndBuffer(
+            WriterOptions,
+            Math.Max(utf8Yaml.Length, 256),
+            out IByteBufferWriter bufferWriter);
+
+        try
+        {
+            YamlToJsonConverter converter = new(utf8Yaml, internalWriter, options, bufferWriter);
+            converter.Convert();
+            internalWriter.Flush();
+
+            writer.WriteRawValue(bufferWriter.WrittenSpan, skipInputValidation: true);
+        }
+        finally
+        {
+            workspace.ReturnWriterAndBuffer(internalWriter, bufferWriter);
+        }
     }
 }
