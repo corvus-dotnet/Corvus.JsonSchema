@@ -8,6 +8,9 @@ using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Columns;
 using BenchmarkDotNet.Configs;
 using Corvus.Text.Json.Yaml;
+using StjYamlDocument = Corvus.Yaml.YamlDocument;
+using StjYamlDocumentMode = Corvus.Yaml.YamlDocumentMode;
+using StjYamlReaderOptions = Corvus.Yaml.YamlReaderOptions;
 using YamlDotNet.Core;
 using YamlDotNet.Serialization;
 
@@ -53,6 +56,11 @@ public class YamlToJsonBenchmark
         DocumentMode = YamlDocumentMode.MultiAsArray,
     };
 
+    private static readonly StjYamlReaderOptions StjMultiDocOptions = new()
+    {
+        DocumentMode = StjYamlDocumentMode.MultiAsArray,
+    };
+
     [GlobalSetup]
     public void GlobalSetup()
     {
@@ -95,6 +103,14 @@ public class YamlToJsonBenchmark
         return doc.RootElement.ValueKind;
     }
 
+    [BenchmarkCategory("SimpleScalar")]
+    [Benchmark]
+    public System.Text.Json.JsonValueKind CorvusStj_SimpleScalar()
+    {
+        using JsonDocument doc = StjYamlDocument.Parse(this.simpleScalarBytes);
+        return doc.RootElement.ValueKind;
+    }
+
     // ---- NestedMapping (540 bytes) ----
 
     [BenchmarkCategory("NestedMapping")]
@@ -110,6 +126,14 @@ public class YamlToJsonBenchmark
     public JsonValueKind Corvus_NestedMapping()
     {
         using ParsedJsonDocument<JsonElement> doc = YamlDocument.Parse<JsonElement>(this.nestedMappingBytes);
+        return doc.RootElement.ValueKind;
+    }
+
+    [BenchmarkCategory("NestedMapping")]
+    [Benchmark]
+    public System.Text.Json.JsonValueKind CorvusStj_NestedMapping()
+    {
+        using JsonDocument doc = StjYamlDocument.Parse(this.nestedMappingBytes);
         return doc.RootElement.ValueKind;
     }
 
@@ -131,6 +155,14 @@ public class YamlToJsonBenchmark
         return doc.RootElement.ValueKind;
     }
 
+    [BenchmarkCategory("BlockScalar")]
+    [Benchmark]
+    public System.Text.Json.JsonValueKind CorvusStj_BlockScalar()
+    {
+        using JsonDocument doc = StjYamlDocument.Parse(this.blockScalarBytes);
+        return doc.RootElement.ValueKind;
+    }
+
     // ---- FlowStyle (374 bytes) ----
 
     [BenchmarkCategory("FlowStyle")]
@@ -146,6 +178,14 @@ public class YamlToJsonBenchmark
     public JsonValueKind Corvus_FlowStyle()
     {
         using ParsedJsonDocument<JsonElement> doc = YamlDocument.Parse<JsonElement>(this.flowStyleBytes);
+        return doc.RootElement.ValueKind;
+    }
+
+    [BenchmarkCategory("FlowStyle")]
+    [Benchmark]
+    public System.Text.Json.JsonValueKind CorvusStj_FlowStyle()
+    {
+        using JsonDocument doc = StjYamlDocument.Parse(this.flowStyleBytes);
         return doc.RootElement.ValueKind;
     }
 
@@ -167,6 +207,14 @@ public class YamlToJsonBenchmark
         return doc.RootElement.ValueKind;
     }
 
+    [BenchmarkCategory("AnchorAlias")]
+    [Benchmark]
+    public System.Text.Json.JsonValueKind CorvusStj_AnchorAlias()
+    {
+        using JsonDocument doc = StjYamlDocument.Parse(this.anchorAliasBytes);
+        return doc.RootElement.ValueKind;
+    }
+
     // ---- SmallConfig (339 bytes) ----
 
     [BenchmarkCategory("SmallConfig")]
@@ -182,6 +230,14 @@ public class YamlToJsonBenchmark
     public JsonValueKind Corvus_SmallConfig()
     {
         using ParsedJsonDocument<JsonElement> doc = YamlDocument.Parse<JsonElement>(this.smallConfigBytes);
+        return doc.RootElement.ValueKind;
+    }
+
+    [BenchmarkCategory("SmallConfig")]
+    [Benchmark]
+    public System.Text.Json.JsonValueKind CorvusStj_SmallConfig()
+    {
+        using JsonDocument doc = StjYamlDocument.Parse(this.smallConfigBytes);
         return doc.RootElement.ValueKind;
     }
 
@@ -203,6 +259,14 @@ public class YamlToJsonBenchmark
         return doc.RootElement.ValueKind;
     }
 
+    [BenchmarkCategory("LargeConfig")]
+    [Benchmark]
+    public System.Text.Json.JsonValueKind CorvusStj_LargeConfig()
+    {
+        using JsonDocument doc = StjYamlDocument.Parse(this.largeConfigBytes);
+        return doc.RootElement.ValueKind;
+    }
+
     // ---- ComplexMixed (~2.4KB) ----
 
     [BenchmarkCategory("ComplexMixed")]
@@ -218,6 +282,14 @@ public class YamlToJsonBenchmark
     public JsonValueKind Corvus_ComplexMixed()
     {
         using ParsedJsonDocument<JsonElement> doc = YamlDocument.Parse<JsonElement>(this.complexMixedBytes);
+        return doc.RootElement.ValueKind;
+    }
+
+    [BenchmarkCategory("ComplexMixed")]
+    [Benchmark]
+    public System.Text.Json.JsonValueKind CorvusStj_ComplexMixed()
+    {
+        using JsonDocument doc = StjYamlDocument.Parse(this.complexMixedBytes);
         return doc.RootElement.ValueKind;
     }
 
@@ -257,6 +329,14 @@ public class YamlToJsonBenchmark
     public JsonValueKind Corvus_MultiDocument()
     {
         using ParsedJsonDocument<JsonElement> doc = YamlDocument.Parse<JsonElement>(this.multiDocumentBytes, MultiDocOptions);
+        return doc.RootElement.ValueKind;
+    }
+
+    [BenchmarkCategory("MultiDocument")]
+    [Benchmark]
+    public System.Text.Json.JsonValueKind CorvusStj_MultiDocument()
+    {
+        using JsonDocument doc = StjYamlDocument.Parse(this.multiDocumentBytes, StjMultiDocOptions);
         return doc.RootElement.ValueKind;
     }
 

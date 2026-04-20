@@ -21,6 +21,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\Corvus.Text.Json.Yaml\Corvus.Text.Json.Yaml.csproj" />
     <ProjectReference Include="..\..\src\Corvus.Text.Json\Corvus.Text.Json.csproj" />
+    <ProjectReference Include="..\..\src\Corvus.Yaml.SystemTextJson\Corvus.Yaml.SystemTextJson.csproj" />
   </ItemGroup>
 
   <ItemGroup>
