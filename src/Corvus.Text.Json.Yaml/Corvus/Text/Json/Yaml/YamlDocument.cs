@@ -38,7 +38,10 @@ public static class YamlDocument
         converter.Convert();
         writer.Flush();
 
-        return JsonDocument.Parse(bufferWriter.WrittenMemory);
+        // Use ParseValue which copies the data internally, so the document
+        // does not reference the pooled buffer after it is returned.
+        var reader = new Utf8JsonReader(bufferWriter.WrittenSpan);
+        return JsonDocument.ParseValue(ref reader);
     }
 
     /// <summary>
@@ -82,7 +85,10 @@ public static class YamlDocument
             converter.Convert();
             writer.Flush();
 
-            return JsonDocument.Parse(jsonBuffer.WrittenMemory);
+            // Use ParseValue which copies the data internally, so the document
+            // does not reference the pooled buffer after it is returned.
+            var reader = new Utf8JsonReader(jsonBuffer.WrittenSpan);
+            return JsonDocument.ParseValue(ref reader);
         }
         finally
         {
@@ -184,7 +190,25 @@ public static class YamlDocument
             converter.Convert();
             writer.Flush();
 
-            return ParsedJsonDocument<TElement>.Parse(bufferWriter.WrittenMemory);
+            // Copy the JSON bytes to a rented array that the document will own.
+            // The workspace's buffer will be returned to the cache, so we must not
+            // let the document reference it directly.
+            ReadOnlySpan<byte> written = bufferWriter.WrittenSpan;
+            int length = written.Length;
+            byte[] ownedBytes = ArrayPool<byte>.Shared.Rent(length);
+            written.CopyTo(ownedBytes);
+
+            try
+            {
+                return ParsedJsonDocument<TElement>.Parse(
+                    ownedBytes.AsMemory(0, length), ownedBytes);
+            }
+            catch
+            {
+                ownedBytes.AsSpan(0, length).Clear();
+                ArrayPool<byte>.Shared.Return(ownedBytes);
+                throw;
+            }
         }
         finally
         {
@@ -240,7 +264,23 @@ public static class YamlDocument
                 converter.Convert();
                 writer.Flush();
 
-                return ParsedJsonDocument<TElement>.Parse(jsonBuffer.WrittenMemory);
+                // Copy the JSON bytes to a rented array that the document will own.
+                ReadOnlySpan<byte> written = jsonBuffer.WrittenSpan;
+                int jsonLength = written.Length;
+                byte[] ownedBytes = ArrayPool<byte>.Shared.Rent(jsonLength);
+                written.CopyTo(ownedBytes);
+
+                try
+                {
+                    return ParsedJsonDocument<TElement>.Parse(
+                        ownedBytes.AsMemory(0, jsonLength), ownedBytes);
+                }
+                catch
+                {
+                    ownedBytes.AsSpan(0, jsonLength).Clear();
+                    ArrayPool<byte>.Shared.Return(ownedBytes);
+                    throw;
+                }
             }
             finally
             {

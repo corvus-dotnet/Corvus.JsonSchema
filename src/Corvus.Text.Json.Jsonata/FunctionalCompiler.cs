@@ -2717,8 +2717,13 @@ internal static class FunctionalCompiler
                 // focus-bound paths handle group-by inside EvalFocusStep).
                 if (startStep == 0 && groupByPairs is not null)
                 {
-                    // GroupBy consumes current's elements — return our array.
-                    if (currentArrayOwned) { current.ReturnBackingArray(); currentArrayOwned = false; }
+                    // Save old sequence so we can return its backing array after group-by.
+                    // We must NOT return the array before the call because the group-by
+                    // methods rent from the same ArrayPool<JsonElement> and could receive
+                    // the same physical array, corrupting the elements we're iterating.
+                    Sequence previous = current;
+                    bool previousOwned = currentArrayOwned;
+                    currentArrayOwned = false;
 
                     // Fast path: single-pair group-by with NameNode key + value.
                     // Uses the CVB object directly as the grouping accumulator.
@@ -2730,6 +2735,9 @@ internal static class FunctionalCompiler
                     {
                         current = ApplyGroupBy(current, groupByPairs, env, tupleIndexVar, tupleGroupIndices);
                     }
+
+                    // Now safe to return — group-by has finished reading previous's elements.
+                    if (previousOwned) { previous.ReturnBackingArray(); }
                 }
 
                 // When the path has the KeepSingletonArray flag (from [] modifier),
