@@ -249,12 +249,62 @@ public class YamlConformanceTests
         using JsonDocument expectedDoc = JsonDocument.Parse(expected);
         using JsonDocument actualDoc = JsonDocument.Parse(actual);
 
-        string normalizedExpected = JsonSerializer.Serialize(expectedDoc.RootElement);
-        string normalizedActual = JsonSerializer.Serialize(actualDoc.RootElement);
-
+        // Use deep comparison that is order-independent for object keys
         Assert.True(
-            normalizedExpected == normalizedActual,
-            $"[{id}] {name}:\n  Expected: {normalizedExpected}\n  Actual:   {normalizedActual}");
+            JsonElementDeepEquals(expectedDoc.RootElement, actualDoc.RootElement),
+            $"[{id}] {name}:\n  Expected: {JsonSerializer.Serialize(expectedDoc.RootElement)}\n  Actual:   {JsonSerializer.Serialize(actualDoc.RootElement)}");
+    }
+
+    private static bool JsonElementDeepEquals(System.Text.Json.JsonElement a, System.Text.Json.JsonElement b)
+    {
+        if (a.ValueKind != b.ValueKind)
+        {
+            return false;
+        }
+
+        switch (a.ValueKind)
+        {
+            case System.Text.Json.JsonValueKind.Object:
+                int countA = 0;
+                foreach (var _ in a.EnumerateObject()) countA++;
+                int countB = 0;
+                foreach (var _ in b.EnumerateObject()) countB++;
+                if (countA != countB) return false;
+
+                foreach (System.Text.Json.JsonProperty prop in a.EnumerateObject())
+                {
+                    if (!b.TryGetProperty(prop.Name, out System.Text.Json.JsonElement bVal))
+                        return false;
+                    if (!JsonElementDeepEquals(prop.Value, bVal))
+                        return false;
+                }
+
+                return true;
+
+            case System.Text.Json.JsonValueKind.Array:
+                int lenA = a.GetArrayLength();
+                int lenB = b.GetArrayLength();
+                if (lenA != lenB) return false;
+
+                var enumA = a.EnumerateArray();
+                var enumB = b.EnumerateArray();
+                while (enumA.MoveNext() && enumB.MoveNext())
+                {
+                    if (!JsonElementDeepEquals(enumA.Current, enumB.Current))
+                        return false;
+                }
+
+                return true;
+
+            case System.Text.Json.JsonValueKind.String:
+                return a.GetString() == b.GetString();
+
+            case System.Text.Json.JsonValueKind.Number:
+                return a.GetRawText() == b.GetRawText();
+
+            default:
+                return true; // True, False, Null
+        }
     }
 
     private static bool IsMultiDocumentJson(string json)

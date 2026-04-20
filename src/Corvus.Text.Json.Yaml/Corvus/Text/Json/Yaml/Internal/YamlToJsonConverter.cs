@@ -427,7 +427,17 @@ internal ref struct YamlToJsonConverter
                 }
 
                 // Read the key
-                ReadOnlySpan<byte> key = ReadMappingKey(out byte[]? rentedKeyBuffer);
+                ReadOnlySpan<byte> key;
+                byte[]? rentedKeyBuffer = null;
+                if (explicitKey)
+                {
+                    key = ReadExplicitKeyContent(mappingIndent, out rentedKeyBuffer);
+                }
+                else
+                {
+                    key = ReadMappingKey(out rentedKeyBuffer);
+                }
+
                 try
                 {
                     // Duplicate key check
@@ -450,41 +460,68 @@ internal ref struct YamlToJsonConverter
                     }
                 }
 
-                // Expect ': ' or just ':' at end of line
-                SkipWhitespaceOnly();
+                // For explicit keys, ': ' can be on a new line (after comments)
+                if (explicitKey)
+                {
+                    SkipWhitespaceAndComments();
+                }
+                else
+                {
+                    SkipWhitespaceOnly();
+                }
 
                 if (_pos < _buffer.Length && _buffer[_pos] == YamlConstants.Colon)
                 {
-                    Advance(1);
-                    SkipWhitespaceOnly();
+                    int next = _pos + 1;
+                    bool isValueIndicator = next >= _buffer.Length
+                        || YamlCharacters.IsWhitespaceOrLineBreak(_buffer[next]);
 
-                    // Check for value on the same line vs next line
-                    if (_pos >= _buffer.Length || YamlCharacters.IsLineBreak(_buffer[_pos]) || IsComment())
+                    if (isValueIndicator)
                     {
-                        // Value is on the next line (block value)
-                        SkipWhitespaceAndComments();
+                        Advance(1);
+                        SkipWhitespaceOnly();
 
-                        // YAML spec: a block sequence at the same indent as a mapping key
-                        // can be the mapping value
-                        bool hasValue = _pos < _buffer.Length && !IsDocumentEndOrStart() &&
-                            (_column > mappingIndent ||
-                             (_column == mappingIndent
-                              && _buffer[_pos] == YamlConstants.Dash && IsBlockSequenceEntry()));
-
-                        if (hasValue)
+                        // Check for value on the same line vs next line
+                        if (_pos >= _buffer.Length || YamlCharacters.IsLineBreak(_buffer[_pos]) || IsComment())
                         {
-                            ConvertNode(mappingIndent, false);
+                            // Value is on the next line (block value)
+                            SkipWhitespaceAndComments();
+
+                            // YAML spec: a block sequence at the same indent as a mapping key
+                            // can be the mapping value
+                            bool hasValue = _pos < _buffer.Length && !IsDocumentEndOrStart() &&
+                                (_column > mappingIndent ||
+                                 (_column == mappingIndent
+                                  && _buffer[_pos] == YamlConstants.Dash && IsBlockSequenceEntry()));
+
+                            if (hasValue)
+                            {
+                                ConvertNode(mappingIndent, false);
+                            }
+                            else
+                            {
+                                // Empty value → null
+                                _writer.WriteNullValue();
+                            }
                         }
                         else
                         {
-                            // Empty value → null
-                            _writer.WriteNullValue();
+                            // Value on same line
+                            ConvertNode(mappingIndent, false);
                         }
                     }
                     else
                     {
-                        // Value on same line
-                        ConvertNode(mappingIndent, false);
+                        // Colon not followed by whitespace — not a value indicator.
+                        // For implicit keys this is an error; for explicit keys, null value.
+                        if (explicitKey)
+                        {
+                            _writer.WriteNullValue();
+                        }
+                        else
+                        {
+                            ThrowExpectedMappingValue();
+                        }
                     }
                 }
                 else if (explicitKey)
@@ -539,6 +576,249 @@ internal ref struct YamlToJsonConverter
 
         // Plain scalar key — read until ': ' or line break
         return ReadPlainScalarKey();
+    }
+
+    /// <summary>
+    /// Reads an explicit key's content (after the '?' indicator).
+    /// Supports block scalars, quoted scalars, and multi-line plain scalars.
+    /// </summary>
+    private ReadOnlySpan<byte> ReadExplicitKeyContent(int mappingIndent, out byte[]? rentedKeyBuffer)
+    {
+        rentedKeyBuffer = null;
+
+        if (_pos >= _buffer.Length || YamlCharacters.IsLineBreak(_buffer[_pos]))
+        {
+            // Empty explicit key → empty string
+            return ReadOnlySpan<byte>.Empty;
+        }
+
+        byte c = _buffer[_pos];
+
+        // Block scalar key (| or >)
+        if (c == YamlConstants.Pipe || c == YamlConstants.GreaterThan)
+        {
+            return ReadBlockScalarContent(mappingIndent, out rentedKeyBuffer);
+        }
+
+        // Double-quoted key
+        if (c == YamlConstants.DoubleQuote)
+        {
+            return ReadDoubleQuotedScalar(out rentedKeyBuffer);
+        }
+
+        // Single-quoted key
+        if (c == YamlConstants.SingleQuote)
+        {
+            return ReadSingleQuotedScalar(out rentedKeyBuffer);
+        }
+
+        // Plain scalar key — may be multi-line
+        return ReadExplicitPlainKey(mappingIndent, out rentedKeyBuffer);
+    }
+
+    /// <summary>
+    /// Reads a multi-line plain scalar key for an explicit key entry.
+    /// The key terminates at a line starting with ':' or '?' at the mapping indent,
+    /// or de-indent below the key content.
+    /// </summary>
+    private ReadOnlySpan<byte> ReadExplicitPlainKey(int mappingIndent, out byte[]? rentedKeyBuffer)
+    {
+        rentedKeyBuffer = null;
+        int start = _pos;
+        int end = _pos;
+
+        // Read first line
+        ReadPlainScalarLine(start, ref end, false);
+
+        // Trim trailing whitespace
+        while (end > start && YamlCharacters.IsWhitespace(_buffer[end - 1]))
+        {
+            end--;
+        }
+
+        // If not at a line break, return the single line
+        if (_pos >= _buffer.Length || !YamlCharacters.IsLineBreak(_buffer[_pos]))
+        {
+            return _buffer.Slice(start, end - start);
+        }
+
+        // Check for continuation: next line must be indented past the mapping indent
+        // and must not start with '?' or ':' at the mapping indent
+        int savedPos = _pos;
+        int savedLine = _line;
+        int savedColumn = _column;
+
+        SkipLineBreak();
+
+        // Skip blank lines
+        int blankLineCount = 0;
+        while (_pos < _buffer.Length)
+        {
+            int lineStartPos = _pos;
+
+            while (_pos < _buffer.Length && _buffer[_pos] == YamlConstants.Space)
+            {
+                _pos++;
+                _column++;
+            }
+
+            if (_pos >= _buffer.Length)
+            {
+                _pos = savedPos;
+                _line = savedLine;
+                _column = savedColumn;
+                return _buffer.Slice(start, end - start);
+            }
+
+            if (YamlCharacters.IsLineBreak(_buffer[_pos]))
+            {
+                blankLineCount++;
+                SkipLineBreak();
+                continue;
+            }
+
+            int indent = _pos - lineStartPos;
+
+            // At or below mapping indent: check for ':' or '?' (explicit value/key indicator)
+            if (indent <= mappingIndent)
+            {
+                _pos = savedPos;
+                _line = savedLine;
+                _column = savedColumn;
+                return _buffer.Slice(start, end - start);
+            }
+
+            // Check for comment
+            if (_buffer[_pos] == YamlConstants.Hash)
+            {
+                _pos = savedPos;
+                _line = savedLine;
+                _column = savedColumn;
+                return _buffer.Slice(start, end - start);
+            }
+
+            if (IsDocumentEndOrStart())
+            {
+                _pos = savedPos;
+                _line = savedLine;
+                _column = savedColumn;
+                return _buffer.Slice(start, end - start);
+            }
+
+            // Found continuation content — need to build multi-line result
+            break;
+        }
+
+        if (_pos >= _buffer.Length)
+        {
+            _pos = savedPos;
+            _line = savedLine;
+            _column = savedColumn;
+            return _buffer.Slice(start, end - start);
+        }
+
+        // Multi-line: build folded key in rented buffer
+        int estimatedLength = Math.Max(end - start + 128, 256);
+        rentedKeyBuffer = ArrayPool<byte>.Shared.Rent(estimatedLength);
+        Span<byte> output = rentedKeyBuffer;
+        int written = 0;
+
+        // Copy first line
+        ReadOnlySpan<byte> firstLine = _buffer.Slice(start, end - start);
+        EnsureRentedCapacity(ref rentedKeyBuffer, ref output, written, firstLine.Length);
+        firstLine.CopyTo(output.Slice(written));
+        written += firstLine.Length;
+
+        // Process continuation lines
+        while (true)
+        {
+            // Write fold separator
+            EnsureRentedCapacity(ref rentedKeyBuffer, ref output, written, blankLineCount + 1);
+            if (blankLineCount > 0)
+            {
+                for (int i = 0; i < blankLineCount; i++)
+                {
+                    output[written++] = YamlConstants.LineFeed;
+                }
+            }
+            else
+            {
+                output[written++] = YamlConstants.Space;
+            }
+
+            // Read this continuation line
+            int lineStart = _pos;
+            int lineEnd = _pos;
+            ReadPlainScalarLine(lineStart, ref lineEnd, false);
+
+            // Trim trailing whitespace
+            while (lineEnd > lineStart && YamlCharacters.IsWhitespace(_buffer[lineEnd - 1]))
+            {
+                lineEnd--;
+            }
+
+            ReadOnlySpan<byte> lineContent = _buffer.Slice(lineStart, lineEnd - lineStart);
+            EnsureRentedCapacity(ref rentedKeyBuffer, ref output, written, lineContent.Length);
+            lineContent.CopyTo(output.Slice(written));
+            written += lineContent.Length;
+
+            // Check for another continuation line
+            if (_pos >= _buffer.Length || !YamlCharacters.IsLineBreak(_buffer[_pos]))
+            {
+                break;
+            }
+
+            savedPos = _pos;
+            savedLine = _line;
+            savedColumn = _column;
+
+            SkipLineBreak();
+
+            blankLineCount = 0;
+            bool foundContinuation = false;
+            while (_pos < _buffer.Length)
+            {
+                int lineStartPos2 = _pos;
+
+                while (_pos < _buffer.Length && _buffer[_pos] == YamlConstants.Space)
+                {
+                    _pos++;
+                    _column++;
+                }
+
+                if (_pos >= _buffer.Length)
+                {
+                    break;
+                }
+
+                if (YamlCharacters.IsLineBreak(_buffer[_pos]))
+                {
+                    blankLineCount++;
+                    SkipLineBreak();
+                    continue;
+                }
+
+                int indent2 = _pos - lineStartPos2;
+
+                if (indent2 <= mappingIndent || _buffer[_pos] == YamlConstants.Hash || IsDocumentEndOrStart())
+                {
+                    break;
+                }
+
+                foundContinuation = true;
+                break;
+            }
+
+            if (!foundContinuation)
+            {
+                _pos = savedPos;
+                _line = savedLine;
+                _column = savedColumn;
+                break;
+            }
+        }
+
+        return rentedKeyBuffer.AsSpan(0, written);
     }
 
     /// <summary>
@@ -748,6 +1028,30 @@ internal ref struct YamlToJsonConverter
         while (_pos < _buffer.Length && _buffer[_pos] != YamlConstants.CloseBracket)
         {
             int posBeforeEntry = _pos;
+
+            // Check for explicit key indicator '?' in flow sequence
+            // Creates a single-pair mapping: [? key : value] → [{"key": "value"}]
+            if (_buffer[_pos] == YamlConstants.QuestionMark)
+            {
+                int next = _pos + 1;
+                if (next >= _buffer.Length || YamlCharacters.IsWhitespaceOrLineBreak(_buffer[next]))
+                {
+                    ConvertExplicitFlowMappingEntry();
+                    SkipWhitespaceAndComments();
+                    if (_pos < _buffer.Length && _buffer[_pos] == YamlConstants.Comma)
+                    {
+                        Advance(1);
+                        SkipWhitespaceAndComments();
+                    }
+
+                    if (_pos == posBeforeEntry)
+                    {
+                        ThrowUnexpectedCharacter();
+                    }
+
+                    continue;
+                }
+            }
 
             // Check for implicit flow mapping: `key: value` inside a sequence
             // becomes {"key": "value"}
@@ -977,6 +1281,83 @@ internal ref struct YamlToJsonConverter
         else
         {
             ConvertNode(-1, true);
+        }
+
+        _writer.WriteEndObject();
+    }
+
+    /// <summary>
+    /// Converts an explicit flow mapping entry (? key : value) inside a flow sequence.
+    /// </summary>
+    private void ConvertExplicitFlowMappingEntry()
+    {
+        _writer.WriteStartObject();
+
+        // Skip '?'
+        Advance(1);
+        SkipWhitespaceAndComments();
+
+        // Read the key (multi-line plain scalar in flow context)
+        byte[]? rentedKeyBuffer = null;
+        try
+        {
+            ReadOnlySpan<byte> key;
+            if (_pos < _buffer.Length && _buffer[_pos] == YamlConstants.DoubleQuote)
+            {
+                key = ReadDoubleQuotedScalar(out rentedKeyBuffer);
+            }
+            else if (_pos < _buffer.Length && _buffer[_pos] == YamlConstants.SingleQuote)
+            {
+                key = ReadSingleQuotedScalar(out rentedKeyBuffer);
+            }
+            else
+            {
+                key = ReadFlowPlainScalarKey(out rentedKeyBuffer);
+            }
+
+            _writer.WritePropertyName(key);
+        }
+        finally
+        {
+            if (rentedKeyBuffer != null)
+            {
+                ArrayPool<byte>.Shared.Return(rentedKeyBuffer);
+            }
+        }
+
+        SkipWhitespaceAndComments();
+
+        // Skip ':' if present
+        if (_pos < _buffer.Length && _buffer[_pos] == YamlConstants.Colon)
+        {
+            int next = _pos + 1;
+            if (next >= _buffer.Length || YamlCharacters.IsWhitespaceOrLineBreak(_buffer[next])
+                || YamlCharacters.IsFlowIndicator(_buffer[next]))
+            {
+                Advance(1);
+                SkipWhitespaceAndComments();
+
+                // Read the value
+                if (_pos >= _buffer.Length
+                    || _buffer[_pos] == YamlConstants.Comma
+                    || _buffer[_pos] == YamlConstants.CloseBracket
+                    || _buffer[_pos] == YamlConstants.CloseBrace)
+                {
+                    _writer.WriteNullValue();
+                }
+                else
+                {
+                    ConvertNode(-1, true);
+                }
+            }
+            else
+            {
+                _writer.WriteNullValue();
+            }
+        }
+        else
+        {
+            _writer.WriteNullValue();
         }
 
         _writer.WriteEndObject();
@@ -1897,6 +2278,201 @@ internal ref struct YamlToJsonConverter
 
         ThrowUnterminatedSingleQuotedScalar();
         return default;
+    }
+
+    /// <summary>
+    /// Reads a block scalar (literal | or folded &gt;) content into a rented buffer.
+    /// Used for explicit key block scalars where we need the bytes rather than
+    /// writing to the JSON writer.
+    /// </summary>
+    private ReadOnlySpan<byte> ReadBlockScalarContent(int parentIndent, out byte[]? rentedKeyBuffer)
+    {
+        byte indicator = _buffer[_pos];
+        bool literal = indicator == YamlConstants.Pipe;
+        Advance(1);
+
+        // Parse block scalar header
+        int chompMode = 0;
+        int explicitIndent = 0;
+
+        while (_pos < _buffer.Length && !YamlCharacters.IsLineBreak(_buffer[_pos]))
+        {
+            byte c = _buffer[_pos];
+
+            if (c == YamlConstants.Dash)
+            {
+                chompMode = -1;
+                Advance(1);
+            }
+            else if (c == YamlConstants.Plus)
+            {
+                chompMode = 1;
+                Advance(1);
+            }
+            else if (YamlCharacters.IsDigit(c) && c != YamlConstants.Zero)
+            {
+                explicitIndent = c - YamlConstants.Zero;
+                Advance(1);
+            }
+            else if (c == YamlConstants.Space || c == YamlConstants.Tab)
+            {
+                Advance(1);
+            }
+            else if (c == YamlConstants.Hash)
+            {
+                SkipToEndOfLine();
+                break;
+            }
+            else
+            {
+                ThrowInvalidBlockScalarHeader();
+                break;
+            }
+        }
+
+        if (_pos < _buffer.Length)
+        {
+            SkipLineBreak();
+        }
+
+        int contentIndent;
+        if (explicitIndent > 0)
+        {
+            contentIndent = parentIndent + explicitIndent;
+        }
+        else
+        {
+            int detected = DetectBlockScalarIndent();
+            if (detected < 0)
+            {
+                contentIndent = parentIndent + 1;
+            }
+            else
+            {
+                contentIndent = detected;
+            }
+        }
+
+        if (contentIndent <= parentIndent)
+        {
+            rentedKeyBuffer = null;
+            return ReadOnlySpan<byte>.Empty;
+        }
+
+        int estimatedLength = Math.Max(_buffer.Length - _pos, 256);
+        rentedKeyBuffer = ArrayPool<byte>.Shared.Rent(estimatedLength);
+        Span<byte> output = rentedKeyBuffer;
+        int written = 0;
+
+        bool hasContent = false;
+        bool prevLineMoreIndented = false;
+        int blankLineCount = 0;
+
+        while (_pos < _buffer.Length)
+        {
+            int lineIndent = 0;
+            while (_pos < _buffer.Length && _buffer[_pos] == YamlConstants.Space)
+            {
+                lineIndent++;
+                _pos++;
+                _column++;
+            }
+
+            if (_pos >= _buffer.Length || YamlCharacters.IsLineBreak(_buffer[_pos]))
+            {
+                int extraIndent = lineIndent - contentIndent;
+
+                if (extraIndent > 0 && hasContent)
+                {
+                    WriteBlockScalarSeparator(
+                        literal, hasContent, prevLineMoreIndented, true,
+                        blankLineCount, ref written, ref output, ref rentedKeyBuffer);
+
+                    EnsureOutputCapacity(ref output, ref rentedKeyBuffer, written, extraIndent);
+                    for (int i = 0; i < extraIndent; i++)
+                    {
+                        output[written++] = YamlConstants.Space;
+                    }
+
+                    blankLineCount = 0;
+                    hasContent = true;
+                    prevLineMoreIndented = true;
+                }
+                else
+                {
+                    blankLineCount++;
+                }
+
+                if (_pos < _buffer.Length)
+                {
+                    SkipLineBreak();
+                }
+
+                continue;
+            }
+
+            if (lineIndent < contentIndent)
+            {
+                _pos -= lineIndent;
+                _column -= lineIndent;
+                break;
+            }
+
+            int extra = lineIndent - contentIndent;
+            bool isMoreIndented = extra > 0 ||
+                (_pos < _buffer.Length && YamlCharacters.IsWhitespace(_buffer[_pos]));
+
+            WriteBlockScalarSeparator(
+                literal, hasContent, prevLineMoreIndented, isMoreIndented,
+                blankLineCount, ref written, ref output, ref rentedKeyBuffer);
+
+            blankLineCount = 0;
+
+            EnsureOutputCapacity(ref output, ref rentedKeyBuffer, written, extra);
+            for (int i = 0; i < extra; i++)
+            {
+                output[written++] = YamlConstants.Space;
+            }
+
+            while (_pos < _buffer.Length && !YamlCharacters.IsLineBreak(_buffer[_pos]))
+            {
+                EnsureOutputCapacity(ref output, ref rentedKeyBuffer, written, 1);
+                output[written++] = _buffer[_pos];
+                _pos++;
+                _column++;
+            }
+
+            if (_pos < _buffer.Length)
+            {
+                SkipLineBreak();
+            }
+
+            hasContent = true;
+            prevLineMoreIndented = isMoreIndented;
+        }
+
+        // Apply chomping to determine trailing newlines
+        if (hasContent)
+        {
+            EnsureOutputCapacity(ref output, ref rentedKeyBuffer, written, 1 + blankLineCount);
+            if (chompMode >= 0)
+            {
+                // Clip: exactly one trailing newline; Keep: all trailing newlines
+                output[written++] = YamlConstants.LineFeed;
+            }
+
+            if (chompMode > 0)
+            {
+                for (int i = 0; i < blankLineCount; i++)
+                {
+                    output[written++] = YamlConstants.LineFeed;
+                }
+            }
+
+            // Strip (chompMode < 0): no trailing newlines — written stays as-is
+        }
+
+        return rentedKeyBuffer.AsSpan(0, written);
     }
 
     /// <summary>
