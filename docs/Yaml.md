@@ -17,7 +17,7 @@ Both packages share the same tokenizer and converter implementation via conditio
 
 ## Conformance
 
-The converter passes **all 373 tests** in the [yaml-test-suite](https://github.com/yaml/yaml-test-suite) that provide expected output (279 valid + 94 error), achieving 100% conformance against the YAML 1.2 specification. A further 29 test cases in the suite provide only parse-event data (no JSON reference output) and are not covered by the automated tests.
+The converter passes **100% of the JSON-testable cases** in the [yaml-test-suite](https://github.com/yaml/yaml-test-suite) — 279 valid and 94 error cases (373 of 402 total, 92.8%). The remaining 29 test cases exercise YAML features with no JSON equivalent (complex keys, empty keys, bare tags) and do not provide JSON reference output.
 
 ## Quick start
 
