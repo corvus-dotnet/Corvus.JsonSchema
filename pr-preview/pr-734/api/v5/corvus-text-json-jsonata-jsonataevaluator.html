@@ -224,7 +224,7 @@ foreach (JsonElement item in items)
     JsonElement result = JsonataEvaluator.Default.Evaluate(
         expression, data, maxDepth: 100, timeLimitMs: 5000);
 }
-catch (JsonataException ex) when (ex.ErrorCode == &quot;U1001&quot;)
+catch (JsonataException ex) when (ex.Code == &quot;U1001&quot;)
 {
     // Expression timed out after 5 seconds
 }
