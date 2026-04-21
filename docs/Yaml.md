@@ -1,6 +1,6 @@
 ﻿# YAML to JSON Converter
 
-> **[Try the YAML Playground](/playground-yaml/)** — convert YAML to JSON in your browser, with built-in examples covering all YAML features.
+> **[Try the YAML Playground](/playground-yaml/)** — convert between YAML and JSON in your browser, view the YAML event stream, and explore built-in examples covering all YAML features.
 
 ## Overview
 

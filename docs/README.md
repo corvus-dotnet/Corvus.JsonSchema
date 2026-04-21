@@ -54,6 +54,7 @@ The markdown files in this directory are the source content for the website. The
 - **[copilot/](./copilot/)** — Copilot migration instructions referenced by the migration guide
 - **[playground/](./playground/)** — Blazor WASM JSON Schema validation playground
 - **[playground-jsonata/](./playground-jsonata/)** — Blazor WASM JSONata expression playground
+- **[playground-yaml/](./playground-yaml/)** — Blazor WASM YAML ↔ JSON conversion playground
 - **[V4/](./V4/)** — Legacy V4 documentation (for reference during migration back to Corvus.JsonSchema)
 - **[V4MigrationExample/](./V4MigrationExample/)** — Worked V4-to-V5 migration example
 - **[V5Example/](./V5Example/)** — V5 usage example project

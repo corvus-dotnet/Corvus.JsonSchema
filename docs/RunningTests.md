@@ -13,7 +13,7 @@ Always exclude the `failing` and `outerloop` categories when running the full su
 
 ## Test projects
 
-The solution contains eleven runnable test projects and four supporting model/utility projects.
+The solution contains eighteen runnable test projects and five supporting model/utility projects.
 
 ### Runnable test projects
 
@@ -23,10 +23,17 @@ The solution contains eleven runnable test projects and four supporting model/ut
 | `Corvus.Text.Json.Validator.Tests` | net9.0, net10.0, net481 | Dynamic schema validator (runtime compilation) |
 | `Corvus.Text.Json.CodeGenerator.Tests` | net10.0 | CLI code generator |
 | `Corvus.Text.Json.Migration.Analyzers.Tests` | net10.0 | V4→V5 migration Roslyn analyzers and code fixes |
+| `Corvus.Text.Json.Analyzers.Tests` | net10.0 | Roslyn analyzers for UTF-8 strings, unnecessary conversions, property naming |
 | `Corvus.Numerics.Tests` | net9.0, net10.0, net481 | `BigNumber` / `BigInteger` arithmetic |
+| `Corvus.Text.Json.Patch.Tests` | net10.0, net481 | RFC 6902 JSON Patch operations — official test suite |
+| `Corvus.Text.Json.Yaml.Tests` | net10.0, net481 | YAML ↔ JSON conversion, `Utf8YamlWriter`, event parsing, YAML test suite conformance (Corvus.Text.Json variant) |
+| `Corvus.Yaml.SystemTextJson.Tests` | net10.0, net481 | YAML ↔ JSON conversion — YAML test suite conformance (System.Text.Json-only variant) |
 | `Corvus.Text.Json.Jsonata.Tests` | net10.0, net481 | JSONata runtime conformance — official test suite |
 | `Corvus.Text.Json.Jsonata.CodeGeneration.Tests` | net10.0 | JSONata code generation conformance and edge-case tests |
 | `Corvus.Text.Json.Jsonata.SourceGenerator.Tests` | net10.0 | JSONata source generator integration tests |
+| `Corvus.Text.Json.JMESPath.Tests` | net10.0, net481 | JMESPath runtime conformance — official compliance test suite |
+| `Corvus.Text.Json.JMESPath.CodeGeneration.Tests` | net10.0 | JMESPath code generation conformance |
+| `Corvus.Text.Json.JMESPath.SourceGenerator.Tests` | net10.0 | JMESPath source generator integration tests |
 | `Corvus.Text.Json.JsonLogic.Tests` | net10.0, net481 | JsonLogic runtime conformance — official test suite |
 | `Corvus.Text.Json.JsonLogic.CodeGeneration.Tests` | net10.0 | JsonLogic code generation tests |
 | `Corvus.Text.Json.JsonLogic.SourceGenerator.Tests` | net10.0 | JsonLogic source generator integration tests |
@@ -39,6 +46,7 @@ The solution contains eleven runnable test projects and four supporting model/ut
 | `Corvus.Text.Json.Tests.GeneratedModels.OptionalAsNullable` | V5 models with `OptionalAsNullable` enabled |
 | `Corvus.Text.Json.Tests.MigrationModels.V4` | V4-generated model types (references `src-v4/Corvus.Json.ExtendedTypes`) |
 | `Corvus.Text.Json.Tests.MigrationModels.V5` | V5 equivalents of the V4 models |
+| `Corvus.Text.Json.Tests.MigrationSchemas` | JSON schemas used to generate the migration model types |
 | `Corvus.JsonSchemaTestSuite.CodeGenerator` | Utility that regenerates xUnit test classes from the JSON Schema Test Suite submodule |
 
 ## Running specific test areas

@@ -7,6 +7,10 @@
 <div class="playground-toolbar">
     <h1>YAML ↔ JSON Playground</h1>
     <button class="toolbar-btn secondary" @onclick="NewProjectAsync" title="New blank project">📄 New</button>
+    <select class="toolbar-select" @bind="selectedDirection" @bind:after="OnDirectionChanged" title="Conversion direction">
+        <option value="@ConversionDirection.YamlToJson">YAML → JSON</option>
+        <option value="@ConversionDirection.JsonToYaml">JSON → YAML</option>
+    </select>
     <select class="toolbar-select" value="@(activeSampleId ?? "")" @onchange="OnSampleChanged">
         @if (activeSampleId is null)
         {
@@ -18,15 +22,9 @@
         }
     </select>
     <div class="spacer"></div>
-    <div class="toolbar-options">
-        <label>Direction:
-            <select @bind="selectedDirection" @bind:after="OnDirectionChanged">
-                <option value="@ConversionDirection.YamlToJson">YAML → JSON</option>
-                <option value="@ConversionDirection.JsonToYaml">JSON → YAML</option>
-            </select>
-        </label>
-        @if (selectedDirection == ConversionDirection.YamlToJson)
-        {
+    @if (selectedDirection == ConversionDirection.YamlToJson)
+    {
+        <div class="toolbar-options">
             <label>Schema:
                 <select @bind="selectedSchema" @bind:after="OnOptionChanged">
                     <option value="@YamlSchema.Core">Core</option>
@@ -47,8 +45,8 @@
                     <option value="@DuplicateKeyBehavior.LastWins">Last Wins</option>
                 </select>
             </label>
-        }
-    </div>
+        </div>
+    }
     <button class="toolbar-btn secondary events-toggle @(showEventStream ? "active" : "")"
             @onclick="ToggleEventStream" title="Toggle YAML event stream">
         📊 Events
@@ -61,57 +59,56 @@
     <div class="sample-description">@activeSample.Description</div>
 }
 
-<div class="playground-main @(showEventStream ? "with-events" : "")">
-    <div class="yaml-grid @(maximizedPanel is not null ? "has-maximized" : "")">
-        @* Left: input *@
-        <div class="playground-panel panel-yaml @(GetPanelClass("input"))">
-            <div class="panel-header">
-                @InputLabel
-                <div class="spacer"></div>
-                <button class="panel-copy-btn" @onclick="CopyInput" title="Copy @InputLabel">📋</button>
-                <button class="panel-maximize-btn" @onclick='() => ToggleMaximize("input")' title="@(maximizedPanel == "input" ? "Restore" : "Maximize")">
-                    @(maximizedPanel == "input" ? "⊟" : "⊞")
-                </button>
-            </div>
-            <div class="panel-body">
-                <StandaloneCodeEditor @ref="inputEditor"
-                                      Id="input-editor"
-                                      ConstructionOptions="InputEditorOptions"
-                                      OnDidChangeModelContent="OnInputChanged" />
-            </div>
+<div class="yaml-grid @(maximizedPanel is not null ? "has-maximized" : "") @(showEventStream ? "with-events" : "")">
+    @* Left: input *@
+    <div class="playground-panel panel-yaml @(GetPanelClass("input"))">
+        <div class="panel-header">
+            @InputLabel
+            <div class="spacer"></div>
+            <button class="panel-copy-btn" @onclick="CopyInput" title="Copy @InputLabel">📋</button>
+            <button class="panel-maximize-btn" @onclick='() => ToggleMaximize("input")' title="@(maximizedPanel == "input" ? "Restore" : "Maximize")">
+                @(maximizedPanel == "input" ? "⊟" : "⊞")
+            </button>
         </div>
-
-        @* Right: output *@
-        <div class="playground-panel panel-output @(GetPanelClass("output"))">
-            <div class="panel-header">
-                @OutputLabel
-                <div class="spacer"></div>
-                @if (lastResult is not null)
-                {
-                    <span style="font-weight:normal;text-transform:none;">
-                        @(lastResult.Success ? "✓" : "✗")
-                        @($"{lastResult.ElapsedMs:F1}ms")
-                    </span>
-                }
-                <button class="panel-copy-btn" @onclick="CopyResult" title="Copy @OutputLabel">📋</button>
-                <button class="panel-maximize-btn" @onclick='() => ToggleMaximize("output")' title="@(maximizedPanel == "output" ? "Restore" : "Maximize")">
-                    @(maximizedPanel == "output" ? "⊟" : "⊞")
-                </button>
-            </div>
-            <div class="panel-body" style="@(lastResult is not null && !lastResult.Success ? "display:none" : "")">
-                <StandaloneCodeEditor @ref="outputEditor"
-                                      Id="output-editor"
-                                      ConstructionOptions="OutputEditorOptions" />
-            </div>
-            @if (lastResult is not null && !lastResult.Success)
-            {
-                <div class="panel-body">
-                    <div class="error-output">@lastResult.ErrorMessage</div>
-                </div>
-            }
+        <div class="panel-body">
+            <StandaloneCodeEditor @ref="inputEditor"
+                                  Id="input-editor"
+                                  ConstructionOptions="InputEditorOptions"
+                                  OnDidChangeModelContent="OnInputChanged" />
         </div>
     </div>
 
+    @* Middle: output *@
+    <div class="playground-panel panel-output @(GetPanelClass("output"))">
+        <div class="panel-header">
+            @OutputLabel
+            <div class="spacer"></div>
+            @if (lastResult is not null)
+            {
+                <span style="font-weight:normal;text-transform:none;">
+                    @(lastResult.Success ? "✓" : "✗")
+                    @($"{lastResult.ElapsedMs:F1}ms")
+                </span>
+            }
+            <button class="panel-copy-btn" @onclick="CopyResult" title="Copy @OutputLabel">📋</button>
+            <button class="panel-maximize-btn" @onclick='() => ToggleMaximize("output")' title="@(maximizedPanel == "output" ? "Restore" : "Maximize")">
+                @(maximizedPanel == "output" ? "⊟" : "⊞")
+            </button>
+        </div>
+        <div class="panel-body" style="@(lastResult is not null && !lastResult.Success ? "display:none" : "")">
+            <StandaloneCodeEditor @ref="outputEditor"
+                                  Id="output-editor"
+                                  ConstructionOptions="OutputEditorOptions" />
+        </div>
+        @if (lastResult is not null && !lastResult.Success)
+        {
+            <div class="panel-body">
+                <div class="error-output">@lastResult.ErrorMessage</div>
+            </div>
+        }
+    </div>
+
+    @* Right: event stream *@
     @if (showEventStream)
     {
         <div class="playground-panel panel-events">

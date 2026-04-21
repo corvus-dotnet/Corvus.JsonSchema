@@ -227,7 +227,7 @@ using ParsedJsonDocument<JsonElement> doc = YamlDocument.Parse<JsonElement>(yaml
 Console.WriteLine(doc.RootElement.GetProperty("name").GetString()); // "Alice"
 ```
 
-See [YAML documentation](docs/Yaml.md) for the full API, configuration options, and supported YAML features.
+See [YAML documentation](docs/Yaml.md) for the full API, configuration options, and supported YAML features. **[Try the YAML Playground](docs/playground-yaml/)** to convert between YAML and JSON in your browser.
 
 ## Supported platforms
 

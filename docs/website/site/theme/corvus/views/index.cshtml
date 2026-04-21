@@ -10,13 +10,14 @@
         <h1 class="hero__title">High-performance <span class="brand">JSON</span> for .NET</h1>
         <p class="hero__subtitle">
             Source-generated strongly-typed C# from JSON Schema. Zero-allocation parsing,
-            full validation for all drafts, mutable documents, JSONata, JsonLogic, JSON Patch, and more.
+            full validation for all drafts, mutable documents, JSONata, JMESPath, JsonLogic, YAML, JSON Patch, and more.
         </p>
         <div class="hero__actions">
             <a href="/getting-started/index.html" class="btn btn--primary btn--lg">Get Started</a>
             <a href="/playground/" class="btn btn--secondary btn--lg" target="_blank" rel="noopener noreferrer">Try the Playground</a>
             <a href="/playground-jsonata/" class="btn btn--secondary btn--lg" target="_blank" rel="noopener noreferrer">Try JSONata</a>
             <a href="/playground-jmespath/" class="btn btn--secondary btn--lg" target="_blank" rel="noopener noreferrer">Try JMESPath</a>
+            <a href="/playground-yaml/" class="btn btn--secondary btn--lg" target="_blank" rel="noopener noreferrer">Try YAML</a>
             <a href="@ViewBag.GitHubUrl"
                class="btn btn--secondary btn--lg" target="_blank" rel="noopener noreferrer">View on GitHub</a>
         </div>
@@ -102,6 +103,11 @@
                 <div class="card__icon">🩹</div>
                 <h3 class="card__title">JSON Patch</h3>
                 <p class="card__body">RFC 6902 JSON Patch with pooled-memory operations. Apply, generate, and diff patches on <code>JsonElement</code> without string allocations.</p>
+            </div>
+            <div class="card">
+                <div class="card__icon">📄</div>
+                <h3 class="card__title">YAML</h3>
+                <p class="card__body">High-performance YAML 1.2 to JSON converter. 100% <a href="https://github.com/yaml/yaml-test-suite">yaml-test-suite</a> conformance with a zero-allocation <code>ref struct</code> tokenizer on UTF-8 bytes. <a href="/docs/yaml.html">Learn more &rarr;</a></p>
             </div>
         </div>
     </div>
@@ -222,6 +228,16 @@ root.SetAge(31);
                 <p class="card__body">RFC 6902 JSON Patch with pooled-memory operations on <code>JsonElement</code>.</p>
                 <pre style="margin-top:var(--space-sm)"><code class="language-bash">dotnet add package Corvus.Text.Json.Patch</code></pre>
             </div>
+            <div class="card">
+                <h3 class="card__title"><a href="/docs/yaml.html" style="color:inherit">Corvus.Text.Json.Yaml</a></h3>
+                <p class="card__body">YAML 1.2 to JSON converter with full Corvus document model integration. <a href="/docs/yaml.html">Read the docs &rarr;</a></p>
+                <pre style="margin-top:var(--space-sm)"><code class="language-bash">dotnet add package Corvus.Text.Json.Yaml</code></pre>
+            </div>
+            <div class="card">
+                <h3 class="card__title"><a href="/docs/yaml.html" style="color:inherit">Corvus.Yaml.SystemTextJson</a></h3>
+                <p class="card__body">Lightweight YAML 1.2 to JSON converter using only System.Text.Json — no Corvus dependency required. <a href="/docs/yaml.html">Read the docs &rarr;</a></p>
+                <pre style="margin-top:var(--space-sm)"><code class="language-bash">dotnet add package Corvus.Yaml.SystemTextJson</code></pre>
+            </div>
         </div>
     </div>
 </section>
@@ -237,6 +253,7 @@ root.SetAge(31);
                 <a href="/playground/" class="btn btn--secondary btn--lg" target="_blank" rel="noopener noreferrer">Try the Playground</a>
                 <a href="/playground-jsonata/" class="btn btn--secondary btn--lg" target="_blank" rel="noopener noreferrer">Try JSONata</a>
                 <a href="/playground-jmespath/" class="btn btn--secondary btn--lg" target="_blank" rel="noopener noreferrer">Try JMESPath</a>
+                <a href="/playground-yaml/" class="btn btn--secondary btn--lg" target="_blank" rel="noopener noreferrer">Try YAML</a>
                 <a href="/examples/index.html" class="btn btn--secondary btn--lg">Browse Examples</a>
             </div>
         </div>
