@@ -326,25 +326,6 @@ catch (YamlException ex)
 }
 ```
 
-## Code generator integration
-
-The `generatejsonschematypes` CLI tool and the Roslyn source generator both accept `.yaml` and `.yml` files as schema input. YAML schemas are automatically converted to JSON before code generation:
-
-**CLI:**
-
-```bash
-generatejsonschematypes schema.yaml \
-    --rootNamespace MyApp.Models \
-    --outputPath ./Generated
-```
-
-**Source generator:**
-
-```csharp
-[JsonSchemaTypeGenerator("schema.yaml")]
-public partial class MySchema;
-```
-
 ## JSON to YAML Conversion
 
 In addition to YAML→JSON, the library converts JSON content to canonical YAML using the `Utf8YamlWriter` — a high-performance `ref struct` writer modelled on `Utf8JsonWriter`. Three input paths are available:
@@ -450,26 +431,6 @@ var options = new YamlWriterOptions
 };
 ```
 
-### JSON→YAML benchmarks
-
-The following benchmarks compare JSON→YAML conversion across four paths: **YamlDotNet** (deserialize JSON string, serialize to YAML), **Corvus UTF-8** (raw byte tokenization), **Corvus CTJ Element** (pre-parsed `ParsedJsonDocument<JsonElement>` walk), and **Corvus STJ Element** (pre-parsed `System.Text.Json.JsonElement` walk).
-
-> Measured with BenchmarkDotNet on .NET 10.0, Intel i7-13800H. Full source and scenario files in [`benchmarks/Corvus.Text.Json.Yaml.Benchmarks/`](https://github.com/corvus-dotnet/Corvus.JsonSchema/tree/main/benchmarks/Corvus.Text.Json.Yaml.Benchmarks).
-
-| Scenario | YamlDotNet | Corvus UTF-8 | Corvus CTJ | Corvus STJ | Speedup | YDN Alloc | Corvus Alloc | Alloc Ratio |
-|---|---|---|---|---|---|---|---|---|
-| SimpleScalar | 8,679 ns | 167 ns | **132 ns** | 152 ns | **66×** | 24,766 B | 104 B | **238×** |
-| MultiDocument | 50,404 ns | 1,344 ns | **1,040 ns** | 1,160 ns | **48×** | 58,366 B | 432 B | **135×** |
-| SmallConfig | 64,602 ns | 1,777 ns | **1,393 ns** | 1,572 ns | **46×** | 67,946 B | 608 B | **112×** |
-| FlowStyle | 61,021 ns | 3,102 ns | **2,153 ns** | 2,499 ns | **28×** | 118,204 B | 728 B | **162×** |
-| NestedMapping | 82,649 ns | 2,435 ns | 2,082 ns | **1,990 ns** | **42×** | 100,463 B | 632 B | **159×** |
-| AnchorAlias | 90,398 ns | 2,943 ns | **2,296 ns** | 2,537 ns | **39×** | 158,201 B | 1,464 B | **108×** |
-| BlockScalar | 19,587 ns | 1,666 ns | **1,209 ns** | 1,730 ns | **16×** | 30,927 B | 1,264 B | **24×** |
-| ComplexMixed | 139,993 ns | 5,740 ns | **4,216 ns** | 5,355 ns | **33×** | 207,927 B | 3,544 B | **59×** |
-| LargeConfig | 725,990 ns | 22,561 ns | **16,001 ns** | 18,391 ns | **45×** | 646,559 B | 7,504 B | **86×** |
-
-**Summary:** Corvus JSON→YAML is **16–66× faster** than YamlDotNet with **24–238× less allocation**. The CTJ element walk is fastest in 8 of 9 scenarios; all three Corvus paths share identical allocation (the only allocation is the output string plus a pooled buffer writer object).
-
 ## Performance
 
 The converter is designed for zero-allocation operation on the hot path. The `Utf8YamlScanner` is a `ref struct` that operates on `ReadOnlySpan<byte>` with `stackalloc`-based scratch buffers. Temporary buffers follow the standard `stackalloc`/`ArrayPool` pattern using `JsonConstants.StackallocByteThreshold` (256 bytes).
@@ -514,6 +475,26 @@ The following benchmarks compare **Corvus event parsing** (`YamlDocument.Enumera
 
 **Summary:** Corvus event parsing is **3–8× faster** than YamlDotNet's `Parser` with **112–1,961× less allocation**. YamlDotNet allocates heap objects for every event; Corvus uses a zero-allocation callback with a `ref struct` event that points directly into the source buffer.
 
+### JSON→YAML benchmarks
+
+The following benchmarks compare JSON→YAML conversion across four paths: **YamlDotNet** (deserialize JSON string, serialize to YAML), **Corvus UTF-8** (raw byte tokenization), **Corvus CTJ Element** (pre-parsed `ParsedJsonDocument<JsonElement>` walk), and **Corvus STJ Element** (pre-parsed `System.Text.Json.JsonElement` walk).
+
+> Measured with BenchmarkDotNet on .NET 10.0, Intel i7-13800H. Full source and scenario files in [`benchmarks/Corvus.Text.Json.Yaml.Benchmarks/`](https://github.com/corvus-dotnet/Corvus.JsonSchema/tree/main/benchmarks/Corvus.Text.Json.Yaml.Benchmarks).
+
+| Scenario | YamlDotNet | Corvus UTF-8 | Corvus CTJ | Corvus STJ | Speedup | YDN Alloc | Corvus Alloc | Alloc Ratio |
+|---|---|---|---|---|---|---|---|---|
+| SimpleScalar | 8,679 ns | 167 ns | **132 ns** | 152 ns | **66×** | 24,766 B | 104 B | **238×** |
+| MultiDocument | 50,404 ns | 1,344 ns | **1,040 ns** | 1,160 ns | **48×** | 58,366 B | 432 B | **135×** |
+| SmallConfig | 64,602 ns | 1,777 ns | **1,393 ns** | 1,572 ns | **46×** | 67,946 B | 608 B | **112×** |
+| FlowStyle | 61,021 ns | 3,102 ns | **2,153 ns** | 2,499 ns | **28×** | 118,204 B | 728 B | **162×** |
+| NestedMapping | 82,649 ns | 2,435 ns | 2,082 ns | **1,990 ns** | **42×** | 100,463 B | 632 B | **159×** |
+| AnchorAlias | 90,398 ns | 2,943 ns | **2,296 ns** | 2,537 ns | **39×** | 158,201 B | 1,464 B | **108×** |
+| BlockScalar | 19,587 ns | 1,666 ns | **1,209 ns** | 1,730 ns | **16×** | 30,927 B | 1,264 B | **24×** |
+| ComplexMixed | 139,993 ns | 5,740 ns | **4,216 ns** | 5,355 ns | **33×** | 207,927 B | 3,544 B | **59×** |
+| LargeConfig | 725,990 ns | 22,561 ns | **16,001 ns** | 18,391 ns | **45×** | 646,559 B | 7,504 B | **86×** |
+
+**Summary:** Corvus JSON→YAML is **16–66× faster** than YamlDotNet with **24–238× less allocation**. The CTJ element walk is fastest in 8 of 9 scenarios; all three Corvus paths share identical allocation (the output string plus a pooled buffer writer).
+
 ## Comparison with YamlDotNet
 
 [YamlDotNet](https://github.com/aaubry/YamlDotNet) is the established YAML library for .NET, with a large feature set and broad ecosystem adoption. Corvus.Yaml takes a different approach — it is a purpose-built, high-performance YAML→JSON converter rather than a general-purpose YAML toolkit.
@@ -522,29 +503,27 @@ The following benchmarks compare **Corvus event parsing** (`YamlDocument.Enumera
 
 | Feature | Corvus.Yaml | YamlDotNet |
 |---|---|---|
-| **YAML→JSON conversion** | ✅ Native, zero-copy | ⚠️ Via deserialize + `JsonCompatible()` serialize |
-| **JSON→YAML conversion** | ✅ Native, 16–66× faster than YamlDotNet | ⚠️ Via deserialize JSON + serialize YAML |
-| **YAML 1.2 conformance** | ✅ 100% of JSON-testable cases (373/402) | ⚠️ 68.9% JSON conformance (257/373) [*](#conformance-note) |
-| **YAML 1.1 support** | ✅ `YamlSchema.Yaml11` mode | ✅ Native |
-| **YAML emitting (C# → YAML)** | ✅ `Utf8YamlWriter` for JSON→YAML; no general object emitter | ✅ Full emitter from any C# object |
-| **Object serialization/deserialization** | ❌ | ✅ `Serializer`/`Deserializer` with naming conventions, type converters, callbacks |
-| **Object model (DOM)** | ❌ | ✅ `YamlStream`/`YamlDocument`/`YamlNode` tree |
-| **Low-level event parser** | ✅ Zero-allocation `YamlEventParser` via `EnumerateEvents` | ✅ `IParser` with `StreamStart`, `DocumentStart`, `Scalar`, etc. |
-| **Schema modes** | ✅ Core, JSON, Failsafe, YAML 1.1 | ⚠️ 1.1 by default; configurable |
-| **Duplicate key handling** | ✅ Configurable (`Error` / `LastWins`) | ✅ Configurable |
-| **Anchors & aliases** | ✅ With billion-laughs protection | ✅ |
-| **Multi-document streams** | ✅ `MultiAsArray` mode | ✅ Via `IParser` iteration |
-| **Block scalars (`\|`, `>`)** | ✅ All chomping indicators | ✅ |
-| **Performance** | ✅ 7–20× faster, near-zero allocation | ⚠️ Higher allocation, string-based |
+| **YAML→JSON conversion** | ✅ Native zero-copy tokenizer to `Utf8JsonWriter` | ⚠️ Deserialize to object graph, then re-serialize with `JsonCompatible()` |
+| **JSON→YAML conversion** | ✅ Native `Utf8YamlWriter` (16–66× faster) | ⚠️ Deserialize JSON to object graph, then serialize to YAML |
+| **YAML 1.2 conformance** | ✅ 100% of yaml-test-suite JSON-comparison cases (373/373 applicable) | ⚠️ 68.9% (257/373) [*](#conformance-note) |
+| **YAML 1.1 support** | ✅ `YamlSchema.Yaml11` mode | ✅ Default schema |
+| **C# object → YAML serialization** | ❌ | ✅ `Serializer` with naming conventions, type converters, callbacks |
+| **C# object ← YAML deserialization** | ❌ | ✅ `Deserializer` with naming conventions, type converters, callbacks |
+| **YAML DOM** | ❌ | ✅ `YamlStream` / `YamlDocument` / `YamlNode` tree |
+| **Low-level event parser** | ✅ Zero-allocation callback-based `EnumerateEvents` | ✅ `IParser` with heap-allocated event objects |
+| **Schema modes** | ✅ Core, JSON, Failsafe, YAML 1.1 | ⚠️ YAML 1.1 by default; limited 1.2 Core support |
+| **Duplicate key handling** | ✅ `Error` (default) or `LastWins` | ✅ Configurable via `DuplicateKeyChecking` |
+| **Anchors & aliases** | ✅ With billion-laughs protection | ✅ No expansion-depth limits by default |
+| **Multi-document streams** | ✅ `MultiAsArray` wraps all documents in a JSON array | ✅ Via `IParser` / `YamlStream` iteration |
+| **Block scalars (`\|`, `>`)** | ✅ All chomping indicators | ✅ All chomping indicators |
+| **Performance** | ✅ 7–66× faster, near-zero allocation | ⚠️ Higher allocation, string-based processing |
 | **`System.Text.Json` integration** | ✅ Direct `JsonDocument` / `ParsedJsonDocument` output | ❌ Separate ecosystem |
 | **Corvus document model** | ✅ `ParsedJsonDocument<T>`, JSON Schema validation | ❌ |
-| **Code generator integration** | ✅ YAML schemas in `generatejsonschematypes` | ❌ |
 | **Target frameworks** | net9.0, net10.0, netstandard2.0/2.1 | net8.0, net10.0, net47, netstandard2.0/2.1 |
-| **NuGet downloads** | New | ~350M+ |
-| **Unity support** | ❌ | ✅ Unity Asset Store |
+| **Unity support** | ❌ | ✅ Unity Asset Store package |
 | **License** | Apache 2.0 | MIT |
 
-<a id="conformance-note"></a>*Conformance figures from the [yaml-test-matrix](https://matrix.yaml.info/) (Jan 2022 data). YamlDotNet may have improved since.*
+<a id="conformance-note"></a>*YamlDotNet conformance figures from the [yaml-test-matrix](https://matrix.yaml.info/) (Jan 2022 data). YamlDotNet may have improved since. Corvus figures measured against the current yaml-test-suite commit.*
 
 ### When to use Corvus.Yaml
 
