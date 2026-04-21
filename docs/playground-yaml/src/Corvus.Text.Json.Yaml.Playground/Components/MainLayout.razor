@@ -5,41 +5,54 @@
 @inject IJSRuntime JSRuntime
 
 <div class="playground-toolbar">
-    <h1>YAML → JSON Playground</h1>
+    <h1>YAML ↔ JSON Playground</h1>
     <button class="toolbar-btn secondary" @onclick="NewProjectAsync" title="New blank project">📄 New</button>
     <select class="toolbar-select" value="@(activeSampleId ?? "")" @onchange="OnSampleChanged">
         @if (activeSampleId is null)
         {
             <option value="" disabled>— Custom —</option>
         }
-        @foreach (var sample in SampleRegistry.All)
+        @foreach (var sample in ActiveSamples)
         {
             <option value="@sample.Id">@sample.DisplayName</option>
         }
     </select>
     <div class="spacer"></div>
     <div class="toolbar-options">
-        <label>Schema:
-            <select @bind="selectedSchema" @bind:after="OnOptionChanged">
-                <option value="@YamlSchema.Core">Core</option>
-                <option value="@YamlSchema.Json">JSON</option>
-                <option value="@YamlSchema.Failsafe">Failsafe</option>
-                <option value="@YamlSchema.Yaml11">YAML 1.1</option>
+        <label>Direction:
+            <select @bind="selectedDirection" @bind:after="OnDirectionChanged">
+                <option value="@ConversionDirection.YamlToJson">YAML → JSON</option>
+                <option value="@ConversionDirection.JsonToYaml">JSON → YAML</option>
             </select>
         </label>
-        <label>Documents:
-            <select @bind="selectedDocMode" @bind:after="OnOptionChanged">
-                <option value="@YamlDocumentMode.SingleRequired">Single</option>
-                <option value="@YamlDocumentMode.MultiAsArray">Multi (Array)</option>
-            </select>
-        </label>
-        <label>Duplicate keys:
-            <select @bind="selectedDupeBehavior" @bind:after="OnOptionChanged">
-                <option value="@DuplicateKeyBehavior.Error">Error</option>
-                <option value="@DuplicateKeyBehavior.LastWins">Last Wins</option>
-            </select>
-        </label>
+        @if (selectedDirection == ConversionDirection.YamlToJson)
+        {
+            <label>Schema:
+                <select @bind="selectedSchema" @bind:after="OnOptionChanged">
+                    <option value="@YamlSchema.Core">Core</option>
+                    <option value="@YamlSchema.Json">JSON</option>
+                    <option value="@YamlSchema.Failsafe">Failsafe</option>
+                    <option value="@YamlSchema.Yaml11">YAML 1.1</option>
+                </select>
+            </label>
+            <label>Documents:
+                <select @bind="selectedDocMode" @bind:after="OnOptionChanged">
+                    <option value="@YamlDocumentMode.SingleRequired">Single</option>
+                    <option value="@YamlDocumentMode.MultiAsArray">Multi (Array)</option>
+                </select>
+            </label>
+            <label>Duplicate keys:
+                <select @bind="selectedDupeBehavior" @bind:after="OnOptionChanged">
+                    <option value="@DuplicateKeyBehavior.Error">Error</option>
+                    <option value="@DuplicateKeyBehavior.LastWins">Last Wins</option>
+                </select>
+            </label>
+        }
     </div>
+    <button class="toolbar-btn secondary events-toggle @(showEventStream ? "active" : "")"
+            @onclick="ToggleEventStream" title="Toggle YAML event stream">
+        📊 Events
+    </button>
     <button class="theme-toggle-btn" @onclick="CycleTheme" title="@themeTooltip">@themeIcon</button>
 </div>
 
@@ -48,54 +61,74 @@
     <div class="sample-description">@activeSample.Description</div>
 }
 
-<div class="yaml-grid @(maximizedPanel is not null ? "has-maximized" : "")">
-    @* Left: YAML input *@
-    <div class="playground-panel panel-yaml @(GetPanelClass("yaml"))">
-        <div class="panel-header">
-            YAML Input
-            <div class="spacer"></div>
-            <button class="panel-copy-btn" @onclick="CopyYaml" title="Copy YAML">📋</button>
-            <button class="panel-maximize-btn" @onclick='() => ToggleMaximize("yaml")' title="@(maximizedPanel == "yaml" ? "Restore" : "Maximize")">
-                @(maximizedPanel == "yaml" ? "⊟" : "⊞")
-            </button>
+<div class="playground-main @(showEventStream ? "with-events" : "")">
+    <div class="yaml-grid @(maximizedPanel is not null ? "has-maximized" : "")">
+        @* Left: input *@
+        <div class="playground-panel panel-yaml @(GetPanelClass("input"))">
+            <div class="panel-header">
+                @InputLabel
+                <div class="spacer"></div>
+                <button class="panel-copy-btn" @onclick="CopyInput" title="Copy @InputLabel">📋</button>
+                <button class="panel-maximize-btn" @onclick='() => ToggleMaximize("input")' title="@(maximizedPanel == "input" ? "Restore" : "Maximize")">
+                    @(maximizedPanel == "input" ? "⊟" : "⊞")
+                </button>
+            </div>
+            <div class="panel-body">
+                <StandaloneCodeEditor @ref="inputEditor"
+                                      Id="input-editor"
+                                      ConstructionOptions="InputEditorOptions"
+                                      OnDidChangeModelContent="OnInputChanged" />
+            </div>
         </div>
-        <div class="panel-body">
-            <StandaloneCodeEditor @ref="yamlEditor"
-                                  Id="yaml-editor"
-                                  ConstructionOptions="YamlEditorOptions"
-                                  OnDidChangeModelContent="OnYamlChanged" />
+
+        @* Right: output *@
+        <div class="playground-panel panel-output @(GetPanelClass("output"))">
+            <div class="panel-header">
+                @OutputLabel
+                <div class="spacer"></div>
+                @if (lastResult is not null)
+                {
+                    <span style="font-weight:normal;text-transform:none;">
+                        @(lastResult.Success ? "✓" : "✗")
+                        @($"{lastResult.ElapsedMs:F1}ms")
+                    </span>
+                }
+                <button class="panel-copy-btn" @onclick="CopyResult" title="Copy @OutputLabel">📋</button>
+                <button class="panel-maximize-btn" @onclick='() => ToggleMaximize("output")' title="@(maximizedPanel == "output" ? "Restore" : "Maximize")">
+                    @(maximizedPanel == "output" ? "⊟" : "⊞")
+                </button>
+            </div>
+            <div class="panel-body" style="@(lastResult is not null && !lastResult.Success ? "display:none" : "")">
+                <StandaloneCodeEditor @ref="outputEditor"
+                                      Id="output-editor"
+                                      ConstructionOptions="OutputEditorOptions" />
+            </div>
+            @if (lastResult is not null && !lastResult.Success)
+            {
+                <div class="panel-body">
+                    <div class="error-output">@lastResult.ErrorMessage</div>
+                </div>
+            }
         </div>
     </div>
 
-    @* Right: JSON output *@
-    <div class="playground-panel panel-output @(GetPanelClass("output"))">
-        <div class="panel-header">
-            JSON Output
-            <div class="spacer"></div>
-            @if (lastResult is not null)
-            {
-                <span style="font-weight:normal;text-transform:none;">
-                    @(lastResult.Success ? "✓" : "✗")
-                    @($"{lastResult.ElapsedMs:F1}ms")
+    @if (showEventStream)
+    {
+        <div class="playground-panel panel-events">
+            <div class="panel-header">
+                YAML Events
+                <div class="spacer"></div>
+                <span style="font-weight:normal;text-transform:none;font-size:10px;color:var(--fg-muted);">
+                    Canonical event notation
                 </span>
-            }
-            <button class="panel-copy-btn" @onclick="CopyResult" title="Copy JSON">📋</button>
-            <button class="panel-maximize-btn" @onclick='() => ToggleMaximize("output")' title="@(maximizedPanel == "output" ? "Restore" : "Maximize")">
-                @(maximizedPanel == "output" ? "⊟" : "⊞")
-            </button>
-        </div>
-        <div class="panel-body" style="@(lastResult is not null && !lastResult.Success ? "display:none" : "")">
-            <StandaloneCodeEditor @ref="outputEditor"
-                                  Id="output-editor"
-                                  ConstructionOptions="OutputEditorOptions" />
-        </div>
-        @if (lastResult is not null && !lastResult.Success)
-        {
-            <div class="panel-body">
-                <div class="error-output">@lastResult.ErrorMessage</div>
+                <button class="panel-copy-btn" @onclick="CopyEvents" title="Copy events">📋</button>
+                <button class="panel-maximize-btn" @onclick="ToggleEventStream" title="Close">✕</button>
             </div>
-        }
-    </div>
+            <div class="panel-body events-body">
+                <pre class="events-output">@eventStreamText</pre>
+            </div>
+        </div>
+    }
 </div>
 
 @if (showDirtyConfirmation)
@@ -103,7 +136,7 @@
     <div class="modal-overlay" @onclick="CancelDirtyConfirmation">
         <div class="modal-dialog" @onclick:stopPropagation="true">
             <h3>Unsaved Changes</h3>
-            <p>Your YAML input has been modified. Do you want to discard these changes?</p>
+            <p>Your input has been modified. Do you want to discard these changes?</p>
             <div class="modal-actions">
                 <button class="toolbar-btn secondary" @onclick="CancelDirtyConfirmation">Cancel</button>
                 <button class="toolbar-btn primary" @onclick="ConfirmDirtyAction">Discard Changes</button>
@@ -113,7 +146,7 @@
 }
 
 <div class="status-bar @(lastResult is not null && !lastResult.Success ? "error" : "")">
-    <span>Corvus.Yaml.SystemTextJson — YAML → JSON Converter</span>
+    <span>Corvus.Yaml.SystemTextJson — @DirectionLabel</span>
     <div class="spacer"></div>
     @if (isConverting)
     {
@@ -130,7 +163,7 @@
 </div>
 
 @code {
-    private StandaloneCodeEditor yamlEditor = null!;
+    private StandaloneCodeEditor inputEditor = null!;
     private StandaloneCodeEditor outputEditor = null!;
 
     private string? activeSampleId;
@@ -141,7 +174,14 @@
     private bool isLoadingSample;
     private string? maximizedPanel;
 
-    // Options
+    // Direction
+    private ConversionDirection selectedDirection = ConversionDirection.YamlToJson;
+
+    // Event stream
+    private bool showEventStream;
+    private string eventStreamText = "";
+
+    // Options (YAML→JSON only)
     private YamlSchema selectedSchema = YamlSchema.Core;
     private YamlDocumentMode selectedDocMode = YamlDocumentMode.SingleRequired;
     private DuplicateKeyBehavior selectedDupeBehavior = DuplicateKeyBehavior.Error;
@@ -149,7 +189,7 @@
     // Dirty checking
     private bool showDirtyConfirmation;
     private Func<Task>? pendingDirtyAction;
-    private string cleanYaml = "";
+    private string cleanInput = "";
 
     // Theme state
     private string themePref = "auto";
@@ -162,19 +202,43 @@
     private CancellationTokenSource? convertDebounce;
     private CancellationTokenSource? saveDebounce;
 
-    private const string YamlStorageKey = "yaml-playground-yaml";
+    private const string InputStorageKey = "yaml-playground-input";
+    private const string DirectionStorageKey = "yaml-playground-direction";
     private const string SchemaStorageKey = "yaml-playground-schema";
     private const string DocModeStorageKey = "yaml-playground-docmode";
     private const string DupeStorageKey = "yaml-playground-dupe";
     private const string ThemeStorageKey = "yaml-playground-theme";
+    private const string EventsStorageKey = "yaml-playground-events-visible";
+
+    // ── Computed properties ──
+
+    private IReadOnlyList<Sample> ActiveSamples =>
+        selectedDirection == ConversionDirection.YamlToJson
+            ? SampleRegistry.YamlSamples
+            : SampleRegistry.JsonSamples;
+
+    private string InputLabel =>
+        selectedDirection == ConversionDirection.YamlToJson ? "YAML Input" : "JSON Input";
+
+    private string OutputLabel =>
+        selectedDirection == ConversionDirection.YamlToJson ? "JSON Output" : "YAML Output";
+
+    private string DirectionLabel =>
+        selectedDirection == ConversionDirection.YamlToJson ? "YAML → JSON" : "JSON → YAML";
+
+    private string InputLanguage =>
+        selectedDirection == ConversionDirection.YamlToJson ? "yaml" : "json";
+
+    private string OutputLanguage =>
+        selectedDirection == ConversionDirection.YamlToJson ? "json" : "yaml";
 
     // ── Editor options ──
 
-    private StandaloneEditorConstructionOptions YamlEditorOptions(StandaloneCodeEditor editor) => new()
+    private StandaloneEditorConstructionOptions InputEditorOptions(StandaloneCodeEditor editor) => new()
     {
-        Language = "yaml",
+        Language = InputLanguage,
         Theme = resolvedTheme == "light" ? "vs" : "vs-dark",
-        Value = initialYaml,
+        Value = initialInput,
         AutomaticLayout = true,
         Minimap = new EditorMinimapOptions { Enabled = false },
         FontSize = 13,
@@ -184,7 +248,7 @@
 
     private StandaloneEditorConstructionOptions OutputEditorOptions(StandaloneCodeEditor editor) => new()
     {
-        Language = "json",
+        Language = OutputLanguage,
         Theme = resolvedTheme == "light" ? "vs" : "vs-dark",
         Value = "",
         AutomaticLayout = true,
@@ -196,7 +260,7 @@
     };
 
     // ── Initial values ──
-    private string initialYaml = SampleRegistry.All[0].Yaml;
+    private string initialInput = SampleRegistry.YamlSamples[0].Content;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -215,6 +279,20 @@
 
             resolvedTheme = await JSRuntime.InvokeAsync<string>("getInitialTheme");
             UpdateThemeIcon();
+
+            // Load saved direction
+            var savedDirection = await GetLocalStorage(DirectionStorageKey);
+            if (!string.IsNullOrEmpty(savedDirection) && Enum.TryParse<ConversionDirection>(savedDirection, out var dir))
+            {
+                selectedDirection = dir;
+            }
+
+            // Load saved events visibility
+            var savedEvents = await GetLocalStorage(EventsStorageKey);
+            if (savedEvents == "true")
+            {
+                showEventStream = true;
+            }
 
             // Load saved options
             var savedSchema = await GetLocalStorage(SchemaStorageKey);
@@ -235,32 +313,37 @@
                 selectedDupeBehavior = db;
             }
 
-            // Load saved YAML
-            var savedYaml = await GetLocalStorage(YamlStorageKey);
+            // Load saved input
+            var savedInput = await GetLocalStorage(InputStorageKey);
 
-            if (!string.IsNullOrEmpty(savedYaml))
+            if (!string.IsNullOrEmpty(savedInput))
             {
                 activeSampleId = null;
                 activeSample = null;
-                await yamlEditor.SetValue(savedYaml);
+                await inputEditor.SetValue(savedInput);
             }
             else
             {
-                activeSampleId = SampleRegistry.All[0].Id;
-                activeSample = SampleRegistry.All[0];
+                var samples = ActiveSamples;
+                activeSampleId = samples[0].Id;
+                activeSample = samples[0];
+                await inputEditor.SetValue(samples[0].Content);
             }
+
+            // Set editor languages to match direction
+            await SetEditorLanguages();
 
             StateHasChanged();
 
             isInitializing = false;
-            cleanYaml = await yamlEditor.GetValue();
+            cleanInput = await inputEditor.GetValue();
             await ConvertAsync();
         }
     }
 
     // ── Event handlers ──
 
-    private void OnYamlChanged(ModelContentChangedEvent e)
+    private void OnInputChanged(ModelContentChangedEvent e)
     {
         if (isInitializing || isLoadingSample) { return; }
 
@@ -278,10 +361,48 @@
         await ConvertAsync();
     }
 
+    private async Task OnDirectionChanged()
+    {
+        if (isInitializing) { return; }
+
+        await SetLocalStorage(DirectionStorageKey, selectedDirection.ToString());
+
+        // Load the first sample for the new direction
+        isLoadingSample = true;
+        try
+        {
+            var samples = ActiveSamples;
+            activeSampleId = samples[0].Id;
+            activeSample = samples[0];
+            await inputEditor.SetValue(samples[0].Content);
+        }
+        finally
+        {
+            isLoadingSample = false;
+        }
+
+        cleanInput = await inputEditor.GetValue();
+        await ClearLocalStorage(inputOnly: true);
+        await ClearInputMarkers();
+
+        // Switch editor languages
+        await SetEditorLanguages();
+
+        lastResult = null;
+        eventStreamText = "";
+        if (outputEditor is not null)
+        {
+            await outputEditor.SetValue("");
+        }
+
+        StateHasChanged();
+        await ConvertAsync();
+    }
+
     private async Task OnSampleChanged(ChangeEventArgs e)
     {
         var sampleId = e.Value?.ToString();
-        var sample = SampleRegistry.All.FirstOrDefault(s => s.Id == sampleId);
+        var sample = ActiveSamples.FirstOrDefault(s => s.Id == sampleId);
         if (sample is null)
         {
             return;
@@ -302,17 +423,21 @@
             {
                 activeSampleId = null;
                 activeSample = null;
-                await yamlEditor.SetValue("# Enter your YAML here");
+                string placeholder = selectedDirection == ConversionDirection.YamlToJson
+                    ? "# Enter your YAML here"
+                    : "{\n  \n}";
+                await inputEditor.SetValue(placeholder);
             }
             finally
             {
                 isLoadingSample = false;
             }
 
-            cleanYaml = await yamlEditor.GetValue();
-            await ClearLocalStorage();
-            await ClearYamlMarkers();
+            cleanInput = await inputEditor.GetValue();
+            await ClearLocalStorage(inputOnly: true);
+            await ClearInputMarkers();
             lastResult = null;
+            eventStreamText = "";
             if (outputEditor is not null)
             {
                 await outputEditor.SetValue("");
@@ -330,43 +455,108 @@
             activeSampleId = sample.Id;
             activeSample = sample;
 
-            // Auto-select appropriate options for the sample
-            if (sample.Id == "multi-document")
+            // Auto-select appropriate options for YAML samples
+            if (selectedDirection == ConversionDirection.YamlToJson)
             {
-                selectedDocMode = YamlDocumentMode.MultiAsArray;
-            }
-            else if (sample.Id == "yaml11-compat")
-            {
-                selectedSchema = YamlSchema.Yaml11;
-                selectedDocMode = YamlDocumentMode.SingleRequired;
-            }
-            else
-            {
-                selectedSchema = YamlSchema.Core;
-                selectedDocMode = YamlDocumentMode.SingleRequired;
+                if (sample.Id == "multi-document")
+                {
+                    selectedDocMode = YamlDocumentMode.MultiAsArray;
+                }
+                else if (sample.Id == "yaml11-compat")
+                {
+                    selectedSchema = YamlSchema.Yaml11;
+                    selectedDocMode = YamlDocumentMode.SingleRequired;
+                }
+                else
+                {
+                    selectedSchema = YamlSchema.Core;
+                    selectedDocMode = YamlDocumentMode.SingleRequired;
+                }
+
+                selectedDupeBehavior = DuplicateKeyBehavior.Error;
             }
 
-            selectedDupeBehavior = DuplicateKeyBehavior.Error;
-            await yamlEditor.SetValue(sample.Yaml);
+            await inputEditor.SetValue(sample.Content);
         }
         finally
         {
             isLoadingSample = false;
         }
 
-        cleanYaml = await yamlEditor.GetValue();
-        await ClearLocalStorage();
-        await ClearYamlMarkers();
+        cleanInput = await inputEditor.GetValue();
+        await ClearLocalStorage(inputOnly: true);
+        await ClearInputMarkers();
         await ConvertAsync();
+    }
+
+    // ── Event stream ──
+
+    private async Task ToggleEventStream()
+    {
+        showEventStream = !showEventStream;
+        await SetLocalStorage(EventsStorageKey, showEventStream ? "true" : "false");
+
+        if (showEventStream && lastResult is not null && lastResult.Success)
+        {
+            await UpdateEventStream();
+        }
+
+        StateHasChanged();
+    }
+
+    private async Task UpdateEventStream()
+    {
+        if (!showEventStream)
+        {
+            return;
+        }
+
+        try
+        {
+            // Get the YAML text to parse events from
+            string yamlText;
+            if (selectedDirection == ConversionDirection.YamlToJson)
+            {
+                yamlText = await inputEditor.GetValue();
+            }
+            else
+            {
+                // In JSON→YAML mode, events come from the YAML output
+                yamlText = lastResult?.ResultText ?? "";
+            }
+
+            if (string.IsNullOrWhiteSpace(yamlText))
+            {
+                eventStreamText = "";
+                return;
+            }
+
+            var options = new YamlReaderOptions
+            {
+                Schema = selectedSchema,
+            };
+
+            var events = await ConvertService.GetEventsAsync(yamlText, options);
+            eventStreamText = ConversionService.FormatEventStream(events);
+        }
+        catch (Exception ex)
+        {
+            eventStreamText = $"Error parsing events: {ex.Message}";
+        }
+    }
+
+    private async Task CopyEvents()
+    {
+        await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", eventStreamText);
     }
 
     // ── Dirty checking ──
 
     private async Task CheckDirtyAndConfirm(Func<Task> action)
     {
-        var currentYaml = await yamlEditor.GetValue();
+        var currentInput = await inputEditor.GetValue();
 
-        if (currentYaml == cleanYaml)
+        if (currentInput == cleanInput)
         {
             await action();
             return;
@@ -399,9 +589,9 @@
 
     // ── Copy helpers ──
 
-    private async Task CopyYaml()
+    private async Task CopyInput()
     {
-        var text = await yamlEditor.GetValue();
+        var text = await inputEditor.GetValue();
         await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", text);
     }
 
@@ -450,24 +640,38 @@
 
         try
         {
-            var yamlInput = await yamlEditor.GetValue();
+            var input = await inputEditor.GetValue();
 
-            lastResult = await ConvertService.ConvertAsync(
-                yamlInput, selectedSchema, selectedDocMode, selectedDupeBehavior);
+            if (selectedDirection == ConversionDirection.YamlToJson)
+            {
+                lastResult = await ConvertService.ConvertYamlToJsonAsync(
+                    input, selectedSchema, selectedDocMode, selectedDupeBehavior);
+            }
+            else
+            {
+                lastResult = await ConvertService.ConvertJsonToYamlAsync(input);
+            }
 
             if (lastResult.Success)
             {
-                await ClearYamlMarkers();
+                await ClearInputMarkers();
                 if (outputEditor is not null)
                 {
-                    await outputEditor.SetValue(lastResult.ResultJson ?? "");
+                    await outputEditor.SetValue(lastResult.ResultText ?? "");
+                }
+
+                if (showEventStream)
+                {
+                    await UpdateEventStream();
                 }
             }
             else
             {
+                eventStreamText = "";
+
                 if (lastResult.ErrorLine.HasValue)
                 {
-                    await SetYamlMarkers(lastResult);
+                    await SetInputMarkers(lastResult);
                 }
             }
         }
@@ -479,12 +683,21 @@
                 ErrorMessage = ex.Message,
                 ElapsedMs = 0,
             };
+            eventStreamText = "";
         }
         finally
         {
             isConverting = false;
             StateHasChanged();
         }
+    }
+
+    // ── Editor language switching ──
+
+    private async Task SetEditorLanguages()
+    {
+        await JSRuntime.InvokeVoidAsync("setEditorLanguage", "input-editor", InputLanguage);
+        await JSRuntime.InvokeVoidAsync("setEditorLanguage", "output-editor", OutputLanguage);
     }
 
     // ── Debounce ──
@@ -514,8 +727,8 @@
             {
                 await InvokeAsync(async () =>
                 {
-                    var yaml = await yamlEditor.GetValue();
-                    await SetLocalStorage(YamlStorageKey, yaml);
+                    var text = await inputEditor.GetValue();
+                    await SetLocalStorage(InputStorageKey, text);
                 });
             }
         }, token);
@@ -523,18 +736,18 @@
 
     // ── Monaco markers (error squiggles) ──
 
-    private async Task SetYamlMarkers(ConversionResult result)
+    private async Task SetInputMarkers(ConversionResult result)
     {
         if (result.ErrorLine is int line && result.ErrorColumn is int col)
         {
-            await JSRuntime.InvokeVoidAsync("setEditorMarkers", "yaml-editor",
+            await JSRuntime.InvokeVoidAsync("setEditorMarkers", "input-editor",
                 result.ErrorMessage ?? "Error", line, col, line, col + 1);
         }
     }
 
-    private async Task ClearYamlMarkers()
+    private async Task ClearInputMarkers()
     {
-        await JSRuntime.InvokeVoidAsync("clearEditorMarkers", "yaml-editor");
+        await JSRuntime.InvokeVoidAsync("clearEditorMarkers", "input-editor");
     }
 
     // ── Theme management ──
@@ -614,14 +827,17 @@
         }
     }
 
-    private async Task ClearLocalStorage()
+    private async Task ClearLocalStorage(bool inputOnly = false)
     {
         try
         {
-            await JSRuntime.InvokeVoidAsync("localStorage.removeItem", YamlStorageKey);
-            await JSRuntime.InvokeVoidAsync("localStorage.removeItem", SchemaStorageKey);
-            await JSRuntime.InvokeVoidAsync("localStorage.removeItem", DocModeStorageKey);
-            await JSRuntime.InvokeVoidAsync("localStorage.removeItem", DupeStorageKey);
+            await JSRuntime.InvokeVoidAsync("localStorage.removeItem", InputStorageKey);
+            if (!inputOnly)
+            {
+                await JSRuntime.InvokeVoidAsync("localStorage.removeItem", SchemaStorageKey);
+                await JSRuntime.InvokeVoidAsync("localStorage.removeItem", DocModeStorageKey);
+                await JSRuntime.InvokeVoidAsync("localStorage.removeItem", DupeStorageKey);
+            }
         }
         catch
         {

@@ -1,7 +1,7 @@
 namespace Corvus.Text.Json.Yaml.Playground.Samples;
 
 /// <summary>
-/// A built-in YAML sample with associated description.
+/// A built-in sample with associated description.
 /// </summary>
 public sealed class Sample
 {
@@ -9,24 +9,24 @@ public sealed class Sample
 
     public required string DisplayName { get; init; }
 
-    public required string Yaml { get; init; }
+    public required string Content { get; init; }
 
     public required string Description { get; init; }
 }
 
 /// <summary>
-/// Registry of built-in YAML samples sourced from common YAML patterns.
+/// Registry of built-in samples for both YAML→JSON and JSON→YAML directions.
 /// </summary>
 public static class SampleRegistry
 {
-    public static IReadOnlyList<Sample> All { get; } =
+    public static IReadOnlyList<Sample> YamlSamples { get; } =
     [
         new Sample
         {
             Id = "basic-mapping",
             DisplayName = "Basic Mapping",
             Description = "Simple key-value pairs — the foundation of YAML configuration files.",
-            Yaml = """
+            Content = """
             name: Alice
             age: 30
             email: alice@example.com
@@ -39,7 +39,7 @@ public static class SampleRegistry
             Id = "sequences",
             DisplayName = "Sequences (Lists)",
             Description = "Block sequences using - notation, producing JSON arrays.",
-            Yaml = """
+            Content = """
             fruits:
               - Apple
               - Banana
@@ -56,7 +56,7 @@ public static class SampleRegistry
             Id = "nested-mappings",
             DisplayName = "Nested Mappings",
             Description = "Mappings within mappings, producing nested JSON objects.",
-            Yaml = """
+            Content = """
             server:
               host: localhost
               port: 8080
@@ -76,7 +76,7 @@ public static class SampleRegistry
             Id = "invoice",
             DisplayName = "Invoice (Anchors & Aliases)",
             Description = "A real-world invoice demonstrating anchors (&), aliases (*), and nested structures.",
-            Yaml = """
+            Content = """
             invoice: 34843
             date: 2001-01-23
             bill-to: &id001
@@ -113,7 +113,7 @@ public static class SampleRegistry
             Id = "block-scalars",
             DisplayName = "Block Scalars (Literal & Folded)",
             Description = "Literal (|) preserves newlines; folded (>) joins lines into paragraphs. Chomping controls trailing newlines.",
-            Yaml = """
+            Content = """
             # Literal: preserves newlines exactly
             literal_block: |
               Line 1
@@ -143,7 +143,7 @@ public static class SampleRegistry
             Id = "flow-style",
             DisplayName = "Flow Style (Compact)",
             Description = "Inline JSON-like notation: flow mappings {} and flow sequences [].",
-            Yaml = """
+            Content = """
             # Flow mappings (like JSON objects)
             person: {name: Alice, age: 30, active: true}
 
@@ -166,7 +166,7 @@ public static class SampleRegistry
             Id = "data-types",
             DisplayName = "Data Types (Core Schema)",
             Description = "YAML Core Schema resolves scalars to null, bool, int, float, and string JSON types.",
-            Yaml = """
+            Content = """
             # Null values
             null_key: null
             tilde_null: ~
@@ -204,7 +204,7 @@ public static class SampleRegistry
             Id = "ci-pipeline",
             DisplayName = "CI Pipeline Config",
             Description = "A typical CI/CD configuration file demonstrating practical YAML patterns.",
-            Yaml = """
+            Content = """
             name: Build and Test
 
             on:
@@ -240,7 +240,7 @@ public static class SampleRegistry
             Id = "kubernetes",
             DisplayName = "Kubernetes Deployment",
             Description = "A Kubernetes deployment manifest — a common real-world YAML use case.",
-            Yaml = """
+            Content = """
             apiVersion: apps/v1
             kind: Deployment
             metadata:
@@ -290,7 +290,7 @@ public static class SampleRegistry
             Id = "multi-document",
             DisplayName = "Multi-Document Stream",
             Description = "Multiple YAML documents in one file, separated by ---. Use MultiAsArray mode to parse all.",
-            Yaml = """
+            Content = """
             ---
             name: Document 1
             type: config
@@ -312,7 +312,7 @@ public static class SampleRegistry
             Id = "yaml11-compat",
             DisplayName = "YAML 1.1 Compatibility",
             Description = "YAML 1.1 mode: yes/no/on/off booleans and merge keys (<<).",
-            Yaml = """
+            Content = """
             # YAML 1.1 boolean values
             enabled: yes
             disabled: no
@@ -341,7 +341,7 @@ public static class SampleRegistry
             Id = "quoted-strings",
             DisplayName = "Quoted Strings & Escapes",
             Description = "Double-quoted strings support escape sequences; single-quoted strings only escape '' to '.",
-            Yaml = """
+            Content = """
             # Double-quoted: full escape support
             newline: "line1\nline2"
             tab: "col1\tcol2"
@@ -359,6 +359,172 @@ public static class SampleRegistry
             not_a_bool: "true"
             not_a_number: "42"
             not_null: "null"
+            """,
+        },
+    ];
+
+    public static IReadOnlyList<Sample> JsonSamples { get; } =
+    [
+        new Sample
+        {
+            Id = "json-basic",
+            DisplayName = "Basic Object",
+            Description = "A simple JSON object — demonstrates key-value mapping to YAML.",
+            Content = """
+            {
+              "name": "Alice",
+              "age": 30,
+              "email": "alice@example.com",
+              "active": true
+            }
+            """,
+        },
+
+        new Sample
+        {
+            Id = "json-nested",
+            DisplayName = "Nested Object",
+            Description = "Nested objects and arrays — shows how JSON structure maps to YAML indentation.",
+            Content = """
+            {
+              "server": {
+                "host": "localhost",
+                "port": 8080,
+                "ssl": {
+                  "enabled": true,
+                  "cert": "/etc/ssl/cert.pem"
+                }
+              },
+              "database": {
+                "host": "db.example.com",
+                "port": 5432,
+                "name": "myapp"
+              }
+            }
+            """,
+        },
+
+        new Sample
+        {
+            Id = "json-arrays",
+            DisplayName = "Arrays",
+            Description = "JSON arrays of primitives and objects — produces YAML block sequences.",
+            Content = """
+            {
+              "fruits": ["Apple", "Banana", "Cherry"],
+              "servers": [
+                {"name": "web1", "ip": "10.0.0.1"},
+                {"name": "web2", "ip": "10.0.0.2"}
+              ]
+            }
+            """,
+        },
+
+        new Sample
+        {
+            Id = "json-data-types",
+            DisplayName = "All Data Types",
+            Description = "All JSON data types: string, number, boolean, null, object, and array.",
+            Content = """
+            {
+              "string": "hello world",
+              "integer": 42,
+              "float": 3.14159,
+              "negative": -17,
+              "exponent": 1.2e+3,
+              "bool_true": true,
+              "bool_false": false,
+              "null_value": null,
+              "empty_object": {},
+              "empty_array": [],
+              "nested": {
+                "key": "value"
+              }
+            }
+            """,
+        },
+
+        new Sample
+        {
+            Id = "json-special-strings",
+            DisplayName = "Special Strings",
+            Description = "Strings that require YAML quoting — booleans, numbers, reserved words, special characters.",
+            Content = """
+            {
+              "looks_like_bool": "true",
+              "looks_like_number": "42",
+              "looks_like_null": "null",
+              "yaml_reserved": "yes",
+              "contains_colon": "key: value",
+              "contains_hash": "before # after",
+              "leading_space": " indented",
+              "empty": "",
+              "multiline": "line1\nline2\nline3"
+            }
+            """,
+        },
+
+        new Sample
+        {
+            Id = "json-package",
+            DisplayName = "Package Manifest",
+            Description = "A package.json-style manifest — a common real-world JSON use case.",
+            Content = """
+            {
+              "name": "@corvus/yaml-playground",
+              "version": "1.0.0",
+              "description": "YAML playground demo",
+              "main": "index.js",
+              "scripts": {
+                "build": "dotnet build",
+                "test": "dotnet test",
+                "start": "dotnet run"
+              },
+              "keywords": ["yaml", "json", "converter"],
+              "author": "Endjin",
+              "license": "Apache-2.0",
+              "dependencies": {
+                "blazor-monaco": "^3.4.0"
+              }
+            }
+            """,
+        },
+
+        new Sample
+        {
+            Id = "json-api-response",
+            DisplayName = "API Response",
+            Description = "A typical REST API response with pagination metadata and nested data.",
+            Content = """
+            {
+              "status": "success",
+              "data": {
+                "users": [
+                  {
+                    "id": 1,
+                    "name": "Alice",
+                    "email": "alice@example.com",
+                    "roles": ["admin", "user"]
+                  },
+                  {
+                    "id": 2,
+                    "name": "Bob",
+                    "email": "bob@example.com",
+                    "roles": ["user"]
+                  }
+                ],
+                "pagination": {
+                  "page": 1,
+                  "per_page": 20,
+                  "total": 2,
+                  "total_pages": 1
+                }
+              },
+              "meta": {
+                "request_id": "abc-123",
+                "timestamp": "2025-01-15T10:30:00Z"
+              }
+            }
             """,
         },
     ];
