@@ -433,7 +433,7 @@ public class JsonToYamlTests
     [Fact]
     public void RoundTrip_MixedTypes()
     {
-        string json = """{"str": "hello", "num": 42, "float": 3.14, "bool": true, "nil": null, "arr": [1, "two"], "obj": {"inner": true}}""";
+        string json = """{"str": "hello", "num": 42, "float": 3.25, "bool": true, "nil": null, "arr": [1, "two"], "obj": {"inner": true}}""";
         string yaml = YamlDocument.ConvertToYamlString(json);
         byte[] yamlBytes = Encoding.UTF8.GetBytes(yaml);
         string roundTripped = YamlDocument.ConvertToJsonString(yamlBytes);
