@@ -161,6 +161,36 @@ html, body, #app {
     flex-shrink: 0;
 }
 
+/* ── Panel tabs (Schema | Data) ── */
+.panel-tab {
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-secondary);
+    padding: 4px 8px;
+    margin: 0;
+    transition: color 0.15s, border-color 0.15s;
+}
+
+.panel-tab:hover {
+    color: var(--text-primary);
+}
+
+.panel-tab--active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+}
+
+.schema-status {
+    font-size: 11px;
+    opacity: 0.7;
+}
+
 .panel-body {
     flex: 1;
     overflow: hidden;

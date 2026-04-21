@@ -717,7 +717,7 @@
     Blockly.Blocks['jsonlogic_all'] = {
         init: function () {
             this.appendValueInput('DATA').setCheck(VALUE_TYPES).appendField('all');
-            this.appendValueInput('EXPR').setCheck(VALUE_TYPES).appendField('→');
+            this.appendValueInput('EXPR').setCheck(['Boolean']).appendField('→');
             this.setOutput(true, ['Boolean', 'Value']);
             this.setColour(COLOUR_ARRAY);
             this.setInputsInline(true);
@@ -728,7 +728,7 @@
     Blockly.Blocks['jsonlogic_some'] = {
         init: function () {
             this.appendValueInput('DATA').setCheck(VALUE_TYPES).appendField('some');
-            this.appendValueInput('EXPR').setCheck(VALUE_TYPES).appendField('→');
+            this.appendValueInput('EXPR').setCheck(['Boolean']).appendField('→');
             this.setOutput(true, ['Boolean', 'Value']);
             this.setColour(COLOUR_ARRAY);
             this.setInputsInline(true);
@@ -739,7 +739,7 @@
     Blockly.Blocks['jsonlogic_none'] = {
         init: function () {
             this.appendValueInput('DATA').setCheck(VALUE_TYPES).appendField('none');
-            this.appendValueInput('EXPR').setCheck(VALUE_TYPES).appendField('→');
+            this.appendValueInput('EXPR').setCheck(['Boolean']).appendField('→');
             this.setOutput(true, ['Boolean', 'Value']);
             this.setColour(COLOUR_ARRAY);
             this.setInputsInline(true);
@@ -955,6 +955,9 @@
     // Current sample data for context-aware dropdowns
     let currentSampleData = null;
 
+    // Current schema tree for schema-aware dropdowns (replaces data when set)
+    let currentSchemaTree = null;
+
     /**
      * Initialize the Blockly workspace.
      * @param {string} elementId - The div to inject Blockly into.
@@ -1027,6 +1030,20 @@
                 currentSampleData = jsonString ? JSON.parse(jsonString) : null;
             } catch (e) {
                 currentSampleData = null;
+            }
+            refreshDataDropdowns();
+        },
+
+        /**
+         * Update the schema tree used for schema-aware dropdowns.
+         * When set, schema replaces data as the dropdown source.
+         * @param {string|null} schemaTreeJson - JSON string of SchemaNode tree, or null to clear.
+         */
+        setSchema: function (schemaTreeJson) {
+            try {
+                currentSchemaTree = schemaTreeJson ? JSON.parse(schemaTreeJson) : null;
+            } catch (e) {
+                currentSchemaTree = null;
             }
             refreshDataDropdowns();
         },
@@ -1377,10 +1394,11 @@
     /** Determine the data context for a property block's dropdown by walking
      *  UP through parent blocks.  Each ancestor property/array_element adds
      *  a segment; the walk stops at a jsonlogic_var or jsonlogic_var_default.
+     *  When a schema tree is set, uses schema for property names instead of data.
      *  @param {Blockly.Block} block - The property block whose context we want.
-     *  @returns {*} The value in currentSampleData at this position. */
+     *  @returns {*} An object whose keys are the valid property names at this position. */
     function getPropertyContext(block) {
-        if (!currentSampleData) return undefined;
+        // Collect path segments by walking up through parents
         var segments = [];
         var current = block;
         while (current) {
@@ -1401,8 +1419,55 @@
             }
             current = parent;
         }
+
+        // Schema-driven: navigate the schema tree
+        if (currentSchemaTree) {
+            return resolveSchemaContext(segments);
+        }
+
+        // Data-driven fallback
+        if (!currentSampleData) return undefined;
         if (segments.length === 0) return currentSampleData;
         return resolveDataPath(segments.join('.'));
+    }
+
+    /** Navigate the schema tree using collected path segments.
+     *  Returns a synthetic object whose keys are the property names at this level. */
+    function resolveSchemaContext(segments) {
+        var node = currentSchemaTree;
+        for (var i = 0; i < segments.length; i++) {
+            if (!node) return undefined;
+            var seg = segments[i];
+
+            // Check if this is a numeric index (array element)
+            var idx = parseInt(seg, 10);
+            if (!isNaN(idx) && node.items) {
+                // Navigate into array items
+                node = node.items;
+                continue;
+            }
+
+            // Navigate into a named property
+            if (node.properties && node.properties[seg]) {
+                node = node.properties[seg];
+            } else {
+                return undefined;
+            }
+        }
+
+        // Return an object whose keys match the schema's property names
+        if (node && node.properties) {
+            // Return a synthetic object with the property names as keys
+            var result = {};
+            for (var key in node.properties) {
+                if (node.properties.hasOwnProperty(key)) {
+                    result[key] = true;
+                }
+            }
+            return result;
+        }
+
+        return undefined;
     }
 
     /** Resolve a dotted path against currentSampleData.

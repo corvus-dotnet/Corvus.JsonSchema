@@ -21,6 +21,28 @@
     <ProjectReference Include="..\..\..\..\src\Corvus.Text.Json.JsonLogic\Corvus.Text.Json.JsonLogic.csproj" />
   </ItemGroup>
 
+  <!-- V4 Code Generation base (for schema introspection via TypeDeclaration) -->
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\src-v4\Corvus.Json.CodeGeneration\Corvus.Json.CodeGeneration.csproj" />
+  </ItemGroup>
+
+  <!-- Vocabulary analyzers (needed to register schema dialects for $ref resolution) -->
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\src-v4\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.201909.csproj" />
+    <ProjectReference Include="..\..\..\..\src-v4\Corvus.Json.CodeGeneration.202012\Corvus.Json.CodeGeneration.202012.csproj" />
+    <ProjectReference Include="..\..\..\..\src-v4\Corvus.Json.CodeGeneration.4\Corvus.Json.CodeGeneration.4.csproj" />
+    <ProjectReference Include="..\..\..\..\src-v4\Corvus.Json.CodeGeneration.6\Corvus.Json.CodeGeneration.6.csproj" />
+    <ProjectReference Include="..\..\..\..\src-v4\Corvus.Json.CodeGeneration.7\Corvus.Json.CodeGeneration.7.csproj" />
+    <ProjectReference Include="..\..\..\..\src-v4\Corvus.Json.CodeGeneration.CorvusVocabulary\Corvus.Json.CodeGeneration.CorvusVocabulary.csproj" />
+    <ProjectReference Include="..\..\..\..\src-v4\Corvus.Json.CodeGeneration.OpenApi30\Corvus.Json.CodeGeneration.OpenApi30.csproj" />
+  </ItemGroup>
+
+  <!-- Embed metaschema files as resources (needed for schema vocabulary resolution) -->
+  <ItemGroup>
+    <EmbeddedResource Include="..\..\..\..\src\Corvus.Json.CodeGenerator\metaschema\**\*.json"
+                      Link="metaschema\%(RecursiveDir)%(Filename)%(Extension)" />
+  </ItemGroup>
+
   <!-- Restore Blockly from npm and copy to wwwroot for self-hosting.
        Loaded before Monaco's AMD loader to avoid define() conflicts. -->
   <PropertyGroup>

@@ -14,6 +14,8 @@ public sealed class Sample
     public required string Rule { get; init; }
 
     public required string Data { get; init; }
+
+    public string? Schema { get; init; }
 }
 
 /// <summary>
@@ -229,6 +231,60 @@ public static class SampleRegistry
             {
               "customer": {"name": "Alice", "tier": "standard"},
               "order": {"total": 75.00, "items": 3}
+            }
+            """,
+        },
+
+        new Sample
+        {
+            Id = "schema-driven",
+            DisplayName = "Schema-Driven",
+            Description = "Demonstrates schema-aware dropdowns — property keys come from the JSON Schema, not sample data.",
+            Rule = """
+            {"and":[
+              {">":[{"var":"age"}, 18]},
+              {"!!":[{"var":"address.city"}]}
+            ]}
+            """,
+            Data = """
+            {
+              "firstName": "Alice",
+              "lastName": "Smith",
+              "age": 30,
+              "address": {
+                "street": "123 Main St",
+                "city": "Springfield",
+                "state": "IL",
+                "zip": "62704"
+              }
+            }
+            """,
+            Schema = """
+            {
+              "$schema": "https://json-schema.org/draft/2020-12/schema",
+              "type": "object",
+              "properties": {
+                "firstName": { "type": "string" },
+                "lastName": { "type": "string" },
+                "age": { "type": "integer" },
+                "email": { "type": "string", "format": "email" },
+                "phone": { "type": "string" },
+                "address": {
+                  "type": "object",
+                  "properties": {
+                    "street": { "type": "string" },
+                    "city": { "type": "string" },
+                    "state": { "type": "string" },
+                    "zip": { "type": "string" }
+                  },
+                  "required": ["street", "city"]
+                },
+                "tags": {
+                  "type": "array",
+                  "items": { "type": "string" }
+                }
+              },
+              "required": ["firstName", "lastName", "age"]
             }
             """,
         },

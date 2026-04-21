@@ -42,17 +42,30 @@
         </div>
     </div>
 
-    @* Top-right: Data *@
+    @* Top-right: Schema | Data (tabbed) *@
     <div class="playground-panel panel-data @(GetPanelClass("data"))">
         <div class="panel-header">
-            Data
+            <button class="panel-tab @(activeDataTab == "schema" ? "panel-tab--active" : "")"
+                    @onclick="@(() => SwitchDataTab("schema"))">Schema</button>
+            <button class="panel-tab @(activeDataTab == "data" ? "panel-tab--active" : "")"
+                    @onclick="@(() => SwitchDataTab("data"))">Data</button>
             <div class="spacer"></div>
-            <button class="panel-copy-btn" @onclick="CopyData" title="Copy data">📋</button>
+            @if (isParsingSchema)
+            {
+                <span class="schema-status" title="Parsing schema...">⏳</span>
+            }
+            <button class="panel-copy-btn" @onclick="CopyDataOrSchema" title="Copy">📋</button>
             <button class="panel-maximize-btn" @onclick='() => ToggleMaximize("data")' title="@(maximizedPanel == "data" ? "Restore" : "Maximize")">
                 @(maximizedPanel == "data" ? "⊟" : "⊞")
             </button>
         </div>
-        <div class="panel-body">
+        <div class="panel-body" style="@(activeDataTab != "schema" ? "display:none" : "")">
+            <StandaloneCodeEditor @ref="schemaEditor"
+                                  Id="schema-editor"
+                                  ConstructionOptions="SchemaEditorOptions"
+                                  OnDidChangeModelContent="OnSchemaChanged" />
+        </div>
+        <div class="panel-body" style="@(activeDataTab != "data" ? "display:none" : "")">
             <StandaloneCodeEditor @ref="dataEditor"
                                   Id="data-editor"
                                   ConstructionOptions="DataEditorOptions"
@@ -122,22 +135,30 @@
 
 @code {
     private RuleBuilder? ruleBuilder;
+    private StandaloneCodeEditor? schemaEditor;
     private StandaloneCodeEditor? dataEditor;
     private StandaloneCodeEditor? outputEditor;
 
     private EvaluationResult? lastResult;
     private bool isEvaluating;
+    private bool isParsingSchema;
     private string? maximizedPanel;
+    private string activeDataTab = "data";
 
     // Sample tracking
     private string? activeSampleId;
     private Sample? activeSample;
     private string sampleRuleJson = "";
     private string sampleDataJson = "";
+    private string sampleSchemaJson = "";
 
     // Debounce
     private CancellationTokenSource? evalDebounce;
     private CancellationTokenSource? saveDebounce;
+    private CancellationTokenSource? schemaDebounce;
+
+    // Schema versioning — monotonic counter to discard stale parse results
+    private long schemaVersion;
 
     // Dirty confirmation
     private bool showDirtyConfirmation;
@@ -171,10 +192,12 @@
             // Load from localStorage or default to first sample
             string? savedRule = null;
             string? savedData = null;
+            string? savedSchema = null;
             try
             {
                 savedRule = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "jsonlogic-rule");
                 savedData = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "jsonlogic-data");
+                savedSchema = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "jsonlogic-schema");
             }
             catch
             {
@@ -183,6 +206,20 @@
 
             if (!string.IsNullOrEmpty(savedRule))
             {
+                if (schemaEditor is not null && !string.IsNullOrEmpty(savedSchema))
+                {
+                    await schemaEditor.SetValue(savedSchema);
+                    activeDataTab = "schema";
+                    // Parse and push schema to Blockly
+                    long version = Interlocked.Increment(ref schemaVersion);
+                    var tree = await Services.SchemaIntrospectionService.ExtractSchemaTreeAsync(savedSchema);
+                    if (tree is not null && Interlocked.Read(ref schemaVersion) == version)
+                    {
+                        string treeJson = System.Text.Json.JsonSerializer.Serialize(tree);
+                        await JSRuntime.InvokeVoidAsync("BlocklyJsonLogic.setSchema", treeJson);
+                    }
+                }
+
                 if (dataEditor is not null && !string.IsNullOrEmpty(savedData))
                 {
                     await dataEditor.SetValue(savedData);
@@ -208,6 +245,21 @@
     }
 
     // ── Editor construction ──
+
+    private StandaloneEditorConstructionOptions SchemaEditorOptions(StandaloneCodeEditor editor)
+    {
+        return new StandaloneEditorConstructionOptions
+        {
+            Language = "json",
+            Theme = "vs-dark",
+            Value = "",
+            AutomaticLayout = true,
+            Minimap = new EditorMinimapOptions { Enabled = false },
+            FontSize = 14,
+            ScrollBeyondLastLine = false,
+            TabSize = 2,
+        };
+    }
 
     private StandaloneEditorConstructionOptions DataEditorOptions(StandaloneCodeEditor editor)
     {
@@ -240,12 +292,109 @@
         };
     }
 
+    // ── Tab switching ──
+
+    private async Task SwitchDataTab(string tab)
+    {
+        activeDataTab = tab;
+        StateHasChanged();
+        // Monaco needs a layout kick after becoming visible
+        await Task.Delay(50);
+        if (tab == "schema" && schemaEditor is not null)
+        {
+            await schemaEditor.Layout();
+        }
+        else if (tab == "data" && dataEditor is not null)
+        {
+            await dataEditor.Layout();
+        }
+    }
+
     // ── Change handlers ──
 
     private void OnRuleChanged(string ruleJson)
     {
         DebounceEval();
         DebounceSave();
+    }
+
+    private async void OnSchemaChanged(ModelContentChangedEvent e)
+    {
+        DebounceSave();
+        DebounceSchemaparse();
+    }
+
+    private void DebounceSchemaparse()
+    {
+        schemaDebounce?.Cancel();
+        schemaDebounce = new CancellationTokenSource();
+        var token = schemaDebounce.Token;
+        long version = Interlocked.Increment(ref schemaVersion);
+        _ = Task.Delay(500, token).ContinueWith(async _ =>
+        {
+            if (!token.IsCancellationRequested)
+            {
+                await InvokeAsync(() => ParseAndPushSchemaAsync(version));
+            }
+        }, token);
+    }
+
+    private async Task ParseAndPushSchemaAsync(long version)
+    {
+        if (schemaEditor is null)
+        {
+            return;
+        }
+
+        string schemaJson = await schemaEditor.GetValue();
+
+        if (string.IsNullOrWhiteSpace(schemaJson))
+        {
+            // Clear schema — revert to data-driven dropdowns
+            if (Interlocked.Read(ref schemaVersion) == version)
+            {
+                await JSRuntime.InvokeVoidAsync("BlocklyJsonLogic.setSchema", null as string);
+            }
+
+            return;
+        }
+
+        isParsingSchema = true;
+        StateHasChanged();
+
+        try
+        {
+            var tree = await Services.SchemaIntrospectionService.ExtractSchemaTreeAsync(schemaJson);
+
+            // Discard if a newer version has been requested
+            if (Interlocked.Read(ref schemaVersion) != version)
+            {
+                return;
+            }
+
+            if (tree is not null)
+            {
+                string treeJson = System.Text.Json.JsonSerializer.Serialize(tree);
+                await JSRuntime.InvokeVoidAsync("BlocklyJsonLogic.setSchema", treeJson);
+            }
+            else
+            {
+                await JSRuntime.InvokeVoidAsync("BlocklyJsonLogic.setSchema", null as string);
+            }
+        }
+        catch
+        {
+            // Schema parse failed — clear schema context
+            if (Interlocked.Read(ref schemaVersion) == version)
+            {
+                await JSRuntime.InvokeVoidAsync("BlocklyJsonLogic.setSchema", null as string);
+            }
+        }
+        finally
+        {
+            isParsingSchema = false;
+            StateHasChanged();
+        }
     }
 
     private async void OnDataChanged(ModelContentChangedEvent e)
@@ -345,10 +494,33 @@
         activeSample = sample;
         sampleRuleJson = sample.Rule.Trim();
         sampleDataJson = sample.Data.Trim();
+        sampleSchemaJson = (sample.Schema ?? "").Trim();
 
         if (dataEditor is not null)
         {
             await dataEditor.SetValue(sampleDataJson);
+        }
+
+        if (schemaEditor is not null)
+        {
+            await schemaEditor.SetValue(sampleSchemaJson);
+        }
+
+        // Push schema first (if any), then data, then rule
+        if (!string.IsNullOrEmpty(sampleSchemaJson))
+        {
+            activeDataTab = "schema";
+            long version = Interlocked.Increment(ref schemaVersion);
+            var tree = await Services.SchemaIntrospectionService.ExtractSchemaTreeAsync(sampleSchemaJson);
+            if (tree is not null && Interlocked.Read(ref schemaVersion) == version)
+            {
+                string treeJson = System.Text.Json.JsonSerializer.Serialize(tree);
+                await JSRuntime.InvokeVoidAsync("BlocklyJsonLogic.setSchema", treeJson);
+            }
+        }
+        else
+        {
+            await JSRuntime.InvokeVoidAsync("BlocklyJsonLogic.setSchema", null as string);
         }
 
         // Push data to Blockly BEFORE loading the rule so dropdowns have context.
@@ -381,7 +553,9 @@
         activeSample = null;
         sampleRuleJson = "";
         sampleDataJson = "{}";
+        sampleSchemaJson = "";
 
+        await JSRuntime.InvokeVoidAsync("BlocklyJsonLogic.setSchema", null as string);
         await JSRuntime.InvokeVoidAsync("BlocklyJsonLogic.setData", "{}");
         ruleBuilder?.SetRule("");
         if (dataEditor is not null)
@@ -389,11 +563,17 @@
             await dataEditor.SetValue("{}");
         }
 
+        if (schemaEditor is not null)
+        {
+            await schemaEditor.SetValue("");
+        }
+
         if (outputEditor is not null)
         {
             await outputEditor.SetValue("");
         }
 
+        activeDataTab = "data";
         lastResult = null;
         StateHasChanged();
     }
@@ -451,9 +631,14 @@
         await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", text);
     }
 
-    private async Task CopyData()
+    private async Task CopyDataOrSchema()
     {
-        if (dataEditor is not null)
+        if (activeDataTab == "schema" && schemaEditor is not null)
+        {
+            string text = await schemaEditor.GetValue();
+            await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", text);
+        }
+        else if (dataEditor is not null)
         {
             string text = await dataEditor.GetValue();
             await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", text);
@@ -544,8 +729,10 @@
         {
             string ruleJson = ruleBuilder?.RuleJson ?? "";
             string dataJson = dataEditor is not null ? await dataEditor.GetValue() : "{}";
+            string schemaJson = schemaEditor is not null ? await schemaEditor.GetValue() : "";
             await JSRuntime.InvokeVoidAsync("localStorage.setItem", "jsonlogic-rule", ruleJson);
             await JSRuntime.InvokeVoidAsync("localStorage.setItem", "jsonlogic-data", dataJson);
+            await JSRuntime.InvokeVoidAsync("localStorage.setItem", "jsonlogic-schema", schemaJson);
         }
         catch
         {
@@ -561,6 +748,8 @@
         evalDebounce?.Dispose();
         saveDebounce?.Cancel();
         saveDebounce?.Dispose();
+        schemaDebounce?.Cancel();
+        schemaDebounce?.Dispose();
         dotNetRef?.Dispose();
     }
 }
