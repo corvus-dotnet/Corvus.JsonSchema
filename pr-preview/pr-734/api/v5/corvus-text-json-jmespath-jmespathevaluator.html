@@ -151,6 +151,46 @@
 </tr>
 </tbody>
 </table>
+<h2 id="examples">Examples</h2>
+<p>Evaluate a JMESPath expression against JSON data using the shared evaluator instance.</p>
+<pre><code class="language-csharp">using Corvus.Text.Json;
+using Corvus.Text.Json.JMESPath;
+
+using ParsedJsonDocument&lt;JsonElement&gt; doc = ParsedJsonDocument&lt;JsonElement&gt;.Parse(
+    &quot;&quot;&quot;
+    {
+      &quot;locations&quot;: [
+        {&quot;name&quot;: &quot;Seattle&quot;, &quot;state&quot;: &quot;WA&quot;},
+        {&quot;name&quot;: &quot;New York&quot;, &quot;state&quot;: &quot;NY&quot;},
+        {&quot;name&quot;: &quot;Bellevue&quot;, &quot;state&quot;: &quot;WA&quot;},
+        {&quot;name&quot;: &quot;Olympia&quot;, &quot;state&quot;: &quot;WA&quot;}
+      ]
+    }
+    &quot;&quot;&quot;u8);
+
+JsonElement result = JMESPathEvaluator.Default.Search(
+    &quot;locations[?state == 'WA'].name | sort(@) | {WashingtonCities: join(', ', @)}&quot;,
+    doc.RootElement);
+// result: {&quot;WashingtonCities&quot;:&quot;Bellevue, Olympia, Seattle&quot;}
+</code></pre>
+<h3 id="simple-path-navigation">Simple path navigation</h3>
+<pre><code class="language-csharp">JsonElement name = JMESPathEvaluator.Default.Search(&quot;person.name&quot;, data);
+JsonElement first = JMESPathEvaluator.Default.Search(&quot;items[0]&quot;, data);
+JsonElement lengths = JMESPathEvaluator.Default.Search(&quot;items[*].length(@)&quot;, data);
+</code></pre>
+<h3 id="caller-managed-workspace-for-high-throughput-scenarios">Caller-managed workspace for high-throughput scenarios</h3>
+<p>When searching many documents with the same expression, pass a shared <code>JsonWorkspace</code> to avoid repeated allocation:</p>
+<pre><code class="language-csharp">using JsonWorkspace workspace = JsonWorkspace.Create();
+
+foreach (JsonElement item in items)
+{
+    JsonElement result = JMESPathEvaluator.Default.Search(
+        &quot;metrics.{avg: avg(values), max: max(values)}&quot;,
+        item,
+        workspace);
+    // process result...
+}
+</code></pre>
 <h2 id="applies-to">Applies To</h2>
 <table>
 <thead>

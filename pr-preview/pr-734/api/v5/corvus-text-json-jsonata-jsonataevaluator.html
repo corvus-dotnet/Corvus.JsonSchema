@@ -161,6 +161,74 @@
 </tr>
 </tbody>
 </table>
+<h2 id="examples">Examples</h2>
+<p>Evaluate a JSONata expression against JSON data using the shared evaluator instance.</p>
+<pre><code class="language-csharp">using Corvus.Text.Json.Jsonata;
+
+// Quick evaluation with string inputs
+string? result = JsonataEvaluator.Default.EvaluateToString(
+    &quot;Account.Order.Product.Price ~&gt; $sum()&quot;,
+    &quot;&quot;&quot;{&quot;Account&quot;:{&quot;Order&quot;:[{&quot;Product&quot;:{&quot;Price&quot;:10}},{&quot;Product&quot;:{&quot;Price&quot;:20}}]}}&quot;&quot;&quot;);
+// result: &quot;30&quot;
+</code></pre>
+<h3 id="structured-evaluation-with-jsonelement">Structured evaluation with JsonElement</h3>
+<pre><code class="language-csharp">using Corvus.Text.Json;
+using Corvus.Text.Json.Jsonata;
+
+using ParsedJsonDocument&lt;JsonElement&gt; doc = ParsedJsonDocument&lt;JsonElement&gt;.Parse(
+    &quot;&quot;&quot;
+    {
+        &quot;FirstName&quot;: &quot;Fred&quot;,
+        &quot;Surname&quot;: &quot;Smith&quot;,
+        &quot;Age&quot;: 28
+    }
+    &quot;&quot;&quot;u8);
+
+JsonElement result = JsonataEvaluator.Default.Evaluate(
+    &quot;FirstName &amp; ' ' &amp; Surname&quot;,
+    doc.RootElement);
+// result: &quot;Fred Smith&quot;
+</code></pre>
+<h3 id="custom-variable-bindings">Custom variable bindings</h3>
+<p>Pass external values into the expression as named bindings:</p>
+<pre><code class="language-csharp">using Corvus.Text.Json.Jsonata;
+
+var bindings = new Dictionary&lt;string, JsonataBinding&gt;
+{
+    [&quot;threshold&quot;] = JsonataBinding.FromValue(100.0),
+    [&quot;label&quot;] = JsonataBinding.FromValue(&quot;high&quot;),
+};
+
+JsonElement result = JsonataEvaluator.Default.Evaluate(
+    &quot;$sum(values[$ &gt; $threshold]) &amp; ' = ' &amp; $label&quot;,
+    data,
+    bindings);
+</code></pre>
+<h3 id="caller-managed-workspace-for-high-throughput-scenarios">Caller-managed workspace for high-throughput scenarios</h3>
+<p>When evaluating many expressions in a loop, pass a shared <code>JsonWorkspace</code> to avoid repeated allocation:</p>
+<pre><code class="language-csharp">using JsonWorkspace workspace = JsonWorkspace.Create();
+
+foreach (JsonElement item in items)
+{
+    JsonElement result = JsonataEvaluator.Default.Evaluate(
+        &quot;name &amp; ': ' &amp; $string(score)&quot;,
+        item,
+        workspace);
+    // process result...
+}
+</code></pre>
+<h3 id="time-limited-evaluation">Time-limited evaluation</h3>
+<p>Set <code>timeLimitMs</code> to prevent runaway expressions from blocking indefinitely:</p>
+<pre><code class="language-csharp">try
+{
+    JsonElement result = JsonataEvaluator.Default.Evaluate(
+        expression, data, maxDepth: 100, timeLimitMs: 5000);
+}
+catch (JsonataException ex) when (ex.ErrorCode == &quot;U1001&quot;)
+{
+    // Expression timed out after 5 seconds
+}
+</code></pre>
 <h2 id="applies-to">Applies To</h2>
 <table>
 <thead>

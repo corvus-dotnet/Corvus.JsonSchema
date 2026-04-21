@@ -171,6 +171,58 @@
 </tr>
 </tbody>
 </table>
+<h2 id="examples">Examples</h2>
+<p>Configure YAML parsing behaviour with <code>YamlReaderOptions</code>. The default options use the Core schema, single-document mode, and error on duplicate keys.</p>
+<pre><code class="language-csharp">using Corvus.Text.Json.Yaml;
+
+// Default options — Core schema, single document, duplicate keys error
+using JsonDocument doc = YamlDocument.Parse(yaml);
+</code></pre>
+<h3 id="custom-options">Custom options</h3>
+<pre><code class="language-csharp">var options = new YamlReaderOptions
+{
+    Schema = YamlSchema.Json,
+    DocumentMode = YamlDocumentMode.MultiAsArray,
+    DuplicateKeyBehavior = DuplicateKeyBehavior.LastWins,
+};
+
+using JsonDocument doc = YamlDocument.Parse(yaml, options);
+</code></pre>
+<h3 id="schema-modes">Schema modes</h3>
+<table>
+<thead>
+<tr>
+<th>Schema</th>
+<th>Behaviour</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>YamlSchema.Core</code></td>
+<td>Default. Resolves <code>true</code>/<code>false</code>/<code>null</code> and numeric scalars.</td>
+</tr>
+<tr>
+<td><code>YamlSchema.Json</code></td>
+<td>Like Core, but untagged scalars that aren't null/bool/number become strings.</td>
+</tr>
+<tr>
+<td><code>YamlSchema.Failsafe</code></td>
+<td>All scalars are strings — no type resolution.</td>
+</tr>
+<tr>
+<td><code>YamlSchema.Yaml11</code></td>
+<td>YAML 1.1 rules — <code>yes</code>/<code>no</code>/<code>on</code>/<code>off</code> are booleans, octal <code>0777</code>, etc.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="alias-expansion-limits">Alias expansion limits</h3>
+<p>Control anchor/alias expansion depth and total size to prevent denial-of-service from deeply nested or exponentially expanding aliases:</p>
+<pre><code class="language-csharp">var options = new YamlReaderOptions
+{
+    MaxAliasExpansionDepth = 10,
+    MaxAliasExpansionSize = 1_000_000,
+};
+</code></pre>
 <h2 id="applies-to">Applies To</h2>
 <table>
 <thead>

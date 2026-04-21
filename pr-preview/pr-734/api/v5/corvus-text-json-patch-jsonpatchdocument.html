@@ -230,6 +230,43 @@
 </tr>
 </tbody>
 </table>
+<h2 id="examples">Examples</h2>
+<p>A <code>JsonPatchDocument</code> represents an RFC 6902 JSON Patch — an array of operations that describe mutations to apply to a JSON document.</p>
+<h3 id="parsing-from-json">Parsing from JSON</h3>
+<pre><code class="language-csharp">using Corvus.Text.Json.Patch;
+
+JsonPatchDocument patch = JsonPatchDocument.ParseValue(
+    &quot;&quot;&quot;
+    [
+        { &quot;op&quot;: &quot;replace&quot;, &quot;path&quot;: &quot;/name&quot;, &quot;value&quot;: &quot;Bob&quot; },
+        { &quot;op&quot;: &quot;add&quot;, &quot;path&quot;: &quot;/email&quot;, &quot;value&quot;: &quot;bob@example.com&quot; },
+        { &quot;op&quot;: &quot;remove&quot;, &quot;path&quot;: &quot;/temporary&quot; }
+    ]
+    &quot;&quot;&quot;u8);
+</code></pre>
+<h3 id="applying-to-a-mutable-document">Applying to a mutable document</h3>
+<p>Use <code>TryValidateAndApplyPatch</code> when the patch comes from an untrusted source — it validates the patch against its JSON Schema before applying:</p>
+<pre><code class="language-csharp">using Corvus.Text.Json;
+using Corvus.Text.Json.Patch;
+
+using var parsedDoc = ParsedJsonDocument&lt;JsonElement&gt;.Parse(json);
+using JsonWorkspace workspace = JsonWorkspace.Create();
+using var builder = parsedDoc.RootElement.CreateBuilder(workspace);
+
+JsonElement.Mutable root = builder.RootElement;
+
+bool applied = root.TryValidateAndApplyPatch(in patch);
+</code></pre>
+<h3 id="building-a-patch-with-patchbuilder">Building a patch with PatchBuilder</h3>
+<p>For locally-constructed patches that don't need validation, use <code>PatchBuilder</code>:</p>
+<pre><code class="language-csharp">JsonPatchDocument patch = root.BeginPatch()
+    .Replace(&quot;/name&quot;u8, &quot;Charlie&quot;)
+    .Add(&quot;/tags/-&quot;u8, &quot;admin&quot;)
+    .Remove(&quot;/temp&quot;u8)
+    .GetPatchAndDispose();
+
+root.TryApplyPatch(in patch);
+</code></pre>
 <h2 id="applies-to">Applies To</h2>
 <table>
 <thead>

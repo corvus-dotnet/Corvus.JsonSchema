@@ -199,6 +199,37 @@
 </tr>
 </tbody>
 </table>
+<h2 id="examples">Examples</h2>
+<p>Write structured YAML output to a buffer or stream using the standalone System.Text.Json package (no Corvus.Text.Json dependency required).</p>
+<pre><code class="language-csharp">using Corvus.Yaml;
+
+var buffer = new ArrayBufferWriter&lt;byte&gt;();
+using (var writer = new Utf8YamlWriter(buffer))
+{
+    writer.WriteStartMapping();
+    writer.WritePropertyName(&quot;name&quot;u8);
+    writer.WriteStringValue(&quot;Alice&quot;u8);
+    writer.WritePropertyName(&quot;age&quot;u8);
+    writer.WriteNumberValue(&quot;30&quot;u8);
+    writer.WriteEndMapping();
+}
+
+string yaml = Encoding.UTF8.GetString(buffer.WrittenSpan);
+// yaml:
+// name: Alice
+// age: 30
+</code></pre>
+<h3 id="writing-to-a-stream">Writing to a stream</h3>
+<pre><code class="language-csharp">using var stream = new MemoryStream();
+using (var writer = new Utf8YamlWriter(stream))
+{
+    writer.WriteStartMapping();
+    writer.WritePropertyName(&quot;key&quot;u8);
+    writer.WriteStringValue(&quot;value&quot;u8);
+    writer.WriteEndMapping();
+    writer.Flush();
+}
+</code></pre>
 <h2 id="applies-to">Applies To</h2>
 <table>
 <thead>

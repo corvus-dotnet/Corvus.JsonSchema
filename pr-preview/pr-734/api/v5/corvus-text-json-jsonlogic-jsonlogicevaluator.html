@@ -161,6 +161,40 @@
 </tr>
 </tbody>
 </table>
+<h2 id="examples">Examples</h2>
+<p>Evaluate a JsonLogic rule against JSON data using the shared evaluator instance.</p>
+<pre><code class="language-csharp">using Corvus.Text.Json.JsonLogic;
+
+// Quick one-liner with string inputs
+string? result = JsonLogicEvaluator.Default.EvaluateToString(
+    &quot;&quot;&quot;{&quot;+&quot;:[1, 2, 3]}&quot;&quot;&quot;,
+    &quot;{}&quot;);
+// result: &quot;6&quot;
+</code></pre>
+<h3 id="evaluating-with-structured-data">Evaluating with structured data</h3>
+<pre><code class="language-csharp">using Corvus.Text.Json;
+using Corvus.Text.Json.JsonLogic;
+
+using ParsedJsonDocument&lt;JsonElement&gt; ruleDoc = ParsedJsonDocument&lt;JsonElement&gt;.Parse(
+    &quot;&quot;&quot;{&quot;if&quot;: [{&quot;&gt;=&quot;: [{&quot;var&quot;: &quot;age&quot;}, 18]}, &quot;adult&quot;, &quot;minor&quot;]}&quot;&quot;&quot;u8);
+using ParsedJsonDocument&lt;JsonElement&gt; dataDoc = ParsedJsonDocument&lt;JsonElement&gt;.Parse(
+    &quot;&quot;&quot;{&quot;age&quot;: 25}&quot;&quot;&quot;u8);
+
+JsonLogicRule rule = new(ruleDoc.RootElement);
+JsonElement result = JsonLogicEvaluator.Default.Evaluate(in rule, dataDoc.RootElement);
+// result: &quot;adult&quot;
+</code></pre>
+<h3 id="caller-managed-workspace-for-high-throughput-scenarios">Caller-managed workspace for high-throughput scenarios</h3>
+<p>When evaluating many rules in a loop, pass a shared <code>JsonWorkspace</code> to avoid repeated allocation:</p>
+<pre><code class="language-csharp">using JsonWorkspace workspace = JsonWorkspace.Create();
+
+foreach (JsonElement data in items)
+{
+    JsonElement result = JsonLogicEvaluator.Default.Evaluate(
+        in rule, in data, workspace);
+    // process result...
+}
+</code></pre>
 <h2 id="applies-to">Applies To</h2>
 <table>
 <thead>

@@ -199,6 +199,74 @@
 </tr>
 </tbody>
 </table>
+<h2 id="examples">Examples</h2>
+<p>Write structured YAML output to a buffer or stream using the low-level writer API.</p>
+<pre><code class="language-csharp">using Corvus.Text.Json.Yaml;
+
+var buffer = new ArrayBufferWriter&lt;byte&gt;();
+using (var writer = new Utf8YamlWriter(buffer))
+{
+    writer.WriteStartMapping();
+    writer.WritePropertyName(&quot;name&quot;u8);
+    writer.WriteStringValue(&quot;Alice&quot;u8);
+    writer.WritePropertyName(&quot;age&quot;u8);
+    writer.WriteNumberValue(&quot;30&quot;u8);
+    writer.WritePropertyName(&quot;active&quot;u8);
+    writer.WriteBooleanValue(true);
+    writer.WriteEndMapping();
+}
+
+string yaml = Encoding.UTF8.GetString(buffer.WrittenSpan);
+// yaml:
+// name: Alice
+// age: 30
+// active: true
+</code></pre>
+<h3 id="nested-mappings-and-sequences">Nested mappings and sequences</h3>
+<pre><code class="language-csharp">using (var writer = new Utf8YamlWriter(buffer))
+{
+    writer.WriteStartMapping();
+
+    writer.WritePropertyName(&quot;person&quot;u8);
+    writer.WriteStartMapping();
+    writer.WritePropertyName(&quot;name&quot;u8);
+    writer.WriteStringValue(&quot;Alice&quot;u8);
+    writer.WriteEndMapping();
+
+    writer.WritePropertyName(&quot;hobbies&quot;u8);
+    writer.WriteStartSequence();
+    writer.WriteStringValue(&quot;reading&quot;u8);
+    writer.WriteStringValue(&quot;cycling&quot;u8);
+    writer.WriteEndSequence();
+
+    writer.WriteEndMapping();
+}
+</code></pre>
+<h3 id="flow-style-collections">Flow-style collections</h3>
+<p>Use <code>YamlCollectionStyle.Flow</code> for compact inline output:</p>
+<pre><code class="language-csharp">using (var writer = new Utf8YamlWriter(buffer))
+{
+    writer.WriteStartMapping();
+    writer.WritePropertyName(&quot;tags&quot;u8);
+    writer.WriteStartSequence(YamlCollectionStyle.Flow);
+    writer.WriteStringValue(&quot;admin&quot;u8);
+    writer.WriteStringValue(&quot;user&quot;u8);
+    writer.WriteEndSequence();
+    writer.WriteEndMapping();
+}
+// tags: [admin, user]
+</code></pre>
+<h3 id="writing-to-a-stream">Writing to a stream</h3>
+<pre><code class="language-csharp">using var stream = new MemoryStream();
+using (var writer = new Utf8YamlWriter(stream))
+{
+    writer.WriteStartMapping();
+    writer.WritePropertyName(&quot;key&quot;u8);
+    writer.WriteStringValue(&quot;value&quot;u8);
+    writer.WriteEndMapping();
+    writer.Flush();
+}
+</code></pre>
 <h2 id="applies-to">Applies To</h2>
 <table>
 <thead>

@@ -155,6 +155,46 @@
 </tr>
 </tbody>
 </table>
+<h2 id="examples">Examples</h2>
+<p>Create named bindings to pass external values and custom functions into JSONata expressions.</p>
+<h3 id="value-bindings">Value bindings</h3>
+<pre><code class="language-csharp">using Corvus.Text.Json.Jsonata;
+
+var bindings = new Dictionary&lt;string, JsonataBinding&gt;
+{
+    [&quot;threshold&quot;] = JsonataBinding.FromValue(100.0),
+    [&quot;label&quot;] = JsonataBinding.FromValue(&quot;high&quot;),
+    [&quot;active&quot;] = JsonataBinding.FromValue(true),
+};
+
+JsonElement result = JsonataEvaluator.Default.Evaluate(
+    &quot;$threshold &amp; ' is ' &amp; $label&quot;,
+    data, bindings);
+</code></pre>
+<h3 id="implicit-conversions">Implicit conversions</h3>
+<p><code>JsonataBinding</code> supports implicit conversions from common types for concise dictionary initialization:</p>
+<pre><code class="language-csharp">var bindings = new Dictionary&lt;string, JsonataBinding&gt;
+{
+    [&quot;limit&quot;] = 50.0,        // implicit from double
+    [&quot;enabled&quot;] = true,      // implicit from bool
+};
+</code></pre>
+<h3 id="custom-function-bindings">Custom function bindings</h3>
+<p>Register custom functions that can be called from JSONata expressions:</p>
+<pre><code class="language-csharp">var bindings = new Dictionary&lt;string, JsonataBinding&gt;
+{
+    // Simple numeric function
+    [&quot;double&quot;] = JsonataBinding.FromFunction((double x) =&gt; x * 2),
+
+    // Two-argument function
+    [&quot;add&quot;] = JsonataBinding.FromFunction((double a, double b) =&gt; a + b),
+};
+
+JsonElement result = JsonataEvaluator.Default.Evaluate(
+    &quot;$double(21)&quot;,
+    data, bindings);
+// result: 42
+</code></pre>
 <h2 id="applies-to">Applies To</h2>
 <table>
 <thead>

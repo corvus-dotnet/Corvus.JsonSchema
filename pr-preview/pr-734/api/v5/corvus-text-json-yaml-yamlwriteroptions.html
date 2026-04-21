@@ -156,6 +156,29 @@
 </tr>
 </tbody>
 </table>
+<h2 id="examples">Examples</h2>
+<p>Configure YAML output formatting with <code>YamlWriterOptions</code>.</p>
+<pre><code class="language-csharp">using Corvus.Text.Json.Yaml;
+
+var options = new YamlWriterOptions
+{
+    IndentSize = 4,   // Default is 2
+};
+
+string yaml = YamlDocument.ConvertToYamlString(jsonElement, options);
+</code></pre>
+<h3 id="default-options">Default options</h3>
+<p>The default options use 2-space indentation with validation enabled:</p>
+<pre><code class="language-csharp">// These are equivalent:
+string yaml1 = YamlDocument.ConvertToYamlString(json);
+string yaml2 = YamlDocument.ConvertToYamlString(json, YamlWriterOptions.Default);
+</code></pre>
+<h3 id="skip-validation-for-performance">Skip validation for performance</h3>
+<p>When you are certain the write calls are well-formed (balanced start/end, correct nesting), disable validation for a small performance gain:</p>
+<pre><code class="language-csharp">var buffer = new ArrayBufferWriter&lt;byte&gt;();
+using var writer = new Utf8YamlWriter(buffer,
+    new YamlWriterOptions { SkipValidation = true });
+</code></pre>
 <h2 id="applies-to">Applies To</h2>
 <table>
 <thead>

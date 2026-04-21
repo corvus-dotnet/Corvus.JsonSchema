@@ -139,6 +139,59 @@
 </tr>
 </tbody>
 </table>
+<h2 id="examples">Examples</h2>
+<p>Parse YAML into a <code>JsonDocument</code>, or convert between YAML and JSON string representations.</p>
+<pre><code class="language-csharp">using System.Text.Json;
+using Corvus.Text.Json.Yaml;
+
+string yaml = &quot;&quot;&quot;
+    name: Alice
+    age: 30
+    hobbies:
+      - reading
+      - cycling
+    &quot;&quot;&quot;;
+
+using JsonDocument doc = YamlDocument.Parse(yaml);
+string name = doc.RootElement.GetProperty(&quot;name&quot;).GetString()!;
+// name: &quot;Alice&quot;
+</code></pre>
+<h3 id="converting-yaml-to-a-json-string">Converting YAML to a JSON string</h3>
+<pre><code class="language-csharp">string json = YamlDocument.ConvertToJsonString(yaml);
+// json: {&quot;name&quot;:&quot;Alice&quot;,&quot;age&quot;:30,&quot;hobbies&quot;:[&quot;reading&quot;,&quot;cycling&quot;]}
+</code></pre>
+<h3 id="converting-json-to-yaml">Converting JSON to YAML</h3>
+<pre><code class="language-csharp">string yamlOutput = YamlDocument.ConvertToYamlString(
+    &quot;&quot;&quot;{&quot;name&quot;:&quot;Alice&quot;,&quot;age&quot;:30,&quot;hobbies&quot;:[&quot;reading&quot;,&quot;cycling&quot;]}&quot;&quot;&quot;);
+// yamlOutput:
+// name: Alice
+// age: 30
+// hobbies:
+// - reading
+// - cycling
+</code></pre>
+<h3 id="multi-document-streams">Multi-document streams</h3>
+<p>Parse a YAML stream containing multiple documents as a JSON array:</p>
+<pre><code class="language-csharp">string multiDoc = &quot;&quot;&quot;
+    ---
+    name: Alice
+    ---
+    name: Bob
+    &quot;&quot;&quot;;
+
+using JsonDocument docs = YamlDocument.Parse(multiDoc,
+    new YamlReaderOptions { DocumentMode = YamlDocumentMode.MultiAsArray });
+int count = docs.RootElement.GetArrayLength(); // 2
+</code></pre>
+<h3 id="schema-selection">Schema selection</h3>
+<pre><code class="language-csharp">// Use the JSON schema (all scalars except null, true, false, and numbers are strings)
+string json = YamlDocument.ConvertToJsonString(yaml,
+    new YamlReaderOptions { Schema = YamlSchema.Json });
+
+// Use the Failsafe schema (everything is a string)
+string failsafe = YamlDocument.ConvertToJsonString(yaml,
+    new YamlReaderOptions { Schema = YamlSchema.Failsafe });
+</code></pre>
 <h2 id="applies-to">Applies To</h2>
 <table>
 <thead>

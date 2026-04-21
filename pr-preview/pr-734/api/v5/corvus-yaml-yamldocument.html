@@ -139,6 +139,41 @@
 </tr>
 </tbody>
 </table>
+<h2 id="examples">Examples</h2>
+<p>Parse YAML into a <code>JsonDocument</code>, or convert between YAML and JSON string representations using the standalone System.Text.Json package (no Corvus.Text.Json dependency required).</p>
+<pre><code class="language-csharp">using System.Text.Json;
+using Corvus.Yaml;
+
+string yaml = &quot;&quot;&quot;
+    name: Alice
+    age: 30
+    hobbies:
+      - reading
+      - cycling
+    &quot;&quot;&quot;;
+
+using JsonDocument doc = YamlDocument.Parse(yaml);
+string name = doc.RootElement.GetProperty(&quot;name&quot;).GetString()!;
+// name: &quot;Alice&quot;
+</code></pre>
+<h3 id="converting-yaml-to-a-json-string">Converting YAML to a JSON string</h3>
+<pre><code class="language-csharp">string json = YamlDocument.ConvertToJsonString(yaml);
+// json: {&quot;name&quot;:&quot;Alice&quot;,&quot;age&quot;:30,&quot;hobbies&quot;:[&quot;reading&quot;,&quot;cycling&quot;]}
+</code></pre>
+<h3 id="converting-json-to-yaml">Converting JSON to YAML</h3>
+<pre><code class="language-csharp">string yamlOutput = YamlDocument.ConvertToYamlString(
+    &quot;&quot;&quot;{&quot;name&quot;:&quot;Alice&quot;,&quot;age&quot;:30,&quot;hobbies&quot;:[&quot;reading&quot;,&quot;cycling&quot;]}&quot;&quot;&quot;);
+// yamlOutput:
+// name: Alice
+// age: 30
+// hobbies:
+// - reading
+// - cycling
+</code></pre>
+<h3 id="multi-document-streams">Multi-document streams</h3>
+<pre><code class="language-csharp">using JsonDocument docs = YamlDocument.Parse(multiDocYaml,
+    new YamlReaderOptions { DocumentMode = YamlDocumentMode.MultiAsArray });
+</code></pre>
 <h2 id="applies-to">Applies To</h2>
 <table>
 <thead>

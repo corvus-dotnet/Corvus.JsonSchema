@@ -149,6 +149,46 @@
 </tr>
 </tbody>
 </table>
+<h2 id="examples">Examples</h2>
+<p>Build an RFC 6902 JSON Patch document using the fluent builder API. Create a builder by calling <code>BeginPatch()</code> on a mutable element, chain operations, then call <code>GetPatchAndDispose()</code> to produce the final <code>JsonPatchDocument</code>.</p>
+<pre><code class="language-csharp">using Corvus.Text.Json;
+using Corvus.Text.Json.Patch;
+
+using var parsedDoc = ParsedJsonDocument&lt;JsonElement&gt;.Parse(
+    &quot;&quot;&quot;{&quot;name&quot;: &quot;Alice&quot;, &quot;age&quot;: 30, &quot;tags&quot;: [&quot;user&quot;]}&quot;&quot;&quot;u8);
+using JsonWorkspace workspace = JsonWorkspace.Create();
+using var builder = parsedDoc.RootElement.CreateBuilder(workspace);
+
+JsonElement.Mutable root = builder.RootElement;
+
+JsonPatchDocument patch = root.BeginPatch()
+    .Replace(&quot;/name&quot;u8, &quot;Bob&quot;)
+    .Add(&quot;/email&quot;u8, &quot;bob@example.com&quot;)
+    .Add(&quot;/tags/-&quot;u8, &quot;admin&quot;)
+    .Remove(&quot;/age&quot;u8)
+    .GetPatchAndDispose();
+
+root.TryApplyPatch(in patch);
+// root is now: {&quot;name&quot;:&quot;Bob&quot;,&quot;tags&quot;:[&quot;user&quot;,&quot;admin&quot;],&quot;email&quot;:&quot;bob@example.com&quot;}
+</code></pre>
+<h3 id="conditional-patches-with-test">Conditional patches with test</h3>
+<p>The <code>Test</code> operation verifies a value before proceeding. If the test fails, the entire patch is rejected:</p>
+<pre><code class="language-csharp">JsonPatchDocument guardedPatch = root.BeginPatch()
+    .Test(&quot;/version&quot;u8, 1)
+    .Replace(&quot;/version&quot;u8, 2)
+    .GetPatchAndDispose();
+
+bool applied = root.TryApplyPatch(in guardedPatch);
+// applied is false if /version was not 1
+</code></pre>
+<h3 id="move-and-copy-operations">Move and copy operations</h3>
+<pre><code class="language-csharp">JsonPatchDocument reorgPatch = root.BeginPatch()
+    .Move(&quot;/tags&quot;u8, &quot;/labels&quot;u8)
+    .Copy(&quot;/name&quot;u8, &quot;/display_name&quot;u8)
+    .GetPatchAndDispose();
+
+root.TryApplyPatch(in reorgPatch);
+</code></pre>
 <h2 id="applies-to">Applies To</h2>
 <table>
 <thead>
