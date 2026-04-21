@@ -254,13 +254,6 @@ html, body {
 }
 
 /* ── Grid layout: side-by-side input → output ── */
-.playground-main {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-}
-
 .yaml-grid {
     flex: 1;
     display: grid;
@@ -270,8 +263,8 @@ html, body {
     overflow: hidden;
 }
 
-.playground-main.with-events .yaml-grid {
-    flex: 2;
+.yaml-grid.with-events {
+    grid-template-columns: 1fr 1fr minmax(200px, 0.6fr);
 }
 
 .panel-yaml {
@@ -283,6 +276,12 @@ html, body {
 .panel-output {
     grid-row: 1;
     grid-column: 2;
+}
+
+.panel-events {
+    grid-row: 1;
+    grid-column: 3;
+    border-left: 1px solid var(--border-color);
 }
 
 /* ── Panel ── */
@@ -446,13 +445,6 @@ html, body {
 }
 
 /* ── Events panel ── */
-.panel-events {
-    flex: 1;
-    border-top: 1px solid var(--border-color);
-    min-height: 120px;
-    max-height: 40vh;
-}
-
 .events-body {
     overflow: auto;
     background: var(--bg-primary);
