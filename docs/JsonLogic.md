@@ -8,6 +8,8 @@
 
 > **Choosing between JsonLogic and JSONata:** JsonLogic is ideal for **declarative business rules** — branching logic, predicates, and simple calculations expressed as JSON. If you need to **query, reshape, or transform** JSON data (path navigation, filtering, object construction), see [JSONata](Jsonata.md) instead.
 
+> **Try it now:** The [JSON Logic Playground](/playground-jsonlogic/) lets you build rules visually and evaluate them against live data — no setup required.
+
 Three evaluation modes are available:
 
 | Mode | When to use | Package |

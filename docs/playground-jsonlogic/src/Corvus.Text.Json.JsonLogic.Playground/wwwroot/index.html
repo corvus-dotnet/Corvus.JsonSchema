@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>JSON Logic Playground — Corvus.Text.Json</title>
+    <base href="/" />
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+    <link rel="stylesheet" href="css/app.css" />
+
+    <!-- Anti-flash: apply saved theme before first paint -->
+    <script>
+        (function () {
+            var saved = 'dark';
+            try { saved = localStorage.getItem('jsonlogic-theme') || 'dark'; } catch (e) { }
+            var resolved = saved;
+            if (saved === 'auto') {
+                resolved = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+            }
+            document.documentElement.setAttribute('data-theme', resolved);
+            window.__playgroundResolvedTheme = resolved;
+        })();
+    </script>
+</head>
+<body>
+    <div id="app">
+        <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;background:var(--bg-primary);color:var(--text-primary)">
+            <div style="margin-bottom:1rem;font-size:1.25rem;font-weight:600">Loading JSON Logic Playground…</div>
+            <div style="width:200px;height:4px;background:var(--bg-tertiary);border-radius:2px;overflow:hidden">
+                <div id="load-progress" style="width:0%;height:100%;background:var(--accent);transition:width 0.3s"></div>
+            </div>
+            <div id="load-status" style="margin-top:0.5rem;font-size:0.85rem;opacity:0.7"></div>
+        </div>
+    </div>
+
+    <!-- Monaco Editor loader -->
+    <script>
+        var require = { paths: { vs: 'https://cdn.jsdelivr.net/npm/monaco-editor@0.52.2/min/vs' } };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.52.2/min/vs/loader.js"></script>
+    <script>
+        require(['vs/editor/editor.main'], function () {
+            console.log('Monaco Editor loaded');
+        });
+    </script>
+
+    <script src="_framework/blazor.webassembly.js" autostart="false"></script>
+    <script src="js/playground-interop.js"></script>
+    <script>
+        // Boot Blazor with progress tracking
+        (function () {
+            var totalResources = 0;
+            var loadedResources = 0;
+            var progressEl = document.getElementById('load-progress');
+            var statusEl = document.getElementById('load-status');
+
+            Blazor.start({
+                loadBootResource: function (type, name, defaultUri, integrity) {
+                    totalResources++;
+                    return fetch(defaultUri, { cache: 'no-cache' }).then(function (response) {
+                        loadedResources++;
+                        var pct = totalResources > 0 ? Math.round((loadedResources / totalResources) * 100) : 0;
+                        if (progressEl) { progressEl.style.width = pct + '%'; }
+                        if (statusEl) { statusEl.textContent = loadedResources + ' / ' + totalResources + ' resources'; }
+                        return response;
+                    });
+                }
+            });
+        })();
+    </script>
+</body>
+</html>

@@ -1,0 +1,432 @@
+@* Recursive visual renderer for a single rule tree node. *@
+
+@if (Node is OperatorNodeModel op)
+{
+    var info = OperatorRegistry.GetOrDefault(op.Operator);
+    bool isVar = op.Operator == "var";
+    bool isIf = op.Operator == "if";
+    bool canAdd = info.MaxArity is null || op.Operands.Count < info.MaxArity;
+
+    <div class="rule-node @info.CategoryClass" @key="Node.Id">
+        <div class="rule-node__header">
+            @if (isVar)
+            {
+                <span class="rule-node__icon">📌</span>
+            }
+            <select class="rule-node__op-select" value="@op.Operator" @onchange="e => ChangeOperator(op, e)">
+                @foreach (var group in OperatorRegistry.Grouped)
+                {
+                    <optgroup label="@group.GroupName">
+                        @foreach (var opInfo in group.Operators)
+                        {
+                            <option value="@opInfo.Key">@opInfo.DisplayName</option>
+                        }
+                    </optgroup>
+                }
+            </select>
+            <div class="spacer"></div>
+            @if (OnRemove.HasDelegate)
+            {
+                <button class="rule-node__remove" @onclick="OnRemove" title="Remove">✕</button>
+            }
+        </div>
+
+        @if (isVar)
+        {
+            @* Special var UI: path input + optional default *@
+            <div class="rule-node__var-body">
+                <label class="rule-node__arg-label">Path</label>
+                @if (op.Operands.Count > 0 && op.Operands[0] is ValueNodeModel varPath)
+                {
+                    <input type="text" class="rule-node__var-input"
+                           value="@varPath.RawValue"
+                           placeholder="e.g. user.name"
+                           @oninput="e => { varPath.RawValue = e.Value?.ToString() ?? string.Empty; NotifyChanged(); }" />
+                }
+                else
+                {
+                    <span class="rule-node__hint">
+                        (empty — references current item)
+                    </span>
+                }
+
+                @if (op.Operands.Count > 1)
+                {
+                    <label class="rule-node__arg-label">Default</label>
+                    <RuleNodeView Node="@op.Operands[1]"
+                                  OnChanged="OnChanged"
+                                  OnRemove="@(() => RemoveOperand(op, 1))"
+                                  OnReplace="@(n => { op.Operands[1] = n; NotifyChanged(); })" />
+                }
+
+                <div class="rule-node__actions">
+                    @if (op.Operands.Count == 0)
+                    {
+                        <button class="rule-node__add-btn" @onclick="() => AddVarPath(op)">+ Path</button>
+                    }
+                    @if (op.Operands.Count == 1)
+                    {
+                        <button class="rule-node__add-btn" @onclick="() => AddVarDefault(op)">+ Default</button>
+                    }
+                </div>
+            </div>
+        }
+        else if (isIf)
+        {
+            @* If/then/else chain: pairs of (condition, then) + optional final else *@
+            <div class="rule-node__if-body">
+                @{
+                    int pairCount = op.Operands.Count / 2;
+                    bool hasElse = op.Operands.Count % 2 == 1 && op.Operands.Count >= 3;
+                }
+                @for (int i = 0; i < pairCount; i++)
+                {
+                    int condIdx = i * 2;
+                    int thenIdx = i * 2 + 1;
+                    <div class="rule-node__if-branch">
+                        <div class="rule-node__if-label">@(i == 0 ? "If" : "Else If")</div>
+                        <div class="rule-node__if-slot">
+                            @{ int ci = condIdx; }
+                            <RuleNodeView Node="@op.Operands[condIdx]"
+                                          OnChanged="OnChanged"
+                                          OnRemove="@(() => RemoveIfBranch(op, i))"
+                                          OnReplace="@(n => { op.Operands[ci] = n; NotifyChanged(); })" />
+                        </div>
+                        <div class="rule-node__if-label">Then</div>
+                        <div class="rule-node__if-slot">
+                            @{ int ti = thenIdx; }
+                            <RuleNodeView Node="@op.Operands[thenIdx]"
+                                          OnChanged="OnChanged"
+                                          OnRemove="EventCallback.Empty"
+                                          OnReplace="@(n => { op.Operands[ti] = n; NotifyChanged(); })" />
+                        </div>
+                    </div>
+                }
+                @if (hasElse)
+                {
+                    <div class="rule-node__if-branch">
+                        <div class="rule-node__if-label">Else</div>
+                        <div class="rule-node__if-slot">
+                            @{ int elseIdx = op.Operands.Count - 1; }
+                            <RuleNodeView Node="@op.Operands[^1]"
+                                          OnChanged="OnChanged"
+                                          OnRemove="@(() => RemoveElse(op))"
+                                          OnReplace="@(n => { op.Operands[elseIdx] = n; NotifyChanged(); })" />
+                        </div>
+                    </div>
+                }
+                <div class="rule-node__actions">
+                    <button class="rule-node__add-btn" @onclick="() => AddIfBranch(op)">+ Else If</button>
+                    @if (!hasElse)
+                    {
+                        <button class="rule-node__add-btn" @onclick="() => AddElse(op)">+ Else</button>
+                    }
+                </div>
+            </div>
+        }
+        else
+        {
+            @* Generic operator: labeled operand list *@
+            <div class="rule-node__body">
+                @for (int i = 0; i < op.Operands.Count; i++)
+                {
+                    int idx = i;
+                    <div class="rule-node__arg">
+                        @if (info.ArgLabels is not null && idx < info.ArgLabels.Length)
+                        {
+                            <label class="rule-node__arg-label">@info.ArgLabels[idx]</label>
+                        }
+                        else
+                        {
+                            <label class="rule-node__arg-label">Arg @(idx + 1)</label>
+                        }
+                        <div class="rule-node__arg-slot">
+                            @{ int capturedIdx = idx; }
+                            @if (op.Operands.Count > info.MinArity)
+                            {
+                                <RuleNodeView Node="@op.Operands[idx]"
+                                              OnChanged="OnChanged"
+                                              OnRemove="@(() => RemoveOperand(op, capturedIdx))"
+                                              OnReplace="@(n => { op.Operands[capturedIdx] = n; NotifyChanged(); })" />
+                            }
+                            else
+                            {
+                                <RuleNodeView Node="@op.Operands[idx]"
+                                              OnChanged="OnChanged"
+                                              OnReplace="@(n => { op.Operands[capturedIdx] = n; NotifyChanged(); })" />
+                            }
+                        </div>
+                    </div>
+                }
+                @if (canAdd)
+                {
+                    <div class="rule-node__actions">
+                        <button class="rule-node__add-btn" @onclick="() => AddOperand(op)">+ Add</button>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+}
+else if (Node is ValueNodeModel val)
+{
+    <div class="rule-value" @key="Node.Id">
+        <select class="rule-value__kind" value="@val.Kind" @onchange="e => ChangeValueKind(val, e)">
+            <option value="@Models.ValueKind.String">Text</option>
+            <option value="@Models.ValueKind.Number">Number</option>
+            <option value="@Models.ValueKind.Boolean">Bool</option>
+            <option value="@Models.ValueKind.Null">null</option>
+        </select>
+
+        @switch (val.Kind)
+        {
+            case Models.ValueKind.String:
+                <input type="text" class="rule-value__input"
+                       value="@val.RawValue" placeholder="text"
+                       @oninput="e => { val.RawValue = e.Value?.ToString() ?? string.Empty; NotifyChanged(); }" />
+                break;
+
+            case Models.ValueKind.Number:
+                <input type="text" inputmode="decimal" class="rule-value__input rule-value__input--num"
+                       value="@val.RawValue" placeholder="0"
+                       @oninput="e => { val.RawValue = e.Value?.ToString() ?? string.Empty; NotifyChanged(); }" />
+                break;
+
+            case Models.ValueKind.Boolean:
+                <select class="rule-value__input" value="@val.RawValue" @onchange="e => OnBoolChanged(val, e)">
+                    <option value="true">true</option>
+                    <option value="false">false</option>
+                </select>
+                break;
+
+            case Models.ValueKind.Null:
+                <span class="rule-value__null">null</span>
+                break;
+        }
+
+        @* Type upgrade: convert this value to a rule or variable *@
+        <div class="rule-value__upgrade">
+            <button class="rule-value__upgrade-btn" @onclick="UpgradeToVar" title="Convert to variable reference">📌</button>
+            <button class="rule-value__upgrade-btn" @onclick="UpgradeToOperator" title="Convert to operator">⚙️</button>
+        </div>
+
+        @if (OnRemove.HasDelegate)
+        {
+            <button class="rule-node__remove rule-value__remove" @onclick="OnRemove" title="Remove">✕</button>
+        }
+    </div>
+}
+else if (Node is ArrayNodeModel arr)
+{
+    <div class="rule-array" @key="Node.Id">
+        <div class="rule-array__header">
+            <span class="rule-array__bracket">[</span>
+            <div class="spacer"></div>
+            @if (OnRemove.HasDelegate)
+            {
+                <button class="rule-node__remove" @onclick="OnRemove" title="Remove">✕</button>
+            }
+        </div>
+        <div class="rule-array__items">
+            @for (int i = 0; i < arr.Items.Count; i++)
+            {
+                int idx = i;
+                <div class="rule-array__item">
+                    @{ int arrIdx = idx; }
+                    <RuleNodeView Node="@arr.Items[idx]"
+                                  OnChanged="OnChanged"
+                                  OnRemove="@(() => RemoveArrayItem(arr, arrIdx))"
+                                  OnReplace="@(n => { arr.Items[arrIdx] = n; NotifyChanged(); })" />
+                </div>
+            }
+        </div>
+        <div class="rule-array__footer">
+            <button class="rule-node__add-btn" @onclick="() => AddArrayItem(arr)">+ Add Item</button>
+            <span class="rule-array__bracket">]</span>
+        </div>
+    </div>
+}
+else if (Node is RawJsonNodeModel raw)
+{
+    <div class="rule-raw" @key="Node.Id">
+        <span class="rule-raw__label">⚠ Raw JSON</span>
+        <code class="rule-raw__code">@raw.Json</code>
+        @if (OnRemove.HasDelegate)
+        {
+            <button class="rule-node__remove" @onclick="OnRemove" title="Remove">✕</button>
+        }
+    </div>
+}
+
+@code {
+    [Parameter, EditorRequired]
+    public RuleNodeModel Node { get; set; } = default!;
+
+    [Parameter]
+    public EventCallback OnChanged { get; set; }
+
+    [Parameter]
+    public EventCallback OnRemove { get; set; }
+
+    private void NotifyChanged()
+    {
+        if (OnChanged.HasDelegate)
+        {
+            OnChanged.InvokeAsync();
+        }
+    }
+
+    private void ChangeOperator(OperatorNodeModel op, ChangeEventArgs e)
+    {
+        string newOp = e.Value?.ToString() ?? "==";
+        if (newOp == op.Operator)
+        {
+            return;
+        }
+
+        op.Operator = newOp;
+        op.Operands = OperatorRegistry.CreateDefaultOperands(newOp);
+        NotifyChanged();
+    }
+
+    private void ChangeValueKind(ValueNodeModel val, ChangeEventArgs e)
+    {
+        if (Enum.TryParse<Models.ValueKind>(e.Value?.ToString(), out var kind))
+        {
+            val.Kind = kind;
+            val.RawValue = kind switch
+            {
+                Models.ValueKind.Number => "0",
+                Models.ValueKind.Boolean => "true",
+                Models.ValueKind.Null => "",
+                _ => val.RawValue,
+            };
+            NotifyChanged();
+        }
+    }
+
+    private void OnBoolChanged(ValueNodeModel val, ChangeEventArgs e)
+    {
+        val.RawValue = e.Value?.ToString() ?? "false";
+        NotifyChanged();
+    }
+
+    private void AddOperand(OperatorNodeModel op)
+    {
+        op.Operands.Add(new ValueNodeModel { Kind = Models.ValueKind.Number, RawValue = "0" });
+        NotifyChanged();
+    }
+
+    private void RemoveOperand(OperatorNodeModel op, int index)
+    {
+        if (index >= 0 && index < op.Operands.Count)
+        {
+            op.Operands.RemoveAt(index);
+            NotifyChanged();
+        }
+    }
+
+    // var-specific actions
+    private void AddVarPath(OperatorNodeModel op)
+    {
+        op.Operands.Insert(0, new ValueNodeModel { Kind = Models.ValueKind.String, RawValue = "" });
+        NotifyChanged();
+    }
+
+    private void AddVarDefault(OperatorNodeModel op)
+    {
+        op.Operands.Add(new ValueNodeModel { Kind = Models.ValueKind.Null, RawValue = "" });
+        NotifyChanged();
+    }
+
+    // if-specific actions
+    private void AddIfBranch(OperatorNodeModel op)
+    {
+        // Insert before the final else (if any)
+        bool hasElse = op.Operands.Count >= 3 && op.Operands.Count % 2 == 1;
+        int insertAt = hasElse ? op.Operands.Count - 1 : op.Operands.Count;
+        op.Operands.Insert(insertAt, new OperatorNodeModel
+        {
+            Operator = "==",
+            Operands = OperatorRegistry.CreateDefaultOperands("=="),
+        });
+        op.Operands.Insert(insertAt + 1, new ValueNodeModel { Kind = Models.ValueKind.String, RawValue = "" });
+        NotifyChanged();
+    }
+
+    private void AddElse(OperatorNodeModel op)
+    {
+        op.Operands.Add(new ValueNodeModel { Kind = Models.ValueKind.String, RawValue = "" });
+        NotifyChanged();
+    }
+
+    private void RemoveIfBranch(OperatorNodeModel op, int branchIndex)
+    {
+        int condIdx = branchIndex * 2;
+        if (condIdx + 1 < op.Operands.Count)
+        {
+            op.Operands.RemoveAt(condIdx + 1);
+            op.Operands.RemoveAt(condIdx);
+            NotifyChanged();
+        }
+    }
+
+    private void RemoveElse(OperatorNodeModel op)
+    {
+        if (op.Operands.Count >= 3 && op.Operands.Count % 2 == 1)
+        {
+            op.Operands.RemoveAt(op.Operands.Count - 1);
+            NotifyChanged();
+        }
+    }
+
+    // Array actions
+    private void AddArrayItem(ArrayNodeModel arr)
+    {
+        arr.Items.Add(new ValueNodeModel { Kind = Models.ValueKind.String, RawValue = "" });
+        NotifyChanged();
+    }
+
+    private void RemoveArrayItem(ArrayNodeModel arr, int index)
+    {
+        if (index >= 0 && index < arr.Items.Count)
+        {
+            arr.Items.RemoveAt(index);
+            NotifyChanged();
+        }
+    }
+
+    // Type upgrade: replace this node at the parent level
+    private void UpgradeToVar()
+    {
+        ReplaceWith(new OperatorNodeModel
+        {
+            Operator = "var",
+            Operands = [new ValueNodeModel { Kind = Models.ValueKind.String, RawValue = "" }],
+        });
+    }
+
+    private void UpgradeToOperator()
+    {
+        ReplaceWith(new OperatorNodeModel
+        {
+            Operator = "==",
+            Operands = OperatorRegistry.CreateDefaultOperands("=="),
+        });
+    }
+
+    /// <summary>
+    /// Requests the parent to replace this node with a new one.
+    /// We use the OnReplace callback pattern through the cascade.
+    /// </summary>
+    [Parameter]
+    public EventCallback<RuleNodeModel> OnReplace { get; set; }
+
+    private void ReplaceWith(RuleNodeModel replacement)
+    {
+        if (OnReplace.HasDelegate)
+        {
+            OnReplace.InvokeAsync(replacement);
+        }
+    }
+}

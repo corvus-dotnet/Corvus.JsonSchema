@@ -895,6 +895,37 @@ $yamlSize = (Get-ChildItem $yamlOutputDir -Recurse -File | Measure-Object -Prope
 Write-Host "  YAML Playground: $([math]::Round($yamlSize/1MB, 1)) MB" -ForegroundColor Gray
 Write-StepDuration "YAML Playground build" $sw
 
+# -- Step 9e: Build JSON Logic Playground (Blazor WASM) -------------------------
+Write-Host "`n[9e/10] Building JSON Logic Playground..." -ForegroundColor Cyan
+$sw = [System.Diagnostics.Stopwatch]::StartNew()
+
+$jsonlogicProject = Join-Path $repoRoot "docs\playground-jsonlogic\src\Corvus.Text.Json.JsonLogic.Playground\Corvus.Text.Json.JsonLogic.Playground.csproj"
+$jsonlogicPublishDir = Join-Path $here ".playground-jsonlogic-publish"
+$jsonlogicOutputDir = Join-Path $outputDir "playground-jsonlogic"
+
+& dotnet publish $jsonlogicProject -c Release -o $jsonlogicPublishDir --nologo
+if ($LASTEXITCODE -ne 0) { throw "JSON Logic Playground publish failed" }
+
+$jsonlogicWwwroot = Join-Path $jsonlogicPublishDir "wwwroot"
+if (!(Test-Path $jsonlogicWwwroot)) {
+    throw "JSON Logic Playground wwwroot not found at $jsonlogicWwwroot"
+}
+Copy-Item -Path $jsonlogicWwwroot -Destination $jsonlogicOutputDir -Recurse -Force
+
+$jsonlogicIndex = Join-Path $jsonlogicOutputDir "index.html"
+if (Test-Path $jsonlogicIndex) {
+    $indexContent = [System.IO.File]::ReadAllText($jsonlogicIndex)
+    $indexContent = $indexContent -replace '<base href="/" />', "<base href=`"$BasePathPrefix/playground-jsonlogic/`" />"
+    [System.IO.File]::WriteAllText($jsonlogicIndex, $indexContent)
+    Write-Host "  Updated base href to $BasePathPrefix/playground-jsonlogic/" -ForegroundColor Gray
+}
+
+Remove-Item $jsonlogicPublishDir -Recurse -Force -ErrorAction SilentlyContinue
+
+$jsonlogicSize = (Get-ChildItem $jsonlogicOutputDir -Recurse -File | Measure-Object -Property Length -Sum).Sum
+Write-Host "  JSON Logic Playground: $([math]::Round($jsonlogicSize/1MB, 1)) MB" -ForegroundColor Gray
+Write-StepDuration "JSON Logic Playground build" $sw
+
 # Tell Jekyll to include _-prefixed directories needed by the Blazor playground.
 # We cannot use .nojekyll (which bypasses Jekyll entirely) because the resulting
 # unprocessed artifact exceeds GitHub Pages deployment limits.
@@ -949,6 +980,7 @@ $lycheeArgs = @(
     "--exclude-path", "playground"
     "--exclude-path", "playground-jsonata"
     "--exclude-path", "playground-jmespath"
+    "--exclude-path", "playground-jsonlogic"
     "--exclude-path", "playground-yaml"
     "."
 )
@@ -973,7 +1005,7 @@ if ($BasePathPrefix) {
 
     # Rewrite HTML files (excluding playgrounds which use <base href>)
     $htmlFiles = Get-ChildItem $outputDir -Filter "*.html" -Recurse -File |
-        Where-Object { $_.FullName -notlike "*\playground\*" -and $_.FullName -notlike "*\playground-jsonata\*" -and $_.FullName -notlike "*\playground-jmespath\*" -and $_.FullName -notlike "*\playground-yaml\*" }
+        Where-Object { $_.FullName -notlike "*\playground\*" -and $_.FullName -notlike "*\playground-jsonata\*" -and $_.FullName -notlike "*\playground-jmespath\*" -and $_.FullName -notlike "*\playground-jsonlogic\*" -and $_.FullName -notlike "*\playground-yaml\*" }
     $rewriteCount = 0
     foreach ($htmlFile in $htmlFiles) {
         $content = [System.IO.File]::ReadAllText($htmlFile.FullName)
@@ -997,7 +1029,7 @@ if ($BasePathPrefix) {
         $original = $content
 
         # Rewrite string literals containing root-relative paths: '/api/', '/search-index.json', etc.
-        $content = $content -replace "(['""])(/(?!/)(?:api|search|docs|examples|getting-started|assets|playground|playground-jsonata|playground-jmespath|playground-yaml))", "`$1$BasePathPrefix`$2"
+        $content = $content -replace "(['""])(/(?!/)(?:api|search|docs|examples|getting-started|assets|playground|playground-jsonata|playground-jmespath|playground-jsonlogic|playground-yaml))", "`$1$BasePathPrefix`$2"
 
         if ($content -ne $original) {
             [System.IO.File]::WriteAllText($jsFile.FullName, $content)
@@ -1039,7 +1071,7 @@ $defaultGitHubUrl = "https://github.com/corvus-dotnet/Corvus.JsonSchema"
 if ($canonicalRepoUrl -ne $defaultGitHubUrl) {
     Write-Host "`n  Rewriting GitHub URLs: $defaultGitHubUrl -> $canonicalRepoUrl" -ForegroundColor Cyan
     $htmlFiles = Get-ChildItem $outputDir -Filter "*.html" -Recurse -File |
-        Where-Object { $_.FullName -notlike "*\playground\*" -and $_.FullName -notlike "*\playground-jsonata\*" -and $_.FullName -notlike "*\playground-jmespath\*" -and $_.FullName -notlike "*\playground-yaml\*" }
+        Where-Object { $_.FullName -notlike "*\playground\*" -and $_.FullName -notlike "*\playground-jsonata\*" -and $_.FullName -notlike "*\playground-jmespath\*" -and $_.FullName -notlike "*\playground-jsonlogic\*" -and $_.FullName -notlike "*\playground-yaml\*" }
     $ghRewriteCount = 0
     foreach ($htmlFile in $htmlFiles) {
         $content = [System.IO.File]::ReadAllText($htmlFile.FullName)

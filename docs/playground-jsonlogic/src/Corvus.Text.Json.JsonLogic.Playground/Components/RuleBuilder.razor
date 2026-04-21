@@ -1,0 +1,293 @@
+@* Rule builder: toggleable Visual / JSON editor with bidirectional sync. *@
+@inject IJSRuntime JSRuntime
+
+<div class="rule-builder">
+    <div class="rule-builder__tabs">
+        <button class="rule-builder__tab @(IsVisualMode ? "active" : "")"
+                @onclick="() => SwitchToVisual()">
+            🧩 Visual
+        </button>
+        <button class="rule-builder__tab @(!IsVisualMode ? "active" : "")"
+                @onclick="() => SwitchToJson()">
+            { } JSON
+        </button>
+    </div>
+
+    @if (jsonParseError is not null)
+    {
+        <div class="rule-builder__error">⚠ @jsonParseError</div>
+    }
+
+    <div class="rule-builder__content" style="@(IsVisualMode ? "" : "display:none")">
+        <div class="rule-builder__visual">
+            @if (rootNode is not null)
+            {
+                <RuleNodeView Node="@rootNode"
+                              OnChanged="OnVisualChanged"
+                              OnReplace="OnRootReplaced" />
+            }
+            else
+            {
+                <div class="rule-builder__empty">
+                    <p>No rule defined. Choose a starting point:</p>
+                    <div class="rule-builder__start-buttons">
+                        <button class="rule-node__add-btn" @onclick="StartWithComparison">⚖️ Comparison</button>
+                        <button class="rule-node__add-btn" @onclick="StartWithIf">🔀 If / Then</button>
+                        <button class="rule-node__add-btn" @onclick="StartWithVar">📌 Variable</button>
+                        <button class="rule-node__add-btn" @onclick="StartWithArithmetic">🔢 Arithmetic</button>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="rule-builder__content" style="@(!IsVisualMode ? "" : "display:none")">
+        <StandaloneCodeEditor @ref="jsonEditor"
+                              Id="rule-json-editor"
+                              ConstructionOptions="JsonEditorOptions"
+                              OnDidChangeModelContent="OnJsonEditorChanged" />
+    </div>
+</div>
+
+@code {
+    private RuleNodeModel? rootNode;
+    private StandaloneCodeEditor? jsonEditor;
+    private bool isVisualMode = true;
+    private string? jsonParseError;
+    private bool suppressJsonSync;
+    private bool suppressVisualSync;
+
+    public bool IsVisualMode
+    {
+        get => isVisualMode;
+        private set => isVisualMode = value;
+    }
+
+    [Parameter]
+    public EventCallback<string> OnRuleChanged { get; set; }
+
+    /// <summary>
+    /// Gets or sets the current rule JSON text.
+    /// </summary>
+    public string RuleJson => rootNode?.ToJson() ?? "";
+
+    /// <summary>
+    /// Sets the rule from JSON, rebuilding the visual tree.
+    /// </summary>
+    public void SetRule(string json)
+    {
+        try
+        {
+            rootNode = string.IsNullOrWhiteSpace(json)
+                ? null
+                : RuleNodeModel.Parse(json);
+            jsonParseError = null;
+        }
+        catch (Exception ex)
+        {
+            jsonParseError = ex.Message;
+        }
+
+        suppressVisualSync = true;
+        _ = UpdateJsonEditorAsync(json);
+        suppressVisualSync = false;
+        StateHasChanged();
+    }
+
+    /// <summary>
+    /// Gets whether the rule has been modified from a given baseline.
+    /// </summary>
+    public bool IsDirty(string baseline)
+    {
+        string current = RuleJson;
+        return !string.Equals(
+            NormalizeJson(current),
+            NormalizeJson(baseline),
+            StringComparison.Ordinal);
+    }
+
+    private StandaloneEditorConstructionOptions JsonEditorOptions(StandaloneCodeEditor editor)
+    {
+        return new StandaloneEditorConstructionOptions
+        {
+            Language = "json",
+            Theme = "vs-dark",
+            Value = rootNode?.ToJson() ?? "",
+            AutomaticLayout = true,
+            Minimap = new EditorMinimapOptions { Enabled = false },
+            FontSize = 14,
+            ScrollBeyondLastLine = false,
+            TabSize = 2,
+        };
+    }
+
+    private async Task SwitchToVisual()
+    {
+        if (IsVisualMode)
+        {
+            return;
+        }
+
+        // Sync JSON → Visual
+        if (jsonEditor is not null)
+        {
+            string json = await jsonEditor.GetValue();
+            try
+            {
+                rootNode = string.IsNullOrWhiteSpace(json)
+                    ? null
+                    : RuleNodeModel.Parse(json);
+                jsonParseError = null;
+            }
+            catch (Exception ex)
+            {
+                jsonParseError = $"Cannot switch to visual mode: {ex.Message}";
+                return;
+            }
+        }
+
+        IsVisualMode = true;
+    }
+
+    private async Task SwitchToJson()
+    {
+        if (!IsVisualMode)
+        {
+            return;
+        }
+
+        // Sync Visual → JSON
+        IsVisualMode = false;
+        string json = rootNode?.ToJson() ?? "";
+        await UpdateJsonEditorAsync(json);
+    }
+
+    private async void OnVisualChanged()
+    {
+        if (suppressVisualSync)
+        {
+            return;
+        }
+
+        string json = rootNode?.ToJson() ?? "";
+        jsonParseError = null;
+
+        // Update JSON editor in background
+        suppressJsonSync = true;
+        await UpdateJsonEditorAsync(json);
+        suppressJsonSync = false;
+
+        if (OnRuleChanged.HasDelegate)
+        {
+            await OnRuleChanged.InvokeAsync(json);
+        }
+
+        StateHasChanged();
+    }
+
+    private void OnRootReplaced(RuleNodeModel replacement)
+    {
+        rootNode = replacement;
+        OnVisualChanged();
+    }
+
+    private async Task OnJsonEditorChanged(ModelContentChangedEvent e)
+    {
+        if (suppressJsonSync || jsonEditor is null)
+        {
+            return;
+        }
+
+        string json = await jsonEditor.GetValue();
+
+        if (OnRuleChanged.HasDelegate)
+        {
+            await OnRuleChanged.InvokeAsync(json);
+        }
+
+        // Try to sync to visual tree (don't show errors during typing)
+        try
+        {
+            suppressVisualSync = true;
+            rootNode = string.IsNullOrWhiteSpace(json)
+                ? null
+                : RuleNodeModel.Parse(json);
+            jsonParseError = null;
+            suppressVisualSync = false;
+        }
+        catch
+        {
+            suppressVisualSync = false;
+            // Don't show error while user is typing — they'll see it if they switch tabs
+        }
+    }
+
+    private async Task UpdateJsonEditorAsync(string json)
+    {
+        if (jsonEditor is not null)
+        {
+            try
+            {
+                await jsonEditor.SetValue(json);
+            }
+            catch
+            {
+                // Editor not yet initialized
+            }
+        }
+    }
+
+    // Starter templates
+    private void StartWithComparison()
+    {
+        rootNode = new OperatorNodeModel
+        {
+            Operator = "==",
+            Operands = OperatorRegistry.CreateDefaultOperands("=="),
+        };
+        OnVisualChanged();
+    }
+
+    private void StartWithIf()
+    {
+        rootNode = new OperatorNodeModel
+        {
+            Operator = "if",
+            Operands = OperatorRegistry.CreateDefaultOperands("if"),
+        };
+        OnVisualChanged();
+    }
+
+    private void StartWithVar()
+    {
+        rootNode = new OperatorNodeModel
+        {
+            Operator = "var",
+            Operands = OperatorRegistry.CreateDefaultOperands("var"),
+        };
+        OnVisualChanged();
+    }
+
+    private void StartWithArithmetic()
+    {
+        rootNode = new OperatorNodeModel
+        {
+            Operator = "+",
+            Operands = OperatorRegistry.CreateDefaultOperands("+"),
+        };
+        OnVisualChanged();
+    }
+
+    private static string NormalizeJson(string json)
+    {
+        try
+        {
+            using var doc = System.Text.Json.JsonDocument.Parse(json);
+            return doc.RootElement.GetRawText();
+        }
+        catch
+        {
+            return json.Trim();
+        }
+    }
+}

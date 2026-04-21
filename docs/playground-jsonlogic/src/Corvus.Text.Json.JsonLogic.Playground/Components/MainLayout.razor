@@ -1,0 +1,538 @@
+@inherits LayoutComponentBase
+@implements IDisposable
+@page "/"
+@inject EvaluationService EvalService
+@inject IJSRuntime JSRuntime
+
+<div class="playground-toolbar">
+    <h1>JSON Logic Playground</h1>
+    <button class="toolbar-btn secondary" @onclick="NewProjectAsync" title="New blank project">📄 New</button>
+    <select class="toolbar-select" value="@(activeSampleId ?? "")" @onchange="OnSampleChanged">
+        @if (activeSampleId is null)
+        {
+            <option value="" disabled>— Custom —</option>
+        }
+        @foreach (var sample in SampleRegistry.All)
+        {
+            <option value="@sample.Id">@sample.DisplayName</option>
+        }
+    </select>
+    <div class="spacer"></div>
+    <button class="theme-toggle-btn" @onclick="CycleTheme" title="@themeTooltip">@themeIcon</button>
+</div>
+
+@if (activeSample is not null)
+{
+    <div class="sample-description">@activeSample.Description</div>
+}
+
+<div class="jsonlogic-grid @(maximizedPanel is not null ? "has-maximized" : "")">
+    @* Left: Rule builder (full height) *@
+    <div class="playground-panel panel-rule @(GetPanelClass("rule"))">
+        <div class="panel-header">
+            Rule
+            <div class="spacer"></div>
+            <button class="panel-copy-btn" @onclick="CopyRule" title="Copy rule JSON">📋</button>
+            <button class="panel-maximize-btn" @onclick='() => ToggleMaximize("rule")' title="@(maximizedPanel == "rule" ? "Restore" : "Maximize")">
+                @(maximizedPanel == "rule" ? "⊟" : "⊞")
+            </button>
+        </div>
+        <div class="panel-body panel-body--builder">
+            <RuleBuilder @ref="ruleBuilder" OnRuleChanged="OnRuleChanged" />
+        </div>
+    </div>
+
+    @* Top-right: Data *@
+    <div class="playground-panel panel-data @(GetPanelClass("data"))">
+        <div class="panel-header">
+            Data
+            <div class="spacer"></div>
+            <button class="panel-copy-btn" @onclick="CopyData" title="Copy data">📋</button>
+            <button class="panel-maximize-btn" @onclick='() => ToggleMaximize("data")' title="@(maximizedPanel == "data" ? "Restore" : "Maximize")">
+                @(maximizedPanel == "data" ? "⊟" : "⊞")
+            </button>
+        </div>
+        <div class="panel-body">
+            <StandaloneCodeEditor @ref="dataEditor"
+                                  Id="data-editor"
+                                  ConstructionOptions="DataEditorOptions"
+                                  OnDidChangeModelContent="OnDataChanged" />
+        </div>
+    </div>
+
+    @* Bottom-right: Result *@
+    <div class="playground-panel panel-output @(GetPanelClass("output"))">
+        <div class="panel-header">
+            Result
+            <div class="spacer"></div>
+            @if (lastResult is not null)
+            {
+                <span style="font-weight:normal;text-transform:none;">
+                    @(lastResult.Success ? "✓" : "✗")
+                    @($"{lastResult.ElapsedMs:F1}ms")
+                </span>
+            }
+            <button class="panel-copy-btn" @onclick="CopyResult" title="Copy result">📋</button>
+            <button class="panel-maximize-btn" @onclick='() => ToggleMaximize("output")' title="@(maximizedPanel == "output" ? "Restore" : "Maximize")">
+                @(maximizedPanel == "output" ? "⊟" : "⊞")
+            </button>
+        </div>
+        <div class="panel-body" style="@(lastResult is not null && !lastResult.Success ? "display:none" : "")">
+            <StandaloneCodeEditor @ref="outputEditor"
+                                  Id="output-editor"
+                                  ConstructionOptions="OutputEditorOptions" />
+        </div>
+        @if (lastResult is not null && !lastResult.Success)
+        {
+            <div class="panel-body">
+                <div class="error-output">@lastResult.ErrorMessage</div>
+            </div>
+        }
+    </div>
+</div>
+
+@if (showDirtyConfirmation)
+{
+    <div class="modal-overlay" @onclick="CancelDirtyConfirmation">
+        <div class="modal-dialog" @onclick:stopPropagation="true">
+            <h3>Unsaved Changes</h3>
+            <p>Your editors have been modified. Do you want to discard these changes?</p>
+            <div class="modal-actions">
+                <button class="toolbar-btn secondary" @onclick="CancelDirtyConfirmation">Cancel</button>
+                <button class="toolbar-btn primary" @onclick="ConfirmDirtyAction">Discard</button>
+            </div>
+        </div>
+    </div>
+}
+
+<div class="status-bar @(lastResult is not null && !lastResult.Success ? "status-bar--error" : "")">
+    @if (isEvaluating)
+    {
+        <span>Evaluating…</span>
+    }
+    else if (lastResult is not null)
+    {
+        <span>@(lastResult.Success ? "✓ Evaluated" : "✗ Error") in @($"{lastResult.ElapsedMs:F1}")ms</span>
+    }
+    else
+    {
+        <span>Ready</span>
+    }
+</div>
+
+@code {
+    private RuleBuilder? ruleBuilder;
+    private StandaloneCodeEditor? dataEditor;
+    private StandaloneCodeEditor? outputEditor;
+
+    private EvaluationResult? lastResult;
+    private bool isEvaluating;
+    private string? maximizedPanel;
+
+    // Sample tracking
+    private string? activeSampleId;
+    private Sample? activeSample;
+    private string sampleRuleJson = "";
+    private string sampleDataJson = "";
+
+    // Debounce
+    private CancellationTokenSource? evalDebounce;
+    private CancellationTokenSource? saveDebounce;
+
+    // Dirty confirmation
+    private bool showDirtyConfirmation;
+    private Action? pendingDirtyAction;
+
+    // Theme
+    private string theme = "dark";
+    private string themeIcon = "🌙";
+    private string themeTooltip = "Switch to light theme";
+    private DotNetObjectReference<MainLayout>? dotNetRef;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            dotNetRef = DotNetObjectReference.Create(this);
+            await JSRuntime.InvokeVoidAsync("registerPlaygroundShortcuts", dotNetRef);
+            await JSRuntime.InvokeVoidAsync("onSystemThemeChange", dotNetRef);
+
+            theme = await JSRuntime.InvokeAsync<string>("getInitialTheme");
+            UpdateThemeUI();
+
+            // Load from localStorage or default to first sample
+            string? savedRule = null;
+            string? savedData = null;
+            try
+            {
+                savedRule = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "jsonlogic-rule");
+                savedData = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "jsonlogic-data");
+            }
+            catch
+            {
+                // localStorage may not be available
+            }
+
+            if (!string.IsNullOrEmpty(savedRule))
+            {
+                ruleBuilder?.SetRule(savedRule);
+                if (dataEditor is not null && !string.IsNullOrEmpty(savedData))
+                {
+                    await dataEditor.SetValue(savedData);
+                }
+
+                await EvaluateAsync();
+            }
+            else
+            {
+                await LoadSampleAsync(SampleRegistry.All[0]);
+            }
+
+            StateHasChanged();
+        }
+    }
+
+    // ── Editor construction ──
+
+    private StandaloneEditorConstructionOptions DataEditorOptions(StandaloneCodeEditor editor)
+    {
+        return new StandaloneEditorConstructionOptions
+        {
+            Language = "json",
+            Theme = "vs-dark",
+            Value = "{}",
+            AutomaticLayout = true,
+            Minimap = new EditorMinimapOptions { Enabled = false },
+            FontSize = 14,
+            ScrollBeyondLastLine = false,
+            TabSize = 2,
+        };
+    }
+
+    private StandaloneEditorConstructionOptions OutputEditorOptions(StandaloneCodeEditor editor)
+    {
+        return new StandaloneEditorConstructionOptions
+        {
+            Language = "json",
+            Theme = "vs-dark",
+            Value = "",
+            AutomaticLayout = true,
+            Minimap = new EditorMinimapOptions { Enabled = false },
+            FontSize = 14,
+            ScrollBeyondLastLine = false,
+            ReadOnly = true,
+            TabSize = 2,
+        };
+    }
+
+    // ── Change handlers ──
+
+    private void OnRuleChanged(string ruleJson)
+    {
+        DebounceEval();
+        DebounceSave();
+    }
+
+    private void OnDataChanged(ModelContentChangedEvent e)
+    {
+        DebounceEval();
+        DebounceSave();
+    }
+
+    // ── Evaluation ──
+
+    private void DebounceEval()
+    {
+        evalDebounce?.Cancel();
+        evalDebounce = new CancellationTokenSource();
+        var token = evalDebounce.Token;
+        _ = Task.Delay(300, token).ContinueWith(async _ =>
+        {
+            if (!token.IsCancellationRequested)
+            {
+                await InvokeAsync(EvaluateAsync);
+            }
+        }, token, TaskContinuationOptions.OnlyOnRanToCompletion, TaskScheduler.Current);
+    }
+
+    private void DebounceSave()
+    {
+        saveDebounce?.Cancel();
+        saveDebounce = new CancellationTokenSource();
+        var token = saveDebounce.Token;
+        _ = Task.Delay(2000, token).ContinueWith(async _ =>
+        {
+            if (!token.IsCancellationRequested)
+            {
+                await InvokeAsync(SaveToLocalStorageAsync);
+            }
+        }, token, TaskContinuationOptions.OnlyOnRanToCompletion, TaskScheduler.Current);
+    }
+
+    private async Task EvaluateAsync()
+    {
+        string ruleJson = ruleBuilder?.RuleJson ?? "";
+        string dataJson = dataEditor is not null ? await dataEditor.GetValue() : "{}";
+
+        isEvaluating = true;
+        StateHasChanged();
+
+        lastResult = await EvalService.EvaluateAsync(ruleJson, dataJson);
+
+        isEvaluating = false;
+
+        if (lastResult.Success && outputEditor is not null)
+        {
+            await outputEditor.SetValue(lastResult.ResultJson ?? "");
+        }
+
+        StateHasChanged();
+    }
+
+    [JSInvokable]
+    public async Task OnEvaluateShortcut()
+    {
+        evalDebounce?.Cancel();
+        await EvaluateAsync();
+    }
+
+    // ── Samples ──
+
+    private async Task OnSampleChanged(ChangeEventArgs e)
+    {
+        string? id = e.Value?.ToString();
+        var sample = SampleRegistry.All.FirstOrDefault(s => s.Id == id);
+        if (sample is null)
+        {
+            return;
+        }
+
+        if (IsDirty())
+        {
+            pendingDirtyAction = async () => await LoadSampleAsync(sample);
+            showDirtyConfirmation = true;
+            StateHasChanged();
+            return;
+        }
+
+        await LoadSampleAsync(sample);
+    }
+
+    private async Task LoadSampleAsync(Sample sample)
+    {
+        activeSampleId = sample.Id;
+        activeSample = sample;
+        sampleRuleJson = sample.Rule.Trim();
+        sampleDataJson = sample.Data.Trim();
+
+        ruleBuilder?.SetRule(sampleRuleJson);
+
+        if (dataEditor is not null)
+        {
+            await dataEditor.SetValue(sampleDataJson);
+        }
+
+        lastResult = null;
+        await EvaluateAsync();
+        StateHasChanged();
+    }
+
+    private async Task NewProjectAsync()
+    {
+        if (IsDirty())
+        {
+            pendingDirtyAction = async () => await ClearProject();
+            showDirtyConfirmation = true;
+            StateHasChanged();
+            return;
+        }
+
+        await ClearProject();
+    }
+
+    private async Task ClearProject()
+    {
+        activeSampleId = null;
+        activeSample = null;
+        sampleRuleJson = "";
+        sampleDataJson = "{}";
+
+        ruleBuilder?.SetRule("");
+        if (dataEditor is not null)
+        {
+            await dataEditor.SetValue("{}");
+        }
+
+        if (outputEditor is not null)
+        {
+            await outputEditor.SetValue("");
+        }
+
+        lastResult = null;
+        StateHasChanged();
+    }
+
+    private bool IsDirty()
+    {
+        string currentRule = ruleBuilder?.RuleJson ?? "";
+        return !JsonEquals(currentRule, sampleRuleJson);
+    }
+
+    private static bool JsonEquals(string a, string b)
+    {
+        try
+        {
+            using var docA = System.Text.Json.JsonDocument.Parse(
+                string.IsNullOrWhiteSpace(a) ? "null" : a);
+            using var docB = System.Text.Json.JsonDocument.Parse(
+                string.IsNullOrWhiteSpace(b) ? "null" : b);
+            return docA.RootElement.GetRawText() == docB.RootElement.GetRawText();
+        }
+        catch
+        {
+            return string.Equals(a.Trim(), b.Trim(), StringComparison.Ordinal);
+        }
+    }
+
+    // ── Dirty confirmation ──
+
+    private void CancelDirtyConfirmation()
+    {
+        showDirtyConfirmation = false;
+        pendingDirtyAction = null;
+        // Reset sample select to current
+        _ = JSRuntime.InvokeVoidAsync("resetSampleSelect", activeSampleId ?? "");
+    }
+
+    private async void ConfirmDirtyAction()
+    {
+        showDirtyConfirmation = false;
+        var action = pendingDirtyAction;
+        pendingDirtyAction = null;
+        if (action is not null)
+        {
+            action.Invoke();
+            // Action may be async void delegate — give it a tick
+            await Task.Yield();
+        }
+    }
+
+    // ── Copy buttons ──
+
+    private async Task CopyRule()
+    {
+        string text = ruleBuilder?.RuleJson ?? "";
+        await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", text);
+    }
+
+    private async Task CopyData()
+    {
+        if (dataEditor is not null)
+        {
+            string text = await dataEditor.GetValue();
+            await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", text);
+        }
+    }
+
+    private async Task CopyResult()
+    {
+        if (outputEditor is not null)
+        {
+            string text = await outputEditor.GetValue();
+            await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", text);
+        }
+    }
+
+    // ── Maximize ──
+
+    private void ToggleMaximize(string panel)
+    {
+        maximizedPanel = maximizedPanel == panel ? null : panel;
+    }
+
+    private string GetPanelClass(string panel)
+    {
+        if (maximizedPanel is null)
+        {
+            return "";
+        }
+
+        return maximizedPanel == panel ? "panel-maximized" : "panel-hidden";
+    }
+
+    // ── Theme ──
+
+    private async Task CycleTheme()
+    {
+        theme = theme switch
+        {
+            "dark" => "light",
+            "light" => "auto",
+            _ => "dark",
+        };
+        UpdateThemeUI();
+        string resolved = theme;
+        if (theme == "auto")
+        {
+            resolved = await JSRuntime.InvokeAsync<string>("getSystemTheme");
+        }
+
+        await JSRuntime.InvokeVoidAsync("applyTheme", resolved);
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("localStorage.setItem", "jsonlogic-theme", theme);
+        }
+        catch
+        {
+            // ignore
+        }
+    }
+
+    [JSInvokable]
+    public async Task OnSystemThemeChanged(string systemTheme)
+    {
+        if (theme == "auto")
+        {
+            await JSRuntime.InvokeVoidAsync("applyTheme", systemTheme);
+            StateHasChanged();
+        }
+    }
+
+    private void UpdateThemeUI()
+    {
+        (themeIcon, themeTooltip) = theme switch
+        {
+            "dark" => ("🌙", "Switch to light theme"),
+            "light" => ("☀️", "Switch to auto theme"),
+            _ => ("🔄", "Switch to dark theme"),
+        };
+    }
+
+    // ── LocalStorage persistence ──
+
+    private async Task SaveToLocalStorageAsync()
+    {
+        try
+        {
+            string ruleJson = ruleBuilder?.RuleJson ?? "";
+            string dataJson = dataEditor is not null ? await dataEditor.GetValue() : "{}";
+            await JSRuntime.InvokeVoidAsync("localStorage.setItem", "jsonlogic-rule", ruleJson);
+            await JSRuntime.InvokeVoidAsync("localStorage.setItem", "jsonlogic-data", dataJson);
+        }
+        catch
+        {
+            // localStorage may not be available
+        }
+    }
+
+    // ── Disposal ──
+
+    public void Dispose()
+    {
+        evalDebounce?.Cancel();
+        evalDebounce?.Dispose();
+        saveDebounce?.Cancel();
+        saveDebounce?.Dispose();
+        dotNetRef?.Dispose();
+    }
+}
