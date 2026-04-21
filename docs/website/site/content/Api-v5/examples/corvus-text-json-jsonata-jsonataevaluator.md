@@ -77,7 +77,7 @@ try
     JsonElement result = JsonataEvaluator.Default.Evaluate(
         expression, data, maxDepth: 100, timeLimitMs: 5000);
 }
-catch (JsonataException ex) when (ex.ErrorCode == "U1001")
+catch (JsonataException ex) when (ex.Code == "U1001")
 {
     // Expression timed out after 5 seconds
 }
