@@ -42,7 +42,7 @@ using var doc = ParsedJsonDocument<Person>.Parse(
 Person person = doc.RootElement;
 
 string name = (string)person.Name;           // "Alice"
-int age = person.Age;                        // 30
+int age = (int)person.Age;                        // 30
 
 // 4. Validate against the schema
 bool valid = person.EvaluateSchema();        // true

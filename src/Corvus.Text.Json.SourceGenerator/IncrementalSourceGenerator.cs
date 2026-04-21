@@ -80,7 +80,7 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
             location = normalizedLocation;
         }
 
-        bool rebaseToRootPath = attribute.ConstructorArguments[0].Value as bool? ?? false;
+        bool rebaseToRootPath = attribute.ConstructorArguments[1].Value as bool? ?? false;
 
         bool emitEvaluator = false;
         foreach (KeyValuePair<string, TypedConstant> namedArg in attribute.NamedArguments)

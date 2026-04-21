@@ -99,7 +99,7 @@ Use `JsonataEvaluator` when expressions are determined at runtime:
 
 ```csharp
 using JsonWorkspace workspace = JsonWorkspace.Create();
-var evaluator = new JsonataEvaluator();
+var evaluator = JsonataEvaluator.Default;
 
 JsonElement result = evaluator.Evaluate(
     "Account.Order.Product.Price",
@@ -522,7 +522,7 @@ JsonElement result = evaluator.Evaluate(expression, data, workspace);
 **Batch evaluation — reset the workspace between iterations:**
 
 ```csharp
-var evaluator = new JsonataEvaluator();
+var evaluator = JsonataEvaluator.Default;
 using JsonWorkspace workspace = JsonWorkspace.Create();
 
 foreach (var item in items)

@@ -170,10 +170,8 @@ using Corvus.Text.Json.JMESPath;
 
 namespace MyApp.Queries;
 
-[JMESPathExpression("Expressions/total-price.jmespath")]
-internal static partial class TotalPrice
-{
-}
+[JMESPathExpression("total-price.jmespath")]
+public static partial class TotalPrice;
 ```
 
 **4. Include the expression file and packages in your `.csproj`:**
