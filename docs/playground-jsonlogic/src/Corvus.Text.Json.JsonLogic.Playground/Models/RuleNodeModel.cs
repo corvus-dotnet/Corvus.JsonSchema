@@ -24,7 +24,11 @@ public abstract class RuleNodeModel
     public string ToJson(bool indented = true)
     {
         using var stream = new MemoryStream();
-        using (var writer = new Stj.Utf8JsonWriter(stream, new Stj.JsonWriterOptions { Indented = indented }))
+        using (var writer = new Stj.Utf8JsonWriter(stream, new Stj.JsonWriterOptions
+        {
+            Indented = indented,
+            Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+        }))
         {
             WriteTo(writer);
         }
@@ -88,6 +92,32 @@ public abstract class RuleNodeModel
                     operands.Add(FromElement(first.Value));
                 }
 
+                // Nest chained if into Scratch-style if/then/else tree.
+                // JSON Logic: {"if":[c1,"A",c2,"B","F"]} (flat list)
+                // Scratch:    if c1 then "A" else (if c2 then "B" else "F")
+                if (op == "if" && operands.Count > 3)
+                {
+                    return NestChainedIf(operands);
+                }
+
+                // Map 3-argument < and <= to visual "between" operators.
+                // {"<": [1, {"var":"x"}, 10]} → between<(1, var:x, 10)
+                if ((op == "<" || op == "<=") && operands.Count == 3)
+                {
+                    return new OperatorNodeModel
+                    {
+                        Operator = op == "<" ? "between<" : "between<=",
+                        Operands = operands,
+                    };
+                }
+
+                // Nest chained and/or into binary pairs.
+                // {"and": [a, b, c]} → and(a, and(b, c))
+                if ((op == "and" || op == "or") && operands.Count > 2)
+                {
+                    return NestBinaryChain(op, operands);
+                }
+
                 return new OperatorNodeModel { Operator = op, Operands = operands };
 
             case Stj.JsonValueKind.Array:
@@ -131,6 +161,53 @@ public abstract class RuleNodeModel
     /// Creates a deep clone of this node.
     /// </summary>
     public abstract RuleNodeModel Clone();
+
+    /// <summary>
+    /// Converts a flat chained-if operand list into nested if/then/else.
+    /// [c1, v1, c2, v2, ..., else] → if(c1, v1, if(c2, v2, ..., else))
+    /// </summary>
+    private static OperatorNodeModel NestChainedIf(List<RuleNodeModel> flat)
+    {
+        // Base: 2 operands = if/then, 3 operands = if/then/else
+        if (flat.Count <= 3)
+        {
+            return new OperatorNodeModel { Operator = "if", Operands = flat };
+        }
+
+        // Take the first condition+then, nest the rest as the else
+        var condition = flat[0];
+        var thenValue = flat[1];
+        var remaining = flat.GetRange(2, flat.Count - 2);
+        var nestedElse = NestChainedIf(remaining);
+
+        return new OperatorNodeModel
+        {
+            Operator = "if",
+            Operands = [condition, thenValue, nestedElse],
+        };
+    }
+
+    /// <summary>
+    /// Converts a flat and/or chain into nested binary pairs.
+    /// [a, b, c] → op(a, op(b, c))
+    /// </summary>
+    private static OperatorNodeModel NestBinaryChain(string op, List<RuleNodeModel> flat)
+    {
+        if (flat.Count <= 2)
+        {
+            return new OperatorNodeModel { Operator = op, Operands = flat };
+        }
+
+        var first = flat[0];
+        var remaining = flat.GetRange(1, flat.Count - 1);
+        var nested = NestBinaryChain(op, remaining);
+
+        return new OperatorNodeModel
+        {
+            Operator = op,
+            Operands = [first, nested],
+        };
+    }
 }
 
 /// <summary>
@@ -144,16 +221,100 @@ public sealed class OperatorNodeModel : RuleNodeModel
 
     public override void WriteTo(Stj.Utf8JsonWriter writer)
     {
-        writer.WriteStartObject();
-        writer.WritePropertyName(Operator);
-        writer.WriteStartArray();
-        foreach (var operand in Operands)
+        // Map visual-only operators back to their JSON Logic equivalents
+        string emitOp = Operator switch
         {
-            operand.WriteTo(writer);
+            "between<" => "<",
+            "between<=" => "<=",
+            _ => Operator,
+        };
+
+        writer.WriteStartObject();
+        writer.WritePropertyName(emitOp);
+
+        // var with a single string operand: {"var": "path"} (not {"var": ["path"]})
+        if (emitOp == "var" && Operands.Count == 1 && Operands[0] is ValueNodeModel varVal && varVal.Kind == ValueKind.String)
+        {
+            writer.WriteStringValue(varVal.RawValue);
+            writer.WriteEndObject();
+            return;
+        }
+
+        writer.WriteStartArray();
+
+        if (Operator == "if")
+        {
+            // Flatten nested if-in-else back to JSON Logic's chained format.
+            FlattenIfOperands(this, writer);
+        }
+        else if (Operator is "and" or "or")
+        {
+            // Flatten nested binary and/or back to flat list.
+            // and(a, and(b, c)) → [a, b, c]
+            FlattenBinaryChain(this, writer);
+        }
+        else
+        {
+            foreach (var operand in Operands)
+            {
+                operand.WriteTo(writer);
+            }
         }
 
         writer.WriteEndArray();
         writer.WriteEndObject();
+    }
+
+    /// <summary>
+    /// Recursively flattens nested if/then/else into a flat operand list.
+    /// </summary>
+    private static void FlattenIfOperands(OperatorNodeModel ifNode, Stj.Utf8JsonWriter writer)
+    {
+        if (ifNode.Operands.Count >= 2)
+        {
+            // Write condition and then-value
+            ifNode.Operands[0].WriteTo(writer);
+            ifNode.Operands[1].WriteTo(writer);
+
+            // If else branch is itself an if, flatten recursively
+            if (ifNode.Operands.Count >= 3)
+            {
+                if (ifNode.Operands[2] is OperatorNodeModel elseIf && elseIf.Operator == "if")
+                {
+                    FlattenIfOperands(elseIf, writer);
+                }
+                else
+                {
+                    ifNode.Operands[2].WriteTo(writer);
+                }
+            }
+        }
+        else
+        {
+            foreach (var operand in ifNode.Operands)
+            {
+                operand.WriteTo(writer);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Recursively flattens nested binary and/or into a flat operand list.
+    /// and(a, and(b, c)) → [a, b, c]
+    /// </summary>
+    private static void FlattenBinaryChain(OperatorNodeModel node, Stj.Utf8JsonWriter writer)
+    {
+        foreach (var operand in node.Operands)
+        {
+            if (operand is OperatorNodeModel nested && nested.Operator == node.Operator)
+            {
+                FlattenBinaryChain(nested, writer);
+            }
+            else
+            {
+                operand.WriteTo(writer);
+            }
+        }
     }
 
     public override RuleNodeModel Clone() => new OperatorNodeModel
@@ -254,6 +415,19 @@ public sealed class RawJsonNodeModel : RuleNodeModel
     }
 
     public override RuleNodeModel Clone() => new RawJsonNodeModel { Json = Json };
+}
+
+/// <summary>
+/// An empty placeholder slot awaiting user input.
+/// </summary>
+public sealed class EmptySlotModel : RuleNodeModel
+{
+    public override void WriteTo(Stj.Utf8JsonWriter writer)
+    {
+        writer.WriteNullValue();
+    }
+
+    public override RuleNodeModel Clone() => new EmptySlotModel();
 }
 
 public enum ValueKind

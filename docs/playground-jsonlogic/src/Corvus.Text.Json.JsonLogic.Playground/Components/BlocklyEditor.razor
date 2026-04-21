@@ -1,0 +1,133 @@
+@* Blockly-based JSON Logic visual editor.
+   Wraps Google Blockly workspace with custom JSON Logic blocks.
+   Communicates via JS interop — Blockly owns the visual, C# owns the JSON. *@
+@using Microsoft.JSInterop
+@inject IJSRuntime JSRuntime
+@implements IAsyncDisposable
+
+<div id="@ElementId" class="blockly-editor" style="width:100%;height:100%;min-height:400px;"></div>
+
+@code {
+    private const string ElementId = "blockly-workspace";
+    private DotNetObjectReference<BlocklyEditor>? dotNetRef;
+    private bool initialized;
+
+    [Parameter]
+    public EventCallback<string> OnChanged { get; set; }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && !initialized)
+        {
+            initialized = true;
+            dotNetRef = DotNetObjectReference.Create(this);
+            try
+            {
+                await JSRuntime.InvokeVoidAsync("BlocklyJsonLogic.init", ElementId, dotNetRef);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Blockly init error: {ex.Message}");
+            }
+        }
+    }
+
+    /// <summary>
+    /// Called from JS when the Blockly workspace changes.
+    /// </summary>
+    [JSInvokable]
+    public async Task OnBlocklyChanged(string jsonLogic)
+    {
+        if (OnChanged.HasDelegate)
+        {
+            await OnChanged.InvokeAsync(jsonLogic);
+        }
+    }
+
+    /// <summary>
+    /// Load a JSON Logic rule into the Blockly workspace.
+    /// </summary>
+    public async Task LoadJsonLogicAsync(string json, string? dataJson = null)
+    {
+        if (initialized)
+        {
+            try
+            {
+                await JSRuntime.InvokeVoidAsync("BlocklyJsonLogic.loadJsonLogic", json, dataJson);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Blockly load error: {ex.Message}");
+            }
+        }
+    }
+
+    /// <summary>
+    /// Get the current JSON Logic from the Blockly workspace.
+    /// </summary>
+    public async Task<string> GetJsonLogicAsync()
+    {
+        if (!initialized) return "";
+        try
+        {
+            return await JSRuntime.InvokeAsync<string>("BlocklyJsonLogic.getJsonLogic");
+        }
+        catch
+        {
+            return "";
+        }
+    }
+
+    /// <summary>
+    /// Force a resize (call after container becomes visible).
+    /// </summary>
+    public async Task ResizeAsync()
+    {
+        if (initialized)
+        {
+            try
+            {
+                await JSRuntime.InvokeVoidAsync("BlocklyJsonLogic.resize");
+            }
+            catch
+            {
+                // Not ready
+            }
+        }
+    }
+
+    /// <summary>
+    /// Sync the theme with the app theme.
+    /// </summary>
+    public async Task SetThemeAsync(bool isDark)
+    {
+        if (initialized)
+        {
+            try
+            {
+                await JSRuntime.InvokeVoidAsync("BlocklyJsonLogic.setTheme", isDark);
+            }
+            catch
+            {
+                // Not ready
+            }
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (initialized)
+        {
+            try
+            {
+                await JSRuntime.InvokeVoidAsync("BlocklyJsonLogic.dispose");
+            }
+            catch
+            {
+                // Already disposed
+            }
+        }
+
+        dotNetRef?.Dispose();
+    }
+}

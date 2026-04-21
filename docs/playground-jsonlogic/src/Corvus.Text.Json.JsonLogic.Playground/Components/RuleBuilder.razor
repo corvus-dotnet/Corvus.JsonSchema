@@ -18,44 +18,29 @@
         <div class="rule-builder__error">⚠ @jsonParseError</div>
     }
 
-    <div class="rule-builder__content" style="@(IsVisualMode ? "" : "display:none")">
-        <div class="rule-builder__visual">
-            @if (rootNode is not null)
-            {
-                <RuleNodeView Node="@rootNode"
-                              OnChanged="OnVisualChanged"
-                              OnReplace="OnRootReplaced" />
-            }
-            else
-            {
-                <div class="rule-builder__empty">
-                    <p>No rule defined. Choose a starting point:</p>
-                    <div class="rule-builder__start-buttons">
-                        <button class="rule-node__add-btn" @onclick="StartWithComparison">⚖️ Comparison</button>
-                        <button class="rule-node__add-btn" @onclick="StartWithIf">🔀 If / Then</button>
-                        <button class="rule-node__add-btn" @onclick="StartWithVar">📌 Variable</button>
-                        <button class="rule-node__add-btn" @onclick="StartWithArithmetic">🔢 Arithmetic</button>
-                    </div>
-                </div>
-            }
+    <div class="rule-builder__panels">
+        <div class="rule-builder__content @(IsVisualMode ? "rule-builder__content--active" : "rule-builder__content--hidden")">
+            <BlocklyEditor @ref="blocklyEditor"
+                           OnChanged="OnBlocklyChanged" />
         </div>
-    </div>
 
-    <div class="rule-builder__content" style="@(!IsVisualMode ? "" : "display:none")">
-        <StandaloneCodeEditor @ref="jsonEditor"
-                              Id="rule-json-editor"
-                              ConstructionOptions="JsonEditorOptions"
-                              OnDidChangeModelContent="OnJsonEditorChanged" />
+        <div class="rule-builder__content @(!IsVisualMode ? "rule-builder__content--active" : "rule-builder__content--hidden")">
+            <StandaloneCodeEditor @ref="jsonEditor"
+                                  Id="rule-json-editor"
+                                  ConstructionOptions="JsonEditorOptions"
+                                  OnDidChangeModelContent="OnJsonEditorChanged" />
+        </div>
     </div>
 </div>
 
 @code {
-    private RuleNodeModel? rootNode;
+    private BlocklyEditor? blocklyEditor;
     private StandaloneCodeEditor? jsonEditor;
     private bool isVisualMode = true;
     private string? jsonParseError;
+    private bool suppressBlocklySync;
     private bool suppressJsonSync;
-    private bool suppressVisualSync;
+    private string lastJson = "";
 
     public bool IsVisualMode
     {
@@ -67,30 +52,51 @@
     public EventCallback<string> OnRuleChanged { get; set; }
 
     /// <summary>
-    /// Gets or sets the current rule JSON text.
+    /// Gets the current rule JSON text.
     /// </summary>
-    public string RuleJson => rootNode?.ToJson() ?? "";
+    public string RuleJson => lastJson;
 
     /// <summary>
-    /// Sets the rule from JSON, rebuilding the visual tree.
+    /// Notify Blockly that the container size has changed.
     /// </summary>
-    public void SetRule(string json)
+    public async Task ResizeBlocklyAsync()
     {
+        if (blocklyEditor is not null)
+        {
+            await blocklyEditor.ResizeAsync();
+        }
+    }
+
+    /// <summary>
+    /// Sets the rule from JSON, rebuilding both editors.
+    /// </summary>
+    public async void SetRule(string json, string? dataJson = null)
+    {
+        lastJson = json;
+        jsonParseError = null;
+
+        suppressBlocklySync = true;
+        suppressJsonSync = true;
+
         try
         {
-            rootNode = string.IsNullOrWhiteSpace(json)
-                ? null
-                : RuleNodeModel.Parse(json);
-            jsonParseError = null;
+            if (blocklyEditor is not null)
+            {
+                await blocklyEditor.LoadJsonLogicAsync(json, dataJson);
+            }
+
+            await UpdateJsonEditorAsync(json);
         }
         catch (Exception ex)
         {
             jsonParseError = ex.Message;
         }
+        finally
+        {
+            suppressBlocklySync = false;
+            suppressJsonSync = false;
+        }
 
-        suppressVisualSync = true;
-        _ = UpdateJsonEditorAsync(json);
-        suppressVisualSync = false;
         StateHasChanged();
     }
 
@@ -99,9 +105,8 @@
     /// </summary>
     public bool IsDirty(string baseline)
     {
-        string current = RuleJson;
         return !string.Equals(
-            NormalizeJson(current),
+            NormalizeJson(lastJson),
             NormalizeJson(baseline),
             StringComparison.Ordinal);
     }
@@ -112,7 +117,7 @@
         {
             Language = "json",
             Theme = "vs-dark",
-            Value = rootNode?.ToJson() ?? "",
+            Value = lastJson,
             AutomaticLayout = true,
             Minimap = new EditorMinimapOptions { Enabled = false },
             FontSize = 14,
@@ -123,21 +128,25 @@
 
     private async Task SwitchToVisual()
     {
-        if (IsVisualMode)
-        {
-            return;
-        }
+        if (IsVisualMode) return;
 
-        // Sync JSON → Visual
+        // Sync JSON → Blockly
         if (jsonEditor is not null)
         {
             string json = await jsonEditor.GetValue();
             try
             {
-                rootNode = string.IsNullOrWhiteSpace(json)
-                    ? null
-                    : RuleNodeModel.Parse(json);
+                // Validate JSON first
+                using var doc = System.Text.Json.JsonDocument.Parse(json);
                 jsonParseError = null;
+
+                suppressBlocklySync = true;
+                if (blocklyEditor is not null)
+                {
+                    await blocklyEditor.LoadJsonLogicAsync(json);
+                }
+                suppressBlocklySync = false;
+                lastJson = json;
             }
             catch (Exception ex)
             {
@@ -147,78 +156,74 @@
         }
 
         IsVisualMode = true;
+
+        // Resize after visual becomes visible
+        StateHasChanged();
+        await Task.Yield();
+        if (blocklyEditor is not null)
+        {
+            await blocklyEditor.ResizeAsync();
+        }
     }
 
     private async Task SwitchToJson()
     {
-        if (!IsVisualMode)
+        if (!IsVisualMode) return;
+
+        // Sync Blockly → JSON
+        if (blocklyEditor is not null)
         {
-            return;
+            string json = await blocklyEditor.GetJsonLogicAsync();
+            lastJson = json;
         }
 
-        // Sync Visual → JSON
         IsVisualMode = false;
-        string json = rootNode?.ToJson() ?? "";
-        await UpdateJsonEditorAsync(json);
+
+        StateHasChanged();
+        await Task.Yield();
+        await UpdateJsonEditorAsync(lastJson);
+
+        if (jsonEditor is not null)
+        {
+            try
+            {
+                await JSRuntime.InvokeVoidAsync(
+                    "blazorMonaco.editor.layout", "rule-json-editor", null, null);
+            }
+            catch
+            {
+                // Editor not ready
+            }
+        }
     }
 
-    private async void OnVisualChanged()
+    private async Task OnBlocklyChanged(string jsonLogic)
     {
-        if (suppressVisualSync)
-        {
-            return;
-        }
+        if (suppressBlocklySync) return;
 
-        string json = rootNode?.ToJson() ?? "";
+        lastJson = jsonLogic;
         jsonParseError = null;
 
-        // Update JSON editor in background
         suppressJsonSync = true;
-        await UpdateJsonEditorAsync(json);
+        await UpdateJsonEditorAsync(jsonLogic);
         suppressJsonSync = false;
 
         if (OnRuleChanged.HasDelegate)
         {
-            await OnRuleChanged.InvokeAsync(json);
+            await OnRuleChanged.InvokeAsync(jsonLogic);
         }
-
-        StateHasChanged();
-    }
-
-    private void OnRootReplaced(RuleNodeModel replacement)
-    {
-        rootNode = replacement;
-        OnVisualChanged();
     }
 
     private async Task OnJsonEditorChanged(ModelContentChangedEvent e)
     {
-        if (suppressJsonSync || jsonEditor is null)
-        {
-            return;
-        }
+        if (suppressJsonSync || jsonEditor is null) return;
 
         string json = await jsonEditor.GetValue();
+        lastJson = json;
 
         if (OnRuleChanged.HasDelegate)
         {
             await OnRuleChanged.InvokeAsync(json);
-        }
-
-        // Try to sync to visual tree (don't show errors during typing)
-        try
-        {
-            suppressVisualSync = true;
-            rootNode = string.IsNullOrWhiteSpace(json)
-                ? null
-                : RuleNodeModel.Parse(json);
-            jsonParseError = null;
-            suppressVisualSync = false;
-        }
-        catch
-        {
-            suppressVisualSync = false;
-            // Don't show error while user is typing — they'll see it if they switch tabs
         }
     }
 
@@ -235,47 +240,6 @@
                 // Editor not yet initialized
             }
         }
-    }
-
-    // Starter templates
-    private void StartWithComparison()
-    {
-        rootNode = new OperatorNodeModel
-        {
-            Operator = "==",
-            Operands = OperatorRegistry.CreateDefaultOperands("=="),
-        };
-        OnVisualChanged();
-    }
-
-    private void StartWithIf()
-    {
-        rootNode = new OperatorNodeModel
-        {
-            Operator = "if",
-            Operands = OperatorRegistry.CreateDefaultOperands("if"),
-        };
-        OnVisualChanged();
-    }
-
-    private void StartWithVar()
-    {
-        rootNode = new OperatorNodeModel
-        {
-            Operator = "var",
-            Operands = OperatorRegistry.CreateDefaultOperands("var"),
-        };
-        OnVisualChanged();
-    }
-
-    private void StartWithArithmetic()
-    {
-        rootNode = new OperatorNodeModel
-        {
-            Operator = "+",
-            Operands = OperatorRegistry.CreateDefaultOperands("+"),
-        };
-        OnVisualChanged();
     }
 
     private static string NormalizeJson(string json)

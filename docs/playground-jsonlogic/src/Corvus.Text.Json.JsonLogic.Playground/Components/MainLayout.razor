@@ -159,6 +159,14 @@
 
             theme = await JSRuntime.InvokeAsync<string>("getInitialTheme");
             UpdateThemeUI();
+            // Resolve the effective theme and sync Blockly
+            string resolvedTheme = theme;
+            if (theme == "auto")
+            {
+                resolvedTheme = await JSRuntime.InvokeAsync<string>("getSystemTheme");
+            }
+            await JSRuntime.InvokeVoidAsync("BlocklyJsonLogic.setTheme", resolvedTheme == "dark");
+            await JSRuntime.InvokeVoidAsync("applyTheme", resolvedTheme);
 
             // Load from localStorage or default to first sample
             string? savedRule = null;
@@ -175,11 +183,18 @@
 
             if (!string.IsNullOrEmpty(savedRule))
             {
-                ruleBuilder?.SetRule(savedRule);
                 if (dataEditor is not null && !string.IsNullOrEmpty(savedData))
                 {
                     await dataEditor.SetValue(savedData);
                 }
+
+                // Push data to Blockly before loading the rule
+                if (!string.IsNullOrEmpty(savedData))
+                {
+                    await JSRuntime.InvokeVoidAsync("BlocklyJsonLogic.setData", savedData);
+                }
+
+                ruleBuilder?.SetRule(savedRule, savedData);
 
                 await EvaluateAsync();
             }
@@ -233,10 +248,16 @@
         DebounceSave();
     }
 
-    private void OnDataChanged(ModelContentChangedEvent e)
+    private async void OnDataChanged(ModelContentChangedEvent e)
     {
         DebounceEval();
         DebounceSave();
+        // Push data to Blockly for context-aware dropdowns
+        if (dataEditor is not null)
+        {
+            string dataJson = await dataEditor.GetValue();
+            await JSRuntime.InvokeVoidAsync("BlocklyJsonLogic.setData", dataJson);
+        }
     }
 
     // ── Evaluation ──
@@ -325,12 +346,16 @@
         sampleRuleJson = sample.Rule.Trim();
         sampleDataJson = sample.Data.Trim();
 
-        ruleBuilder?.SetRule(sampleRuleJson);
-
         if (dataEditor is not null)
         {
             await dataEditor.SetValue(sampleDataJson);
         }
+
+        // Push data to Blockly BEFORE loading the rule so dropdowns have context.
+        // OnDataChanged fires asynchronously (too late), so we call setData explicitly.
+        await JSRuntime.InvokeVoidAsync("BlocklyJsonLogic.setData", sampleDataJson);
+
+        ruleBuilder?.SetRule(sampleRuleJson, sampleDataJson);
 
         lastResult = null;
         await EvaluateAsync();
@@ -357,6 +382,7 @@
         sampleRuleJson = "";
         sampleDataJson = "{}";
 
+        await JSRuntime.InvokeVoidAsync("BlocklyJsonLogic.setData", "{}");
         ruleBuilder?.SetRule("");
         if (dataEditor is not null)
         {
@@ -478,6 +504,7 @@
         }
 
         await JSRuntime.InvokeVoidAsync("applyTheme", resolved);
+        await JSRuntime.InvokeVoidAsync("BlocklyJsonLogic.setTheme", resolved == "dark");
         try
         {
             await JSRuntime.InvokeVoidAsync("localStorage.setItem", "jsonlogic-theme", theme);
@@ -494,6 +521,7 @@
         if (theme == "auto")
         {
             await JSRuntime.InvokeVoidAsync("applyTheme", systemTheme);
+            await JSRuntime.InvokeVoidAsync("BlocklyJsonLogic.setTheme", systemTheme == "dark");
             StateHasChanged();
         }
     }
@@ -504,7 +532,7 @@
         {
             "dark" => ("🌙", "Switch to light theme"),
             "light" => ("☀️", "Switch to auto theme"),
-            _ => ("🔄", "Switch to dark theme"),
+            _ => ("🖥️", "Switch to dark theme"),
         };
     }
 

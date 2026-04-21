@@ -128,6 +128,19 @@ public static class SampleRegistry
 
         new Sample
         {
+            Id = "missing-some",
+            DisplayName = "Missing Some",
+            Description = "Check if at least 2 of the required contact methods are missing.",
+            Rule = """
+            {"missing_some":[2, ["phone", "email", "address", "fax"]]}
+            """,
+            Data = """
+            {"phone": "555-1234", "email": "alice@example.com"}
+            """,
+        },
+
+        new Sample
+        {
             Id = "array-filter",
             DisplayName = "Array Filter",
             Description = "Filter products to find those priced above $20.",

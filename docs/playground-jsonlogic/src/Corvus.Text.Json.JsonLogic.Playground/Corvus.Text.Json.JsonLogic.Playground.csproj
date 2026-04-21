@@ -20,4 +20,19 @@
   <ItemGroup>
     <ProjectReference Include="..\..\..\..\src\Corvus.Text.Json.JsonLogic\Corvus.Text.Json.JsonLogic.csproj" />
   </ItemGroup>
+
+  <!-- Restore Blockly from npm and copy to wwwroot for self-hosting.
+       Loaded before Monaco's AMD loader to avoid define() conflicts. -->
+  <PropertyGroup>
+    <BlocklySource>$(MSBuildProjectDirectory)\node_modules\blockly</BlocklySource>
+    <BlocklyTarget>$(MSBuildProjectDirectory)\wwwroot\js\blockly</BlocklyTarget>
+  </PropertyGroup>
+
+  <Target Name="RestoreBlockly" BeforeTargets="BeforeBuild" Inputs="$(MSBuildProjectDirectory)\package-lock.json" Outputs="$(BlocklyTarget)\blockly_compressed.js">
+    <Exec Command="npm ci --ignore-scripts" WorkingDirectory="$(MSBuildProjectDirectory)" />
+    <MakeDir Directories="$(BlocklyTarget)\msg" />
+    <Copy SourceFiles="$(BlocklySource)\blockly_compressed.js" DestinationFolder="$(BlocklyTarget)" />
+    <Copy SourceFiles="$(BlocklySource)\blocks_compressed.js" DestinationFolder="$(BlocklyTarget)" />
+    <Copy SourceFiles="$(BlocklySource)\msg\en.js" DestinationFolder="$(BlocklyTarget)\msg" />
+  </Target>
 </Project>

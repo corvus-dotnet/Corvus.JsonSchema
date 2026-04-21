@@ -38,9 +38,8 @@ public sealed class EvaluationResult
 /// </summary>
 public sealed class EvaluationService
 {
-    // Dedicated instance to avoid unbounded cache growth on Default
-    private JsonLogicEvaluator evaluator = new(new Dictionary<string, IOperatorCompiler>());
-    private int evalCount;
+    // Fresh evaluator per call — avoids cache holding references to disposed documents
+    private readonly SemaphoreSlim evalLock = new(1, 1);
 
     public async Task<EvaluationResult> EvaluateAsync(string ruleJson, string dataJson)
     {
@@ -54,68 +53,77 @@ public sealed class EvaluationService
             };
         }
 
-        return await Task.Run(() =>
+        await evalLock.WaitAsync();
+        try
         {
-            var sw = Stopwatch.StartNew();
+            return await Task.Run(() =>
+            {
+                var sw = Stopwatch.StartNew();
 
-            // Parse rule and data separately so we can attribute errors correctly
-            ParsedJsonDocument<JsonElement> ruleDoc;
-            try
-            {
-                ruleDoc = ParsedJsonDocument<JsonElement>.Parse(
-                    Encoding.UTF8.GetBytes(ruleJson));
-            }
-            catch (JsonException ex)
-            {
-                sw.Stop();
-                return new EvaluationResult
+                // Parse rule
+                ParsedJsonDocument<JsonElement> ruleDoc;
+                try
                 {
-                    Success = false,
-                    ErrorMessage = "Rule JSON: " + FixBrokenSRFormat(ex.Message),
-                    ErrorSource = ErrorSource.Rule,
-                    ElapsedMs = sw.Elapsed.TotalMilliseconds,
-                };
-            }
-
-            ParsedJsonDocument<JsonElement> dataDoc;
-            try
-            {
-                string data = string.IsNullOrWhiteSpace(dataJson) ? "{}" : dataJson;
-                dataDoc = ParsedJsonDocument<JsonElement>.Parse(
-                    Encoding.UTF8.GetBytes(data));
-            }
-            catch (JsonException ex)
-            {
-                ruleDoc.Dispose();
-                sw.Stop();
-                return new EvaluationResult
+                    ruleDoc = ParsedJsonDocument<JsonElement>.Parse(
+                        Encoding.UTF8.GetBytes(ruleJson));
+                }
+                catch (JsonException ex)
                 {
-                    Success = false,
-                    ErrorMessage = "Data JSON: " + FixBrokenSRFormat(ex.Message),
-                    ErrorSource = ErrorSource.Data,
-                    ElapsedMs = sw.Elapsed.TotalMilliseconds,
-                };
-            }
-
-            try
-            {
-                using (ruleDoc)
-                using (dataDoc)
-                {
-                    var rule = new JsonLogicRule(ruleDoc.RootElement);
-                    JsonElement result = evaluator.Evaluate(in rule, dataDoc.RootElement);
-
                     sw.Stop();
-
-                    // Periodically clear cache to avoid unbounded growth
-                    if (++evalCount % 50 == 0)
+                    return new EvaluationResult
                     {
-                        evaluator.ClearCache();
+                        Success = false,
+                        ErrorMessage = "Rule JSON: " + FixBrokenSRFormat(ex.Message),
+                        ErrorSource = ErrorSource.Rule,
+                        ElapsedMs = sw.Elapsed.TotalMilliseconds,
+                    };
+                }
+
+                // Parse data
+                ParsedJsonDocument<JsonElement> dataDoc;
+                try
+                {
+                    string data = string.IsNullOrWhiteSpace(dataJson) ? "{}" : dataJson;
+                    dataDoc = ParsedJsonDocument<JsonElement>.Parse(
+                        Encoding.UTF8.GetBytes(data));
+                }
+                catch (JsonException ex)
+                {
+                    ruleDoc.Dispose();
+                    sw.Stop();
+                    return new EvaluationResult
+                    {
+                        Success = false,
+                        ErrorMessage = "Data JSON: " + FixBrokenSRFormat(ex.Message),
+                        ErrorSource = ErrorSource.Data,
+                        ElapsedMs = sw.Elapsed.TotalMilliseconds,
+                    };
+                }
+
+                try
+                {
+                    // Use a fresh evaluator each time so no cached references
+                    // to previously-disposed documents survive across calls.
+                    var eval = new JsonLogicEvaluator(
+                        new Dictionary<string, IOperatorCompiler>());
+
+                    var rule = new JsonLogicRule(ruleDoc.RootElement);
+                    JsonElement result = eval.Evaluate(in rule, dataDoc.RootElement);
+
+                    // Format result BEFORE disposing documents
+                    string resultText;
+                    try
+                    {
+                        resultText = result.ValueKind == JsonValueKind.Undefined
+                            ? "/* no result */"
+                            : FormatJson(result);
+                    }
+                    catch (ObjectDisposedException)
+                    {
+                        resultText = "/* result unavailable — backing document was disposed */";
                     }
 
-                    string? resultText = result.ValueKind == JsonValueKind.Undefined
-                        ? "/* no result */"
-                        : FormatJson(result);
+                    sw.Stop();
 
                     return new EvaluationResult
                     {
@@ -124,23 +132,49 @@ public sealed class EvaluationService
                         ElapsedMs = sw.Elapsed.TotalMilliseconds,
                     };
                 }
-            }
-            catch (Exception ex)
-            {
-                sw.Stop();
-                return new EvaluationResult
+                catch (Exception ex) when (ex is ObjectDisposedException)
                 {
-                    Success = false,
-                    ErrorMessage = FixBrokenSRFormat(ex.Message),
-                    ErrorSource = ErrorSource.Rule,
-                    ElapsedMs = sw.Elapsed.TotalMilliseconds,
-                };
-            }
-        });
+                    sw.Stop();
+                    return new EvaluationResult
+                    {
+                        Success = false,
+                        ErrorMessage = "Cannot access a disposed object (JsonDocument). Try again.",
+                        ErrorSource = ErrorSource.Rule,
+                        ElapsedMs = sw.Elapsed.TotalMilliseconds,
+                    };
+                }
+                catch (Exception ex)
+                {
+                    sw.Stop();
+                    return new EvaluationResult
+                    {
+                        Success = false,
+                        ErrorMessage = FixBrokenSRFormat(ex.Message),
+                        ErrorSource = ErrorSource.Rule,
+                        ElapsedMs = sw.Elapsed.TotalMilliseconds,
+                    };
+                }
+                finally
+                {
+                    ruleDoc.Dispose();
+                    dataDoc.Dispose();
+                }
+            });
+        }
+        finally
+        {
+            evalLock.Release();
+        }
     }
 
     private static string FixBrokenSRFormat(string message)
     {
+        // Detect unresolved SR key patterns (Blazor WASM trims resource strings)
+        if (message.Contains("ObjectDisposed_"))
+        {
+            return "Cannot access a disposed object.";
+        }
+
         if (!message.Contains("{0}"))
         {
             return message;

@@ -1,261 +1,243 @@
-@* Recursive visual renderer for a single rule tree node. *@
+@* Scratch-style block editor for JSON Logic rules.
+   Blocks are block-level elements. C-blocks have full-width mouths.
+   Reporter/boolean blocks become inline only when nested inside input holes.
+   SVG C-block shapes rendered by scratch-blocks.js. *@
+@using Corvus.Text.Json.JsonLogic.Playground.Models
 
 @if (Node is OperatorNodeModel op)
 {
     var info = OperatorRegistry.GetOrDefault(op.Operator);
-    bool isVar = op.Operator == "var";
-    bool isIf = op.Operator == "if";
-    bool canAdd = info.MaxArity is null || op.Operands.Count < info.MaxArity;
+    var effectiveStyle = GetEffectiveStyle(op, info);
 
-    <div class="rule-node @info.CategoryClass" @key="Node.Id">
-        <div class="rule-node__header">
-            @if (isVar)
+    @if (effectiveStyle == RenderStyle.Data)
+    {
+        @* Variable: blue rounded pill *@
+        <div class="block block-data" @key="Node.Id">
+            <span class="block-label">📌</span>
+            @if (op.Operands.Count > 0 && op.Operands[0] is ValueNodeModel varPath)
             {
-                <span class="rule-node__icon">📌</span>
+                <input type="text" class="block-input block-input--var"
+                       value="@varPath.RawValue"
+                       placeholder="e.g. path"
+                       size="@Math.Max(4, (varPath.RawValue?.Length ?? 4))"
+                       @oninput="e => OnVarPathInput(varPath, e)" />
             }
-            <select class="rule-node__op-select" value="@op.Operator" @onchange="e => ChangeOperator(op, e)">
-                @foreach (var group in OperatorRegistry.Grouped)
-                {
-                    <optgroup label="@group.GroupName">
-                        @foreach (var opInfo in group.Operators)
-                        {
-                            <option value="@opInfo.Key">@opInfo.DisplayName</option>
-                        }
-                    </optgroup>
-                }
-            </select>
-            <div class="spacer"></div>
+            else
+            {
+                <span class="block-hint">(current)</span>
+            }
+            @if (op.Operands.Count > 1)
+            {
+                <span class="block-sep">default:</span>
+                <SlotView Node="@op.Operands[1]"
+                          Accepts="SlotType.Any"
+                          OnChanged="OnChanged"
+                          OnRemove="@(EventCallback.Factory.Create(this, () => RemoveOperand(op, 1)))"
+                          OnReplace="@(n => ReplaceOperand(op, 1, n))" />
+            }
+            @if (op.Operands.Count <= 1)
+            {
+                <button class="block-btn-add" @onclick="() => AddVarDefault(op)" title="Add default">+</button>
+            }
             @if (OnRemove.HasDelegate)
             {
-                <button class="rule-node__remove" @onclick="OnRemove" title="Remove">✕</button>
+                <button class="block-btn-remove" @onclick="OnRemove" title="Remove">✕</button>
             }
         </div>
-
-        @if (isVar)
-        {
-            @* Special var UI: path input + optional default *@
-            <div class="rule-node__var-body">
-                <label class="rule-node__arg-label">Path</label>
-                @if (op.Operands.Count > 0 && op.Operands[0] is ValueNodeModel varPath)
-                {
-                    <input type="text" class="rule-node__var-input"
-                           value="@varPath.RawValue"
-                           placeholder="e.g. user.name"
-                           @oninput="e => { varPath.RawValue = e.Value?.ToString() ?? string.Empty; NotifyChanged(); }" />
-                }
-                else
-                {
-                    <span class="rule-node__hint">
-                        (empty — references current item)
-                    </span>
-                }
-
+    }
+    else if (effectiveStyle == RenderStyle.Control)
+    {
+        @* Scratch-style C-block: if <condition> then <mouth>, optionally else <mouth>.
+           No "else if" — nest an if block inside the else mouth instead.
+           SVG shape drawn by scratch-blocks.js. *@
+        <div class="block block-cblock" @key="Node.Id">
+            @{
+                bool hasElse = op.Operands.Count >= 3;
+            }
+            <div class="cblock-header">
+                <span class="cblock-keyword">if</span>
+                <SlotView Node="@op.Operands[0]"
+                          Accepts="SlotType.Boolean"
+                          OnChanged="OnChanged"
+                          OnRemove="@(EventCallback.Factory.Create(this, () => ClearToEmpty(op, 0)))"
+                          OnReplace="@(n => ReplaceOperand(op, 0, n))" />
+                <span class="cblock-keyword">then</span>
+            </div>
+            <div class="cblock-mouth">
                 @if (op.Operands.Count > 1)
                 {
-                    <label class="rule-node__arg-label">Default</label>
                     <RuleNodeView Node="@op.Operands[1]"
                                   OnChanged="OnChanged"
-                                  OnRemove="@(() => RemoveOperand(op, 1))"
-                                  OnReplace="@(n => { op.Operands[1] = n; NotifyChanged(); })" />
+                                  OnRemove="@(EventCallback.Factory.Create(this, () => ClearToEmpty(op, 1)))"
+                                  OnReplace="@(n => ReplaceOperand(op, 1, n))" />
                 }
-
-                <div class="rule-node__actions">
-                    @if (op.Operands.Count == 0)
-                    {
-                        <button class="rule-node__add-btn" @onclick="() => AddVarPath(op)">+ Path</button>
-                    }
-                    @if (op.Operands.Count == 1)
-                    {
-                        <button class="rule-node__add-btn" @onclick="() => AddVarDefault(op)">+ Default</button>
-                    }
+            </div>
+            @if (hasElse)
+            {
+                <div class="cblock-header">
+                    <span class="cblock-keyword">else</span>
                 </div>
-            </div>
-        }
-        else if (isIf)
-        {
-            @* If/then/else chain: pairs of (condition, then) + optional final else *@
-            <div class="rule-node__if-body">
-                @{
-                    int pairCount = op.Operands.Count / 2;
-                    bool hasElse = op.Operands.Count % 2 == 1 && op.Operands.Count >= 3;
-                }
-                @for (int i = 0; i < pairCount; i++)
-                {
-                    int condIdx = i * 2;
-                    int thenIdx = i * 2 + 1;
-                    <div class="rule-node__if-branch">
-                        <div class="rule-node__if-label">@(i == 0 ? "If" : "Else If")</div>
-                        <div class="rule-node__if-slot">
-                            @{ int ci = condIdx; }
-                            <RuleNodeView Node="@op.Operands[condIdx]"
-                                          OnChanged="OnChanged"
-                                          OnRemove="@(() => RemoveIfBranch(op, i))"
-                                          OnReplace="@(n => { op.Operands[ci] = n; NotifyChanged(); })" />
-                        </div>
-                        <div class="rule-node__if-label">Then</div>
-                        <div class="rule-node__if-slot">
-                            @{ int ti = thenIdx; }
-                            <RuleNodeView Node="@op.Operands[thenIdx]"
-                                          OnChanged="OnChanged"
-                                          OnRemove="EventCallback.Empty"
-                                          OnReplace="@(n => { op.Operands[ti] = n; NotifyChanged(); })" />
-                        </div>
-                    </div>
-                }
-                @if (hasElse)
-                {
-                    <div class="rule-node__if-branch">
-                        <div class="rule-node__if-label">Else</div>
-                        <div class="rule-node__if-slot">
-                            @{ int elseIdx = op.Operands.Count - 1; }
-                            <RuleNodeView Node="@op.Operands[^1]"
-                                          OnChanged="OnChanged"
-                                          OnRemove="@(() => RemoveElse(op))"
-                                          OnReplace="@(n => { op.Operands[elseIdx] = n; NotifyChanged(); })" />
-                        </div>
-                    </div>
-                }
-                <div class="rule-node__actions">
-                    <button class="rule-node__add-btn" @onclick="() => AddIfBranch(op)">+ Else If</button>
-                    @if (!hasElse)
-                    {
-                        <button class="rule-node__add-btn" @onclick="() => AddElse(op)">+ Else</button>
-                    }
+                <div class="cblock-mouth">
+                    <RuleNodeView Node="@op.Operands[2]"
+                                  OnChanged="OnChanged"
+                                  OnRemove="@(EventCallback.Factory.Create(this, () => RemoveElse(op)))"
+                                  OnReplace="@(n => ReplaceOperand(op, 2, n))" />
                 </div>
-            </div>
-        }
-        else
-        {
-            @* Generic operator: labeled operand list *@
-            <div class="rule-node__body">
-                @for (int i = 0; i < op.Operands.Count; i++)
+            }
+            <div class="cblock-footer">
+                @if (!hasElse)
                 {
-                    int idx = i;
-                    <div class="rule-node__arg">
-                        @if (info.ArgLabels is not null && idx < info.ArgLabels.Length)
-                        {
-                            <label class="rule-node__arg-label">@info.ArgLabels[idx]</label>
-                        }
-                        else
-                        {
-                            <label class="rule-node__arg-label">Arg @(idx + 1)</label>
-                        }
-                        <div class="rule-node__arg-slot">
-                            @{ int capturedIdx = idx; }
-                            @if (op.Operands.Count > info.MinArity)
-                            {
-                                <RuleNodeView Node="@op.Operands[idx]"
-                                              OnChanged="OnChanged"
-                                              OnRemove="@(() => RemoveOperand(op, capturedIdx))"
-                                              OnReplace="@(n => { op.Operands[capturedIdx] = n; NotifyChanged(); })" />
-                            }
-                            else
-                            {
-                                <RuleNodeView Node="@op.Operands[idx]"
-                                              OnChanged="OnChanged"
-                                              OnReplace="@(n => { op.Operands[capturedIdx] = n; NotifyChanged(); })" />
-                            }
-                        </div>
-                    </div>
+                    <button class="cblock-action" @onclick="() => AddElse(op)">+ else</button>
                 }
-                @if (canAdd)
+                @if (OnRemove.HasDelegate)
                 {
-                    <div class="rule-node__actions">
-                        <button class="rule-node__add-btn" @onclick="() => AddOperand(op)">+ Add</button>
-                    </div>
+                    <button class="block-btn-remove" @onclick="OnRemove" title="Remove">✕</button>
                 }
             </div>
-        }
-    </div>
-}
-else if (Node is ValueNodeModel val)
-{
-    <div class="rule-value" @key="Node.Id">
-        <select class="rule-value__kind" value="@val.Kind" @onchange="e => ChangeValueKind(val, e)">
-            <option value="@Models.ValueKind.String">Text</option>
-            <option value="@Models.ValueKind.Number">Number</option>
-            <option value="@Models.ValueKind.Boolean">Bool</option>
-            <option value="@Models.ValueKind.Null">null</option>
-        </select>
-
-        @switch (val.Kind)
-        {
-            case Models.ValueKind.String:
-                <input type="text" class="rule-value__input"
-                       value="@val.RawValue" placeholder="text"
-                       @oninput="e => { val.RawValue = e.Value?.ToString() ?? string.Empty; NotifyChanged(); }" />
-                break;
-
-            case Models.ValueKind.Number:
-                <input type="text" inputmode="decimal" class="rule-value__input rule-value__input--num"
-                       value="@val.RawValue" placeholder="0"
-                       @oninput="e => { val.RawValue = e.Value?.ToString() ?? string.Empty; NotifyChanged(); }" />
-                break;
-
-            case Models.ValueKind.Boolean:
-                <select class="rule-value__input" value="@val.RawValue" @onchange="e => OnBoolChanged(val, e)">
-                    <option value="true">true</option>
-                    <option value="false">false</option>
-                </select>
-                break;
-
-            case Models.ValueKind.Null:
-                <span class="rule-value__null">null</span>
-                break;
-        }
-
-        @* Type upgrade: convert this value to a rule or variable *@
-        <div class="rule-value__upgrade">
-            <button class="rule-value__upgrade-btn" @onclick="UpgradeToVar" title="Convert to variable reference">📌</button>
-            <button class="rule-value__upgrade-btn" @onclick="UpgradeToOperator" title="Convert to operator">⚙️</button>
         </div>
-
-        @if (OnRemove.HasDelegate)
-        {
-            <button class="rule-node__remove rule-value__remove" @onclick="OnRemove" title="Remove">✕</button>
-        }
-    </div>
+    }
+    else if (effectiveStyle == RenderStyle.Infix || effectiveStyle == RenderStyle.InfixKeyword)
+    {
+        @* Infix: [slot] op [slot], or between: [low] < [value] < [high] *@
+        <div class="block block-shape-@info.Shape.ToString().ToLowerInvariant()" @key="Node.Id">
+            @{
+                string infixLabel = op.Operator switch
+                {
+                    "between<" => "<",
+                    "between<=" => "≤",
+                    _ => info.DisplayName,
+                };
+            }
+            @for (int i = 0; i < op.Operands.Count; i++)
+            {
+                int idx = i;
+                @if (idx > 0)
+                {
+                    <span class="block-op-label">@infixLabel</span>
+                }
+                <SlotView Node="@op.Operands[idx]"
+                          Accepts="@info.GetSlotType(idx)"
+                          OnChanged="OnChanged"
+                          OnRemove="@GetSlotRemove(op, idx, info)"
+                          OnReplace="@(n => ReplaceOperand(op, idx, n))" />
+            }
+            @if (info.MaxArity is null || op.Operands.Count < info.MaxArity)
+            {
+                <button class="block-btn-add" @onclick="() => AddOperand(op)" title="Add operand">+</button>
+            }
+            @if (OnRemove.HasDelegate)
+            {
+                <button class="block-btn-remove" @onclick="OnRemove" title="Remove">✕</button>
+            }
+        </div>
+    }
+    else if (effectiveStyle == RenderStyle.Prefix)
+    {
+        @* Prefix: op [slot] *@
+        <div class="block block-shape-@info.Shape.ToString().ToLowerInvariant()" @key="Node.Id">
+            <span class="block-op-label">@info.DisplayName</span>
+            @for (int i = 0; i < op.Operands.Count; i++)
+            {
+                int idx = i;
+                <SlotView Node="@op.Operands[idx]"
+                          Accepts="@info.GetSlotType(idx)"
+                          OnChanged="OnChanged"
+                          OnRemove="@GetSlotRemove(op, idx, info)"
+                          OnReplace="@(n => ReplaceOperand(op, idx, n))" />
+            }
+            @if (OnRemove.HasDelegate)
+            {
+                <button class="block-btn-remove" @onclick="OnRemove" title="Remove">✕</button>
+            }
+        </div>
+    }
+    else
+    {
+        @* Function: name(slot, slot) *@
+        <div class="block block-shape-@info.Shape.ToString().ToLowerInvariant()" @key="Node.Id">
+            <span class="block-op-label">@info.DisplayName</span>
+            <span class="block-paren">(</span>
+            @for (int i = 0; i < op.Operands.Count; i++)
+            {
+                int idx = i;
+                @if (idx > 0)
+                {
+                    <span class="block-comma">,</span>
+                }
+                @if (info.ArgLabels is not null && idx < info.ArgLabels.Length)
+                {
+                    <span class="block-arg-label">@info.ArgLabels[idx]:</span>
+                }
+                <SlotView Node="@op.Operands[idx]"
+                          Accepts="@info.GetSlotType(idx)"
+                          OnChanged="OnChanged"
+                          OnRemove="@GetSlotRemove(op, idx, info)"
+                          OnReplace="@(n => ReplaceOperand(op, idx, n))" />
+            }
+            <span class="block-paren">)</span>
+            @if (info.MaxArity is null || op.Operands.Count < info.MaxArity)
+            {
+                <button class="block-btn-add" @onclick="() => AddOperand(op)" title="Add argument">+</button>
+            }
+            @if (OnRemove.HasDelegate)
+            {
+                <button class="block-btn-remove" @onclick="OnRemove" title="Remove">✕</button>
+            }
+        </div>
+    }
 }
 else if (Node is ArrayNodeModel arr)
 {
-    <div class="rule-array" @key="Node.Id">
-        <div class="rule-array__header">
-            <span class="rule-array__bracket">[</span>
-            <div class="spacer"></div>
-            @if (OnRemove.HasDelegate)
+    <div class="block block-array" @key="Node.Id">
+        <span class="block-bracket">[</span>
+        @for (int i = 0; i < arr.Items.Count; i++)
+        {
+            int idx = i;
+            @if (idx > 0)
             {
-                <button class="rule-node__remove" @onclick="OnRemove" title="Remove">✕</button>
+                <span class="block-comma">,</span>
             }
-        </div>
-        <div class="rule-array__items">
-            @for (int i = 0; i < arr.Items.Count; i++)
-            {
-                int idx = i;
-                <div class="rule-array__item">
-                    @{ int arrIdx = idx; }
-                    <RuleNodeView Node="@arr.Items[idx]"
-                                  OnChanged="OnChanged"
-                                  OnRemove="@(() => RemoveArrayItem(arr, arrIdx))"
-                                  OnReplace="@(n => { arr.Items[arrIdx] = n; NotifyChanged(); })" />
-                </div>
-            }
-        </div>
-        <div class="rule-array__footer">
-            <button class="rule-node__add-btn" @onclick="() => AddArrayItem(arr)">+ Add Item</button>
-            <span class="rule-array__bracket">]</span>
-        </div>
+            <SlotView Node="@arr.Items[idx]"
+                      Accepts="SlotType.Any"
+                      OnChanged="OnChanged"
+                      OnRemove="@(EventCallback.Factory.Create(this, () => RemoveArrayItem(arr, idx)))"
+                      OnReplace="@(n => ReplaceArrayItem(arr, idx, n))" />
+        }
+        <span class="block-bracket">]</span>
+        <button class="block-btn-add" @onclick="() => AddArrayItem(arr)" title="Add item">+</button>
+        @if (OnRemove.HasDelegate)
+        {
+            <button class="block-btn-remove" @onclick="OnRemove" title="Remove">✕</button>
+        }
     </div>
 }
 else if (Node is RawJsonNodeModel raw)
 {
-    <div class="rule-raw" @key="Node.Id">
-        <span class="rule-raw__label">⚠ Raw JSON</span>
-        <code class="rule-raw__code">@raw.Json</code>
+    <div class="block-raw" @key="Node.Id">
+        <span>⚠</span>
+        <code>@raw.Json</code>
         @if (OnRemove.HasDelegate)
         {
-            <button class="rule-node__remove" @onclick="OnRemove" title="Remove">✕</button>
+            <button class="block-btn-remove" @onclick="OnRemove" title="Remove">✕</button>
         }
     </div>
+}
+else if (Node is ValueNodeModel)
+{
+    @* Literal value — delegate to SlotView for inline rendering *@
+    <SlotView Node="@Node"
+              Accepts="SlotType.Any"
+              OnChanged="OnChanged"
+              OnRemove="OnRemove"
+              OnReplace="OnReplace" />
+}
+else if (Node is EmptySlotModel)
+{
+    <SlotView Node="@Node"
+              Accepts="SlotType.Any"
+              OnChanged="OnChanged"
+              OnRemove="OnRemove"
+              OnReplace="OnReplace" />
 }
 
 @code {
@@ -268,6 +250,9 @@ else if (Node is RawJsonNodeModel raw)
     [Parameter]
     public EventCallback OnRemove { get; set; }
 
+    [Parameter]
+    public EventCallback<RuleNodeModel> OnReplace { get; set; }
+
     private void NotifyChanged()
     {
         if (OnChanged.HasDelegate)
@@ -276,44 +261,39 @@ else if (Node is RawJsonNodeModel raw)
         }
     }
 
-    private void ChangeOperator(OperatorNodeModel op, ChangeEventArgs e)
+    private static RenderStyle GetEffectiveStyle(OperatorNodeModel op, OperatorInfo info)
     {
-        string newOp = e.Value?.ToString() ?? "==";
-        if (newOp == op.Operator)
+        if (op.Operator is "+" or "-" && op.Operands.Count <= 1)
         {
-            return;
+            return RenderStyle.Prefix;
         }
 
-        op.Operator = newOp;
-        op.Operands = OperatorRegistry.CreateDefaultOperands(newOp);
-        NotifyChanged();
+        return info.Style;
     }
 
-    private void ChangeValueKind(ValueNodeModel val, ChangeEventArgs e)
+    private EventCallback GetSlotRemove(OperatorNodeModel op, int idx, OperatorInfo info)
     {
-        if (Enum.TryParse<Models.ValueKind>(e.Value?.ToString(), out var kind))
+        bool isExtra = idx >= info.MinArity;
+        bool isEmpty = op.Operands[idx] is EmptySlotModel;
+
+        if (isEmpty && !isExtra)
         {
-            val.Kind = kind;
-            val.RawValue = kind switch
-            {
-                Models.ValueKind.Number => "0",
-                Models.ValueKind.Boolean => "true",
-                Models.ValueKind.Null => "",
-                _ => val.RawValue,
-            };
-            NotifyChanged();
+            return default;
         }
+
+        if (isExtra)
+        {
+            return EventCallback.Factory.Create(this, () => RemoveOperand(op, idx));
+        }
+
+        return EventCallback.Factory.Create(this, () => ClearToEmpty(op, idx));
     }
 
-    private void OnBoolChanged(ValueNodeModel val, ChangeEventArgs e)
-    {
-        val.RawValue = e.Value?.ToString() ?? "false";
-        NotifyChanged();
-    }
+    // ── Operand management ──
 
     private void AddOperand(OperatorNodeModel op)
     {
-        op.Operands.Add(new ValueNodeModel { Kind = Models.ValueKind.Number, RawValue = "0" });
+        op.Operands.Add(new EmptySlotModel());
         NotifyChanged();
     }
 
@@ -326,64 +306,64 @@ else if (Node is RawJsonNodeModel raw)
         }
     }
 
-    // var-specific actions
-    private void AddVarPath(OperatorNodeModel op)
+    private void ClearToEmpty(OperatorNodeModel op, int index)
     {
-        op.Operands.Insert(0, new ValueNodeModel { Kind = Models.ValueKind.String, RawValue = "" });
+        if (index >= 0 && index < op.Operands.Count)
+        {
+            op.Operands[index] = new EmptySlotModel();
+            NotifyChanged();
+        }
+    }
+
+    private void ReplaceOperand(OperatorNodeModel op, int index, RuleNodeModel replacement)
+    {
+        if (index >= 0 && index < op.Operands.Count)
+        {
+            op.Operands[index] = replacement;
+            NotifyChanged();
+        }
+    }
+
+    // ── var-specific ──
+
+    private void OnVarPathInput(ValueNodeModel varPath, ChangeEventArgs e)
+    {
+        varPath.RawValue = e.Value?.ToString() ?? string.Empty;
         NotifyChanged();
     }
 
     private void AddVarDefault(OperatorNodeModel op)
     {
-        op.Operands.Add(new ValueNodeModel { Kind = Models.ValueKind.Null, RawValue = "" });
+        op.Operands.Add(new EmptySlotModel());
         NotifyChanged();
     }
 
-    // if-specific actions
-    private void AddIfBranch(OperatorNodeModel op)
-    {
-        // Insert before the final else (if any)
-        bool hasElse = op.Operands.Count >= 3 && op.Operands.Count % 2 == 1;
-        int insertAt = hasElse ? op.Operands.Count - 1 : op.Operands.Count;
-        op.Operands.Insert(insertAt, new OperatorNodeModel
-        {
-            Operator = "==",
-            Operands = OperatorRegistry.CreateDefaultOperands("=="),
-        });
-        op.Operands.Insert(insertAt + 1, new ValueNodeModel { Kind = Models.ValueKind.String, RawValue = "" });
-        NotifyChanged();
-    }
+    // ── if-specific ──
 
     private void AddElse(OperatorNodeModel op)
     {
-        op.Operands.Add(new ValueNodeModel { Kind = Models.ValueKind.String, RawValue = "" });
-        NotifyChanged();
-    }
-
-    private void RemoveIfBranch(OperatorNodeModel op, int branchIndex)
-    {
-        int condIdx = branchIndex * 2;
-        if (condIdx + 1 < op.Operands.Count)
+        // Add an else slot (operand index 2)
+        if (op.Operands.Count < 3)
         {
-            op.Operands.RemoveAt(condIdx + 1);
-            op.Operands.RemoveAt(condIdx);
+            op.Operands.Add(new EmptySlotModel());
             NotifyChanged();
         }
     }
 
     private void RemoveElse(OperatorNodeModel op)
     {
-        if (op.Operands.Count >= 3 && op.Operands.Count % 2 == 1)
+        if (op.Operands.Count >= 3)
         {
-            op.Operands.RemoveAt(op.Operands.Count - 1);
+            op.Operands.RemoveAt(2);
             NotifyChanged();
         }
     }
 
-    // Array actions
+    // ── Array ──
+
     private void AddArrayItem(ArrayNodeModel arr)
     {
-        arr.Items.Add(new ValueNodeModel { Kind = Models.ValueKind.String, RawValue = "" });
+        arr.Items.Add(new EmptySlotModel());
         NotifyChanged();
     }
 
@@ -396,37 +376,13 @@ else if (Node is RawJsonNodeModel raw)
         }
     }
 
-    // Type upgrade: replace this node at the parent level
-    private void UpgradeToVar()
+    private void ReplaceArrayItem(ArrayNodeModel arr, int index, RuleNodeModel replacement)
     {
-        ReplaceWith(new OperatorNodeModel
+        if (index >= 0 && index < arr.Items.Count)
         {
-            Operator = "var",
-            Operands = [new ValueNodeModel { Kind = Models.ValueKind.String, RawValue = "" }],
-        });
-    }
-
-    private void UpgradeToOperator()
-    {
-        ReplaceWith(new OperatorNodeModel
-        {
-            Operator = "==",
-            Operands = OperatorRegistry.CreateDefaultOperands("=="),
-        });
-    }
-
-    /// <summary>
-    /// Requests the parent to replace this node with a new one.
-    /// We use the OnReplace callback pattern through the cascade.
-    /// </summary>
-    [Parameter]
-    public EventCallback<RuleNodeModel> OnReplace { get; set; }
-
-    private void ReplaceWith(RuleNodeModel replacement)
-    {
-        if (OnReplace.HasDelegate)
-        {
-            OnReplace.InvokeAsync(replacement);
+            arr.Items[index] = replacement;
+            NotifyChanged();
         }
     }
 }
+
