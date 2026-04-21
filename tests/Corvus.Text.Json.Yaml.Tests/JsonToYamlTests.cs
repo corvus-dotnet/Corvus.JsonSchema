@@ -249,6 +249,15 @@ public class JsonToYamlTests
         Assert.Equal("k: c:\\path", yaml);
     }
 
+    [Fact]
+    public void StringWithTab_IsPlainScalar()
+    {
+        // Tab is safe in YAML plain scalars — it passes through as a literal byte
+        string json = """{"k": "col1\tcol2"}""";
+        string yaml = YamlDocument.ConvertToYamlString(json);
+        Assert.Equal("k: col1\tcol2", yaml);
+    }
+
     // ===================================================================
     // Category 7: Empty string as key
     // ===================================================================
@@ -357,6 +366,7 @@ public class JsonToYamlTests
     [InlineData("""{"a": 1, "b": "hello", "c": true, "d": null}""")]
     [InlineData("""[1, 2, 3]""")]
     [InlineData("""{"nested": {"deep": {"value": 42}}}""")]
+    [InlineData("""{"arr": [{"a": 1}, {"b": 2}]}""")]
     [InlineData("""{"empty_obj": {}, "empty_arr": []}""")]
     public void RoundTrip_PreservesStructure(string json)
     {
@@ -397,6 +407,9 @@ public class JsonToYamlTests
     [InlineData("""{"k": "&anchor"}""")]
     [InlineData("""{"k": "*alias"}""")]
     [InlineData("""{"k": "line1\nline2"}""")]
+    [InlineData("""{"k": "col1\tcol2"}""")]
+    [InlineData("""{"k": "say \"hi\""}""")]
+    [InlineData("""{"k": "back\\slash"}""")]
     public void RoundTrip_PreservesSpecialStrings(string json)
     {
         string yaml = YamlDocument.ConvertToYamlString(json);
@@ -516,6 +529,267 @@ public class JsonToYamlTests
     {
         string yaml = YamlDocument.ConvertToYamlString(json);
         Assert.Equal(expectedYaml, yaml);
+    }
+
+    // ===================================================================
+    // Category 15: Deep nesting (beyond initial stack capacity)
+    // ===================================================================
+
+    [Theory]
+    [InlineData(5)]
+    [InlineData(16)]
+    [InlineData(20)]  // Beyond MaxStackDepth initial capacity
+    [InlineData(32)]
+    public void DeeplyNestedObjects_RoundTrip(int depth)
+    {
+        // Build JSON: {"a":{"a":{"a":...1...}}}
+        StringBuilder sb = new();
+        for (int i = 0; i < depth; i++)
+        {
+            sb.Append("{\"a\":");
+        }
+
+        sb.Append('1');
+        for (int i = 0; i < depth; i++)
+        {
+            sb.Append('}');
+        }
+
+        string json = sb.ToString();
+        string yaml = YamlDocument.ConvertToYamlString(json);
+        byte[] yamlBytes = Encoding.UTF8.GetBytes(yaml);
+        string roundTripped = YamlDocument.ConvertToJsonString(yamlBytes);
+
+        AssertJsonEqual(json, roundTripped);
+
+        // Verify correct indentation depth
+        string[] lines = yaml.Split('\n');
+        Assert.Equal(depth, lines.Length);
+        for (int i = 0; i < depth - 1; i++)
+        {
+            Assert.StartsWith(new string(' ', i * 2) + "a:", lines[i]);
+        }
+
+        // Last line is the value
+        Assert.StartsWith(new string(' ', (depth - 1) * 2) + "a: 1", lines[depth - 1]);
+    }
+
+    [Theory]
+    [InlineData(5)]
+    [InlineData(20)]
+    public void DeeplyNestedArrays_RoundTrip(int depth)
+    {
+        // Build JSON: [[[...1...]]]
+        StringBuilder sb = new();
+        for (int i = 0; i < depth; i++)
+        {
+            sb.Append('[');
+        }
+
+        sb.Append('1');
+        for (int i = 0; i < depth; i++)
+        {
+            sb.Append(']');
+        }
+
+        string json = sb.ToString();
+        string yaml = YamlDocument.ConvertToYamlString(json);
+        byte[] yamlBytes = Encoding.UTF8.GetBytes(yaml);
+        string roundTripped = YamlDocument.ConvertToJsonString(yamlBytes);
+
+        AssertJsonEqual(json, roundTripped);
+    }
+
+    // ===================================================================
+    // Category 16: Element overloads
+    // ===================================================================
+
+    [Theory]
+    [InlineData("""{"a": 1, "b": [2, 3]}""")]
+    [InlineData("""[1, "two", null]""")]
+    [InlineData("""{"nested": {"deep": true}}""")]
+    public void ElementOverload_ProducesSameResult(string json)
+    {
+        string fromString = YamlDocument.ConvertToYamlString(json);
+
+#if STJ
+        using System.Text.Json.JsonDocument doc = System.Text.Json.JsonDocument.Parse(json);
+        string fromElement = YamlDocument.ConvertToYamlString(doc.RootElement);
+#else
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes(json));
+        string fromElement = YamlDocument.ConvertToYamlString(doc.RootElement);
+#endif
+
+        Assert.Equal(fromString, fromElement);
+    }
+
+    [Theory]
+    [InlineData("""{"a": 1, "b": [2, 3]}""")]
+    [InlineData("""[1, "two", null]""")]
+    public void ElementOverload_WritesToStream(string json)
+    {
+#if STJ
+        using System.Text.Json.JsonDocument doc = System.Text.Json.JsonDocument.Parse(json);
+        using MemoryStream stream = new();
+        YamlDocument.ConvertToYaml(doc.RootElement, stream);
+#else
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes(json));
+        using MemoryStream stream = new();
+        YamlDocument.ConvertToYaml(doc.RootElement, stream);
+#endif
+
+        stream.Position = 0;
+        string yaml = new StreamReader(stream, Encoding.UTF8).ReadToEnd();
+        string expected = YamlDocument.ConvertToYamlString(json);
+        Assert.Equal(expected, yaml);
+    }
+
+    [Theory]
+    [InlineData("""{"a": 1, "b": [2, 3]}""")]
+    [InlineData("""[1, "two", null]""")]
+    public void ElementOverload_WritesToBufferWriter(string json)
+    {
+#if STJ
+        using System.Text.Json.JsonDocument doc = System.Text.Json.JsonDocument.Parse(json);
+        ArrayBufferWriter<byte> writer = new();
+        YamlDocument.ConvertToYaml(doc.RootElement, writer);
+#else
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes(json));
+        ArrayBufferWriter<byte> writer = new();
+        YamlDocument.ConvertToYaml(doc.RootElement, writer);
+#endif
+
+#if NET
+        string yaml = Encoding.UTF8.GetString(writer.WrittenSpan);
+#else
+        string yaml = Encoding.UTF8.GetString(writer.WrittenSpan.ToArray());
+#endif
+        string expected = YamlDocument.ConvertToYamlString(json);
+        Assert.Equal(expected, yaml);
+    }
+
+    // ===================================================================
+    // Category 17: UTF-8 byte overloads with Stream/IBufferWriter
+    // ===================================================================
+
+    [Theory]
+    [InlineData("""{"a": 1, "b": "hello"}""")]
+    public void Utf8Overload_WritesToStream(string json)
+    {
+        byte[] utf8 = Encoding.UTF8.GetBytes(json);
+        using MemoryStream stream = new();
+
+        YamlDocument.ConvertToYaml((ReadOnlySpan<byte>)utf8, stream);
+
+        stream.Position = 0;
+        string yaml = new StreamReader(stream, Encoding.UTF8).ReadToEnd();
+        string expected = YamlDocument.ConvertToYamlString(json);
+        Assert.Equal(expected, yaml);
+    }
+
+    [Theory]
+    [InlineData("""{"a": 1, "b": "hello"}""")]
+    public void Utf8Overload_WritesToBufferWriter(string json)
+    {
+        byte[] utf8 = Encoding.UTF8.GetBytes(json);
+        ArrayBufferWriter<byte> writer = new();
+
+        YamlDocument.ConvertToYaml((ReadOnlySpan<byte>)utf8, writer);
+
+#if NET
+        string yaml = Encoding.UTF8.GetString(writer.WrittenSpan);
+#else
+        string yaml = Encoding.UTF8.GetString(writer.WrittenSpan.ToArray());
+#endif
+        string expected = YamlDocument.ConvertToYamlString(json);
+        Assert.Equal(expected, yaml);
+    }
+
+    // ===================================================================
+    // Category 18: IndentSize edge cases
+    // ===================================================================
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-1)]
+    [InlineData(-100)]
+    public void IndentSize_ZeroOrNegative_DefaultsToTwo(int indentSize)
+    {
+        string json = """{"a": {"b": 1}}""";
+        string yaml = YamlDocument.ConvertToYamlString(json, new YamlWriterOptions { IndentSize = indentSize });
+        Assert.Equal("a:\n  b: 1", yaml);
+    }
+
+    [Fact]
+    public void IndentSize_Large_ProducesWideIndent()
+    {
+        string json = """{"a": {"b": 1}}""";
+        string yaml = YamlDocument.ConvertToYamlString(json, new YamlWriterOptions { IndentSize = 8 });
+        Assert.Equal("a:\n        b: 1", yaml);
+    }
+
+    // ===================================================================
+    // Category 19: Empty containers at various depths
+    // ===================================================================
+
+    [Fact]
+    public void EmptyContainersInsideNestedStructure_RoundTrip()
+    {
+        string json = """{"outer": {"empty_obj": {}, "empty_arr": [], "value": 1}}""";
+        string yaml = YamlDocument.ConvertToYamlString(json);
+        byte[] yamlBytes = Encoding.UTF8.GetBytes(yaml);
+        string roundTripped = YamlDocument.ConvertToJsonString(yamlBytes);
+        AssertJsonEqual(json, roundTripped);
+    }
+
+    [Fact]
+    public void NestedEmptyArraysInArray_RoundTrip()
+    {
+        string json = """[[], {}, [1], {"a": 1}]""";
+        string yaml = YamlDocument.ConvertToYamlString(json);
+        byte[] yamlBytes = Encoding.UTF8.GetBytes(yaml);
+        string roundTripped = YamlDocument.ConvertToJsonString(yamlBytes);
+        AssertJsonEqual(json, roundTripped);
+    }
+
+    // ===================================================================
+    // Category 20: Consecutive escape sequences
+    // ===================================================================
+
+    [Fact]
+    public void ConsecutiveEscapeSequences_RoundTrip()
+    {
+        string json = """{"k": "line1\nline2\n\ttab\r\nwindows"}""";
+        string yaml = YamlDocument.ConvertToYamlString(json);
+        byte[] yamlBytes = Encoding.UTF8.GetBytes(yaml);
+        string roundTripped = YamlDocument.ConvertToJsonString(yamlBytes);
+        AssertJsonEqual(json, roundTripped);
+    }
+
+    [Fact]
+    public void QuotesAndBackslashesInString_RoundTrip()
+    {
+        string json = """{"k": "say \"hello\" and use \\path\\file"}""";
+        string yaml = YamlDocument.ConvertToYamlString(json);
+        byte[] yamlBytes = Encoding.UTF8.GetBytes(yaml);
+        string roundTripped = YamlDocument.ConvertToJsonString(yamlBytes);
+        AssertJsonEqual(json, roundTripped);
+    }
+
+    // ===================================================================
+    // Category 21: Property order preservation
+    // ===================================================================
+
+    [Fact]
+    public void PropertyOrderPreserved()
+    {
+        string json = """{"z": 1, "a": 2, "m": 3, "b": 4}""";
+        string yaml = YamlDocument.ConvertToYamlString(json);
+        string[] lines = yaml.Split('\n');
+        Assert.Equal("z: 1", lines[0]);
+        Assert.Equal("a: 2", lines[1]);
+        Assert.Equal("m: 3", lines[2]);
+        Assert.Equal("b: 4", lines[3]);
     }
 
     // ===================================================================
