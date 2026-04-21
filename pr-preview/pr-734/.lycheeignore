@@ -22,6 +22,10 @@ https://corvus-oss\.org
 # lychee cannot find them in the raw HTML that GitHub returns.
 https://github\.com/corvus-dotnet/Corvus\.JsonSchema/blob/.+#L\d+
 
+# GitHub tree links to directories that exist on feature branches but not yet on main.
+# These resolve once the PR is merged.
+https://github\.com/corvus-dotnet/Corvus\.JsonSchema/tree/main/benchmarks
+
 # dotnet.microsoft.com returns 403 to automated crawlers
 https://dotnet\.microsoft\.com
 

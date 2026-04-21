@@ -1,0 +1,1344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#1C1D21" />
+    <meta name="description" content="Convert YAML to JSON with a high-performance, zero-allocation converter supporting YAML 1.2 Core, JSON, Failsafe, and 1.1 compatibility schemas with 100% yaml-test-suite conformance." />
+    <meta name="keywords" content="documentation, Corvus.Text.Json" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:description" content="Convert YAML to JSON with a high-performance, zero-allocation converter supporting YAML 1.2 Core, JSON, Failsafe, and 1.1 compatibility schemas with 100% yaml-test-suite conformance." />
+    <meta name="twitter:image" content="/Corvus.JsonSchema/pr-preview/pr-734/assets/images/og-corvus.png" />
+    <meta name="twitter:title" content="YAML to JSON Converter - Corvus.Text.Json" />
+    <meta property="article:tag" content="documentation" />
+    <meta property="article:tag" content="Corvus.Text.Json" />
+    <meta property="og:description" content="Convert YAML to JSON with a high-performance, zero-allocation converter supporting YAML 1.2 Core, JSON, Failsafe, and 1.1 compatibility schemas with 100% yaml-test-suite conformance." />
+    <meta property="og:image" content="/Corvus.JsonSchema/pr-preview/pr-734/assets/images/og-corvus.png" />
+    <meta property="og:title" content="YAML to JSON Converter - Corvus.Text.Json" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://corvus-oss.org/corvus-json-schema/docs/yaml/" />
+    <title>YAML to JSON Converter - Corvus.Text.Json</title>
+    <link itemprop="url" href="https://corvus-oss.org/corvus-json-schema/docs/yaml/" />
+    <link rel="canonical" href="https://corvus-oss.org/corvus-json-schema/docs/yaml/" />
+    <link rel="sitemap" href="https://corvus-oss.org/corvus-json-schema/sitemap.xml" />
+    <!-- Styles -->
+    <link rel="stylesheet" href="/Corvus.JsonSchema/pr-preview/pr-734/main.css" />
+    <link rel="icon" type="image/svg+xml" href="/Corvus.JsonSchema/pr-preview/pr-734/assets/images/favicon.svg" />
+    
+</head>
+<body>
+    <a class="sr-only" href="#main-content">Skip to content</a>
+<header class="site-header">
+    <div class="site-header__inner">
+        <a class="site-header__brand" href="/Corvus.JsonSchema/pr-preview/pr-734/index.html" aria-label="Corvus.JsonSchema home">
+            <img src="/Corvus.JsonSchema/pr-preview/pr-734/assets/images/logo-corvus.svg" alt="" width="28" height="28" aria-hidden="true" />
+            Corvus<span style="color:var(--color-brand)">.</span>Json<span style="color:var(--color-brand)">Schema</span>
+        </a>
+        <nav class="site-header__nav-desktop" aria-label="Main navigation">
+                    <a href="/Corvus.JsonSchema/pr-preview/pr-734/getting-started/index.html"
+                       class="site-header__link "
+                       >Getting Started</a>
+                    <a href="/Corvus.JsonSchema/pr-preview/pr-734/docs/index.html"
+                       class="site-header__link is-active"
+                       aria-current=page>Documentation</a>
+                    <a href="/Corvus.JsonSchema/pr-preview/pr-734/examples/index.html"
+                       class="site-header__link "
+                       >Examples</a>
+                    <a href="/Corvus.JsonSchema/pr-preview/pr-734/api/index.html"
+                       class="site-header__link "
+                       >API</a>
+            <a href="/Corvus.JsonSchema/pr-preview/pr-734/playground/"
+               class="site-header__link"
+               target="_blank" rel="noopener noreferrer"
+               title="Interactive JSON Schema playground">Playground</a>
+            <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema"
+               class="site-header__link" target="_blank" rel="noopener noreferrer"
+               aria-label="View on GitHub">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+            </a>
+        </nav>
+        <button class="site-header__menu-toggle js-toggle-menu"
+                aria-expanded="false" aria-label="Toggle menu">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+            </svg>
+        </button>
+    </div>
+</header>
+<nav class="site-header__nav-mobile js-mobile-nav" aria-label="Mobile navigation">
+            <a href="/Corvus.JsonSchema/pr-preview/pr-734/getting-started/index.html" class="site-header__link">Getting Started</a>
+            <a href="/Corvus.JsonSchema/pr-preview/pr-734/docs/index.html" class="site-header__link">Documentation</a>
+            <a href="/Corvus.JsonSchema/pr-preview/pr-734/examples/index.html" class="site-header__link">Examples</a>
+            <a href="/Corvus.JsonSchema/pr-preview/pr-734/api/index.html" class="site-header__link">API</a>
+    <a href="/Corvus.JsonSchema/pr-preview/pr-734/playground/" class="site-header__link" target="_blank" rel="noopener noreferrer">Playground</a>
+    <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema"
+       class="site-header__link" target="_blank" rel="noopener noreferrer">GitHub</a>
+</nav>
+
+    <div class="page-content">
+    <div class="layout-docs container">
+    <button class="sidebar-toggle" aria-label="Toggle navigation" aria-expanded="false"></button>
+<div class="sidebar-backdrop"></div>
+<aside class="sidebar">
+    <div class="sidebar__inner">
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Getting Started</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                    <li class="sidebar__item"><a class="sidebar__link" href="/Corvus.JsonSchema/pr-preview/pr-734/getting-started/index.html">Tutorial</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Documentation</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/docs/parsed-json-document.html">Parsing &amp; Reading JSON</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/docs/json-document-builder.html">Building &amp; Mutating JSON</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/docs/source-generator.html">Source Generator</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/docs/code-generator.html">CLI Code Generation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/docs/validator.html">Dynamic Schema Validation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/docs/migrating-from-v4-to-v5.html">Migrating from V4</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/docs/using-copilot-for-migration.html">Copilot Migration</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/docs/migration-analyzers.html">Migration Analyzers</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/docs/analyzers.html">Analyzers</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/docs/schema-evaluator.html">Standalone Schema Evaluator</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/docs/json-patch.html">JSON Patch (RFC 6902)</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/docs/json-logic.html">JsonLogic Rule Engine</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/docs/jsonata.html">JSONata Query Language</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/docs/jmes-path.html">JMESPath Query Language</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link is-active" href="/Corvus.JsonSchema/pr-preview/pr-734/docs/yaml.html">YAML Converter</a>
+                            </li>
+                </ul>
+            </div>
+        </div>
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Examples</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/data-object.html">Simple Data Objects</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/data-object-validation.html">Data Object Validation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/reusing-common-types.html">Reusing Common Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/open-versus-closed-types.html">Open Versus Closed Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/extending-a-base-type.html">Extending a Base Type</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/constraining-a-base-type.html">Constraining a Base Type</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/creating-a-strongly-typed-array.html">Strongly Typed Arrays</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/creating-an-array-of-higher-rank.html">Multi-Dimensional Arrays</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/working-with-tensors.html">Working with Tensors</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/creating-tuples.html">Creating Tuples</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/interfaces-and-mix-in-types.html">Interfaces and Mix-In Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/pattern-matching.html">Pattern Matching and Discriminated Unions</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/polymorphism-with-discriminators.html">Polymorphism with Discriminator Properties</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/string-enumerations.html">String Enumerations and Pattern Matching</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/numeric-enumerations.html">Numeric Enumerations</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/maps.html">Maps of Strings to Strongly Typed Values</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/mapping-input-and-output-values.html">Mapping Input and Output Values</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/creating-and-mutating-objects.html">Creating and Mutating Objects</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/clone-and-freeze.html">Clone and Freeze</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/conditional-schemas.html">Conditional Schemas</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/default-values.html">Default Values</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/format-validation.html">Format Validation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/json-patch.html">JSON Patch (RFC 6902)</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/json-logic.html">JsonLogic Rule Evaluation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/jsonata.html">JSONata Expression Evaluation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/jmespath.html">JMESPath Query Evaluation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/yaml.html">YAML Conversion</a>
+                            </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</aside>
+
+    <main id="main-content" class="layout-docs__main">
+        <div class="doc__content">
+            <h1>YAML to JSON Converter</h1>
+<blockquote>
+<p><strong><a href="/Corvus.JsonSchema/pr-preview/pr-734/playground-yaml/">Try the YAML Playground</a></strong> — convert YAML to JSON in your browser, with built-in examples covering all YAML features.</p>
+</blockquote>
+<h2 id="overview">Overview</h2>
+<p><code>Corvus.Text.Json.Yaml</code> is a high-performance, zero-allocation YAML 1.2 to JSON converter built on a custom <code>ref struct</code> tokenizer that operates directly on UTF-8 bytes. It supports all YAML scalar styles (plain, single-quoted, double-quoted, literal block, folded block), flow and block collections, anchors and aliases, multi-document streams, and four schema modes. The converter produces JSON output via <code>Utf8JsonWriter</code>, integrating directly into the Corvus parsing pipeline.</p>
+<p>Two packages are available:</p>
+<table>
+<thead>
+<tr>
+<th>Package</th>
+<th>Dependency</th>
+<th>Use when</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong><code>Corvus.Text.Json.Yaml</code></strong></td>
+<td><code>Corvus.Text.Json</code></td>
+<td>You need <code>ParsedJsonDocument&lt;T&gt;</code> and the full Corvus document model</td>
+</tr>
+<tr>
+<td><strong><code>Corvus.Yaml.SystemTextJson</code></strong></td>
+<td><code>System.Text.Json</code> only</td>
+<td>You need a lightweight <code>JsonDocument</code> without Corvus dependencies</td>
+</tr>
+</tbody>
+</table>
+<p>Both packages share the same tokenizer and converter implementation via conditional compilation. They target <code>net9.0</code>, <code>net10.0</code>, <code>netstandard2.0</code>, and <code>netstandard2.1</code>.</p>
+<h2 id="conformance">Conformance</h2>
+<p>The converter passes <strong>100% of the JSON-testable cases</strong> in the <a href="https://github.com/yaml/yaml-test-suite">yaml-test-suite</a> — 279 valid and 94 error cases (373 of 402 total, 92.8%). The remaining 29 test cases exercise YAML features with no JSON equivalent (complex keys, empty keys, bare tags) and do not provide JSON reference output.</p>
+<h2 id="quick-start">Quick start</h2>
+<p>Install the package:</p>
+<pre><code class="language-bash"># Full Corvus document model
+dotnet add package Corvus.Text.Json.Yaml
+
+# Or: System.Text.Json only
+dotnet add package Corvus.Yaml.SystemTextJson
+</code></pre>
+<h3 id="corvus.text.json.yaml">Corvus.Text.Json.Yaml</h3>
+<p><strong>Parse YAML to a typed document:</strong></p>
+<pre><code class="language-csharp">using Corvus.Text.Json;
+using Corvus.Text.Json.Yaml;
+
+string yaml = &quot;&quot;&quot;
+    name: Alice
+    age: 30
+    hobbies:
+      - reading
+      - cycling
+    &quot;&quot;&quot;;
+
+using ParsedJsonDocument&lt;JsonElement&gt; doc = YamlDocument.Parse&lt;JsonElement&gt;(yaml);
+JsonElement root = doc.RootElement;
+Console.WriteLine(root.GetProperty(&quot;name&quot;).GetString()); // &quot;Alice&quot;
+Console.WriteLine(root.GetProperty(&quot;age&quot;).GetInt32());    // 30
+</code></pre>
+<p><strong>Convert YAML to a JSON string:</strong></p>
+<pre><code class="language-csharp">string json = YamlDocument.ConvertToJsonString(&quot;key: value&quot;);
+Console.WriteLine(json); // {&quot;key&quot;:&quot;value&quot;}
+</code></pre>
+<p><strong>Stream YAML to a Utf8JsonWriter:</strong></p>
+<pre><code class="language-csharp">using var stream = new MemoryStream();
+using var writer = new Utf8JsonWriter(stream, new JsonWriterOptions { Indented = true });
+
+YamlDocument.Convert(&quot;items:\n  - one\n  - two&quot;u8, writer);
+writer.Flush();
+
+Console.WriteLine(Encoding.UTF8.GetString(stream.ToArray()));
+</code></pre>
+<h3 id="corvus.yaml.systemtextjson">Corvus.Yaml.SystemTextJson</h3>
+<pre><code class="language-csharp">using Corvus.Yaml;
+
+string yaml = &quot;name: Bob\nage: 25&quot;;
+
+using JsonDocument doc = YamlDocument.Parse(yaml);
+Console.WriteLine(doc.RootElement.GetProperty(&quot;name&quot;).GetString()); // &quot;Bob&quot;
+</code></pre>
+<h2 id="configuration">Configuration</h2>
+<p>The <code>YamlReaderOptions</code> struct controls parsing behavior:</p>
+<pre><code class="language-csharp">var options = new YamlReaderOptions
+{
+    Schema = YamlSchema.Core,                       // Core (default), Json, Failsafe, Yaml11
+    DocumentMode = YamlDocumentMode.SingleRequired, // SingleRequired (default) or MultiAsArray
+    DuplicateKeyBehavior = DuplicateKeyBehavior.Error, // Error (default) or LastWins
+    MaxAliasExpansionDepth = 64,                    // Billion-laughs protection
+    MaxAliasExpansionSize = 1_000_000,              // Max nodes from alias expansion
+};
+
+using var doc = YamlDocument.Parse&lt;JsonElement&gt;(yaml, options);
+</code></pre>
+<h3 id="schemas">Schemas</h3>
+<table>
+<thead>
+<tr>
+<th>Schema</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Core</code></td>
+<td>YAML 1.2 Core Schema (default). Recognizes <code>null</code>, <code>true</code>/<code>false</code>, integers (decimal, <code>0o77</code>, <code>0xFF</code>), floats (decimal, <code>.inf</code>, <code>.nan</code>).</td>
+</tr>
+<tr>
+<td><code>Json</code></td>
+<td>YAML 1.2 JSON Schema. Strict JSON-only: only <code>null</code>, <code>true</code>/<code>false</code>, and JSON-style numbers.</td>
+</tr>
+<tr>
+<td><code>Failsafe</code></td>
+<td>All scalars become JSON strings. No implicit type coercion.</td>
+</tr>
+<tr>
+<td><code>Yaml11</code></td>
+<td>YAML 1.1 compatibility. Adds <code>yes</code>/<code>no</code>/<code>on</code>/<code>off</code>/<code>y</code>/<code>n</code> booleans, sexagesimal integers, and merge keys (<code>&lt;&lt;</code>).</td>
+</tr>
+</tbody>
+</table>
+<h3 id="document-modes">Document modes</h3>
+<table>
+<thead>
+<tr>
+<th>Mode</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>SingleRequired</code></td>
+<td>Expects exactly one YAML document. Throws <code>YamlException</code> if multiple documents are found.</td>
+</tr>
+<tr>
+<td><code>MultiAsArray</code></td>
+<td>Wraps all documents in a JSON array: <code>[doc1, doc2, ...]</code>. A single document still produces an array with one element.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="duplicate-key-handling">Duplicate key handling</h3>
+<table>
+<thead>
+<tr>
+<th>Behavior</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Error</code></td>
+<td>Throws <code>YamlException</code> on duplicate mapping keys (default, per YAML spec recommendation).</td>
+</tr>
+<tr>
+<td><code>LastWins</code></td>
+<td>Last value for a duplicate key is kept (matches most YAML parsers' lenient behavior).</td>
+</tr>
+</tbody>
+</table>
+<h2 id="yaml-features-json-mapping">YAML features → JSON mapping</h2>
+<table>
+<thead>
+<tr>
+<th>YAML Feature</th>
+<th>JSON Result</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Mapping <code>key: value</code></td>
+<td><code>{&quot;key&quot;: &quot;value&quot;}</code></td>
+</tr>
+<tr>
+<td>Sequence <code>- item</code></td>
+<td><code>[&quot;item&quot;]</code></td>
+</tr>
+<tr>
+<td>Plain scalar <code>hello</code></td>
+<td><code>&quot;hello&quot;</code> (or number/bool/null per schema)</td>
+</tr>
+<tr>
+<td>Double-quoted <code>&quot;hello\n&quot;</code></td>
+<td><code>&quot;hello\n&quot;</code> (escape sequences processed)</td>
+</tr>
+<tr>
+<td>Single-quoted <code>'it''s'</code></td>
+<td><code>&quot;it's&quot;</code> (only <code>''</code> → <code>'</code>)</td>
+</tr>
+<tr>
+<td>Literal block <code>\|</code></td>
+<td>Preserves newlines</td>
+</tr>
+<tr>
+<td>Folded block <code>&gt;</code></td>
+<td>Folds newlines to spaces</td>
+</tr>
+<tr>
+<td>Flow mapping <code>{a: 1}</code></td>
+<td><code>{&quot;a&quot;: 1}</code></td>
+</tr>
+<tr>
+<td>Flow sequence <code>[1, 2]</code></td>
+<td><code>[1, 2]</code></td>
+</tr>
+<tr>
+<td>Anchor <code>&amp;name value</code></td>
+<td>Stores for alias reference</td>
+</tr>
+<tr>
+<td>Alias <code>*name</code></td>
+<td>Expands inline</td>
+</tr>
+<tr>
+<td>Null <code>~</code>, <code>null</code>, empty</td>
+<td><code>null</code></td>
+</tr>
+<tr>
+<td>Bool <code>true</code>/<code>false</code></td>
+<td><code>true</code>/<code>false</code></td>
+</tr>
+<tr>
+<td>Int <code>123</code>, <code>0o77</code>, <code>0xFF</code></td>
+<td>JSON number</td>
+</tr>
+<tr>
+<td>Float <code>1.5</code>, <code>.inf</code>, <code>.nan</code></td>
+<td>Number, or <code>null</code> for infinity/NaN</td>
+</tr>
+<tr>
+<td>Multi-document <code>---</code></td>
+<td>Array (in <code>MultiAsArray</code> mode)</td>
+</tr>
+<tr>
+<td>Comment <code># text</code></td>
+<td>Ignored</td>
+</tr>
+</tbody>
+</table>
+<h2 id="anchors-and-aliases">Anchors and aliases</h2>
+<p>YAML anchors (<code>&amp;name</code>) and aliases (<code>*name</code>) are resolved inline — the aliased content is expanded into the JSON output:</p>
+<pre><code class="language-yaml">defaults: &amp;defaults
+  adapter: postgres
+  host: localhost
+
+development:
+  &lt;&lt;: *defaults
+  database: dev_db
+
+production:
+  &lt;&lt;: *defaults
+  database: prod_db
+</code></pre>
+<p>Produces (with <code>YamlSchema.Yaml11</code> for merge key support):</p>
+<pre><code class="language-json">{
+  &quot;defaults&quot;: {&quot;adapter&quot;: &quot;postgres&quot;, &quot;host&quot;: &quot;localhost&quot;},
+  &quot;development&quot;: {&quot;adapter&quot;: &quot;postgres&quot;, &quot;host&quot;: &quot;localhost&quot;, &quot;database&quot;: &quot;dev_db&quot;},
+  &quot;production&quot;: {&quot;adapter&quot;: &quot;postgres&quot;, &quot;host&quot;: &quot;localhost&quot;, &quot;database&quot;: &quot;prod_db&quot;}
+}
+</code></pre>
+<h3 id="billion-laughs-protection">Billion-laughs protection</h3>
+<p>Alias expansion is bounded by <code>MaxAliasExpansionDepth</code> (default 64) and <code>MaxAliasExpansionSize</code> (default 1,000,000 nodes). Malicious YAML that attempts exponential expansion via nested aliases will be rejected with a <code>YamlException</code>.</p>
+<h2 id="block-scalars">Block scalars</h2>
+<p>Literal (<code>|</code>) and folded (<code>&gt;</code>) block scalars support chomping indicators:</p>
+<pre><code class="language-yaml">literal_keep: |+
+  Line 1
+  Line 2
+
+folded_strip: &gt;-
+  This is a long
+  paragraph that gets
+  folded into one line.
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>Indicator</th>
+<th>Effect on trailing newlines</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>(none)</td>
+<td>Clip: single trailing newline</td>
+</tr>
+<tr>
+<td><code>-</code></td>
+<td>Strip: no trailing newline</td>
+</tr>
+<tr>
+<td><code>+</code></td>
+<td>Keep: all trailing newlines preserved</td>
+</tr>
+</tbody>
+</table>
+<h2 id="event-parsing">Event parsing</h2>
+<p>For advanced scenarios — building a custom YAML processor, collecting metadata, or feeding events into a non-JSON pipeline — the <code>YamlEventParser</code> provides zero-allocation, callback-based event enumeration over YAML content.</p>
+<h3 id="api">API</h3>
+<pre><code class="language-csharp">// Enumerate events from UTF-8 bytes
+bool completed = YamlDocument.EnumerateEvents(
+    utf8Yaml,
+    (in YamlEvent e) =&gt;
+    {
+        // Process the event...
+        return true; // return false to stop early
+    });
+
+// Enumerate events from a string
+bool completed = YamlDocument.EnumerateEvents(
+    yamlString,
+    (in YamlEvent e) =&gt;
+    {
+        // Process the event...
+        return true;
+    });
+</code></pre>
+<p>The callback receives each <code>YamlEvent</code> by <code>in</code> reference. Return <code>true</code> to continue parsing or <code>false</code> to stop early. <code>EnumerateEvents</code> returns <code>true</code> if parsing completed normally, or <code>false</code> if the callback stopped it.</p>
+<h3 id="yamlevent">YamlEvent</h3>
+<p><code>YamlEvent</code> is a <code>ref struct</code> — its <code>ReadOnlySpan&lt;byte&gt;</code> fields point directly into the source buffer and are <strong>only valid for the duration of the callback</strong>. Copy any data you need to retain.</p>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Type</code></td>
+<td><code>YamlEventType</code></td>
+<td>The event type (see below)</td>
+</tr>
+<tr>
+<td><code>Value</code></td>
+<td><code>ReadOnlySpan&lt;byte&gt;</code></td>
+<td>Scalar value or alias name (UTF-8)</td>
+</tr>
+<tr>
+<td><code>ScalarStyle</code></td>
+<td><code>YamlScalarStyle</code></td>
+<td><code>Plain</code>, <code>SingleQuoted</code>, <code>DoubleQuoted</code>, <code>Literal</code>, <code>Folded</code></td>
+</tr>
+<tr>
+<td><code>Anchor</code></td>
+<td><code>ReadOnlySpan&lt;byte&gt;</code></td>
+<td>Anchor name (without <code>&amp;</code>) if present</td>
+</tr>
+<tr>
+<td><code>Tag</code></td>
+<td><code>ReadOnlySpan&lt;byte&gt;</code></td>
+<td>Tag text (e.g. <code>!!str</code>) if present</td>
+</tr>
+<tr>
+<td><code>Line</code></td>
+<td><code>int</code></td>
+<td>1-based line number</td>
+</tr>
+<tr>
+<td><code>Column</code></td>
+<td><code>int</code></td>
+<td>1-based column number</td>
+</tr>
+<tr>
+<td><code>IsImplicit</code></td>
+<td><code>bool</code></td>
+<td>Whether a document boundary is implicit</td>
+</tr>
+<tr>
+<td><code>IsFlowStyle</code></td>
+<td><code>bool</code></td>
+<td>Whether a collection uses flow style (<code>{}</code> / <code>[]</code>)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="event-types">Event types</h3>
+<table>
+<thead>
+<tr>
+<th>Event</th>
+<th>Emitted when</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>StreamStart</code> / <code>StreamEnd</code></td>
+<td>Beginning and end of the YAML stream</td>
+</tr>
+<tr>
+<td><code>DocumentStart</code> / <code>DocumentEnd</code></td>
+<td>Beginning and end of each YAML document</td>
+</tr>
+<tr>
+<td><code>MappingStart</code> / <code>MappingEnd</code></td>
+<td>Beginning and end of a mapping (block or flow)</td>
+</tr>
+<tr>
+<td><code>SequenceStart</code> / <code>SequenceEnd</code></td>
+<td>Beginning and end of a sequence (block or flow)</td>
+</tr>
+<tr>
+<td><code>Scalar</code></td>
+<td>A scalar value (any style)</td>
+</tr>
+<tr>
+<td><code>Alias</code></td>
+<td>An alias reference (<code>*name</code>)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="example-counting-events">Example: counting events</h3>
+<pre><code class="language-csharp">int count = 0;
+
+YamlDocument.EnumerateEvents(
+    &quot;items:\n  - one\n  - two&quot;,
+    (in YamlEvent e) =&gt;
+    {
+        count++;
+        Console.WriteLine($&quot;[{e.Line}:{e.Column}] {e.Type}&quot;);
+        return true;
+    });
+
+Console.WriteLine($&quot;Total events: {count}&quot;);
+</code></pre>
+<p>Output:</p>
+<pre><code>[1:1] StreamStart
+[1:1] DocumentStart
+[1:1] MappingStart
+[1:1] Scalar
+[2:3] SequenceStart
+[2:5] Scalar
+[3:5] Scalar
+[3:8] SequenceEnd
+[3:8] MappingEnd
+[3:8] DocumentEnd
+[3:8] StreamEnd
+Total events: 11
+</code></pre>
+<h3 id="example-extracting-scalar-values">Example: extracting scalar values</h3>
+<pre><code class="language-csharp">using System.Text;
+
+var scalars = new List&lt;string&gt;();
+
+YamlDocument.EnumerateEvents(
+    &quot;name: Alice\nage: 30&quot;,
+    (in YamlEvent e) =&gt;
+    {
+        if (e.Type == YamlEventType.Scalar)
+        {
+            scalars.Add(Encoding.UTF8.GetString(e.Value));
+        }
+
+        return true;
+    });
+
+// scalars = [&quot;name&quot;, &quot;Alice&quot;, &quot;age&quot;, &quot;30&quot;]
+</code></pre>
+<blockquote>
+<p><strong>Note:</strong> The <code>YamlEvent</code> and its spans are only valid during the callback. If you need to retain scalar values, copy them (e.g. with <code>Encoding.UTF8.GetString()</code> or <code>e.Value.ToArray()</code>).</p>
+</blockquote>
+<h2 id="error-handling">Error handling</h2>
+<p>All parsing errors are reported as <code>YamlException</code> with line and column information:</p>
+<pre><code class="language-csharp">try
+{
+    using var doc = YamlDocument.Parse&lt;JsonElement&gt;(invalidYaml);
+}
+catch (YamlException ex)
+{
+    Console.WriteLine($&quot;Line {ex.Line}, Column {ex.Column}: {ex.Message}&quot;);
+}
+</code></pre>
+<h2 id="json-to-yaml-conversion">JSON to YAML Conversion</h2>
+<p>In addition to YAML→JSON, the library converts JSON content to canonical YAML using the <code>Utf8YamlWriter</code> — a high-performance <code>ref struct</code> writer modelled on <code>Utf8JsonWriter</code>. Three input paths are available:</p>
+<table>
+<thead>
+<tr>
+<th>Input</th>
+<th>Method</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>UTF-8 JSON bytes</td>
+<td><code>ConvertToYamlString(ReadOnlySpan&lt;byte&gt;)</code></td>
+<td>Tokenizes with <code>Utf8JsonReader</code> — fastest for raw bytes</td>
+</tr>
+<tr>
+<td>JSON string</td>
+<td><code>ConvertToYamlString(string)</code></td>
+<td>Encodes to UTF-8, then tokenizes</td>
+</tr>
+<tr>
+<td>Pre-parsed element</td>
+<td><code>ConvertToYamlString(JsonElement)</code> / <code>ConvertToYamlString&lt;TElement&gt;(in TElement)</code></td>
+<td>Walks the document tree — fastest when already parsed</td>
+</tr>
+</tbody>
+</table>
+<h3 id="quick-start-1">Quick start</h3>
+<pre><code class="language-csharp">using Corvus.Text.Json.Yaml;
+
+// From a JSON string
+string yaml = YamlDocument.ConvertToYamlString(&quot;&quot;&quot;{&quot;name&quot;:&quot;Alice&quot;,&quot;age&quot;:30}&quot;&quot;&quot;);
+// name: Alice
+// age: 30
+
+// From a pre-parsed CTJ document
+using ParsedJsonDocument&lt;JsonElement&gt; doc = ParsedJsonDocument&lt;JsonElement&gt;.Parse(jsonBytes);
+JsonElement root = doc.RootElement;
+string yaml2 = YamlDocument.ConvertToYamlString(in root);
+</code></pre>
+<h3 id="corvus.yaml.systemtextjson-1">Corvus.Yaml.SystemTextJson</h3>
+<pre><code class="language-csharp">using Corvus.Yaml;
+
+// From a pre-parsed STJ document
+using JsonDocument doc = JsonDocument.Parse(jsonBytes);
+string yaml = YamlDocument.ConvertToYamlString(doc.RootElement);
+
+// From raw UTF-8 bytes
+string yaml2 = YamlDocument.ConvertToYamlString(jsonUtf8Bytes);
+</code></pre>
+<h3 id="streaming-to-a-buffer-or-stream">Streaming to a buffer or stream</h3>
+<p>For zero-copy output to an <code>IBufferWriter&lt;byte&gt;</code> or <code>Stream</code>:</p>
+<pre><code class="language-csharp">using var stream = new FileStream(&quot;output.yaml&quot;, FileMode.Create);
+using JsonDocument doc = JsonDocument.Parse(jsonBytes);
+
+YamlDocument.ConvertToYaml(doc.RootElement, stream);
+</code></pre>
+<p>Or write directly to a buffer:</p>
+<pre><code class="language-csharp">ArrayBufferWriter&lt;byte&gt; buffer = new(1024);
+YamlDocument.ConvertToYaml(doc.RootElement, buffer);
+ReadOnlySpan&lt;byte&gt; yamlBytes = buffer.WrittenSpan;
+</code></pre>
+<h3 id="utf8yamlwriter">Utf8YamlWriter</h3>
+<p>For fine-grained control, use <code>Utf8YamlWriter</code> directly — it is a public <code>ref struct</code> that writes YAML to any <code>IBufferWriter&lt;byte&gt;</code> or <code>Stream</code>:</p>
+<pre><code class="language-csharp">ArrayBufferWriter&lt;byte&gt; output = new(256);
+Utf8YamlWriter writer = new(output);
+
+try
+{
+    writer.WriteStartMapping();
+    writer.WritePropertyName(&quot;name&quot;u8);
+    writer.WriteStringValue(&quot;Alice&quot;u8);
+    writer.WritePropertyName(&quot;scores&quot;u8);
+    writer.WriteStartSequence();
+    writer.WriteNumberValue(&quot;95&quot;u8);
+    writer.WriteNumberValue(&quot;87&quot;u8);
+    writer.WriteEndSequence();
+    writer.WriteEndMapping();
+    writer.Flush();
+}
+finally
+{
+    writer.Dispose();
+}
+
+// output.WrittenSpan contains:
+// name: Alice
+// scores:
+//   - 95
+//   - 87
+</code></pre>
+<p>The writer validates structural correctness by default (e.g., property names must precede values in mappings, containers must be properly closed). Set <code>YamlWriterOptions.SkipValidation = true</code> to disable this for maximum throughput.</p>
+<blockquote>
+<p><strong>Warning:</strong> <code>Utf8YamlWriter</code> is a <code>ref struct</code>. Always pass by <code>ref</code> and dispose exactly once via a <code>using</code> declaration or explicit call to <code>Dispose()</code>.</p>
+</blockquote>
+<h3 id="yaml-writer-options">YAML writer options</h3>
+<pre><code class="language-csharp">var options = new YamlWriterOptions
+{
+    IndentSize = 2,          // Spaces per indent level (default: 2)
+    SkipValidation = false,  // Disable structural validation for max throughput
+};
+</code></pre>
+<h2 id="performance">Performance</h2>
+<p>The converter is designed for zero-allocation operation on the hot path. The <code>Utf8YamlScanner</code> is a <code>ref struct</code> that operates on <code>ReadOnlySpan&lt;byte&gt;</code> with <code>stackalloc</code>-based scratch buffers. Temporary buffers follow the standard <code>stackalloc</code>/<code>ArrayPool</code> pattern using <code>JsonConstants.StackallocByteThreshold</code> (256 bytes).</p>
+<h3 id="benchmarks-vs-yamldotnet">Benchmarks vs YamlDotNet</h3>
+<p>The following benchmarks compare <strong>Corvus.Yaml</strong> (both <code>Corvus.Text.Json.Yaml</code> and <code>Corvus.Yaml.SystemTextJson</code>) against <strong>YamlDotNet 16.3</strong> for YAML→JSON conversion across nine scenarios of varying size and complexity.</p>
+<blockquote>
+<p>Measured with BenchmarkDotNet on .NET 10.0, Intel i7-13800H. YamlDotNet is configured with <code>JsonCompatible()</code> serialization. Full source and scenario files in <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/tree/main/benchmarks/Corvus.Text.Json.Yaml.Benchmarks"><code>benchmarks/Corvus.Text.Json.Yaml.Benchmarks/</code></a>.</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th>Scenario</th>
+<th>Size</th>
+<th>YamlDotNet</th>
+<th>Corvus (CTJ)</th>
+<th>Corvus (STJ)</th>
+<th>Speedup</th>
+<th>YDN Alloc</th>
+<th>Corvus Alloc</th>
+<th>Alloc Ratio</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>SimpleScalar</td>
+<td>24 B</td>
+<td>5,027 ns</td>
+<td>245 ns</td>
+<td>255 ns</td>
+<td><strong>20×</strong></td>
+<td>24,741 B</td>
+<td>136 B</td>
+<td><strong>182×</strong></td>
+</tr>
+<tr>
+<td>MultiDocument</td>
+<td>235 B</td>
+<td>31,097 ns</td>
+<td>1,800 ns</td>
+<td>1,879 ns</td>
+<td><strong>17×</strong></td>
+<td>87,353 B</td>
+<td>136 B</td>
+<td><strong>642×</strong></td>
+</tr>
+<tr>
+<td>SmallConfig</td>
+<td>339 B</td>
+<td>34,416 ns</td>
+<td>2,458 ns</td>
+<td>2,514 ns</td>
+<td><strong>14×</strong></td>
+<td>70,034 B</td>
+<td>136 B</td>
+<td><strong>515×</strong></td>
+</tr>
+<tr>
+<td>FlowStyle</td>
+<td>374 B</td>
+<td>61,161 ns</td>
+<td>3,859 ns</td>
+<td>3,953 ns</td>
+<td><strong>16×</strong></td>
+<td>115,828 B</td>
+<td>136 B</td>
+<td><strong>852×</strong></td>
+</tr>
+<tr>
+<td>NestedMapping</td>
+<td>540 B</td>
+<td>54,090 ns</td>
+<td>3,974 ns</td>
+<td>4,072 ns</td>
+<td><strong>14×</strong></td>
+<td>97,739 B</td>
+<td>136 B</td>
+<td><strong>719×</strong></td>
+</tr>
+<tr>
+<td>AnchorAlias</td>
+<td>604 B</td>
+<td>64,142 ns</td>
+<td>4,483 ns</td>
+<td>4,678 ns</td>
+<td><strong>14×</strong></td>
+<td>106,984 B</td>
+<td>136 B</td>
+<td><strong>787×</strong></td>
+</tr>
+<tr>
+<td>BlockScalar</td>
+<td>642 B</td>
+<td>16,651 ns</td>
+<td>2,240 ns</td>
+<td>2,149 ns</td>
+<td><strong>7×</strong></td>
+<td>30,767 B</td>
+<td>136 B</td>
+<td><strong>226×</strong></td>
+</tr>
+<tr>
+<td>ComplexMixed</td>
+<td>2.4 KB</td>
+<td>136,973 ns</td>
+<td>11,368 ns</td>
+<td>11,537 ns</td>
+<td><strong>12×</strong></td>
+<td>186,505 B</td>
+<td>136 B</td>
+<td><strong>1,372×</strong></td>
+</tr>
+<tr>
+<td>LargeConfig</td>
+<td>6 KB</td>
+<td>413,192 ns</td>
+<td>30,478 ns</td>
+<td>31,268 ns</td>
+<td><strong>14×</strong></td>
+<td>580,263 B</td>
+<td>136 B</td>
+<td><strong>4,267×</strong></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Summary:</strong> Corvus.Yaml is <strong>7–20× faster</strong> than YamlDotNet and allocates <strong>182–4,267× less memory</strong>. The Corvus CTJ and STJ variants perform nearly identically — choose based on whether you need the Corvus document model or just <code>System.Text.Json.JsonDocument</code>.</p>
+<h3 id="event-parsing-benchmarks">Event parsing benchmarks</h3>
+<p>The following benchmarks compare <strong>Corvus event parsing</strong> (<code>YamlDocument.EnumerateEvents</code>) against <strong>YamlDotNet's low-level <code>Parser</code></strong> (<code>MoveNext()</code> / <code>Current</code> iteration). Both enumerate all YAML events without building a document — this measures pure parsing throughput.</p>
+<blockquote>
+<p>Note: The 88 B Corvus allocation is a one-time closure for the counting callback. Production code using a static method achieves zero allocation.</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th>Scenario</th>
+<th>Size</th>
+<th>YamlDotNet</th>
+<th>Corvus</th>
+<th>Speedup</th>
+<th>YDN Alloc</th>
+<th>Corvus Alloc</th>
+<th>Alloc Ratio</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>SimpleScalar</td>
+<td>24 B</td>
+<td>1,420 ns</td>
+<td>206 ns</td>
+<td><strong>6.9×</strong></td>
+<td>8,160 B</td>
+<td>88 B</td>
+<td><strong>93×</strong></td>
+</tr>
+<tr>
+<td>MultiDocument</td>
+<td>235 B</td>
+<td>8,870 ns</td>
+<td>1,152 ns</td>
+<td><strong>7.7×</strong></td>
+<td>18,816 B</td>
+<td>88 B</td>
+<td><strong>214×</strong></td>
+</tr>
+<tr>
+<td>SmallConfig</td>
+<td>339 B</td>
+<td>12,023 ns</td>
+<td>1,550 ns</td>
+<td><strong>7.8×</strong></td>
+<td>21,064 B</td>
+<td>88 B</td>
+<td><strong>239×</strong></td>
+</tr>
+<tr>
+<td>FlowStyle</td>
+<td>374 B</td>
+<td>19,731 ns</td>
+<td>2,647 ns</td>
+<td><strong>7.5×</strong></td>
+<td>35,752 B</td>
+<td>88 B</td>
+<td><strong>406×</strong></td>
+</tr>
+<tr>
+<td>NestedMapping</td>
+<td>540 B</td>
+<td>15,749 ns</td>
+<td>2,281 ns</td>
+<td><strong>6.9×</strong></td>
+<td>28,968 B</td>
+<td>88 B</td>
+<td><strong>329×</strong></td>
+</tr>
+<tr>
+<td>AnchorAlias</td>
+<td>604 B</td>
+<td>19,270 ns</td>
+<td>2,524 ns</td>
+<td><strong>7.6×</strong></td>
+<td>29,656 B</td>
+<td>88 B</td>
+<td><strong>337×</strong></td>
+</tr>
+<tr>
+<td>BlockScalar</td>
+<td>642 B</td>
+<td>4,741 ns</td>
+<td>1,389 ns</td>
+<td><strong>3.4×</strong></td>
+<td>9,888 B</td>
+<td>88 B</td>
+<td><strong>112×</strong></td>
+</tr>
+<tr>
+<td>ComplexMixed</td>
+<td>2.4 KB</td>
+<td>42,719 ns</td>
+<td>7,379 ns</td>
+<td><strong>5.8×</strong></td>
+<td>56,248 B</td>
+<td>88 B</td>
+<td><strong>639×</strong></td>
+</tr>
+<tr>
+<td>LargeConfig</td>
+<td>6 KB</td>
+<td>137,412 ns</td>
+<td>21,703 ns</td>
+<td><strong>6.3×</strong></td>
+<td>172,568 B</td>
+<td>88 B</td>
+<td><strong>1,961×</strong></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Summary:</strong> Corvus event parsing is <strong>3–8× faster</strong> than YamlDotNet's <code>Parser</code> with <strong>112–1,961× less allocation</strong>. YamlDotNet allocates heap objects for every event; Corvus uses a zero-allocation callback with a <code>ref struct</code> event that points directly into the source buffer.</p>
+<h3 id="jsonyaml-benchmarks">JSON→YAML benchmarks</h3>
+<p>The following benchmarks compare JSON→YAML conversion across four paths: <strong>YamlDotNet</strong> (deserialize JSON string, serialize to YAML), <strong>Corvus UTF-8</strong> (raw byte tokenization), <strong>Corvus CTJ Element</strong> (pre-parsed <code>ParsedJsonDocument&lt;JsonElement&gt;</code> walk), and <strong>Corvus STJ Element</strong> (pre-parsed <code>System.Text.Json.JsonElement</code> walk).</p>
+<blockquote>
+<p>Measured with BenchmarkDotNet on .NET 10.0, Intel i7-13800H. Full source and scenario files in <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/tree/main/benchmarks/Corvus.Text.Json.Yaml.Benchmarks"><code>benchmarks/Corvus.Text.Json.Yaml.Benchmarks/</code></a>.</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th>Scenario</th>
+<th>YamlDotNet</th>
+<th>Corvus UTF-8</th>
+<th>Corvus CTJ</th>
+<th>Corvus STJ</th>
+<th>Speedup</th>
+<th>YDN Alloc</th>
+<th>Corvus Alloc</th>
+<th>Alloc Ratio</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>SimpleScalar</td>
+<td>8,679 ns</td>
+<td>167 ns</td>
+<td><strong>132 ns</strong></td>
+<td>152 ns</td>
+<td><strong>66×</strong></td>
+<td>24,766 B</td>
+<td>104 B</td>
+<td><strong>238×</strong></td>
+</tr>
+<tr>
+<td>MultiDocument</td>
+<td>50,404 ns</td>
+<td>1,344 ns</td>
+<td><strong>1,040 ns</strong></td>
+<td>1,160 ns</td>
+<td><strong>48×</strong></td>
+<td>58,366 B</td>
+<td>432 B</td>
+<td><strong>135×</strong></td>
+</tr>
+<tr>
+<td>SmallConfig</td>
+<td>64,602 ns</td>
+<td>1,777 ns</td>
+<td><strong>1,393 ns</strong></td>
+<td>1,572 ns</td>
+<td><strong>46×</strong></td>
+<td>67,946 B</td>
+<td>608 B</td>
+<td><strong>112×</strong></td>
+</tr>
+<tr>
+<td>FlowStyle</td>
+<td>61,021 ns</td>
+<td>3,102 ns</td>
+<td><strong>2,153 ns</strong></td>
+<td>2,499 ns</td>
+<td><strong>28×</strong></td>
+<td>118,204 B</td>
+<td>728 B</td>
+<td><strong>162×</strong></td>
+</tr>
+<tr>
+<td>NestedMapping</td>
+<td>82,649 ns</td>
+<td>2,435 ns</td>
+<td>2,082 ns</td>
+<td><strong>1,990 ns</strong></td>
+<td><strong>42×</strong></td>
+<td>100,463 B</td>
+<td>632 B</td>
+<td><strong>159×</strong></td>
+</tr>
+<tr>
+<td>AnchorAlias</td>
+<td>90,398 ns</td>
+<td>2,943 ns</td>
+<td><strong>2,296 ns</strong></td>
+<td>2,537 ns</td>
+<td><strong>39×</strong></td>
+<td>158,201 B</td>
+<td>1,464 B</td>
+<td><strong>108×</strong></td>
+</tr>
+<tr>
+<td>BlockScalar</td>
+<td>19,587 ns</td>
+<td>1,666 ns</td>
+<td><strong>1,209 ns</strong></td>
+<td>1,730 ns</td>
+<td><strong>16×</strong></td>
+<td>30,927 B</td>
+<td>1,264 B</td>
+<td><strong>24×</strong></td>
+</tr>
+<tr>
+<td>ComplexMixed</td>
+<td>139,993 ns</td>
+<td>5,740 ns</td>
+<td><strong>4,216 ns</strong></td>
+<td>5,355 ns</td>
+<td><strong>33×</strong></td>
+<td>207,927 B</td>
+<td>3,544 B</td>
+<td><strong>59×</strong></td>
+</tr>
+<tr>
+<td>LargeConfig</td>
+<td>725,990 ns</td>
+<td>22,561 ns</td>
+<td><strong>16,001 ns</strong></td>
+<td>18,391 ns</td>
+<td><strong>45×</strong></td>
+<td>646,559 B</td>
+<td>7,504 B</td>
+<td><strong>86×</strong></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Summary:</strong> Corvus JSON→YAML is <strong>16–66× faster</strong> than YamlDotNet with <strong>24–238× less allocation</strong>. The CTJ element walk is fastest in 8 of 9 scenarios; all three Corvus paths share identical allocation (the output string plus a pooled buffer writer).</p>
+<h2 id="comparison-with-yamldotnet">Comparison with YamlDotNet</h2>
+<p><a href="https://github.com/aaubry/YamlDotNet">YamlDotNet</a> is the established YAML library for .NET, with a large feature set and broad ecosystem adoption. Corvus.Yaml takes a different approach — it is a purpose-built, high-performance YAML→JSON converter rather than a general-purpose YAML toolkit.</p>
+<h3 id="feature-comparison">Feature comparison</h3>
+<table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>Corvus.Yaml</th>
+<th>YamlDotNet</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>YAML→JSON conversion</strong></td>
+<td>✅ Native zero-copy tokenizer to <code>Utf8JsonWriter</code></td>
+<td>⚠️ Deserialize to object graph, then re-serialize with <code>JsonCompatible()</code></td>
+</tr>
+<tr>
+<td><strong>JSON→YAML conversion</strong></td>
+<td>✅ Native <code>Utf8YamlWriter</code> (16–66× faster)</td>
+<td>⚠️ Deserialize JSON to object graph, then serialize to YAML</td>
+</tr>
+<tr>
+<td><strong>YAML 1.2 conformance</strong></td>
+<td>✅ 100% of yaml-test-suite JSON-comparison cases (373/373 applicable)</td>
+<td>⚠️ 68.9% (257/373) <a href="#conformance-note">*</a></td>
+</tr>
+<tr>
+<td><strong>YAML 1.1 support</strong></td>
+<td>✅ <code>YamlSchema.Yaml11</code> mode</td>
+<td>✅ Default schema</td>
+</tr>
+<tr>
+<td><strong>C# object → YAML serialization</strong></td>
+<td>❌</td>
+<td>✅ <code>Serializer</code> with naming conventions, type converters, callbacks</td>
+</tr>
+<tr>
+<td><strong>C# object ← YAML deserialization</strong></td>
+<td>❌</td>
+<td>✅ <code>Deserializer</code> with naming conventions, type converters, callbacks</td>
+</tr>
+<tr>
+<td><strong>YAML DOM</strong></td>
+<td>❌</td>
+<td>✅ <code>YamlStream</code> / <code>YamlDocument</code> / <code>YamlNode</code> tree</td>
+</tr>
+<tr>
+<td><strong>Low-level event parser</strong></td>
+<td>✅ Zero-allocation callback-based <code>EnumerateEvents</code></td>
+<td>✅ <code>IParser</code> with heap-allocated event objects</td>
+</tr>
+<tr>
+<td><strong>Schema modes</strong></td>
+<td>✅ Core, JSON, Failsafe, YAML 1.1</td>
+<td>⚠️ YAML 1.1 by default; limited 1.2 Core support</td>
+</tr>
+<tr>
+<td><strong>Duplicate key handling</strong></td>
+<td>✅ <code>Error</code> (default) or <code>LastWins</code></td>
+<td>✅ Configurable via <code>DuplicateKeyChecking</code></td>
+</tr>
+<tr>
+<td><strong>Anchors &amp; aliases</strong></td>
+<td>✅ With billion-laughs protection</td>
+<td>✅ No expansion-depth limits by default</td>
+</tr>
+<tr>
+<td><strong>Multi-document streams</strong></td>
+<td>✅ <code>MultiAsArray</code> wraps all documents in a JSON array</td>
+<td>✅ Via <code>IParser</code> / <code>YamlStream</code> iteration</td>
+</tr>
+<tr>
+<td><strong>Block scalars (<code>\|</code>, <code>&gt;</code>)</strong></td>
+<td>✅ All chomping indicators</td>
+<td>✅ All chomping indicators</td>
+</tr>
+<tr>
+<td><strong>Performance</strong></td>
+<td>✅ 7–66× faster, near-zero allocation</td>
+<td>⚠️ Higher allocation, string-based processing</td>
+</tr>
+<tr>
+<td><strong><code>System.Text.Json</code> integration</strong></td>
+<td>✅ Direct <code>JsonDocument</code> / <code>ParsedJsonDocument</code> output</td>
+<td>❌ Separate ecosystem</td>
+</tr>
+<tr>
+<td><strong>Corvus document model</strong></td>
+<td>✅ <code>ParsedJsonDocument&lt;T&gt;</code>, JSON Schema validation</td>
+<td>❌</td>
+</tr>
+<tr>
+<td><strong>Target frameworks</strong></td>
+<td>net9.0, net10.0, netstandard2.0/2.1</td>
+<td>net8.0, net10.0, net47, netstandard2.0/2.1</td>
+</tr>
+<tr>
+<td><strong>Unity support</strong></td>
+<td>❌</td>
+<td>✅ Unity Asset Store package</td>
+</tr>
+<tr>
+<td><strong>License</strong></td>
+<td>Apache 2.0</td>
+<td>MIT</td>
+</tr>
+</tbody>
+</table>
+<p><a id="conformance-note"></a><em>YamlDotNet conformance figures from the <a href="https://matrix.yaml.info/">yaml-test-matrix</a> (Jan 2022 data). YamlDotNet may have improved since. Corvus figures measured against the current yaml-test-suite commit.</em></p>
+<h3 id="when-to-use-corvus.yaml">When to use Corvus.Yaml</h3>
+<ul>
+<li><strong>YAML configuration → JSON pipeline:</strong> You need to convert YAML files (Kubernetes manifests, CI configs, OpenAPI specs) into JSON for processing by <code>System.Text.Json</code>, JSON Schema validation, or the Corvus document model.</li>
+<li><strong>JSON→YAML output:</strong> You need to convert JSON data to canonical YAML for configuration generation, API responses, or human-readable output — using <code>ConvertToYamlString</code> or the low-level <code>Utf8YamlWriter</code>.</li>
+<li><strong>High-throughput / low-allocation:</strong> You're processing YAML in a hot path — an API server, a build tool, a code generator — where 7–66× speed and near-zero GC pressure matter.</li>
+<li><strong>Spec conformance:</strong> You need accurate YAML 1.2 parsing with correct type resolution (Core schema) and strict error detection.</li>
+<li><strong>Corvus ecosystem:</strong> You're already using Corvus.Text.Json for JSON Schema, JSONata, JMESPath, or JSON Patch and want YAML input to flow into the same pipeline.</li>
+</ul>
+<h3 id="when-to-use-yamldotnet">When to use YamlDotNet</h3>
+<ul>
+<li><strong>YAML round-tripping:</strong> You need to read YAML, modify it, and write it back as YAML preserving comments and formatting — Corvus.Yaml converts JSON→YAML as canonical block style only.</li>
+<li><strong>Object serialization:</strong> You need to serialize C# objects directly to/from YAML with naming conventions, type converters, and custom deserialization callbacks.</li>
+<li><strong>YAML DOM manipulation:</strong> You need to build or transform a YAML document tree (<code>YamlStream</code>, <code>YamlNode</code>) programmatically.</li>
+<li><strong>Event-level parsing with allocation:</strong> You need a materialized event stream you can store and replay — Corvus provides a zero-allocation callback-based parser, while YamlDotNet's <code>IParser</code> produces heap-allocated event objects.</li>
+<li><strong>Ecosystem compatibility:</strong> You're using a library that depends on YamlDotNet (e.g., KubernetesClient, NJsonSchema.Yaml).</li>
+</ul>
+<h3 id="using-both-together">Using both together</h3>
+<p>The two libraries are not mutually exclusive. A common pattern is to use YamlDotNet for its serialization/deserialization features and Corvus.Yaml for high-performance YAML→JSON conversion in the same project:</p>
+<pre><code class="language-csharp">// Use Corvus.Yaml for fast YAML→JSON conversion and schema validation
+using ParsedJsonDocument&lt;JsonElement&gt; doc = YamlDocument.Parse&lt;JsonElement&gt;(yamlBytes);
+bool isValid = doc.RootElement.IsValid(mySchema);
+
+// Use YamlDotNet for object deserialization with naming conventions
+var deserializer = new DeserializerBuilder()
+    .WithNamingConvention(CamelCaseNamingConvention.Instance)
+    .Build();
+var config = deserializer.Deserialize&lt;AppConfig&gt;(yamlString);
+</code></pre>
+<h2 id="api-reference">API reference</h2>
+<ul>
+<li><a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-yaml.html"><code>Corvus.Text.Json.Yaml</code> API docs</a></li>
+<li><a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-yaml.html"><code>Corvus.Yaml.SystemTextJson</code> API docs</a></li>
+</ul>
+        </div>
+    </main>
+</div>
+
+    </div>
+    <footer class="site-footer">
+    <div class="site-footer__inner">
+        <div class="site-footer__sponsor">
+            Sponsored by
+            <a href="https://endjin.com" target="_blank" rel="noopener noreferrer">endjin</a>
+        </div>
+        <ul class="site-footer__links" role="list">
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/pr-preview/pr-734/getting-started/index.html">Getting Started</a></li>
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/pr-preview/pr-734/docs/index.html">Documentation</a></li>
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/pr-preview/pr-734/examples/index.html">Examples</a></li>
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/pr-preview/pr-734/api/index.html">API</a></li>
+            <li><a class="site-footer__link" href="https://github.com/corvus-dotnet/Corvus.JsonSchema" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+            <li><a class="site-footer__link" href="https://www.nuget.org/packages?q=Corvus.Json" target="_blank" rel="noopener noreferrer">NuGet</a></li>
+        </ul>
+        <p class="site-footer__copyright">&copy; 2026 endjin Ltd.</p>
+    </div>
+</footer>
+
+    <!-- highlight.js for syntax highlighting (CSS targets .hljs-* classes) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/csharp.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/json.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/bash.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/xml.min.js" defer></script>
+    <script>document.addEventListener('DOMContentLoaded',()=>hljs.highlightAll())</script>
+    <script src="/Corvus.JsonSchema/pr-preview/pr-734/assets/js/main.js" defer></script>
+    <script src="/Corvus.JsonSchema/pr-preview/pr-734/assets/js/sidebar-search.js" defer></script>
+    
+</body>
+</html>

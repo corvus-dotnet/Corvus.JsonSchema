@@ -137,6 +137,9 @@
                             <li class="sidebar__item">
                                 <a class="sidebar__link is-active" href="/Corvus.JsonSchema/pr-preview/pr-734/docs/jmes-path.html">JMESPath Query Language</a>
                             </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/docs/yaml.html">YAML Converter</a>
+                            </li>
                 </ul>
             </div>
         </div>
@@ -221,6 +224,9 @@
                             </li>
                             <li class="sidebar__item">
                                 <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/jmespath.html">JMESPath Query Evaluation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/yaml.html">YAML Conversion</a>
                             </li>
                 </ul>
             </div>
@@ -1114,7 +1120,7 @@ Console.WriteLine(result.GetRawText()); // safe
 </tr>
 <tr>
 <td>JSON document model</td>
-<td><code>Corvus.Text.Json</code> (pooled, zero-copy, over <code>System.Text.Json</code>)</td>
+<td><code>Corvus.Text.Json</code> (pooled, zero-copy)</td>
 <td><code>Newtonsoft.Json</code></td>
 </tr>
 <tr>
@@ -1129,18 +1135,13 @@ Console.WriteLine(result.GetRawText()); // safe
 </tr>
 <tr>
 <td>Conformance (official suite)</td>
-<td>892 / 892 (100%)</td>
+<td>100%</td>
 <td>100%</td>
 </tr>
 <tr>
-<td>.NET Framework support</td>
+<td>Supported frameworks</td>
 <td>net9.0+, netstandard2.0/2.1</td>
-<td>net6.0+</td>
-</tr>
-<tr>
-<td>Pipe fusion optimization</td>
-<td>Yes (multi-stage pipe chains fused into single pass)</td>
-<td>No</td>
+<td>net45, net6.0+, netstandard2.0/2.1</td>
 </tr>
 </tbody>
 </table>
