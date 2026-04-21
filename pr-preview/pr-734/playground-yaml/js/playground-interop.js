@@ -90,3 +90,19 @@ window.clearEditorMarkers = function (editorId) {
         }
     }
 };
+
+// ── Editor language switching ──
+window.setEditorLanguage = function (editorId, language) {
+    if (typeof monaco === 'undefined' || !monaco.editor) return;
+    var editors = monaco.editor.getEditors();
+    for (var j = 0; j < editors.length; j++) {
+        var container = editors[j].getContainerDomNode();
+        if (container && container.id === editorId) {
+            var model = editors[j].getModel();
+            if (model) {
+                monaco.editor.setModelLanguage(model, language);
+            }
+            return;
+        }
+    }
+};
