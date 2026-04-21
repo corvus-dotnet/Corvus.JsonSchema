@@ -50,6 +50,7 @@ public ref struct Utf8YamlWriter
     private readonly int _indentSize;
     private readonly bool _skipValidation;
     private bool _wroteRootValue;
+    private bool _hasWrittenAny;
     private bool _disposed;
 
     /// <summary>
@@ -63,10 +64,11 @@ public ref struct Utf8YamlWriter
         _output = bufferWriter ?? throw new ArgumentNullException(nameof(bufferWriter));
         _stream = null;
         _arrayBufferWriter = null;
-        _indentSize = options.IndentSize;
+        _indentSize = options.IndentSize > 0 ? options.IndentSize : 2;
         _skipValidation = options.SkipValidation;
-        _indentLevel = 0;
+        _indentLevel = -1;
         _wroteRootValue = false;
+        _hasWrittenAny = false;
         _contextStack = new ValueListBuilder<WriteContext>(MaxStackDepth);
     }
 
@@ -91,10 +93,11 @@ public ref struct Utf8YamlWriter
         _stream = utf8Stream;
         _output = null;
         _arrayBufferWriter = new ArrayBufferWriter<byte>();
-        _indentSize = options.IndentSize;
+        _indentSize = options.IndentSize > 0 ? options.IndentSize : 2;
         _skipValidation = options.SkipValidation;
-        _indentLevel = 0;
+        _indentLevel = -1;
         _wroteRootValue = false;
+        _hasWrittenAny = false;
         _contextStack = new ValueListBuilder<WriteContext>(MaxStackDepth);
     }
 
@@ -470,22 +473,7 @@ public ref struct Utf8YamlWriter
 
     private bool HasWrittenContent()
     {
-        if (_stream != null)
-        {
-            Debug.Assert(_arrayBufferWriter != null);
-            return _arrayBufferWriter!.WrittenCount > 0;
-        }
-
-        // For IBufferWriter we don't have a clean "bytes written" count,
-        // so we track via _wroteRootValue + context state.
-        // If we're inside a container with items, content has been written.
-        if (_contextStack.Length > 0)
-        {
-            ref WriteContext ctx = ref _contextStack[_contextStack.Length - 1];
-            return ctx.ItemCount > 0;
-        }
-
-        return _wroteRootValue;
+        return _hasWrittenAny;
     }
 
     private void WriteScalarValue(scoped ReadOnlySpan<byte> utf8Value, bool isKey)
@@ -701,6 +689,8 @@ public ref struct Utf8YamlWriter
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void WriteRaw(scoped ReadOnlySpan<byte> utf8Data)
     {
+        _hasWrittenAny = true;
+
         if (_stream != null)
         {
             Debug.Assert(_arrayBufferWriter != null);
