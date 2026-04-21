@@ -331,7 +331,7 @@ Console.WriteLine(result); // &quot;Fred Smith&quot;
 <h3 id="interpreted-runtime-evaluation">Interpreted (runtime evaluation)</h3>
 <p>Use <code>JsonataEvaluator</code> when expressions are determined at runtime:</p>
 <pre><code class="language-csharp">using JsonWorkspace workspace = JsonWorkspace.Create();
-var evaluator = new JsonataEvaluator();
+var evaluator = JsonataEvaluator.Default;
 
 JsonElement result = evaluator.Evaluate(
     &quot;Account.Order.Product.Price&quot;,
@@ -706,7 +706,7 @@ JsonElement result = evaluator.Evaluate(expression, data, workspace);
 // result is valid until workspace is disposed or reset
 </code></pre>
 <p><strong>Batch evaluation — reset the workspace between iterations:</strong></p>
-<pre><code class="language-csharp">var evaluator = new JsonataEvaluator();
+<pre><code class="language-csharp">var evaluator = JsonataEvaluator.Default;
 using JsonWorkspace workspace = JsonWorkspace.Create();
 
 foreach (var item in items)

@@ -567,10 +567,8 @@ JsonElement result = evaluator.Search(
 
 namespace MyApp.Queries;
 
-[JMESPathExpression(&quot;Expressions/total-price.jmespath&quot;)]
-internal static partial class TotalPrice
-{
-}
+[JMESPathExpression(&quot;total-price.jmespath&quot;)]
+public static partial class TotalPrice;
 </code></pre>
 <p><strong>4. Include the expression file and packages in your <code>.csproj</code>:</strong></p>
 <pre><code class="language-xml">&lt;ItemGroup&gt;
