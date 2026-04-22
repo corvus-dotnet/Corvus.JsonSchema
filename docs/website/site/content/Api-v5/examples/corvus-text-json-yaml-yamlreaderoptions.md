@@ -1,10 +1,11 @@
 Configure YAML parsing behaviour with `YamlReaderOptions`. The default options use the Core schema, single-document mode, and error on duplicate keys.
 
 ```csharp
+using Corvus.Text.Json;
 using Corvus.Text.Json.Yaml;
 
 // Default options — Core schema, single document, duplicate keys error
-using JsonDocument doc = YamlDocument.Parse(yaml);
+using ParsedJsonDocument<JsonElement> doc = YamlDocument.Parse<JsonElement>(yaml);
 ```
 
 ### Custom options
@@ -17,7 +18,7 @@ var options = new YamlReaderOptions
     DuplicateKeyBehavior = DuplicateKeyBehavior.LastWins,
 };
 
-using JsonDocument doc = YamlDocument.Parse(yaml, options);
+using ParsedJsonDocument<JsonElement> doc = YamlDocument.Parse<JsonElement>(yaml, options);
 ```
 
 ### Schema modes

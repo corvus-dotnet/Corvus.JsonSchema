@@ -1,7 +1,7 @@
-Parse YAML into a `JsonDocument`, or convert between YAML and JSON string representations.
+Parse YAML into a `ParsedJsonDocument<TElement>`, or convert between YAML and JSON string representations.
 
 ```csharp
-using System.Text.Json;
+using Corvus.Text.Json;
 using Corvus.Text.Json.Yaml;
 
 string yaml = """
@@ -12,8 +12,8 @@ string yaml = """
       - cycling
     """;
 
-using JsonDocument doc = YamlDocument.Parse(yaml);
-string name = doc.RootElement.GetProperty("name").GetString()!;
+using ParsedJsonDocument<JsonElement> doc = YamlDocument.Parse<JsonElement>(yaml);
+string name = (string)doc.RootElement.GetProperty("name"u8);
 // name: "Alice"
 ```
 
@@ -49,7 +49,7 @@ string multiDoc = """
     name: Bob
     """;
 
-using JsonDocument docs = YamlDocument.Parse(multiDoc,
+using ParsedJsonDocument<JsonElement> docs = YamlDocument.Parse<JsonElement>(multiDoc,
     new YamlReaderOptions { DocumentMode = YamlDocumentMode.MultiAsArray });
 int count = docs.RootElement.GetArrayLength(); // 2
 ```
