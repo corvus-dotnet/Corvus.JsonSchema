@@ -6,6 +6,8 @@
     <LangVersion>14</LangVersion>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <StaticWebAssetBasePath>/</StaticWebAssetBasePath>
+    <!-- Disable WebCIL to output regular .dll files that Roslyn can read -->
+    <WasmEnableWebcil>false</WasmEnableWebcil>
     <!-- Disable the Endjin analyzers for this standalone tool -->
     <EndjinDisableCreateEditorConfig>true</EndjinDisableCreateEditorConfig>
     <EndjinDisableAutoPackagesLock>true</EndjinDisableAutoPackagesLock>
@@ -15,6 +17,10 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="10.0.0" />
     <PackageReference Include="BlazorMonaco" Version="3.4.0" />
+    <!-- Roslyn for in-browser compilation of custom operators -->
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="5.3.0" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Features" Version="5.3.0" />
+    <PackageReference Include="Microsoft.CodeAnalysis.Features" Version="5.3.0" />
   </ItemGroup>
 
   <ItemGroup>
@@ -42,6 +48,50 @@
     <EmbeddedResource Include="..\..\..\..\src\Corvus.Json.CodeGenerator\metaschema\**\*.json"
                       Link="metaschema\%(RecursiveDir)%(Filename)%(Extension)" />
   </ItemGroup>
+
+  <!-- Preserve assemblies from trimming for dynamic Roslyn compilation -->
+  <ItemGroup>
+    <TrimmerRootAssembly Include="System.Private.CoreLib" />
+    <TrimmerRootAssembly Include="System.Runtime" />
+    <TrimmerRootAssembly Include="System.Collections" />
+    <TrimmerRootAssembly Include="System.Linq" />
+    <TrimmerRootAssembly Include="System.Text.Json" />
+    <TrimmerRootAssembly Include="System.Text.Encodings.Web" />
+    <TrimmerRootAssembly Include="System.Buffers" />
+    <TrimmerRootAssembly Include="System.Memory" />
+    <TrimmerRootAssembly Include="System.Threading" />
+    <TrimmerRootAssembly Include="System.Threading.Tasks" />
+    <TrimmerRootAssembly Include="System.Diagnostics.Debug" />
+    <TrimmerRootAssembly Include="System.ComponentModel" />
+    <TrimmerRootAssembly Include="System.Runtime.InteropServices" />
+    <TrimmerRootAssembly Include="netstandard" />
+    <TrimmerRootAssembly Include="System.Private.Uri" />
+    <TrimmerRootAssembly Include="System.Text.RegularExpressions" />
+    <TrimmerRootAssembly Include="System.Numerics.Vectors" />
+    <TrimmerRootAssembly Include="System.Runtime.Numerics" />
+    <TrimmerRootAssembly Include="Corvus.Text.Json" />
+    <TrimmerRootAssembly Include="Corvus.Text.Json.JsonLogic" />
+    <TrimmerRootAssembly Include="Corvus.Text.Json.JsonLogic.Playground" />
+    <TrimmerRootAssembly Include="Microsoft.CodeAnalysis" />
+    <TrimmerRootAssembly Include="Microsoft.CodeAnalysis.CSharp" />
+    <TrimmerRootAssembly Include="Microsoft.CodeAnalysis.Features" />
+    <TrimmerRootAssembly Include="Microsoft.CodeAnalysis.CSharp.Features" />
+  </ItemGroup>
+
+  <!-- Copy static web assets manifest to wwwroot for Roslyn assembly resolution -->
+  <Target Name="CopyAssetManifestBuild" AfterTargets="Build">
+    <Copy SourceFiles="$(OutputPath)$(AssemblyName).staticwebassets.endpoints.json"
+          DestinationFiles="$(OutputPath)wwwroot/_framework/asset-manifest.json"
+          SkipUnchangedFiles="true"
+          Condition="Exists('$(OutputPath)$(AssemblyName).staticwebassets.endpoints.json')" />
+  </Target>
+
+  <Target Name="CopyAssetManifestPublish" AfterTargets="Publish">
+    <Copy SourceFiles="$(PublishDir)$(AssemblyName).staticwebassets.endpoints.json"
+          DestinationFiles="$(PublishDir)wwwroot/_framework/asset-manifest.json"
+          SkipUnchangedFiles="true"
+          Condition="Exists('$(PublishDir)$(AssemblyName).staticwebassets.endpoints.json')" />
+  </Target>
 
   <!-- Restore Blockly from npm and copy to wwwroot for self-hosting.
        Loaded before Monaco's AMD loader to avoid define() conflicts. -->

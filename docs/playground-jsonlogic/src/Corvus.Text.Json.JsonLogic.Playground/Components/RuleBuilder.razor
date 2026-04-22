@@ -52,6 +52,12 @@
     public EventCallback<string> OnRuleChanged { get; set; }
 
     /// <summary>
+    /// Fires after switching back to visual mode and the blocks have been rebuilt.
+    /// </summary>
+    [Parameter]
+    public EventCallback OnVisualModeRestored { get; set; }
+
+    /// <summary>
     /// Gets the current rule JSON text.
     /// </summary>
     public string RuleJson => lastJson;
@@ -164,6 +170,8 @@
         {
             await blocklyEditor.ResizeAsync();
         }
+
+        await OnVisualModeRestored.InvokeAsync();
     }
 
     private async Task SwitchToJson()

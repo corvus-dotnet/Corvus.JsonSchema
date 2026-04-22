@@ -16,6 +16,8 @@ public sealed class Sample
     public required string Data { get; init; }
 
     public string? Schema { get; init; }
+
+    public string? OperatorsCode { get; init; }
 }
 
 /// <summary>
@@ -285,6 +287,72 @@ public static class SampleRegistry
                 }
               },
               "required": ["firstName", "lastName", "age"]
+            }
+            """,
+        },
+
+        new Sample
+        {
+            Id = "custom-operators",
+            DisplayName = "Custom Operators",
+            Description = "Define custom JsonLogic operators in C# — they compile in-browser and appear as new blocks in the toolbox.",
+            Rule = """
+            {"double":[{"var":"score"}]}
+            """,
+            Data = """
+            {"score": 42, "name": "Alice"}
+            """,
+            OperatorsCode = """
+            public static class MyOperators
+            {
+                public static Dictionary<string, CustomOperatorDefinition> Create()
+                {
+                    return new()
+                    {
+                        ["double"] = new CustomOperatorDefinition(
+                            new DoubleOp(), MinArgs: 1, MaxArgs: 1,
+                            Description: "Doubles the input value"),
+
+                        ["clamp"] = new CustomOperatorDefinition(
+                            new ClampOp(), MinArgs: 3, MaxArgs: 3,
+                            Description: "Clamps value between min and max"),
+                    };
+                }
+            }
+
+            public class DoubleOp : IOperatorCompiler
+            {
+                public RuleEvaluator Compile(RuleEvaluator[] operands)
+                {
+                    var op = operands[0];
+                    return (in JsonElement data, JsonWorkspace workspace) =>
+                    {
+                        var result = op(data, workspace);
+                        if (result.TryGetDouble(out double val))
+                            return EvalResult.FromDouble(val * 2);
+                        return result;
+                    };
+                }
+            }
+
+            public class ClampOp : IOperatorCompiler
+            {
+                public RuleEvaluator Compile(RuleEvaluator[] operands)
+                {
+                    var value = operands[0];
+                    var min = operands[1];
+                    var max = operands[2];
+                    return (in JsonElement data, JsonWorkspace workspace) =>
+                    {
+                        if (value(data, workspace).TryGetDouble(out double v) &&
+                            min(data, workspace).TryGetDouble(out double lo) &&
+                            max(data, workspace).TryGetDouble(out double hi))
+                        {
+                            return EvalResult.FromDouble(Math.Clamp(v, lo, hi));
+                        }
+                        return EvalResult.FromElement(JsonLogicHelpers.NullElement());
+                    };
+                }
             }
             """,
         },
