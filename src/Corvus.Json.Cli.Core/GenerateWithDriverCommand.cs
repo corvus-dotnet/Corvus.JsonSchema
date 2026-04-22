@@ -24,8 +24,9 @@ internal class GenerateWithDriverCommand : AsyncCommand<GenerateWithDriverComman
     {
         ArgumentNullException.ThrowIfNullOrEmpty(settings.GenerationSpecificationFile); // We will never see this exception if the framework is doing its job; it should have blown up inside the CLI command handling
 
+        Engine engine = settings.GenerationEngine ?? CliDefaults.DefaultEngine;
         var config = GeneratorConfig.Parse(File.OpenRead(settings.GenerationSpecificationFile));
-        return GenerationDriver.GenerateTypes(config, settings.GenerationEngine, settings.CodeGenerationMode, cancellationToken);
+        return GenerationDriver.GenerateTypes(config, engine, settings.CodeGenerationMode, cancellationToken);
     }
 
     /// <summary>
@@ -38,10 +39,9 @@ internal class GenerateWithDriverCommand : AsyncCommand<GenerateWithDriverComman
         [NotNull] // <> => NotNull
         public string? GenerationSpecificationFile { get; init; }
 
-        [Description("The code generation engine to use. V4 uses Corvus.Json.ExtendedTypes. V5 uses Corvus.Text.Json.")]
+        [Description("The code generation engine to use. V4 uses Corvus.Json.ExtendedTypes. V5 uses Corvus.Text.Json. Default: V5 for corvusjson, V4 for generatejsonschematypes.")]
         [CommandOption("--engine")]
-        [DefaultValue(Engine.V5)]
-        public Engine GenerationEngine { get; init; }
+        public Engine? GenerationEngine { get; init; }
 
         [Description("The code generation mode. TypeGeneration emits strongly-typed C# types (default). SchemaEvaluationOnly emits a standalone evaluator for validation and annotation collection. Both emits both.")]
         [CommandOption("--codeGenerationMode")]

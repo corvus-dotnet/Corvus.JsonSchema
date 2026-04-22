@@ -1,33 +1,27 @@
 // <copyright file="Program.cs" company="Endjin Limited">
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
-// <licensing>
-// Derived from code licensed to the .NET Foundation under one or more agreements.
-// The .NET Foundation licensed this code under the MIT license.
-// https://github.com/dotnet/runtime/blob/388a7c4814cb0d6e344621d017507b357902043a/LICENSE.TXT
-// </licensing>
 
-using Spectre.Console.Cli;
+using Corvus.Text.Json.CodeGenerator;
 
-namespace Corvus.Text.Json.CodeGenerator;
-
-class Program
+// Emit deprecation warning to stderr so it doesn't interfere with piped output.
+if (!Console.IsErrorRedirected)
 {
-    static Task<int> Main(string[] args)
-    {
-        var app = new CommandApp<GenerateCommand>();
-        app.Configure(
-            c =>
-            {
-                c.SetApplicationName("generatejsonschematypes");
-                c.AddCommand<GenerateWithDriverCommand>("config");
-                c.AddCommand<ListNamingHeuristicsCommand>("listNameHeuristics");
-                c.AddCommand<ValidateDocumentCommand>("validateDocument");
-                c.AddCommand<VersionCommand>("version");
-                c.AddCommand<JsonLogicCommand>("jsonlogic");
-                c.AddCommand<JsonataCommand>("jsonata");
-                c.AddCommand<JMESPathCommand>("jmespath");
-            });
-        return app.RunAsync(args);
-    }
+    Console.Error.WriteLine("WARNING: 'generatejsonschematypes' has been renamed to 'corvusjson'.");
+    Console.Error.WriteLine("Install the new tool with: dotnet tool install Corvus.Json.Cli");
+    Console.Error.WriteLine();
 }
+
+CliDefaults.DefaultEngine = Engine.V4;
+
+// Rewrite bare-args invocations to use the 'jsonschema' subcommand.
+// If the first argument is not a known subcommand or an option, prepend 'jsonschema'.
+string[] knownCommands = ["jsonschema", "config", "listNameHeuristics", "validateDocument", "version", "jsonlogic", "jsonata", "jmespath"];
+if (args.Length > 0
+    && !args[0].StartsWith('-')
+    && !knownCommands.Contains(args[0], StringComparer.OrdinalIgnoreCase))
+{
+    args = ["jsonschema", .. args];
+}
+
+return await CliAppFactory.Create("generatejsonschematypes").RunAsync(args);

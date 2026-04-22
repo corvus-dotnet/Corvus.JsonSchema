@@ -19,7 +19,7 @@ internal static class CodeGeneratorRunner
         Path.Combine(
             AppContext.BaseDirectory,
             "..", "..", "..", "..", "..",
-            "src", "Corvus.Json.CodeGenerator", "bin", BuildConfiguration, "net10.0", "Corvus.Json.JsonSchema.TypeGeneratorTool.dll"));
+            "src", "Corvus.Json.Cli", "bin", BuildConfiguration, "net10.0", "Corvus.Json.Cli.dll"));
 
     /// <summary>
     /// Runs the code generator with the specified arguments and returns the result.

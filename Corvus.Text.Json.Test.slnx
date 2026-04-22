@@ -89,5 +89,7 @@
     <Project Path="src/Corvus.Text.Json.Validator/Corvus.Text.Json.Validator.csproj" />
     <Project Path="src/Corvus.Text.Json/Corvus.Text.Json.csproj" />
   </Folder>
+  <Project Path="src/Corvus.Json.Cli.Core/Corvus.Json.Cli.Core.csproj" />
+  <Project Path="src/Corvus.Json.Cli/Corvus.Json.Cli.csproj" />
   <Project Path="src/Corvus.Json.CodeGenerator/Corvus.Json.CodeGenerator.csproj" />
 </Solution>

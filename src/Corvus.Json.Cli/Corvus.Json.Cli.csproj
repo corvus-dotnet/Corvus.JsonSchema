@@ -3,12 +3,12 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFrameworks>net9.0;net10.0</TargetFrameworks>
-    <AssemblyName>Corvus.Json.JsonSchema.TypeGeneratorTool</AssemblyName>
+    <AssemblyName>Corvus.Json.Cli</AssemblyName>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <PreserveCompilationContext>true</PreserveCompilationContext>
     <PackAsTool>true</PackAsTool>
-    <ToolCommandName>generatejsonschematypes</ToolCommandName>
+    <ToolCommandName>corvusjson</ToolCommandName>
     <PackageOutputPath>./nupkg</PackageOutputPath>
     <NoWarn>$(NoWarn);NU1504;CS1591</NoWarn>
     <EndjinDisableCreateEditorConfig>true</EndjinDisableCreateEditorConfig>
@@ -17,10 +17,10 @@
   <PropertyGroup>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>
-    <Description>Legacy shim for the generatejsonschematypes CLI tool. This tool has been renamed to corvusjson (package: Corvus.Json.Cli). Install the new tool with: dotnet tool install Corvus.Json.Cli. This shim delegates all commands to the same implementation with a deprecation warning.</Description>
+    <Description>CLI tool for generating strongly-typed C# from JSON Schema, JSONata, JMESPath, and JSON Logic. Supports both Corvus.Text.Json (V5) and Corvus.Json (V4) output. Covers JSON Schema draft 4, 6, 7, 2019-09, and 2020-12.</Description>
   </PropertyGroup>
   <ItemGroup>
-    <None Include="README.md" Pack="true" PackagePath="\" />
+    <None Include="..\Corvus.Json.CodeGenerator\README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Corvus.Json.Cli.Core\Corvus.Json.Cli.Core.csproj" />

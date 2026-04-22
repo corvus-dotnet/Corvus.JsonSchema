@@ -1,5 +1,5 @@
 # Define the base path for the TypeGeneratorTool executable
-$toolPath = './Corvus.Json.CodeGenerator/bin/Debug/net8.0/Corvus.Json.JsonSchema.TypeGeneratorTool.exe'
+$toolPath = '../src/Corvus.Json.CodeGenerator/bin/Debug/net10.0/Corvus.Json.JsonSchema.TypeGeneratorTool.exe'
 
 # Run the TypeGeneratorTool for each schema
 & $toolPath --rootNamespace Corvus.Json.JsonSchema.Draft4 --outputPath .\Corvus.Json.JsonSchema.Draft4\Draft4\ https://json-schema.org/draft-04/schema
