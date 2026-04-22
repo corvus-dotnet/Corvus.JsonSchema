@@ -113,8 +113,20 @@
 <td>Evaluates a JSONata expression against JSON data.</td>
 </tr>
 <tr>
+<td><a href="#evaluate-string-jsonelement-int-int">Evaluate(string, JsonElement, int, int)</a></td>
+<td>Evaluates a JSONata expression against JSON data.</td>
+</tr>
+<tr>
 <td><a href="#evaluate-string-jsonelement-ireadonlydictionary-string-jsonelement-int-int">Evaluate(string, JsonElement, IReadOnlyDictionary&lt;string, JsonElement&gt;, int, int)</a></td>
 <td>Evaluates a JSONata expression against input data with optional variable bindings.</td>
+</tr>
+<tr>
+<td><a href="#evaluate-string-jsonelement-ireadonlydictionary-string-jsonelement-int-int">Evaluate(string, JsonElement, IReadOnlyDictionary&lt;string, JsonElement&gt;, int, int)</a></td>
+<td>Evaluates a JSONata expression against input data with optional variable bindings.</td>
+</tr>
+<tr>
+<td><a href="#evaluate-string-jsonelement-jsonworkspace-ireadonlydictionary-string-jsonelement-int-int">Evaluate(string, JsonElement, JsonWorkspace, IReadOnlyDictionary&lt;string, JsonElement&gt;, int, int)</a></td>
+<td>Evaluates a JSONata expression against input data using the caller's workspace.</td>
 </tr>
 <tr>
 <td><a href="#evaluate-string-jsonelement-jsonworkspace-ireadonlydictionary-string-jsonelement-int-int">Evaluate(string, JsonElement, JsonWorkspace, IReadOnlyDictionary&lt;string, JsonElement&gt;, int, int)</a></td>
@@ -125,8 +137,20 @@
 <td>Evaluates a JSONata expression against input data with optional typed bindings that can include both values and callable functions.</td>
 </tr>
 <tr>
+<td><a href="#evaluate-string-jsonelement-ireadonlydictionary-string-jsonatabinding-int-int">Evaluate(string, JsonElement, IReadOnlyDictionary&lt;string, JsonataBinding&gt;, int, int)</a></td>
+<td>Evaluates a JSONata expression against input data with optional typed bindings that can include both values and callable functions.</td>
+</tr>
+<tr>
 <td><a href="#evaluate-string-jsonelement-jsonworkspace-ireadonlydictionary-string-jsonatabinding-int-int">Evaluate(string, JsonElement, JsonWorkspace, IReadOnlyDictionary&lt;string, JsonataBinding&gt;, int, int)</a></td>
 <td>Evaluates a JSONata expression against input data using the caller's workspace, with optional typed bindings that can include both values and callable functions.</td>
+</tr>
+<tr>
+<td><a href="#evaluate-string-jsonelement-jsonworkspace-ireadonlydictionary-string-jsonatabinding-int-int">Evaluate(string, JsonElement, JsonWorkspace, IReadOnlyDictionary&lt;string, JsonataBinding&gt;, int, int)</a></td>
+<td>Evaluates a JSONata expression against input data using the caller's workspace, with optional typed bindings that can include both values and callable functions.</td>
+</tr>
+<tr>
+<td><a href="#evaluate-byte-jsonelement-jsonworkspace-string-int-int">Evaluate(byte[], JsonElement, JsonWorkspace, string, int, int)</a></td>
+<td>Evaluates a JSONata expression provided as pre-encoded UTF-8 bytes. This overload bypasses the string-to-UTF-8 transcode. When a <code>cacheKey</code> is provided, the compiled expression is cached under that...</td>
 </tr>
 <tr>
 <td><a href="#evaluate-byte-jsonelement-jsonworkspace-string-int-int">Evaluate(byte[], JsonElement, JsonWorkspace, string, int, int)</a></td>
@@ -136,8 +160,24 @@
 </table>
 <h2 id="evaluate-string-jsonelement-int-int">Evaluate(string, JsonElement, int, int)</h2>
 <p>Evaluates a JSONata expression against JSON data.</p>
-<pre><code class="language-csharp">public JsonElement Evaluate(string expression, JsonElement data, int maxDepth, int timeLimitMs)
+<pre><code class="language-csharp">public TElement Evaluate&lt;TElement&gt;(string expression, JsonElement data, int maxDepth, int timeLimitMs)
+    where TElement : struct, IJsonElement&lt;TElement&gt;
 </code></pre>
+<h3 id="type-parameters">Type Parameters</h3>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>TElement</code></td>
+<td>The type of the JSON element to return.</td>
+</tr>
+</tbody>
+</table>
 <h3 id="parameters">Parameters</h3>
 <table>
 <thead>
@@ -171,9 +211,68 @@
 </tbody>
 </table>
 <h3 id="returns">Returns</h3>
+<p><code>TElement</code></p>
+<p>The result as a <code>TElement</code>. Returns a <code>default</code> value (with <a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonvaluekind.undefined.html"><code>Undefined</code></a>) if the expression produces no result.</p>
+<h2 id="applies-to">Applies To</h2>
+<table>
+<thead>
+<tr>
+<th>Product</th>
+<th>Versions</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>.NET</td>
+<td>9, 10</td>
+</tr>
+<tr>
+<td>.NET Standard</td>
+<td>2.0, 2.1</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="evaluate-string-jsonelement-int-int">Evaluate(string, JsonElement, int, int)</h2>
+<p>Evaluates a JSONata expression against JSON data.</p>
+<pre><code class="language-csharp">public JsonElement Evaluate(string expression, JsonElement data, int maxDepth, int timeLimitMs)
+</code></pre>
+<h3 id="parameters-1">Parameters</h3>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>expression</code></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string</code></a></td>
+<td>The JSONata expression string.</td>
+</tr>
+<tr>
+<td><code>data</code></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a></td>
+<td>The input JSON data.</td>
+</tr>
+<tr>
+<td><code>maxDepth</code></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>int</code></a></td>
+<td>The maximum recursion depth for function calls. Defaults to <code>DefaultMaxDepth</code>. Pass a lower value for safety, or a higher value for deeply recursive expressions. <em>(optional)</em></td>
+</tr>
+<tr>
+<td><code>timeLimitMs</code></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>int</code></a></td>
+<td>The maximum time in milliseconds for expression evaluation. Zero means no limit. When the limit is exceeded, a <a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonata-jsonataexception.html"><code>JsonataException</code></a> with code <code>U1001</code> is thrown. <em>(optional)</em></td>
+</tr>
+</tbody>
+</table>
+<h3 id="returns-1">Returns</h3>
 <p><a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a></p>
 <p>The result as a <a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a>. Returns a <code>default</code><a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a> (with <a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonvaluekind.undefined.html"><code>Undefined</code></a>) if the expression produces no result.</p>
-<h2 id="applies-to">Applies To</h2>
+<h2 id="applies-to-1">Applies To</h2>
 <table>
 <thead>
 <tr>
@@ -195,9 +294,25 @@
 <hr />
 <h2 id="evaluate-string-jsonelement-ireadonlydictionary-string-jsonelement-int-int">Evaluate(string, JsonElement, IReadOnlyDictionary&lt;string, JsonElement&gt;, int, int)</h2>
 <p>Evaluates a JSONata expression against input data with optional variable bindings.</p>
-<pre><code class="language-csharp">public JsonElement Evaluate(string expression, JsonElement data, IReadOnlyDictionary&lt;string, JsonElement&gt; bindings, int maxDepth, int timeLimitMs)
+<pre><code class="language-csharp">public TElement Evaluate&lt;TElement&gt;(string expression, JsonElement data, IReadOnlyDictionary&lt;string, JsonElement&gt; bindings, int maxDepth, int timeLimitMs)
+    where TElement : struct, IJsonElement&lt;TElement&gt;
 </code></pre>
-<h3 id="parameters-1">Parameters</h3>
+<h3 id="type-parameters-1">Type Parameters</h3>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>TElement</code></td>
+<td>The type of the JSON element to return.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="parameters-2">Parameters</h3>
 <table>
 <thead>
 <tr>
@@ -234,10 +349,161 @@
 </tr>
 </tbody>
 </table>
-<h3 id="returns-1">Returns</h3>
+<h3 id="returns-2">Returns</h3>
+<p><code>TElement</code></p>
+<p>The evaluation result as a <code>TElement</code>, or <code>default</code> if the result is undefined.</p>
+<h2 id="applies-to-2">Applies To</h2>
+<table>
+<thead>
+<tr>
+<th>Product</th>
+<th>Versions</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>.NET</td>
+<td>9, 10</td>
+</tr>
+<tr>
+<td>.NET Standard</td>
+<td>2.0, 2.1</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="evaluate-string-jsonelement-ireadonlydictionary-string-jsonelement-int-int">Evaluate(string, JsonElement, IReadOnlyDictionary&lt;string, JsonElement&gt;, int, int)</h2>
+<p>Evaluates a JSONata expression against input data with optional variable bindings.</p>
+<pre><code class="language-csharp">public JsonElement Evaluate(string expression, JsonElement data, IReadOnlyDictionary&lt;string, JsonElement&gt; bindings, int maxDepth, int timeLimitMs)
+</code></pre>
+<h3 id="parameters-3">Parameters</h3>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>expression</code></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string</code></a></td>
+<td>The JSONata expression string.</td>
+</tr>
+<tr>
+<td><code>data</code></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a></td>
+<td>The input JSON data element.</td>
+</tr>
+<tr>
+<td><code>bindings</code></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ireadonlydictionary-2"><code>IReadOnlyDictionary&lt;string, JsonElement&gt;</code></a></td>
+<td>Optional pre-defined variable bindings (name → value).</td>
+</tr>
+<tr>
+<td><code>maxDepth</code></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>int</code></a></td>
+<td>Maximum recursion depth (default 500). <em>(optional)</em></td>
+</tr>
+<tr>
+<td><code>timeLimitMs</code></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>int</code></a></td>
+<td>Maximum evaluation time in milliseconds (0 = no limit). <em>(optional)</em></td>
+</tr>
+</tbody>
+</table>
+<h3 id="returns-3">Returns</h3>
 <p><a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a></p>
 <p>The evaluation result as a <a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a>, or <code>default</code> if the result is undefined.</p>
-<h2 id="applies-to-1">Applies To</h2>
+<h2 id="applies-to-3">Applies To</h2>
+<table>
+<thead>
+<tr>
+<th>Product</th>
+<th>Versions</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>.NET</td>
+<td>9, 10</td>
+</tr>
+<tr>
+<td>.NET Standard</td>
+<td>2.0, 2.1</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="evaluate-string-jsonelement-jsonworkspace-ireadonlydictionary-string-jsonelement-int-int">Evaluate(string, JsonElement, JsonWorkspace, IReadOnlyDictionary&lt;string, JsonElement&gt;, int, int)</h2>
+<p>Evaluates a JSONata expression against input data using the caller's workspace.</p>
+<pre><code class="language-csharp">public TElement Evaluate&lt;TElement&gt;(string expression, JsonElement data, JsonWorkspace workspace, IReadOnlyDictionary&lt;string, JsonElement&gt; bindings, int maxDepth, int timeLimitMs)
+    where TElement : struct, IJsonElement&lt;TElement&gt;
+</code></pre>
+<h3 id="type-parameters-2">Type Parameters</h3>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>TElement</code></td>
+<td>The type of the JSON element to return.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="parameters-4">Parameters</h3>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>expression</code></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string</code></a></td>
+<td>The JSONata expression string.</td>
+</tr>
+<tr>
+<td><code>data</code></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a></td>
+<td>The input JSON data element.</td>
+</tr>
+<tr>
+<td><code>workspace</code></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonworkspace.html"><code>JsonWorkspace</code></a></td>
+<td>The workspace for intermediate document allocation. The returned element may reference documents owned by this workspace, so it remains valid only while the workspace is alive and has not been reset.</td>
+</tr>
+<tr>
+<td><code>bindings</code></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ireadonlydictionary-2"><code>IReadOnlyDictionary&lt;string, JsonElement&gt;</code></a></td>
+<td>Optional pre-defined variable bindings (name → value). <em>(optional)</em></td>
+</tr>
+<tr>
+<td><code>maxDepth</code></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>int</code></a></td>
+<td>Maximum recursion depth (default 500). <em>(optional)</em></td>
+</tr>
+<tr>
+<td><code>timeLimitMs</code></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>int</code></a></td>
+<td>Maximum evaluation time in milliseconds (0 = no limit). <em>(optional)</em></td>
+</tr>
+</tbody>
+</table>
+<h3 id="returns-4">Returns</h3>
+<p><code>TElement</code></p>
+<p>The evaluation result as a <code>TElement</code>, or <code>default</code> if the result is undefined.</p>
+<h3 id="remarks">Remarks</h3>
+<p>Because the result is not cloned, this overload avoids allocation at the evaluation boundary. The caller is responsible for ensuring the workspace outlives any use of the returned element.</p>
+<h2 id="applies-to-4">Applies To</h2>
 <table>
 <thead>
 <tr>
@@ -261,7 +527,7 @@
 <p>Evaluates a JSONata expression against input data using the caller's workspace.</p>
 <pre><code class="language-csharp">public JsonElement Evaluate(string expression, JsonElement data, JsonWorkspace workspace, IReadOnlyDictionary&lt;string, JsonElement&gt; bindings, int maxDepth, int timeLimitMs)
 </code></pre>
-<h3 id="parameters-2">Parameters</h3>
+<h3 id="parameters-5">Parameters</h3>
 <table>
 <thead>
 <tr>
@@ -303,12 +569,12 @@
 </tr>
 </tbody>
 </table>
-<h3 id="returns-2">Returns</h3>
+<h3 id="returns-5">Returns</h3>
 <p><a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a></p>
 <p>The evaluation result as a <a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a>, or <code>default</code> if the result is undefined.</p>
-<h3 id="remarks">Remarks</h3>
+<h3 id="remarks-1">Remarks</h3>
 <p>Because the result is not cloned, this overload avoids allocation at the evaluation boundary. The caller is responsible for ensuring the workspace outlives any use of the returned element.</p>
-<h2 id="applies-to-2">Applies To</h2>
+<h2 id="applies-to-5">Applies To</h2>
 <table>
 <thead>
 <tr>
@@ -330,9 +596,25 @@
 <hr />
 <h2 id="evaluate-string-jsonelement-ireadonlydictionary-string-jsonatabinding-int-int">Evaluate(string, JsonElement, IReadOnlyDictionary&lt;string, JsonataBinding&gt;, int, int)</h2>
 <p>Evaluates a JSONata expression against input data with optional typed bindings that can include both values and callable functions.</p>
-<pre><code class="language-csharp">public JsonElement Evaluate(string expression, JsonElement data, IReadOnlyDictionary&lt;string, JsonataBinding&gt; bindings, int maxDepth, int timeLimitMs)
+<pre><code class="language-csharp">public TElement Evaluate&lt;TElement&gt;(string expression, JsonElement data, IReadOnlyDictionary&lt;string, JsonataBinding&gt; bindings, int maxDepth, int timeLimitMs)
+    where TElement : struct, IJsonElement&lt;TElement&gt;
 </code></pre>
-<h3 id="parameters-3">Parameters</h3>
+<h3 id="type-parameters-3">Type Parameters</h3>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>TElement</code></td>
+<td>The type of the JSON element to return.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="parameters-6">Parameters</h3>
 <table>
 <thead>
 <tr>
@@ -369,10 +651,161 @@
 </tr>
 </tbody>
 </table>
-<h3 id="returns-3">Returns</h3>
+<h3 id="returns-6">Returns</h3>
+<p><code>TElement</code></p>
+<p>The evaluation result as a <code>TElement</code>, or <code>default</code> if the result is undefined.</p>
+<h2 id="applies-to-6">Applies To</h2>
+<table>
+<thead>
+<tr>
+<th>Product</th>
+<th>Versions</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>.NET</td>
+<td>9, 10</td>
+</tr>
+<tr>
+<td>.NET Standard</td>
+<td>2.0, 2.1</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="evaluate-string-jsonelement-ireadonlydictionary-string-jsonatabinding-int-int">Evaluate(string, JsonElement, IReadOnlyDictionary&lt;string, JsonataBinding&gt;, int, int)</h2>
+<p>Evaluates a JSONata expression against input data with optional typed bindings that can include both values and callable functions.</p>
+<pre><code class="language-csharp">public JsonElement Evaluate(string expression, JsonElement data, IReadOnlyDictionary&lt;string, JsonataBinding&gt; bindings, int maxDepth, int timeLimitMs)
+</code></pre>
+<h3 id="parameters-7">Parameters</h3>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>expression</code></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string</code></a></td>
+<td>The JSONata expression string.</td>
+</tr>
+<tr>
+<td><code>data</code></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a></td>
+<td>The input JSON data element.</td>
+</tr>
+<tr>
+<td><code>bindings</code></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ireadonlydictionary-2"><code>IReadOnlyDictionary&lt;string, JsonataBinding&gt;</code></a></td>
+<td>Optional pre-defined bindings (name → value or function).</td>
+</tr>
+<tr>
+<td><code>maxDepth</code></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>int</code></a></td>
+<td>Maximum recursion depth (default 500). <em>(optional)</em></td>
+</tr>
+<tr>
+<td><code>timeLimitMs</code></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>int</code></a></td>
+<td>Maximum evaluation time in milliseconds (0 = no limit). <em>(optional)</em></td>
+</tr>
+</tbody>
+</table>
+<h3 id="returns-7">Returns</h3>
 <p><a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a></p>
 <p>The evaluation result as a <a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a>, or <code>default</code> if the result is undefined.</p>
-<h2 id="applies-to-3">Applies To</h2>
+<h2 id="applies-to-7">Applies To</h2>
+<table>
+<thead>
+<tr>
+<th>Product</th>
+<th>Versions</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>.NET</td>
+<td>9, 10</td>
+</tr>
+<tr>
+<td>.NET Standard</td>
+<td>2.0, 2.1</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="evaluate-string-jsonelement-jsonworkspace-ireadonlydictionary-string-jsonatabinding-int-int">Evaluate(string, JsonElement, JsonWorkspace, IReadOnlyDictionary&lt;string, JsonataBinding&gt;, int, int)</h2>
+<p>Evaluates a JSONata expression against input data using the caller's workspace, with optional typed bindings that can include both values and callable functions.</p>
+<pre><code class="language-csharp">public TElement Evaluate&lt;TElement&gt;(string expression, JsonElement data, JsonWorkspace workspace, IReadOnlyDictionary&lt;string, JsonataBinding&gt; bindings, int maxDepth, int timeLimitMs)
+    where TElement : struct, IJsonElement&lt;TElement&gt;
+</code></pre>
+<h3 id="type-parameters-4">Type Parameters</h3>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>TElement</code></td>
+<td>The type of the JSON element to return.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="parameters-8">Parameters</h3>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>expression</code></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string</code></a></td>
+<td>The JSONata expression string.</td>
+</tr>
+<tr>
+<td><code>data</code></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a></td>
+<td>The input JSON data element.</td>
+</tr>
+<tr>
+<td><code>workspace</code></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonworkspace.html"><code>JsonWorkspace</code></a></td>
+<td>The workspace for intermediate document allocation. The returned element may reference documents owned by this workspace, so it remains valid only while the workspace is alive and has not been reset.</td>
+</tr>
+<tr>
+<td><code>bindings</code></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ireadonlydictionary-2"><code>IReadOnlyDictionary&lt;string, JsonataBinding&gt;</code></a></td>
+<td>Optional pre-defined bindings (name → value or function).</td>
+</tr>
+<tr>
+<td><code>maxDepth</code></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>int</code></a></td>
+<td>Maximum recursion depth (default 500). <em>(optional)</em></td>
+</tr>
+<tr>
+<td><code>timeLimitMs</code></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>int</code></a></td>
+<td>Maximum evaluation time in milliseconds (0 = no limit). <em>(optional)</em></td>
+</tr>
+</tbody>
+</table>
+<h3 id="returns-8">Returns</h3>
+<p><code>TElement</code></p>
+<p>The evaluation result as a <code>TElement</code>, or <code>default</code> if the result is undefined.</p>
+<h3 id="remarks-2">Remarks</h3>
+<p>Because the result is not cloned, this overload avoids allocation at the evaluation boundary. The caller is responsible for ensuring the workspace outlives any use of the returned element.</p>
+<h2 id="applies-to-8">Applies To</h2>
 <table>
 <thead>
 <tr>
@@ -396,7 +829,7 @@
 <p>Evaluates a JSONata expression against input data using the caller's workspace, with optional typed bindings that can include both values and callable functions.</p>
 <pre><code class="language-csharp">public JsonElement Evaluate(string expression, JsonElement data, JsonWorkspace workspace, IReadOnlyDictionary&lt;string, JsonataBinding&gt; bindings, int maxDepth, int timeLimitMs)
 </code></pre>
-<h3 id="parameters-4">Parameters</h3>
+<h3 id="parameters-9">Parameters</h3>
 <table>
 <thead>
 <tr>
@@ -438,12 +871,97 @@
 </tr>
 </tbody>
 </table>
-<h3 id="returns-4">Returns</h3>
+<h3 id="returns-9">Returns</h3>
 <p><a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a></p>
 <p>The evaluation result as a <a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a>, or <code>default</code> if the result is undefined.</p>
-<h3 id="remarks-1">Remarks</h3>
+<h3 id="remarks-3">Remarks</h3>
 <p>Because the result is not cloned, this overload avoids allocation at the evaluation boundary. The caller is responsible for ensuring the workspace outlives any use of the returned element.</p>
-<h2 id="applies-to-4">Applies To</h2>
+<h2 id="applies-to-9">Applies To</h2>
+<table>
+<thead>
+<tr>
+<th>Product</th>
+<th>Versions</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>.NET</td>
+<td>9, 10</td>
+</tr>
+<tr>
+<td>.NET Standard</td>
+<td>2.0, 2.1</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="evaluate-byte-jsonelement-jsonworkspace-string-int-int">Evaluate(byte[], JsonElement, JsonWorkspace, string, int, int)</h2>
+<p>Evaluates a JSONata expression provided as pre-encoded UTF-8 bytes. This overload bypasses the string-to-UTF-8 transcode. When a <code>cacheKey</code> is provided, the compiled expression is cached under that key (same cache as the string overloads). When <code>cacheKey</code> is <code>null</code>, the expression is compiled fresh each invocation — ideal for cold-start scenarios where each expression is evaluated once.</p>
+<pre><code class="language-csharp">public TElement Evaluate&lt;TElement&gt;(byte[] utf8Expression, JsonElement data, JsonWorkspace workspace, string cacheKey, int maxDepth, int timeLimitMs)
+    where TElement : struct, IJsonElement&lt;TElement&gt;
+</code></pre>
+<h3 id="type-parameters-5">Type Parameters</h3>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>TElement</code></td>
+<td>The type of the JSON element to return.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="parameters-10">Parameters</h3>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>utf8Expression</code></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.byte"><code>byte[]</code></a></td>
+<td>The JSONata expression as UTF-8 bytes.</td>
+</tr>
+<tr>
+<td><code>data</code></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a></td>
+<td>The input JSON data element.</td>
+</tr>
+<tr>
+<td><code>workspace</code></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonworkspace.html"><code>JsonWorkspace</code></a></td>
+<td>The workspace for intermediate document allocation. The returned element may reference documents owned by this workspace, so it remains valid only while the workspace is alive and has not been reset.</td>
+</tr>
+<tr>
+<td><code>cacheKey</code></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.string"><code>string</code></a></td>
+<td>Optional cache key. When non-null, the compiled expression is stored (and retrieved on subsequent calls) using this key. The caller is responsible for ensuring the key uniquely identifies the expression. <em>(optional)</em></td>
+</tr>
+<tr>
+<td><code>maxDepth</code></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>int</code></a></td>
+<td>Maximum recursion depth (default 500). <em>(optional)</em></td>
+</tr>
+<tr>
+<td><code>timeLimitMs</code></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>int</code></a></td>
+<td>Maximum evaluation time in milliseconds (0 = no limit). <em>(optional)</em></td>
+</tr>
+</tbody>
+</table>
+<h3 id="returns-10">Returns</h3>
+<p><code>TElement</code></p>
+<p>The evaluation result as a <code>TElement</code>, or <code>default</code> if the result is undefined.</p>
+<h2 id="applies-to-10">Applies To</h2>
 <table>
 <thead>
 <tr>
@@ -467,7 +985,7 @@
 <p>Evaluates a JSONata expression provided as pre-encoded UTF-8 bytes. This overload bypasses the string-to-UTF-8 transcode. When a <code>cacheKey</code> is provided, the compiled expression is cached under that key (same cache as the string overloads). When <code>cacheKey</code> is <code>null</code>, the expression is compiled fresh each invocation — ideal for cold-start scenarios where each expression is evaluated once.</p>
 <pre><code class="language-csharp">public JsonElement Evaluate(byte[] utf8Expression, JsonElement data, JsonWorkspace workspace, string cacheKey, int maxDepth, int timeLimitMs)
 </code></pre>
-<h3 id="parameters-5">Parameters</h3>
+<h3 id="parameters-11">Parameters</h3>
 <table>
 <thead>
 <tr>
@@ -509,10 +1027,10 @@
 </tr>
 </tbody>
 </table>
-<h3 id="returns-5">Returns</h3>
+<h3 id="returns-11">Returns</h3>
 <p><a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a></p>
 <p>The evaluation result as a <a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a>, or <code>default</code> if the result is undefined.</p>
-<h2 id="applies-to-5">Applies To</h2>
+<h2 id="applies-to-11">Applies To</h2>
 <table>
 <thead>
 <tr>
