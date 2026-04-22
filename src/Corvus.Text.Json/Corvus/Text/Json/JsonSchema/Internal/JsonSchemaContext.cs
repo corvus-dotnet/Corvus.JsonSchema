@@ -100,31 +100,80 @@ public struct JsonSchemaContext
         _rentedBuffer = rentedBuffer;
         _offset = offset;
         _resultsCollector = resultsCollector;
+
+        // Clear inherited length bits — this context starts with length 0.
+        // Keep only the flag bits (top nybble) and set IsMatch.
         _lengthAndUsingFeatures =
-            lengthAndUsingFeatures
-            | (uint)UsingFeatures.IsMatch; // But always  valid
+            (lengthAndUsingFeatures & 0xF000_0000U)
+            | (uint)UsingFeatures.IsMatch;
 
 #if NET
         if (evaluatedCount > MaxComplexValueCount)
         {
-            int bitBufferLength = EnsureBitBufferLengths(evaluatedCount);
+            // We need bits 0..evaluatedCount inclusive, so evaluatedCount+1 bits.
+            int bitBufferLength = (evaluatedCount + 32) >> 5;
+            int required = bitBufferLength * 2; // local + applied
+
+            if (_rentedBuffer is null)
+            {
+                // Root context: rent initial buffer
+                _rentedBuffer = ArrayPool<int>.Shared.Rent(Math.Max(InitialRentedBufferSize, required));
+                _rentedBuffer.AsSpan().Clear();
+                _lengthAndUsingFeatures |= (uint)UsingFeatures.IsDisposable;
+            }
+            else if (required > _rentedBuffer.Length - _offset)
+            {
+                // Not enough space in the shared buffer. Rent our own independent buffer.
+                // Do NOT return the shared buffer — it belongs to the parent.
+                _rentedBuffer = ArrayPool<int>.Shared.Rent(required);
+                _rentedBuffer.AsSpan(0, required).Clear();
+                _offset = 0;
+                _lengthAndUsingFeatures |= (uint)UsingFeatures.IsDisposable;
+            }
+            else
+            {
+                // Enough space in the shared buffer. Clear our portion.
+                _rentedBuffer.AsSpan(_offset, required).Clear();
+            }
+
             _localEvaluated[^1] = 0b1000_0000; // Set the top bit to indicate that we are using the buffer for evaluated items
             _appliedEvaluated[^1] = 0b1000_0000; // Set the top bit to indicate that we are using the buffer for evaluated items
             _localEvaluated[0] = _offset;
             _localEvaluated[1] = bitBufferLength;
             _appliedEvaluated[0] = _offset + bitBufferLength;
             _appliedEvaluated[1] = bitBufferLength;
-            _lengthAndUsingFeatures = (_lengthAndUsingFeatures & 0xF000_0000U) | unchecked((uint)(bitBufferLength * 2));
+            _lengthAndUsingFeatures = (_lengthAndUsingFeatures & 0xF000_0000U) | unchecked((uint)required);
         }
 #else
         if (evaluatedCount > 0)
         {
-            int bitBufferLength = EnsureBitBufferLengths(evaluatedCount);
-            _localEvaluatedOffset = offset;
+            // We need bits 0..evaluatedCount inclusive, so evaluatedCount+1 bits.
+            int bitBufferLength = (evaluatedCount + 32) >> 5;
+            int required = bitBufferLength * 2; // local + applied
+
+            if (_rentedBuffer is null)
+            {
+                _rentedBuffer = ArrayPool<int>.Shared.Rent(Math.Max(InitialRentedBufferSize, required));
+                _rentedBuffer.AsSpan().Clear();
+                _lengthAndUsingFeatures |= (uint)UsingFeatures.IsDisposable;
+            }
+            else if (required > _rentedBuffer.Length - _offset)
+            {
+                _rentedBuffer = ArrayPool<int>.Shared.Rent(required);
+                _rentedBuffer.AsSpan(0, required).Clear();
+                _offset = 0;
+                _lengthAndUsingFeatures |= (uint)UsingFeatures.IsDisposable;
+            }
+            else
+            {
+                _rentedBuffer.AsSpan(_offset, required).Clear();
+            }
+
+            _localEvaluatedOffset = _offset;
             _localEvaluatedLength = bitBufferLength;
-            _appliedEvaluatedOffset = offset + bitBufferLength;
+            _appliedEvaluatedOffset = _offset + bitBufferLength;
             _appliedEvaluatedLength = bitBufferLength;
-            _lengthAndUsingFeatures = (_lengthAndUsingFeatures & 0xF000_0000U) | unchecked((uint)(bitBufferLength * 2));
+            _lengthAndUsingFeatures = (_lengthAndUsingFeatures & 0xF000_0000U) | unchecked((uint)required);
         }
 #endif
     }
@@ -521,7 +570,13 @@ public struct JsonSchemaContext
     public void CommitChildContext<TProviderContext>(bool isMatch, ref readonly JsonSchemaContext childContext, TProviderContext providerContext, JsonSchemaMessageProvider<TProviderContext>? messageProvider = null)
     {
         _resultsCollector?.CommitChildContext(childContext._sequenceNumber, parentIsMatch: isMatch, childIsMatch: childContext.IsMatch, providerContext, messageProvider ?? (static (_, buffer, out written) => JsonSchemaEvaluation.EvaluatedSubschema(buffer, out written)));
-        _rentedBuffer = childContext._rentedBuffer;
+
+        if (!childContext.IsDisposable)
+        {
+            // Child shares our buffer — transfer the reference (typically a no-op).
+            _rentedBuffer = childContext._rentedBuffer;
+        }
+
         if (!isMatch)
         {
             _lengthAndUsingFeatures &= ~(uint)UsingFeatures.IsMatch;
@@ -556,7 +611,12 @@ public struct JsonSchemaContext
     public void CommitChildContext(bool isMatch, ref readonly JsonSchemaContext childContext, JsonSchemaMessageProvider? messageProvider = null)
     {
         _resultsCollector?.CommitChildContext(childContext._sequenceNumber, parentIsMatch: isMatch, childIsMatch: childContext.IsMatch, messageProvider ?? JsonSchemaEvaluation.EvaluatedSubschema);
-        _rentedBuffer = childContext._rentedBuffer;
+
+        if (!childContext.IsDisposable)
+        {
+            _rentedBuffer = childContext._rentedBuffer;
+        }
+
         if (!isMatch)
         {
             _lengthAndUsingFeatures &= ~(uint)UsingFeatures.IsMatch;
@@ -758,7 +818,17 @@ public struct JsonSchemaContext
     public void PopChildContext(ref readonly JsonSchemaContext childContext)
     {
         _resultsCollector?.PopChildContext(childContext._sequenceNumber);
-        _rentedBuffer = childContext._rentedBuffer;
+
+        if (!childContext.IsDisposable)
+        {
+            _rentedBuffer = childContext._rentedBuffer;
+        }
+        else
+        {
+            // Child allocated its own buffer — return it now since
+            // ApplyEvaluated will not be called on the pop path.
+            ReturnChildBuffer(in childContext);
+        }
     }
 
     /// <summary>
@@ -883,6 +953,9 @@ public struct JsonSchemaContext
             }
 #endif
         }
+
+        // If the child allocated its own independent buffer, return it now.
+        ReturnChildBuffer(in childContext);
     }
 
     public void Dispose()
@@ -1006,7 +1079,7 @@ public struct JsonSchemaContext
                 return new JsonSchemaContext(
                     sequenceNumber,
                     _rentedBuffer,
-                    _lengthAndUsingFeatures | usingFeatures & ~(uint)UsingFeatures.IsDisposable,
+                    (_lengthAndUsingFeatures | usingFeatures) & ~(uint)UsingFeatures.IsDisposable,
                     offset: _offset + Length,
                     evaluatedCount: parentDocument.GetPropertyCount(parentDocumentIndex),
                     resultsCollector: _resultsCollector);
@@ -1017,7 +1090,7 @@ public struct JsonSchemaContext
                 return new JsonSchemaContext(
                     sequenceNumber,
                     _rentedBuffer,
-                    _lengthAndUsingFeatures | usingFeatures & ~(uint)UsingFeatures.IsDisposable,
+                    (_lengthAndUsingFeatures | usingFeatures) & ~(uint)UsingFeatures.IsDisposable,
                     offset: _offset + Length,
                     evaluatedCount: parentDocument.GetArrayLength(parentDocumentIndex),
                     resultsCollector: _resultsCollector);
@@ -1033,72 +1106,13 @@ public struct JsonSchemaContext
             resultsCollector: _resultsCollector);
     }
 
-    private int EnsureBitBufferLengths(int count)
+    private static void ReturnChildBuffer(ref readonly JsonSchemaContext childContext)
     {
-        Debug.Assert(count != 0);
-
-        // Required property buffer length
-        int bitBufferLength = (count >> 5) + 1; // Divide by 32 (>> 5) gives offset, add 1 to give length
-        int propertyRemainder = count & 0b1_1111; // Remainder is the bottom 5 bits (0 > 31)
-        bitBufferLength += (propertyRemainder == 0 ? 0 : 1);
-
-        if (bitBufferLength > 0)
+        if (childContext.IsDisposable && childContext._rentedBuffer is not null)
         {
-            if ((_rentedBuffer is null || bitBufferLength > _rentedBuffer.Length - _offset - Length))
-            {
-                Enlarge(bitBufferLength * 2); // We double the required length in order to support local and applied bitBuffers
-            }
-            else
-            {
-                // Clear our bit of the buffer
-                _rentedBuffer.AsSpan(_offset, bitBufferLength * 2).Clear();
-            }
+            childContext._rentedBuffer.AsSpan().Clear();
+            ArrayPool<int>.Shared.Return(childContext._rentedBuffer);
         }
-
-        return bitBufferLength;
-    }
-
-    private void Enlarge(int required)
-    {
-        if (_rentedBuffer == null)
-        {
-            _rentedBuffer = ArrayPool<int>.Shared.Rent(InitialRentedBufferSize);
-            _rentedBuffer.AsSpan().Clear();
-            return;
-        }
-
-        int[] toReturn = _rentedBuffer;
-
-        // Allow the data to grow up to maximum possible capacity (~2G bytes) before encountering overflow.
-        // Note: Array.MaxLength exists only on .NET 6 or greater,
-        // so for the other versions value is hardcoded
-        const int MaxArrayLength = 0x7FFFFFC7;
-
-#if NET
-        Debug.Assert(MaxArrayLength == Array.MaxLength);
-#endif
-
-        // We will double the length, or use required
-        int newCapacity = Math.Max(toReturn.Length * 2, toReturn.Length + required);
-
-        // Note that this check works even when newCapacity overflowed thanks to the (uint) cast
-        if ((uint)newCapacity > MaxArrayLength) newCapacity = MaxArrayLength;
-
-        // If the maximum capacity has already been reached,
-        // then set the new capacity to be larger than what is possible
-        // so that ArrayPool.Rent throws an OutOfMemoryException for us.
-        if (newCapacity == toReturn.Length) newCapacity = int.MaxValue;
-
-        _rentedBuffer = ArrayPool<int>.Shared.Rent(newCapacity);
-        Buffer.BlockCopy(toReturn, 0, _rentedBuffer, 0, toReturn.Length * sizeof(int));
-
-        // Clear the new buffer bits
-        _rentedBuffer.AsSpan(toReturn.Length).Clear();
-
-        // The data in this rented buffer only conveys the
-        // index of items or properties in a complex value, but no content;
-        // so it does not need to be cleared.
-        ArrayPool<int>.Shared.Return(toReturn);
     }
 
 #if NET
