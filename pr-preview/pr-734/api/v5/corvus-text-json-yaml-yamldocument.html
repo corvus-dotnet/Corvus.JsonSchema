@@ -140,8 +140,8 @@
 </tbody>
 </table>
 <h2 id="examples">Examples</h2>
-<p>Parse YAML into a <code>JsonDocument</code>, or convert between YAML and JSON string representations.</p>
-<pre><code class="language-csharp">using System.Text.Json;
+<p>Parse YAML into a <code>ParsedJsonDocument&lt;TElement&gt;</code>, or convert between YAML and JSON string representations.</p>
+<pre><code class="language-csharp">using Corvus.Text.Json;
 using Corvus.Text.Json.Yaml;
 
 string yaml = &quot;&quot;&quot;
@@ -152,8 +152,8 @@ string yaml = &quot;&quot;&quot;
       - cycling
     &quot;&quot;&quot;;
 
-using JsonDocument doc = YamlDocument.Parse(yaml);
-string name = doc.RootElement.GetProperty(&quot;name&quot;).GetString()!;
+using ParsedJsonDocument&lt;JsonElement&gt; doc = YamlDocument.Parse&lt;JsonElement&gt;(yaml);
+string name = (string)doc.RootElement.GetProperty(&quot;name&quot;u8);
 // name: &quot;Alice&quot;
 </code></pre>
 <h3 id="converting-yaml-to-a-json-string">Converting YAML to a JSON string</h3>
@@ -179,7 +179,7 @@ string name = doc.RootElement.GetProperty(&quot;name&quot;).GetString()!;
     name: Bob
     &quot;&quot;&quot;;
 
-using JsonDocument docs = YamlDocument.Parse(multiDoc,
+using ParsedJsonDocument&lt;JsonElement&gt; docs = YamlDocument.Parse&lt;JsonElement&gt;(multiDoc,
     new YamlReaderOptions { DocumentMode = YamlDocumentMode.MultiAsArray });
 int count = docs.RootElement.GetArrayLength(); // 2
 </code></pre>

@@ -173,10 +173,11 @@
 </table>
 <h2 id="examples">Examples</h2>
 <p>Configure YAML parsing behaviour with <code>YamlReaderOptions</code>. The default options use the Core schema, single-document mode, and error on duplicate keys.</p>
-<pre><code class="language-csharp">using Corvus.Text.Json.Yaml;
+<pre><code class="language-csharp">using Corvus.Text.Json;
+using Corvus.Text.Json.Yaml;
 
 // Default options — Core schema, single document, duplicate keys error
-using JsonDocument doc = YamlDocument.Parse(yaml);
+using ParsedJsonDocument&lt;JsonElement&gt; doc = YamlDocument.Parse&lt;JsonElement&gt;(yaml);
 </code></pre>
 <h3 id="custom-options">Custom options</h3>
 <pre><code class="language-csharp">var options = new YamlReaderOptions
@@ -186,7 +187,7 @@ using JsonDocument doc = YamlDocument.Parse(yaml);
     DuplicateKeyBehavior = DuplicateKeyBehavior.LastWins,
 };
 
-using JsonDocument doc = YamlDocument.Parse(yaml, options);
+using ParsedJsonDocument&lt;JsonElement&gt; doc = YamlDocument.Parse&lt;JsonElement&gt;(yaml, options);
 </code></pre>
 <h3 id="schema-modes">Schema modes</h3>
 <table>
