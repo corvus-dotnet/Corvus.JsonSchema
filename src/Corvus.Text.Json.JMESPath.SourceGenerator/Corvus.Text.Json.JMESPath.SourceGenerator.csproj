@@ -1,7 +1,5 @@
 <Project Sdk="Microsoft.NET.Sdk">
-
   <Import Project="$(EndjinProjectPropsPath)" Condition="$(EndjinProjectPropsPath) != ''" />
-
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <Nullable>enable</Nullable>
@@ -11,15 +9,15 @@
     <RootNamespace>Corvus.Text.Json.JMESPath.SourceGenerator</RootNamespace>
     <CorvusTextJsonJMESPathPath>..\Corvus.Text.Json.JMESPath\</CorvusTextJsonJMESPathPath>
     <CorvusTextJsonJMESPathCodeGenPath>..\Corvus.Text.Json.JMESPath.CodeGeneration\</CorvusTextJsonJMESPathCodeGenPath>
+    <ManagePackageVersionsCentrally>false</ManagePackageVersionsCentrally>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
-
   <PropertyGroup Label="SourceGenerator">
     <IsRoslynComponent>true</IsRoslynComponent>
     <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
     <IncludeSymbols>false</IncludeSymbols>
     <DefineConstants>$(DefineConstants);BUILDING_SOURCE_GENERATOR</DefineConstants>
   </PropertyGroup>
-
   <PropertyGroup Label="Standard">
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <WarningsNotAsErrors>$(WarningsNotAsErrors);NU1901;NU1902;NU1903;NU1904</WarningsNotAsErrors>
@@ -33,14 +31,12 @@
     <EndjinDisableCreateEditorConfig>true</EndjinDisableCreateEditorConfig>
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
   </PropertyGroup>
-
   <PropertyGroup Label="NuGet">
     <DevelopmentDependency>true</DevelopmentDependency>
     <IncludeBuildOutput>false</IncludeBuildOutput>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <Description>Roslyn incremental source generator that produces optimized C# evaluation code from JMESPath expression files at build time.</Description>
   </PropertyGroup>
-
   <ItemGroup>
     <Using Include="System" />
     <Using Include="System.IO" />
@@ -49,7 +45,6 @@
     <Using Include="System.Threading" />
     <Using Include="System.Collections.Generic" />
   </ItemGroup>
-
   <!-- Roslyn and polyfill packages -->
   <ItemGroup>
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.12.0" PrivateAssets="all" />
@@ -58,17 +53,14 @@
     <PackageReference Include="StyleCop.Analyzers" Version="1.2.0-beta.556" PrivateAssets="All" />
     <PackageReference Include="Roslynator.Analyzers" Version="4.13.1" PrivateAssets="All" />
   </ItemGroup>
-
   <!-- Generator's own source files -->
   <ItemGroup>
     <Compile Include="JMESPathSourceGenerator.cs" />
   </ItemGroup>
-
   <!-- Link the JMESPath code generation engine -->
   <ItemGroup>
     <Compile Include="$(CorvusTextJsonJMESPathCodeGenPath)JMESPathCodeGenerator.cs" LinkBase="CodeGeneration" />
   </ItemGroup>
-
   <!-- Link the JMESPath parser, lexer, and AST (no external dependencies) -->
   <ItemGroup>
     <Compile Include="$(CorvusTextJsonJMESPathPath)Parser.cs" LinkBase="JMESPath" />
@@ -79,10 +71,11 @@
     <Compile Include="$(CorvusTextJsonJMESPathPath)JMESPathException.cs" LinkBase="JMESPath" />
     <Compile Include="$(CorvusTextJsonJMESPathPath)FusedPipePlanner.cs" LinkBase="JMESPath" />
   </ItemGroup>
-
   <!-- Package the generator DLL into analyzers/dotnet/cs -->
   <ItemGroup>
     <None Include="$(OutputPath)\$(AssemblyName).dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
   </ItemGroup>
-
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
 </Project>

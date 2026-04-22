@@ -1,7 +1,5 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
-
+<Project Sdk="Microsoft.NET.Sdk">
   <Import Project="$(EndjinProjectPropsPath)" Condition="$(EndjinProjectPropsPath) != ''" />
-
   <PropertyGroup>
     <TargetFrameworks>net9.0;net10.0;netstandard2.0;netstandard2.1</TargetFrameworks>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
@@ -26,11 +24,9 @@
     <DefineConstants>$(DefineConstants);CORVUS_TEXT_JSON_CODEGENERATION</DefineConstants>
     <EndjinDisableCreateEditorConfig>true</EndjinDisableCreateEditorConfig>
   </PropertyGroup>
-
   <ItemGroup>
     <None Include="README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
-
   <ItemGroup>
     <Compile Include="EcmaRegexTranslator.cs" />
     <Compile Include="StandaloneEvaluatorGenerator.cs" />
@@ -124,41 +120,35 @@
     <Compile Include="ValidationHandlers\FormatValidationHandler.cs" />
     <Compile Include="ValidationHandlers\TypeValidationHandler.cs" />
   </ItemGroup>
-
   <ItemGroup>
     <!-- DateTimeParsing -->
     <Compile Include="$(CorvusTextJsonPath)Corvus\Text\Json\Internal\JsonElementHelpers.DateTime.Core.cs" Link="Corvus.Text.Json\JsonElementHelpers.DateTime.Core.cs" />
     <!-- NumberParsing -->
     <Compile Include="$(CorvusTextJsonPath)Corvus\Text\Json\Internal\JsonElementHelpers.Numeric.Core.cs" Link="Corvus.Text.Json\JsonElementHelpers.Numeric.Core.cs" />
   </ItemGroup>
-
   <ItemGroup>
     <InternalsVisibleTo Include="Corvus.Text.Json.Tests" />
     <InternalsVisibleTo Include="Corvus.Text.Json.CodeGenerator.Tests" />
   </ItemGroup>
-
   <ItemGroup>
     <ProjectReference Include="..\..\src-v4\Corvus.Json.CodeGeneration\Corvus.Json.CodeGeneration.csproj" />
   </ItemGroup>
-
   <ItemGroup>
-    <PackageReference Include="Endjin.RecommendedPractices.GitHub" Version="2.1.18" PrivateAssets="All" />
-    <PackageReference Include="Microsoft.CodeAnalysis.ResxSourceGenerator" Version="5.0.0-1.25277.114">
+    <PackageReference Include="Endjin.RecommendedPractices.GitHub" PrivateAssets="All" />
+    <PackageReference Include="Microsoft.CodeAnalysis.ResxSourceGenerator">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="StyleCop.Analyzers" Version="1.2.0-beta.556" PrivateAssets="All" />
-    <PackageReference Include="Roslynator.Analyzers" Version="4.13.1" PrivateAssets="All" />
-    <PackageReference Include="Microsoft.Bcl.Memory" Version="10.0.4" />
-    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="5.3.0" />
+    <PackageReference Include="StyleCop.Analyzers" PrivateAssets="All" />
+    <PackageReference Include="Roslynator.Analyzers" PrivateAssets="All" />
+    <PackageReference Include="Microsoft.Bcl.Memory" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
   </ItemGroup>
-
   <ItemGroup>
     <Using Include="System" />
     <Using Include="System.Text" />
     <Using Include="SR = Resources.Strings" />
   </ItemGroup>
-
   <ItemGroup>
     <EmbeddedResource Include="Resources\Strings.resx" Visible="true" IncludeDefaultValues="true" EmitFormatMethods="false" GenerateSource="true" OmitGetResourceString="true" />
     <Compile Include="SR.cs" Visible="true" Link="Resources/Common/SR.cs" />

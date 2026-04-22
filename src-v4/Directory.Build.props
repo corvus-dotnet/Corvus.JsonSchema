@@ -4,10 +4,11 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
 
-  <!-- Pin Microsoft.Bcl.Memory to a non-vulnerable version (9.0.14+) on netstandard2.0.
-       System.Text.Json transitively pulls in 9.0.0 which has GHSA-73j8-2gch-69rq. -->
-  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0' Or '$(TargetFramework)' == 'netstandard2.1'">
-    <PackageReference Include="Microsoft.Bcl.Memory" Version="9.0.14" />
+  <!-- Pin Microsoft.Bcl.Memory on netstandard2.0/2.1 to ensure a non-vulnerable version.
+       Version is centrally managed in Directory.Packages.props; source generators that
+       opt out of central management must add their own versioned reference. -->
+  <ItemGroup Condition="('$(TargetFramework)' == 'netstandard2.0' Or '$(TargetFramework)' == 'netstandard2.1') And '$(ManagePackageVersionsCentrally)' != 'false'">
+    <PackageReference Include="Microsoft.Bcl.Memory" />
   </ItemGroup>
 
 </Project>

@@ -1,6 +1,5 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <Import Project="$(EndjinProjectPropsPath)" Condition="$(EndjinProjectPropsPath) != ''" />
-
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <LangVersion>12.0</LangVersion>
@@ -9,12 +8,10 @@
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
     <NoWarn>$(NoWarn);nullable;IDE0007;NU5128;RS2008;SA0001;SA1633;SA1101;SA1201;SA1202;SA1204;SA1401;SA1413;SA1512;SA1629</NoWarn>
   </PropertyGroup>
-
   <PropertyGroup>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <Description>Tools to assist people building .NET Source Generators for language providers other than the original Corvus.Json.CodeGeneration.CSharp.CSharpLanguageProvider.</Description>
   </PropertyGroup>
-
   <ItemGroup>
     <Using Include="System" />
     <Using Include="System.IO" />
@@ -24,7 +21,6 @@
     <Using Include="System.Threading.Tasks" />
     <Using Include="System.Collections.Generic" />
   </ItemGroup>
-
   <ItemGroup>
     <Compile Include="..\Corvus.Json.ExtendedTypes\Corvus.Json\**\*.cs">
       <Link>Corvus.Json.ExtendedTypes\%(RecursiveDir)\%(Filename)%(Extension)</Link>
@@ -80,13 +76,11 @@
     <Compile Include="..\Corvus.Json.JsonSchema.OpenApi31\OpenApi31\**\*.cs">
       <Link>Corvus.Json.CodeGeneration.OpenApi31\%(RecursiveDir)\%(Filename)%(Extension)</Link>
     </Compile>
-
     <Compile Remove="..\Corvus.Json.CodeGeneration\Corvus.Json.CodeGeneration\**\FileSystemDocumentResolver.cs" />
     <Compile Remove="..\Corvus.Json.CodeGeneration.CSharp\Corvus.Json.CodeGeneration\CSharp\**\NullableAttributes.cs" />
     <Compile Remove="..\Corvus.Json.JsonReference\Corvus.Json\**\NullableAttributes.cs" />
     <Compile Remove="..\Corvus.Json.ExtendedTypes\Corvus.Json\**\NullableAttributes.cs" />
   </ItemGroup>
-
   <ItemGroup>
     <EmbeddedResource Include="metaschema\corvus\meta\corvus-extensions.json" />
     <EmbeddedResource Include="metaschema\corvus\schema.json" />
@@ -112,41 +106,35 @@
     <EmbeddedResource Include="metaschema\draft6\schema.json" />
     <EmbeddedResource Include="metaschema\draft7\schema.json" />
   </ItemGroup>
-
-
   <ItemGroup>
-    <PackageReference Include="Endjin.RecommendedPractices.GitHub" Version="2.1.18">
+    <PackageReference Include="Endjin.RecommendedPractices.GitHub">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
   </ItemGroup>
-
   <ItemGroup>
-    <PackageReference Include="IndexRange" Version="1.1.0" />
-    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.12.0" />
-    <PackageReference Include="Microsoft.Extensions.ObjectPool" Version="8.0.11" />
-    <PackageReference Include="NodaTime" Version="3.2.1" />
-    <PackageReference Include="System.Reflection.Emit.Lightweight" Version="4.7.0" />
-    <PackageReference Include="System.Text.Json" Version="8.0.6" />
-    <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="8.0.0" />
-    <PackageReference Include="Microsoft.Bcl.HashCode" Version="6.0.0" />
-    <PackageReference Include="System.Buffers" Version="4.6.1" />
-    <PackageReference Include="System.Collections.Immutable" Version="9.0.0" />
-    <PackageReference Include="System.IO.Pipelines" Version="8.0.0" />
-    <PackageReference Include="System.Memory" Version="4.6.3" />
-    <PackageReference Include="System.Numerics.Vectors" Version="4.6.1" />
-    <PackageReference Include="System.Reflection.Metadata" Version="9.0.0" />
-    <PackageReference Include="System.Text.Encoding.CodePages" Version="8.0.0" />
-    <PackageReference Include="System.Text.Encodings.Web" Version="8.0.0" />
-    <PackageReference Include="System.Threading.Tasks.Extensions" Version="4.6.3" />
+    <PackageReference Include="IndexRange" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
+    <PackageReference Include="Microsoft.Extensions.ObjectPool" />
+    <PackageReference Include="NodaTime" />
+    <PackageReference Include="System.Reflection.Emit.Lightweight" />
+    <PackageReference Include="System.Text.Json" />
+    <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" />
+    <PackageReference Include="Microsoft.Bcl.HashCode" />
+    <PackageReference Include="System.Buffers" />
+    <PackageReference Include="System.Collections.Immutable" />
+    <PackageReference Include="System.IO.Pipelines" />
+    <PackageReference Include="System.Memory" />
+    <PackageReference Include="System.Numerics.Vectors" />
+    <PackageReference Include="System.Reflection.Metadata" />
+    <PackageReference Include="System.Text.Encoding.CodePages" />
+    <PackageReference Include="System.Text.Encodings.Web" />
+    <PackageReference Include="System.Threading.Tasks.Extensions" />
   </ItemGroup>
-
   <ItemGroup>
-    <PackageReference Update="Roslynator.Analyzers" Version="4.12.9" />
+    <PackageReference Update="Roslynator.Analyzers" />
   </ItemGroup>
-
   <ItemGroup>
     <Folder Include="Community.HighPerformance\Buffers\Views\" />
   </ItemGroup>
-
 </Project>

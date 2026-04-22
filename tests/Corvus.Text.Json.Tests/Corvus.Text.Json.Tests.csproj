@@ -1,5 +1,4 @@
 <Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
     <TargetFrameworks>net10.0;net481</TargetFrameworks>
     <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
@@ -44,29 +43,24 @@
     <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
     <PreserveCompilationContext>true</PreserveCompilationContext>
   </PropertyGroup>
-
   <ItemGroup>
     <None Remove="ILLink.Descriptors.xml" />
     <None Remove="Innerloop.playlist" />
   </ItemGroup>
-
   <ItemGroup>
     <Using Include="System" />
     <Using Include="System.Text" />
     <Using Include="SR = Corvus.Text.Json.Tests.Resources.Strings" />
   </ItemGroup>
-
   <ItemGroup>
     <ProjectReference Include="..\..\src-v4\Corvus.Json.ExtendedTypes\Corvus.Json.ExtendedTypes.csproj" />
-    <PackageReference Include="Microsoft.Bcl.Memory" Version="10.0.4" />
-    <PackageReference Include="Microsoft.Extensions.DependencyModel" Version="10.0.4" />
+    <PackageReference Include="Microsoft.Bcl.Memory" />
+    <PackageReference Include="Microsoft.Extensions.DependencyModel" />
   </ItemGroup>
-  
   <ItemGroup Condition="'$(TargetFramework)' == 'net481'">
-    <PackageReference Include="System.Runtime.Loader" Version="4.3.0" />
-    <PackageReference Include="System.Net.Http" Version="4.3.4" />
+    <PackageReference Include="System.Runtime.Loader" />
+    <PackageReference Include="System.Net.Http" />
   </ItemGroup>
-
   <ItemGroup>
     <EmbeddedResource Include="Resources\Strings.resx" Visible="true" IncludeDefaultValues="true" EmitFormatMethods="false" GenerateSource="true" OmitGetResourceString="true" />
     <Compile Include="BigNumber\BigNumberArithmeticTests.cs" />
@@ -168,26 +162,21 @@
     <!-- Include common SR helper when resources are included. -->
     <Compile Include="System\SR$(DefaultLanguageSourceExtension)" Visible="true" Link="Resources/Common/SR$(DefaultLanguageSourceExtension)" />
   </ItemGroup>
-
   <ItemGroup Condition="'$(ContinuousIntegrationBuild)' == 'true'">
     <HighAotMemoryUsageAssembly Include="Corvus.Text.Json.Tests.dll" />
   </ItemGroup>
-
   <!-- Adds Nullable annotation attributes to C# non .NETCoreApp builds. -->
   <ItemGroup Condition="'$(TargetFramework)' == 'net481'">
     <Compile Include="$(CoreLibSharedDir)System\Diagnostics\CodeAnalysis\NullableAttributes.cs" Link="System\Diagnostics\CodeAnalysis\NullableAttributes.cs" />
   </ItemGroup>
-
   <!-- Adds polyfills on non-.NETCoreApp builds -->
   <ItemGroup Condition="'$(TargetFramework)' == 'net481'">
     <Compile Include="$(CoreLibSharedDir)System\Runtime\CompilerServices\CallerArgumentExpressionAttribute.cs" />
     <Compile Include="$(LibrariesProjectRoot)\Common\src\System\ExceptionPolyfills.cs" Link="System\ExceptionPolyfills.cs" />
   </ItemGroup>
-
   <ItemGroup Condition="'$(TargetFramework)' == 'net481'">
     <Compile Include="$(CoreLibSharedDir)System\Runtime\Versioning\PlatformAttributes.cs" Link="System\Runtime\Versioning\PlatformAttributes.cs" />
   </ItemGroup>
-
   <!-- Adds ObsoleteAttribute to projects that need to apply downlevel Obsoletions with DiagnosticId and UrlFormat -->
   <Choose>
     <When Condition="'$(TargetFramework)' == 'net481'">
@@ -200,17 +189,14 @@
       </PropertyGroup>
     </When>
   </Choose>
-
   <ItemGroup Condition="'$(TargetFramework)' == 'net481'">
     <Compile Include="$(CoreLibSharedDir)System\Index.cs" Link="System\Index.cs" />
     <Compile Include="$(CoreLibSharedDir)System\Range.cs" Link="System\Range.cs" />
     <Compile Include="$(CoreLibSharedDir)System\Numerics\Hashing\HashHelpers.cs" Link="System\Numerics\Hashing\HashHelpers.cs" />
   </ItemGroup>
-
   <PropertyGroup>
     <NoWarn Condition="'$(TargetFramework)' == 'net481'">$(NoWarn);nullable</NoWarn>
   </PropertyGroup>
-
   <ItemGroup>
     <Compile Include="AssemblyInfo.cs" />
     <Compile Include="$(CommonTestPath)System\IO\WrappedMemoryStream.cs" Link="CommonTest\System\IO\WrappedMemoryStream.cs" />
@@ -286,7 +272,6 @@
     <Compile Include="Utf8IriReferenceTests.cs" />
     <Compile Include="Utf8IriTests.cs" />
   </ItemGroup>
-
   <ItemGroup Condition="'$(TargetFramework)' == 'net481'">
     <Compile Include="$(CommonPath)System\Buffers\ArrayBufferWriter.cs" Link="CommonTest\System\Buffers\ArrayBufferWriter.cs" />
     <Compile Include="$(CoreLibSharedDir)System\Diagnostics\CodeAnalysis\DynamicallyAccessedMemberTypes.cs" />
@@ -296,37 +281,32 @@
     <Compile Include="$(CoreLibSharedDir)System\Runtime\CompilerServices\IsExternalInit.cs" />
     <Compile Include="$(CoreLibSharedDir)System\Runtime\CompilerServices\RequiredMemberAttribute.cs" Link="System.Private.CoreLib\System\Runtime\CompilerServices\RequiredMemberAttribute.cs" />
   </ItemGroup>
-
   <ItemGroup>
     <ProjectReference Include="..\..\src-v4\Corvus.Json.CodeGeneration\Corvus.Json.CodeGeneration.csproj" />
-    <PackageReference Include="Microsoft.DotNet.RemoteExecutor" Version="10.0.0-beta.25228.101" />
-    <PackageReference Include="Microsoft.DotNet.XUnitExtensions" Version="10.0.0-beta.25227.101" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.3.0" />
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.5-beta1" />
-    <PackageReference Include="xunit" Version="2.9.3" />
-    <PackageReference Include="xunit.runner.visualstudio" Version="3.1.5">
+    <PackageReference Include="Microsoft.DotNet.RemoteExecutor" />
+    <PackageReference Include="Microsoft.DotNet.XUnitExtensions" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="Newtonsoft.Json" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
   </ItemGroup>
-
   <!-- Only include System.Text.Json for net481 as it's included in .NET 6+ runtime -->
   <ItemGroup Condition="'$(TargetFramework)' == 'net481'">
-    <PackageReference Include="System.Text.Json" Version="10.0.4" />
+    <PackageReference Include="System.Text.Json" />
   </ItemGroup>
-
   <ItemGroup Condition="'$(TargetFramework)' == 'net481'">
-    <PackageReference Include="System.Collections.Immutable" Version="10.0.4" />
-    <PackageReference Include="System.IO.Pipelines" Version="10.0.4" />
-    <PackageReference Include="System.Linq.AsyncEnumerable" Version="10.0.4" />
+    <PackageReference Include="System.Collections.Immutable" />
+    <PackageReference Include="System.IO.Pipelines" />
+    <PackageReference Include="System.Linq.AsyncEnumerable" />
     <Reference Include="Microsoft.CSharp" />
-    <PackageReference Include="System.ComponentModel.Annotations" Version="5.0.0" />
+    <PackageReference Include="System.ComponentModel.Annotations" />
   </ItemGroup>
-
   <ItemGroup>
-    <PackageReference Include="JsonSchema.Net" Version="9.1.2" />
+    <PackageReference Include="JsonSchema.Net" />
   </ItemGroup>
-
   <ItemGroup>
     <ProjectReference Include="..\..\Common\tests\TestUtilities\TestUtilities.csproj" />
     <ProjectReference Include="..\..\src\Corvus.Text.Json\Corvus.Text.Json.csproj" />
@@ -335,38 +315,30 @@
     <ProjectReference Include="..\Corvus.Text.Json.Tests.MigrationModels.V4\Corvus.Text.Json.Tests.MigrationModels.V4.csproj" />
     <ProjectReference Include="..\Corvus.Text.Json.Tests.MigrationModels.V5\Corvus.Text.Json.Tests.MigrationModels.V5.csproj" />
   </ItemGroup>
-
   <ItemGroup Condition="'$(TargetFramework)' == 'net10.0'">
     <PackageReference Include="Microsoft.DotNet.XUnitAssert">
-      <Version>2.9.2-beta.25225.102</Version>
     </PackageReference>
   </ItemGroup>
-
   <ItemGroup>
-    <PackageReference Include="Microsoft.CodeAnalysis.ResxSourceGenerator" Version="5.0.0-1.25277.114">
+    <PackageReference Include="Microsoft.CodeAnalysis.ResxSourceGenerator">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
   </ItemGroup>
-
   <ItemGroup>
     <None Remove="..\..\Common\tests\xunit.runner.json" />
   </ItemGroup>
-
   <ItemGroup>
     <None Include="$(CommonTestPath)xunit.runner.json" CopyToOutputDirectory="PreserveNewest" Visible="false" />
   </ItemGroup>
-
   <ItemGroup>
     <Compile Include="JsonSchemaTestSuite\**\*.cs" />
     <Compile Include="StandaloneEvaluatorTestSuite\**\*.cs" />
     <Compile Include="AnnotationTestSuite\**\*.cs" />
   </ItemGroup>
-
   <ItemGroup>
     <Folder Include="JsonSchemaTestSuite\" />
     <Folder Include="StandaloneEvaluatorTestSuite\" />
     <Folder Include="AnnotationTestSuite\" />
   </ItemGroup>
-
 </Project>

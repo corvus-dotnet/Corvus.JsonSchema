@@ -6,6 +6,6 @@
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="System.Reflection.MetadataLoadContext" Version="9.0.4" />
+    <PackageReference Include="System.Reflection.MetadataLoadContext" />
   </ItemGroup>
 </Project>

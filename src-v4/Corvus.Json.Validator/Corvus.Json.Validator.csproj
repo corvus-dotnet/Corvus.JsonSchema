@@ -1,42 +1,36 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <Import Project="$(EndjinProjectPropsPath)" Condition="$(EndjinProjectPropsPath) != ''" />
-
   <PropertyGroup>
     <TargetFrameworks>netstandard2.0;net8.0;net9.0;net10.0</TargetFrameworks>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <PreserveCompilationContext>true</PreserveCompilationContext>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
-
   <PropertyGroup>
     <NoWarn>CS1591</NoWarn>
   </PropertyGroup>
-
   <PropertyGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
     <NoWarn>$(NoWarn);nullable</NoWarn>
   </PropertyGroup>
-
   <PropertyGroup>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <Description>Dynamically load JSON Schema and validate JSON documents.</Description>
   </PropertyGroup>
-
   <ItemGroup>
     <None Include="build\**" Pack="true" PackagePath="build\" />
   </ItemGroup>
-
   <ItemGroup>
-    <PackageReference Include="Endjin.RecommendedPractices.GitHub" Version="2.1.18">
+    <PackageReference Include="Endjin.RecommendedPractices.GitHub">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.Extensions.DependencyModel" Version="10.0.4" />
-    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.12.0" />
-    <PackageReference Include="System.Collections.Immutable" Version="10.0.4" />
-    <PackageReference Include="System.Reflection.Metadata" Version="10.0.4" />
-    <PackageReference Include="System.Text.Json" Version="10.0.4" />
+    <PackageReference Include="Microsoft.Extensions.DependencyModel" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
+    <PackageReference Include="System.Collections.Immutable" />
+    <PackageReference Include="System.Reflection.Metadata" />
+    <PackageReference Include="System.Text.Json" />
   </ItemGroup>
-
   <ItemGroup>
     <ProjectReference Include="..\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.201909.csproj" />
     <ProjectReference Include="..\Corvus.Json.CodeGeneration.202012\Corvus.Json.CodeGeneration.202012.csproj" />
@@ -50,15 +44,12 @@
     <ProjectReference Include="..\Corvus.Json.CodeGeneration\Corvus.Json.CodeGeneration.csproj" />
     <ProjectReference Include="..\Corvus.Json.ExtendedTypes\Corvus.Json.ExtendedTypes.csproj" />
   </ItemGroup>
-
   <ItemGroup>
-    <PackageReference Update="StyleCop.Analyzers" Version="1.2.0-beta.435" />
+    <PackageReference Update="StyleCop.Analyzers" />
   </ItemGroup>
-
   <ItemGroup>
-    <PackageReference Update="Roslynator.Analyzers" Version="4.12.9" />
+    <PackageReference Update="Roslynator.Analyzers" />
   </ItemGroup>
-
   <ItemGroup>
     <EmbeddedResource Include="metaschema\corvus\meta\corvus-extensions.json" />
     <EmbeddedResource Include="metaschema\corvus\schema.json" />
@@ -84,5 +75,7 @@
     <EmbeddedResource Include="metaschema\draft6\schema.json" />
     <EmbeddedResource Include="metaschema\draft7\schema.json" />
   </ItemGroup>
-
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
 </Project>

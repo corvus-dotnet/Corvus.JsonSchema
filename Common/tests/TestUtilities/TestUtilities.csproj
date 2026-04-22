@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFrameworks>net10.0;net481</TargetFrameworks>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
@@ -39,27 +39,22 @@
   <ItemGroup>
     <AdditionalFiles Include="JsonSchemaTestSuite\test-schema.json" />
   </ItemGroup>
-
   <ItemGroup>
     <Using Include="System" />
     <Using Include="System.Text" />
   </ItemGroup>
-
   <!-- Adds Nullable annotation attributes to C# non .NETCoreApp builds. -->
   <ItemGroup Condition="'$(TargetFramework)' == 'net481'">
     <Compile Include="$(CoreLibSharedDir)System\Diagnostics\CodeAnalysis\NullableAttributes.cs" Link="System\Diagnostics\CodeAnalysis\NullableAttributes.cs" />
   </ItemGroup>
-
   <!-- Adds polyfills on non-.NETCoreApp builds -->
   <ItemGroup Condition="'$(TargetFramework)' == 'net481'">
     <Compile Include="$(CoreLibSharedDir)System\Runtime\CompilerServices\CallerArgumentExpressionAttribute.cs" />
     <Compile Include="$(LibrariesProjectRoot)\Common\src\System\ExceptionPolyfills.cs" Link="System\ExceptionPolyfills.cs" />
   </ItemGroup>
-
   <ItemGroup Condition="'$(TargetFramework)' == 'net481'">
     <Compile Include="$(CoreLibSharedDir)System\Runtime\Versioning\PlatformAttributes.cs" Link="System\Runtime\Versioning\PlatformAttributes.cs" />
   </ItemGroup>
-
   <!-- Adds ObsoleteAttribute to projects that need to apply downlevel Obsoletions with DiagnosticId and UrlFormat -->
   <Choose>
     <When Condition="'$(TargetFramework)' == 'net481'">
@@ -72,18 +67,14 @@
       </PropertyGroup>
     </When>
   </Choose>
-
   <ItemGroup Condition="'$(TargetFramework)' == 'net481'">
     <Compile Include="$(CoreLibSharedDir)System\Index.cs" Link="System\Index.cs" />
     <Compile Include="$(CoreLibSharedDir)System\Range.cs" Link="System\Range.cs" />
     <Compile Include="$(CoreLibSharedDir)System\Numerics\Hashing\HashHelpers.cs" Link="System\Numerics\Hashing\HashHelpers.cs" />
   </ItemGroup>
-
   <PropertyGroup>
     <NoWarn Condition="'$(TargetFramework)' == 'net481'">$(NoWarn);nullable</NoWarn>
   </PropertyGroup>
-
-
   <ItemGroup>
     <!--<Compile Include="System\AdminHelpers.cs" />-->
     <Compile Include="FakeWebDocumentResolver.cs" />
@@ -111,26 +102,21 @@
     <Compile Include="System\PlatformDetection.Unix.cs" />
     <Compile Include="System\PlatformDetection.Windows.cs" />-->
     <!--<Compile Include="System\WindowsIdentityFixture.cs" />-->
-
     <Compile Include="$(CommonPath)System\Text\ValueStringBuilder.cs" Link="Common\System\Text\ValueStringBuilder.cs" />
     <!--
       Interop.Library is not designed to support runtime checks therefore we are picking the Windows
       variant from the Common folder and adding the missing members manually.
     -->
     <Compile Include="Interop\Interop.Libraries.cs" />
-
     <Compile Include="RandomTestCaseOrderer.cs" />
     <Compile Include="RandomTestCollectionOrderer.cs" />
-
     <Compile Include="TestEventListener.cs" />
-
     <Compile Include="TestEvaluatorHelper.cs" />
     <Compile Include="AnnotationTestHelper.cs" />
     <Compile Include="TestJsonSchemaCodeGenerator.cs" />
   </ItemGroup>
-
- 
-  <!-- Windows imports --><!--
+  <!-- Windows imports -->
+  <!--
   <ItemGroup Condition="'$(TargetFramework)' != 'net481'">
     <Compile Include="$(CommonPath)Interop\Windows\Kernel32\Interop.CreateFile.cs" Link="Common\Interop\Windows\Kernel32\Interop.CreateFile.cs" />
     <Compile Include="$(CommonPath)Interop\Windows\Kernel32\Interop.FileOperations.cs" Link="Common\Interop\Windows\Kernel32\Interop.FileOperations.cs" />
@@ -150,7 +136,9 @@
     <Compile Include="$(CommonPath)System\IO\PathInternal.Windows.cs" Link="Common\System\IO\PathInternal.Windows.cs" />
   </ItemGroup>
 
-  --><!-- Unix imports --><!--
+  -->
+  <!-- Unix imports -->
+  <!--
   <ItemGroup Condition="'$(TargetFramework)' != 'net481'">
     <Compile Include="$(CommonPath)Interop\Unix\System.Security.Cryptography.Native\Interop.Initialization.cs" Link="Common\Interop\Unix\System.Security.Cryptography.Native\Interop.Initialization.cs" />
     <Compile Include="$(CommonPath)Interop\Unix\System.Security.Cryptography.Native\Interop.OpenSslAvailable.cs" Link="Common\Interop\Unix\System.Security.Cryptography.Native\Interop.OpenSslAvailable.cs" />
@@ -159,12 +147,13 @@
     <Compile Include="$(CommonPath)Interop\Unix\System.Native\Interop.GetEUid.cs" Link="Common\Interop\Unix\Interop.GetEUid.cs" />
   </ItemGroup>
 
-  --><!-- Android imports --><!--
+  -->
+  <!-- Android imports -->
+  <!--
   <ItemGroup Condition="'$(TargetFramework)' != 'net481'">
     <Compile Include="$(CommonPath)Interop\Android\Interop.Libraries.cs" Link="Common\Interop\Android\Interop.Libraries.cs" />
     <Compile Include="$(CommonPath)Interop\Android\System.Security.Cryptography.Native.Android\Interop.Ssl.ProtocolSupport.cs" Link="Common\Interop\Android\System.Security.Cryptography.Native.Android\Interop.Ssl.ProtocolSupport.cs" />
   </ItemGroup>-->
-
   <ItemGroup>
     <ProjectReference Include="..\..\..\src-v4\Corvus.Json.CodeGeneration\Corvus.Json.CodeGeneration.csproj" />
     <ProjectReference Include="..\..\..\src-v4\Corvus.Json.CodeGeneration.201909\Corvus.Json.CodeGeneration.201909.csproj" />
@@ -178,24 +167,21 @@
     <ProjectReference Include="..\..\..\src-v4\Corvus.Json.CodeGeneration.YamlPreProcessor\Corvus.Json.CodeGeneration.YamlPreProcessor.csproj" />
     <ProjectReference Include="..\..\..\src-v4\Corvus.Json.ExtendedTypes\Corvus.Json.ExtendedTypes.csproj" />
     <ProjectReference Include="..\..\..\src-v4\Corvus.Json.SourceGenerator\Corvus.Json.SourceGenerator.csproj" PrivateAssets="all" ReferenceOutputAssembly="false" OutputItemType="Analyzer" />
-    <PackageReference Include="Microsoft.Bcl.Memory" Version="10.0.4" />
-    <PackageReference Include="Microsoft.DotNet.RemoteExecutor" Version="10.0.0-beta.25228.101" />
-    <PackageReference Include="Microsoft.DotNet.XUnitExtensions" Version="10.0.0-beta.25227.101" />
-    <PackageReference Include="xunit" Version="2.9.3" ExcludeAssets="build" />
-    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="5.3.0" />
-    <PackageReference Include="Microsoft.Extensions.DependencyModel" Version="10.0.4" />
+    <PackageReference Include="Microsoft.Bcl.Memory" />
+    <PackageReference Include="Microsoft.DotNet.RemoteExecutor" />
+    <PackageReference Include="Microsoft.DotNet.XUnitExtensions" />
+    <PackageReference Include="xunit" ExcludeAssets="build" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
+    <PackageReference Include="Microsoft.Extensions.DependencyModel" />
   </ItemGroup>
-
   <ItemGroup Condition="'$(TargetFramework)' == 'net481'">
-    <PackageReference Include="System.Memory" Version="4.6.3" />
+    <PackageReference Include="System.Memory" />
   </ItemGroup>
-
   <ItemGroup>
     <ProjectReference Include="..\..\..\src\Corvus.Text.Json.CodeGeneration\Corvus.Text.Json.CodeGeneration.csproj" />
     <ProjectReference Include="..\..\..\src\Corvus.Text.Json.Validator\Corvus.Text.Json.Validator.csproj" />
     <ProjectReference Include="..\..\..\src\Corvus.Text.Json\Corvus.Text.Json.csproj" />
   </ItemGroup>
-
   <ItemGroup>
     <None Update="metaschema\draft2019-09\meta\applicator.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
@@ -261,5 +247,4 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
-
 </Project>

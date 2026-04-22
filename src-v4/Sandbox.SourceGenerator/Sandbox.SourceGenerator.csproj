@@ -7,7 +7,6 @@
     <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
     <IsPackable>false</IsPackable>
   </PropertyGroup>
-
   <PropertyGroup>
     <CorvusJsonSchemaOptionalAsNullable>None</CorvusJsonSchemaOptionalAsNullable>
     <CorvusJsonSchemaDefaultAccessibility>Internal</CorvusJsonSchemaDefaultAccessibility>
@@ -15,19 +14,16 @@
     <CorvusJsonSchemaUseImplicitOperatorString>True</CorvusJsonSchemaUseImplicitOperatorString>
     <CorvusJsonSchemaFallbackVocabulary>Corvus202012</CorvusJsonSchemaFallbackVocabulary>
   </PropertyGroup>
-
   <ItemGroup>
     <None Remove="DynamicRefTest\app-model-common.json" />
     <None Remove="DynamicRefTest\choice-and-configuration.json" />
     <None Remove="Model\keycloak-realm-26.0.2.json" />
     <None Remove="test2.json" />
   </ItemGroup>
-
   <ItemGroup>
     <ProjectReference Include="..\Corvus.Json.ExtendedTypes\Corvus.Json.ExtendedTypes.csproj" />
     <ProjectReference Include="..\Corvus.Json.SourceGenerator\Corvus.Json.SourceGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" SetTargetFramework="TargetFramework=netstandard2.0" />
   </ItemGroup>
-
   <ItemGroup>
     <AdditionalFiles Include="DynamicRefTest\app-model-common.json" />
     <AdditionalFiles Include="DynamicRefTest\choice-and-configuration.json" />
@@ -35,13 +31,10 @@
     <AdditionalFiles Include="test.json" />
     <AdditionalFiles Include="test2.json" />
   </ItemGroup>
-
   <ItemGroup>
     <AdditionalFiles Include="LargeIntegerExample.json" />
   </ItemGroup>
-
   <ItemGroup>
-    <PackageReference Include="System.Collections.Immutable" Version="10.0.4" />
+    <PackageReference Include="System.Collections.Immutable" />
   </ItemGroup>
-  
 </Project>

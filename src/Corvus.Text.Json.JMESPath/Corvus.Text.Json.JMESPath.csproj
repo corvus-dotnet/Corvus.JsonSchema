@@ -1,7 +1,5 @@
 <Project Sdk="Microsoft.NET.Sdk">
-
   <Import Project="$(EndjinProjectPropsPath)" Condition="$(EndjinProjectPropsPath) != ''" />
-
   <PropertyGroup>
     <TargetFrameworks>net9.0;net10.0;netstandard2.0;netstandard2.1</TargetFrameworks>
     <ImplicitUsings>enable</ImplicitUsings>
@@ -17,31 +15,29 @@
     <IsPackable>true</IsPackable>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <Description>JMESPath query language evaluator for Corvus.Text.Json, with zero-allocation compiled delegate evaluation and caching.</Description>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
-
   <PropertyGroup>
     <CommonPath>..\..\Common\src\</CommonPath>
   </PropertyGroup>
-
   <ItemGroup>
     <Compile Include="..\Common\JsonConstants.cs" Link="Common\JsonConstants.cs" />
     <Compile Include="..\Common\Utf8KeyHashSet.cs" Link="Common\Utf8KeyHashSet.cs" />
   </ItemGroup>
-
   <ItemGroup>
     <InternalsVisibleTo Include="Corvus.Text.Json.JMESPath.Tests" />
     <InternalsVisibleTo Include="Corvus.Text.Json.JMESPath.CodeGeneration" />
     <InternalsVisibleTo Include="Corvus.Text.Json.JMESPath.CodeGeneration.Tests" />
   </ItemGroup>
-
   <ItemGroup>
     <ProjectReference Include="..\Corvus.Text.Json\Corvus.Text.Json.csproj" />
   </ItemGroup>
-
   <ItemGroup>
-    <PackageReference Include="Endjin.RecommendedPractices.GitHub" Version="2.1.18" PrivateAssets="All" />
-    <PackageReference Include="StyleCop.Analyzers" Version="1.2.0-beta.556" PrivateAssets="All" />
-    <PackageReference Include="Roslynator.Analyzers" Version="4.13.1" PrivateAssets="All" />
+    <PackageReference Include="Endjin.RecommendedPractices.GitHub" PrivateAssets="All" />
+    <PackageReference Include="StyleCop.Analyzers" PrivateAssets="All" />
+    <PackageReference Include="Roslynator.Analyzers" PrivateAssets="All" />
   </ItemGroup>
-
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
 </Project>

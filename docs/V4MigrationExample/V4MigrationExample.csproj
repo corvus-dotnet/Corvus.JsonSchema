@@ -1,5 +1,4 @@
 <Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net8.0</TargetFramework>
@@ -8,23 +7,19 @@
     <LangVersion>preview</LangVersion>
     <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
   </PropertyGroup>
-
   <PropertyGroup>
     <CorvusJsonSchemaFallbackVocabulary>Draft202012</CorvusJsonSchemaFallbackVocabulary>
     <CorvusJsonSchemaAlwaysAssertFormat>true</CorvusJsonSchemaAlwaysAssertFormat>
   </PropertyGroup>
-
   <ItemGroup>
-    <PackageReference Include="Corvus.Json.ExtendedTypes" Version="4.6.6-local.1" />
-    <PackageReference Include="Corvus.Json.SourceGenerator" Version="4.6.6-local.1">
+    <PackageReference Include="Corvus.Json.ExtendedTypes" />
+    <PackageReference Include="Corvus.Json.SourceGenerator">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Corvus.Text.Json.Migration.Analyzers" Version="1.0.0-local.24" PrivateAssets="all" />
+    <PackageReference Include="Corvus.Text.Json.Migration.Analyzers" PrivateAssets="all" />
   </ItemGroup>
-
   <ItemGroup>
     <AdditionalFiles Include="Schemas\**\*.json" />
   </ItemGroup>
-
 </Project>

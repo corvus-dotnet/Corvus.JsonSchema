@@ -1,7 +1,5 @@
 <Project Sdk="Microsoft.NET.Sdk">
-
   <Import Project="$(EndjinProjectPropsPath)" Condition="$(EndjinProjectPropsPath) != ''" />
-
   <PropertyGroup>
     <TargetFrameworks>net9.0;net10.0;netstandard2.0;netstandard2.1</TargetFrameworks>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
@@ -34,66 +32,51 @@
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
     <EnableDefaultEmbeddedResourceItems>false</EnableDefaultEmbeddedResourceItems>
     <Nullable>enable</Nullable>
-    <RootNamespace></RootNamespace>
+    <RootNamespace>
+    </RootNamespace>
   </PropertyGroup>
-
   <ItemGroup>
     <None Include="README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
-
   <ItemGroup Label="Bundled Analyzers">
-    <ProjectReference Include="..\Corvus.Text.Json.Analyzers\Corvus.Text.Json.Analyzers.csproj"
-                      ReferenceOutputAssembly="false"
-                      PrivateAssets="all" />
-    <None Include="..\Corvus.Text.Json.Analyzers\bin\$(Configuration)\netstandard2.0\Corvus.Text.Json.Analyzers.dll"
-          Pack="true"
-          PackagePath="analyzers/dotnet/cs"
-          Visible="false" />
+    <ProjectReference Include="..\Corvus.Text.Json.Analyzers\Corvus.Text.Json.Analyzers.csproj" ReferenceOutputAssembly="false" PrivateAssets="all" />
+    <None Include="..\Corvus.Text.Json.Analyzers\bin\$(Configuration)\netstandard2.0\Corvus.Text.Json.Analyzers.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
   </ItemGroup>
-
   <ItemGroup>
     <InternalsVisibleTo Include="Corvus.Text.Json.Tests" />
   </ItemGroup>
-  
   <ItemGroup>
     <Using Include="System" />
     <Using Include="System.Text" />
     <Using Include="SR = Resources.Strings" />
   </ItemGroup>
-
   <ItemGroup>
     <AssemblyAttribute Include="CLSCompliantAttribute">
       <_Parameter1>true</_Parameter1>
     </AssemblyAttribute>
   </ItemGroup>
-
   <!-- Adds System.Reflection.Emit.Lightweight to non .NETCoreApp builds. -->
   <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0' OR '$(TargetFramework)' == 'netstandard2.1'">
-    <PackageReference Include="System.Reflection.Emit.Lightweight" Version="4.7.0" />
+    <PackageReference Include="System.Reflection.Emit.Lightweight" />
   </ItemGroup>
-  
   <!-- Adds Nullable annotation attributes to C# non .NETCoreApp builds. -->
   <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0' OR '$(TargetFramework)' == 'netstandard2.1'">
     <Compile Include="$(CoreLibSharedDir)System\Diagnostics\CodeAnalysis\NullableAttributes.cs" Link="System\Diagnostics\CodeAnalysis\NullableAttributes.cs" />
   </ItemGroup>
-
   <!-- Adds polyfills on non-.NETCoreApp builds -->
   <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0' OR '$(TargetFramework)' == 'netstandard2.1'">
     <Compile Include="$(CoreLibSharedDir)System\Runtime\CompilerServices\CallerArgumentExpressionAttribute.cs" />
     <Compile Include="$(LibrariesProjectRoot)\Common\src\System\ExceptionPolyfills.cs" Link="System\ExceptionPolyfills.cs" />
   </ItemGroup>
-
   <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0' OR '$(TargetFramework)' == 'netstandard2.1'">
     <Compile Include="$(CoreLibSharedDir)System\Runtime\Versioning\PlatformAttributes.cs" Link="System\Runtime\Versioning\PlatformAttributes.cs" />
   </ItemGroup>
-
   <!-- HashCode polyfills: needed for all netstandard builds (not part of netstandard API surface) -->
   <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0' OR '$(TargetFramework)' == 'netstandard2.1'">
     <Compile Include="$(CoreLibSharedDir)System\Marvin.cs" Link="System\Marvin.cs" />
     <Compile Include="$(CoreLibSharedDir)System\Marvin.OrdinalIgnoreCase.cs" Link="System\Marvin.OrdinalIgnoreCase.cs" />
     <Compile Include="Corvus\Text\Json\Document\Internal\HashCode.NetStandard.cs" />
   </ItemGroup>
-
   <!-- Adds ObsoleteAttribute to projects that need to apply downlevel Obsoletions with DiagnosticId and UrlFormat -->
   <Choose>
     <When Condition="'$(TargetFramework)' == 'netstandard2.0' OR '$(TargetFramework)' == 'netstandard2.1'">
@@ -106,60 +89,47 @@
       </PropertyGroup>
     </When>
   </Choose>
-
   <!-- Index, Range polyfills: only needed for netstandard2.0 (provided by Microsoft.Bcl.Memory on netstandard2.1) -->
   <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
     <Compile Include="$(CoreLibSharedDir)System\Index.cs" Link="System\Index.cs" />
     <Compile Include="$(CoreLibSharedDir)System\Range.cs" Link="System\Range.cs" />
   </ItemGroup>
-
   <!-- HashHelpers, BitConverter polyfills: needed for all netstandard builds -->
   <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0' OR '$(TargetFramework)' == 'netstandard2.1'">
     <Compile Include="$(CoreLibSharedDir)System\Numerics\Hashing\HashHelpers.cs" Link="System\Numerics\Hashing\HashHelpers.cs" />
     <Compile Include="Corvus\BitConverterPolyfills.cs" />
   </ItemGroup>
-
   <!-- Ascii polyfills: needed for all netstandard builds (System.Text.Ascii is .NET 8+) -->
   <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0' OR '$(TargetFramework)' == 'netstandard2.1'">
     <Compile Include="Corvus\Text\Json\JsonSchema\Internal\Ascii.cs" />
   </ItemGroup>
-  
   <PropertyGroup>
     <NoWarn Condition="'$(TargetFramework)' == 'netstandard2.0' OR '$(TargetFramework)' == 'netstandard2.1'">$(NoWarn);nullable</NoWarn>
   </PropertyGroup>
-  
   <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net9.0|AnyCPU'">
     <WarningLevel>9999</WarningLevel>
   </PropertyGroup>
-  
   <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net9.0|AnyCPU'">
     <WarningLevel>9999</WarningLevel>
   </PropertyGroup>
-  
   <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|netstandard2.1|AnyCPU'">
     <WarningLevel>9999</WarningLevel>
   </PropertyGroup>
-  
   <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|netstandard2.1|AnyCPU'">
     <WarningLevel>9999</WarningLevel>
   </PropertyGroup>
-  
   <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net10.0|AnyCPU'">
     <WarningLevel>9999</WarningLevel>
   </PropertyGroup>
-  
   <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net10.0|AnyCPU'">
     <WarningLevel>9999</WarningLevel>
   </PropertyGroup>
-  
   <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|netstandard2.0|AnyCPU'">
     <WarningLevel>9999</WarningLevel>
   </PropertyGroup>
-  
   <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|netstandard2.0|AnyCPU'">
     <WarningLevel>9999</WarningLevel>
   </PropertyGroup>
-
   <ItemGroup>
     <Compile Include="Corvus\Collections\Generic\ValueStack.cs" />
     <Compile Include="Corvus\Collections\Generic\ValueStack.Pop.cs" />
@@ -311,7 +281,7 @@
     <Compile Include="Corvus\Text\Json\Reader\JsonReaderState.cs" />
     <Compile Include="Corvus\Text\Json\Reader\Utf8JsonReader.cs" />
     <Compile Include="Corvus\Text\Json\Reader\Utf8JsonReader.MultiSegment.cs" />
-    <Compile Include="Corvus\Text\Json\Reader\Utf8JsonReader.TryGet.cs" />    
+    <Compile Include="Corvus\Text\Json\Reader\Utf8JsonReader.TryGet.cs" />
     <Compile Include="Corvus\Text\Json\StackHelper.cs" />
     <Compile Include="Corvus\Text\Json\Internal\CodeGenThrowHelper.cs" />
     <Compile Include="Corvus\Text\Json\UriTemplate\Utf8UriTemplate.cs" />
@@ -381,14 +351,12 @@
     <Compile Include="Corvus\Globalization\IdnMapping.Ascii.cs" />
     <Compile Include="Corvus\Globalization\StrongBidiCategory.cs" />
   </ItemGroup>
-
   <!-- Include files under StringResourcesPath by convention unless OmitResources is set. -->
   <ItemGroup>
     <EmbeddedResource Include="Resources\Strings.resx" Visible="true" IncludeDefaultValues="true" EmitFormatMethods="false" GenerateSource="true" OmitGetResourceString="true" />
     <!-- Include common SR helper when resources are included. -->
     <Compile Include="Corvus\SR$(DefaultLanguageSourceExtension)" Visible="true" Link="Resources/Common/SR$(DefaultLanguageSourceExtension)" />
   </ItemGroup>
-
   <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0' OR '$(TargetFramework)' == 'netstandard2.1'">
     <Compile Include="$(CoreLibSharedDir)System\Runtime\CompilerServices\IsExternalInit.cs" />
     <Compile Include="$(CoreLibSharedDir)System\Runtime\Versioning\RequiresPreviewFeaturesAttribute.cs" />
@@ -400,11 +368,9 @@
     <Compile Include="$(CoreLibSharedDir)System\Reflection\NullabilityInfo.cs" />
     <Compile Include="$(CoreLibSharedDir)System\Reflection\NullabilityInfoContext.cs" />
   </ItemGroup>
-
   <ItemGroup Condition="'$(TargetFramework)' == 'net9.0' or '$(TargetFramework)' == 'net10.0'">
     <Compile Include="Corvus\Text\Json\Reader\JsonReaderHelper.net8.cs" />
   </ItemGroup>
-
   <!-- Polyfills needed by all netstandard builds (.NET 5+/7+ APIs) -->
   <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0' OR '$(TargetFramework)' == 'netstandard2.1'">
     <Compile Include="$(CommonPath)System\IO\StreamExtensions.netstandard.cs" Link="Common\System\IO\StreamExtensions.netstandard.cs" />
@@ -412,12 +378,10 @@
     <Compile Include="$(CoreLibSharedDir)System\Diagnostics\CodeAnalysis\RequiresDynamicCodeAttribute.cs" />
     <Compile Include="Corvus\Text\Json\Reader\JsonReaderHelper.netstandard.cs" />
   </ItemGroup>
-
   <!-- ArrayBufferWriter polyfill: needed for all netstandard builds -->
   <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0' OR '$(TargetFramework)' == 'netstandard2.1'">
     <Compile Include="$(CommonPath)System\Buffers\ArrayBufferWriter.cs" Link="Common\System\Buffers\ArrayBufferWriter.cs" />
   </ItemGroup>
-
   <!-- Unicode polyfills: needed for all netstandard builds (Rune is .NET Core 3.0+, not in netstandard) -->
   <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0' OR '$(TargetFramework)' == 'netstandard2.1'">
     <Compile Include="$(CoreLibSharedDir)System\Text\Rune.cs" Link="System\Text\Rune.cs" />
@@ -428,43 +392,39 @@
   <ItemGroup>
     <None Include="Corvus\Globalization\IdnMapping.Unicode.UTF8.cs" />
   </ItemGroup>
-
   <!-- Application tfms (.NETCoreApp, .NETFramework) need to use the same or higher version of .NETStandard's dependencies. -->
   <ItemGroup>
-    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="10.0.201">
+    <PackageReference Include="Microsoft.SourceLink.GitHub">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="NodaTime" Version="3.3.1" />
+    <PackageReference Include="NodaTime" />
   </ItemGroup>
-
   <!-- Only include these packages for netstandard builds as they're included in .NET 9+ runtime -->
   <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0' OR '$(TargetFramework)' == 'netstandard2.1'">
-    <PackageReference Include="System.Text.Encodings.Web" Version="10.0.4" />
-    <PackageReference Include="System.IO.Pipelines" Version="10.0.4" />
+    <PackageReference Include="System.Text.Encodings.Web" />
+    <PackageReference Include="System.IO.Pipelines" />
   </ItemGroup>
-
   <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0' OR '$(TargetFramework)' == 'netstandard2.1'">
-    <PackageReference Include="System.Buffers" Version="4.6.1" />
-    <PackageReference Include="System.Memory" Version="4.6.3" />
-    <PackageReference Include="System.Threading.Tasks.Extensions" Version="4.6.3" />
-    <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="10.0.4" />
-    <PackageReference Include="Microsoft.Bcl.HashCode" Version="6.0.0" />
-    <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="6.1.2" />
+    <PackageReference Include="System.Buffers" />
+    <PackageReference Include="System.Memory" />
+    <PackageReference Include="System.Threading.Tasks.Extensions" />
+    <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" />
+    <PackageReference Include="Microsoft.Bcl.HashCode" />
+    <PackageReference Include="System.Runtime.CompilerServices.Unsafe" />
   </ItemGroup>
-
   <ItemGroup>
-    <PackageReference Include="Endjin.RecommendedPractices.GitHub" Version="2.1.18">
+    <PackageReference Include="Endjin.RecommendedPractices.GitHub">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="StyleCop.Analyzers" Version="1.2.0-beta.556">
+    <PackageReference Include="StyleCop.Analyzers">
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="Roslynator.Analyzers" Version="4.13.1">
+    <PackageReference Include="Roslynator.Analyzers">
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.CodeAnalysis.ResxSourceGenerator" Version="5.0.0-1.25277.114">
+    <PackageReference Include="Microsoft.CodeAnalysis.ResxSourceGenerator">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>

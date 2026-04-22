@@ -1,5 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
-
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFrameworks>net481;net10.0</TargetFrameworks>
@@ -8,16 +7,13 @@
     <LangVersion>Preview</LangVersion>
     <IsPackable>false</IsPackable>
   </PropertyGroup>
-
   <ItemGroup>
-    <PackageReference Include="Microsoft.Bcl.Memory" Version="10.0.4" />
-    <PackageReference Include="Microsoft.VisualStudio.DiagnosticsHub.UserMarks" Version="18.6.37110.2" />
+    <PackageReference Include="Microsoft.Bcl.Memory" />
+    <PackageReference Include="Microsoft.VisualStudio.DiagnosticsHub.UserMarks" />
   </ItemGroup>
- 
   <ItemGroup>
     <ProjectReference Include="..\..\benchmarks\Corvus.Text.Json.BenchmarkModels\Corvus.Text.Json.BenchmarkModels.csproj" />
     <ProjectReference Include="..\Corvus.Text.Json.Compatibility\Corvus.Text.Json.Compatibility.csproj" />
     <ProjectReference Include="..\Corvus.Text.Json\Corvus.Text.Json.csproj" />
   </ItemGroup>
-
 </Project>

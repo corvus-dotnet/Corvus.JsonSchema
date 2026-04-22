@@ -1,5 +1,4 @@
 <Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFrameworks>net481;net9.0;net10.0</TargetFrameworks>
@@ -12,40 +11,30 @@
     <PreserveCompilationContext>true</PreserveCompilationContext>
     <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
   </PropertyGroup>
-
   <ItemGroup>
-    <PackageReference Include="BenchmarkDotNet" Version="0.15.8" />
-    <PackageReference Include="BenchmarkDotNet.Diagnostics.Windows" Version="0.15.8" />
-    <PackageReference Include="JmesPath.Net" Version="1.1.0" />
+    <PackageReference Include="BenchmarkDotNet" />
+    <PackageReference Include="BenchmarkDotNet.Diagnostics.Windows" />
+    <PackageReference Include="JmesPath.Net" />
   </ItemGroup>
-
   <ItemGroup Condition="'$(TargetFramework)' == 'net481'">
-    <PackageReference Include="System.Text.Json" Version="10.0.5" />
+    <PackageReference Include="System.Text.Json" />
   </ItemGroup>
-
   <ItemGroup>
     <ProjectReference Include="..\..\src\Corvus.Text.Json.JMESPath\Corvus.Text.Json.JMESPath.csproj" />
     <ProjectReference Include="..\..\src\Corvus.Text.Json\Corvus.Text.Json.csproj" />
   </ItemGroup>
-
   <!-- Source generator reference (analyzer-only, no runtime DLL) -->
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Corvus.Text.Json.JMESPath.SourceGenerator\Corvus.Text.Json.JMESPath.SourceGenerator.csproj"
-                      PrivateAssets="all"
-                      ReferenceOutputAssembly="false"
-                      OutputItemType="Analyzer" />
+    <ProjectReference Include="..\..\src\Corvus.Text.Json.JMESPath.SourceGenerator\Corvus.Text.Json.JMESPath.SourceGenerator.csproj" PrivateAssets="all" ReferenceOutputAssembly="false" OutputItemType="Analyzer" />
   </ItemGroup>
-
   <!-- JMESPath expression files for source-generated evaluators -->
   <ItemGroup>
     <AdditionalFiles Include="Expressions\*.jmespath" />
   </ItemGroup>
-
   <!-- Copy long expressions to output directory for runtime file access in benchmarks -->
   <ItemGroup>
     <Content Include="Expressions\conformance-deep-projection.jmespath" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="Expressions\conformance-long-string.jmespath" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="Expressions\conformance-nested-sum.jmespath" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
-
 </Project>
