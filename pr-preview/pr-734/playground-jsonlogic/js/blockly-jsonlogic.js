@@ -958,6 +958,150 @@
     // Current schema tree for schema-aware dropdowns (replaces data when set)
     let currentSchemaTree = null;
 
+    // Custom operator definitions from Roslyn compilation
+    // Array of { name, minArgs, maxArgs, description }
+    let customOperatorDefs = [];
+
+    var COLOUR_CUSTOM = '#7B1FA2'; // dark purple for custom operator blocks
+
+    /**
+     * Register a Blockly block definition for a custom operator.
+     * Fixed-arity operators get fixed value inputs; variadic ones get expandable +/- buttons.
+     */
+    function registerCustomOperatorBlock(def) {
+        var blockType = 'jsonlogic_custom_' + def.name;
+        var isFixed = def.maxArgs !== null && def.minArgs === def.maxArgs;
+
+        if (isFixed) {
+            // Fixed-arity block
+            Blockly.Blocks[blockType] = {
+                init: function () {
+                    this.appendDummyInput('LABEL').appendField(def.name);
+                    for (var i = 0; i < def.minArgs; i++) {
+                        this.appendValueInput('ARG_' + i).setCheck(VALUE_TYPES);
+                    }
+                    this.setOutput(true, 'Value');
+                    this.setColour(COLOUR_CUSTOM);
+                    this.setInputsInline(true);
+                    this.setTooltip(def.description || ('Custom operator: ' + def.name));
+                }
+            };
+        } else {
+            // Variadic block with +/- buttons
+            var minArgs = def.minArgs || 0;
+            Blockly.Blocks[blockType] = {
+                init: function () {
+                    this.itemCount_ = Math.max(minArgs, 1);
+                    this.appendDummyInput('HEADER').appendField(def.name);
+                    for (var i = 0; i < this.itemCount_; i++) {
+                        this.appendValueInput('ARG_' + i).setCheck(VALUE_TYPES);
+                    }
+                    this.appendDummyInput('BUTTONS')
+                        .appendField(new Blockly.FieldImage(ICON_PLUS, 20, 20, '+', function (field) {
+                            field.getSourceBlock().addItem_();
+                        }))
+                        .appendField(new Blockly.FieldImage(ICON_MINUS, 20, 20, '−', function (field) {
+                            field.getSourceBlock().removeItem_();
+                        }));
+                    this.setOutput(true, 'Value');
+                    this.setColour(COLOUR_CUSTOM);
+                    this.setInputsInline(true);
+                    this.setTooltip(def.description || ('Custom operator: ' + def.name));
+                },
+                addItem_: function () {
+                    var max = def.maxArgs;
+                    if (max !== null && this.itemCount_ >= max) return;
+                    this.removeInput('BUTTONS');
+                    this.appendValueInput('ARG_' + this.itemCount_).setCheck(VALUE_TYPES);
+                    this.itemCount_++;
+                    this.appendDummyInput('BUTTONS')
+                        .appendField(new Blockly.FieldImage(ICON_PLUS, 20, 20, '+', function (field) {
+                            field.getSourceBlock().addItem_();
+                        }))
+                        .appendField(new Blockly.FieldImage(ICON_MINUS, 20, 20, '−', function (field) {
+                            field.getSourceBlock().removeItem_();
+                        }));
+                },
+                removeItem_: function () {
+                    if (this.itemCount_ <= (def.minArgs || 0)) return;
+                    this.removeInput('BUTTONS');
+                    this.itemCount_--;
+                    this.removeInput('ARG_' + this.itemCount_);
+                    this.appendDummyInput('BUTTONS')
+                        .appendField(new Blockly.FieldImage(ICON_PLUS, 20, 20, '+', function (field) {
+                            field.getSourceBlock().addItem_();
+                        }))
+                        .appendField(new Blockly.FieldImage(ICON_MINUS, 20, 20, '−', function (field) {
+                            field.getSourceBlock().removeItem_();
+                        }));
+                },
+            };
+        }
+    }
+
+    /**
+     * Build the full toolbox definition, including a Custom category if any custom operators are defined.
+     */
+    function buildToolboxWithCustomOps() {
+        var categories = TOOLBOX.contents.filter(function (c) {
+            return c.name !== 'Custom';
+        });
+
+        if (customOperatorDefs.length > 0) {
+            var customContents = [];
+            for (var i = 0; i < customOperatorDefs.length; i++) {
+                customContents.push({
+                    kind: 'block',
+                    type: 'jsonlogic_custom_' + customOperatorDefs[i].name,
+                });
+            }
+            categories.push({
+                kind: 'category',
+                name: 'Custom',
+                colour: COLOUR_CUSTOM,
+                contents: customContents,
+            });
+        }
+
+        return { kind: 'categoryToolbox', contents: categories };
+    }
+
+    /**
+     * Find JSON pointer paths for all instances of a custom operator in the current rule.
+     * Uses the JSON Logic output (same depth-first order the evaluator uses).
+     */
+    function findBlockPaths(ws, operatorName) {
+        var paths = [];
+        var topBlocks = ws.getTopBlocks(true);
+        if (topBlocks.length === 0) return paths;
+
+        // Build JSON Logic from the workspace, then find all paths of the operator
+        var json = blockToJsonLogic(topBlocks[0]);
+        if (json) {
+            findOpPathsRecursive(json, '', operatorName, paths);
+        }
+        return paths;
+    }
+
+    function findOpPathsRecursive(node, currentPath, opName, paths) {
+        if (node === null || typeof node !== 'object') return;
+        if (Array.isArray(node)) {
+            for (var i = 0; i < node.length; i++) {
+                findOpPathsRecursive(node[i], currentPath + '/' + i, opName, paths);
+            }
+        } else {
+            var keys = Object.keys(node);
+            for (var k = 0; k < keys.length; k++) {
+                var key = keys[k];
+                var propPath = currentPath + '/' + key;
+                if (key === opName) {
+                    paths.push(propPath);
+                }
+                findOpPathsRecursive(node[key], propPath, opName, paths);
+            }
+        }
+    }
+
     /**
      * Initialize the Blockly workspace.
      * @param {string} elementId - The div to inject Blockly into.
@@ -1049,6 +1193,100 @@
         },
 
         /**
+         * Set custom operators from compiled C# code.
+         * @param {string} operatorsJson - JSON array of {name, minArgs, maxArgs, description}
+         */
+        setCustomOperators: function (operatorsJson) {
+            var newDefs;
+            try {
+                newDefs = JSON.parse(operatorsJson);
+            } catch (e) {
+                newDefs = [];
+            }
+
+            // Remove old custom block definitions
+            for (var i = 0; i < customOperatorDefs.length; i++) {
+                var oldName = 'jsonlogic_custom_' + customOperatorDefs[i].name;
+                delete Blockly.Blocks[oldName];
+            }
+
+            customOperatorDefs = newDefs || [];
+
+            // Register new custom block definitions
+            for (var i = 0; i < customOperatorDefs.length; i++) {
+                registerCustomOperatorBlock(customOperatorDefs[i]);
+            }
+
+            // Rebuild toolbox with updated custom category
+            if (workspace) {
+                workspace.updateToolbox(buildToolboxWithCustomOps());
+            }
+        },
+
+        /**
+         * Highlight blocks belonging to a custom operator that caused an error.
+         * Pass null to clear highlighting.
+         * @param {string|null} operatorName - The operator name (e.g. "clamp") or null to clear.
+         * @param {string} pathsJson - JSON array of JSON Pointer paths to the error location(s).
+         */
+        highlightErrorOperator: function (operatorName, pathsJson, errorMessage) {
+            if (!workspace) return;
+
+            // Clear previous error highlights
+            if (workspace._errorHighlightedBlocks) {
+                for (var i = 0; i < workspace._errorHighlightedBlocks.length; i++) {
+                    var block = workspace._errorHighlightedBlocks[i];
+                    if (block && !block.isDeadOrDying()) {
+                        block.setWarningText(null);
+                        block.removeSelect();
+                    }
+                }
+                workspace._errorHighlightedBlocks = null;
+            }
+
+            if (!operatorName) return;
+
+            var paths = [];
+            try { paths = JSON.parse(pathsJson); } catch (e) { /* ignore */ }
+
+            var blockType = 'jsonlogic_custom_' + operatorName;
+            var allBlocks = workspace.getBlocksByType(blockType, false);
+
+            var toHighlight;
+            if (paths.length > 0 && allBlocks.length > 1) {
+                // Match specific blocks by depth-first index
+                // The paths contain the operator name as the last segment;
+                // the blocks array is in workspace order which matches depth-first.
+                // We find which depth-first indices are in the paths list.
+                var allPaths = findBlockPaths(workspace, operatorName);
+                toHighlight = [];
+                for (var i = 0; i < allPaths.length; i++) {
+                    for (var j = 0; j < paths.length; j++) {
+                        if (allPaths[i] === paths[j]) {
+                            if (i < allBlocks.length) {
+                                toHighlight.push(allBlocks[i]);
+                            }
+                            break;
+                        }
+                    }
+                }
+                if (toHighlight.length === 0) toHighlight = allBlocks;
+            } else {
+                toHighlight = allBlocks;
+            }
+
+            if (toHighlight.length > 0) {
+                workspace._errorHighlightedBlocks = toHighlight;
+                for (var i = 0; i < toHighlight.length; i++) {
+                    toHighlight[i].setWarningText(errorMessage || 'Runtime error in this operator');
+                }
+                // Visually highlight and scroll the first one into view
+                toHighlight[0].addSelect();
+                toHighlight[0].select();
+            }
+        },
+
+        /**
          * Dispose the workspace.
          */
         dispose: function () {
@@ -1115,6 +1353,8 @@
                 Blockly.Events.enable();
                 suppressChange = false;
             }
+            // Refresh dropdowns now that the full block tree is connected
+            refreshDataDropdowns();
         },
     };
 
@@ -1341,9 +1581,23 @@
                 return result;
             }
 
-            default:
+            default: {
+                // Check if this is a custom operator block
+                if (type.startsWith('jsonlogic_custom_')) {
+                    var opName = type.substring('jsonlogic_custom_'.length);
+                    var args = [];
+                    var argIdx = 0;
+                    while (block.getInput('ARG_' + argIdx)) {
+                        args.push(valueInput(block, 'ARG_' + argIdx));
+                        argIdx++;
+                    }
+                    var result = {};
+                    result[opName] = args;
+                    return result;
+                }
                 console.warn('Unknown block type:', type);
                 return null;
+            }
         }
     }
 
@@ -1391,6 +1645,18 @@
         return segments.join('.');
     }
 
+    /** Set of block types that are array iterators with DATA + EXPR inputs.
+     *  Inside EXPR, var references resolve against the current array element,
+     *  not the root data object. */
+    var ITERATOR_BLOCK_TYPES = {
+        'jsonlogic_map': true,
+        'jsonlogic_filter': true,
+        'jsonlogic_reduce': true,
+        'jsonlogic_all': true,
+        'jsonlogic_some': true,
+        'jsonlogic_none': true,
+    };
+
     /** Determine the data context for a property block's dropdown by walking
      *  UP through parent blocks.  Each ancestor property/array_element adds
      *  a segment; the walk stops at a jsonlogic_var or jsonlogic_var_default.
@@ -1408,7 +1674,17 @@
 
             if (parent.type === 'jsonlogic_var'
                 || parent.type === 'jsonlogic_var_default') {
-                break; // reached the var wrapper — done
+                // Reached the var wrapper — now check if it's inside an iterator's EXPR
+                var iteratorCtx = getIteratorElementContext(parent);
+                if (iteratorCtx !== undefined) {
+                    // Resolve path segments against the iterator element context
+                    if (currentSchemaTree && iteratorCtx.__schemaNode) {
+                        return resolveSchemaContext(segments, iteratorCtx.__schemaNode);
+                    }
+                    if (segments.length === 0) return iteratorCtx;
+                    return resolveDataPathFrom(iteratorCtx, segments);
+                }
+                break; // not inside an iterator — use root context
             }
             if (isPropertyBlock(parent.type)) {
                 segments.unshift(parent.getFieldValue('PROP') || parent.getFieldValue('SEGMENT'));
@@ -1431,10 +1707,147 @@
         return resolveDataPath(segments.join('.'));
     }
 
+    /** Walk UP from a var block to find the nearest enclosing iterator block
+     *  (filter, map, reduce, all, some, none).  If the var is inside the
+     *  iterator's EXPR input, resolve the DATA input to find the array and
+     *  return the first element as the context for property suggestions.
+     *  @param {Blockly.Block} varBlock - The jsonlogic_var or jsonlogic_var_default block.
+     *  @returns {*} The element context, or undefined if not inside an iterator EXPR. */
+    function getIteratorElementContext(varBlock) {
+        var child = varBlock;
+        var ancestor = null;
+        try { ancestor = child.getParent(); } catch (e) { return undefined; }
+
+        while (ancestor) {
+            if (ITERATOR_BLOCK_TYPES[ancestor.type]) {
+                // Check: is the child connected to the EXPR input (not DATA)?
+                var exprInput = ancestor.getInput('EXPR');
+                if (exprInput && exprInput.connection) {
+                    var exprTarget = exprInput.connection.targetBlock();
+                    if (isDescendantOf(child, exprTarget)) {
+                        // We're inside EXPR — resolve DATA to find the array
+                        return resolveIteratorDataContext(ancestor);
+                    }
+                }
+                // Connected to DATA, not EXPR — stop looking
+                return undefined;
+            }
+
+            // Keep walking up
+            child = ancestor;
+            try { ancestor = ancestor.getParent(); } catch (e) { break; }
+        }
+
+        return undefined;
+    }
+
+    /** Check if block is the same as or a descendant of root. */
+    function isDescendantOf(block, root) {
+        if (!root || !block) return false;
+        var current = block;
+        while (current) {
+            if (current.id === root.id) return true;
+            try { current = current.getParent(); } catch (e) { return false; }
+        }
+        return false;
+    }
+
+    /** Resolve an iterator block's DATA input to find the array value,
+     *  then return the first element (for data-driven) or the items
+     *  schema node (for schema-driven).
+     *  @param {Blockly.Block} iteratorBlock - The filter/map/etc. block.
+     *  @returns {*} The element context. */
+    function resolveIteratorDataContext(iteratorBlock) {
+        var dataInput = iteratorBlock.getInput('DATA');
+        if (!dataInput || !dataInput.connection) return undefined;
+        var dataBlock = dataInput.connection.targetBlock();
+        if (!dataBlock) return undefined;
+
+        // The DATA is typically a var block — extract its path
+        var path = extractVarPath(dataBlock);
+        if (path === undefined) return undefined;
+
+        // Schema-driven
+        if (currentSchemaTree) {
+            var segments = path ? path.split('.') : [];
+            var node = currentSchemaTree;
+            for (var i = 0; i < segments.length; i++) {
+                if (!node) return undefined;
+                if (node.properties && node.properties[segments[i]]) {
+                    node = node.properties[segments[i]];
+                } else {
+                    return undefined;
+                }
+            }
+            // Navigate into array items
+            if (node && node.items) {
+                var result = {};
+                if (node.items.properties) {
+                    for (var key in node.items.properties) {
+                        if (node.items.properties.hasOwnProperty(key)) {
+                            result[key] = true;
+                        }
+                    }
+                }
+                result.__schemaNode = node.items;
+                return result;
+            }
+            return undefined;
+        }
+
+        // Data-driven
+        if (!currentSampleData) return undefined;
+        var arrayVal = path ? resolveDataPath(path) : currentSampleData;
+        if (Array.isArray(arrayVal) && arrayVal.length > 0) {
+            return arrayVal[0]; // First element as representative
+        }
+        return undefined;
+    }
+
+    /** Extract the dotted var path from a var block tree.
+     *  Returns the path string, or '' for bare var, or undefined if not a var. */
+    function extractVarPath(block) {
+        if (!block) return undefined;
+        if (block.type === 'jsonlogic_var' || block.type === 'jsonlogic_var_default') {
+            var pathInput = block.getInput('PATH');
+            if (pathInput && pathInput.connection) {
+                var pathBlock = pathInput.connection.targetBlock();
+                if (pathBlock) {
+                    return collectPathChain(pathBlock);
+                }
+            }
+            return ''; // bare var (no path)
+        }
+        return undefined;
+    }
+
+    /** Resolve path segments against a given root object (not currentSampleData).
+     *  Used for iterator element contexts. */
+    function resolveDataPathFrom(root, segments) {
+        if (!root || segments.length === 0) return root;
+        var val = root;
+        for (var i = 0; i < segments.length; i++) {
+            if (val === null || val === undefined) return undefined;
+            var seg = segments[i];
+            if (Array.isArray(val)) {
+                var idx = parseInt(seg, 10);
+                if (isNaN(idx)) return undefined;
+                val = val[idx];
+            } else if (typeof val === 'object') {
+                val = val[seg];
+            } else {
+                return undefined;
+            }
+        }
+        return val;
+    }
+
     /** Navigate the schema tree using collected path segments.
-     *  Returns a synthetic object whose keys are the property names at this level. */
-    function resolveSchemaContext(segments) {
-        var node = currentSchemaTree;
+     *  Returns a synthetic object whose keys are the property names at this level.
+     *  @param {string[]} segments - Path segments to navigate.
+     *  @param {object} [startNode] - Optional starting schema node (default: currentSchemaTree). */
+    function resolveSchemaContext(segments, startNode) {
+        var node = startNode || currentSchemaTree;
         for (var i = 0; i < segments.length; i++) {
             if (!node) return undefined;
             var seg = segments[i];
@@ -1756,7 +2169,22 @@
             }
 
             default: {
-                // Unknown operator — show as null for now
+                // Check if this is a custom operator
+                var customBlockType = 'jsonlogic_custom_' + op;
+                if (Blockly.Blocks[customBlockType]) {
+                    var b = createBlock(ws, customBlockType);
+                    // Expand variadic blocks if needed
+                    if (b.addItem_) {
+                        while ((b.itemCount_ || 0) < args.length) b.addItem_();
+                    }
+                    for (var i = 0; i < args.length; i++) {
+                        if (b.getInput('ARG_' + i)) {
+                            connectValue(b, 'ARG_' + i, jsonLogicToBlock(args[i], ws));
+                        }
+                    }
+                    return b;
+                }
+                // Unknown operator — show as null
                 console.warn('Unknown JSON Logic operator:', op);
                 return createBlock(ws, 'jsonlogic_null');
             }
