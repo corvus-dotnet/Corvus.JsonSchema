@@ -53,7 +53,7 @@
 
   <!-- Embed metaschema files as resources (shared with the CLI tool) -->
   <ItemGroup>
-    <EmbeddedResource Include="..\..\..\..\src\Corvus.Json.CodeGenerator\metaschema\**\*.json"
+    <EmbeddedResource Include="..\..\..\..\src\Corvus.Json.Cli.Core\metaschema\**\*.json"
                       Link="metaschema\%(RecursiveDir)%(Filename)%(Extension)" />
   </ItemGroup>
 
