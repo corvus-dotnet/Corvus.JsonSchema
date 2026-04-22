@@ -319,6 +319,35 @@
         }
     };
 
+    // ── jsonlogic_array_computed: computed array index (chainable) ──
+    Blockly.Blocks['jsonlogic_array_computed'] = {
+        init: function () {
+            this.appendDummyInput().appendField('[');
+            this.appendValueInput('INDEX').setCheck(VALUE_TYPES);
+            this.appendDummyInput().appendField(']');
+            this.appendValueInput('NEXT')
+                .setCheck('PathSegment')
+                .appendField('.');
+            this.setOutput(true, 'PathSegment');
+            this.setColour(COLOUR_PATH);
+            this.setInputsInline(true);
+            this.setTooltip('Access an array element by computed index, with further path segments');
+        }
+    };
+
+    // ── jsonlogic_array_computed_end: terminal computed array index (no NEXT) ──
+    Blockly.Blocks['jsonlogic_array_computed_end'] = {
+        init: function () {
+            this.appendDummyInput().appendField('[');
+            this.appendValueInput('INDEX').setCheck(VALUE_TYPES);
+            this.appendDummyInput().appendField(']');
+            this.setOutput(true, 'PathSegment');
+            this.setColour(COLOUR_PATH);
+            this.setInputsInline(true);
+            this.setTooltip('Access an array element by computed index');
+        }
+    };
+
     // ── jsonlogic_property: path segment for named property (chainable) ──
     Blockly.Blocks['jsonlogic_property'] = {
         init: function () {
@@ -908,6 +937,8 @@
                     { kind: 'block', type: 'jsonlogic_var_default' },
                     { kind: 'block', type: 'jsonlogic_array_element' },
                     { kind: 'block', type: 'jsonlogic_array_element_end' },
+                    { kind: 'block', type: 'jsonlogic_array_computed' },
+                    { kind: 'block', type: 'jsonlogic_array_computed_end' },
                     { kind: 'block', type: 'jsonlogic_property' },
                     { kind: 'block', type: 'jsonlogic_property_end' },
                     { kind: 'block', type: 'jsonlogic_path_text' },
@@ -1382,26 +1413,30 @@
             case 'jsonlogic_var': {
                 var pathBlock = block.getInput('PATH').connection
                     && block.getInput('PATH').connection.targetBlock();
-                var path = pathBlock ? collectPathChain(pathBlock) : '';
-                return { 'var': path };
+                if (!pathBlock) return { 'var': '' };
+                var varPath = buildVarPathOrCat(pathBlock);
+                return { 'var': varPath };
             }
 
             case 'jsonlogic_var_default': {
                 var pathBlock = block.getInput('PATH').connection
                     && block.getInput('PATH').connection.targetBlock();
-                var path = pathBlock ? collectPathChain(pathBlock) : '';
+                var varPath = pathBlock ? buildVarPathOrCat(pathBlock) : '';
                 var def = valueInput(block, 'DEFAULT');
-                return { 'var': [path, def] };
+                return { 'var': [varPath, def] };
             }
 
             case 'jsonlogic_array_element':
             case 'jsonlogic_array_element_end':
+            case 'jsonlogic_array_computed':
+            case 'jsonlogic_array_computed_end':
             case 'jsonlogic_property':
             case 'jsonlogic_property_end':
             case 'jsonlogic_path_text':
             case 'jsonlogic_path_text_end': {
                 // Path segment blocks at top level — wrap as var
-                return { 'var': collectPathChain(block) };
+                var varPath = buildVarPathOrCat(block);
+                return { 'var': varPath };
             }
 
             case 'jsonlogic_var_current': {
@@ -1618,12 +1653,20 @@
 
     /** Helper: is this block type an array-element path segment (chainable or terminal)? */
     function isArrayElementBlock(type) {
-        return type === 'jsonlogic_array_element' || type === 'jsonlogic_array_element_end';
+        return type === 'jsonlogic_array_element' || type === 'jsonlogic_array_element_end'
+            || type === 'jsonlogic_array_computed' || type === 'jsonlogic_array_computed_end';
+    }
+
+    /** Helper: is this block type a computed array-element (value input for INDEX)? */
+    function isComputedArrayBlock(type) {
+        return type === 'jsonlogic_array_computed' || type === 'jsonlogic_array_computed_end';
     }
 
     /** Walk FORWARD through a chain of property/array_element blocks linked
      *  via NEXT inputs, collecting path segments into a dotted string.
      *  Terminal (_end) blocks have no NEXT and end the chain.
+     *  Computed array blocks contribute their literal number (if math_number)
+     *  or "0" (fallback) — use collectPathSegments for structured output.
      *  @param {Blockly.Block} block - The first path-segment block.
      *  @returns {string} The dotted path, e.g. "order.total". */
     function collectPathChain(block) {
@@ -1634,6 +1677,9 @@
                 // PROP for dropdown blocks, SEGMENT for text blocks
                 var val = current.getFieldValue('PROP') || current.getFieldValue('SEGMENT');
                 segments.push(val);
+            } else if (isComputedArrayBlock(current.type)) {
+                var idx = getComputedIndexLiteral(current);
+                segments.push(idx !== null ? idx : '0');
             } else if (isArrayElementBlock(current.type)) {
                 segments.push(String(current.getFieldValue('INDEX') * 1));
             } else {
@@ -1643,6 +1689,125 @@
             current = next && next.connection && next.connection.targetBlock();
         }
         return segments.join('.');
+    }
+
+    /** If a computed array block has a math_number connected, return its
+     *  value as a string; otherwise return null. */
+    function getComputedIndexLiteral(block) {
+        var input = block.getInput('INDEX');
+        if (!input || !input.connection) return null;
+        var target = input.connection.targetBlock();
+        if (!target || target.type !== 'math_number') return null;
+        return String(parseInt(target.getFieldValue('NUM'), 10));
+    }
+
+    /** Walk FORWARD through a path chain collecting structured segments.
+     *  Each segment is { type:'literal', value:string } or
+     *  { type:'expr', jsonLogic:* } for computed array indices.
+     *  @param {Blockly.Block} block - The first path-segment block.
+     *  @returns {Array} Array of segment descriptors. */
+    function collectPathSegments(block) {
+        var segments = [];
+        var current = block;
+        while (current) {
+            if (isPropertyBlock(current.type)) {
+                var val = current.getFieldValue('PROP') || current.getFieldValue('SEGMENT');
+                segments.push({ type: 'literal', value: val });
+            } else if (isComputedArrayBlock(current.type)) {
+                var literal = getComputedIndexLiteral(current);
+                if (literal !== null) {
+                    segments.push({ type: 'literal', value: literal });
+                } else {
+                    var expr = valueInput(current, 'INDEX');
+                    segments.push({ type: 'expr', jsonLogic: expr !== null ? expr : 0 });
+                }
+            } else if (isArrayElementBlock(current.type)) {
+                segments.push({ type: 'literal', value: String(current.getFieldValue('INDEX') * 1) });
+            } else {
+                break;
+            }
+            var next = current.getInput('NEXT');
+            current = next && next.connection && next.connection.targetBlock();
+        }
+        return segments;
+    }
+
+    /** Build a cat argument array from structured path segments.
+     *  Merges consecutive literals into dot-separated strings;
+     *  expressions become individual cat arguments with dot separators.
+     *  @param {Array} segments - From collectPathSegments.
+     *  @returns {Array} Arguments for a JSON Logic cat expression. */
+    function buildCatFromSegments(segments) {
+        var items = [];
+        var pendingLiteral = '';
+        var afterExpr = false;
+
+        for (var i = 0; i < segments.length; i++) {
+            if (segments[i].type === 'literal') {
+                if (afterExpr) {
+                    pendingLiteral = '.';
+                    afterExpr = false;
+                } else if (pendingLiteral !== '') {
+                    pendingLiteral += '.';
+                }
+                pendingLiteral += segments[i].value;
+            } else {
+                // Flush pending literal with trailing dot separator
+                if (pendingLiteral !== '') {
+                    items.push(pendingLiteral + '.');
+                    pendingLiteral = '';
+                } else if (afterExpr) {
+                    items.push('.');
+                }
+                items.push(segments[i].jsonLogic);
+                afterExpr = true;
+            }
+        }
+
+        if (pendingLiteral !== '') {
+            items.push(pendingLiteral);
+        }
+
+        return items;
+    }
+
+    /** Parse a cat argument array back into structured path segments.
+     *  String arguments are split on '.' to extract literal segments;
+     *  non-string arguments are computed index expressions.
+     *  @param {Array} catArgs - The cat expression arguments.
+     *  @returns {Array} Array of segment descriptors. */
+    function parseCatToSegments(catArgs) {
+        var segments = [];
+        for (var i = 0; i < catArgs.length; i++) {
+            var arg = catArgs[i];
+            if (typeof arg === 'string') {
+                var parts = arg.split('.');
+                for (var j = 0; j < parts.length; j++) {
+                    if (parts[j] !== '') {
+                        segments.push({ type: 'literal', value: parts[j] });
+                    }
+                }
+            } else {
+                segments.push({ type: 'expr', jsonLogic: arg });
+            }
+        }
+        return segments;
+    }
+
+    /** Collect a path chain and return either a string (all literal)
+     *  or a { cat: [...] } expression (has computed segments).
+     *  @param {Blockly.Block} pathBlock - The first path-segment block.
+     *  @returns {string|Object} A path string or cat expression. */
+    function buildVarPathOrCat(pathBlock) {
+        var segments = collectPathSegments(pathBlock);
+        var hasExpr = false;
+        for (var i = 0; i < segments.length; i++) {
+            if (segments[i].type === 'expr') { hasExpr = true; break; }
+        }
+        if (!hasExpr) {
+            return segments.map(function (s) { return s.value; }).join('.');
+        }
+        return { 'cat': buildCatFromSegments(segments) };
     }
 
     /** Set of block types that are array iterators with DATA + EXPR inputs.
@@ -1688,6 +1853,9 @@
             }
             if (isPropertyBlock(parent.type)) {
                 segments.unshift(parent.getFieldValue('PROP') || parent.getFieldValue('SEGMENT'));
+            } else if (isComputedArrayBlock(parent.type)) {
+                var idx = getComputedIndexLiteral(parent);
+                segments.unshift(idx !== null ? idx : '0');
             } else if (isArrayElementBlock(parent.type)) {
                 segments.unshift(String(parent.getFieldValue('INDEX') * 1));
             } else {
@@ -1767,6 +1935,8 @@
         var path = extractVarPath(dataBlock);
         if (path === undefined) return undefined;
 
+        var isReduce = iteratorBlock.type === 'jsonlogic_reduce';
+
         // Schema-driven
         if (currentSchemaTree) {
             var segments = path ? path.split('.') : [];
@@ -1781,16 +1951,23 @@
             }
             // Navigate into array items
             if (node && node.items) {
-                var result = {};
+                var elementResult = {};
                 if (node.items.properties) {
                     for (var key in node.items.properties) {
                         if (node.items.properties.hasOwnProperty(key)) {
-                            result[key] = true;
+                            elementResult[key] = true;
                         }
                     }
                 }
-                result.__schemaNode = node.items;
-                return result;
+                elementResult.__schemaNode = node.items;
+
+                if (isReduce) {
+                    // In reduce, "current" and "accumulator" are the top-level names
+                    var ctx = { current: elementResult, accumulator: {} };
+                    ctx.__schemaNode = { properties: { current: node.items, accumulator: {} } };
+                    return ctx;
+                }
+                return elementResult;
             }
             return undefined;
         }
@@ -1799,7 +1976,11 @@
         if (!currentSampleData) return undefined;
         var arrayVal = path ? resolveDataPath(path) : currentSampleData;
         if (Array.isArray(arrayVal) && arrayVal.length > 0) {
-            return arrayVal[0]; // First element as representative
+            var element = arrayVal[0]; // First element as representative
+            if (isReduce) {
+                return { current: element || {}, accumulator: {} };
+            }
+            return element;
         }
         return undefined;
     }
@@ -1983,8 +2164,26 @@
 
         switch (op) {
             case 'var': {
-                var path = typeof args[0] === 'string' ? args[0] : String(args[0] || '');
+                var pathArg = args[0];
                 var hasDefault = args.length >= 2;
+
+                // Cat-based computed path: {"var": {"cat": [...]}}
+                if (pathArg && typeof pathArg === 'object' && !Array.isArray(pathArg) && pathArg['cat']) {
+                    var catArgs = Array.isArray(pathArg['cat']) ? pathArg['cat'] : [pathArg['cat']];
+                    var segments = parseCatToSegments(catArgs);
+                    var chain = buildPathChainFromSegments(segments, ws);
+                    if (hasDefault) {
+                        var b = createBlock(ws, 'jsonlogic_var_default');
+                        if (chain) connectValue(b, 'PATH', chain);
+                        connectValue(b, 'DEFAULT', jsonLogicToBlock(args[1], ws));
+                        return b;
+                    }
+                    var b = createBlock(ws, 'jsonlogic_var');
+                    if (chain) connectValue(b, 'PATH', chain);
+                    return b;
+                }
+
+                var path = typeof pathArg === 'string' ? pathArg : String(pathArg || '');
 
                 if (path === '' || path === 'current') {
                     return createBlock(ws, 'jsonlogic_var_current');
@@ -2294,6 +2493,52 @@
         for (var i = 0; i < blocks.length; i++) {
             var pb = blocks[i];
             if (pb.isIndex) {
+                pb.block.setFieldValue(parseInt(pb.seg, 10), 'INDEX');
+            } else {
+                pb.block.setFieldValue(pb.seg, 'PROP');
+            }
+        }
+
+        return blocks[0].block;
+    }
+
+    /** Build a path chain from structured segments (which may include
+     *  computed expressions). Uses computed array blocks for expr segments
+     *  and literal property/array_element blocks for string segments.
+     *  @param {Array} segments - From parseCatToSegments.
+     *  @param {Blockly.Workspace} ws - The workspace.
+     *  @returns {Blockly.Block|null} The first block in the chain. */
+    function buildPathChainFromSegments(segments, ws) {
+        if (!segments || segments.length === 0) return null;
+        var blocks = [];
+
+        for (var i = 0; i < segments.length; i++) {
+            var seg = segments[i];
+            var isLast = (i === segments.length - 1);
+            if (seg.type === 'expr') {
+                var blockType = isLast ? 'jsonlogic_array_computed_end' : 'jsonlogic_array_computed';
+                var b = createBlock(ws, blockType);
+                blocks.push({ block: b, expr: seg.jsonLogic });
+            } else if (/^\d+$/.test(seg.value)) {
+                var blockType = isLast ? 'jsonlogic_array_element_end' : 'jsonlogic_array_element';
+                blocks.push({ block: createBlock(ws, blockType), seg: seg.value, isIndex: true });
+            } else {
+                var blockType = isLast ? 'jsonlogic_property_end' : 'jsonlogic_property';
+                blocks.push({ block: createBlock(ws, blockType), seg: seg.value, isIndex: false });
+            }
+        }
+
+        // Wire NEXT connections
+        for (var i = 0; i < blocks.length - 1; i++) {
+            connectValue(blocks[i].block, 'NEXT', blocks[i + 1].block);
+        }
+
+        // Set field values and connect expressions
+        for (var i = 0; i < blocks.length; i++) {
+            var pb = blocks[i];
+            if (pb.expr !== undefined) {
+                connectValue(pb.block, 'INDEX', jsonLogicToBlock(pb.expr, ws));
+            } else if (pb.isIndex) {
                 pb.block.setFieldValue(parseInt(pb.seg, 10), 'INDEX');
             } else {
                 pb.block.setFieldValue(pb.seg, 'PROP');
