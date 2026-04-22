@@ -340,7 +340,7 @@ bool success = root.TryApplyPatch(in guardedPatch);
 </code></pre>
 <h3 id="parsing-patches-from-json">Parsing patches from JSON</h3>
 <p>You can also parse a patch document directly from raw JSON:</p>
-<pre><code class="language-csharp">JsonPatchDocument parsedPatch = JsonPatchDocument.Parse(
+<pre><code class="language-csharp">JsonPatchDocument parsedPatch = JsonPatchDocument.ParseValue(
     &quot;&quot;&quot;
     [
         { &quot;op&quot;: &quot;replace&quot;, &quot;path&quot;: &quot;/age&quot;, &quot;value&quot;: 32 },
