@@ -1353,6 +1353,8 @@
                 Blockly.Events.enable();
                 suppressChange = false;
             }
+            // Refresh dropdowns now that the full block tree is connected
+            refreshDataDropdowns();
         },
     };
 
@@ -1643,6 +1645,18 @@
         return segments.join('.');
     }
 
+    /** Set of block types that are array iterators with DATA + EXPR inputs.
+     *  Inside EXPR, var references resolve against the current array element,
+     *  not the root data object. */
+    var ITERATOR_BLOCK_TYPES = {
+        'jsonlogic_map': true,
+        'jsonlogic_filter': true,
+        'jsonlogic_reduce': true,
+        'jsonlogic_all': true,
+        'jsonlogic_some': true,
+        'jsonlogic_none': true,
+    };
+
     /** Determine the data context for a property block's dropdown by walking
      *  UP through parent blocks.  Each ancestor property/array_element adds
      *  a segment; the walk stops at a jsonlogic_var or jsonlogic_var_default.
@@ -1660,7 +1674,17 @@
 
             if (parent.type === 'jsonlogic_var'
                 || parent.type === 'jsonlogic_var_default') {
-                break; // reached the var wrapper — done
+                // Reached the var wrapper — now check if it's inside an iterator's EXPR
+                var iteratorCtx = getIteratorElementContext(parent);
+                if (iteratorCtx !== undefined) {
+                    // Resolve path segments against the iterator element context
+                    if (currentSchemaTree && iteratorCtx.__schemaNode) {
+                        return resolveSchemaContext(segments, iteratorCtx.__schemaNode);
+                    }
+                    if (segments.length === 0) return iteratorCtx;
+                    return resolveDataPathFrom(iteratorCtx, segments);
+                }
+                break; // not inside an iterator — use root context
             }
             if (isPropertyBlock(parent.type)) {
                 segments.unshift(parent.getFieldValue('PROP') || parent.getFieldValue('SEGMENT'));
@@ -1683,10 +1707,147 @@
         return resolveDataPath(segments.join('.'));
     }
 
+    /** Walk UP from a var block to find the nearest enclosing iterator block
+     *  (filter, map, reduce, all, some, none).  If the var is inside the
+     *  iterator's EXPR input, resolve the DATA input to find the array and
+     *  return the first element as the context for property suggestions.
+     *  @param {Blockly.Block} varBlock - The jsonlogic_var or jsonlogic_var_default block.
+     *  @returns {*} The element context, or undefined if not inside an iterator EXPR. */
+    function getIteratorElementContext(varBlock) {
+        var child = varBlock;
+        var ancestor = null;
+        try { ancestor = child.getParent(); } catch (e) { return undefined; }
+
+        while (ancestor) {
+            if (ITERATOR_BLOCK_TYPES[ancestor.type]) {
+                // Check: is the child connected to the EXPR input (not DATA)?
+                var exprInput = ancestor.getInput('EXPR');
+                if (exprInput && exprInput.connection) {
+                    var exprTarget = exprInput.connection.targetBlock();
+                    if (isDescendantOf(child, exprTarget)) {
+                        // We're inside EXPR — resolve DATA to find the array
+                        return resolveIteratorDataContext(ancestor);
+                    }
+                }
+                // Connected to DATA, not EXPR — stop looking
+                return undefined;
+            }
+
+            // Keep walking up
+            child = ancestor;
+            try { ancestor = ancestor.getParent(); } catch (e) { break; }
+        }
+
+        return undefined;
+    }
+
+    /** Check if block is the same as or a descendant of root. */
+    function isDescendantOf(block, root) {
+        if (!root || !block) return false;
+        var current = block;
+        while (current) {
+            if (current.id === root.id) return true;
+            try { current = current.getParent(); } catch (e) { return false; }
+        }
+        return false;
+    }
+
+    /** Resolve an iterator block's DATA input to find the array value,
+     *  then return the first element (for data-driven) or the items
+     *  schema node (for schema-driven).
+     *  @param {Blockly.Block} iteratorBlock - The filter/map/etc. block.
+     *  @returns {*} The element context. */
+    function resolveIteratorDataContext(iteratorBlock) {
+        var dataInput = iteratorBlock.getInput('DATA');
+        if (!dataInput || !dataInput.connection) return undefined;
+        var dataBlock = dataInput.connection.targetBlock();
+        if (!dataBlock) return undefined;
+
+        // The DATA is typically a var block — extract its path
+        var path = extractVarPath(dataBlock);
+        if (path === undefined) return undefined;
+
+        // Schema-driven
+        if (currentSchemaTree) {
+            var segments = path ? path.split('.') : [];
+            var node = currentSchemaTree;
+            for (var i = 0; i < segments.length; i++) {
+                if (!node) return undefined;
+                if (node.properties && node.properties[segments[i]]) {
+                    node = node.properties[segments[i]];
+                } else {
+                    return undefined;
+                }
+            }
+            // Navigate into array items
+            if (node && node.items) {
+                var result = {};
+                if (node.items.properties) {
+                    for (var key in node.items.properties) {
+                        if (node.items.properties.hasOwnProperty(key)) {
+                            result[key] = true;
+                        }
+                    }
+                }
+                result.__schemaNode = node.items;
+                return result;
+            }
+            return undefined;
+        }
+
+        // Data-driven
+        if (!currentSampleData) return undefined;
+        var arrayVal = path ? resolveDataPath(path) : currentSampleData;
+        if (Array.isArray(arrayVal) && arrayVal.length > 0) {
+            return arrayVal[0]; // First element as representative
+        }
+        return undefined;
+    }
+
+    /** Extract the dotted var path from a var block tree.
+     *  Returns the path string, or '' for bare var, or undefined if not a var. */
+    function extractVarPath(block) {
+        if (!block) return undefined;
+        if (block.type === 'jsonlogic_var' || block.type === 'jsonlogic_var_default') {
+            var pathInput = block.getInput('PATH');
+            if (pathInput && pathInput.connection) {
+                var pathBlock = pathInput.connection.targetBlock();
+                if (pathBlock) {
+                    return collectPathChain(pathBlock);
+                }
+            }
+            return ''; // bare var (no path)
+        }
+        return undefined;
+    }
+
+    /** Resolve path segments against a given root object (not currentSampleData).
+     *  Used for iterator element contexts. */
+    function resolveDataPathFrom(root, segments) {
+        if (!root || segments.length === 0) return root;
+        var val = root;
+        for (var i = 0; i < segments.length; i++) {
+            if (val === null || val === undefined) return undefined;
+            var seg = segments[i];
+            if (Array.isArray(val)) {
+                var idx = parseInt(seg, 10);
+                if (isNaN(idx)) return undefined;
+                val = val[idx];
+            } else if (typeof val === 'object') {
+                val = val[seg];
+            } else {
+                return undefined;
+            }
+        }
+        return val;
+    }
+
     /** Navigate the schema tree using collected path segments.
-     *  Returns a synthetic object whose keys are the property names at this level. */
-    function resolveSchemaContext(segments) {
-        var node = currentSchemaTree;
+     *  Returns a synthetic object whose keys are the property names at this level.
+     *  @param {string[]} segments - Path segments to navigate.
+     *  @param {object} [startNode] - Optional starting schema node (default: currentSchemaTree). */
+    function resolveSchemaContext(segments, startNode) {
+        var node = startNode || currentSchemaTree;
         for (var i = 0; i < segments.length; i++) {
             if (!node) return undefined;
             var seg = segments[i];
