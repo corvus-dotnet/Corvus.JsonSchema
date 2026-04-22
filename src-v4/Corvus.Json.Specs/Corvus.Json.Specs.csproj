@@ -9,6 +9,7 @@
     <IsTestProject>true</IsTestProject>
     <NoWarn>RCS1029;RCS1118;RCS1146;RC1251;CS1591;NU1510</NoWarn>
     <ReqnrollDeleteObsoleteCodeBehindFilesOnClean>true</ReqnrollDeleteObsoleteCodeBehindFilesOnClean>
+    <ReqnrollUseIntermediateOutputPathForCodeBehind>true</ReqnrollUseIntermediateOutputPathForCodeBehind>
   </PropertyGroup>
   <PropertyGroup>
     <GenerateReqnrollCodeBehindDependsOn>
