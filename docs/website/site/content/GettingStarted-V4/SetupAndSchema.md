@@ -135,7 +135,7 @@ The `OtherNames` union type allows backwards-compatible API evolution — a prev
 Run the code generator, specifying the root namespace and the path to the `Person` definition:
 
 ```
-generatejsonschematypes --rootNamespace JsonSchemaSample.Api --rootPath #/$defs/Person person-from-api.json
+corvusjson jsonschema --rootNamespace JsonSchemaSample.Api --rootPath #/$defs/Person person-from-api.json --engine V4
 ```
 
 This produces files for each schema element reachable from `Person`:

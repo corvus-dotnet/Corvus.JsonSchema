@@ -14,7 +14,7 @@ Three evaluation modes are available:
 |------|-------------|---------|
 | **Interpreted** | Expressions are dynamic, determined at runtime | `Corvus.Text.Json.JMESPath` |
 | **Source generator** | Expressions are known at build time, embedded in your project | `Corvus.Text.Json.JMESPath.SourceGenerator` |
-| **CLI code generation** | Expressions are known ahead of time, generated outside the build | `Corvus.Json.CodeGenerator` (the `jmespath` command) |
+| **CLI code generation** | Expressions are known ahead of time, generated outside the build | `Corvus.Json.Cli` (the `jmespath` command) |
 
 The source generator and CLI tool produce optimized static C# that eliminates delegate dispatch.
 
@@ -210,14 +210,14 @@ The generated method is a static method that directly evaluates the expression w
 
 ### CLI code generation
 
-The `generatejsonschematypes` CLI tool includes a `jmespath` subcommand for ahead-of-time code generation outside the MSBuild pipeline:
+The `corvusjson` CLI tool includes a `jmespath` subcommand for ahead-of-time code generation outside the MSBuild pipeline:
 
 ```bash
-dotnet tool install --global Corvus.Json.CodeGenerator
+dotnet tool install --global Corvus.Json.Cli
 ```
 
 ```bash
-generatejsonschematypes jmespath <expressionFile> \
+corvusjson jmespath <expressionFile> \
     --className <ClassName> \
     --namespace <Namespace> \
     [--outputPath <output.cs>]
@@ -233,7 +233,7 @@ generatejsonschematypes jmespath <expressionFile> \
 Example:
 
 ```bash
-generatejsonschematypes jmespath expressions/total-price.jmespath \
+corvusjson jmespath expressions/total-price.jmespath \
     --className TotalPrice \
     --namespace MyApp.Queries \
     --outputPath Generated/TotalPrice.cs

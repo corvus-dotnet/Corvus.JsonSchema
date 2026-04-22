@@ -16,7 +16,7 @@ Three evaluation modes are available:
 |------|-------------|---------|
 | **Interpreted** | Rules are dynamic, determined at runtime | `Corvus.Text.Json.JsonLogic` |
 | **Source generator** | Rules are known at build time, embedded in your project | `Corvus.Text.Json.JsonLogic.SourceGenerator` |
-| **CLI code generation** | Rules are known ahead of time, generated outside the build | `Corvus.Json.CodeGenerator` (the `jsonlogic` command) |
+| **CLI code generation** | Rules are known ahead of time, generated outside the build | `Corvus.Json.Cli` (the `jsonlogic` command) |
 
 The source generator and CLI tool produce optimized static C# that eliminates delegate dispatch and can constant-fold literal expressions. Benchmarks show generated code is typically **70–98% faster** than JsonEverything across 19 scenarios, with zero or near-zero allocations (see [benchmark summary](#benchmark-summary)).
 
@@ -94,10 +94,10 @@ The source generator package is a development dependency — it runs at build ti
 ### CLI tool
 
 ```bash
-dotnet tool install --global Corvus.Json.CodeGenerator
+dotnet tool install --global Corvus.Json.Cli
 ```
 
-The `generatejsonschematypes` tool includes a `jsonlogic` subcommand. See [CLI code generation](#cli-code-generation) below.
+The `corvusjson` tool includes a `jsonlogic` subcommand. See [CLI code generation](#cli-code-generation) below.
 
 ## Interpreted evaluation
 
@@ -199,10 +199,10 @@ The generated `Evaluate` method is a static method that directly evaluates the r
 
 ## CLI code generation
 
-The `generatejsonschematypes` CLI tool includes a `jsonlogic` subcommand for ahead-of-time code generation:
+The `corvusjson` CLI tool includes a `jsonlogic` subcommand for ahead-of-time code generation:
 
 ```bash
-generatejsonschematypes jsonlogic <ruleFile> \
+corvusjson jsonlogic <ruleFile> \
     --className <ClassName> \
     --namespace <Namespace> \
     [--outputPath <output.cs>]
@@ -218,7 +218,7 @@ generatejsonschematypes jsonlogic <ruleFile> \
 Example:
 
 ```bash
-generatejsonschematypes jsonlogic rules/pricing.json \
+corvusjson jsonlogic rules/pricing.json \
     --className PricingRule \
     --namespace MyApp.Rules \
     --outputPath Generated/PricingRule.cs
@@ -612,7 +612,7 @@ All custom operators from all `.jlops` files are available to all `[JsonLogicRul
 Pass the `--operators` flag pointing to a `.jlops` file:
 
 ```bash
-generatejsonschematypes jsonlogic rules/pricing.json \
+corvusjson jsonlogic rules/pricing.json \
     --className PricingRule \
     --namespace MyApp.Rules \
     --operators operators/custom-ops.jlops

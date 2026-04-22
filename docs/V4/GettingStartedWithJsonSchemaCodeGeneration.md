@@ -4,7 +4,7 @@ TL;DR - this is a getting started Hands-On-Lab that walks you through our new JS
 
 ## Goals
 
-- Understand how to generate C# code from JSON schema, supporting the full capabilities of JSON Schema, using the `Corvus.Json.CodeGenerator` tool.
+- Understand how to generate C# code from JSON schema, supporting the full capabilities of JSON Schema, using the `corvusjson` tool (or the legacy `Corvus.Json.CodeGenerator` tool).
 - Understand how to serialize and deserialize JSON documents using the generated code
 - Understand how to validate JSON documents against schema using the generated code
 - Understand how to navigate a JSON document using the generated code
@@ -360,14 +360,14 @@ So, let's generate some code...
 We've already installed our code generator tool. To check that all went well, we can run it, with the `-h` option.
 
 ```
-generatejsonschematypes -h
+corvusjson jsonschema -h
 ```
 
 You should see the help text - something like this at the time of writing.
 
 ```
 USAGE:
-    generatejsonschematypes <schemaFile> [OPTIONS]
+    corvusjson jsonschema <schemaFile> [OPTIONS]
 
 ARGUMENTS:
     <schemaFile>    The path to the schema file to process
@@ -427,7 +427,7 @@ The other defaults mean that we will generate our output files in the same folde
 So we end up with the command.
 
 ```
-generatejsonschematypes --rootNamespace JsonSchemaSample.Api --rootPath #/$defs/Person person-from-api.json
+corvusjson jsonschema --rootNamespace JsonSchemaSample.Api --rootPath #/$defs/Person person-from-api.json --engine V4
 ```
 
 Let's run that now. When it has completed, list the C# files in the directory, using whatever command is appropriate for your shell.

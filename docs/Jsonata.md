@@ -14,7 +14,7 @@ Three evaluation modes are available:
 |------|-------------|---------|
 | **Interpreted** | Expressions are dynamic, determined at runtime | `Corvus.Text.Json.Jsonata` |
 | **Source generator** | Expressions are known at build time, embedded in your project | `Corvus.Text.Json.Jsonata.SourceGenerator` |
-| **CLI code generation** | Expressions are known ahead of time, generated outside the build | `Corvus.Json.CodeGenerator` (the `jsonata` command) |
+| **CLI code generation** | Expressions are known ahead of time, generated outside the build | `Corvus.Json.Cli` (the `jsonata` command) |
 
 The source generator and CLI tool produce optimized static C# that eliminates delegate dispatch. Benchmarks show the interpreted evaluator is **up to 8× faster** than [Jsonata.Net.Native](https://github.com/mikhail-barg/jsonata.net.native) (the .NET reference implementation) with **90–100% less memory allocation**, and code-generated evaluators can be **up to 12× faster**.
 
@@ -177,14 +177,14 @@ The generated method is a static method that directly evaluates the expression w
 
 ### CLI code generation
 
-The `generatejsonschematypes` CLI tool includes a `jsonata` subcommand for ahead-of-time code generation outside the MSBuild pipeline:
+The `corvusjson` CLI tool includes a `jsonata` subcommand for ahead-of-time code generation outside the MSBuild pipeline:
 
 ```bash
-dotnet tool install --global Corvus.Json.CodeGenerator
+dotnet tool install --global Corvus.Json.Cli
 ```
 
 ```bash
-generatejsonschematypes jsonata <expressionFile> \
+corvusjson jsonata <expressionFile> \
     --className <ClassName> \
     --namespace <Namespace> \
     [--outputPath <output.cs>]
@@ -200,7 +200,7 @@ generatejsonschematypes jsonata <expressionFile> \
 Example:
 
 ```bash
-generatejsonschematypes jsonata expressions/employee-transform.jsonata \
+corvusjson jsonata expressions/employee-transform.jsonata \
     --className EmployeeTransform \
     --namespace MyApp.Transforms \
     --outputPath Generated/EmployeeTransform.cs
@@ -479,7 +479,7 @@ The source generator automatically discovers `.jfn` files and makes the function
 **Using with the CLI tool:** Pass the `--customFunctions` option:
 
 ```bash
-generatejsonschematypes jsonata MyExpression.jsonata --customFunctions MyFunctions.jfn
+corvusjson jsonata MyExpression.jsonata --customFunctions MyFunctions.jfn
 ```
 
 ### Recursion depth and execution timeouts

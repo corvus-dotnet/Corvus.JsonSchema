@@ -16,7 +16,8 @@ What we now call the V4 Engine continues to be maintained in this library - and 
 
 ### Breaking changes
 
-- The `generatejsonschematypes` CLI tool now defaults to the V5 engine. To continue generating V4 types, you must specify `--engine V4`.
+- The CLI tool has been renamed from `generatejsonschematypes` (package: `Corvus.Json.CodeGenerator`) to `corvusjson` (package: `Corvus.Json.Cli`). Schema generation is now the `jsonschema` subcommand: `corvusjson jsonschema schema.json ...`. The legacy `generatejsonschematypes` command still works as a shim but displays a deprecation warning.
+- The `corvusjson` CLI tool defaults to the V5 engine. The legacy `generatejsonschematypes` shim defaults to V4. To explicitly select an engine, use `--engine V4` or `--engine V5`.
 - V5 generated types use the `Corvus.Text.Json` namespace and require the `Corvus.Text.Json` NuGet package at runtime, rather than `Corvus.Json.ExtendedTypes`.
 - The immutable functional API from V4 (`WithProperty()`, `SetItem()`, etc.) is replaced by the mutable builder pattern (`CreateBuilder()`, `SetProperty()`, etc.).
 

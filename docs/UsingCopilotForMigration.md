@@ -18,7 +18,7 @@ Before migrating any code, generate the V5 types so Copilot can see the actual t
 
 ```bash
 # Using the CLI tool
-generatejsonschematypes --rootNamespace MyApp.Models --outputPath generated/ schema.json
+corvusjson jsonschema --rootNamespace MyApp.Models --outputPath generated/ schema.json
 
 # Or using the source generator — add the attribute and build
 # [JsonSchemaTypeGenerator("schema.json")]

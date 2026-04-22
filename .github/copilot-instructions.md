@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-This is **Corvus.Text.Json**, a high-performance JSON library for .NET that extends `System.Text.Json` with pooled-memory parsing, JSON Schema validation (draft 2019-09 and 2020-12), mutable document building, extended numeric types (`BigNumber`, `BigInteger`), and NodaTime integration. It includes a Roslyn incremental source generator and a CLI code generator (`generatejsonschematypes`) that produce strongly-typed C# from JSON Schema files.
+This is **Corvus.Text.Json**, a high-performance JSON library for .NET that extends `System.Text.Json` with pooled-memory parsing, JSON Schema validation (draft 2019-09 and 2020-12), mutable document building, extended numeric types (`BigNumber`, `BigInteger`), and NodaTime integration. It includes a Roslyn incremental source generator and a CLI code generator (`corvusjson`) that produce strongly-typed C# from JSON Schema files.
 
 The repo structure mirrors the dotnet/runtime repository conventions: shared source files in `Common/`, polyfills from `System.Private.CoreLib/`, and explicit `<Compile>` item groups (no glob includes).
 
@@ -50,11 +50,11 @@ Follow this pattern when adding functionality: keep the core struct untouched an
 
 Two code-gen mechanisms are used together:
 1. **Roslyn `IIncrementalGenerator`** (`src/Corvus.Text.Json.SourceGenerator/`) — triggered at build time via `JsonSchemaTypeGeneratorAttribute`. `EmitCompilerGeneratedFiles=true` writes output to `obj/` for inspection.
-2. **CLI tool** (`src/Corvus.Json.CodeGenerator/`) — `generatejsonschematypes` generates C# from JSON Schema for use outside the build pipeline (e.g., the `tests/Corvus.Text.Json.Tests.GeneratedModels/` project).
+2. **CLI tool** (`src/Corvus.Json.CodeGenerator/`) — `corvusjson` (package: `Corvus.Json.Cli`) generates C# from JSON Schema for use outside the build pipeline (e.g., the `tests/Corvus.Text.Json.Tests.GeneratedModels/` project). The legacy `generatejsonschematypes` command (package: `Corvus.Json.CodeGenerator`) still works as a shim but defaults to the V4 engine.
 
 **IMPORTANT:** When writing documentation, examples, or instructions that reference Source Generator attributes or CLI tool options, always verify the exact parameter names and types by checking the source code:
 - **Source Generator attribute:** `src/Corvus.Text.Json.SourceGenerator/IncrementalSourceGenerator.cs` — the `JsonSchemaTypeGeneratorAttribute` is emitted by the generator and defines: `Location` (string, required), `RebaseToRootPath` (bool), `EmitEvaluator` (bool).
-- **CLI tool options:** `src/Corvus.Json.CodeGenerator/GenerateCommand.cs` — defines all command-line settings including `--assertFormat` (bool, default true), `--rootNamespace`, `--outputPath`, `--outputRootTypeName`, `--engine`, `--codeGenerationMode`, etc.
+- **CLI tool options:** `src/Corvus.Json.CodeGenerator/GenerateCommand.cs` — defines all command-line settings including `--assertFormat` (bool, default true), `--rootNamespace`, `--outputPath`, `--outputRootTypeName`, `--engine`, `--codeGenerationMode`, etc. The new CLI package is `Corvus.Json.Cli` (command: `corvusjson`); the legacy `Corvus.Json.CodeGenerator` package (command: `generatejsonschematypes`) still works but defaults to the V4 engine.
 
 Do **not** invent or hallucinate option names. If unsure, read the source files above before writing.
 

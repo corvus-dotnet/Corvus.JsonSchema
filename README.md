@@ -6,7 +6,7 @@ High-performance, source-generated, strongly-typed C# models from JSON Schema �
 
 ## Features
 
-- **Source Generation** — Generate strongly-typed C# from JSON Schema at build time with the Roslyn incremental source generator, or ahead of time with the `generatejsonschematypes` CLI tool.
+- **Source Generation** — Generate strongly-typed C# from JSON Schema at build time with the Roslyn incremental source generator, or ahead of time with the `corvusjson` CLI tool.
 - **Schema Validation** — Full JSON Schema draft 4, 6, 7, 2019-09, and 2020-12 validation. Over 10× faster than other .NET JSON Schema validators.
 - **Pooled Memory** — `ParsedJsonDocument<T>` uses `ArrayPool<byte>` for minimal GC impact. Just 120B per-document vs 1,528B for `JsonNode` — 92% less memory.
 - **Mutable Documents** — `JsonDocumentBuilder<T>` and `JsonWorkspace` provide a builder pattern for creating and modifying JSON with pooled workspace memory.
@@ -63,7 +63,8 @@ Console.WriteLine(root.ToString());
 |---|---|
 | **Corvus.Text.Json** | Core runtime library. Required by all generated types. |
 | **Corvus.Text.Json.SourceGenerator** | Roslyn incremental source generator. Generates C# from JSON Schema at build time. |
-| **Corvus.Json.CodeGenerator** | CLI tool (`generatejsonschematypes`) for ahead-of-time code generation. |
+| **Corvus.Json.Cli** | CLI tool (`corvusjson`) for ahead-of-time code generation. |
+| **Corvus.Json.CodeGenerator** | Legacy CLI tool (`generatejsonschematypes`). Delegates to the same engine; defaults to V4. |
 | **Corvus.Text.Json.Validator** | Dynamically load and validate JSON against JSON Schema at runtime using Roslyn. |
 | **Corvus.Text.Json.Jsonata** | JSONata query and transformation language — interpreted runtime evaluator. |
 | **Corvus.Text.Json.Jsonata.SourceGenerator** | Roslyn source generator for compile-time JSONata code generation. |
@@ -82,7 +83,7 @@ Console.WriteLine(root.ToString());
 dotnet add package Corvus.Text.Json
 
 # CLI code generator
-dotnet tool install --global Corvus.Json.CodeGenerator
+dotnet tool install --global Corvus.Json.Cli
 ```
 
 For the source generator, add as an analyzer reference:
