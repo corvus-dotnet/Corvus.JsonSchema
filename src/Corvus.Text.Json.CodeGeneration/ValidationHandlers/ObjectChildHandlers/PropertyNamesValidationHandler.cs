@@ -34,7 +34,7 @@ public class PropertyNamesValidationHandler : IChildObjectPropertyValidationHand
     }
 
     /// <inheritdoc/>
-    public CodeGenerator AppendValidateMethodSetup(CodeGenerator generator, TypeDeclaration typeDeclaration) => throw new NotImplementedException();
+    public CodeGenerator AppendValidateMethodSetup(CodeGenerator generator, TypeDeclaration typeDeclaration) => generator;
 
     /// <inheritdoc/>
     public CodeGenerator AppendValidationCode(CodeGenerator generator, TypeDeclaration typeDeclaration)
