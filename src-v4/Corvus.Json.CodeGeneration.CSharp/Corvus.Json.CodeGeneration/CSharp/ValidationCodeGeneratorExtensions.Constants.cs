@@ -4,6 +4,7 @@
 
 using System.Diagnostics;
 using System.Text.Json;
+using Corvus.Text.Json.CodeGeneration;
 using Microsoft.CodeAnalysis.CSharp;
 
 namespace Corvus.Json.CodeGeneration.CSharp;
@@ -379,6 +380,7 @@ public static partial class ValidationCodeGeneratorExtensions
             return generator;
         }
 
+        string translatedValue = EcmaRegexTranslator.TranslateOrFallback(value);
         string memberName = generator.GetMethodNameInScope(keyword.Keyword, prefix: "Create", suffix: index?.ToString());
 
         return generator
@@ -386,12 +388,12 @@ public static partial class ValidationCodeGeneratorExtensions
                 .AppendIndent("private static Regex ")
                 .Append(memberName)
                 .Append("() => new(")
-                .AppendQuotedStringLiteral(value)
+                .AppendQuotedStringLiteral(translatedValue)
                 .AppendLine(", RegexOptions.Compiled);");
 #else
                 .AppendLine("#if NET8_0_OR_GREATER && !DYNAMIC_BUILD")
                 .AppendIndent("[GeneratedRegex(")
-                .Append(SymbolDisplay.FormatLiteral(value, true))
+                .Append(SymbolDisplay.FormatLiteral(translatedValue, true))
                 .AppendLine(")]")
                 .AppendIndent("private static partial Regex ")
                 .Append(memberName)
@@ -400,7 +402,7 @@ public static partial class ValidationCodeGeneratorExtensions
             .AppendIndent("private static Regex ")
             .Append(memberName)
             .Append("() => new(")
-            .AppendQuotedStringLiteral(value)
+            .AppendQuotedStringLiteral(translatedValue)
             .AppendLine(", RegexOptions.Compiled);")
             .AppendLine("#endif");
 #endif

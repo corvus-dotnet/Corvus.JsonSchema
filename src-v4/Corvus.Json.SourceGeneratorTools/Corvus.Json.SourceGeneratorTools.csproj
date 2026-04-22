@@ -2,7 +2,7 @@
   <Import Project="$(EndjinProjectPropsPath)" Condition="$(EndjinProjectPropsPath) != ''" />
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <LangVersion>12.0</LangVersion>
+    <LangVersion>14.0</LangVersion>
     <Nullable>enable</Nullable>
     <DefineConstants>$(DefineConstants);BUILDING_SOURCE_GENERATOR</DefineConstants>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
@@ -83,6 +83,7 @@
     <Compile Remove="..\Corvus.Json.CodeGeneration.CSharp\Corvus.Json.CodeGeneration\CSharp\**\NullableAttributes.cs" />
     <Compile Remove="..\Corvus.Json.JsonReference\Corvus.Json\**\NullableAttributes.cs" />
     <Compile Remove="..\Corvus.Json.ExtendedTypes\Corvus.Json\**\NullableAttributes.cs" />
+    <Compile Include="..\..\src\Corvus.Text.Json.CodeGeneration\EcmaRegexTranslator.cs" Link="EcmaRegexTranslator.cs" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="metaschema\corvus\meta\corvus-extensions.json" />
