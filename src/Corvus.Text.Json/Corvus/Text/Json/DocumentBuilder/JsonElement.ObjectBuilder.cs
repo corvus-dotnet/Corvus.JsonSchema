@@ -4,7 +4,7 @@
 // <licensing>
 // Derived from code licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licensed this code under the MIT license.
-// https:// github.com/dotnet/runtime/blob/388a7c4814cb0d6e344621d017507b357902043a/LICENSE.TXT
+// https://github.com/dotnet/runtime/blob/388a7c4814cb0d6e344621d017507b357902043a/LICENSE.TXT
 // </licensing>
 using System.Diagnostics;
 using System.Numerics;
@@ -79,9 +79,9 @@ public readonly partial struct JsonElement
         }
 
         /// <summary>
-        /// Builds a JSON array value using the provided delegate and value builder.
+        /// Builds a JSON object value using the provided delegate and value builder.
         /// </summary>
-        /// <param name="value">The delegate to build the array.</param>
+        /// <param name="value">The delegate to build the object.</param>
         /// <param name="valueBuilder">The <see cref="ComplexValueBuilder"/> to use.</param>
         public static void BuildValue<TContext>(in TContext context, Build<TContext> value, ref ComplexValueBuilder valueBuilder)
 #if NET9_0_OR_GREATER

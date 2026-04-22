@@ -4,7 +4,7 @@
 // <licensing>
 // Derived from code licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licensed this code under the MIT license.
-// https:// github.com/dotnet/runtime/blob/388a7c4814cb0d6e344621d017507b357902043a/LICENSE.TXT
+// https://github.com/dotnet/runtime/blob/388a7c4814cb0d6e344621d017507b357902043a/LICENSE.TXT
 // </licensing>
 using System.Buffers;
 using System.Buffers.Text;
@@ -1343,7 +1343,7 @@ public static partial class JsonSchemaEvaluation
         // conceptually equivalent to "C:\abc" being an absolute Uri on Windows, but it's more
         // of a problem because a lot of relative Uris of the kind you come across on the web
         // look exactly like Unix file paths.)
-        // https:// github.com/dotnet/runtime/issues/22718
+        // https://github.com/dotnet/runtime/issues/22718
         // However, this only needs to be a problem if you insist that the Uri is absolute.
         // If you accept either absolute or relative Uris, it will interpret "/abc" as a
         // relative Uri on either Windows or Linux. It only interprets it as an absolute Uri
@@ -1444,7 +1444,7 @@ public static partial class JsonSchemaEvaluation
         // conceptually equivalent to "C:\abc" being an absolute Uri on Windows, but it's more
         // of a problem because a lot of relative Uris of the kind you come across on the web
         // look exactly like Unix file paths.)
-        // https:// github.com/dotnet/runtime/issues/22718
+        // https://github.com/dotnet/runtime/issues/22718
         // However, this only needs to be a problem if you insist that the Uri is absolute.
         // If you accept either absolute or relative Uris, it will interpret "/abc" as a
         // relative Uri on either Windows or Linux. It only interprets it as an absolute Uri

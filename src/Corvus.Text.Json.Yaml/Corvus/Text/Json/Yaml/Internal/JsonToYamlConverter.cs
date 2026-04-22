@@ -39,7 +39,7 @@ namespace Corvus.Text.Json.Yaml.Internal;
 /// <b>CTJ element walk</b> (CTJ build only): walks any
 /// <see cref="IJsonElement{T}"/> implementation through the
 /// <see cref="IJsonDocument"/> APIs using index-based
-/// <see cref="ObjectEnumerator"/> and <see cref="ArrayEnumerator"/>
+/// <c>ObjectEnumerator</c> and <c>ArrayEnumerator</c>
 /// enumerators. No <c>System.Text.Json</c> references.
 /// </description></item>
 /// </list>

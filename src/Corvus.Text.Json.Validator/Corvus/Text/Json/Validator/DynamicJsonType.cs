@@ -16,7 +16,7 @@ using Corvus.Text.Json.Internal;
 namespace Corvus.Text.Json.Validator;
 
 /// <summary>
-/// Represents a dynamically-compiled JSON Schema typeand provides methods to parse
+/// Represents a dynamically-compiled JSON Schema type and provides methods to parse
 /// JSON documents into instances of that type.
 /// </summary>
 public readonly struct DynamicJsonType

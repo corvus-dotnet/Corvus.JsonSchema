@@ -239,7 +239,7 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
 
                         /// <summary>
                         /// Gets or sets a value indicating whether to emit a standalone
-                        /// schema evaluator in addition to (or instead of) the generated types.
+                        /// schema evaluator in addition to the generated types.
                         /// </summary>
                         public bool EmitEvaluator { get; set; }
                     }

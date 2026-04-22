@@ -4,7 +4,7 @@
 // <licensing>
 // Derived from code licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licensed this code under the MIT license.
-// https:// github.com/dotnet/runtime/blob/388a7c4814cb0d6e344621d017507b357902043a/LICENSE.TXT
+// https://github.com/dotnet/runtime/blob/388a7c4814cb0d6e344621d017507b357902043a/LICENSE.TXT
 // </licensing>
 using System.Buffers;
 using System.Diagnostics;
@@ -51,7 +51,7 @@ internal partial struct ValueStack<T>
     {
         int pos = _pos;
 
-        // Workaround for https:// github.com/dotnet/runtime/issues/72004
+        // Workaround for https://github.com/dotnet/runtime/issues/72004
         Span<T> span = Span;
         if ((uint)pos < (uint)span.Length)
         {
