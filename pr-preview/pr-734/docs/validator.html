@@ -445,7 +445,7 @@ JsonSchema schema2 = JsonSchema.FromFile(&quot;person.json&quot;);
 <ol>
 <li><strong>Parse</strong> the JSON Schema document</li>
 <li><strong>Resolve</strong> all <code>$ref</code> references using registered document resolvers</li>
-<li><strong>Generate</strong> C# source code for strongly-typed validators (identical output to <code>generatejsonschematypes</code>)</li>
+<li><strong>Generate</strong> C# source code for strongly-typed validators (identical output to the <code>corvusjson</code> CLI tool)</li>
 <li><strong>Compile</strong> the generated code using Roslyn (<code>Microsoft.CodeAnalysis.CSharp</code>) into an in-memory assembly</li>
 <li><strong>Load</strong> the compiled assembly and create a validation pipeline</li>
 <li><strong>Cache</strong> the pipeline for subsequent validations against the same schema</li>

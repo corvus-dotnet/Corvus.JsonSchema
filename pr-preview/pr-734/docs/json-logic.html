@@ -269,7 +269,7 @@
 <tr>
 <td><strong>CLI code generation</strong></td>
 <td>Rules are known ahead of time, generated outside the build</td>
-<td><code>Corvus.Json.CodeGenerator</code> (the <code>jsonlogic</code> command)</td>
+<td><code>Corvus.Json.Cli</code> (the <code>jsonlogic</code> command)</td>
 </tr>
 </tbody>
 </table>
@@ -324,9 +324,9 @@ dotnet add package Corvus.Text.Json.JsonLogic.SourceGenerator
 </code></pre>
 <p>The source generator package is a development dependency — it runs at build time and produces C# source; the generated code depends on <code>Corvus.Text.Json</code> and <code>Corvus.Text.Json.JsonLogic</code> at runtime.</p>
 <h3 id="cli-tool">CLI tool</h3>
-<pre><code class="language-bash">dotnet tool install --global Corvus.Json.CodeGenerator
+<pre><code class="language-bash">dotnet tool install --global Corvus.Json.Cli
 </code></pre>
-<p>The <code>generatejsonschematypes</code> tool includes a <code>jsonlogic</code> subcommand. See <a href="#cli-code-generation">CLI code generation</a> below.</p>
+<p>The <code>corvusjson</code> tool includes a <code>jsonlogic</code> subcommand. See <a href="#cli-code-generation">CLI code generation</a> below.</p>
 <h2 id="interpreted-evaluation">Interpreted evaluation</h2>
 <h3 id="basic-evaluation">Basic evaluation</h3>
 <p>Parse a rule, wrap it in a <code>JsonLogicRule</code>, and evaluate it against data:</p>
@@ -420,8 +420,8 @@ JsonElement result = DiscountRule.Evaluate(dataDoc.RootElement, workspace);
 </tbody>
 </table>
 <h2 id="cli-code-generation">CLI code generation</h2>
-<p>The <code>generatejsonschematypes</code> CLI tool includes a <code>jsonlogic</code> subcommand for ahead-of-time code generation:</p>
-<pre><code class="language-bash">generatejsonschematypes jsonlogic &lt;ruleFile&gt; \
+<p>The <code>corvusjson</code> CLI tool includes a <code>jsonlogic</code> subcommand for ahead-of-time code generation:</p>
+<pre><code class="language-bash">corvusjson jsonlogic &lt;ruleFile&gt; \
     --className &lt;ClassName&gt; \
     --namespace &lt;Namespace&gt; \
     [--outputPath &lt;output.cs&gt;]
@@ -458,7 +458,7 @@ JsonElement result = DiscountRule.Evaluate(dataDoc.RootElement, workspace);
 </tbody>
 </table>
 <p>Example:</p>
-<pre><code class="language-bash">generatejsonschematypes jsonlogic rules/pricing.json \
+<pre><code class="language-bash">corvusjson jsonlogic rules/pricing.json \
     --className PricingRule \
     --namespace MyApp.Rules \
     --outputPath Generated/PricingRule.cs
@@ -1056,7 +1056,7 @@ if (!val.TryGetDouble(out double d))
 </code></pre>
 <h3 id="using-with-the-cli-tool">Using with the CLI tool</h3>
 <p>Pass the <code>--operators</code> flag pointing to a <code>.jlops</code> file:</p>
-<pre><code class="language-bash">generatejsonschematypes jsonlogic rules/pricing.json \
+<pre><code class="language-bash">corvusjson jsonlogic rules/pricing.json \
     --className PricingRule \
     --namespace MyApp.Rules \
     --operators operators/custom-ops.jlops

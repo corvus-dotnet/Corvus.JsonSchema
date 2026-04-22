@@ -303,11 +303,11 @@ public readonly partial struct Person;
 </code></pre>
 <p>Build the project. The generator produces the full implementation, deriving the <strong>namespace</strong>, <strong>accessibility</strong>, and <strong>type name</strong> from this declaration.</p>
 <h2 id="cli-tool">CLI tool</h2>
-<p>If you prefer ahead-of-time code generation, install the <code>generatejsonschematypes</code> .NET tool globally:</p>
-<pre><code class="language-bash">dotnet tool install --global Corvus.Json.CodeGenerator
+<p>If you prefer ahead-of-time code generation, install the <code>corvusjson</code> .NET tool globally:</p>
+<pre><code class="language-bash">dotnet tool install --global Corvus.Json.Cli
 </code></pre>
 <p>Generate code from a schema:</p>
-<pre><code class="language-bash">generatejsonschematypes \
+<pre><code class="language-bash">corvusjson jsonschema \
   --rootNamespace MyApp.Models \
   --outputPath Generated/ \
   Schemas/person.json

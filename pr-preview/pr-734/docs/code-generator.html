@@ -4,16 +4,16 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#1C1D21" />
-    <meta name="description" content="Generate strongly-typed C# models from JSON Schema files using the generatejsonschematypes CLI tool. Same output as the source generator, for CI pipelines and pre-generation workflows." />
+    <meta name="description" content="Generate strongly-typed C# models from JSON Schema files using the `corvusjson` CLI tool. Same output as the source generator, for CI pipelines and pre-generation workflows." />
     <meta name="keywords" content="documentation, Corvus.Text.Json" />
     <meta name="robots" content="noindex, nofollow" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:description" content="Generate strongly-typed C# models from JSON Schema files using the generatejsonschematypes CLI tool. Same output as the source generator, for CI pipelines and pre-generation workflows." />
+    <meta name="twitter:description" content="Generate strongly-typed C# models from JSON Schema files using the `corvusjson` CLI tool. Same output as the source generator, for CI pipelines and pre-generation workflows." />
     <meta name="twitter:image" content="/Corvus.JsonSchema/pr-preview/pr-734/assets/images/og-corvus.png" />
     <meta name="twitter:title" content="CLI Code Generation - Corvus.Text.Json" />
     <meta property="article:tag" content="documentation" />
     <meta property="article:tag" content="Corvus.Text.Json" />
-    <meta property="og:description" content="Generate strongly-typed C# models from JSON Schema files using the generatejsonschematypes CLI tool. Same output as the source generator, for CI pipelines and pre-generation workflows." />
+    <meta property="og:description" content="Generate strongly-typed C# models from JSON Schema files using the `corvusjson` CLI tool. Same output as the source generator, for CI pipelines and pre-generation workflows." />
     <meta property="og:image" content="/Corvus.JsonSchema/pr-preview/pr-734/assets/images/og-corvus.png" />
     <meta property="og:title" content="CLI Code Generation - Corvus.Text.Json" />
     <meta property="og:type" content="website" />
@@ -238,29 +238,32 @@
         <div class="doc__content">
             <h1>CLI Code Generation</h1>
 <h2 id="overview">Overview</h2>
-<p><code>generatejsonschematypes</code> is a .NET global tool that generates strongly-typed C# models from JSON Schema files. It produces the same output as the Roslyn incremental source generator, but runs ahead of time from the command line — making it suitable for CI/CD pipelines, pre-generation workflows, and scenarios where you need to inspect or version-control the generated code.</p>
+<p><code>corvusjson</code> is the .NET global tool that generates strongly-typed C# models from JSON Schema files. It produces the same output as the Roslyn incremental source generator, but runs ahead of time from the command line — making it suitable for CI/CD pipelines, pre-generation workflows, and scenarios where you need to inspect or version-control the generated code.</p>
 <p>The tool supports all major JSON Schema drafts (Draft 4, 6, 7, 2019-09, and 2020-12), OpenAPI 3.0, and YAML input.</p>
 <blockquote>
 <p><strong>Tip:</strong> If you only need validation and annotation collection without the full type system, use <code>--codeGenerationMode SchemaEvaluationOnly</code> to generate a <a href="/Corvus.JsonSchema/pr-preview/pr-734/docs/schema-evaluator.html">standalone schema evaluator</a>.</p>
 </blockquote>
 <h2 id="installation">Installation</h2>
-<pre><code class="language-bash">dotnet tool install --global Corvus.Json.CodeGenerator
+<pre><code class="language-bash">dotnet tool install --global Corvus.Json.Cli
 </code></pre>
 <p>Or as a local tool:</p>
 <pre><code class="language-bash">dotnet new tool-manifest
-dotnet tool install Corvus.Json.CodeGenerator
+dotnet tool install Corvus.Json.Cli
 </code></pre>
+<blockquote>
+<p><strong>Legacy shim:</strong> The previous package <code>Corvus.Json.CodeGenerator</code> (command: <code>generatejsonschematypes</code>) still works but defaults to the V4 engine and displays a deprecation warning. New projects should use <code>Corvus.Json.Cli</code>.</p>
+</blockquote>
 <h2 id="quick-start">Quick Start</h2>
 <p>Generate types from a schema file:</p>
-<pre><code class="language-bash">generatejsonschematypes Schemas/person.json \
+<pre><code class="language-bash">corvusjson jsonschema Schemas/person.json \
     --rootNamespace MyApp.Models \
     --outputPath Generated/
 </code></pre>
 <p>This reads <code>person.json</code>, generates one or more C# files into <code>Generated/</code>, and uses <code>MyApp.Models</code> as the root namespace.</p>
 <h2 id="commands">Commands</h2>
 <h3 id="generate-default"><code>generate</code> (Default)</h3>
-<p>Generate C# types from a single schema file. This is the default command — you can omit the command name.</p>
-<pre><code class="language-bash">generatejsonschematypes &lt;schemaFile&gt; [OPTIONS]
+<p>Generate C# types from a single schema file. This is the default command when using the <code>jsonschema</code> subcommand — you can omit the command name.</p>
+<pre><code class="language-bash">corvusjson jsonschema &lt;schemaFile&gt; [OPTIONS]
 </code></pre>
 <p><strong>Required arguments:</strong></p>
 <ul>
@@ -361,27 +364,27 @@ dotnet tool install Corvus.Json.CodeGenerator
 </table>
 <p><strong>Examples:</strong></p>
 <pre><code class="language-bash"># Generate with a custom root type name
-generatejsonschematypes Schemas/person.json \
+corvusjson jsonschema Schemas/person.json \
     --rootNamespace MyApp.Models \
     --outputPath Generated/ \
     --outputRootTypeName Person
 
 # Generate from a specific definition within a schema
-generatejsonschematypes Schemas/api.json \
+corvusjson jsonschema Schemas/api.json \
     --rootNamespace MyApp.Models \
     --outputPath Generated/ \
     --rootPath &quot;#/definitions/Address&quot; \
     --rebaseToRootPath
 
 # Treat optional properties as nullable
-generatejsonschematypes Schemas/config.json \
+corvusjson jsonschema Schemas/config.json \
     --rootNamespace MyApp.Config \
     --outputPath Generated/ \
     --optionalAsNullable NullOrUndefined
 </code></pre>
 <h3 id="config"><code>config</code></h3>
 <p>Generate types from a configuration file that specifies multiple schemas and shared settings:</p>
-<pre><code class="language-bash">generatejsonschematypes config myconfig.json [--engine V5]
+<pre><code class="language-bash">corvusjson config myconfig.json [--engine V5]
 </code></pre>
 <h4 id="example-configuration-file">Example configuration file</h4>
 <pre><code class="language-json">{
@@ -501,7 +504,7 @@ generatejsonschematypes Schemas/config.json \
 <td><code>disabledNamingHeuristics</code></td>
 <td>No</td>
 <td>—</td>
-<td>An array of specific naming heuristic names to disable. Use <code>generatejsonschematypes listNameHeuristics</code> to see available names. Cannot be combined with <code>disableOptionalNameHeuristics</code>.</td>
+<td>An array of specific naming heuristic names to disable. Use <code>corvusjson listNameHeuristics</code> to see available names. Cannot be combined with <code>disableOptionalNameHeuristics</code>.</td>
 </tr>
 <tr>
 <td><code>useImplicitOperatorString</code></td>
@@ -627,16 +630,16 @@ generatejsonschematypes Schemas/config.json \
 </table>
 <h3 id="validatedocument"><code>validateDocument</code></h3>
 <p>Validate a JSON or YAML document against a schema:</p>
-<pre><code class="language-bash">generatejsonschematypes validateDocument Schemas/person.json data.json
+<pre><code class="language-bash">corvusjson validateDocument Schemas/person.json data.json
 </code></pre>
 <p>Output includes pass/fail status for each validation rule, with file path, line, column, and the schema evaluation location for failures.</p>
 <h3 id="listnameheuristics"><code>listNameHeuristics</code></h3>
 <p>List all available naming heuristics. Some are optional and can be disabled with <code>--disableNamingHeuristic</code>:</p>
-<pre><code class="language-bash">generatejsonschematypes listNameHeuristics
+<pre><code class="language-bash">corvusjson listNameHeuristics
 </code></pre>
 <h3 id="version"><code>version</code></h3>
 <p>Display the tool version and build information:</p>
-<pre><code class="language-bash">generatejsonschematypes version
+<pre><code class="language-bash">corvusjson version
 </code></pre>
 <h2 id="source-generator-vs.cli-tool">Source Generator vs. CLI Tool</h2>
 <p>Both produce identical output — the same <code>readonly struct</code> types with the same property accessors, validation, serialization, and implicit conversions. The difference is when and how they run:</p>
@@ -657,7 +660,7 @@ generatejsonschematypes Schemas/config.json \
 <tr>
 <td><strong>Triggered by</strong></td>
 <td><code>[JsonSchemaTypeGenerator]</code> attribute</td>
-<td>Explicit <code>generatejsonschematypes</code> invocation</td>
+<td>Explicit <code>corvusjson jsonschema</code> invocation</td>
 </tr>
 <tr>
 <td><strong>Output location</strong></td>
@@ -756,7 +759,7 @@ generatejsonschematypes Schemas/config.json \
 <p>The tool auto-detects the schema draft from the <code>$schema</code> keyword. Use <code>--useSchema</code> only as a fallback when the keyword is missing.</p>
 <h2 id="output-map-file">Output Map File</h2>
 <p>Use <code>--outputMapFile</code> to generate a JSON manifest of all generated files:</p>
-<pre><code class="language-bash">generatejsonschematypes Schemas/person.json \
+<pre><code class="language-bash">corvusjson jsonschema Schemas/person.json \
     --rootNamespace MyApp.Models \
     --outputPath Generated/ \
     --outputMapFile generated.map.json
@@ -874,18 +877,18 @@ generatejsonschematypes Schemas/config.json \
 <p>When a derived name collides with its parent type or a sibling, the tool automatically appends a suffix based on the schema kind (<code>Object</code>, <code>Array</code>, <code>String</code>, etc.). For example, if both a parent and child would be named <code>User</code>, the child becomes <code>UserObject</code>.</p>
 <h3 id="disabling-heuristics">Disabling heuristics</h3>
 <pre><code class="language-bash"># Disable a specific heuristic by name
-generatejsonschematypes Schemas/person.json \
+corvusjson jsonschema Schemas/person.json \
     --rootNamespace MyApp.Models \
     --outputPath Generated/ \
     --disableNamingHeuristic DocumentationNameHeuristic
 
 # Disable all optional heuristics at once
-generatejsonschematypes Schemas/person.json \
+corvusjson jsonschema Schemas/person.json \
     --rootNamespace MyApp.Models \
     --outputPath Generated/ \
     --disableOptionalNamingHeuristics
 </code></pre>
-<p>Run <code>generatejsonschematypes listNameHeuristics</code> to see all available heuristics and which ones are optional.</p>
+<p>Run <code>corvusjson listNameHeuristics</code> to see all available heuristics and which ones are optional.</p>
         </div>
     </main>
 </div>

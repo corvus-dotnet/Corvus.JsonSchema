@@ -164,7 +164,7 @@
 </blockquote>
 <h3 id="what-you-will-learn">What you will learn</h3>
 <ul>
-<li>Generate C# code from JSON Schema using the <code>generatejsonschematypes</code> CLI tool</li>
+<li>Generate C# code from JSON Schema using the <code>corvusjson</code> CLI tool (with <code>--engine V4</code> for V4 output)</li>
 <li>Serialize and deserialize JSON documents with the generated types</li>
 <li>Validate JSON documents against schema</li>
 <li>Navigate JSON documents — including additional properties, arrays, and union types</li>
@@ -297,7 +297,7 @@ dotnet add package Corvus.Json.ExtendedTypes
 <p>The <code>OtherNames</code> union type allows backwards-compatible API evolution — a previous version might support only a single string, while a newer version adds the array form.</p>
 <h2 id="generating-c-code">Generating C# code</h2>
 <p>Run the code generator, specifying the root namespace and the path to the <code>Person</code> definition:</p>
-<pre><code>generatejsonschematypes --rootNamespace JsonSchemaSample.Api --rootPath #/$defs/Person person-from-api.json
+<pre><code>corvusjson jsonschema --rootNamespace JsonSchemaSample.Api --rootPath #/$defs/Person person-from-api.json --engine V4
 </code></pre>
 <p>This produces files for each schema element reachable from <code>Person</code>:</p>
 <table>

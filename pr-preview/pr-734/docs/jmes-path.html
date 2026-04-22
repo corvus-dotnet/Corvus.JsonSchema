@@ -266,7 +266,7 @@
 <tr>
 <td><strong>CLI code generation</strong></td>
 <td>Expressions are known ahead of time, generated outside the build</td>
-<td><code>Corvus.Json.CodeGenerator</code> (the <code>jmespath</code> command)</td>
+<td><code>Corvus.Json.Cli</code> (the <code>jmespath</code> command)</td>
 </tr>
 </tbody>
 </table>
@@ -617,10 +617,10 @@ JsonElement result = TotalPrice.Evaluate(dataDoc.RootElement, workspace);
 </tbody>
 </table>
 <h3 id="cli-code-generation">CLI code generation</h3>
-<p>The <code>generatejsonschematypes</code> CLI tool includes a <code>jmespath</code> subcommand for ahead-of-time code generation outside the MSBuild pipeline:</p>
-<pre><code class="language-bash">dotnet tool install --global Corvus.Json.CodeGenerator
+<p>The <code>corvusjson</code> CLI tool includes a <code>jmespath</code> subcommand for ahead-of-time code generation outside the MSBuild pipeline:</p>
+<pre><code class="language-bash">dotnet tool install --global Corvus.Json.Cli
 </code></pre>
-<pre><code class="language-bash">generatejsonschematypes jmespath &lt;expressionFile&gt; \
+<pre><code class="language-bash">corvusjson jmespath &lt;expressionFile&gt; \
     --className &lt;ClassName&gt; \
     --namespace &lt;Namespace&gt; \
     [--outputPath &lt;output.cs&gt;]
@@ -657,7 +657,7 @@ JsonElement result = TotalPrice.Evaluate(dataDoc.RootElement, workspace);
 </tbody>
 </table>
 <p>Example:</p>
-<pre><code class="language-bash">generatejsonschematypes jmespath expressions/total-price.jmespath \
+<pre><code class="language-bash">corvusjson jmespath expressions/total-price.jmespath \
     --className TotalPrice \
     --namespace MyApp.Queries \
     --outputPath Generated/TotalPrice.cs

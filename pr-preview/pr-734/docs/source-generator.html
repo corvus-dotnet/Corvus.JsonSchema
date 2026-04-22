@@ -239,7 +239,7 @@
             <h1>Source Generator Code Generation</h1>
 <h2 id="overview">Overview</h2>
 <p><code>Corvus.Text.Json.SourceGenerator</code> is a Roslyn incremental source generator that produces strongly-typed C# models from JSON Schema at build time. Simply annotate a <code>partial struct</code> with <code>[JsonSchemaTypeGenerator]</code> pointing at a schema file, and the generator produces a complete implementation — type-safe property accessors, validation, serialization, implicit conversions, and mutable builder support — all without leaving your IDE.</p>
-<p>The source generator produces identical output to the <a href="/Corvus.JsonSchema/pr-preview/pr-734/docs/code-generator.html"><code>generatejsonschematypes</code> CLI tool</a>, but runs automatically during the build with full IntelliSense support as you type.</p>
+<p>The source generator produces identical output to the <a href="/Corvus.JsonSchema/pr-preview/pr-734/docs/code-generator.html"><code>corvusjson</code> CLI tool</a>, but runs automatically during the build with full IntelliSense support as you type.</p>
 <blockquote>
 <p><strong>Tip:</strong> If you only need validation and annotation collection without the full type system, you can also generate a <a href="/Corvus.JsonSchema/pr-preview/pr-734/docs/schema-evaluator.html">standalone schema evaluator</a> by setting <code>EmitEvaluator = true</code> on the attribute.</p>
 </blockquote>
@@ -441,7 +441,7 @@ public readonly partial struct PhoneNumber;
 </ul>
 <p>This keeps build times fast even in large projects with many generated types.</p>
 <h2 id="source-generator-vs.cli-tool">Source Generator vs. CLI Tool</h2>
-<p>Both the source generator and the <a href="/Corvus.JsonSchema/pr-preview/pr-734/docs/code-generator.html"><code>generatejsonschematypes</code> CLI tool</a> use the same code generation engine and produce identical output:</p>
+<p>Both the source generator and the <a href="/Corvus.JsonSchema/pr-preview/pr-734/docs/code-generator.html"><code>corvusjson</code> CLI tool</a> use the same code generation engine and produce identical output:</p>
 <table>
 <thead>
 <tr>
@@ -459,7 +459,7 @@ public readonly partial struct PhoneNumber;
 <tr>
 <td><strong>Triggered by</strong></td>
 <td><code>[JsonSchemaTypeGenerator]</code> attribute</td>
-<td>Explicit <code>generatejsonschematypes</code> command</td>
+<td>Explicit <code>corvusjson jsonschema</code> command</td>
 </tr>
 <tr>
 <td><strong>Output location</strong></td>

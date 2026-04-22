@@ -266,7 +266,7 @@
 <tr>
 <td><strong>CLI code generation</strong></td>
 <td>Expressions are known ahead of time, generated outside the build</td>
-<td><code>Corvus.Json.CodeGenerator</code> (the <code>jsonata</code> command)</td>
+<td><code>Corvus.Json.Cli</code> (the <code>jsonata</code> command)</td>
 </tr>
 </tbody>
 </table>
@@ -407,10 +407,10 @@ JsonElement result = EmployeeTransform.Evaluate(dataDoc.RootElement, workspace);
 </tbody>
 </table>
 <h3 id="cli-code-generation">CLI code generation</h3>
-<p>The <code>generatejsonschematypes</code> CLI tool includes a <code>jsonata</code> subcommand for ahead-of-time code generation outside the MSBuild pipeline:</p>
-<pre><code class="language-bash">dotnet tool install --global Corvus.Json.CodeGenerator
+<p>The <code>corvusjson</code> CLI tool includes a <code>jsonata</code> subcommand for ahead-of-time code generation outside the MSBuild pipeline:</p>
+<pre><code class="language-bash">dotnet tool install --global Corvus.Json.Cli
 </code></pre>
-<pre><code class="language-bash">generatejsonschematypes jsonata &lt;expressionFile&gt; \
+<pre><code class="language-bash">corvusjson jsonata &lt;expressionFile&gt; \
     --className &lt;ClassName&gt; \
     --namespace &lt;Namespace&gt; \
     [--outputPath &lt;output.cs&gt;]
@@ -447,7 +447,7 @@ JsonElement result = EmployeeTransform.Evaluate(dataDoc.RootElement, workspace);
 </tbody>
 </table>
 <p>Example:</p>
-<pre><code class="language-bash">generatejsonschematypes jsonata expressions/employee-transform.jsonata \
+<pre><code class="language-bash">corvusjson jsonata expressions/employee-transform.jsonata \
     --className EmployeeTransform \
     --namespace MyApp.Transforms \
     --outputPath Generated/EmployeeTransform.cs
@@ -676,7 +676,7 @@ fn celsius_to_fahrenheit(temp) =&gt; JsonataCodeGenHelpers.NumberFromDouble(temp
 </code></pre>
 <p>The source generator automatically discovers <code>.jfn</code> files and makes the functions available to all <code>[JsonataExpression]</code>-annotated types in the project.</p>
 <p><strong>Using with the CLI tool:</strong> Pass the <code>--customFunctions</code> option:</p>
-<pre><code class="language-bash">generatejsonschematypes jsonata MyExpression.jsonata --customFunctions MyFunctions.jfn
+<pre><code class="language-bash">corvusjson jsonata MyExpression.jsonata --customFunctions MyFunctions.jfn
 </code></pre>
 <h3 id="recursion-depth-and-execution-timeouts">Recursion depth and execution timeouts</h3>
 <p>Guard against runaway expressions with depth and timeout limits:</p>

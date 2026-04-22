@@ -249,7 +249,7 @@
 <h2 id="step-1-generate-your-v5-types-first">Step 1: Generate Your V5 Types First</h2>
 <p>Before migrating any code, generate the V5 types so Copilot can see the actual type names:</p>
 <pre><code class="language-bash"># Using the CLI tool
-generatejsonschematypes --rootNamespace MyApp.Models --outputPath generated/ schema.json
+corvusjson jsonschema --rootNamespace MyApp.Models --outputPath generated/ schema.json
 
 # Or using the source generator — add the attribute and build
 # [JsonSchemaTypeGenerator(&quot;schema.json&quot;)]
