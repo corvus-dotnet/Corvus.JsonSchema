@@ -59,6 +59,9 @@ generatejsonschematypes <schemaFile> [OPTIONS]
 | `--assertFormat` | `true` | Enforce `format` keyword as a validation assertion |
 | `--optionalAsNullable` | `None` | How to handle optional properties: `None` or `NullOrUndefined` |
 | `--useImplicitOperatorString` | `false` | Use implicit (vs explicit) conversion to `string` |
+| `--disableOptionalNamingHeuristics` | `false` | Disable all optional naming heuristics at once (see [Naming Heuristics](#naming-heuristics)) |
+| `--disableNamingHeuristic` | — | Disable a specific naming heuristic by name (repeatable; see [Naming Heuristics](#naming-heuristics)) |
+| `--useUnixLineEndings` | `false` | Use Unix line endings (`\n`) instead of Windows (`\r\n`) in generated files |
 | `--yaml` | `false` | Enable YAML schema support |
 | `--addExplicitUsings` | `false` | Include explicit `using` statements for standard implicit usings |
 | `--engine` | `V5` | Code generation engine: `V5` (Corvus.Text.Json) or `V4` (legacy Corvus.Json.ExtendedTypes) |

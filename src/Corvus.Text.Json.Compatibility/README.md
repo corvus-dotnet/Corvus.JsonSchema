@@ -10,8 +10,8 @@ dotnet add package Corvus.Text.Json.Compatibility
 
 ## Target Frameworks
 
-- .NET 10.0, 9.0, 8.0
-- .NET Standard 2.0
+- .NET 10.0, 9.0
+- .NET Standard 2.0, 2.1
 
 ## Related Packages
 

@@ -27,14 +27,14 @@ string schema = """
     }
     """;
 
-// Create a validator
-using var validator = JsonSchemaValidator.Create(schema);
+// Compile and cache the schema
+JsonSchema validator = JsonSchema.FromText(schema);
 
 // Validate JSON documents
 string json = """{"name": "Alice"}""";
-ValidationResult result = validator.Validate(json);
+bool isValid = validator.Validate(json);
 
-Console.WriteLine(result.IsValid);  // true
+Console.WriteLine(isValid);  // true
 ```
 
 ## Features

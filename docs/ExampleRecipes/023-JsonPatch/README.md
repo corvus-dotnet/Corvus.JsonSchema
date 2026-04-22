@@ -111,7 +111,7 @@ bool success = root.TryApplyPatch(in guardedPatch);
 You can also parse a patch document directly from raw JSON:
 
 ```csharp
-JsonPatchDocument parsedPatch = JsonPatchDocument.Parse(
+JsonPatchDocument parsedPatch = JsonPatchDocument.ParseValue(
     """
     [
         { "op": "replace", "path": "/age", "value": 32 },
