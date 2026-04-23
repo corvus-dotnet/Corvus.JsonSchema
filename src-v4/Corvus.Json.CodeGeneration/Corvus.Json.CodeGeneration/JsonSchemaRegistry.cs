@@ -20,6 +20,7 @@ public class JsonSchemaRegistry(IDocumentResolver documentResolver, VocabularyRe
 {
     private static readonly JsonReference DefaultAbsoluteLocation = new(string.Empty);
     private readonly Dictionary<string, LocatedSchema> locatedSchema = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, string> scopeRootDocumentPointers = new(StringComparer.Ordinal);
 
     /// <summary>
     /// Walk a JSON document and build a schema map.
@@ -178,11 +179,23 @@ public class JsonSchemaRegistry(IDocumentResolver documentResolver, VocabularyRe
 
         currentLocation = MakeAbsolute(currentLocation);
 
+        // Compute root-document pointer BEFORE any scope change.
+        // At this point, the fragment of currentLocation is correct relative to the
+        // current scope, and we can resolve it to a root-document pointer using our
+        // scope-to-root-document-pointer map.
+        string rootDocPointer = this.ComputeRootDocumentPointer(currentLocation);
+
         if (!this.TryAddLocatedSchema(currentLocation, schema, vocabulary))
         {
             // We've already registered this schema, so we are going to leave early.
             // But we have to resolve a change of scope, so we will continue to do that.
             leavingEarlyBecauseTheLocatedSchemaHasAlreadyBeenRegistered = true;
+        }
+
+        // Set the root-document pointer on the located schema.
+        if (this.TryGetLocatedSchema(currentLocation, out LocatedSchema? locatedSchemaForPointer))
+        {
+            locatedSchemaForPointer.RootDocumentPointer = rootDocPointer;
         }
 
         if (schema.ValueKind != JsonValueKind.Object)
@@ -236,6 +249,13 @@ public class JsonSchemaRegistry(IDocumentResolver documentResolver, VocabularyRe
                 {
                     return default;
                 }
+            }
+
+            // After scope change: record the mapping for URI-based scopes (no fragment)
+            // so that child schemas can resolve their root-document pointers.
+            if (!currentLocation.HasFragment && currentLocation.HasUri)
+            {
+                this.scopeRootDocumentPointers[currentLocation.Uri.ToString()] = rootDocPointer;
             }
         }
 
@@ -462,5 +482,39 @@ public class JsonSchemaRegistry(IDocumentResolver documentResolver, VocabularyRe
         }
 
         return DefaultAbsoluteLocation.Apply(location);
+    }
+
+    /// <summary>
+    /// Computes the JSON Pointer from the root document to the given absolute location.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// For locations within a sub-resource (one whose base URI was changed by <c>$id</c>),
+    /// the fragment is relative to the sub-resource. This method resolves through the
+    /// scope-to-root-document-pointer map to produce a pointer relative to the original
+    /// root document.
+    /// </para>
+    /// </remarks>
+    private string ComputeRootDocumentPointer(JsonReference absoluteLocation)
+    {
+        string scopeUri = absoluteLocation.HasUri ? absoluteLocation.Uri.ToString() : string.Empty;
+
+        string fragmentWithinScope = string.Empty;
+        if (absoluteLocation.HasFragment)
+        {
+            ReadOnlySpan<char> fragment = absoluteLocation.Fragment;
+            if (fragment.Length > 1)
+            {
+                // Fragment includes the leading '#'; skip it.
+                fragmentWithinScope = fragment[1..].ToString();
+            }
+        }
+
+        if (scopeUri.Length > 0 && this.scopeRootDocumentPointers.TryGetValue(scopeUri, out string? prefix))
+        {
+            return prefix + fragmentWithinScope;
+        }
+
+        return fragmentWithinScope;
     }
 }

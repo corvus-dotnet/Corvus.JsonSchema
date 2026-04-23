@@ -1275,7 +1275,7 @@ internal static partial class CodeGeneratorExtensions
         bool isGlobalSimpleType = typeDeclaration.IsGlobalSimpleType();
         string schemaLocation = isGlobalSimpleType
             ? string.Empty
-            : typeDeclaration.RelativeSchemaLocation;
+            : typeDeclaration.LocatedSchema.RootDocumentPointer;
 
         generator
             .ReserveName("SchemaLocationProvider")

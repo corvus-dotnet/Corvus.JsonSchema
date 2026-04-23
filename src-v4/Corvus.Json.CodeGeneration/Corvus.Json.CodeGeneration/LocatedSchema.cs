@@ -55,6 +55,23 @@ public class LocatedSchema
     public IVocabulary Vocabulary { get; }
 
     /// <summary>
+    /// Gets or sets the JSON Pointer from the root document to this schema.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// For schemas within a sub-resource (one that changes the base URI via <c>$id</c>),
+    /// <see cref="Location"/>.<see cref="JsonReference.Fragment"/> is relative to the
+    /// sub-resource, not the root document. This property provides the pointer relative
+    /// to the root document so that annotation schema locations are reported correctly.
+    /// </para>
+    /// <para>
+    /// For schemas that are not within a sub-resource, this is equivalent to the fragment
+    /// of <see cref="Location"/>.
+    /// </para>
+    /// </remarks>
+    public string RootDocumentPointer { get; internal set; } = string.Empty;
+
+    /// <summary>
     /// Gets the <see cref="IAnchorKeyword"/> associated with this located schema,
     /// if any.
     /// </summary>
@@ -87,7 +104,10 @@ public class LocatedSchema
     /// <returns>The located schema with the updated location.</returns>
     public LocatedSchema WithLocation(JsonReference location)
     {
-        return new LocatedSchema(location, this.Schema, this.anchors, this.Vocabulary);
+        return new LocatedSchema(location, this.Schema, this.anchors, this.Vocabulary)
+        {
+            RootDocumentPointer = this.RootDocumentPointer,
+        };
     }
 
     private IAnchorKeyword? GetAnchorKeyword()

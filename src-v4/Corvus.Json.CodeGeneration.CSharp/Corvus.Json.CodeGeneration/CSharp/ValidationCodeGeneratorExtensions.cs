@@ -642,7 +642,7 @@ public static partial class ValidationCodeGeneratorExtensions
                             result = result.UsingStack();
                         }
 
-                        result = result.PushSchemaLocation({{SymbolDisplay.FormatLiteral(typeDeclaration.RelativeSchemaLocation, true)}});
+                        result = result.PushSchemaLocation({{SymbolDisplay.FormatLiteral(typeDeclaration.LocatedSchema.RootDocumentPointer, true)}});
                     }
                     """)
                 .PushResultIdentifierName("result") // Make result...
