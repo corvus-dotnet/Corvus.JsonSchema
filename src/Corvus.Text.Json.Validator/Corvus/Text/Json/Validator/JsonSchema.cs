@@ -342,6 +342,11 @@ public readonly struct JsonSchema
             resolvers.Add(additionalResolver);
         }
 
+        if (options.AdditionalDocumentResolver is not null)
+        {
+            resolvers.Add(options.AdditionalDocumentResolver);
+        }
+
         RegisterAdditionalFiles(resolvers, options);
 
         resolvers.Add(MetaschemaDocumentResolver);
@@ -403,18 +408,21 @@ public readonly struct JsonSchema
         /// <param name="fallbackVocabulary">The fallback vocabulary (defaults to <see cref="Corvus.Json.CodeGeneration.Draft202012.VocabularyAnalyser.DefaultVocabulary"/>).</param>
         /// <param name="alwaysAssertFormat">If <see langword="true"/>, <c>format</c> will always be asserted, even for vocabularies that usually annotate.</param>
         /// <param name="hostAssembly">The host assembly whose compilation context provides metadata references. Defaults to the entry assembly.</param>
+        /// <param name="additionalDocumentResolver">An additional document resolver for in-memory schema resolution (e.g. a <see cref="PrepopulatedDocumentResolver"/>).</param>
         public Options(
             IReadOnlyList<AdditionalSchemaFile>? additionalSchemaFiles = null,
             bool allowFileSystemAndHttpResolution = true,
             IVocabulary? fallbackVocabulary = null,
             bool alwaysAssertFormat = true,
-            Assembly? hostAssembly = null)
+            Assembly? hostAssembly = null,
+            IDocumentResolver? additionalDocumentResolver = null)
         {
             this.AdditionalSchemaFiles = additionalSchemaFiles;
             this.AllowFileSystemAndHttpResolution = allowFileSystemAndHttpResolution;
             this.FallbackVocabulary = fallbackVocabulary ?? Corvus.Json.CodeGeneration.Draft202012.VocabularyAnalyser.DefaultVocabulary;
             this.AlwaysAssertFormat = alwaysAssertFormat;
             this.HostAssembly = hostAssembly ?? Assembly.GetEntryAssembly() ?? typeof(JsonSchema).Assembly;
+            this.AdditionalDocumentResolver = additionalDocumentResolver;
         }
 
         /// <summary>
@@ -446,5 +454,10 @@ public readonly struct JsonSchema
         /// Gets the host assembly whose compilation context provides metadata references.
         /// </summary>
         public Assembly HostAssembly { get; }
+
+        /// <summary>
+        /// Gets the additional document resolver for in-memory schema resolution.
+        /// </summary>
+        public IDocumentResolver? AdditionalDocumentResolver { get; }
     }
 }
