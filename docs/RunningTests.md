@@ -259,12 +259,56 @@ dotnet test tests\Corvus.Text.Json.Tests --filter "FullyQualifiedName~MigrationE
 
 The `JSON-Schema-Test-Suite/` directory is a git submodule. If you update it, **both** the V4 and V5 test generators must be re-run.
 
-### V5 test generator
+### Using the automated script (recommended)
 
-The `Corvus.JsonSchemaTestSuite.CodeGenerator` project reads the submodule and writes xUnit test classes into `tests/Corvus.Text.Json.Tests/JsonSchemaTestSuite/`:
+The `update-json-schema-test-suite.ps1` script in the repository root handles the full workflow:
 
 ```powershell
-dotnet run --project tests\Corvus.JsonSchemaTestSuite.CodeGenerator
+.\update-json-schema-test-suite.ps1
+```
+
+This script:
+
+1. Fetches and checks out the latest commit on the submodule's `main` branch
+2. Deletes old generated test files (the generators only create files — they never delete stale ones)
+3. Regenerates V5 test classes (type-based, standalone evaluator, and annotation)
+4. Regenerates V4 spec feature files using **both** selectors (JsonSchema from `JSON-Schema-Test-Suite/` and OpenApi30 from `OpenApi-Test-Suite/`)
+
+To update to a different branch:
+
+```powershell
+.\update-json-schema-test-suite.ps1 -Branch some-branch
+```
+
+After the script completes, rebuild and run the tests to verify:
+
+```powershell
+dotnet build Corvus.Text.Json.slnx
+dotnet test Corvus.Text.Json.slnx --filter "category!=failing&category!=outerloop"
+```
+
+### Manual regeneration
+
+If you need to run the generators individually, the details below explain each one.
+
+#### V5 test generator
+
+The `Corvus.JsonSchemaTestSuite.CodeGenerator` project reads the submodule and writes xUnit test classes into three output directories under `tests/Corvus.Text.Json.Tests/`:
+
+- `JsonSchemaTestSuite/` — type-based tests
+- `StandaloneEvaluatorTestSuite/` — standalone evaluator tests
+- `AnnotationTestSuite/` — annotation tests
+
+> **Important:** Delete existing `.cs` files from all three output directories before regenerating. The generator only creates files — it does not remove files that are no longer selected by the exclusion rules.
+
+> **Important:** The generator must be run from its `bin/` directory (not via `dotnet run` from the repo root), because `appsettings.json` uses relative paths that resolve from the executable's working directory.
+
+```powershell
+# Build and run from bin directory
+dotnet build tests\Corvus.JsonSchemaTestSuite.CodeGenerator -v q
+cd tests\Corvus.JsonSchemaTestSuite.CodeGenerator\bin\Debug\net10.0
+.\Corvus.JsonSchemaTestSuite.CodeGenerator.exe
+cd ..\..\..\..\..\
 ```
 
 **Configuration:** `tests/Corvus.JsonSchemaTestSuite.CodeGenerator/appsettings.json`
@@ -282,22 +326,36 @@ dotnet run --project tests\Corvus.JsonSchemaTestSuite.CodeGenerator
 
 Each generated test class uses `TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(...)` at runtime to dynamically compile a V5 type from the schema, then validates test instances against it.
 
-### V4 specs generator
+#### V4 specs generator
 
-The `Corvus.JsonSchema.SpecGenerator` project (in `src-v4/`) generates SpecFlow `.feature` files into `src-v4/Corvus.Json.Specs/Features/JsonSchema/`:
+The `Corvus.JsonSchema.SpecGenerator` project (in `src-v4/`) generates SpecFlow `.feature` files into `src-v4/Corvus.Json.Specs/Features/JsonSchema/`.
+
+> **Important:** Delete existing `.feature` files from the output directory before regenerating.
+
+> **Important:** The V4 generator requires **two separate runs** with different selectors and input directories:
+> - `JsonSchemaOrgTestSuiteSelector.jsonc` — reads from the `JSON-Schema-Test-Suite/` submodule (drafts 4, 6, 7, 2019-09, 2020-12)
+> - `OpenApiTestSuiteSelector.jsonc` — reads from the `OpenApi-Test-Suite/` directory (OpenApi30)
+>
+> Missing either run will silently drop features.
 
 ```powershell
-dotnet run --project src-v4\Corvus.JsonSchema.SpecGenerator -- `
-    JSON-Schema-Test-Suite `
-    src-v4\Corvus.Json.Specs\Features\JsonSchema\ `
-    src-v4\Corvus.JsonSchema.SpecGenerator\JsonSchemaOrgTestSuiteSelector.jsonc
+dotnet build src-v4\Corvus.JsonSchema.SpecGenerator -c Release -v q
+
+$exe = "src-v4\Corvus.JsonSchema.SpecGenerator\bin\Release\net8.0\Corvus.JsonSchema.SpecGenerator.exe"
+$outputDir = "src-v4\Corvus.Json.Specs\Features\JsonSchema"
+
+# Run with JsonSchema selector
+& $exe JSON-Schema-Test-Suite $outputDir JsonSchemaOrgTestSuiteSelector.jsonc
+
+# Run with OpenApi selector
+& $exe OpenApi-Test-Suite $outputDir OpenApiTestSuiteSelector.jsonc
 ```
 
 The three positional arguments are:
 
 | Argument | Purpose |
 |----------|---------|
-| `inputDir` | Path to the `JSON-Schema-Test-Suite/` submodule |
+| `inputDir` | Path to the test suite directory (`JSON-Schema-Test-Suite/` or `OpenApi-Test-Suite/`) |
 | `outputDir` | Path to the generated `.feature` file output directory |
 | `testselector` | Path to a JSONC selector file controlling which drafts, files, and individual tests to include/exclude |
 
@@ -313,14 +371,3 @@ The selector file uses a recursive directory-matching structure:
 | `.assertFormat` | Whether format validation is enforced for this draft |
 | `.excludeFromThisDirectory[]` | Regex patterns for files to skip (e.g. `"bignum\\.json"`) |
 | `.testExclusions.<file>.<scenario>.testsToIgnoreIndices[]` | Individual test indices to skip within a scenario (e.g. leap-second tests) |
-
-There is also an `OpenApiTestSuiteSelector.jsonc` for the OpenAPI test suite specs.
-
-### After regenerating
-
-After running both generators, rebuild and re-run the tests to verify:
-
-```powershell
-dotnet build Corvus.Text.Json.slnx
-dotnet test Corvus.Text.Json.slnx --filter "category!=failing&category!=outerloop"
-```
