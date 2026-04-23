@@ -19415,7 +19415,7 @@
     "Title": "LocatedSchema",
     "Description": "A located schema.",
     "Keywords": "LocatedSchema class Corvus.Json.CodeGeneration",
-    "Body": "A located schema.\r\nLocation: Gets the scoped location of the located schema.\r\nSchema: Gets the schema associated with the location.\r\nVocabulary: Gets the schema vocabulary associated with the location.\r\nAnchor: Gets the [`IAnchorKeyword`](/api/v4/corvus-json-codegeneration-ianchorkeyword.html) associated with this located schema, if any.\r\nLocatedAnchors: Gets the located anchors for the located schema.\r\nIsBooleanSchema: Gets a value indicating whether the schema is a boolean schema.\r\nAddOrUpdateLocatedAnchor: Adds a located anchor to the set of anchors associated with this located schema.\r\nWithLocation: Returns a new located schema with an updated location."
+    "Body": "A located schema.\r\nLocation: Gets the scoped location of the located schema.\r\nSchema: Gets the schema associated with the location.\r\nVocabulary: Gets the schema vocabulary associated with the location.\r\nRootDocumentPointer: Gets or sets the JSON Pointer from the root document to this schema.\r\nAnchor: Gets the [`IAnchorKeyword`](/api/v4/corvus-json-codegeneration-ianchorkeyword.html) associated with this located schema, if any.\r\nLocatedAnchors: Gets the located anchors for the located schema.\r\nIsBooleanSchema: Gets a value indicating whether the schema is a boolean schema.\r\nAddOrUpdateLocatedAnchor: Adds a located anchor to the set of anchors associated with this located schema.\r\nWithLocation: Returns a new located schema with an updated location."
   },
   {
     "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v4/corvus-json-codegeneration-locatedschema.location.html",
@@ -19437,6 +19437,13 @@
     "Description": "Gets the schema vocabulary associated with the location.",
     "Keywords": "LocatedSchema Vocabulary property Corvus.Json.CodeGeneration",
     "Body": "Gets the schema vocabulary associated with the location."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v4/corvus-json-codegeneration-locatedschema.rootdocumentpointer.html",
+    "Title": "LocatedSchema.RootDocumentPointer",
+    "Description": "Gets or sets the JSON Pointer from the root document to this schema.",
+    "Keywords": "LocatedSchema RootDocumentPointer property Corvus.Json.CodeGeneration",
+    "Body": "Gets or sets the JSON Pointer from the root document to this schema."
   },
   {
     "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v4/corvus-json-codegeneration-locatedschema.anchor.html",
