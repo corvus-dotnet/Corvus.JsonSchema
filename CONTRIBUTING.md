@@ -33,6 +33,16 @@ Always exclude the `failing` and `outerloop` categories:
 
 Tests run sequentially (`-m:1`) in CI to avoid memory pressure on GitHub Actions runners.
 
+### Local package testing
+
+To test changes as NuGet packages in a consuming project, run the `build-local-packages.ps1` script from the repository root:
+
+```powershell
+.\build-local-packages.ps1
+```
+
+This packs all V4 and V5 projects into a `local-packages/` folder (git-ignored). See [docs/LocalNuGetTesting.md](docs/LocalNuGetTesting.md) for the full guide, including how to configure a consuming project's `nuget.config` and iterate efficiently.
+
 ## Branch conventions
 
 | Branch | Purpose |

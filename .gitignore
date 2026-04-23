@@ -383,3 +383,6 @@ coverage.cobertura.xml
 /_packages
 *.sbom.*
 benchmarks/baseline-results/
+
+# Local NuGet packages produced by build-local-packages.ps1
+local-packages/
