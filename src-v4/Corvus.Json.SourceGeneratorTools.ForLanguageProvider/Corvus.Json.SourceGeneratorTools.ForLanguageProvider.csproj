@@ -125,23 +125,24 @@
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="IndexRange" />
-    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
-    <PackageReference Include="Microsoft.Extensions.ObjectPool" />
-    <PackageReference Include="NodaTime" />
-    <PackageReference Include="System.Reflection.Emit.Lightweight" />
-    <PackageReference Include="System.Text.Json" />
-    <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" />
-    <PackageReference Include="Microsoft.Bcl.HashCode" />
-    <PackageReference Include="System.Buffers" />
-    <PackageReference Include="System.Collections.Immutable" />
-    <PackageReference Include="System.IO.Pipelines" />
-    <PackageReference Include="System.Memory" />
-    <PackageReference Include="System.Numerics.Vectors" />
-    <PackageReference Include="System.Reflection.Metadata" />
-    <PackageReference Include="System.Text.Encoding.CodePages" />
-    <PackageReference Include="System.Text.Encodings.Web" />
-    <PackageReference Include="System.Threading.Tasks.Extensions" />
+    <!-- Pin SG dependencies to safe versions for netstandard2.0 on back-level Visual Studio -->
+    <PackageReference Include="IndexRange" VersionOverride="1.1.0" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" VersionOverride="4.12.0" />
+    <PackageReference Include="Microsoft.Extensions.ObjectPool" VersionOverride="8.0.11" />
+    <PackageReference Include="NodaTime" VersionOverride="3.2.1" />
+    <PackageReference Include="System.Reflection.Emit.Lightweight" VersionOverride="4.7.0" />
+    <PackageReference Include="System.Text.Json" VersionOverride="8.0.6" />
+    <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" VersionOverride="8.0.0" />
+    <PackageReference Include="Microsoft.Bcl.HashCode" VersionOverride="6.0.0" />
+    <PackageReference Include="System.Buffers" VersionOverride="4.6.1" />
+    <PackageReference Include="System.Collections.Immutable" VersionOverride="8.0.0" />
+    <PackageReference Include="System.IO.Pipelines" VersionOverride="8.0.0" />
+    <PackageReference Include="System.Memory" VersionOverride="4.6.3" />
+    <PackageReference Include="System.Numerics.Vectors" VersionOverride="4.6.1" />
+    <PackageReference Include="System.Reflection.Metadata" VersionOverride="8.0.1" />
+    <PackageReference Include="System.Text.Encoding.CodePages" VersionOverride="8.0.0" />
+    <PackageReference Include="System.Text.Encodings.Web" VersionOverride="8.0.0" />
+    <PackageReference Include="System.Threading.Tasks.Extensions" VersionOverride="4.6.3" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Update="Roslynator.Analyzers" />

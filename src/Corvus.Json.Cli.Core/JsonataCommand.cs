@@ -41,7 +41,7 @@ internal class JsonataCommand : Command<JsonataCommand.Settings>
     }
 
     /// <inheritdoc/>
-    public override int Execute(CommandContext context, Settings settings, CancellationToken cancellationToken)
+    protected override int Execute(CommandContext context, Settings settings, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNullOrEmpty(settings.ExpressionFile);
         ArgumentNullException.ThrowIfNullOrEmpty(settings.ClassName);

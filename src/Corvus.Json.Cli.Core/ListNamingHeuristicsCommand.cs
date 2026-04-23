@@ -18,7 +18,7 @@ namespace Corvus.Text.Json.CodeGenerator;
 /// </summary>
 internal class ListNamingHeuristicsCommand : Command
 {
-    public override int Execute(CommandContext context, CancellationToken cancellationToken)
+    protected override int Execute(CommandContext context, CancellationToken cancellationToken)
     {
         AnsiConsole.MarkupLine("[green]Available name heuristics:[/]");
         foreach ((string name, bool isOptional) in CSharpLanguageProvider.Default.GetNameHeuristicNames())

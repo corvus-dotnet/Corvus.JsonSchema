@@ -45,7 +45,7 @@ internal class JsonLogicCommand : Command<JsonLogicCommand.Settings>
     }
 
     /// <inheritdoc/>
-    public override int Execute(CommandContext context, Settings settings, CancellationToken cancellationToken)
+    protected override int Execute(CommandContext context, Settings settings, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNullOrEmpty(settings.RuleFile);
         ArgumentNullException.ThrowIfNullOrEmpty(settings.ClassName);

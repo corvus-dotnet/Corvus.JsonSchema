@@ -38,7 +38,7 @@ internal class ValidateDocumentCommand : Command<ValidateDocumentCommand.Setting
 
 
     /// <inheritdoc/>
-    public override int Execute(CommandContext context, Settings settings, CancellationToken cancellationToken)
+    protected override int Execute(CommandContext context, Settings settings, CancellationToken cancellationToken)
     {
         // Prevent line wrapping in diagnostic output — the file(line,col) format
         // must remain intact for IDE and tooling integration.

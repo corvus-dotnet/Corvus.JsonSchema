@@ -20,7 +20,7 @@ namespace Corvus.Text.Json.CodeGenerator;
 /// </summary>
 internal class GenerateWithDriverCommand : AsyncCommand<GenerateWithDriverCommand.Settings>
 {
-    public override Task<int> ExecuteAsync(CommandContext context, Settings settings, CancellationToken cancellationToken)
+    protected override Task<int> ExecuteAsync(CommandContext context, Settings settings, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNullOrEmpty(settings.GenerationSpecificationFile); // We will never see this exception if the framework is doing its job; it should have blown up inside the CLI command handling
 

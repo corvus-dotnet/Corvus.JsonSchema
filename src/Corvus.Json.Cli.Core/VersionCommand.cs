@@ -19,7 +19,7 @@ namespace Corvus.Text.Json.CodeGenerator;
 /// </summary>
 internal class VersionCommand : Command
 {
-    public override int Execute(CommandContext context, CancellationToken cancellationToken)
+    protected override int Execute(CommandContext context, CancellationToken cancellationToken)
     {
         string? assemblyLocation = Assembly.GetEntryAssembly()?.Location;
         string? version = null;
