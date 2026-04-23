@@ -7714,13 +7714,6 @@
     "Body": "Tries to copy the higher-rank array data from the instance to the given array. Tries to copy the higher-rank array data from the instance to the given array. Tries to copy the higher-rank array data from the instance to the given array. Tries to copy the higher-rank array data from the instance to the given array. Tries to copy the higher-rank array data from the instance to the given array. Tries to copy the higher-rank array data from the instance to the given array. Tries to copy the higher-rank array data from the instance to the given array. Tries to copy the higher-rank array data from the instance to the given array. Tries to copy the higher-rank array data from the instance to the given array. Tries to copy the higher-rank array data from the instance to the given array. Tries to copy the higher-rank array data from the instance to the given array. Tries to copy the higher-rank array data from the instance to the given array. Tries to copy the higher-rank array data from the instance to the given array. Tries to copy the higher-rank array data from the instance to the given array."
   },
   {
-    "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-internal-jsonregexoptions.html",
-    "Title": "JsonRegexOptions",
-    "Description": "",
-    "Keywords": "JsonRegexOptions enum Corvus.Text.Json.Internal",
-    "Body": ""
-  },
-  {
     "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-internal-jsonschemacontext.html",
     "Title": "JsonSchemaContext",
     "Description": "The context for a JSON schema evaluation.",
