@@ -15,8 +15,6 @@
                 "optional": {
                     "excludeFromThisDirectory": [
                         "bignum\\.json",
-                        "ecmascript-regex\\.json",
-                        "non-bmp-regex\\.json",
                         "zeroTerminatedFloats\\.json"
                     ],
                     "subdirectories": {
@@ -50,9 +48,7 @@
             "subdirectories": {
                 "optional": {
                     "excludeFromThisDirectory": [
-                        "bignum\\.json",
-                        "ecmascript-regex\\.json",
-                        "non-bmp-regex\\.json"
+                        "bignum\\.json"
                     ],
                     "subdirectories": {
                         "format": {
@@ -86,9 +82,7 @@
                 "optional": {
                     "excludeFromThisDirectory": [
                         ////"cross-draft\\.json",
-                        "bignum\\.json",
-                        "ecmascript-regex\\.json",
-                        "non-bmp-regex\\.json"
+                        "bignum\\.json"
                     ],
                     "subdirectories": {
                         "format": {
@@ -136,9 +130,7 @@
                 "optional": {
                     "excludeFromThisDirectory": [
                         ////"cross-draft\\.json",
-                        "bignum\\.json",
-                        "ecmascript-regex\\.json",
-                        "non-bmp-regex\\.json"
+                        "bignum\\.json"
                     ],
                     "subdirectories": {
                         "format": {
@@ -188,9 +180,7 @@
                         ////"cross-draft\\.json",
                         ////"format-assertion,\\.json"
                         "dynamicRef\\.json",
-                        "bignum\\.json",
-                        "ecmascript-regex\\.json",
-                        "non-bmp-regex\\.json"
+                        "bignum\\.json"
                     ],
                     "subdirectories": {
                         "format": {
