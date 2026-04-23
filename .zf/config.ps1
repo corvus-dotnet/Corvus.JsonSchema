@@ -6,9 +6,15 @@ to provide the features needed when building a .NET solutions.
 $zerofailedExtensions = @(
     @{
         # References the extension from its GitHub repository. If not already installed, use latest version from 'main' will be downloaded.
+        Name = "ZeroFailed.DevOps.Common"
+        GitRepository = "https://github.com/zerofailed/ZeroFailed.DevOps.Common"
+        GitRef = "feature/update-enter-exit-action-support"
+    }
+    @{
+        # References the extension from its GitHub repository. If not already installed, use latest version from 'main' will be downloaded.
         Name = "ZeroFailed.Build.DotNet"
         GitRepository = "https://github.com/zerofailed/ZeroFailed.Build.DotNet"
-        GitRef = "main"
+        GitRef = "feature/refactor-test-report"
     }
     @{
         # References the extension from its GitHub repository. If not already installed, use latest version from 'main' will be downloaded.
@@ -54,6 +60,8 @@ $AdditionalTestArgs = @(
     "--filter", 'category!=failing&category!=outerloop',
     '-p:EnableSourceControlManagerQueries=false'
 )
+$StripOutputFromLargeTrxFiles = $true
+$TruncateOversizedCoverageReport = $true
 
 # Collect code coverage only for the core library assemblies.
 # $IncludeFilesInCodeCoverage = "Corvus.Json.CodeGeneration.dll;Corvus.Json.CodeGeneration.CSharp.dll;Corvus.Json.ExtendedTypes.dll;Corvus.Json.JsonReference.dll;Corvus.Text.Json.dll;Corvus.Text.Json.Validator.dll;Corvus.Text.Json.CodeGeneration.dll"
@@ -101,7 +109,7 @@ task PreTest {
         Write-Build Yellow "PreTest: Using $testSlnx for $TargetFrameworkMoniker (excludes net10.0-only test projects)"
     }
 }
-task PostTest ShrinkV4SpecsTrxFile,TruncateOversizedCoverageReport,{
+task PostTest {
     # Revert solution and logging level
     $script:SolutionToBuild = $SolutionToTestBackup
     $script:LogLevel = $LogLevelBackup
@@ -139,61 +147,4 @@ task BuildWebsite -If { $BuildWebsite } {
     }
 
     exec { & pwsh -File (Join-Path $websiteDir "build.ps1") @websiteBuildArgs }
-}
-task ShrinkV4SpecsTrxFile {
-    # TRX files from large test suites (V4 Specs ~105 MB, V5 ~40K+ tests) can
-    # exceed lxml limits or become corrupted when the test host is killed mid-write.
-    # The publish-unit-test-result-action uses lxml which has a default text-node
-    # size limit; individual <Output> blocks with large StdOut, ErrorInfo, or
-    # StackTrace content trigger "huge text node" errors.
-    # Strip ALL <Output>...</Output> blocks (not just StdOut), then validate XML.
-    # Corrupted files are removed so publish-unit-test-result-action doesn't fail.
-    Get-ChildItem -Path $SourcesDir -Filter "test-results_*.trx" -Recurse -ErrorAction SilentlyContinue |
-        ForEach-Object {
-            $sizeMB = [math]::Round($_.Length / 1MB, 1)
-            Write-Build Yellow "PostTest: processing $($_.FullName) ($sizeMB MB)"
-            try {
-                $content = [System.IO.File]::ReadAllText($_.FullName)
-                # Strip all <Output> blocks — covers StdOut, ErrorInfo, StackTrace.
-                # The publish action only needs pass/fail/skip status, not output text.
-                $stripped = [regex]::Replace(
-                    $content,
-                    '<Output>.*?</Output>',
-                    '',
-                    [System.Text.RegularExpressions.RegexOptions]::Singleline)
-                if ($stripped.Length -ne $content.Length) {
-                    [System.IO.File]::WriteAllText($_.FullName, $stripped)
-                    $newSizeMB = [math]::Round((Get-Item $_.FullName).Length / 1MB, 1)
-                    Write-Build Yellow "  Stripped output: $sizeMB MB -> $newSizeMB MB"
-                }
-                # Validate the TRX file is well-formed XML
-                $null = [xml]([System.IO.File]::ReadAllText($_.FullName))
-                Write-Build Yellow "  XML valid"
-            }
-            catch {
-                Write-Build Yellow "  TRX file is invalid or unprocessable, removing: $_"
-                Remove-Item $_.FullName -Force -ErrorAction SilentlyContinue
-            }
-        }
-}
-task TruncateOversizedCoverageReport {
-    # GitHub PR comments have a 65536 character limit. The coverage summary for this
-    # solution often exceeds that. Truncate and append a note when too large.
-    # The SummaryGithub.md is generated inside RunTestsWithDotNetCoverage (before
-    # PostTest), so it exists at this point.
-    $summaryPath = Join-Path $CoverageDir "SummaryGithub.md"
-    $maxChars = 60000  # leave headroom for sticky-comment wrapper
-    if (Test-Path $summaryPath) {
-        $content = Get-Content -Raw -Path $summaryPath
-        if ($content.Length -gt $maxChars) {
-            $originalLen = $content.Length
-            $truncated = $content.Substring(0, $maxChars)
-            # Cut at last newline to avoid splitting a table row
-            $lastNl = $truncated.LastIndexOf("`n")
-            if ($lastNl -gt 0) { $truncated = $truncated.Substring(0, $lastNl) }
-            $truncated += "`n`n---`n> **Note:** Coverage summary truncated from $originalLen to $($truncated.Length) characters. Full report is in the build artifacts.`n"
-            Set-Content -Path $summaryPath -Value $truncated -Encoding UTF8 -NoNewline
-            Write-Build Yellow "PostTest: truncated $summaryPath from $originalLen to $($truncated.Length) chars"
-        }
-    }
 }
