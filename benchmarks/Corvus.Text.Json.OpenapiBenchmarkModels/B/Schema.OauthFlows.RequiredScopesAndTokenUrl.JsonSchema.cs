@@ -65,14 +65,14 @@ public readonly partial struct Schema
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext =
-                        Corvus.OpenapiBenchmark.Baseline.JsonUri.JsonSchema.PushChildContextUnescaped(
+                        Corvus.OpenapiBenchmark.Baseline.JsonUriNotAsserted.JsonSchema.PushChildContextUnescaped(
                             parentDocument,
                             parentDocumentIndex,
                             ref context,
                             JsonPropertyNames.RefreshUrlUtf8,
                             evaluationPath: RefreshUrlSchemaEvaluationPath);
 
-                    Corvus.OpenapiBenchmark.Baseline.JsonUri.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext);
+                    Corvus.OpenapiBenchmark.Baseline.JsonUriNotAsserted.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext);
                     context.CommitChildContext(childContext.IsMatch, ref childContext);
                 }
 
@@ -102,14 +102,14 @@ public readonly partial struct Schema
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext2 =
-                        Corvus.OpenapiBenchmark.Baseline.JsonUri.JsonSchema.PushChildContextUnescaped(
+                        Corvus.OpenapiBenchmark.Baseline.JsonUriNotAsserted.JsonSchema.PushChildContextUnescaped(
                             parentDocument,
                             parentDocumentIndex,
                             ref context,
                             JsonPropertyNames.TokenUrlUtf8,
                             evaluationPath: TokenUrlSchemaEvaluationPath);
 
-                    Corvus.OpenapiBenchmark.Baseline.JsonUri.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext2);
+                    Corvus.OpenapiBenchmark.Baseline.JsonUriNotAsserted.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext2);
                     context.CommitChildContext(childContext2.IsMatch, ref childContext2);
 
                     if (!context.HasCollector && !context.IsMatch)

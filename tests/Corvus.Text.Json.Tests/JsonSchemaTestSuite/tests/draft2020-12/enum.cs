@@ -768,3 +768,77 @@ public class SuiteNulCharactersInStrings : IClassFixture<SuiteNulCharactersInStr
         }
     }
 }
+
+[Trait("JsonSchemaTestSuite", "Draft202012")]
+public class SuiteEmptyEnum : IClassFixture<SuiteEmptyEnum.Fixture>
+{
+    private readonly Fixture _fixture;
+    public SuiteEmptyEnum(Fixture fixture)
+    {
+        _fixture = fixture;
+    }
+
+    [Fact]
+    public void TestStringIsInvalid()
+    {
+        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"foo\"");
+        Assert.False(dynamicInstance.EvaluateSchema());
+    }
+
+    [Fact]
+    public void TestNumberIsInvalid()
+    {
+        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("42");
+        Assert.False(dynamicInstance.EvaluateSchema());
+    }
+
+    [Fact]
+    public void TestNullIsInvalid()
+    {
+        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("null");
+        Assert.False(dynamicInstance.EvaluateSchema());
+    }
+
+    [Fact]
+    public void TestObjectIsInvalid()
+    {
+        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("{}");
+        Assert.False(dynamicInstance.EvaluateSchema());
+    }
+
+    [Fact]
+    public void TestArrayIsInvalid()
+    {
+        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("[]");
+        Assert.False(dynamicInstance.EvaluateSchema());
+    }
+
+    [Fact]
+    public void TestBooleanIsInvalid()
+    {
+        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("false");
+        Assert.False(dynamicInstance.EvaluateSchema());
+    }
+
+    public class Fixture : IAsyncLifetime
+    {
+        public DynamicJsonType DynamicJsonType { get; private set; }
+
+        public Task DisposeAsync() => Task.CompletedTask;
+
+        public async Task InitializeAsync()
+        {
+            this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
+                "tests\\draft2020-12\\enum.json",
+                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"enum\": []\r\n        }",
+                "JsonSchemaTestSuite.Draft202012.Enum",
+                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "https://json-schema.org/draft/2020-12/schema",
+                validateFormat: false,
+                optionalAsNullable: false,
+                useImplicitOperatorString: false,
+                addExplicitUsings: false,
+                Assembly.GetExecutingAssembly());
+        }
+    }
+}

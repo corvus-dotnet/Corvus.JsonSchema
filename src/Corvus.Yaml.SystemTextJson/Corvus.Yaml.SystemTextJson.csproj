@@ -1,0 +1,106 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="$(EndjinProjectPropsPath)" Condition="$(EndjinProjectPropsPath) != ''" />
+  <PropertyGroup>
+    <TargetFrameworks>net9.0;net10.0;netstandard2.0;netstandard2.1</TargetFrameworks>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>preview</LangVersion>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <WarningsNotAsErrors>$(WarningsNotAsErrors);NU1901;NU1902;NU1903;NU1904</WarningsNotAsErrors>
+    <NoWarn>$(NoWarn);CS1591;NU1504;CS8500;CS8969;IDE0065;IDE0290;IDE0079;IDE0130;CS1572;CS1573;CS1574;CS1584;CS1658;CS3021</NoWarn>
+    <NoWarn Condition="$(TargetFrameworks.Contains('netstandard'))">$(NoWarn);CA1510;CA1511;CA1512;CA1513;CA1845;CA1846;CA1847</NoWarn>
+    <EndjinDisableCreateEditorConfig>true</EndjinDisableCreateEditorConfig>
+    <IsPackable>true</IsPackable>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+    <Description>High-performance zero-allocation YAML to JSON converter using System.Text.Json only, supporting YAML 1.2 (and optional 1.1 compatibility) with streaming Utf8JsonWriter output.</Description>
+    <DefineConstants>$(DefineConstants);STJ</DefineConstants>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+  <PropertyGroup>
+    <CtjYamlSourceDir>..\Corvus.Text.Json.Yaml\Corvus\Text\Json\Yaml\</CtjYamlSourceDir>
+    <CtjYamlInternalDir>..\Corvus.Text.Json.Yaml\Corvus\Text\Json\Yaml\Internal\</CtjYamlInternalDir>
+    <CommonPath>..\..\Common\src\</CommonPath>
+    <CoreLibSharedDir>..\..\System.Private.CoreLib\src\</CoreLibSharedDir>
+    <EnableDefaultEmbeddedResourceItems>false</EnableDefaultEmbeddedResourceItems>
+  </PropertyGroup>
+  <!-- SR/Resource setup -->
+  <ItemGroup>
+    <Using Include="SR = Resources.Strings" />
+    <Using Include="System.Text.Json" />
+    <EmbeddedResource Include="Resources\Strings.resx" Visible="true" IncludeDefaultValues="true" EmitFormatMethods="false" GenerateSource="true" OmitGetResourceString="true" />
+  </ItemGroup>
+  <!-- Shared public types from CTJ YAML project (with #if STJ namespace) -->
+  <ItemGroup>
+    <Compile Include="$(CtjYamlSourceDir)DuplicateKeyBehavior.cs" Link="Corvus\Yaml\DuplicateKeyBehavior.cs" />
+    <Compile Include="$(CtjYamlSourceDir)YamlCollectionStyle.cs" Link="Corvus\Yaml\YamlCollectionStyle.cs" />
+    <Compile Include="$(CtjYamlSourceDir)YamlDocumentMode.cs" Link="Corvus\Yaml\YamlDocumentMode.cs" />
+    <Compile Include="$(CtjYamlSourceDir)YamlEvent.cs" Link="Corvus\Yaml\YamlEvent.cs" />
+    <Compile Include="$(CtjYamlSourceDir)YamlEventCallback.cs" Link="Corvus\Yaml\YamlEventCallback.cs" />
+    <Compile Include="$(CtjYamlSourceDir)YamlEventType.cs" Link="Corvus\Yaml\YamlEventType.cs" />
+    <Compile Include="$(CtjYamlSourceDir)YamlException.cs" Link="Corvus\Yaml\YamlException.cs" />
+    <Compile Include="$(CtjYamlSourceDir)YamlReaderOptions.cs" Link="Corvus\Yaml\YamlReaderOptions.cs" />
+    <Compile Include="$(CtjYamlSourceDir)YamlScalarStyle.cs" Link="Corvus\Yaml\YamlScalarStyle.cs" />
+    <Compile Include="$(CtjYamlSourceDir)YamlSchema.cs" Link="Corvus\Yaml\YamlSchema.cs" />
+    <Compile Include="$(CtjYamlSourceDir)YamlWriterOptions.cs" Link="Corvus\Yaml\YamlWriterOptions.cs" />
+    <Compile Include="$(CtjYamlSourceDir)YamlDocument.cs" Link="Corvus\Yaml\YamlDocument.cs" />
+  </ItemGroup>
+  <!-- Shared internal types from CTJ YAML project (with #if STJ namespace) -->
+  <ItemGroup>
+    <Compile Include="$(CtjYamlInternalDir)ArrayPoolBufferWriter.cs" Link="Corvus\Yaml\Internal\ArrayPoolBufferWriter.cs" />
+    <Compile Include="$(CtjYamlInternalDir)JsonToYamlConverter.cs" Link="Corvus\Yaml\Internal\JsonToYamlConverter.cs" />
+    <Compile Include="$(CtjYamlInternalDir)ArrayBufferWriterPolyfill.cs" Link="Corvus\Yaml\Internal\ArrayBufferWriterPolyfill.cs" />
+    <Compile Include="$(CtjYamlInternalDir)ScalarResolver.cs" Link="Corvus\Yaml\Internal\ScalarResolver.cs" />
+    <Compile Include="$(CtjYamlSourceDir)Utf8YamlWriter.cs" Link="Corvus\Yaml\Utf8YamlWriter.cs" />
+    <Compile Include="$(CtjYamlInternalDir)YamlCharacters.cs" Link="Corvus\Yaml\Internal\YamlCharacters.cs" />
+    <Compile Include="$(CtjYamlInternalDir)YamlConstants.cs" Link="Corvus\Yaml\Internal\YamlConstants.cs" />
+    <Compile Include="$(CtjYamlInternalDir)YamlTokenType.cs" Link="Corvus\Yaml\Internal\YamlTokenType.cs" />
+    <Compile Include="$(CtjYamlInternalDir)YamlToJsonConverter.cs" Link="Corvus\Yaml\Internal\YamlToJsonConverter.cs" />
+    <Compile Include="$(CtjYamlInternalDir)YamlEventParser.cs" Link="Corvus\Yaml\Internal\YamlEventParser.cs" />
+  </ItemGroup>
+  <!-- Common files linked (with #if STJ namespace) -->
+  <ItemGroup>
+    <Compile Include="..\Common\JsonConstants.cs" Link="Common\JsonConstants.cs" />
+    <Compile Include="..\Common\Utf8KeyHashSet.cs" Link="Common\Utf8KeyHashSet.cs" />
+    <Compile Include="$(CoreLibSharedDir)System\Collections\Generic\ValueListBuilder.cs" Link="Common\System\Collections\Generic\ValueListBuilder.cs" />
+    <Compile Include="$(CoreLibSharedDir)System\Collections\Generic\ValueListBuilder.Pop.cs" Link="Common\System\Collections\Generic\ValueListBuilder.Pop.cs" />
+  </ItemGroup>
+  <!-- Utf8Hash from Corvus.Text.Json (with #if STJ namespace + access modifier) -->
+  <ItemGroup>
+    <Compile Include="..\Corvus.Text.Json\Corvus\Text\Json\Internal\Utf8Hash.cs" Link="Corvus\Yaml\Internal\Utf8Hash.cs" />
+  </ItemGroup>
+  <!-- Polyfills for netstandard2.0 -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
+    <Compile Include="$(CoreLibSharedDir)System\Runtime\CompilerServices\IsExternalInit.cs" />
+    <Compile Include="$(CoreLibSharedDir)System\Diagnostics\CodeAnalysis\NullableAttributes.cs" Link="System\Diagnostics\CodeAnalysis\NullableAttributes.cs" />
+    <Compile Include="$(CoreLibSharedDir)System\Index.cs" Link="System\Index.cs" />
+  </ItemGroup>
+  <!-- IsExternalInit: also needed for netstandard2.1 -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.1'">
+    <Compile Include="$(CoreLibSharedDir)System\Runtime\CompilerServices\IsExternalInit.cs" />
+  </ItemGroup>
+  <!-- netstandard polyfill packages -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0' OR '$(TargetFramework)' == 'netstandard2.1'">
+    <PackageReference Include="System.Memory" />
+    <PackageReference Include="System.Buffers" />
+    <PackageReference Include="System.Runtime.CompilerServices.Unsafe" />
+  </ItemGroup>
+  <!-- STJ 10.0 for all TFMs below net10.0 (in-box STJ 9.0 lacks JsonMarshal.GetRawUtf8PropertyName) -->
+  <ItemGroup Condition="!$([MSBuild]::IsTargetFrameworkCompatible('$(TargetFramework)', 'net10.0'))">
+    <PackageReference Include="System.Text.Json" />
+  </ItemGroup>
+  <!-- Internals visibility -->
+  <ItemGroup>
+    <InternalsVisibleTo Include="Corvus.Yaml.SystemTextJson.Tests" />
+  </ItemGroup>
+  <!-- Analyzer packages -->
+  <ItemGroup>
+    <PackageReference Include="Endjin.RecommendedPractices.GitHub" PrivateAssets="All" />
+    <PackageReference Include="Microsoft.CodeAnalysis.ResxSourceGenerator" PrivateAssets="all" />
+    <PackageReference Include="StyleCop.Analyzers" PrivateAssets="All" />
+    <PackageReference Include="Roslynator.Analyzers" PrivateAssets="All" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+</Project>

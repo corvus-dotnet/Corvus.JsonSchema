@@ -1473,7 +1473,6 @@ internal static partial class CodeGeneratorExtensions
 
     /// <summary>
     /// Appends the From static factory method.
-    /// to JsonAny.
     /// </summary>
     /// <param name="generator">The code generator.</param>
     /// <param name="typeDeclaration">The type declaration to which to convert.</param>
@@ -1699,7 +1698,6 @@ internal static partial class CodeGeneratorExtensions
 
     /// <summary>
     /// Appends the CreateInstance static factory method.
-    /// to JsonAny.
     /// </summary>
     /// <param name="generator">The code generator.</param>
     /// <param name="typeDeclaration">The type declaration to which to convert.</param>
@@ -1732,7 +1730,6 @@ internal static partial class CodeGeneratorExtensions
 
     /// <summary>
     /// Appends the JsonElement conversion operator.
-    /// to JsonAny.
     /// </summary>
     /// <param name="generator">The code generator.</param>
     /// <param name="typeDeclaration">The type declaration to which to convert.</param>
@@ -1788,7 +1785,6 @@ internal static partial class CodeGeneratorExtensions
 
     /// <summary>
     /// Appends the conversion operators for a mutable instance.
-    /// to JsonAny.
     /// </summary>
     /// <param name="generator">The code generator.</param>
     /// <param name="typeDeclaration">The type declaration to which to convert.</param>

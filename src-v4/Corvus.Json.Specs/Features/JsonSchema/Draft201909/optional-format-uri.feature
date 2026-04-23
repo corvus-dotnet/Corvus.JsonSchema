@@ -94,3 +94,19 @@ Scenario Outline: validation of URIs
         | #/000/tests/034/data | false | invalid SPACE character                                                          |
         # https://example.org/foobar|.txt
         | #/000/tests/035/data | false | invalid \| character                                                             |
+        # http://087.10.0.1/
+        | #/000/tests/036/data | true  | URI with leading-zero IPv4 is structurally valid as a reg-name                   |
+        # http://999.999.999.999/
+        | #/000/tests/037/data | true  | URI with out-of-bounds IPv4 is structurally valid as a reg-name                  |
+        # http://example.com/%6G
+        | #/000/tests/038/data | false | invalid percent-encoding with non-hex digits                                     |
+        # http://example.com/%A
+        | #/000/tests/039/data | false | incomplete percent-encoding triplet                                              |
+        # http://example.com/%
+        | #/000/tests/040/data | false | lone percent sign is invalid                                                     |
+        # 1http://example.com
+        | #/000/tests/041/data | false | scheme must start with a letter                                                  |
+        # ht_tp://example.com
+        | #/000/tests/042/data | false | invalid character in scheme                                                      |
+        # http://example.com:abc/path
+        | #/000/tests/043/data | false | non-numeric port is invalid                                                      |

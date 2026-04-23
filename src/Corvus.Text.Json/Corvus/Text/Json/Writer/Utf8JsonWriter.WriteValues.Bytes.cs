@@ -4,7 +4,7 @@
 // <licensing>
 // Derived from code licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licensed this code under the MIT license.
-// https:// github.com/dotnet/runtime/blob/388a7c4814cb0d6e344621d017507b357902043a/LICENSE.TXT
+// https://github.com/dotnet/runtime/blob/388a7c4814cb0d6e344621d017507b357902043a/LICENSE.TXT
 // </licensing>
 using System.Buffers.Text;
 using System.Diagnostics;
@@ -52,7 +52,7 @@ public sealed partial class Utf8JsonWriter
         }
     }
 
-    // TODO: https:// github.com/dotnet/runtime/issues/29293
+    // TODO: https://github.com/dotnet/runtime/issues/29293
     private void WriteBase64Indented(ReadOnlySpan<byte> bytes)
     {
         int indent = Indentation;
@@ -104,7 +104,7 @@ public sealed partial class Utf8JsonWriter
         output[BytesPending++] = JsonConstants.Quote;
     }
 
-    // TODO: https:// github.com/dotnet/runtime/issues/29293
+    // TODO: https://github.com/dotnet/runtime/issues/29293
     private void WriteBase64Minimized(ReadOnlySpan<byte> bytes)
     {
         // Base64.GetMaxEncodedToUtf8Length checks to make sure the length is <= int.MaxValue / 4 * 3,

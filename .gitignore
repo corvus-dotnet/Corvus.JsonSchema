@@ -386,3 +386,5 @@ _packages/
 *.sbom.*
 benchmarks/baseline-results/
 image-tag
+# Local NuGet packages produced by build-local-packages.ps1
+local-packages/

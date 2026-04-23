@@ -15,14 +15,11 @@
                 "optional": {
                     "excludeFromThisDirectory": [
                         "bignum\\.json",
-                        "ecmascript-regex\\.json",
-                        "non-bmp-regex\\.json",
                         "zeroTerminatedFloats\\.json"
                     ],
                     "subdirectories": {
                         "format": {
                             "excludeFromThisDirectory": [
-                                "ecmascript-regex\\.json"
                             ],
                             "testExclusions": {
                                 "optional/format/date-time.json": {
@@ -51,14 +48,11 @@
             "subdirectories": {
                 "optional": {
                     "excludeFromThisDirectory": [
-                        "bignum\\.json",
-                        "ecmascript-regex\\.json",
-                        "non-bmp-regex\\.json"
+                        "bignum\\.json"
                     ],
                     "subdirectories": {
                         "format": {
                             "excludeFromThisDirectory": [
-                                "ecmascript-regex\\.json"
                             ],
                             "testExclusions": {
                                 "optional/format/date-time.json": {
@@ -88,14 +82,11 @@
                 "optional": {
                     "excludeFromThisDirectory": [
                         ////"cross-draft\\.json",
-                        "bignum\\.json",
-                        "ecmascript-regex\\.json",
-                        "non-bmp-regex\\.json"
+                        "bignum\\.json"
                     ],
                     "subdirectories": {
                         "format": {
                             "excludeFromThisDirectory": [
-                                "ecmascript-regex\\.json"
                             ],
                             "testExclusions": {
                                 "optional/format/date-time.json": {
@@ -139,15 +130,12 @@
                 "optional": {
                     "excludeFromThisDirectory": [
                         ////"cross-draft\\.json",
-                        "bignum\\.json",
-                        "ecmascript-regex\\.json",
-                        "non-bmp-regex\\.json"
+                        "bignum\\.json"
                     ],
                     "subdirectories": {
                         "format": {
                             "excludeFromThisDirectory": [
-                                "unknown\\.json",
-                                "ecmascript-regex\\.json"
+                                "unknown\\.json"
                             ],
                             "testExclusions": {
                                 "optional/format/date-time.json": {
@@ -192,16 +180,11 @@
                         ////"cross-draft\\.json",
                         ////"format-assertion,\\.json"
                         "dynamicRef\\.json",
-                        "bignum\\.json",
-                        "ecmascript-regex\\.json",
-                        "non-bmp-regex\\.json"
+                        "bignum\\.json"
                     ],
                     "subdirectories": {
                         "format": {
                             "assertFormat": true,
-                            "excludeFromThisDirectory": [
-                                "ecmascript-regex\\.json"
-                            ],
                             "testExclusions": {
                                 "optional/format/date-time.json": {
                                     "validation of date-time strings": {

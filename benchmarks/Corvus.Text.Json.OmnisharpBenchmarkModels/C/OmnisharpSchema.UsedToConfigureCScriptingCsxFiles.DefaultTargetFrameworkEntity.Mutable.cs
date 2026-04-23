@@ -353,7 +353,7 @@ public readonly partial struct OmnisharpSchema
                     return JsonSchema.Evaluate(_parent, _idx, resultsCollector);
                 }
 
-                private void CheckValidInstance()
+                private readonly void CheckValidInstance()
                 {
                     if (_parent == null)
                     {
@@ -387,6 +387,48 @@ public readonly partial struct OmnisharpSchema
 
                 [DebuggerBrowsable(DebuggerBrowsableState.Never)]
                 JsonValueKind IJsonElement.ValueKind => ValueKind;
+
+                /// <summary>
+                /// Gets a <see cref="DefaultTargetFrameworkEntity"/> which can be safely stored beyond the lifetime of the
+                /// original document.
+                /// </summary>
+                /// <returns>
+                /// A <see cref="DefaultTargetFrameworkEntity"/> which can be safely stored beyond the lifetime of the
+                /// original document.
+                /// </returns>
+                /// <remarks>
+                /// <para>
+                /// This serializes the element and re-parses it into a standalone heap-allocated
+                /// document. The result is independent of the workspace.
+                /// </para>
+                /// </remarks>
+                public readonly DefaultTargetFrameworkEntity Clone()
+                {
+                    CheckValidInstance();
+                    return _parent.CloneElement<DefaultTargetFrameworkEntity>(_idx);
+                }
+
+                /// <summary>
+                /// Creates a frozen (immutable) copy of this element, backed by a new
+                /// document builder registered in the same workspace.
+                /// </summary>
+                /// <returns>
+                /// An immutable <see cref="DefaultTargetFrameworkEntity"/> that lives for the lifetime of its
+                /// workspace and its associated documents.
+                /// </returns>
+                /// <remarks>
+                /// <para>
+                /// Unlike <see cref="Clone()"/>, which serializes the element and re-parses it
+                /// into a standalone heap-allocated document, <c>Freeze()</c> performs a cheap
+                /// blit of the metadata and value backing arrays. The resulting element is
+                /// immutable but is only valid for the lifetime of the workspace.
+                /// </para>
+                /// </remarks>
+                public readonly DefaultTargetFrameworkEntity Freeze()
+                {
+                    CheckValidInstance();
+                    return _parent.FreezeElement<DefaultTargetFrameworkEntity>(_idx);
+                }
 
                 /// <summary>
                 /// Matches the value against the composed values, and returns the result of calling the provided match function for the first match found.

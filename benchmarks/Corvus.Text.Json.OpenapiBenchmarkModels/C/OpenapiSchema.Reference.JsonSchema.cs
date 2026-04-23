@@ -46,14 +46,14 @@ public readonly partial struct OpenapiSchema
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext =
-                    Corvus.OpenapiBenchmark.Current.JsonUriReference.JsonSchema.PushChildContextUnescaped(
+                    Corvus.OpenapiBenchmark.Current.JsonUriReferenceNotAsserted.JsonSchema.PushChildContextUnescaped(
                         parentDocument,
                         parentDocumentIndex,
                         ref context,
                         JsonPropertyNames.RefUtf8,
                         evaluationPath: RefSchemaEvaluationPath);
 
-                Corvus.OpenapiBenchmark.Current.JsonUriReference.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext);
+                Corvus.OpenapiBenchmark.Current.JsonUriReferenceNotAsserted.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext);
                 context.CommitChildContext(childContext.IsMatch, ref childContext);
             }
 

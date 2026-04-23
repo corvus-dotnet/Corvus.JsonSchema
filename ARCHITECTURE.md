@@ -50,12 +50,14 @@ The schema analysis and code emission layer:
 
 A Roslyn incremental generator triggered by `[JsonSchemaTypeGenerator]` attributes. It shares source files with the code generation engine via MSBuild `<Compile>` links. Output is written to `obj/` (`EmitCompilerGeneratedFiles=true`).
 
-### CLI tool (`Corvus.Json.CodeGenerator`)
+### CLI tool (`Corvus.Json.Cli`)
 
-The `generatejsonschematypes` command-line tool generates C# from JSON Schema files. Used for:
+The `corvusjson` command-line tool generates C# from JSON Schema files. Used for:
 - Pre-generating models (test projects, benchmark models)
 - CI/CD pipelines
 - Scenarios where source generator integration isn't suitable
+
+> The legacy `generatejsonschematypes` command (package: `Corvus.Json.CodeGenerator`) still works as a shim but defaults to the V4 engine.
 
 ### Validator (`Corvus.Json.Validator`)
 

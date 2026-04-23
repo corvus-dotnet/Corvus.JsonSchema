@@ -50,7 +50,7 @@ public class SuiteUnevaluatedPropertiesAlone : IClassFixture<SuiteUnevaluatedPro
                 "annotations/unevaluated.json",
                 "{\r\n        \"unevaluatedProperties\": { \"title\": \"Unevaluated\" }\r\n      }",
                 "AnnotationTestSuite.Draft202012.Unevaluated",
-                "D:\\source\\mwadams\\Corvus.Text.Json\\JSON-Schema-Test-Suite\\remotes",
+                "D:\\source\\corvus-dotnet\\Corvus.JsonSchema\\JSON-Schema-Test-Suite\\remotes",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -101,7 +101,7 @@ public class SuiteUnevaluatedPropertiesWithProperties : IClassFixture<SuiteUneva
                 "annotations/unevaluated.json",
                 "{\r\n        \"properties\": {\r\n          \"foo\": { \"title\": \"Evaluated\" }\r\n        },\r\n        \"unevaluatedProperties\": { \"title\": \"Unevaluated\" }\r\n      }",
                 "AnnotationTestSuite.Draft202012.Unevaluated",
-                "D:\\source\\mwadams\\Corvus.Text.Json\\JSON-Schema-Test-Suite\\remotes",
+                "D:\\source\\corvus-dotnet\\Corvus.JsonSchema\\JSON-Schema-Test-Suite\\remotes",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -152,7 +152,7 @@ public class SuiteUnevaluatedPropertiesWithPatternProperties : IClassFixture<Sui
                 "annotations/unevaluated.json",
                 "{\r\n        \"patternProperties\": {\r\n          \"^a\": { \"title\": \"Evaluated\" }\r\n        },\r\n        \"unevaluatedProperties\": { \"title\": \"Unevaluated\" }\r\n      }",
                 "AnnotationTestSuite.Draft202012.Unevaluated",
-                "D:\\source\\mwadams\\Corvus.Text.Json\\JSON-Schema-Test-Suite\\remotes",
+                "D:\\source\\corvus-dotnet\\Corvus.JsonSchema\\JSON-Schema-Test-Suite\\remotes",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -203,7 +203,7 @@ public class SuiteUnevaluatedPropertiesWithAdditionalProperties : IClassFixture<
                 "annotations/unevaluated.json",
                 "{\r\n        \"additionalProperties\": { \"title\": \"Evaluated\" },\r\n        \"unevaluatedProperties\": { \"title\": \"Unevaluated\" }\r\n      }",
                 "AnnotationTestSuite.Draft202012.Unevaluated",
-                "D:\\source\\mwadams\\Corvus.Text.Json\\JSON-Schema-Test-Suite\\remotes",
+                "D:\\source\\corvus-dotnet\\Corvus.JsonSchema\\JSON-Schema-Test-Suite\\remotes",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -254,7 +254,7 @@ public class SuiteUnevaluatedPropertiesWithDependentSchemas : IClassFixture<Suit
                 "annotations/unevaluated.json",
                 "{\r\n        \"dependentSchemas\": {\r\n          \"foo\": {\r\n            \"properties\": {\r\n              \"bar\": { \"title\": \"Evaluated\" }\r\n            }\r\n          }\r\n        },\r\n        \"unevaluatedProperties\": { \"title\": \"Unevaluated\" }\r\n      }",
                 "AnnotationTestSuite.Draft202012.Unevaluated",
-                "D:\\source\\mwadams\\Corvus.Text.Json\\JSON-Schema-Test-Suite\\remotes",
+                "D:\\source\\corvus-dotnet\\Corvus.JsonSchema\\JSON-Schema-Test-Suite\\remotes",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -327,7 +327,7 @@ public class SuiteUnevaluatedPropertiesWithIfThenAndElse : IClassFixture<SuiteUn
                 "annotations/unevaluated.json",
                 "{\r\n        \"if\": {\r\n          \"properties\": {\r\n            \"foo\": {\r\n              \"type\": \"string\",\r\n              \"title\": \"If\"\r\n            }\r\n          }\r\n        },\r\n        \"then\": {\r\n          \"properties\": {\r\n            \"foo\": { \"title\": \"Then\" }\r\n          }\r\n        },\r\n        \"else\": {\r\n          \"properties\": {\r\n            \"foo\": { \"title\": \"Else\" }\r\n          }\r\n        },\r\n        \"unevaluatedProperties\": { \"title\": \"Unevaluated\" }\r\n      }",
                 "AnnotationTestSuite.Draft202012.Unevaluated",
-                "D:\\source\\mwadams\\Corvus.Text.Json\\JSON-Schema-Test-Suite\\remotes",
+                "D:\\source\\corvus-dotnet\\Corvus.JsonSchema\\JSON-Schema-Test-Suite\\remotes",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -378,7 +378,7 @@ public class SuiteUnevaluatedPropertiesWithAllOf : IClassFixture<SuiteUnevaluate
                 "annotations/unevaluated.json",
                 "{\r\n        \"allOf\": [\r\n          {\r\n            \"properties\": {\r\n              \"foo\": { \"title\": \"Evaluated\" }\r\n            }\r\n          }\r\n        ],\r\n        \"unevaluatedProperties\": { \"title\": \"Unevaluated\" }\r\n      }",
                 "AnnotationTestSuite.Draft202012.Unevaluated",
-                "D:\\source\\mwadams\\Corvus.Text.Json\\JSON-Schema-Test-Suite\\remotes",
+                "D:\\source\\corvus-dotnet\\Corvus.JsonSchema\\JSON-Schema-Test-Suite\\remotes",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -429,7 +429,7 @@ public class SuiteUnevaluatedPropertiesWithAnyOf : IClassFixture<SuiteUnevaluate
                 "annotations/unevaluated.json",
                 "{\r\n        \"anyOf\": [\r\n          {\r\n            \"properties\": {\r\n              \"foo\": { \"title\": \"Evaluated\" }\r\n            }\r\n          }\r\n        ],\r\n        \"unevaluatedProperties\": { \"title\": \"Unevaluated\" }\r\n      }",
                 "AnnotationTestSuite.Draft202012.Unevaluated",
-                "D:\\source\\mwadams\\Corvus.Text.Json\\JSON-Schema-Test-Suite\\remotes",
+                "D:\\source\\corvus-dotnet\\Corvus.JsonSchema\\JSON-Schema-Test-Suite\\remotes",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -480,7 +480,7 @@ public class SuiteUnevaluatedPropertiesWithOneOf : IClassFixture<SuiteUnevaluate
                 "annotations/unevaluated.json",
                 "{\r\n        \"oneOf\": [\r\n          {\r\n            \"properties\": {\r\n              \"foo\": { \"title\": \"Evaluated\" }\r\n            }\r\n          }\r\n        ],\r\n        \"unevaluatedProperties\": { \"title\": \"Unevaluated\" }\r\n      }",
                 "AnnotationTestSuite.Draft202012.Unevaluated",
-                "D:\\source\\mwadams\\Corvus.Text.Json\\JSON-Schema-Test-Suite\\remotes",
+                "D:\\source\\corvus-dotnet\\Corvus.JsonSchema\\JSON-Schema-Test-Suite\\remotes",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -531,7 +531,7 @@ public class SuiteUnevaluatedPropertiesWithNot : IClassFixture<SuiteUnevaluatedP
                 "annotations/unevaluated.json",
                 "{\r\n        \"not\": {\r\n          \"not\": {\r\n            \"properties\": {\r\n              \"foo\": { \"title\": \"Evaluated\" }\r\n            }\r\n          }\r\n        },\r\n        \"unevaluatedProperties\": { \"title\": \"Unevaluated\" }\r\n      }",
                 "AnnotationTestSuite.Draft202012.Unevaluated",
-                "D:\\source\\mwadams\\Corvus.Text.Json\\JSON-Schema-Test-Suite\\remotes",
+                "D:\\source\\corvus-dotnet\\Corvus.JsonSchema\\JSON-Schema-Test-Suite\\remotes",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -582,7 +582,7 @@ public class SuiteUnevaluatedItemsAlone : IClassFixture<SuiteUnevaluatedItemsAlo
                 "annotations/unevaluated.json",
                 "{\r\n        \"unevaluatedItems\": { \"title\": \"Unevaluated\" }\r\n      }",
                 "AnnotationTestSuite.Draft202012.Unevaluated",
-                "D:\\source\\mwadams\\Corvus.Text.Json\\JSON-Schema-Test-Suite\\remotes",
+                "D:\\source\\corvus-dotnet\\Corvus.JsonSchema\\JSON-Schema-Test-Suite\\remotes",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -633,7 +633,7 @@ public class SuiteUnevaluatedItemsWithPrefixItems : IClassFixture<SuiteUnevaluat
                 "annotations/unevaluated.json",
                 "{\r\n        \"prefixItems\": [{ \"title\": \"Evaluated\" }],\r\n        \"unevaluatedItems\": { \"title\": \"Unevaluated\" }\r\n      }",
                 "AnnotationTestSuite.Draft202012.Unevaluated",
-                "D:\\source\\mwadams\\Corvus.Text.Json\\JSON-Schema-Test-Suite\\remotes",
+                "D:\\source\\corvus-dotnet\\Corvus.JsonSchema\\JSON-Schema-Test-Suite\\remotes",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -684,7 +684,7 @@ public class SuiteUnevaluatedItemsWithContains : IClassFixture<SuiteUnevaluatedI
                 "annotations/unevaluated.json",
                 "{\r\n        \"contains\": {\r\n          \"type\": \"string\",\r\n          \"title\": \"Evaluated\"\r\n        },\r\n        \"unevaluatedItems\": { \"title\": \"Unevaluated\" }\r\n      }",
                 "AnnotationTestSuite.Draft202012.Unevaluated",
-                "D:\\source\\mwadams\\Corvus.Text.Json\\JSON-Schema-Test-Suite\\remotes",
+                "D:\\source\\corvus-dotnet\\Corvus.JsonSchema\\JSON-Schema-Test-Suite\\remotes",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -757,7 +757,7 @@ public class SuiteUnevaluatedItemsWithIfThenAndElse : IClassFixture<SuiteUnevalu
                 "annotations/unevaluated.json",
                 "{\r\n        \"if\": {\r\n          \"prefixItems\": [\r\n            {\r\n              \"type\": \"string\",\r\n              \"title\": \"If\"\r\n            }\r\n          ]\r\n        },\r\n        \"then\": {\r\n          \"prefixItems\": [\r\n            { \"title\": \"Then\" }\r\n          ]\r\n        },\r\n        \"else\": {\r\n          \"prefixItems\": [\r\n            { \"title\": \"Else\" }\r\n          ]\r\n        },\r\n        \"unevaluatedItems\": { \"title\": \"Unevaluated\" }\r\n      }",
                 "AnnotationTestSuite.Draft202012.Unevaluated",
-                "D:\\source\\mwadams\\Corvus.Text.Json\\JSON-Schema-Test-Suite\\remotes",
+                "D:\\source\\corvus-dotnet\\Corvus.JsonSchema\\JSON-Schema-Test-Suite\\remotes",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -808,7 +808,7 @@ public class SuiteUnevaluatedItemsWithAllOf : IClassFixture<SuiteUnevaluatedItem
                 "annotations/unevaluated.json",
                 "{\r\n        \"allOf\": [\r\n          {\r\n            \"prefixItems\": [\r\n              { \"title\": \"Evaluated\" }\r\n            ]\r\n          }\r\n        ],\r\n        \"unevaluatedItems\": { \"title\": \"Unevaluated\" }\r\n      }",
                 "AnnotationTestSuite.Draft202012.Unevaluated",
-                "D:\\source\\mwadams\\Corvus.Text.Json\\JSON-Schema-Test-Suite\\remotes",
+                "D:\\source\\corvus-dotnet\\Corvus.JsonSchema\\JSON-Schema-Test-Suite\\remotes",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -859,7 +859,7 @@ public class SuiteUnevaluatedItemsWithAnyOf : IClassFixture<SuiteUnevaluatedItem
                 "annotations/unevaluated.json",
                 "{\r\n        \"anyOf\": [\r\n          {\r\n            \"prefixItems\": [\r\n              { \"title\": \"Evaluated\" }\r\n            ]\r\n          }\r\n        ],\r\n        \"unevaluatedItems\": { \"title\": \"Unevaluated\" }\r\n      }",
                 "AnnotationTestSuite.Draft202012.Unevaluated",
-                "D:\\source\\mwadams\\Corvus.Text.Json\\JSON-Schema-Test-Suite\\remotes",
+                "D:\\source\\corvus-dotnet\\Corvus.JsonSchema\\JSON-Schema-Test-Suite\\remotes",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -910,7 +910,7 @@ public class SuiteUnevaluatedItemsWithOneOf : IClassFixture<SuiteUnevaluatedItem
                 "annotations/unevaluated.json",
                 "{\r\n        \"oneOf\": [\r\n          {\r\n            \"prefixItems\": [\r\n              { \"title\": \"Evaluated\" }\r\n            ]\r\n          }\r\n        ],\r\n        \"unevaluatedItems\": { \"title\": \"Unevaluated\" }\r\n      }",
                 "AnnotationTestSuite.Draft202012.Unevaluated",
-                "D:\\source\\mwadams\\Corvus.Text.Json\\JSON-Schema-Test-Suite\\remotes",
+                "D:\\source\\corvus-dotnet\\Corvus.JsonSchema\\JSON-Schema-Test-Suite\\remotes",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -961,7 +961,7 @@ public class SuiteUnevaluatedItemsWithNot : IClassFixture<SuiteUnevaluatedItemsW
                 "annotations/unevaluated.json",
                 "{\r\n        \"not\": {\r\n          \"not\": {\r\n            \"prefixItems\": [\r\n              { \"title\": \"Evaluated\" }\r\n            ]\r\n          }\r\n        },\r\n        \"unevaluatedItems\": { \"title\": \"Unevaluated\" }\r\n      }",
                 "AnnotationTestSuite.Draft202012.Unevaluated",
-                "D:\\source\\mwadams\\Corvus.Text.Json\\JSON-Schema-Test-Suite\\remotes",
+                "D:\\source\\corvus-dotnet\\Corvus.JsonSchema\\JSON-Schema-Test-Suite\\remotes",
                 "https://json-schema.org/draft/2020-12/schema",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());

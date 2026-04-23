@@ -41,16 +41,16 @@ Build the project. The generator produces the full implementation, deriving the 
 
 ## CLI tool
 
-If you prefer ahead-of-time code generation, install the `generatejsonschematypes` .NET tool globally:
+If you prefer ahead-of-time code generation, install the `corvusjson` .NET tool globally:
 
 ```bash
-dotnet tool install --global Corvus.Json.CodeGenerator
+dotnet tool install --global Corvus.Json.Cli
 ```
 
 Generate code from a schema:
 
 ```bash
-generatejsonschematypes \
+corvusjson jsonschema \
   --rootNamespace MyApp.Models \
   --outputPath Generated/ \
   Schemas/person.json

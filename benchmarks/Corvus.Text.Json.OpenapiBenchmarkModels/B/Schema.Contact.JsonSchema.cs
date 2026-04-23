@@ -46,14 +46,14 @@ public readonly partial struct Schema
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext =
-                    Corvus.OpenapiBenchmark.Baseline.JsonEmail.JsonSchema.PushChildContextUnescaped(
+                    Corvus.OpenapiBenchmark.Baseline.JsonEmailNotAsserted.JsonSchema.PushChildContextUnescaped(
                         parentDocument,
                         parentDocumentIndex,
                         ref context,
                         JsonPropertyNames.EmailUtf8,
                         evaluationPath: EmailSchemaEvaluationPath);
 
-                Corvus.OpenapiBenchmark.Baseline.JsonEmail.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext);
+                Corvus.OpenapiBenchmark.Baseline.JsonEmailNotAsserted.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext);
                 context.CommitChildContext(childContext.IsMatch, ref childContext);
             }
 
@@ -76,14 +76,14 @@ public readonly partial struct Schema
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext2 =
-                    Corvus.OpenapiBenchmark.Baseline.JsonUri.JsonSchema.PushChildContextUnescaped(
+                    Corvus.OpenapiBenchmark.Baseline.JsonUriNotAsserted.JsonSchema.PushChildContextUnescaped(
                         parentDocument,
                         parentDocumentIndex,
                         ref context,
                         JsonPropertyNames.UrlUtf8,
                         evaluationPath: UrlSchemaEvaluationPath);
 
-                Corvus.OpenapiBenchmark.Baseline.JsonUri.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext2);
+                Corvus.OpenapiBenchmark.Baseline.JsonUriNotAsserted.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext2);
                 context.CommitChildContext(childContext2.IsMatch, ref childContext2);
             }
 

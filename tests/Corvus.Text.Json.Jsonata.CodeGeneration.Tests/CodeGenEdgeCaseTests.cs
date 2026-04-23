@@ -155,8 +155,33 @@ public class CodeGenEdgeCaseTests : IClassFixture<CodeGenConformanceFixture>
     [InlineData("items.name", """{"items":[{"name":"x"},{"name":"y"}]}""", """["x","y"]""")]
     // Numeric index in path
     [InlineData("items[0]", """{"items":[10,20,30]}""", "10")]
+    // Constant index with post-index navigation (benchmark: indexed-chain pattern)
+    [InlineData("items.orders[0].products.name", """{"items":{"orders":[{"products":[{"name":"x"},{"name":"y"}]}]}}""", """["x","y"]""")]
+    // Constant index 0 on singleton (autoboxing: non-array treated as single-element)
+    [InlineData("data.value[0].name", """{"data":{"value":{"name":"hello"}}}""", "\"hello\"")]
+    // Constant index out of range returns undefined — tested in undefined section
+    // Deep constant index chain with multiple indices
+    [InlineData("a.b[0].c[0].d", """{"a":{"b":[{"c":[{"d":42}]}]}}""", "42")]
     // Filter predicate in path
     [InlineData("items[val > 1].name", """{"items":[{"val":1,"name":"a"},{"val":2,"name":"b"},{"val":3,"name":"c"}]}""", """["b","c"]""")]
+    // Filter predicate with post-predicate array flattening
+    [InlineData("""items[type="a"].products.name""", """{"items":[{"type":"a","products":[{"name":"x"},{"name":"y"}]},{"type":"b","products":[{"name":"z"}]}]}""", """["x","y"]""")]
+    // Equality predicate with nested array — multiple matches
+    [InlineData("""items[type="a"].tags""", """{"items":[{"type":"a","tags":[1,2]},{"type":"a","tags":[3]},{"type":"b","tags":[4]}]}""", """[[1,2],[3]]""")]
+    // Equality predicate with nested array then property — deep chain
+    [InlineData("""orders[status="shipped"].lines.product.sku""", """{"orders":[{"status":"shipped","lines":[{"product":{"sku":"A1"}},{"product":{"sku":"A2"}}]},{"status":"pending","lines":[{"product":{"sku":"B1"}}]}]}""", """["A1","A2"]""")]
+    // Post-predicate: object intermediate then terminal array — no flatten (EvalFromStep path)
+    [InlineData("""items[type="a"].data.values""", """{"items":[{"type":"a","data":{"values":[10,20]}},{"type":"a","data":{"values":[30]}}]}""", """[[10,20],[30]]""")]
+    // Post-predicate: array intermediate then terminal array — flatten (CollectAndContinue path)
+    [InlineData("""items[type="a"].entries.value""", """{"items":[{"type":"a","entries":[{"value":10},{"value":20}]},{"type":"a","entries":[{"value":30}]}]}""", """[10,20,30]""")]
+    // Post-predicate: single matching element returns unwrapped result
+    [InlineData("""items[type="a"].name""", """{"items":[{"type":"a","name":"hello"},{"type":"b","name":"world"}]}""", "\"hello\"")]
+    // Post-predicate: nested arrays at intermediate — recursive flatten
+    [InlineData("""groups[active=true].members.tags""", """{"groups":[{"active":true,"members":[{"tags":["x","y"]},{"tags":["z"]}]},{"active":false,"members":[{"tags":["q"]}]}]}""", """["x","y","z"]""")]
+    // Post-predicate: singleton source object (not array) with equality predicate match
+    [InlineData("""item[type="a"].name""", """{"item":{"type":"a","name":"found"}}""", "\"found\"")]
+    // Pre-predicate steps then post-predicate navigation (single match unwraps)
+    [InlineData("""root.items[type="a"].products.name""", """{"root":{"items":[{"type":"a","products":[{"name":"x"}]},{"type":"b","products":[{"name":"y"}]}]}}""", "\"x\"")]
     // $$ reference inside filter predicate
     [InlineData("items[val > $$.min].name", """{"items":[{"val":1,"name":"a"},{"val":2,"name":"b"},{"val":3,"name":"c"}],"min":1}""", """["b","c"]""")]
     // $sum over property
@@ -247,6 +272,10 @@ public class CodeGenEdgeCaseTests : IClassFixture<CodeGenConformanceFixture>
     [InlineData("items.a[]", """{"items":[]}""")]
     // KeepArray ([]) — missing property on object input returns undefined
     [InlineData("data.missing[]", """{"data":{"name":"Alice"}}""")]
+    // Post-predicate: singleton source object with equality predicate mismatch
+    [InlineData("""item[type="b"].name""", """{"item":{"type":"a","name":"found"}}""")]
+    // Constant index out of range in chain
+    [InlineData("items.orders[5].name", """{"items":{"orders":[{"name":"x"}]}}""")]
     public void EvaluateExpressionReturnsUndefined(string expression, string inputJson)
     {
         CompiledExpression compiled = this.fixture.GetOrCompile(expression);

@@ -3,11 +3,13 @@
 // </copyright>
 
 using System.Buffers;
+using System.Buffers.Text;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.RegularExpressions;
 using Corvus.Runtime.InteropServices;
+using Corvus.Text;
 using Corvus.Text.Json.Internal;
 
 namespace Corvus.Text.Json.Jsonata;
@@ -42,6 +44,15 @@ internal static class BuiltInFunctions
     /// Used for context-binding (0-arg calls like <c>$number()</c>).
     /// </summary>
     private static readonly ExpressionEvaluator ContextArg = static (in JsonElement input, Environment env) => new Sequence(input);
+
+    private static readonly JsonElement TypeNullElement = ParsedJsonDocument<JsonElement>.StringConstant("\"null\""u8.ToArray());
+    private static readonly JsonElement TypeNumberElement = ParsedJsonDocument<JsonElement>.StringConstant("\"number\""u8.ToArray());
+    private static readonly JsonElement TypeStringElement = ParsedJsonDocument<JsonElement>.StringConstant("\"string\""u8.ToArray());
+    private static readonly JsonElement TypeBooleanElement = ParsedJsonDocument<JsonElement>.StringConstant("\"boolean\""u8.ToArray());
+    private static readonly JsonElement TypeArrayElement = ParsedJsonDocument<JsonElement>.StringConstant("\"array\""u8.ToArray());
+    private static readonly JsonElement TypeObjectElement = ParsedJsonDocument<JsonElement>.StringConstant("\"object\""u8.ToArray());
+    private static readonly JsonElement TypeFunctionElement = ParsedJsonDocument<JsonElement>.StringConstant("\"function\""u8.ToArray());
+    private static readonly JsonElement TypeUndefinedElement = ParsedJsonDocument<JsonElement>.StringConstant("\"undefined\""u8.ToArray());
 
     /// <summary>
     /// Tries to get a compile-time function compiler for the given built-in name.
@@ -148,6 +159,7 @@ internal static class BuiltInFunctions
                 count = seq.Count;
             }
 
+            seq.ReturnBackingArray();
             return Sequence.FromDouble(count, env.Workspace);
         };
     }
@@ -170,6 +182,7 @@ internal static class BuiltInFunctions
 
             double total = 0;
             EnumerateNumericValues(seq, ref total, static (ref double acc, double val) => acc += val);
+            seq.ReturnBackingArray();
             return Sequence.FromDouble(total, env.Workspace);
         };
     }
@@ -191,18 +204,17 @@ internal static class BuiltInFunctions
             }
 
             double max = double.NegativeInfinity;
-            bool found = false;
-            EnumerateNumericValues(seq, ref max, (ref double acc, double val) =>
+            int found = EnumerateNumericValues(seq, ref max, static (ref double acc, double val) =>
             {
                 if (val > acc)
                 {
                     acc = val;
                 }
-
-                found = true;
             });
 
-            if (!found)
+            seq.ReturnBackingArray();
+
+            if (found == 0)
             {
                 return Sequence.Undefined;
             }
@@ -228,18 +240,17 @@ internal static class BuiltInFunctions
             }
 
             double min = double.PositiveInfinity;
-            bool found = false;
-            EnumerateNumericValues(seq, ref min, (ref double acc, double val) =>
+            int found = EnumerateNumericValues(seq, ref min, static (ref double acc, double val) =>
             {
                 if (val < acc)
                 {
                     acc = val;
                 }
-
-                found = true;
             });
 
-            if (!found)
+            seq.ReturnBackingArray();
+
+            if (found == 0)
             {
                 return Sequence.Undefined;
             }
@@ -265,12 +276,9 @@ internal static class BuiltInFunctions
             }
 
             double total = 0;
-            int count = 0;
-            EnumerateNumericValues(seq, ref total, (ref double acc, double val) =>
-            {
-                acc += val;
-                count++;
-            });
+            int count = EnumerateNumericValues(seq, ref total, static (ref double acc, double val) => acc += val);
+
+            seq.ReturnBackingArray();
 
             if (count == 0)
             {
@@ -314,6 +322,36 @@ internal static class BuiltInFunctions
                 throw new JsonataException("D3001", SR.D3001_AttemptingToInvokeStringFunctionOnInfinityOrNan, 0);
             }
 
+            bool prettyPrint = false;
+            if (prettyArg is not null)
+            {
+                var prettySeq = prettyArg(input, env);
+                if (!prettySeq.IsUndefined)
+                {
+                    var prettyElem = prettySeq.FirstOrDefault;
+                    if (prettyElem.ValueKind is not JsonValueKind.True and not JsonValueKind.False)
+                    {
+                        throw new JsonataException("T0410", SR.T0410_SecondArgumentOfStringMustBeABoolean, 0);
+                    }
+
+                    prettyPrint = prettyElem.ValueKind == JsonValueKind.True;
+                }
+            }
+
+            // Multi-valued sequences are materialized as a JSON array and stringified.
+            if (seq.Count > 1)
+            {
+                var arrDoc = JsonElement.CreateArrayBuilder(env.Workspace, seq.Count);
+                var arrRoot = arrDoc.RootElement;
+                for (int i = 0; i < seq.Count; i++)
+                {
+                    arrRoot.AddItem(seq[i]);
+                }
+
+                string arrJson = StringifyElement((JsonElement)arrRoot, prettyPrint);
+                return new Sequence(JsonataHelpers.StringFromString(arrJson, env.Workspace));
+            }
+
             var element = seq.FirstOrDefault;
 
             // When the context itself is undefined (e.g. $string() with no data),
@@ -333,27 +371,26 @@ internal static class BuiltInFunctions
                 }
             }
 
-            bool prettyPrint = false;
-            if (prettyArg is not null)
-            {
-                var prettySeq = prettyArg(input, env);
-                if (!prettySeq.IsUndefined)
-                {
-                    var prettyElem = prettySeq.FirstOrDefault;
-                    if (prettyElem.ValueKind is not JsonValueKind.True and not JsonValueKind.False)
-                    {
-                        throw new JsonataException("T0410", SR.T0410_SecondArgumentOfStringMustBeABoolean, 0);
-                    }
-
-                    prettyPrint = prettyElem.ValueKind == JsonValueKind.True;
-                }
-            }
-
             // For arrays and objects, produce JSON
             if (element.ValueKind is JsonValueKind.Array or JsonValueKind.Object)
             {
                 string json = StringifyElement(element, prettyPrint);
                 return new Sequence(JsonataHelpers.StringFromString(json, env.Workspace));
+            }
+
+            // Numbers: format directly to UTF-8, zero managed string allocation.
+            if (element.ValueKind == JsonValueKind.Number)
+            {
+                Utf8ValueStringBuilder sb = new(stackalloc byte[64]);
+                try
+                {
+                    JsonataCodeGenHelpers.AppendFormattedNumber(element, ref sb);
+                    return new Sequence(JsonataHelpers.StringFromUnescapedUtf8(sb.AsSpan(), env.Workspace));
+                }
+                finally
+                {
+                    sb.Dispose();
+                }
             }
 
             string result = FunctionalCompiler.CoerceElementToString(element);
@@ -789,7 +826,7 @@ internal static class BuiltInFunctions
 
             if (seq.IsLambda)
             {
-                return new Sequence(JsonataHelpers.StringFromString("function", env.Workspace));
+                return new Sequence(TypeFunctionElement);
             }
 
             if (seq.IsUndefined)
@@ -797,18 +834,18 @@ internal static class BuiltInFunctions
                 return Sequence.Undefined;
             }
 
-            string typeName = seq.FirstOrDefault.ValueKind switch
+            JsonElement typeElement = seq.FirstOrDefault.ValueKind switch
             {
-                JsonValueKind.Null => "null",
-                JsonValueKind.Number => "number",
-                JsonValueKind.String => "string",
-                JsonValueKind.True or JsonValueKind.False => "boolean",
-                JsonValueKind.Array => "array",
-                JsonValueKind.Object => "object",
-                _ => "undefined",
+                JsonValueKind.Null => TypeNullElement,
+                JsonValueKind.Number => TypeNumberElement,
+                JsonValueKind.String => TypeStringElement,
+                JsonValueKind.True or JsonValueKind.False => TypeBooleanElement,
+                JsonValueKind.Array => TypeArrayElement,
+                JsonValueKind.Object => TypeObjectElement,
+                _ => TypeUndefinedElement,
             };
 
-            return new Sequence(JsonataHelpers.StringFromString(typeName, env.Workspace));
+            return new Sequence(typeElement);
         };
     }
 
@@ -1765,62 +1802,19 @@ internal static class BuiltInFunctions
                 }
             }
 
+            // Return the backing array from the chain evaluation — previously leaked.
+            seq.ReturnBackingArray();
+
             if (funcArg is not null)
             {
                 var funcSeq = funcArg(input, env);
                 if (funcSeq.IsLambda)
                 {
                     var lambda = funcSeq.Lambda!;
-                    var sortInput = input;
                     var invokeEnv = lambda.CreateInvokeEnv(env);
                     try
                     {
-                        StableSort(ref elements, (a, b) =>
-                        {
-                            Sequence sa = new Sequence(a);
-                            Sequence sb = new Sequence(b);
-#if NET9_0_OR_GREATER
-                            var result = lambda.InvokeReusing([sa, sb], sortInput, invokeEnv, env);
-#else
-                            var result = lambda.InvokeReusing(new Sequence[] { sa, sb }, sortInput, invokeEnv, env);
-#endif
-                            if (result.IsUndefined)
-                            {
-                                return 0;
-                            }
-
-                            var el = result.FirstOrDefault;
-
-                            // Boolean comparator: true means a > b (a should come after b).
-                            // false could mean a < b OR a == b, so check the reverse.
-                            if (el.ValueKind == JsonValueKind.True)
-                            {
-                                return 1;
-                            }
-
-                            if (el.ValueKind == JsonValueKind.False)
-                            {
-#if NET9_0_OR_GREATER
-                                var reverseResult = lambda.InvokeReusing([sb, sa], sortInput, invokeEnv, env);
-#else
-                                var reverseResult = lambda.InvokeReusing(new Sequence[] { sb, sa }, sortInput, invokeEnv, env);
-#endif
-                                if (!reverseResult.IsUndefined
-                                    && reverseResult.FirstOrDefault.ValueKind == JsonValueKind.True)
-                                {
-                                    return -1;
-                                }
-
-                                return 0;
-                            }
-
-                            if (FunctionalCompiler.TryCoerceToNumber(el, out double num))
-                            {
-                                return num < 0 ? -1 : (num > 0 ? 1 : 0);
-                            }
-
-                            return 0;
-                        });
+                        StableSortLambda(ref elements, lambda, input, invokeEnv, env);
                     }
                     finally
                     {
@@ -1830,33 +1824,7 @@ internal static class BuiltInFunctions
             }
             else
             {
-                // Default sort: check types are homogeneous
-                bool hasObjects = false;
-                for (int i = 0; i < elements.Count; i++)
-                {
-                    if (elements[i].ValueKind is JsonValueKind.Object or JsonValueKind.Array)
-                    {
-                        hasObjects = true;
-                        break;
-                    }
-                }
-
-                if (hasObjects)
-                {
-                    throw new JsonataException("D3070", SR.D3070_SortSingleArgRequiresStringsOrNumbers, 0);
-                }
-
-                StableSort(ref elements, (a, b) =>
-                {
-                    if (a.ValueKind == JsonValueKind.Number && b.ValueKind == JsonValueKind.Number)
-                    {
-                        return a.GetDouble().CompareTo(b.GetDouble());
-                    }
-
-                    return string.CompareOrdinal(
-                        FunctionalCompiler.CoerceElementToString(a),
-                        FunctionalCompiler.CoerceElementToString(b));
-                });
+                StableSortDefault(ref elements);
             }
 
             return new Sequence(JsonataHelpers.ArrayFromBuilder(ref elements, env.Workspace));
@@ -1941,6 +1909,8 @@ internal static class BuiltInFunctions
                 items.Add(el);
             }
         }
+
+        seq.ReturnBackingArray();
 
         // If only one non-array item, return as-is
         if (items.Count <= 1 && seq.Count == 1 && seq.FirstOrDefault.ValueKind != JsonValueKind.Array)
@@ -2085,6 +2055,8 @@ internal static class BuiltInFunctions
                     }
                 }
             }
+
+            seq.ReturnBackingArray();
 
             // Build the flattened array as a Sequence for the 3rd lambda arg,
             // but only if the lambda actually uses it (arity >= 3)
@@ -2292,6 +2264,7 @@ internal static class BuiltInFunctions
                         }
                     }
 
+                    seq.ReturnBackingArray();
                     seq = new Sequence((JsonElement)flatRoot);
                     inputWasArray = true;
                 }
@@ -2351,6 +2324,8 @@ internal static class BuiltInFunctions
                         }
                     }
                 }
+
+                seq.ReturnBackingArray();
 
                 // If input was not an array, unwrap single results
                 if (!inputWasArray)
@@ -2556,7 +2531,7 @@ internal static class BuiltInFunctions
             JsonElement.Mutable arrayRoot = arrayDoc.RootElement;
 
             Environment reuseEnv = lambda.CreateInvokeEnv(env);
-            Sequence[] lambdaArgs = ArrayPool<Sequence>.Shared.Rent(2);
+            Sequence[] lambdaArgs = ArrayPool<Sequence>.Shared.Rent(3);
             try
             {
                 foreach (var prop in obj.EnumerateObject())
@@ -2564,6 +2539,7 @@ internal static class BuiltInFunctions
                     lambdaArgs[0] = new Sequence(prop.Value);
                     using UnescapedUtf8JsonString nameUtf8 = prop.Utf8NameSpan;
                     lambdaArgs[1] = new Sequence(JsonataHelpers.StringFromUnescapedUtf8(nameUtf8.Span, env.Workspace));
+                    lambdaArgs[2] = new Sequence(obj);
                     var result = lambda.InvokeReusing(lambdaArgs, input, reuseEnv, env);
                     if (!result.IsUndefined)
                     {
@@ -2615,53 +2591,16 @@ internal static class BuiltInFunctions
 
             if (seq.IsSingleton && seq.FirstOrDefault.ValueKind == JsonValueKind.Array)
             {
-                JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateBuilder(
-                    env.Workspace,
-                    seq.FirstOrDefault,
-                    static (in JsonElement ctx, ref JsonElement.ObjectBuilder builder) =>
-                    {
-                        foreach (var item in ctx.EnumerateArray())
-                        {
-                            if (item.ValueKind == JsonValueKind.Object)
-                            {
-                                foreach (var prop in item.EnumerateObject())
-                                {
-                                    using UnescapedUtf8JsonString nameUtf8 = prop.Utf8NameSpan;
-                                    builder.AddProperty(nameUtf8.Span, prop.Value, escapeName: false, nameRequiresUnescaping: false);
-                                }
-                            }
-                        }
-                    },
-                    estimatedMemberCount: 16);
-
-                return new Sequence((JsonElement)doc.RootElement);
+                var result = JsonataCodeGenHelpers.MergeArrayOfObjects(seq.FirstOrDefault, env.Workspace);
+                seq.ReturnBackingArray();
+                return new Sequence(result);
             }
 
             if (seq.Count > 1)
             {
-                // Multi-element sequence — build from first element that is an object,
-                // then overlay remaining. Use CVB with the first object as seed.
-                JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateBuilder(
-                    env.Workspace,
-                    seq,
-                    static (in Sequence ctx, ref JsonElement.ObjectBuilder builder) =>
-                    {
-                        for (int i = 0; i < ctx.Count; i++)
-                        {
-                            var item = ctx[i];
-                            if (item.ValueKind == JsonValueKind.Object)
-                            {
-                                foreach (var prop in item.EnumerateObject())
-                                {
-                                    using UnescapedUtf8JsonString nameUtf8 = prop.Utf8NameSpan;
-                                    builder.AddProperty(nameUtf8.Span, prop.Value, escapeName: false, nameRequiresUnescaping: false);
-                                }
-                            }
-                        }
-                    },
-                    estimatedMemberCount: 16);
-
-                return new Sequence((JsonElement)doc.RootElement);
+                var result = JsonataCodeGenHelpers.MergeSequenceOfObjects(seq, env.Workspace);
+                seq.ReturnBackingArray();
+                return new Sequence(result);
             }
 
             return Sequence.Undefined;
@@ -3567,40 +3506,6 @@ internal static class BuiltInFunctions
         };
     }
 
-    private static string RegexReplaceWithString(string str, Regex regex, string replacement, int limit)
-    {
-        if (limit <= 0)
-        {
-            return str;
-        }
-
-        int count = 0;
-        int searchStart = 0;
-        var sb = new StringBuilder();
-
-        while (count < limit && searchStart <= str.Length)
-        {
-            Match m = regex.Match(str, searchStart);
-            if (!m.Success)
-            {
-                break;
-            }
-
-            if (m.Length == 0)
-            {
-                throw new JsonataException("D1004", SR.D1004_RegularExpressionMatchesZeroLengthString, 0);
-            }
-
-            sb.Append(str, searchStart, m.Index - searchStart);
-            sb.Append(ApplyJsonataBackreferences(replacement, m));
-            searchStart = m.Index + m.Length;
-            count++;
-        }
-
-        sb.Append(str, searchStart, str.Length - searchStart);
-        return sb.ToString();
-    }
-
     private static string RegexReplaceWithFunction(
         string str,
         Regex regex,
@@ -3653,86 +3558,6 @@ internal static class BuiltInFunctions
         }
 
         sb.Append(str, searchStart, str.Length - searchStart);
-        return sb.ToString();
-    }
-
-    private static string ApplyJsonataBackreferences(string replacement, Match match)
-    {
-        int numGroups = match.Groups.Count - 1;
-        var sb = new StringBuilder(replacement.Length);
-
-        for (int i = 0; i < replacement.Length; i++)
-        {
-            if (replacement[i] != '$')
-            {
-                sb.Append(replacement[i]);
-                continue;
-            }
-
-            // At '$'
-            if (i + 1 >= replacement.Length)
-            {
-                // $ at end of string → literal $
-                sb.Append('$');
-                continue;
-            }
-
-            char next = replacement[i + 1];
-
-            if (next == '$')
-            {
-                // $$ → literal $
-                sb.Append('$');
-                i++;
-            }
-            else if (next >= '0' && next <= '9')
-            {
-                // Read all following digits
-                int digitStart = i + 1;
-                int digitEnd = digitStart;
-                while (digitEnd < replacement.Length && replacement[digitEnd] >= '0' && replacement[digitEnd] <= '9')
-                {
-                    digitEnd++;
-                }
-
-                string allDigits = replacement.Substring(digitStart, digitEnd - digitStart);
-
-                // Try longest valid prefix (shorten from the right)
-                int consumed = allDigits.Length;
-                bool found = false;
-                while (consumed > 0)
-                {
-                    int groupNum = int.Parse(allDigits.Substring(0, consumed), CultureInfo.InvariantCulture);
-                    if (groupNum <= numGroups)
-                    {
-                        sb.Append(match.Groups[groupNum].Value);
-
-                        // Remaining digits become literal
-                        sb.Append(allDigits, consumed, allDigits.Length - consumed);
-                        found = true;
-                        break;
-                    }
-
-                    consumed--;
-                }
-
-                if (!found)
-                {
-                    // No valid group reference; remaining digits after the single invalid digit are literal
-                    sb.Append(allDigits, 1, allDigits.Length - 1);
-                }
-
-                i = digitEnd - 1;
-            }
-            else
-            {
-                // $ followed by non-digit → literal $<char>
-                sb.Append('$');
-                sb.Append(next);
-                i++;
-            }
-        }
-
         return sb.ToString();
     }
 
@@ -4062,7 +3887,7 @@ internal static class BuiltInFunctions
             {
                 byte b = str[pos];
                 int cpLen = b < 0x80 ? 1 : b < 0xE0 ? 2 : b < 0xF0 ? 3 : 4;
-                arrayRoot.AddItem(JsonataHelpers.StringFromUnescapedUtf8(str.Slice(pos, cpLen), workspace));
+                arrayRoot.AddItem(str.Slice(pos, cpLen));
                 pos += cpLen;
             }
 
@@ -4107,21 +3932,21 @@ internal static class BuiltInFunctions
             for (int i = 0; i < resultCount - 1; i++)
             {
                 int idx = str.Slice(searchStart).IndexOf(sep);
-                arrayRoot.AddItem(JsonataHelpers.StringFromUnescapedUtf8(str.Slice(searchStart, idx), workspace));
+                arrayRoot.AddItem(str.Slice(searchStart, idx));
                 searchStart += idx + sep.Length;
             }
 
             if (exhausted)
             {
                 // All parts fit — add remainder
-                arrayRoot.AddItem(JsonataHelpers.StringFromUnescapedUtf8(str.Slice(searchStart), workspace));
+                arrayRoot.AddItem(str.Slice(searchStart));
             }
             else
             {
                 // Hit limit: take text up to next separator (or end)
                 int idx = str.Slice(searchStart).IndexOf(sep);
                 int partLen = idx >= 0 ? idx : str.Length - searchStart;
-                arrayRoot.AddItem(JsonataHelpers.StringFromUnescapedUtf8(str.Slice(searchStart, partLen), workspace));
+                arrayRoot.AddItem(str.Slice(searchStart, partLen));
             }
 
             return (JsonElement)arrayRoot;
@@ -4239,7 +4064,33 @@ internal static class BuiltInFunctions
                 return Sequence.Undefined;
             }
 
-            string str = FunctionalCompiler.CoerceElementToString(seq.FirstOrDefault);
+            JsonElement element = seq.FirstOrDefault;
+
+            if (element.ValueKind == JsonValueKind.String)
+            {
+                using UnescapedUtf8JsonString utf8 = element.GetUtf8String();
+                ReadOnlySpan<byte> source = utf8.Span;
+                int maxLen = Base64.GetMaxEncodedToUtf8Length(source.Length);
+                byte[]? rented = null;
+                Span<byte> dest = maxLen <= JsonConstants.StackallocByteThreshold
+                    ? stackalloc byte[JsonConstants.StackallocByteThreshold]
+                    : (rented = ArrayPool<byte>.Shared.Rent(maxLen));
+
+                try
+                {
+                    Base64.EncodeToUtf8(source, dest, out _, out int written);
+                    return new Sequence(JsonataHelpers.StringFromUnescapedUtf8(dest.Slice(0, written), env.Workspace));
+                }
+                finally
+                {
+                    if (rented != null)
+                    {
+                        ArrayPool<byte>.Shared.Return(rented);
+                    }
+                }
+            }
+
+            string str = FunctionalCompiler.CoerceElementToString(element);
             return new Sequence(JsonataHelpers.StringFromString(
                 Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(str)), env.Workspace));
         };
@@ -4266,7 +4117,33 @@ internal static class BuiltInFunctions
                 return Sequence.Undefined;
             }
 
-            string str = FunctionalCompiler.CoerceElementToString(seq.FirstOrDefault);
+            JsonElement element = seq.FirstOrDefault;
+
+            if (element.ValueKind == JsonValueKind.String)
+            {
+                using UnescapedUtf8JsonString utf8 = element.GetUtf8String();
+                ReadOnlySpan<byte> source = utf8.Span;
+                int maxLen = Base64.GetMaxDecodedFromUtf8Length(source.Length);
+                byte[]? rented = null;
+                Span<byte> dest = maxLen <= JsonConstants.StackallocByteThreshold
+                    ? stackalloc byte[JsonConstants.StackallocByteThreshold]
+                    : (rented = ArrayPool<byte>.Shared.Rent(maxLen));
+
+                try
+                {
+                    Base64.DecodeFromUtf8(source, dest, out _, out int written);
+                    return new Sequence(JsonataHelpers.StringFromUnescapedUtf8(dest.Slice(0, written), env.Workspace));
+                }
+                finally
+                {
+                    if (rented != null)
+                    {
+                        ArrayPool<byte>.Shared.Return(rented);
+                    }
+                }
+            }
+
+            string str = FunctionalCompiler.CoerceElementToString(element);
             return new Sequence(JsonataHelpers.StringFromString(
                 System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(str)), env.Workspace));
         };
@@ -4288,10 +4165,42 @@ internal static class BuiltInFunctions
                 return Sequence.Undefined;
             }
 
+            JsonElement element = seq.FirstOrDefault;
+
+            if (element.ValueKind == JsonValueKind.String)
+            {
+                using UnescapedUtf8JsonString utf8 = element.GetUtf8String();
+                ReadOnlySpan<byte> source = utf8.Span;
+
+                if (ContainsUtf8Surrogate(source))
+                {
+                    throw new JsonataException("D3140", SR.D3140_MalformedUrlEncodeUrlComponent, 0);
+                }
+
+                int maxLen = source.Length * 3;
+                byte[]? rented = null;
+                Span<byte> dest = maxLen <= JsonConstants.StackallocByteThreshold
+                    ? stackalloc byte[JsonConstants.StackallocByteThreshold]
+                    : (rented = ArrayPool<byte>.Shared.Rent(maxLen));
+
+                try
+                {
+                    Utf8Uri.TryEscapeDataString(source, dest, out int written);
+                    return new Sequence(JsonataHelpers.StringFromUnescapedUtf8(dest.Slice(0, written), env.Workspace));
+                }
+                finally
+                {
+                    if (rented != null)
+                    {
+                        ArrayPool<byte>.Shared.Return(rented);
+                    }
+                }
+            }
+
             string str;
             try
             {
-                str = FunctionalCompiler.CoerceElementToString(seq.FirstOrDefault);
+                str = FunctionalCompiler.CoerceElementToString(element);
             }
             catch (InvalidOperationException)
             {
@@ -4319,7 +4228,38 @@ internal static class BuiltInFunctions
                 return Sequence.Undefined;
             }
 
-            string str = FunctionalCompiler.CoerceElementToString(seq.FirstOrDefault);
+            JsonElement element = seq.FirstOrDefault;
+
+            if (element.ValueKind == JsonValueKind.String)
+            {
+                using UnescapedUtf8JsonString utf8 = element.GetUtf8String();
+                ReadOnlySpan<byte> source = utf8.Span;
+
+                if (HasInvalidPercentEncoding(source))
+                {
+                    throw new JsonataException("D3140", SR.Format(SR.D3140_MalformedUrlPassedToDecodeUrlComponent, element.GetString()!), 0);
+                }
+
+                byte[]? rented = null;
+                Span<byte> dest = source.Length <= JsonConstants.StackallocByteThreshold
+                    ? stackalloc byte[JsonConstants.StackallocByteThreshold]
+                    : (rented = ArrayPool<byte>.Shared.Rent(source.Length));
+
+                try
+                {
+                    Utf8Uri.TryUnescapeDataString(source, dest, out int written);
+                    return new Sequence(JsonataHelpers.StringFromUnescapedUtf8(dest.Slice(0, written), env.Workspace));
+                }
+                finally
+                {
+                    if (rented != null)
+                    {
+                        ArrayPool<byte>.Shared.Return(rented);
+                    }
+                }
+            }
+
+            string str = FunctionalCompiler.CoerceElementToString(element);
 
             if (HasInvalidPercentEncoding(str))
             {
@@ -4337,7 +4277,6 @@ internal static class BuiltInFunctions
         };
     }
 
-#pragma warning disable SYSLIB0013 // Uri.EscapeUriString is obsolete
     private static ExpressionEvaluator CompileEncodeUrl(ExpressionEvaluator[] args)
     {
         if (args.Length != 1)
@@ -4354,10 +4293,42 @@ internal static class BuiltInFunctions
                 return Sequence.Undefined;
             }
 
+            JsonElement element = seq.FirstOrDefault;
+
+            if (element.ValueKind == JsonValueKind.String)
+            {
+                using UnescapedUtf8JsonString utf8 = element.GetUtf8String();
+                ReadOnlySpan<byte> source = utf8.Span;
+
+                if (ContainsUtf8Surrogate(source))
+                {
+                    throw new JsonataException("D3140", SR.D3140_MalformedUrlEncodeUrl, 0);
+                }
+
+                int maxLen = source.Length * 3;
+                byte[]? rented = null;
+                Span<byte> dest = maxLen <= JsonConstants.StackallocByteThreshold
+                    ? stackalloc byte[JsonConstants.StackallocByteThreshold]
+                    : (rented = ArrayPool<byte>.Shared.Rent(maxLen));
+
+                try
+                {
+                    Utf8Uri.TryEscapeUri(source, dest, out int written);
+                    return new Sequence(JsonataHelpers.StringFromUnescapedUtf8(dest.Slice(0, written), env.Workspace));
+                }
+                finally
+                {
+                    if (rented != null)
+                    {
+                        ArrayPool<byte>.Shared.Return(rented);
+                    }
+                }
+            }
+
             string str;
             try
             {
-                str = FunctionalCompiler.CoerceElementToString(seq.FirstOrDefault);
+                str = FunctionalCompiler.CoerceElementToString(element);
             }
             catch (InvalidOperationException)
             {
@@ -4365,10 +4336,28 @@ internal static class BuiltInFunctions
             }
 
             ValidateNoUnpairedSurrogates(str, "$encodeUrl");
-            return new Sequence(JsonataHelpers.StringFromString(Uri.EscapeUriString(str), env.Workspace));
+
+            byte[] sourceBytes = System.Text.Encoding.UTF8.GetBytes(str);
+            int maxLen2 = sourceBytes.Length * 3;
+            byte[]? rented2 = null;
+            Span<byte> dest2 = maxLen2 <= JsonConstants.StackallocByteThreshold
+                ? stackalloc byte[JsonConstants.StackallocByteThreshold]
+                : (rented2 = ArrayPool<byte>.Shared.Rent(maxLen2));
+
+            try
+            {
+                Utf8Uri.TryEscapeUri(sourceBytes, dest2, out int written);
+                return new Sequence(JsonataHelpers.StringFromUnescapedUtf8(dest2.Slice(0, written), env.Workspace));
+            }
+            finally
+            {
+                if (rented2 != null)
+                {
+                    ArrayPool<byte>.Shared.Return(rented2);
+                }
+            }
         };
     }
-#pragma warning restore SYSLIB0013
 
     private static ExpressionEvaluator CompileDecodeUrl(ExpressionEvaluator[] args)
     {
@@ -4386,7 +4375,38 @@ internal static class BuiltInFunctions
                 return Sequence.Undefined;
             }
 
-            string str = FunctionalCompiler.CoerceElementToString(seq.FirstOrDefault);
+            JsonElement element = seq.FirstOrDefault;
+
+            if (element.ValueKind == JsonValueKind.String)
+            {
+                using UnescapedUtf8JsonString utf8 = element.GetUtf8String();
+                ReadOnlySpan<byte> source = utf8.Span;
+
+                if (HasInvalidPercentEncoding(source))
+                {
+                    throw new JsonataException("D3140", SR.Format(SR.D3140_MalformedUrlPassedToDecodeUrl, element.GetString()!), 0);
+                }
+
+                byte[]? rented = null;
+                Span<byte> dest = source.Length <= JsonConstants.StackallocByteThreshold
+                    ? stackalloc byte[JsonConstants.StackallocByteThreshold]
+                    : (rented = ArrayPool<byte>.Shared.Rent(source.Length));
+
+                try
+                {
+                    Utf8Uri.TryUnescapeDataString(source, dest, out int written);
+                    return new Sequence(JsonataHelpers.StringFromUnescapedUtf8(dest.Slice(0, written), env.Workspace));
+                }
+                finally
+                {
+                    if (rented != null)
+                    {
+                        ArrayPool<byte>.Shared.Return(rented);
+                    }
+                }
+            }
+
+            string str = FunctionalCompiler.CoerceElementToString(element);
 
             if (HasInvalidPercentEncoding(str))
             {
@@ -4414,6 +4434,48 @@ internal static class BuiltInFunctions
                 if (i + 2 >= input.Length ||
                     !IsHexDigit(input[i + 1]) ||
                     !IsHexDigit(input[i + 2]))
+                {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    internal static bool HasInvalidPercentEncoding(ReadOnlySpan<byte> input)
+    {
+        for (int i = 0; i < input.Length; i++)
+        {
+            if (input[i] == (byte)'%')
+            {
+                if (i + 2 >= input.Length ||
+                    !IsHexDigit((char)input[i + 1]) ||
+                    !IsHexDigit((char)input[i + 2]))
+                {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Returns <see langword="true"/> if the UTF-8 byte span contains WTF-8 encoded
+    /// surrogate code points (U+D800..U+DFFF). Properly paired surrogates in a JSONata
+    /// expression are encoded as 4-byte UTF-8 by the lexer, so any 3-byte <c>ED [A0-BF] [80-BF]</c>
+    /// sequence indicates an unpaired surrogate.
+    /// </summary>
+    internal static bool ContainsUtf8Surrogate(ReadOnlySpan<byte> utf8)
+    {
+        int last = utf8.Length - 2;
+        for (int i = 0; i < last; i++)
+        {
+            if (utf8[i] == 0xED)
+            {
+                byte b1 = utf8[i + 1];
+                if (b1 >= 0xA0 && b1 <= 0xBF && utf8[i + 2] >= 0x80 && utf8[i + 2] <= 0xBF)
                 {
                     return true;
                 }
@@ -5188,41 +5250,56 @@ internal static class BuiltInFunctions
             }
 
             long numLong = (long)Math.Round(num, MidpointRounding.ToEven);
-            bool negative = numLong < 0;
-            string result = ConvertToBase(Math.Abs(numLong), radixInt);
-            if (negative)
-            {
-                result = "-" + result;
-            }
 
-            return new Sequence(JsonataHelpers.StringFromString(result, env.Workspace));
+            // Max 64 digits + sign = 65 bytes
+            Span<byte> buffer = stackalloc byte[65];
+            int written = ConvertToBaseUtf8(numLong, radixInt, buffer);
+            return new Sequence(JsonataHelpers.StringFromUnescapedUtf8(buffer.Slice(0, written), env.Workspace));
         };
     }
 
-    internal static string ConvertToBase(long value, int radix)
+    /// <summary>
+    /// Formats a long as a string in the specified radix, writing UTF-8 bytes to the destination.
+    /// Suitable for CVB/backing buffer scenarios.
+    /// </summary>
+    /// <param name="value">The value to format (may be negative).</param>
+    /// <param name="radix">The radix (2–36).</param>
+    /// <param name="destination">The destination buffer (must be at least 65 bytes).</param>
+    /// <returns>The number of bytes written.</returns>
+    internal static int ConvertToBaseUtf8(long value, int radix, Span<byte> destination)
     {
-        if (radix is 2 or 8 or 10 or 16)
+        bool negative = value < 0;
+        ulong absValue = negative ? (ulong)(-(value + 1)) + 1 : (ulong)value;
+
+        // Build digits right-to-left in a stack buffer, then copy with optional sign
+        Span<byte> digits = stackalloc byte[64];
+        int pos = digits.Length;
+
+        if (absValue == 0)
         {
-            return Convert.ToString(value, radix);
+            digits[--pos] = (byte)'0';
+        }
+        else
+        {
+            while (absValue > 0)
+            {
+                int digit = (int)(absValue % (ulong)radix);
+                digits[--pos] = digit < 10 ? (byte)('0' + digit) : (byte)('a' + digit - 10);
+                absValue /= (ulong)radix;
+            }
         }
 
-        if (value == 0)
+        int digitCount = digits.Length - pos;
+        int written = 0;
+
+        if (negative)
         {
-            return "0";
+            destination[written++] = (byte)'-';
         }
 
-        const string digits = "0123456789abcdefghijklmnopqrstuvwxyz";
-        var chars = new char[64];
-        int pos = chars.Length;
-
-        long remaining = value;
-        while (remaining > 0)
-        {
-            chars[--pos] = digits[(int)(remaining % radix)];
-            remaining /= radix;
-        }
-
-        return new string(chars, pos, chars.Length - pos);
+        digits.Slice(pos, digitCount).CopyTo(destination.Slice(written));
+        written += digitCount;
+        return written;
     }
 
     // --- Array functions: shuffle, zip ---
@@ -5511,8 +5588,7 @@ internal static class BuiltInFunctions
     {
         return static (in JsonElement input, Environment env) =>
         {
-            return new Sequence(JsonataHelpers.StringFromString(
-                DateTimeOffset.UtcNow.ToString("yyyy-MM-ddTHH:mm:ss.fffZ", CultureInfo.InvariantCulture), env.Workspace));
+            return new Sequence(FormatIso8601Utc(DateTimeOffset.UtcNow, env.Workspace));
         };
     }
 
@@ -5575,12 +5651,10 @@ internal static class BuiltInFunctions
             {
                 if (hasTz)
                 {
-                    return new Sequence(JsonataHelpers.StringFromString(
-                        FormatIso8601WithOffset(dt, offset), env.Workspace));
+                    return new Sequence(FormatIso8601WithOffset(dt, offset, env.Workspace));
                 }
 
-                return new Sequence(JsonataHelpers.StringFromString(
-                    dt.ToString("yyyy-MM-ddTHH:mm:ss.fffZ", CultureInfo.InvariantCulture), env.Workspace));
+                return new Sequence(FormatIso8601Utc(dt, env.Workspace));
             }
 
             var picSeq = pictureArg(input, env);
@@ -5589,34 +5663,129 @@ internal static class BuiltInFunctions
                 // Undefined picture -> use ISO 8601 default with timezone
                 if (hasTz)
                 {
-                    return new Sequence(JsonataHelpers.StringFromString(
-                        FormatIso8601WithOffset(dt, offset), env.Workspace));
+                    return new Sequence(FormatIso8601WithOffset(dt, offset, env.Workspace));
                 }
 
-                return new Sequence(JsonataHelpers.StringFromString(
-                    dt.ToString("yyyy-MM-ddTHH:mm:ss.fffZ", CultureInfo.InvariantCulture), env.Workspace));
+                return new Sequence(FormatIso8601Utc(dt, env.Workspace));
             }
 
-            string picture = FunctionalCompiler.CoerceElementToString(picSeq.FirstOrDefault);
-            string result = XPathDateTimeFormatter.FormatDateTime(dt, picture);
-            return new Sequence(JsonataHelpers.StringFromString(result, env.Workspace));
+            JsonElement picEl = picSeq.FirstOrDefault;
+            Utf8ValueStringBuilder sb = new(stackalloc byte[256]);
+            if (picEl.ValueKind == JsonValueKind.String)
+            {
+                XPathDateTimeFormatter.FormatDateTime(dt, picEl.GetUtf8String().Span, ref sb);
+            }
+            else
+            {
+                string picture = FunctionalCompiler.CoerceElementToString(picEl);
+                byte[] pictureBytes = Encoding.UTF8.GetBytes(picture);
+                XPathDateTimeFormatter.FormatDateTime(dt, pictureBytes, ref sb);
+            }
+
+            JsonElement element = JsonataHelpers.StringFromUnescapedUtf8(sb.AsSpan(), env.Workspace);
+            sb.Dispose();
+            return new Sequence(element);
         };
     }
 
-    internal static string FormatIso8601WithOffset(DateTimeOffset dt, TimeSpan offset)
+    // "yyyy-MM-ddTHH:mm:ss.fffZ" = 24 bytes, "+HH:MM" suffix = 30 bytes max
+    private const int Iso8601MaxBytes = 32;
+
+    private const string Iso8601UtcFormat = "yyyy-MM-ddTHH:mm:ss.fffZ";
+    private const string Iso8601BaseFormat = "yyyy-MM-ddTHH:mm:ss.fff";
+
+    internal static JsonElement FormatIso8601Utc(DateTimeOffset dt, JsonWorkspace workspace)
     {
+#if NET
+        Span<byte> buffer = stackalloc byte[Iso8601MaxBytes];
+        if (TryFormatIso8601Utc(dt, buffer, out int written))
+        {
+            return JsonataHelpers.StringFromUnescapedUtf8(buffer.Slice(0, written), workspace);
+        }
+#endif
+
+        return JsonataHelpers.StringFromString(
+            dt.ToString(Iso8601UtcFormat, CultureInfo.InvariantCulture), workspace);
+    }
+
+    internal static JsonElement FormatIso8601WithOffset(DateTimeOffset dt, TimeSpan offset, JsonWorkspace workspace)
+    {
+#if NET
+        Span<byte> buffer = stackalloc byte[Iso8601MaxBytes];
+        if (TryFormatIso8601WithOffset(dt, offset, buffer, out int written))
+        {
+            return JsonataHelpers.StringFromUnescapedUtf8(buffer.Slice(0, written), workspace);
+        }
+#endif
+
         string formatted = dt.ToString("yyyy-MM-ddTHH:mm:ss.fff", CultureInfo.InvariantCulture);
         if (offset == TimeSpan.Zero)
         {
-            return formatted + "Z";
+            return JsonataHelpers.StringFromString(formatted + "Z", workspace);
         }
 
         string sign = offset >= TimeSpan.Zero ? "+" : "-";
-        int totalMin = (int)Math.Abs(offset.TotalMinutes);
-        int h = totalMin / 60;
-        int m = totalMin % 60;
-        return formatted + sign + h.ToString(CultureInfo.InvariantCulture).PadLeft(2, '0') + ":" + m.ToString(CultureInfo.InvariantCulture).PadLeft(2, '0');
+        int totalMin2 = (int)Math.Abs(offset.TotalMinutes);
+        int h2 = totalMin2 / 60;
+        int m2 = totalMin2 % 60;
+        return JsonataHelpers.StringFromString(
+            formatted + sign + h2.ToString(CultureInfo.InvariantCulture).PadLeft(2, '0') + ":" + m2.ToString(CultureInfo.InvariantCulture).PadLeft(2, '0'), workspace);
     }
+
+#if NET
+    /// <summary>
+    /// Formats a <see cref="DateTimeOffset"/> as ISO 8601 UTC ("yyyy-MM-ddTHH:mm:ss.fffZ")
+    /// directly into a UTF-8 span. Suitable for CVB/backing buffer scenarios.
+    /// </summary>
+    /// <param name="dt">The date/time to format.</param>
+    /// <param name="destination">The destination buffer (must be at least <see cref="Iso8601MaxBytes"/> bytes).</param>
+    /// <param name="bytesWritten">The number of bytes written.</param>
+    /// <returns><see langword="true"/> if the formatting succeeded.</returns>
+    internal static bool TryFormatIso8601Utc(DateTimeOffset dt, Span<byte> destination, out int bytesWritten)
+    {
+        return ((IUtf8SpanFormattable)dt).TryFormat(destination, out bytesWritten, Iso8601UtcFormat, CultureInfo.InvariantCulture);
+    }
+
+    /// <summary>
+    /// Formats a <see cref="DateTimeOffset"/> as ISO 8601 with an explicit offset
+    /// ("yyyy-MM-ddTHH:mm:ss.fff±HH:mm", or "...Z" when offset is zero)
+    /// directly into a UTF-8 span. Suitable for CVB/backing buffer scenarios.
+    /// </summary>
+    /// <param name="dt">The date/time to format.</param>
+    /// <param name="offset">The timezone offset.</param>
+    /// <param name="destination">The destination buffer (must be at least <see cref="Iso8601MaxBytes"/> bytes).</param>
+    /// <param name="bytesWritten">The number of bytes written.</param>
+    /// <returns><see langword="true"/> if the formatting succeeded.</returns>
+    internal static bool TryFormatIso8601WithOffset(DateTimeOffset dt, TimeSpan offset, Span<byte> destination, out int bytesWritten)
+    {
+        if (offset == TimeSpan.Zero)
+        {
+            return ((IUtf8SpanFormattable)dt).TryFormat(destination, out bytesWritten, Iso8601UtcFormat, CultureInfo.InvariantCulture);
+        }
+
+        if (((IUtf8SpanFormattable)dt).TryFormat(destination, out bytesWritten, Iso8601BaseFormat, CultureInfo.InvariantCulture))
+        {
+            if (bytesWritten + 6 > destination.Length)
+            {
+                bytesWritten = 0;
+                return false;
+            }
+
+            destination[bytesWritten++] = offset >= TimeSpan.Zero ? (byte)'+' : (byte)'-';
+            int totalMin = (int)Math.Abs(offset.TotalMinutes);
+            int h = totalMin / 60;
+            int m = totalMin % 60;
+            destination[bytesWritten++] = (byte)('0' + (h / 10));
+            destination[bytesWritten++] = (byte)('0' + (h % 10));
+            destination[bytesWritten++] = (byte)':';
+            destination[bytesWritten++] = (byte)('0' + (m / 10));
+            destination[bytesWritten++] = (byte)('0' + (m % 10));
+            return true;
+        }
+
+        return false;
+    }
+#endif
 
     /// <summary>
     /// Parse a string as strict ISO 8601 date/time or throw D3110 for invalid format.
@@ -5669,25 +5838,38 @@ internal static class BuiltInFunctions
             }
 
             var picSeq = pictureArg(input, env);
-            string strVal = FunctionalCompiler.CoerceElementToString(el);
 
             if (picSeq.IsUndefined)
             {
+                string strVal = FunctionalCompiler.CoerceElementToString(el);
                 return ParseIso8601ToMillis(strVal, env.Workspace);
             }
 
-            string picture = FunctionalCompiler.CoerceElementToString(picSeq.FirstOrDefault);
+            JsonElement picEl = picSeq.FirstOrDefault;
 
-            try
+            if (el.ValueKind != JsonValueKind.String)
             {
-                if (XPathDateTimeFormatter.TryParseDateTime(strVal, picture, out long millis))
+                return Sequence.Undefined;
+            }
+
+            if (picEl.ValueKind == JsonValueKind.String)
+            {
+                using UnescapedUtf8JsonString picUtf8 = picEl.GetUtf8String();
+                using UnescapedUtf8JsonString utf8 = el.GetUtf8String();
+                if (XPathDateTimeFormatter.TryParseDateTime(utf8.Span, picUtf8.Span, out long millis))
                 {
                     return Sequence.FromDouble(millis, env.Workspace);
                 }
             }
-            catch (JsonataException)
+            else
             {
-                throw;
+                string pictureStr = FunctionalCompiler.CoerceElementToString(picEl);
+                byte[] pictureBytes = Encoding.UTF8.GetBytes(pictureStr);
+                using UnescapedUtf8JsonString utf8 = el.GetUtf8String();
+                if (XPathDateTimeFormatter.TryParseDateTime(utf8.Span, pictureBytes, out long millis))
+                {
+                    return Sequence.FromDouble(millis, env.Workspace);
+                }
             }
 
             return Sequence.Undefined;
@@ -5715,33 +5897,54 @@ internal static class BuiltInFunctions
             var numElement = numSeq.FirstOrDefault;
 
             var picSeq = picArg(input, env);
-            string picture = FunctionalCompiler.CoerceElementToString(picSeq.FirstOrDefault);
+            JsonElement picEl = picSeq.FirstOrDefault;
 
-            string result;
-
-            // Try to parse as long directly from the raw UTF-8 text to avoid
-            // precision loss when converting large integers through double.
-            if (numElement.ValueKind == JsonValueKind.Number && numElement.TryGetInt64(out long longVal))
+            Sequence FormatWithPicture(JsonElement num, ReadOnlySpan<byte> picture, Environment e)
             {
-                result = XPathDateTimeFormatter.FormatInteger(longVal, picture);
-            }
-            else if (FunctionalCompiler.TryCoerceToNumber(numElement, out double numVal))
-            {
-                if (numVal >= long.MinValue && numVal <= long.MaxValue)
+                if (num.ValueKind == JsonValueKind.Number && num.TryGetInt64(out long longVal))
                 {
-                    result = XPathDateTimeFormatter.FormatInteger((long)numVal, picture);
+                    Utf8ValueStringBuilder sb = new(stackalloc byte[64]);
+                    XPathDateTimeFormatter.FormatInteger(longVal, picture, ref sb);
+                    JsonElement element = JsonataHelpers.StringFromUnescapedUtf8(sb.AsSpan(), e.Workspace);
+                    sb.Dispose();
+                    return new Sequence(element);
+                }
+                else if (FunctionalCompiler.TryCoerceToNumber(num, out double numVal))
+                {
+                    if (numVal >= long.MinValue && numVal <= long.MaxValue)
+                    {
+                        Utf8ValueStringBuilder sb = new(stackalloc byte[64]);
+                        XPathDateTimeFormatter.FormatInteger((long)numVal, picture, ref sb);
+                        JsonElement element = JsonataHelpers.StringFromUnescapedUtf8(sb.AsSpan(), e.Workspace);
+                        sb.Dispose();
+                        return new Sequence(element);
+                    }
+                    else
+                    {
+                        Utf8ValueStringBuilder sb = new(stackalloc byte[128]);
+                        XPathDateTimeFormatter.FormatInteger(numVal, picture, ref sb);
+                        JsonElement element = JsonataHelpers.StringFromUnescapedUtf8(sb.AsSpan(), e.Workspace);
+                        sb.Dispose();
+                        return new Sequence(element);
+                    }
                 }
                 else
                 {
-                    result = XPathDateTimeFormatter.FormatInteger(numVal, picture);
+                    return Sequence.Undefined;
                 }
+            }
+
+            if (picEl.ValueKind == JsonValueKind.String)
+            {
+                using UnescapedUtf8JsonString picUtf8 = picEl.GetUtf8String();
+                return FormatWithPicture(numElement, picUtf8.Span, env);
             }
             else
             {
-                return Sequence.Undefined;
+                string pictureStr = FunctionalCompiler.CoerceElementToString(picEl);
+                byte[] pictureBytes = Encoding.UTF8.GetBytes(pictureStr);
+                return FormatWithPicture(numElement, pictureBytes, env);
             }
-
-            return new Sequence(JsonataHelpers.StringFromString(result, env.Workspace));
         };
     }
 
@@ -5763,14 +5966,33 @@ internal static class BuiltInFunctions
                 return Sequence.Undefined;
             }
 
-            string str = FunctionalCompiler.CoerceElementToString(strSeq.FirstOrDefault);
-
             var picSeq = picArg(input, env);
-            string picture = FunctionalCompiler.CoerceElementToString(picSeq.FirstOrDefault);
+            JsonElement picEl = picSeq.FirstOrDefault;
 
-            if (XPathDateTimeFormatter.TryParseInteger(str, picture, out double dblValue))
+            JsonElement strEl = strSeq.FirstOrDefault;
+            if (strEl.ValueKind != JsonValueKind.String)
             {
-                return Sequence.FromDouble(dblValue, env.Workspace);
+                return Sequence.Undefined;
+            }
+
+            if (picEl.ValueKind == JsonValueKind.String)
+            {
+                using UnescapedUtf8JsonString picUtf8 = picEl.GetUtf8String();
+                using UnescapedUtf8JsonString utf8 = strEl.GetUtf8String();
+                if (XPathDateTimeFormatter.TryParseInteger(utf8.Span, picUtf8.Span, out double dblValue))
+                {
+                    return Sequence.FromDouble(dblValue, env.Workspace);
+                }
+            }
+            else
+            {
+                string pictureStr = FunctionalCompiler.CoerceElementToString(picEl);
+                byte[] pictureBytes = Encoding.UTF8.GetBytes(pictureStr);
+                using UnescapedUtf8JsonString utf8 = strEl.GetUtf8String();
+                if (XPathDateTimeFormatter.TryParseInteger(utf8.Span, pictureBytes, out double dblValue))
+                {
+                    return Sequence.FromDouble(dblValue, env.Workspace);
+                }
             }
 
             return Sequence.Undefined;
@@ -5874,8 +6096,9 @@ internal static class BuiltInFunctions
         return new Sequence(array);
     }
 
-    private static void EnumerateNumericValues(Sequence seq, ref double accumulator, NumericAccumulator action)
+    private static int EnumerateNumericValues(Sequence seq, ref double accumulator, NumericAccumulator action)
     {
+        int count = 0;
         if (seq.IsSingleton)
         {
             var el = seq.FirstOrDefault;
@@ -5884,11 +6107,13 @@ internal static class BuiltInFunctions
                 foreach (var item in el.EnumerateArray())
                 {
                     ValidateAndAccumulate(item, ref accumulator, action);
+                    count++;
                 }
             }
             else
             {
                 ValidateAndAccumulate(el, ref accumulator, action);
+                count++;
             }
         }
         else
@@ -5896,8 +6121,11 @@ internal static class BuiltInFunctions
             for (int i = 0; i < seq.Count; i++)
             {
                 ValidateAndAccumulate(seq[i], ref accumulator, action);
+                count++;
             }
         }
+
+        return count;
     }
 
     private static void ValidateAndAccumulate(JsonElement el, ref double accumulator, NumericAccumulator action)
@@ -6090,5 +6318,113 @@ internal static class BuiltInFunctions
 
             builder[j + 1] = key;
         }
+    }
+
+    /// <summary>
+    /// Performs a stable insertion sort using a user-supplied lambda comparator,
+    /// without allocating a closure or delegate. Called by both the non-fused and
+    /// fused sort paths.
+    /// </summary>
+    internal static void StableSortLambda(
+        ref SequenceBuilder builder,
+        LambdaValue lambda,
+        in JsonElement input,
+        Environment invokeEnv,
+        Environment callerEnv)
+    {
+        int count = builder.Count;
+        for (int i = 1; i < count; i++)
+        {
+            JsonElement key = builder[i];
+            int j = i - 1;
+            while (j >= 0 && CompareLambda(builder[j], key, lambda, input, invokeEnv, callerEnv) > 0)
+            {
+                builder[j + 1] = builder[j];
+                j--;
+            }
+
+            builder[j + 1] = key;
+        }
+    }
+
+    /// <summary>
+    /// Validates that all elements are numbers or strings (no objects/arrays),
+    /// then performs a stable default sort. Called by both the non-fused and fused
+    /// sort paths.
+    /// </summary>
+    internal static void StableSortDefault(ref SequenceBuilder builder)
+    {
+        for (int i = 0; i < builder.Count; i++)
+        {
+            if (builder[i].ValueKind is JsonValueKind.Object or JsonValueKind.Array)
+            {
+                throw new JsonataException("D3070", SR.D3070_SortSingleArgRequiresStringsOrNumbers, 0);
+            }
+        }
+
+        StableSort(ref builder, DefaultComparator);
+    }
+
+    private static int DefaultComparator(JsonElement a, JsonElement b)
+    {
+        if (a.ValueKind == JsonValueKind.Number && b.ValueKind == JsonValueKind.Number)
+        {
+            return a.GetDouble().CompareTo(b.GetDouble());
+        }
+
+        return string.CompareOrdinal(
+            FunctionalCompiler.CoerceElementToString(a),
+            FunctionalCompiler.CoerceElementToString(b));
+    }
+
+    private static int CompareLambda(
+        in JsonElement a,
+        in JsonElement b,
+        LambdaValue lambda,
+        in JsonElement input,
+        Environment invokeEnv,
+        Environment callerEnv)
+    {
+        Sequence sa = new(a);
+        Sequence sb = new(b);
+#if NET9_0_OR_GREATER
+        var result = lambda.InvokeReusing([sa, sb], input, invokeEnv, callerEnv);
+#else
+        var result = lambda.InvokeReusing(new Sequence[] { sa, sb }, input, invokeEnv, callerEnv);
+#endif
+        if (result.IsUndefined)
+        {
+            return 0;
+        }
+
+        var el = result.FirstOrDefault;
+
+        if (el.ValueKind == JsonValueKind.True)
+        {
+            return 1;
+        }
+
+        if (el.ValueKind == JsonValueKind.False)
+        {
+#if NET9_0_OR_GREATER
+            var reverseResult = lambda.InvokeReusing([sb, sa], input, invokeEnv, callerEnv);
+#else
+            var reverseResult = lambda.InvokeReusing(new Sequence[] { sb, sa }, input, invokeEnv, callerEnv);
+#endif
+            if (!reverseResult.IsUndefined
+                && reverseResult.FirstOrDefault.ValueKind == JsonValueKind.True)
+            {
+                return -1;
+            }
+
+            return 0;
+        }
+
+        if (FunctionalCompiler.TryCoerceToNumber(el, out double num))
+        {
+            return num < 0 ? -1 : (num > 0 ? 1 : 0);
+        }
+
+        return 0;
     }
 }

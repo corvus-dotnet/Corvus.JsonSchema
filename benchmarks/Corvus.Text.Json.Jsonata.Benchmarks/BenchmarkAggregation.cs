@@ -44,6 +44,11 @@ public class BenchmarkAggregation : JsonataBenchmarkBase
     private const string ExprMin = "$min(Account.Order.Product.Price)";
     private const string ExprAverage = "$average(Account.Order.Product.Price)";
 
+    private static readonly byte[] ExprMaxUtf8 = "$max(Account.Order.Product.Price)"u8.ToArray();
+    private static readonly byte[] ExprMinUtf8 = "$min(Account.Order.Product.Price)"u8.ToArray();
+    private static readonly byte[] ExprAverageUtf8 = "$average(Account.Order.Product.Price)"u8.ToArray();
+
+
     private JsonataEvaluator evaluator = null!;
     private ParsedJsonDocument<JsonElement>? doc;
     private JsonElement data;
@@ -67,9 +72,9 @@ public class BenchmarkAggregation : JsonataBenchmarkBase
         this.evaluator = new JsonataEvaluator();
         this.workspace = JsonWorkspace.Create();
 
-        this.evaluator.Evaluate(ExprMax, this.data);
-        this.evaluator.Evaluate(ExprMin, this.data);
-        this.evaluator.Evaluate(ExprAverage, this.data);
+        this.evaluator.Evaluate(ExprMaxUtf8, this.data, this.workspace, cacheKey: ExprMax);
+        this.evaluator.Evaluate(ExprMinUtf8, this.data, this.workspace, cacheKey: ExprMin);
+        this.evaluator.Evaluate(ExprAverageUtf8, this.data, this.workspace, cacheKey: ExprAverage);
 
         MaxCodeGen.Evaluate(this.data, this.workspace); this.workspace.Reset();
         MinCodeGen.Evaluate(this.data, this.workspace); this.workspace.Reset();
@@ -101,7 +106,7 @@ public class BenchmarkAggregation : JsonataBenchmarkBase
     public JsonElement Corvus_Max()
     {
         this.workspace.Reset();
-        return this.evaluator.Evaluate(ExprMax, this.data, this.workspace);
+        return this.evaluator.Evaluate(ExprMaxUtf8, this.data, this.workspace, cacheKey: ExprMax);
     }
 
 #if !NETFRAMEWORK
@@ -128,7 +133,7 @@ public class BenchmarkAggregation : JsonataBenchmarkBase
     public JsonElement Corvus_Min()
     {
         this.workspace.Reset();
-        return this.evaluator.Evaluate(ExprMin, this.data, this.workspace);
+        return this.evaluator.Evaluate(ExprMinUtf8, this.data, this.workspace, cacheKey: ExprMin);
     }
 
 #if !NETFRAMEWORK
@@ -155,7 +160,7 @@ public class BenchmarkAggregation : JsonataBenchmarkBase
     public JsonElement Corvus_Average()
     {
         this.workspace.Reset();
-        return this.evaluator.Evaluate(ExprAverage, this.data, this.workspace);
+        return this.evaluator.Evaluate(ExprAverageUtf8, this.data, this.workspace, cacheKey: ExprAverage);
     }
 
 #if !NETFRAMEWORK

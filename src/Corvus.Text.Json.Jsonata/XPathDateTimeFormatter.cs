@@ -3,9 +3,12 @@
 // </copyright>
 
 using System;
+using System.Buffers;
+using System.Buffers.Text;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
+using Corvus.Text;
 
 namespace Corvus.Text.Json.Jsonata;
 
@@ -16,152 +19,179 @@ namespace Corvus.Text.Json.Jsonata;
 /// </summary>
 internal static class XPathDateTimeFormatter
 {
-    private static readonly string[] MonthNames =
+    private static readonly byte[][] MonthNames =
     {
-        "January", "February", "March", "April", "May", "June",
-        "July", "August", "September", "October", "November", "December",
+        "January"u8.ToArray(), "February"u8.ToArray(), "March"u8.ToArray(),
+        "April"u8.ToArray(), "May"u8.ToArray(), "June"u8.ToArray(),
+        "July"u8.ToArray(), "August"u8.ToArray(), "September"u8.ToArray(),
+        "October"u8.ToArray(), "November"u8.ToArray(), "December"u8.ToArray(),
     };
 
-    private static readonly string[] DayNames =
+    private static readonly byte[][] DayNames =
     {
-        "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday",
+        "Monday"u8.ToArray(), "Tuesday"u8.ToArray(), "Wednesday"u8.ToArray(),
+        "Thursday"u8.ToArray(), "Friday"u8.ToArray(), "Saturday"u8.ToArray(), "Sunday"u8.ToArray(),
     };
 
-    private static readonly string[] Ones =
+    private static readonly byte[][] Ones =
     {
-        string.Empty, "one", "two", "three", "four", "five", "six", "seven", "eight", "nine",
-        "ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen",
+        Array.Empty<byte>(), "one"u8.ToArray(), "two"u8.ToArray(), "three"u8.ToArray(),
+        "four"u8.ToArray(), "five"u8.ToArray(), "six"u8.ToArray(), "seven"u8.ToArray(),
+        "eight"u8.ToArray(), "nine"u8.ToArray(), "ten"u8.ToArray(), "eleven"u8.ToArray(),
+        "twelve"u8.ToArray(), "thirteen"u8.ToArray(), "fourteen"u8.ToArray(), "fifteen"u8.ToArray(),
+        "sixteen"u8.ToArray(), "seventeen"u8.ToArray(), "eighteen"u8.ToArray(), "nineteen"u8.ToArray(),
     };
 
-    private static readonly string[] Tens =
+    private static readonly byte[][] Tens =
     {
-        string.Empty, string.Empty, "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety",
+        Array.Empty<byte>(), Array.Empty<byte>(), "twenty"u8.ToArray(), "thirty"u8.ToArray(),
+        "forty"u8.ToArray(), "fifty"u8.ToArray(), "sixty"u8.ToArray(), "seventy"u8.ToArray(),
+        "eighty"u8.ToArray(), "ninety"u8.ToArray(),
     };
 
-    private static readonly Dictionary<string, string> OrdinalWordMap = new(StringComparer.OrdinalIgnoreCase)
+    private static readonly (byte[] Key, byte[] Value)[] OrdinalWordMap =
     {
-        { "one", "first" },
-        { "two", "second" },
-        { "three", "third" },
-        { "four", "fourth" },
-        { "five", "fifth" },
-        { "six", "sixth" },
-        { "seven", "seventh" },
-        { "eight", "eighth" },
-        { "nine", "ninth" },
-        { "ten", "tenth" },
-        { "eleven", "eleventh" },
-        { "twelve", "twelfth" },
-        { "thirteen", "thirteenth" },
-        { "fourteen", "fourteenth" },
-        { "fifteen", "fifteenth" },
-        { "sixteen", "sixteenth" },
-        { "seventeen", "seventeenth" },
-        { "eighteen", "eighteenth" },
-        { "nineteen", "nineteenth" },
-        { "twenty", "twentieth" },
-        { "thirty", "thirtieth" },
-        { "forty", "fortieth" },
-        { "fifty", "fiftieth" },
-        { "sixty", "sixtieth" },
-        { "seventy", "seventieth" },
-        { "eighty", "eightieth" },
-        { "ninety", "ninetieth" },
-        { "hundred", "hundredth" },
-        { "thousand", "thousandth" },
-        { "million", "millionth" },
-        { "billion", "billionth" },
-        { "trillion", "trillionth" },
+        ("one"u8.ToArray(), "first"u8.ToArray()),
+        ("two"u8.ToArray(), "second"u8.ToArray()),
+        ("three"u8.ToArray(), "third"u8.ToArray()),
+        ("four"u8.ToArray(), "fourth"u8.ToArray()),
+        ("five"u8.ToArray(), "fifth"u8.ToArray()),
+        ("six"u8.ToArray(), "sixth"u8.ToArray()),
+        ("seven"u8.ToArray(), "seventh"u8.ToArray()),
+        ("eight"u8.ToArray(), "eighth"u8.ToArray()),
+        ("nine"u8.ToArray(), "ninth"u8.ToArray()),
+        ("ten"u8.ToArray(), "tenth"u8.ToArray()),
+        ("eleven"u8.ToArray(), "eleventh"u8.ToArray()),
+        ("twelve"u8.ToArray(), "twelfth"u8.ToArray()),
+        ("thirteen"u8.ToArray(), "thirteenth"u8.ToArray()),
+        ("fourteen"u8.ToArray(), "fourteenth"u8.ToArray()),
+        ("fifteen"u8.ToArray(), "fifteenth"u8.ToArray()),
+        ("sixteen"u8.ToArray(), "sixteenth"u8.ToArray()),
+        ("seventeen"u8.ToArray(), "seventeenth"u8.ToArray()),
+        ("eighteen"u8.ToArray(), "eighteenth"u8.ToArray()),
+        ("nineteen"u8.ToArray(), "nineteenth"u8.ToArray()),
+        ("twenty"u8.ToArray(), "twentieth"u8.ToArray()),
+        ("thirty"u8.ToArray(), "thirtieth"u8.ToArray()),
+        ("forty"u8.ToArray(), "fortieth"u8.ToArray()),
+        ("fifty"u8.ToArray(), "fiftieth"u8.ToArray()),
+        ("sixty"u8.ToArray(), "sixtieth"u8.ToArray()),
+        ("seventy"u8.ToArray(), "seventieth"u8.ToArray()),
+        ("eighty"u8.ToArray(), "eightieth"u8.ToArray()),
+        ("ninety"u8.ToArray(), "ninetieth"u8.ToArray()),
+        ("hundred"u8.ToArray(), "hundredth"u8.ToArray()),
+        ("thousand"u8.ToArray(), "thousandth"u8.ToArray()),
+        ("million"u8.ToArray(), "millionth"u8.ToArray()),
+        ("billion"u8.ToArray(), "billionth"u8.ToArray()),
+        ("trillion"u8.ToArray(), "trillionth"u8.ToArray()),
     };
 
-    private static readonly (string Name, long Value)[] ScaleWords =
+    private static readonly (byte[] Name, long Value)[] ScaleWords =
     {
-        ("trillion", 1_000_000_000_000L),
-        ("billion", 1_000_000_000L),
-        ("million", 1_000_000L),
-        ("thousand", 1_000L),
-        ("hundred", 100L),
+        ("trillion"u8.ToArray(), 1_000_000_000_000L),
+        ("billion"u8.ToArray(), 1_000_000_000L),
+        ("million"u8.ToArray(), 1_000_000L),
+        ("thousand"u8.ToArray(), 1_000L),
+        ("hundred"u8.ToArray(), 100L),
     };
 
     /// <summary>
-    /// Formats a <see cref="DateTimeOffset"/> using an XPath picture string.
+    /// Formats the given <see cref="DateTimeOffset"/> using the XPath picture string,
+    /// writing the UTF-8 result directly to a caller-supplied buffer.
     /// </summary>
-    /// <param name="dt">The date/time to format.</param>
+    /// <param name="dt">The date and time to format.</param>
     /// <param name="picture">The XPath picture string.</param>
-    /// <returns>The formatted string.</returns>
-    public static string FormatDateTime(DateTimeOffset dt, string picture)
+    /// <param name="destination">The destination buffer for UTF-8 output.</param>
+    /// <param name="bytesWritten">The number of bytes written.</param>
+    /// <returns><see langword="true"/> if the destination was large enough; otherwise <see langword="false"/>.</returns>
+    internal static bool TryFormatDateTime(DateTimeOffset dt, ReadOnlySpan<byte> picture, Span<byte> destination, out int bytesWritten)
     {
-        // Pre-validate bracket matching before formatting any components
+        Utf8ValueStringBuilder sb = new(destination);
+        FormatDateTime(dt, picture, ref sb);
+        bool success = sb.TryCopyTo(destination, out bytesWritten);
+        sb.Dispose();
+        return success;
+    }
+
+    internal static void FormatDateTime(DateTimeOffset dt, ReadOnlySpan<byte> picture, ref Utf8ValueStringBuilder sb)
+    {
         ValidateBrackets(picture);
 
-        var sb = new StringBuilder();
         int i = 0;
 
-        while (i < picture.Length)
+        // Rent a small buffer for whitespace stripping (heap-backed span avoids
+        // ref-safety conflicts with the ref Utf8ValueStringBuilder parameter).
+        byte[] stripRented = ArrayPool<byte>.Shared.Rent(64);
+        try
         {
-            if (picture[i] == '[')
+            while (i < picture.Length)
             {
-                if (i + 1 < picture.Length && picture[i + 1] == '[')
+                if (picture[i] == (byte)'[')
                 {
-                    sb.Append('[');
-                    i += 2;
-                    continue;
-                }
+                    if (i + 1 < picture.Length && picture[i + 1] == (byte)'[')
+                    {
+                        sb.Append((byte)'[');
+                        i += 2;
+                        continue;
+                    }
 
-                int end = picture.IndexOf(']', i + 1);
-                if (end < 0)
-                {
-                    throw new JsonataException("D3135", SR.D3135_PictureStringContainsAWithNoMatching, 0);
-                }
+                    int endRel = picture.Slice(i + 1).IndexOf((byte)']');
+                    if (endRel < 0)
+                    {
+                        throw new JsonataException("D3135", SR.D3135_PictureStringContainsAWithNoMatching, 0);
+                    }
 
-                string marker = picture.Substring(i + 1, end - i - 1);
-                string stripped = StripWhitespace(marker);
-                FormatComponent(dt, stripped, sb);
-                i = end + 1;
-            }
-            else if (picture[i] == ']')
-            {
-                if (i + 1 < picture.Length && picture[i + 1] == ']')
+                    int end = i + 1 + endRel;
+                    ReadOnlySpan<byte> marker = picture.Slice(i + 1, end - i - 1);
+                    int strippedLen = StripAllAsciiWhitespace(marker, stripRented);
+                    FormatComponent(dt, ((ReadOnlySpan<byte>)stripRented).Slice(0, strippedLen), ref sb);
+                    i = end + 1;
+                }
+                else if (picture[i] == (byte)']')
                 {
-                    sb.Append(']');
-                    i += 2;
+                    if (i + 1 < picture.Length && picture[i + 1] == (byte)']')
+                    {
+                        sb.Append((byte)']');
+                        i += 2;
+                    }
+                    else
+                    {
+                        sb.Append((byte)']');
+                        i++;
+                    }
                 }
                 else
                 {
-                    sb.Append(']');
+                    sb.Append(picture[i]);
                     i++;
                 }
             }
-            else
-            {
-                sb.Append(picture[i]);
-                i++;
-            }
         }
-
-        return sb.ToString();
+        finally
+        {
+            ArrayPool<byte>.Shared.Return(stripRented);
+        }
     }
 
-    private static void ValidateBrackets(string picture)
+    private static void ValidateBrackets(ReadOnlySpan<byte> picture)
     {
         int i = 0;
         while (i < picture.Length)
         {
-            if (picture[i] == '[')
+            if (picture[i] == (byte)'[')
             {
-                if (i + 1 < picture.Length && picture[i + 1] == '[')
+                if (i + 1 < picture.Length && picture[i + 1] == (byte)'[')
                 {
                     i += 2;
                     continue;
                 }
 
-                int end = picture.IndexOf(']', i + 1);
+                int end = picture.Slice(i + 1).IndexOf((byte)']');
                 if (end < 0)
                 {
                     throw new JsonataException("D3135", SR.D3135_PictureStringContainsAWithNoMatching, 0);
                 }
 
-                i = end + 1;
+                i = i + 1 + end + 1;
             }
             else
             {
@@ -171,13 +201,13 @@ internal static class XPathDateTimeFormatter
     }
 
     /// <summary>
-    /// Parses a date/time string using an XPath picture string and returns UTC milliseconds since epoch.
+    /// Parses a date/time UTF-8 byte span using an XPath picture string and returns UTC milliseconds since epoch.
     /// </summary>
-    /// <param name="str">The date/time string to parse.</param>
+    /// <param name="utf8">The UTF-8 bytes to parse.</param>
     /// <param name="picture">The XPath picture string.</param>
     /// <param name="millis">The parsed milliseconds since Unix epoch.</param>
     /// <returns><see langword="true"/> if the string was successfully parsed; otherwise <see langword="false"/>.</returns>
-    public static bool TryParseDateTime(string str, string picture, out long millis)
+    public static bool TryParseDateTime(ReadOnlySpan<byte> utf8, ReadOnlySpan<byte> picture, out long millis)
     {
         millis = 0;
 
@@ -192,117 +222,116 @@ internal static class XPathDateTimeFormatter
         {
             if (comp.IsLiteral)
             {
-                if (pos + comp.Literal!.Length > str.Length)
+                byte[] litBytes = comp.Literal!;
+                if (pos + litBytes.Length > utf8.Length)
                 {
                     return false;
                 }
 
-                // Match literal text
-                string expected = comp.Literal;
-                string actual = str.Substring(pos, expected.Length);
-                if (!string.Equals(expected, actual, StringComparison.OrdinalIgnoreCase))
+                // Match literal text (case-insensitive for ASCII)
+                if (!Utf8EqualsAsciiIgnoreCase(utf8.Slice(pos, litBytes.Length), litBytes))
                 {
                     return false;
                 }
 
-                pos += expected.Length;
+                pos += litBytes.Length;
                 continue;
             }
 
-            char compChar = comp.Component;
-            string presentation = comp.Presentation;
+            byte compChar = comp.Component;
+            byte[] presentation = comp.Presentation;
             int digitWidth = comp.DigitWidth;
 
             switch (compChar)
             {
-                case 'Y':
-                    year = ParseIntegerValueFromString(str, ref pos, presentation, digitWidth);
+                case (byte)'Y':
+                    year = ParseIntegerValue(utf8, ref pos, presentation, digitWidth);
                     if (year < 0)
                     {
                         return false;
                     }
 
                     break;
-                case 'M':
-                    month = ParseDateComponentFromString(str, ref pos, presentation, MonthNames, digitWidth);
+                case (byte)'M':
+                    month = ParseDateComponent(utf8, ref pos, presentation, MonthNames, digitWidth);
                     if (month < 0)
                     {
                         return false;
                     }
 
                     break;
-                case 'D':
-                    day = ParseIntegerValueFromString(str, ref pos, presentation, digitWidth);
+                case (byte)'D':
+                    day = ParseIntegerValue(utf8, ref pos, presentation, digitWidth);
                     if (day < 0)
                     {
                         return false;
                     }
 
                     break;
-                case 'd':
-                    dayOfYear = ParseIntegerValueFromString(str, ref pos, presentation, digitWidth);
+                case (byte)'d':
+                    dayOfYear = ParseIntegerValue(utf8, ref pos, presentation, digitWidth);
                     if (dayOfYear < 0)
                     {
                         return false;
                     }
 
                     break;
-                case 'H':
-                    hour = ParseIntegerValueFromString(str, ref pos, presentation, digitWidth);
+                case (byte)'H':
+                    hour = ParseIntegerValue(utf8, ref pos, presentation, digitWidth);
                     if (hour < 0)
                     {
                         return false;
                     }
 
                     break;
-                case 'h':
-                    hour = ParseIntegerValueFromString(str, ref pos, presentation, digitWidth);
+                case (byte)'h':
+                    hour = ParseIntegerValue(utf8, ref pos, presentation, digitWidth);
                     if (hour < 0)
                     {
                         return false;
                     }
 
                     break;
-                case 'm':
-                    minute = ParseIntegerValueFromString(str, ref pos, presentation, digitWidth);
+                case (byte)'m':
+                    minute = ParseIntegerValue(utf8, ref pos, presentation, digitWidth);
                     if (minute < 0)
                     {
                         return false;
                     }
 
                     break;
-                case 's':
-                    second = ParseIntegerValueFromString(str, ref pos, presentation, digitWidth);
+                case (byte)'s':
+                    second = ParseIntegerValue(utf8, ref pos, presentation, digitWidth);
                     if (second < 0)
                     {
                         return false;
                     }
 
                     break;
-                case 'f':
-                    millisecond = ParseFractionalSeconds(str, ref pos, presentation);
+                case (byte)'f':
+                    millisecond = ParseFractionalSeconds(utf8, ref pos);
                     if (millisecond < 0)
                     {
                         return false;
                     }
 
                     break;
-                case 'P':
-                    // AM/PM
-                    string ampm = ParseAmPm(str, ref pos);
-                    if (ampm.Length == 0)
+                case (byte)'P':
+                    // AM/PM: 0=none, 1=am, 2=pm
+                    int ampmResult = ParseAmPm(utf8, ref pos);
+                    if (ampmResult == 0)
                     {
                         return false;
                     }
 
-                    if (string.Equals(ampm, "pm", StringComparison.OrdinalIgnoreCase))
+                    if (ampmResult == 2)
                     {
                         if (hour >= 0 && hour < 12)
                         {
                             hour += 12;
                         }
                     }
-                    else if (string.Equals(ampm, "am", StringComparison.OrdinalIgnoreCase))
+                    else if (ampmResult == 1)
                     {
                         if (hour == 12)
                         {
@@ -311,28 +340,28 @@ internal static class XPathDateTimeFormatter
                     }
 
                     break;
-                case 'Z':
-                    tzOffsetMinutes = ParseTimezoneOffset(str, ref pos);
+                case (byte)'Z':
+                    tzOffsetMinutes = ParseTimezoneOffset(utf8, ref pos);
                     break;
-                case 'z':
-                    tzOffsetMinutes = ParseTimezoneNameOffset(str, ref pos);
+                case (byte)'z':
+                    tzOffsetMinutes = ParseTimezoneNameOffset(utf8, ref pos);
                     break;
-                case 'F':
+                case (byte)'F':
                     // Day of week - just consume it, we don't use it for calculation
-                    SkipDayOfWeek(str, ref pos, presentation);
+                    SkipDayOfWeek(utf8, ref pos, presentation);
                     break;
-                case 'C':
-                case 'E':
+                case (byte)'C':
+                case (byte)'E':
                     // Calendar/Era - skip
-                    SkipWord(str, ref pos);
+                    SkipWord(utf8, ref pos);
                     break;
-                case 'W':
-                case 'w':
-                case 'X':
-                case 'x':
+                case (byte)'W':
+                case (byte)'w':
+                case (byte)'X':
+                case (byte)'x':
                     throw new JsonataException("D3136", SR.D3136_TheDateTimeComponentsInThePictureStringAreNotConsistent, 0);
                 default:
-                    throw new JsonataException("D3132", SR.Format(SR.D3132_UnknownComponentSpecifier, compChar), 0);
+                    throw new JsonataException("D3132", SR.Format(SR.D3132_UnknownComponentSpecifier, (char)compChar), 0);
             }
         }
 
@@ -437,22 +466,34 @@ internal static class XPathDateTimeFormatter
     }
 
     /// <summary>
-    /// Formats an integer using an XPath integer picture string.
+    /// Formats an integer using the XPath picture string,
+    /// writing the UTF-8 result directly to a caller-supplied buffer.
     /// </summary>
     /// <param name="value">The integer value to format.</param>
     /// <param name="picture">The XPath integer picture string.</param>
-    /// <returns>The formatted string.</returns>
-    public static string FormatInteger(long value, string picture)
+    /// <param name="destination">The destination buffer for UTF-8 output.</param>
+    /// <param name="bytesWritten">The number of bytes written.</param>
+    /// <returns><see langword="true"/> if the destination was large enough; otherwise <see langword="false"/>.</returns>
+    internal static bool TryFormatInteger(long value, ReadOnlySpan<byte> picture, Span<byte> destination, out int bytesWritten)
+    {
+        Utf8ValueStringBuilder sb = new(destination);
+        FormatInteger(value, picture, ref sb);
+        bool success = sb.TryCopyTo(destination, out bytesWritten);
+        sb.Dispose();
+        return success;
+    }
+
+    internal static void FormatInteger(long value, ReadOnlySpan<byte> picture, ref Utf8ValueStringBuilder sb)
     {
         // Split picture on ';' for ordinal modifier
-        string primary;
+        ReadOnlySpan<byte> primary;
         bool isOrdinal = false;
-        int semiIdx = picture.IndexOf(';');
+        int semiIdx = picture.IndexOf((byte)';');
         if (semiIdx >= 0)
         {
-            primary = picture.Substring(0, semiIdx);
-            string modifier = picture.Substring(semiIdx + 1);
-            if (modifier.IndexOf('o') >= 0)
+            primary = picture.Slice(0, semiIdx);
+            ReadOnlySpan<byte> modifier = picture.Slice(semiIdx + 1);
+            if (modifier.IndexOf((byte)'o') >= 0)
             {
                 isOrdinal = true;
             }
@@ -464,10 +505,10 @@ internal static class XPathDateTimeFormatter
 
         if (primary.Length == 0)
         {
-            primary = "0";
+            primary = "0"u8;
         }
 
-        return FormatIntegerWithPresentation(value, primary, isOrdinal);
+        FormatIntegerWithPresentation(value, primary, isOrdinal, ref sb);
     }
 
     /// <summary>
@@ -476,22 +517,23 @@ internal static class XPathDateTimeFormatter
     /// </summary>
     /// <param name="value">The integer value as a double.</param>
     /// <param name="picture">The XPath integer picture string.</param>
-    /// <returns>The formatted string.</returns>
-    public static string FormatInteger(double value, string picture)
+    /// <param name="sb">The UTF-8 builder to append to.</param>
+    internal static void FormatInteger(double value, ReadOnlySpan<byte> picture, ref Utf8ValueStringBuilder sb)
     {
         if (value >= long.MinValue && value <= long.MaxValue)
         {
-            return FormatInteger((long)value, picture);
+            FormatInteger((long)value, picture, ref sb);
+            return;
         }
 
-        string primary;
+        ReadOnlySpan<byte> primary;
         bool isOrdinal = false;
-        int semiIdx = picture.IndexOf(';');
+        int semiIdx = picture.IndexOf((byte)';');
         if (semiIdx >= 0)
         {
-            primary = picture.Substring(0, semiIdx);
-            string modifier = picture.Substring(semiIdx + 1);
-            if (modifier.IndexOf('o') >= 0)
+            primary = picture.Slice(0, semiIdx);
+            ReadOnlySpan<byte> modifier = picture.Slice(semiIdx + 1);
+            if (modifier.IndexOf((byte)'o') >= 0)
             {
                 isOrdinal = true;
             }
@@ -503,87 +545,42 @@ internal static class XPathDateTimeFormatter
 
         if (primary.Length == 0)
         {
-            primary = "0";
+            primary = "0"u8;
         }
 
-        if (primary == "W" || primary == "w" || primary == "Ww")
+        if (primary.SequenceEqual("W"u8) || primary.SequenceEqual("w"u8) || primary.SequenceEqual("Ww"u8))
         {
-            bool isNegative = value < 0;
-            double absValue = Math.Abs(value);
-            string words = NumberToWordsLarge(absValue);
-            if (isNegative)
-            {
-                words = "minus " + words;
-            }
-
-            if (isOrdinal)
-            {
-                words = MakeOrdinalWords(words);
-            }
-
-            return ApplyWordCasing(words, primary);
-        }
-
-        // For non-word patterns, format using scientific notation
-        return value.ToString("R", CultureInfo.InvariantCulture);
-    }
-
-    /// <summary>
-    /// Parses an integer from a string using an XPath integer picture string.
-    /// </summary>
-    /// <param name="str">The string to parse.</param>
-    /// <param name="picture">The XPath integer picture string.</param>
-    /// <param name="value">The parsed integer value.</param>
-    /// <returns><see langword="true"/> if the string was successfully parsed; otherwise <see langword="false"/>.</returns>
-    public static bool TryParseInteger(string str, string picture, out long value)
-    {
-        value = 0;
-
-        string primary;
-        bool isOrdinal = false;
-        int semiIdx = picture.IndexOf(';');
-        if (semiIdx >= 0)
-        {
-            primary = picture.Substring(0, semiIdx);
-            string modifier = picture.Substring(semiIdx + 1);
-            if (modifier.IndexOf('o') >= 0)
-            {
-                isOrdinal = true;
-            }
+            AppendAsWordsLarge(value, primary, isOrdinal, ref sb);
         }
         else
         {
-            primary = picture;
+            // For non-word patterns, format as decimal digits via Utf8Formatter
+            Span<byte> buf = sb.AppendSpan(32);
+            Utf8Formatter.TryFormat(value, buf, out int written, new StandardFormat('R'));
+            sb.Length -= 32 - written;
         }
-
-        if (primary.Length == 0)
-        {
-            primary = "0";
-        }
-
-        return TryParseIntegerWithPresentation(str, primary, isOrdinal, out value);
     }
 
     /// <summary>
-    /// Parses an integer from a string using an XPath integer picture string, returning a double
+    /// Parses an integer from a UTF-8 byte span using an XPath integer picture string, returning a double
     /// to handle values outside the range of <see cref="long"/>.
     /// </summary>
-    /// <param name="str">The string to parse.</param>
+    /// <param name="utf8">The UTF-8 bytes to parse.</param>
     /// <param name="picture">The XPath integer picture string.</param>
     /// <param name="value">The parsed value as a double.</param>
     /// <returns><see langword="true"/> if the string was successfully parsed; otherwise <see langword="false"/>.</returns>
-    public static bool TryParseInteger(string str, string picture, out double value)
+    public static bool TryParseInteger(ReadOnlySpan<byte> utf8, ReadOnlySpan<byte> picture, out double value)
     {
         value = 0;
 
-        string primary;
+        ReadOnlySpan<byte> primary;
         bool isOrdinal = false;
-        int semiIdx = picture.IndexOf(';');
+        int semiIdx = picture.IndexOf((byte)';');
         if (semiIdx >= 0)
         {
-            primary = picture.Substring(0, semiIdx);
-            string modifier = picture.Substring(semiIdx + 1);
-            if (modifier.IndexOf('o') >= 0)
+            primary = picture.Slice(0, semiIdx);
+            ReadOnlySpan<byte> modifier = picture.Slice(semiIdx + 1);
+            if (modifier.IndexOf((byte)'o') >= 0)
             {
                 isOrdinal = true;
             }
@@ -595,16 +592,16 @@ internal static class XPathDateTimeFormatter
 
         if (primary.Length == 0)
         {
-            primary = "0";
+            primary = "0"u8;
         }
 
-        if (primary == "W" || primary == "w" || primary == "Ww")
+        if (primary.SequenceEqual("W"u8) || primary.SequenceEqual("w"u8) || primary.SequenceEqual("Ww"u8))
         {
-            return TryParseWordsToNumberDouble(str, isOrdinal, out value);
+            return TryParseWordsToNumberDouble(utf8, isOrdinal, out value);
         }
 
         // For other patterns, use the long version
-        if (TryParseIntegerWithPresentation(str, primary, isOrdinal, out long longValue))
+        if (TryParseIntegerWithPresentation(utf8, primary, isOrdinal, out long longValue))
         {
             value = longValue;
             return true;
@@ -613,35 +610,40 @@ internal static class XPathDateTimeFormatter
         return false;
     }
 
-    internal static string FormatIntegerWithPresentation(long value, string presentation, bool isOrdinal)
+    internal static void FormatIntegerWithPresentation(long value, ReadOnlySpan<byte> presentation, bool isOrdinal, ref Utf8ValueStringBuilder result)
     {
         // Detect the format type from the first meaningful character
-        if (presentation == "I")
+        if (presentation.SequenceEqual("I"u8))
         {
-            return ToRomanNumerals(value, true);
+            ToRomanNumerals(value, true, ref result);
+            return;
         }
 
-        if (presentation == "i")
+        if (presentation.SequenceEqual("i"u8))
         {
-            return ToRomanNumerals(value, false);
+            ToRomanNumerals(value, false, ref result);
+            return;
         }
 
-        if (presentation == "W" || presentation == "w" || presentation == "Ww")
+        if (presentation.SequenceEqual("W"u8) || presentation.SequenceEqual("w"u8) || presentation.SequenceEqual("Ww"u8))
         {
-            return FormatAsWords(value, presentation, isOrdinal);
+            AppendAsWords(value, presentation, isOrdinal, ref result);
+            return;
         }
 
-        if (presentation == "A")
+        if (presentation.SequenceEqual("A"u8))
         {
-            return ToAlpha(value, true);
+            ToAlpha(value, true, ref result);
+            return;
         }
 
-        if (presentation == "a")
+        if (presentation.SequenceEqual("a"u8))
         {
-            return ToAlpha(value, false);
+            ToAlpha(value, false, ref result);
+            return;
         }
 
-        if (presentation == "N" || presentation == "n" || presentation == "Nn")
+        if (presentation.SequenceEqual("N"u8) || presentation.SequenceEqual("n"u8) || presentation.SequenceEqual("Nn"u8))
         {
             throw new JsonataException("D3133", SR.D3133_TheComponentCannotBeRepresentedAsAName, 0);
         }
@@ -649,11 +651,12 @@ internal static class XPathDateTimeFormatter
         // Check if it's a decimal digit pattern
         if (IsDecimalDigitPattern(presentation))
         {
-            return FormatDecimalDigit(value, presentation, isOrdinal);
+            FormatDecimalDigit(value, presentation, isOrdinal, ref result);
+            return;
         }
 
         // Check for single '#' which is an error in formatInteger context
-        if (presentation == "#")
+        if (presentation.SequenceEqual("#"u8))
         {
             throw new JsonataException("D3130", SR.D3130_TheFormatPictureStringIsNotValid, 0);
         }
@@ -661,55 +664,55 @@ internal static class XPathDateTimeFormatter
         throw new JsonataException("D3130", SR.D3130_TheFormatPictureStringIsNotValid, 0);
     }
 
-    private static bool TryParseIntegerWithPresentation(string str, string presentation, bool isOrdinal, out long value)
+    private static bool TryParseIntegerWithPresentation(ReadOnlySpan<byte> utf8, ReadOnlySpan<byte> presentation, bool isOrdinal, out long value)
     {
         value = 0;
 
-        if (presentation == "I" || presentation == "i")
+        if (presentation.SequenceEqual("I"u8) || presentation.SequenceEqual("i"u8))
         {
-            value = FromRomanNumerals(str);
+            value = FromRomanNumerals(utf8);
             return true;
         }
 
-        if (presentation == "W" || presentation == "w" || presentation == "Ww")
+        if (presentation.SequenceEqual("W"u8) || presentation.SequenceEqual("w"u8) || presentation.SequenceEqual("Ww"u8))
         {
-            return TryParseWordsToNumber(str, isOrdinal, out value);
+            return TryParseWordsToNumber(utf8, isOrdinal, out value);
         }
 
-        if (presentation == "A")
+        if (presentation.SequenceEqual("A"u8))
         {
-            value = FromAlpha(str, true);
+            value = FromAlpha(utf8, true);
             return true;
         }
 
-        if (presentation == "a")
+        if (presentation.SequenceEqual("a"u8))
         {
-            value = FromAlpha(str, false);
+            value = FromAlpha(utf8, false);
             return true;
         }
 
-        if (presentation == "#")
+        if (presentation.SequenceEqual("#"u8))
         {
             throw new JsonataException("D3130", SR.D3130_TheFormatPictureStringIsNotValid, 0);
         }
 
         if (IsDecimalDigitPattern(presentation))
         {
-            return TryParseDecimalDigit(str, presentation, isOrdinal, out value);
+            return TryParseDecimalDigit(utf8, presentation, isOrdinal, out value);
         }
 
         throw new JsonataException("D3130", SR.D3130_TheFormatPictureStringIsNotValid, 0);
     }
 
-    private static void FormatComponent(DateTimeOffset dt, string marker, StringBuilder sb)
+    private static void FormatComponent(DateTimeOffset dt, ReadOnlySpan<byte> marker, ref Utf8ValueStringBuilder sb)
     {
         if (marker.Length == 0)
         {
             return;
         }
 
-        char comp = marker[0];
-        string rest = marker.Length > 1 ? marker.Substring(1) : string.Empty;
+        byte comp = marker[0];
+        ReadOnlySpan<byte> rest = marker.Length > 1 ? marker.Slice(1) : ReadOnlySpan<byte>.Empty;
 
         // Parse optional width modifier (after comma).
         // The presentation modifier can itself contain commas (e.g. '#,##0' as a grouping pattern),
@@ -719,9 +722,9 @@ internal static class XPathDateTimeFormatter
         int widthCommaIdx = -1;
         for (int ci = rest.Length - 1; ci >= 0; ci--)
         {
-            if (rest[ci] == ',')
+            if (rest[ci] == (byte)',')
             {
-                string candidate = rest.Substring(ci + 1);
+                ReadOnlySpan<byte> candidate = rest.Slice(ci + 1);
                 if (IsValidWidthModifier(candidate))
                 {
                     widthCommaIdx = ci;
@@ -733,15 +736,12 @@ internal static class XPathDateTimeFormatter
         bool hardMaxWidth = false;
         if (widthCommaIdx >= 0)
         {
-            string widthSpec = rest.Substring(widthCommaIdx + 1);
-            rest = rest.Substring(0, widthCommaIdx);
-            bool isRange = widthSpec.IndexOf('-') >= 0;
+            ReadOnlySpan<byte> widthSpec = rest.Slice(widthCommaIdx + 1);
+            rest = rest.Slice(0, widthCommaIdx);
+            bool isRange = widthSpec.IndexOf((byte)'-') >= 0;
             ParseWidthModifier(widthSpec, out minWidth, out maxWidth);
             hardMaxWidth = isRange;
 
-            // When the width modifier is a single value (not a range), the maxWidth
-            // should not truncate below the mandatory digit count in the presentation.
-            // When it's an explicit range, the max is authoritative.
             if (!isRange && maxWidth >= 0)
             {
                 int mandatoryFromPres = CountMandatoryDigits(rest);
@@ -752,141 +752,142 @@ internal static class XPathDateTimeFormatter
             }
         }
 
-        string presentation = rest;
+        ReadOnlySpan<byte> presentation = rest;
 
         // Apply XPath 3.1 default presentation modifiers per component
         if (presentation.Length == 0)
         {
             presentation = comp switch
             {
-                'Y' => "1",
-                'M' => "1",
-                'D' => "1",
-                'd' => "1",
-                'F' => "n",
-                'H' => "1",
-                'h' => "1",
-                'P' => "n",
-                'm' => "01",
-                's' => "01",
-                'f' => "1",
-                'Z' => "01:01",
-                'W' => "1",
-                'w' => "1",
-                'x' => "1",
-                'X' => "1",
-                _ => "1",
+                (byte)'Y' => "1"u8,
+                (byte)'M' => "1"u8,
+                (byte)'D' => "1"u8,
+                (byte)'d' => "1"u8,
+                (byte)'F' => "n"u8,
+                (byte)'H' => "1"u8,
+                (byte)'h' => "1"u8,
+                (byte)'P' => "n"u8,
+                (byte)'m' => "01"u8,
+                (byte)'s' => "01"u8,
+                (byte)'f' => "1"u8,
+                (byte)'Z' => "01:01"u8,
+                (byte)'W' => "1"u8,
+                (byte)'w' => "1"u8,
+                (byte)'x' => "1"u8,
+                (byte)'X' => "1"u8,
+                _ => "1"u8,
             };
         }
 
         switch (comp)
         {
-            case 'Y':
-                FormatDateValue(dt.Year, presentation, minWidth, maxWidth, hardMaxWidth, sb);
+            case (byte)'Y':
+                FormatDateValue(dt.Year, presentation, minWidth, maxWidth, hardMaxWidth, ref sb);
                 break;
-            case 'M':
-                FormatDateValueOrName(dt.Month, presentation, minWidth, maxWidth, hardMaxWidth, MonthNames, sb);
+            case (byte)'M':
+                FormatDateValueOrName(dt.Month, presentation, minWidth, maxWidth, hardMaxWidth, MonthNames, ref sb);
                 break;
-            case 'D':
-                FormatDateValue(dt.Day, presentation, minWidth, maxWidth, hardMaxWidth, sb);
+            case (byte)'D':
+                FormatDateValue(dt.Day, presentation, minWidth, maxWidth, hardMaxWidth, ref sb);
                 break;
-            case 'd':
-                FormatDateValue(dt.DayOfYear, presentation, minWidth, maxWidth, hardMaxWidth, sb);
+            case (byte)'d':
+                FormatDateValue(dt.DayOfYear, presentation, minWidth, maxWidth, hardMaxWidth, ref sb);
                 break;
-            case 'F':
+            case (byte)'F':
                 int isoDay = GetIsoDayOfWeek(dt.DayOfWeek);
-                FormatDateValueOrName(isoDay, presentation, minWidth, maxWidth, hardMaxWidth, DayNames, sb);
+                FormatDateValueOrName(isoDay, presentation, minWidth, maxWidth, hardMaxWidth, DayNames, ref sb);
                 break;
-            case 'H':
-                FormatDateValue(dt.Hour, presentation, minWidth, maxWidth, hardMaxWidth, sb);
+            case (byte)'H':
+                FormatDateValue(dt.Hour, presentation, minWidth, maxWidth, hardMaxWidth, ref sb);
                 break;
-            case 'h':
+            case (byte)'h':
                 int h12 = dt.Hour % 12;
                 if (h12 == 0)
                 {
                     h12 = 12;
                 }
 
-                FormatDateValue(h12, presentation, minWidth, maxWidth, hardMaxWidth, sb);
+                FormatDateValue(h12, presentation, minWidth, maxWidth, hardMaxWidth, ref sb);
                 break;
-            case 'P':
-                string ampm = dt.Hour < 12 ? "am" : "pm";
-                if (presentation.Length == 0 || presentation == "n")
+            case (byte)'P':
+                if (presentation.Length == 0 || presentation.SequenceEqual("n"u8))
                 {
-                    sb.Append(ampm);
+                    sb.Append(dt.Hour < 12 ? "am"u8 : "pm"u8);
                 }
-                else if (presentation == "N")
+                else if (presentation.SequenceEqual("N"u8))
                 {
-                    sb.Append(ampm.ToUpperInvariant());
+                    sb.Append(dt.Hour < 12 ? "AM"u8 : "PM"u8);
                 }
                 else
                 {
-                    sb.Append(ampm);
+                    sb.Append(dt.Hour < 12 ? "am"u8 : "pm"u8);
                 }
 
                 break;
-            case 'm':
-                FormatDateValue(dt.Minute, presentation, minWidth, maxWidth, hardMaxWidth, sb);
+            case (byte)'m':
+                FormatDateValue(dt.Minute, presentation, minWidth, maxWidth, hardMaxWidth, ref sb);
                 break;
-            case 's':
-                FormatDateValue(dt.Second, presentation, minWidth, maxWidth, hardMaxWidth, sb);
+            case (byte)'s':
+                FormatDateValue(dt.Second, presentation, minWidth, maxWidth, hardMaxWidth, ref sb);
                 break;
-            case 'f':
-                FormatFractionalSeconds(dt.Millisecond, presentation, sb);
+            case (byte)'f':
+                FormatFractionalSeconds(dt.Millisecond, presentation, ref sb);
                 break;
-            case 'Z':
-                FormatTimezoneOffset(dt.Offset, presentation, sb);
+            case (byte)'Z':
+                FormatTimezoneOffset(dt.Offset, presentation, ref sb);
                 break;
-            case 'z':
-                FormatTimezoneGmt(dt.Offset, sb);
+            case (byte)'z':
+                FormatTimezoneGmt(dt.Offset, ref sb);
                 break;
-            case 'W':
-                FormatDateValue(GetIsoWeekOfYear(dt), presentation, minWidth, maxWidth, hardMaxWidth, sb);
+            case (byte)'W':
+                FormatDateValue(GetIsoWeekOfYear(dt), presentation, minWidth, maxWidth, hardMaxWidth, ref sb);
                 break;
-            case 'w':
-                FormatDateValue(GetWeekOfMonth(dt), presentation, minWidth, maxWidth, hardMaxWidth, sb);
+            case (byte)'w':
+                FormatDateValue(GetWeekOfMonth(dt), presentation, minWidth, maxWidth, hardMaxWidth, ref sb);
                 break;
-            case 'x':
-                FormatDateValueOrName(GetMonthOfWeek(dt), presentation, minWidth, maxWidth, hardMaxWidth, MonthNames, sb);
+            case (byte)'x':
+                FormatDateValueOrName(GetMonthOfWeek(dt), presentation, minWidth, maxWidth, hardMaxWidth, MonthNames, ref sb);
                 break;
-            case 'X':
-                FormatDateValue(GetIsoWeekYear(dt), presentation, minWidth, maxWidth, hardMaxWidth, sb);
+            case (byte)'X':
+                FormatDateValue(GetIsoWeekYear(dt), presentation, minWidth, maxWidth, hardMaxWidth, ref sb);
                 break;
-            case 'C':
-                sb.Append("ISO");
+            case (byte)'C':
+                sb.Append("ISO"u8);
                 break;
-            case 'E':
-                sb.Append("ISO");
+            case (byte)'E':
+                sb.Append("ISO"u8);
                 break;
             default:
-                throw new JsonataException("D3132", SR.Format(SR.D3132_UnknownComponentSpecifier, comp), 0);
+                throw new JsonataException("D3132", SR.Format(SR.D3132_UnknownComponentSpecifier, (char)comp), 0);
         }
     }
 
-    private static void FormatDateValue(int value, string presentation, int minWidth, int maxWidth, bool hardMaxWidth, StringBuilder sb)
+    private static void FormatDateValue(int value, ReadOnlySpan<byte> presentation, int minWidth, int maxWidth, bool hardMaxWidth, ref Utf8ValueStringBuilder sb)
     {
         bool isOrdinal = false;
-        string pres = presentation;
+        ReadOnlySpan<byte> pres = presentation;
 
         // Check for trailing 'o' ordinal modifier in presentation
-        if (pres.Length > 0 && pres[pres.Length - 1] == 'o')
+        if (pres.Length > 0 && pres[pres.Length - 1] == (byte)'o')
         {
             isOrdinal = true;
-            pres = pres.Substring(0, pres.Length - 1);
+            pres = pres.Slice(0, pres.Length - 1);
         }
 
         if (pres.Length == 0)
         {
-            pres = "1";
+            pres = "1"u8;
         }
 
-        string formatted = FormatIntegerWithPresentation(value, pres, isOrdinal);
+        Utf8ValueStringBuilder temp = new(stackalloc byte[64]);
+        FormatIntegerWithPresentation(value, pres, isOrdinal, ref temp);
+        ReadOnlySpan<byte> formatted = temp.AsSpan();
 
         if (maxWidth >= 0 && formatted.Length > maxWidth)
         {
             if (hardMaxWidth)
             {
-                formatted = formatted.Substring(formatted.Length - maxWidth);
+                formatted = formatted.Slice(formatted.Length - maxWidth);
             }
             else
             {
@@ -894,25 +895,26 @@ internal static class XPathDateTimeFormatter
                 int effectiveMax = Math.Max(maxWidth, mandatoryFromPres);
                 if (formatted.Length > effectiveMax)
                 {
-                    formatted = formatted.Substring(formatted.Length - effectiveMax);
+                    formatted = formatted.Slice(formatted.Length - effectiveMax);
                 }
             }
         }
 
         if (minWidth >= 0 && formatted.Length < minWidth)
         {
-            formatted = formatted.PadLeft(minWidth, '0');
+            sb.Append((byte)'0', minWidth - formatted.Length);
         }
 
         sb.Append(formatted);
+        temp.Dispose();
     }
 
-    private static void FormatDateValueOrName(int value, string presentation, int minWidth, int maxWidth, bool hardMaxWidth, string[] names, StringBuilder sb)
+    private static void FormatDateValueOrName(int value, ReadOnlySpan<byte> presentation, int minWidth, int maxWidth, bool hardMaxWidth, byte[][] names, ref Utf8ValueStringBuilder sb)
     {
         if (presentation.Length == 0)
         {
             // Default numeric
-            FormatDateValue(value, presentation, minWidth, maxWidth, hardMaxWidth, sb);
+            FormatDateValue(value, presentation, minWidth, maxWidth, hardMaxWidth, ref sb);
             return;
         }
 
@@ -920,22 +922,20 @@ internal static class XPathDateTimeFormatter
         bool isName = false;
         bool isUpper = false;
         bool isLower = false;
-        bool isTitleCase = false;
 
-        if (presentation == "N")
+        if (presentation.SequenceEqual("N"u8))
         {
             isName = true;
             isUpper = true;
         }
-        else if (presentation == "n")
+        else if (presentation.SequenceEqual("n"u8))
         {
             isName = true;
             isLower = true;
         }
-        else if (presentation == "Nn")
+        else if (presentation.SequenceEqual("Nn"u8))
         {
             isName = true;
-            isTitleCase = true;
         }
 
         if (isName && names.Length > 0)
@@ -943,44 +943,51 @@ internal static class XPathDateTimeFormatter
             int idx = value - 1;
             if (idx < 0 || idx >= names.Length)
             {
-                sb.Append(value.ToString(CultureInfo.InvariantCulture));
+                sb.Append(value);
                 return;
             }
 
-            string name = names[idx];
-
-            if (maxWidth >= 0 && name.Length > maxWidth)
-            {
-                name = name.Substring(0, maxWidth);
-            }
+            byte[] name = names[idx];
+            int nameLen = maxWidth >= 0 && name.Length > maxWidth ? maxWidth : name.Length;
 
             if (isUpper)
             {
-                name = name.ToUpperInvariant();
+                Span<byte> dest = sb.AppendSpan(nameLen);
+                for (int j = 0; j < nameLen; j++)
+                {
+                    byte b = name[j];
+                    dest[j] = b >= (byte)'a' && b <= (byte)'z' ? (byte)(b & 0xDF) : b;
+                }
             }
             else if (isLower)
             {
-                name = name.ToLowerInvariant();
+                Span<byte> dest = sb.AppendSpan(nameLen);
+                for (int j = 0; j < nameLen; j++)
+                {
+                    byte b = name[j];
+                    dest[j] = b >= (byte)'A' && b <= (byte)'Z' ? (byte)(b | 0x20) : b;
+                }
             }
-            else if (isTitleCase)
+            else
             {
-                // Already title case
+                // Title case — already title case in the names array
+                sb.Append(name.AsSpan(0, nameLen));
             }
 
-            sb.Append(name);
             return;
         }
 
-        FormatDateValue(value, presentation, minWidth, maxWidth, hardMaxWidth, sb);
+        FormatDateValue(value, presentation, minWidth, maxWidth, hardMaxWidth, ref sb);
     }
 
-    private static void FormatFractionalSeconds(int milliseconds, string presentation, StringBuilder sb)
+    private static void FormatFractionalSeconds(int milliseconds, ReadOnlySpan<byte> presentation, ref Utf8ValueStringBuilder sb)
     {
         // Count digit characters in presentation for number of fractional digits
         int digits = 0;
-        foreach (char c in presentation)
+        for (int i = 0; i < presentation.Length; i++)
         {
-            if (c >= '0' && c <= '9')
+            byte b = presentation[i];
+            if (b >= (byte)'0' && b <= (byte)'9')
             {
                 digits++;
             }
@@ -991,23 +998,24 @@ internal static class XPathDateTimeFormatter
             digits = 1;
         }
 
-        string ms = milliseconds.ToString(CultureInfo.InvariantCulture).PadLeft(3, '0');
+        // Format milliseconds as 3-digit zero-padded
+        Span<byte> msBuf = stackalloc byte[3];
+        msBuf[0] = (byte)('0' + (milliseconds / 100));
+        msBuf[1] = (byte)('0' + ((milliseconds / 10) % 10));
+        msBuf[2] = (byte)('0' + (milliseconds % 10));
 
         if (digits <= 3)
         {
-            sb.Append(ms.Substring(0, digits));
+            sb.Append(msBuf.Slice(0, digits));
         }
         else
         {
-            sb.Append(ms);
-            for (int i = 3; i < digits; i++)
-            {
-                sb.Append('0');
-            }
+            sb.Append(msBuf);
+            sb.Append((byte)'0', digits - 3);
         }
     }
 
-    private static void FormatTimezoneOffset(TimeSpan offset, string presentation, StringBuilder sb)
+    private static void FormatTimezoneOffset(TimeSpan offset, ReadOnlySpan<byte> presentation, ref Utf8ValueStringBuilder sb)
     {
         bool useColon = true;
         bool useZForUtc = false;
@@ -1020,27 +1028,27 @@ internal static class XPathDateTimeFormatter
         // "0101t" = Z for UTC, else +HHMM
         // "" or default = +HH:MM
         // "0" = minimal (no leading zero on hour, include minutes only if non-zero)
-        string p = presentation;
-        if (p.Length > 0 && p[p.Length - 1] == 't')
+        ReadOnlySpan<byte> p = presentation;
+        if (p.Length > 0 && p[p.Length - 1] == (byte)'t')
         {
             useZForUtc = true;
-            p = p.Substring(0, p.Length - 1);
+            p = p.Slice(0, p.Length - 1);
         }
 
         if (useZForUtc && offset == TimeSpan.Zero)
         {
-            sb.Append('Z');
+            sb.Append((byte)'Z');
             return;
         }
 
         // Detect pattern
-        if (p.Contains(":"))
+        if (p.IndexOf((byte)':') >= 0)
         {
             // Colon-separated
             useColon = true;
             digits = 2; // zero-padded
         }
-        else if (p == "0")
+        else if (p.Length == 1 && p[0] == (byte)'0')
         {
             // Minimal: no leading zero on hour, minutes only if non-zero
             useColon = false;
@@ -1069,8 +1077,7 @@ internal static class XPathDateTimeFormatter
             digits = 2;
         }
 
-        char sign = offset >= TimeSpan.Zero ? '+' : '-';
-        sb.Append(sign);
+        sb.Append(offset >= TimeSpan.Zero ? (byte)'+' : (byte)'-');
 
         int totalMinutes = (int)Math.Abs(offset.TotalMinutes);
         int hours = totalMinutes / 60;
@@ -1079,38 +1086,64 @@ internal static class XPathDateTimeFormatter
         if (digits == 0)
         {
             // Minimal format
-            sb.Append(hours.ToString(CultureInfo.InvariantCulture));
+            sb.Append(hours);
             if (minutes > 0)
             {
-                sb.Append(':');
-                sb.Append(minutes.ToString(CultureInfo.InvariantCulture).PadLeft(2, '0'));
+                sb.Append((byte)':');
+                if (minutes < 10)
+                {
+                    sb.Append((byte)'0');
+                }
+
+                sb.Append(minutes);
             }
         }
         else
         {
-            sb.Append(hours.ToString(CultureInfo.InvariantCulture).PadLeft(2, '0'));
-            if (useColon)
+            if (hours < 10)
             {
-                sb.Append(':');
+                sb.Append((byte)'0');
             }
 
-            sb.Append(minutes.ToString(CultureInfo.InvariantCulture).PadLeft(2, '0'));
+            sb.Append(hours);
+            if (useColon)
+            {
+                sb.Append((byte)':');
+            }
+
+            if (minutes < 10)
+            {
+                sb.Append((byte)'0');
+            }
+
+            sb.Append(minutes);
         }
     }
 
-    private static void FormatTimezoneGmt(TimeSpan offset, StringBuilder sb)
+    private static void FormatTimezoneGmt(TimeSpan offset, ref Utf8ValueStringBuilder sb)
     {
-        sb.Append("GMT");
+        sb.Append("GMT"u8);
         if (offset != TimeSpan.Zero)
         {
-            char sign = offset >= TimeSpan.Zero ? '+' : '-';
-            sb.Append(sign);
+            sb.Append(offset >= TimeSpan.Zero ? (byte)'+' : (byte)'-');
             int totalMinutes = (int)Math.Abs(offset.TotalMinutes);
             int hours = totalMinutes / 60;
             int minutes = totalMinutes % 60;
-            sb.Append(hours.ToString(CultureInfo.InvariantCulture).PadLeft(2, '0'));
-            sb.Append(':');
-            sb.Append(minutes.ToString(CultureInfo.InvariantCulture).PadLeft(2, '0'));
+
+            if (hours < 10)
+            {
+                sb.Append((byte)'0');
+            }
+
+            sb.Append(hours);
+            sb.Append((byte)':');
+
+            if (minutes < 10)
+            {
+                sb.Append((byte)'0');
+            }
+
+            sb.Append(minutes);
         }
     }
 
@@ -1201,7 +1234,7 @@ internal static class XPathDateTimeFormatter
     /// <summary>
     /// Checks if a string is a valid width modifier: a number, '*', or 'n-m' range.
     /// </summary>
-    private static bool IsValidWidthModifier(string spec)
+    private static bool IsValidWidthModifier(ReadOnlySpan<byte> spec)
     {
         if (spec.Length == 0)
         {
@@ -1209,20 +1242,20 @@ internal static class XPathDateTimeFormatter
         }
 
         // Split on '-' for range
-        int dash = spec.IndexOf('-');
+        int dash = spec.IndexOf((byte)'-');
         if (dash >= 0)
         {
-            string left = spec.Substring(0, dash).Trim();
-            string right = spec.Substring(dash + 1).Trim();
+            ReadOnlySpan<byte> left = TrimAsciiWhitespace(spec.Slice(0, dash));
+            ReadOnlySpan<byte> right = TrimAsciiWhitespace(spec.Slice(dash + 1));
             return IsWidthPart(left) && IsWidthPart(right);
         }
 
-        return IsWidthPart(spec.Trim());
+        return IsWidthPart(TrimAsciiWhitespace(spec));
     }
 
-    private static bool IsWidthPart(string part)
+    private static bool IsWidthPart(ReadOnlySpan<byte> part)
     {
-        if (part == "*")
+        if (part.Length == 1 && part[0] == (byte)'*')
         {
             return true;
         }
@@ -1232,9 +1265,9 @@ internal static class XPathDateTimeFormatter
             return false;
         }
 
-        foreach (char c in part)
+        for (int i = 0; i < part.Length; i++)
         {
-            if (c < '0' || c > '9')
+            if (part[i] < (byte)'0' || part[i] > (byte)'9')
             {
                 return false;
             }
@@ -1243,23 +1276,38 @@ internal static class XPathDateTimeFormatter
         return true;
     }
 
-    private static int CountMandatoryDigits(string presentation)
+    private static int CountMandatoryDigits(ReadOnlySpan<byte> presentation)
     {
         // Count digit positions (0-9) and optional-digit markers (#) — these
         // define how many digit characters the presentation pattern requires.
         int count = 0;
-        foreach (char c in presentation)
+        int i = 0;
+        while (i < presentation.Length)
         {
-            if ((c >= '0' && c <= '9') || c == '#')
+            byte b = presentation[i];
+            if (b < 0x80)
             {
-                count++;
+                if ((b >= (byte)'0' && b <= (byte)'9') || b == (byte)'#')
+                {
+                    count++;
+                }
+
+                i++;
             }
             else
             {
-                int ug = GetUnicodeDecimalGroup(c);
-                if (ug >= 0)
+                if (TryDecodeUtf8CodePoint(presentation.Slice(i), out int cp, out int consumed))
                 {
-                    count++;
+                    if (GetUnicodeDecimalGroup((char)cp) >= 0)
+                    {
+                        count++;
+                    }
+
+                    i += consumed;
+                }
+                else
+                {
+                    i++;
                 }
             }
         }
@@ -1267,31 +1315,31 @@ internal static class XPathDateTimeFormatter
         return count;
     }
 
-    private static void ParseWidthModifier(string spec, out int minWidth, out int maxWidth)
+    private static void ParseWidthModifier(ReadOnlySpan<byte> spec, out int minWidth, out int maxWidth)
     {
         minWidth = -1;
         maxWidth = -1;
 
-        int dash = spec.IndexOf('-');
+        int dash = spec.IndexOf((byte)'-');
         if (dash >= 0)
         {
-            string minStr = spec.Substring(0, dash).Trim();
-            string maxStr = spec.Substring(dash + 1).Trim();
+            ReadOnlySpan<byte> minPart = TrimAsciiWhitespace(spec.Slice(0, dash));
+            ReadOnlySpan<byte> maxPart = TrimAsciiWhitespace(spec.Slice(dash + 1));
 
-            if (minStr == "*")
+            if (minPart.Length == 1 && minPart[0] == (byte)'*')
             {
                 minWidth = -1;
             }
-            else if (minStr.Length > 0 && int.TryParse(minStr, NumberStyles.Integer, CultureInfo.InvariantCulture, out int mn))
+            else if (minPart.Length > 0 && Utf8Parser.TryParse(minPart, out int mn, out int mnConsumed) && mnConsumed == minPart.Length)
             {
                 minWidth = mn;
             }
 
-            if (maxStr == "*")
+            if (maxPart.Length == 1 && maxPart[0] == (byte)'*')
             {
                 maxWidth = -1;
             }
-            else if (maxStr.Length > 0 && int.TryParse(maxStr, NumberStyles.Integer, CultureInfo.InvariantCulture, out int mx))
+            else if (maxPart.Length > 0 && Utf8Parser.TryParse(maxPart, out int mx, out int mxConsumed) && mxConsumed == maxPart.Length)
             {
                 maxWidth = mx;
             }
@@ -1299,11 +1347,12 @@ internal static class XPathDateTimeFormatter
         else
         {
             // Single value = both minimum and maximum width
-            if (spec == "*")
+            ReadOnlySpan<byte> trimmed = TrimAsciiWhitespace(spec);
+            if (trimmed.Length == 1 && trimmed[0] == (byte)'*')
             {
                 minWidth = -1;
             }
-            else if (int.TryParse(spec.Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out int w))
+            else if (Utf8Parser.TryParse(trimmed, out int w, out int wConsumed) && wConsumed == trimmed.Length)
             {
                 minWidth = w;
                 maxWidth = w;
@@ -1311,7 +1360,7 @@ internal static class XPathDateTimeFormatter
         }
     }
 
-    private static bool IsDecimalDigitPattern(string presentation)
+    private static bool IsDecimalDigitPattern(ReadOnlySpan<byte> presentation)
     {
         if (presentation.Length == 0)
         {
@@ -1324,46 +1373,78 @@ internal static class XPathDateTimeFormatter
         bool hasPosition = false; // true if we've seen '#' or a digit
         int? detectedDecimalGroup = null;
 
-        foreach (char c in presentation)
+        int i = 0;
+        while (i < presentation.Length)
         {
-            if (c == '#')
+            byte b = presentation[i];
+            if (b < 0x80)
             {
-                hasPosition = true;
-                continue;
-            }
-
-            if (c >= '0' && c <= '9')
-            {
-                if (detectedDecimalGroup.HasValue && detectedDecimalGroup.Value != 0)
+                if (b == (byte)'#')
                 {
-                    throw new JsonataException("D3131", SR.D3131_TheFormatPictureStringContainsMixedDecimalDigitGroups, 0);
+                    hasPosition = true;
+                    i++;
+                    continue;
                 }
 
-                detectedDecimalGroup = 0;
-                hasDigit = true;
-                hasPosition = true;
-                continue;
-            }
-
-            // Check unicode decimal digit
-            int unicodeGroup = GetUnicodeDecimalGroup(c);
-            if (unicodeGroup >= 0)
-            {
-                if (detectedDecimalGroup.HasValue && detectedDecimalGroup.Value != unicodeGroup)
+                if (b >= (byte)'0' && b <= (byte)'9')
                 {
-                    throw new JsonataException("D3131", SR.D3131_TheFormatPictureStringContainsMixedDecimalDigitGroups, 0);
+                    if (detectedDecimalGroup.HasValue && detectedDecimalGroup.Value != 0)
+                    {
+                        throw new JsonataException("D3131", SR.D3131_TheFormatPictureStringContainsMixedDecimalDigitGroups, 0);
+                    }
+
+                    detectedDecimalGroup = 0;
+                    hasDigit = true;
+                    hasPosition = true;
+                    i++;
+                    continue;
                 }
 
-                detectedDecimalGroup = unicodeGroup;
-                hasDigit = true;
-                hasPosition = true;
-                continue;
-            }
+                // Must be a grouping separator if there's already been a digit or #
+                if (!hasPosition)
+                {
+                    return false;
+                }
 
-            // Must be a grouping separator if there's already been a digit or #
-            if (!hasPosition)
+                i++;
+            }
+            else
             {
-                return false;
+                // Multi-byte: decode code point
+                if (TryDecodeUtf8CodePoint(presentation.Slice(i), out int cp, out int consumed))
+                {
+                    int unicodeGroup = GetUnicodeDecimalGroup((char)cp);
+                    if (unicodeGroup >= 0)
+                    {
+                        if (detectedDecimalGroup.HasValue && detectedDecimalGroup.Value != unicodeGroup)
+                        {
+                            throw new JsonataException("D3131", SR.D3131_TheFormatPictureStringContainsMixedDecimalDigitGroups, 0);
+                        }
+
+                        detectedDecimalGroup = unicodeGroup;
+                        hasDigit = true;
+                        hasPosition = true;
+                        i += consumed;
+                        continue;
+                    }
+
+                    // Grouping separator
+                    if (!hasPosition)
+                    {
+                        return false;
+                    }
+
+                    i += consumed;
+                }
+                else
+                {
+                    if (!hasPosition)
+                    {
+                        return false;
+                    }
+
+                    i++;
+                }
             }
         }
 
@@ -1399,38 +1480,84 @@ internal static class XPathDateTimeFormatter
         return -1;
     }
 
-    private static string FormatDecimalDigit(long value, string presentation, bool isOrdinal)
+    private static void FormatDecimalDigit(long value, ReadOnlySpan<byte> presentation, bool isOrdinal, ref Utf8ValueStringBuilder result)
     {
         bool isNegative = value < 0;
         long absValue = Math.Abs(value);
 
         // Detect the digit base (ASCII or Unicode)
         int unicodeBase = 0;
-        foreach (char c in presentation)
+        int pi = 0;
+        while (pi < presentation.Length)
         {
-            if (c >= '0' && c <= '9')
+            byte b = presentation[pi];
+            if (b < 0x80)
             {
-                unicodeBase = 0;
-                break;
-            }
+                if (b >= (byte)'0' && b <= (byte)'9')
+                {
+                    unicodeBase = 0;
+                    break;
+                }
 
-            int ug = GetUnicodeDecimalGroup(c);
-            if (ug >= 0)
+                pi++;
+            }
+            else
             {
-                unicodeBase = ug;
-                break;
+                if (TryDecodeUtf8CodePoint(presentation.Slice(pi), out int cp, out int consumed))
+                {
+                    int ug = GetUnicodeDecimalGroup((char)cp);
+                    if (ug >= 0)
+                    {
+                        unicodeBase = ug;
+                        break;
+                    }
+
+                    pi += consumed;
+                }
+                else
+                {
+                    pi++;
+                }
             }
         }
 
         // Count mandatory digits (0s in pattern), find grouping separators
         int mandatoryDigits = 0;
-        var groupSeparators = new List<(int Position, char Separator)>();
+
+        // Max 20 group separators in a pattern is more than enough
+        Span<(int Position, char Separator)> groupSeparators = stackalloc (int, char)[20];
+        int groupSepCount = 0;
         int digitCount = 0;
 
         // Process pattern from right to left for grouping
-        for (int i = presentation.Length - 1; i >= 0; i--)
+        // Iterate forward with Rune decoding to collect (position, char) pairs, then process reversed
+        Span<(int CodePoint, int ByteOffset)> elements = stackalloc (int, int)[presentation.Length];
+        int elemCount = 0;
+        int ei = 0;
+        while (ei < presentation.Length)
         {
-            char c = presentation[i];
+            byte eb = presentation[ei];
+            if (eb < 0x80)
+            {
+                elements[elemCount++] = (eb, ei);
+                ei++;
+            }
+            else if (TryDecodeUtf8CodePoint(presentation.Slice(ei), out int ecp, out int econsumed))
+            {
+                elements[elemCount++] = (ecp, ei);
+                ei += econsumed;
+            }
+            else
+            {
+                elements[elemCount++] = (eb, ei);
+                ei++;
+            }
+        }
+
+        for (int i = elemCount - 1; i >= 0; i--)
+        {
+            int cp = elements[i].CodePoint;
+            char c = (char)cp;
             if (c == '0' || c == '#' || (c >= '1' && c <= '9'))
             {
                 digitCount++;
@@ -1447,10 +1574,10 @@ internal static class XPathDateTimeFormatter
                     digitCount++;
                     mandatoryDigits = digitCount;
                 }
-                else
+                else if (groupSepCount < groupSeparators.Length)
                 {
                     // Grouping separator
-                    groupSeparators.Add((digitCount, c));
+                    groupSeparators[groupSepCount++] = (digitCount, c);
                 }
             }
         }
@@ -1460,51 +1587,86 @@ internal static class XPathDateTimeFormatter
             mandatoryDigits = 1;
         }
 
-        string digits = absValue.ToString(CultureInfo.InvariantCulture);
-        if (digits.Length < mandatoryDigits)
+        // Format digits into a byte buffer (max 20 digits for a long)
+        Span<byte> digitBuf = stackalloc byte[20];
+        int digitLen;
+        if (!Utf8Formatter.TryFormat(absValue, digitBuf, out digitLen))
         {
-            digits = digits.PadLeft(mandatoryDigits, '0');
+            // Should never happen for a long
+            digitLen = 0;
         }
 
-        // Convert to unicode if needed
-        if (unicodeBase != 0)
+        // Pad left with '0' if needed
+        if (digitLen < mandatoryDigits)
         {
-            var unicodeDigits = new char[digits.Length];
-            for (int i = 0; i < digits.Length; i++)
-            {
-                unicodeDigits[i] = (char)(unicodeBase + (digits[i] - '0'));
-            }
-
-            digits = new string(unicodeDigits);
+            int pad = mandatoryDigits - digitLen;
+            digitBuf.Slice(0, digitLen).CopyTo(digitBuf.Slice(pad));
+            digitBuf.Slice(0, pad).Fill((byte)'0');
+            digitLen = mandatoryDigits;
         }
 
-        // Insert grouping separators
-        if (groupSeparators.Count > 0)
-        {
-            digits = InsertGroupingSeparators(digits, groupSeparators);
-        }
+        ReadOnlySpan<byte> digits = digitBuf.Slice(0, digitLen);
 
-        var result = new StringBuilder();
         if (isNegative)
         {
-            result.Append('-');
+            result.Append((byte)'-');
         }
 
-        result.Append(digits);
+        if (unicodeBase != 0)
+        {
+            // Unicode digits: convert each ASCII digit to the Unicode digit and encode as UTF-8
+            if (groupSepCount > 0)
+            {
+                Utf8ValueStringBuilder temp = new(stackalloc byte[64]);
+                InsertGroupingSeparators(digits, groupSeparators.Slice(0, groupSepCount), ref temp);
+                ReadOnlySpan<byte> grouped = temp.AsSpan();
+                for (int i = 0; i < grouped.Length; i++)
+                {
+                    byte b = grouped[i];
+                    if (b >= (byte)'0' && b <= (byte)'9')
+                    {
+                        result.AppendChar((char)(unicodeBase + (b - '0')));
+                    }
+                    else
+                    {
+                        result.Append(b);
+                    }
+                }
+
+                temp.Dispose();
+            }
+            else
+            {
+                for (int i = 0; i < digits.Length; i++)
+                {
+                    result.AppendChar((char)(unicodeBase + (digits[i] - '0')));
+                }
+            }
+        }
+        else if (groupSepCount > 0)
+        {
+            InsertGroupingSeparators(digits, groupSeparators.Slice(0, groupSepCount), ref result);
+        }
+        else
+        {
+            result.Append(digits);
+        }
 
         if (isOrdinal)
         {
-            result.Append(GetOrdinalSuffix(absValue));
+            AppendOrdinalSuffix(ref result, absValue);
         }
-
-        return result.ToString();
     }
 
-    private static string InsertGroupingSeparators(string digits, List<(int Position, char Separator)> separators)
+    private static void InsertGroupingSeparators(
+        scoped ReadOnlySpan<byte> digits,
+        scoped ReadOnlySpan<(int Position, char Separator)> separators,
+        ref Utf8ValueStringBuilder result)
     {
-        if (separators.Count == 0)
+        if (separators.Length == 0)
         {
-            return digits;
+            result.Append(digits);
+            return;
         }
 
         // Check if all separators use the same character and are regularly spaced
@@ -1512,7 +1674,7 @@ internal static class XPathDateTimeFormatter
         char sepChar = separators[0].Separator;
         int groupSize = separators[0].Position;
 
-        for (int i = 1; i < separators.Count; i++)
+        for (int i = 1; i < separators.Length; i++)
         {
             if (separators[i].Separator != sepChar)
             {
@@ -1520,13 +1682,6 @@ internal static class XPathDateTimeFormatter
                 break;
             }
 
-            // Check regular spacing from the previous separator
-            int expectedPos = separators[0].Position + (i * groupSize);
-
-            // Actually, let's re-check: positions are cumulative digit counts
-            // separators[0].Position = digits from right to first separator
-            // separators[1].Position = digits from right to second separator
-            // Regular if separators[i].Position = groupSize * (i + 1)
             if (separators[i].Position != groupSize * (i + 1))
             {
                 isRegular = false;
@@ -1534,126 +1689,154 @@ internal static class XPathDateTimeFormatter
             }
         }
 
-        var result = new StringBuilder();
-
-        if (isRegular && separators.Count > 0)
+        if (isRegular)
         {
-            // Regular grouping - repeat for the entire number
-            for (int i = digits.Length - 1; i >= 0; i--)
+            // Regular grouping - build left-to-right with separator insertion
+            for (int i = 0; i < digits.Length; i++)
             {
-                result.Insert(0, digits[i]);
                 int posFromRight = digits.Length - i;
                 if (posFromRight % groupSize == 0 && i > 0)
                 {
-                    result.Insert(0, sepChar);
+                    result.AppendChar(sepChar);
                 }
+
+                result.Append(digits[i]);
             }
         }
         else
         {
-            // Non-regular grouping: use explicit positions from the pattern
-            // Sort separators by position ascending
-            var sortedSeps = new List<(int Position, char Separator)>(separators);
-            sortedSeps.Sort((a, b) => a.Position.CompareTo(b.Position));
+            // Non-regular grouping: sort separators by position descending, build left-to-right
+            Span<(int Position, char Separator)> sorted = stackalloc (int, char)[separators.Length];
+            separators.CopyTo(sorted);
 
-            // Build from right to left
-            int digitIdx = digits.Length - 1;
-            int currentPos = 0;
-            int sepIdx = 0;
-            var parts = new List<char>();
-
-            while (digitIdx >= 0)
+            // Sort descending by position so we encounter them left-to-right (insertion sort)
+            for (int si = 1; si < sorted.Length; si++)
             {
-                parts.Add(digits[digitIdx]);
-                currentPos++;
-                digitIdx--;
-
-                if (sepIdx < sortedSeps.Count && currentPos == sortedSeps[sepIdx].Position && digitIdx >= 0)
+                var key = sorted[si];
+                int sj = si - 1;
+                while (sj >= 0 && sorted[sj].Position < key.Position)
                 {
-                    parts.Add(sortedSeps[sepIdx].Separator);
+                    sorted[sj + 1] = sorted[sj];
+                    sj--;
+                }
+
+                sorted[sj + 1] = key;
+            }
+
+            int sepIdx = 0;
+            for (int i = 0; i < digits.Length; i++)
+            {
+                result.Append(digits[i]);
+                int posFromRight = digits.Length - i - 1;
+                if (sepIdx < sorted.Length && posFromRight == sorted[sepIdx].Position && i < digits.Length - 1)
+                {
+                    result.AppendChar(sorted[sepIdx].Separator);
                     sepIdx++;
                 }
             }
-
-            parts.Reverse();
-            foreach (char c in parts)
-            {
-                result.Append(c);
-            }
         }
-
-        return result.ToString();
     }
 
-    private static string GetOrdinalSuffix(long value)
+    private static void AppendOrdinalSuffix(ref Utf8ValueStringBuilder sb, long value)
     {
         long lastTwo = value % 100;
         long lastOne = value % 10;
 
         if (lastTwo >= 11 && lastTwo <= 13)
         {
-            return "th";
+            sb.Append("th"u8);
+            return;
         }
 
-        return lastOne switch
+        switch (lastOne)
         {
-            1 => "st",
-            2 => "nd",
-            3 => "rd",
-            _ => "th",
-        };
+            case 1:
+                sb.Append("st"u8);
+                break;
+            case 2:
+                sb.Append("nd"u8);
+                break;
+            case 3:
+                sb.Append("rd"u8);
+                break;
+            default:
+                sb.Append("th"u8);
+                break;
+        }
     }
 
-    private static readonly (string Symbol, int Value)[] RomanValues =
-    {
-        ("M", 1000), ("CM", 900), ("D", 500), ("CD", 400),
-        ("C", 100), ("XC", 90), ("L", 50), ("XL", 40),
-        ("X", 10), ("IX", 9), ("V", 5), ("IV", 4), ("I", 1),
-    };
-
-    private static string ToRomanNumerals(long value, bool uppercase)
+    private static void ToRomanNumerals(long value, bool uppercase, ref Utf8ValueStringBuilder sb)
     {
         if (value <= 0)
         {
-            return string.Empty;
+            return;
         }
 
-        var sb = new StringBuilder();
         long remaining = value;
+        byte offset = uppercase ? (byte)0 : (byte)('a' - 'A');
 
-        foreach (var (symbol, val) in RomanValues)
-        {
-            while (remaining >= val)
-            {
-                sb.Append(symbol);
-                remaining -= val;
-            }
-        }
-
-        string result = sb.ToString();
-        return uppercase ? result : result.ToLowerInvariant();
+        // M=1000, CM=900, D=500, CD=400, C=100, XC=90, L=50, XL=40, X=10, IX=9, V=5, IV=4, I=1
+        AppendRomanGroup(ref sb, ref remaining, 1000, (byte)('M' + offset));
+        AppendRomanPair(ref sb, ref remaining, 900, (byte)('C' + offset), (byte)('M' + offset));
+        AppendRomanGroup(ref sb, ref remaining, 500, (byte)('D' + offset));
+        AppendRomanPair(ref sb, ref remaining, 400, (byte)('C' + offset), (byte)('D' + offset));
+        AppendRomanGroup(ref sb, ref remaining, 100, (byte)('C' + offset));
+        AppendRomanPair(ref sb, ref remaining, 90, (byte)('X' + offset), (byte)('C' + offset));
+        AppendRomanGroup(ref sb, ref remaining, 50, (byte)('L' + offset));
+        AppendRomanPair(ref sb, ref remaining, 40, (byte)('X' + offset), (byte)('L' + offset));
+        AppendRomanGroup(ref sb, ref remaining, 10, (byte)('X' + offset));
+        AppendRomanPair(ref sb, ref remaining, 9, (byte)('I' + offset), (byte)('X' + offset));
+        AppendRomanGroup(ref sb, ref remaining, 5, (byte)('V' + offset));
+        AppendRomanPair(ref sb, ref remaining, 4, (byte)('I' + offset), (byte)('V' + offset));
+        AppendRomanGroup(ref sb, ref remaining, 1, (byte)('I' + offset));
     }
 
-    private static long FromRomanNumerals(string str)
+    private static void AppendRomanGroup(ref Utf8ValueStringBuilder sb, ref long remaining, int value, byte symbol)
     {
-        if (string.IsNullOrEmpty(str))
+        while (remaining >= value)
+        {
+            sb.Append(symbol);
+            remaining -= value;
+        }
+    }
+
+    private static void AppendRomanPair(ref Utf8ValueStringBuilder sb, ref long remaining, int value, byte first, byte second)
+    {
+        if (remaining >= value)
+        {
+            sb.Append(first);
+            sb.Append(second);
+            remaining -= value;
+        }
+    }
+
+    private static readonly (byte[] Symbol, int Value)[] RomanValues =
+    {
+        ("M"u8.ToArray(), 1000), ("CM"u8.ToArray(), 900), ("D"u8.ToArray(), 500), ("CD"u8.ToArray(), 400),
+        ("C"u8.ToArray(), 100), ("XC"u8.ToArray(), 90), ("L"u8.ToArray(), 50), ("XL"u8.ToArray(), 40),
+        ("X"u8.ToArray(), 10), ("IX"u8.ToArray(), 9), ("V"u8.ToArray(), 5), ("IV"u8.ToArray(), 4), ("I"u8.ToArray(), 1),
+    };
+
+    private static long FromRomanNumerals(ReadOnlySpan<byte> utf8)
+    {
+        if (utf8.Length == 0)
         {
             return 0;
         }
 
-        string upper = str.ToUpperInvariant();
         long result = 0;
         int i = 0;
 
-        while (i < upper.Length)
+        while (i < utf8.Length)
         {
-            if (i + 1 < upper.Length)
+            if (i + 1 < utf8.Length)
             {
-                string two = upper.Substring(i, 2);
+                byte c0 = (byte)(utf8[i] & 0xDF);
+                byte c1 = (byte)(utf8[i + 1] & 0xDF);
                 bool found = false;
                 foreach (var (symbol, val) in RomanValues)
                 {
-                    if (symbol == two)
+                    if (symbol.Length == 2 && symbol[0] == c0 && symbol[1] == c1)
                     {
                         result += val;
                         i += 2;
@@ -1668,350 +1851,381 @@ internal static class XPathDateTimeFormatter
                 }
             }
 
-            string one = upper.Substring(i, 1);
-            bool foundOne = false;
-            foreach (var (symbol, val) in RomanValues)
             {
-                if (symbol == one)
+                byte c0 = (byte)(utf8[i] & 0xDF);
+                bool foundOne = false;
+                foreach (var (symbol, val) in RomanValues)
                 {
-                    result += val;
-                    i++;
-                    foundOne = true;
-                    break;
+                    if (symbol.Length == 1 && symbol[0] == c0)
+                    {
+                        result += val;
+                        i++;
+                        foundOne = true;
+                        break;
+                    }
                 }
-            }
 
-            if (!foundOne)
-            {
-                i++;
+                if (!foundOne)
+                {
+                    i++;
+                }
             }
         }
 
         return result;
     }
 
-    private static string ToAlpha(long value, bool uppercase)
+    private static void ToAlpha(long value, bool uppercase, ref Utf8ValueStringBuilder sb)
     {
         if (value <= 0)
         {
-            return string.Empty;
+            return;
         }
 
-        var sb = new StringBuilder();
+        // Build right-to-left into a small stack buffer (max 13 chars for long range)
+        Span<byte> buf = stackalloc byte[16];
+        int pos = buf.Length;
+        byte baseChar = uppercase ? (byte)'A' : (byte)'a';
         long remaining = value;
-        char baseChar = uppercase ? 'A' : 'a';
 
         while (remaining > 0)
         {
             remaining--;
-            sb.Insert(0, (char)(baseChar + (remaining % 26)));
+            buf[--pos] = (byte)(baseChar + (remaining % 26));
             remaining /= 26;
         }
 
-        return sb.ToString();
+        sb.Append(buf.Slice(pos));
     }
 
-    private static long FromAlpha(string str, bool uppercase)
+    private static long FromAlpha(ReadOnlySpan<byte> utf8, bool uppercase)
     {
-        if (string.IsNullOrEmpty(str))
+        if (utf8.Length == 0)
         {
             return 0;
         }
 
-        char baseChar = uppercase ? 'A' : 'a';
         long result = 0;
 
-        foreach (char c in str)
+        foreach (byte b in utf8)
         {
-            result = (result * 26) + (char.ToUpperInvariant(c) - 'A') + 1;
+            result = (result * 26) + ((byte)(b & 0xDF) - (byte)'A') + 1;
         }
 
         return result;
     }
 
-    private static string FormatAsWords(long value, string casing, bool isOrdinal)
+    /// <summary>
+    /// Appends a number formatted as English words to the builder, with optional
+    /// ordinal form and casing.
+    /// </summary>
+    private static void AppendAsWords(long value, ReadOnlySpan<byte> casing, bool isOrdinal, ref Utf8ValueStringBuilder sb)
     {
         if (value == 0)
         {
-            string zeroWord = isOrdinal ? "zeroth" : "zero";
-            return ApplyWordCasing(zeroWord, casing);
+            int start = sb.Length;
+            sb.Append(isOrdinal ? "zeroth"u8 : "zero"u8);
+            ApplyWordCasingInPlace(ref sb, start, casing);
+            return;
         }
 
-        bool isNegative = value < 0;
-        long absValue = Math.Abs(value);
+        int wordsStart = sb.Length;
 
-        string words = NumberToWords(absValue);
-
-        if (isNegative)
+        if (value < 0)
         {
-            words = "minus " + words;
+            sb.Append("minus "u8);
+
+            // Use ulong to handle long.MinValue safely
+            ulong magnitude = value == long.MinValue
+                ? ((ulong)long.MaxValue) + 1
+                : (ulong)(-value);
+            AppendNumberWords(magnitude, ref sb);
+        }
+        else
+        {
+            AppendNumberWords((ulong)value, ref sb);
         }
 
         if (isOrdinal)
         {
-            words = MakeOrdinalWords(words);
+            OrdinalizeLastWord(ref sb, wordsStart);
         }
 
-        return ApplyWordCasing(words, casing);
+        ApplyWordCasingInPlace(ref sb, wordsStart, casing);
     }
 
-    private static string NumberToWords(long value)
+    /// <summary>
+    /// Appends a large number (as double, outside long range) formatted as English words.
+    /// </summary>
+    private static void AppendAsWordsLarge(double value, ReadOnlySpan<byte> casing, bool isOrdinal, ref Utf8ValueStringBuilder sb)
+    {
+        int wordsStart = sb.Length;
+
+        bool isNegative = value < 0;
+        double absValue = Math.Abs(value);
+
+        if (isNegative)
+        {
+            sb.Append("minus "u8);
+        }
+
+        AppendNumberWordsLarge(absValue, ref sb);
+
+        if (isOrdinal)
+        {
+            OrdinalizeLastWord(ref sb, wordsStart);
+        }
+
+        ApplyWordCasingInPlace(ref sb, wordsStart, casing);
+    }
+
+    /// <summary>
+    /// Appends the cardinal English word representation of a non-negative integer
+    /// directly to a <see cref="Utf8ValueStringBuilder"/>.
+    /// </summary>
+    private static void AppendNumberWords(ulong value, ref Utf8ValueStringBuilder sb)
     {
         if (value == 0)
         {
-            return "zero";
-        }
-
-        if (value < 0)
-        {
-            return "minus " + NumberToWords(-value);
+            sb.Append("zero"u8);
+            return;
         }
 
         // Handle very large numbers by chaining "trillion"
-        if (value >= 1_000_000_000_000_000L)
+        if (value >= 1_000_000_000_000_000UL)
         {
-            // Express as X trillion(s)
-            long trillions = value / 1_000_000_000_000L;
-            long remainder = value % 1_000_000_000_000L;
+            ulong trillions = value / 1_000_000_000_000UL;
+            ulong remainder = value % 1_000_000_000_000UL;
 
-            string trillionPart = NumberToWords(trillions) + " trillion";
+            AppendNumberWords(trillions, ref sb);
+            sb.Append(" trillion"u8);
             if (remainder == 0)
             {
-                return trillionPart;
+                return;
             }
 
-            string sep = remainder < 100 ? " and " : ", ";
-            return trillionPart + sep + NumberToWords(remainder);
+            sb.Append(remainder < 100 ? " and "u8 : ", "u8);
+            AppendNumberWords(remainder, ref sb);
+            return;
         }
 
-        var parts = new List<string>();
+        bool needsSeparator = false;
 
         foreach (var (name, scale) in ScaleWords)
         {
-            if (scale > 1_000_000_000_000L)
+            if ((ulong)scale > 1_000_000_000_000UL)
             {
                 continue; // Skip trillion, handled above
             }
 
-            if (value >= scale)
+            if (value >= (ulong)scale)
             {
-                long count = value / scale;
-                value %= scale;
+                ulong count = value / (ulong)scale;
+                value %= (ulong)scale;
 
-                if (scale >= 1000)
+                if (needsSeparator)
                 {
-                    parts.Add(NumberToWords(count) + " " + name);
+                    sb.Append(", "u8);
+                }
+
+                if ((ulong)scale >= 1000)
+                {
+                    AppendNumberWords(count, ref sb);
+                    sb.Append((byte)' ');
                 }
                 else
                 {
                     // hundred
-                    parts.Add(Ones[count] + " " + name);
+                    sb.Append(Ones[count]);
+                    sb.Append((byte)' ');
                 }
+
+                sb.Append(name);
+                needsSeparator = true;
             }
         }
 
         if (value > 0)
         {
-            if (parts.Count > 0)
+            if (needsSeparator)
             {
-                parts.Add("and");
+                sb.Append(" and "u8);
             }
 
             if (value < 20)
             {
-                parts.Add(Ones[value]);
+                sb.Append(Ones[value]);
             }
             else
             {
-                string tens = Tens[value / 10];
-                long ones = value % 10;
+                sb.Append(Tens[value / 10]);
+                ulong ones = value % 10;
                 if (ones > 0)
                 {
-                    parts.Add(tens + "-" + Ones[ones]);
-                }
-                else
-                {
-                    parts.Add(tens);
+                    sb.Append((byte)'-');
+                    sb.Append(Ones[ones]);
                 }
             }
         }
-
-        // Join: use ", " between major groups but " and " before last small part
-        // Actually, the logic is: groups are joined by ", " except "and" tokens use " "
-        var result = new StringBuilder();
-        for (int i = 0; i < parts.Count; i++)
-        {
-            if (i > 0)
-            {
-                if (parts[i] == "and")
-                {
-                    result.Append(' ');
-                }
-                else if (i > 0 && parts[i - 1] == "and")
-                {
-                    result.Append(' ');
-                }
-                else
-                {
-                    result.Append(", ");
-                }
-            }
-
-            result.Append(parts[i]);
-        }
-
-        return result.ToString();
     }
 
-    private static string NumberToWordsLarge(double value)
+    /// <summary>
+    /// Appends the cardinal English word representation of a large number (double)
+    /// directly to a <see cref="Utf8ValueStringBuilder"/>.
+    /// </summary>
+    private static void AppendNumberWordsLarge(double value, ref Utf8ValueStringBuilder sb)
     {
         if (value < 1_000_000_000_000.0)
         {
-            return NumberToWords((long)value);
+            AppendNumberWords((ulong)value, ref sb);
+            return;
         }
 
         double trillions = Math.Floor(value / 1_000_000_000_000.0);
         double remainder = value - (trillions * 1_000_000_000_000.0);
 
-        string trillionPart;
         if (trillions >= 1_000_000_000_000.0)
         {
-            trillionPart = NumberToWordsLarge(trillions) + " trillion";
+            AppendNumberWordsLarge(trillions, ref sb);
         }
         else
         {
-            trillionPart = NumberToWords((long)trillions) + " trillion";
+            AppendNumberWords((ulong)trillions, ref sb);
         }
+
+        sb.Append(" trillion"u8);
 
         if (remainder < 1.0)
         {
-            return trillionPart;
+            return;
         }
 
-        string sep = remainder < 100 ? " and " : ", ";
-        return trillionPart + sep + NumberToWords((long)remainder);
+        sb.Append(remainder < 100 ? " and "u8 : ", "u8);
+        AppendNumberWords((ulong)remainder, ref sb);
     }
 
-    private static string MakeOrdinalWords(string words)
+    /// <summary>
+    /// Finds the last word in the builder (after <paramref name="regionStart"/>),
+    /// replaces it with its ordinal form.
+    /// </summary>
+    private static void OrdinalizeLastWord(ref Utf8ValueStringBuilder sb, int regionStart)
     {
-        // Find the last word and convert it to ordinal form
-        int lastSpace = -1;
-        int lastHyphen = -1;
+        Span<byte> raw = sb.RawBytes;
+        int end = sb.Length;
 
-        for (int i = words.Length - 1; i >= 0; i--)
+        // Scan backward to find last word boundary (space or hyphen)
+        int tokenStart = regionStart;
+        for (int i = end - 1; i >= regionStart; i--)
         {
-            if (words[i] == ' ' && lastSpace < 0)
+            if (raw[i] == (byte)' ' || raw[i] == (byte)'-')
             {
-                lastSpace = i;
-            }
-
-            if (words[i] == '-' && lastHyphen < 0)
-            {
-                lastHyphen = i;
-            }
-
-            if (lastSpace >= 0 && lastHyphen >= 0)
-            {
+                tokenStart = i + 1;
                 break;
             }
         }
 
-        int splitPos = Math.Max(lastSpace, lastHyphen);
-        if (splitPos < 0)
+        int tokenLength = end - tokenStart;
+        ReadOnlySpan<byte> tokenBytes = raw.Slice(tokenStart, tokenLength);
+
+        // Try OrdinalWordMap lookup (all entries are ASCII, case-insensitive)
+        foreach (var (key, value) in OrdinalWordMap)
         {
-            // Single word
-            return WordToOrdinal(words);
-        }
-
-        string prefix = words.Substring(0, splitPos + 1);
-        string lastWord = words.Substring(splitPos + 1);
-
-        return prefix + WordToOrdinal(lastWord);
-    }
-
-    private static string WordToOrdinal(string word)
-    {
-        if (OrdinalWordMap.TryGetValue(word, out string? ordinal))
-        {
-            return ordinal;
-        }
-
-        // Check if it ends with "y" - change to "ieth"
-        if (word.EndsWith("y", StringComparison.Ordinal))
-        {
-            return word.Substring(0, word.Length - 1) + "ieth";
-        }
-
-        return word + "th";
-    }
-
-    private static string ApplyWordCasing(string words, string casing)
-    {
-        if (casing == "W")
-        {
-            return words.ToUpperInvariant();
-        }
-
-        if (casing == "w")
-        {
-            return words.ToLowerInvariant();
-        }
-
-        if (casing == "Ww")
-        {
-            return TitleCase(words);
-        }
-
-        return words;
-    }
-
-    private static string TitleCase(string text)
-    {
-        var sb = new StringBuilder(text.Length);
-        bool capitalizeNext = true;
-
-        // Split into words and capitalize each, except "and" which stays lowercase
-        int i = 0;
-        while (i < text.Length)
-        {
-            if (text[i] == ' ' || text[i] == '-' || text[i] == ',')
+            if (Utf8EqualsAsciiIgnoreCase(tokenBytes, key))
             {
-                sb.Append(text[i]);
-                capitalizeNext = true;
-                i++;
+                sb.Length = tokenStart;
+                sb.Append(value);
+                return;
             }
-            else if (capitalizeNext)
+        }
+
+        // Check if it ends with "y" → change to "ieth"
+        if (tokenLength > 0 && tokenBytes[tokenLength - 1] == (byte)'y')
+        {
+            sb.Length = end - 1; // Remove the 'y'
+            sb.Append("ieth"u8);
+            return;
+        }
+
+        // Default: just append "th"
+        sb.Append("th"u8);
+    }
+
+    /// <summary>
+    /// Applies word casing (W = UPPER, w = lower, Ww = Title Case) in-place
+    /// over the region <c>[start..sb.Length)</c> of the builder.
+    /// </summary>
+    private static void ApplyWordCasingInPlace(ref Utf8ValueStringBuilder sb, int start, ReadOnlySpan<byte> casing)
+    {
+        if (casing.SequenceEqual("w"u8))
+        {
+            // Already lowercase — nothing to do
+            return;
+        }
+
+        Span<byte> raw = sb.RawBytes;
+        int end = sb.Length;
+
+        if (casing.SequenceEqual("W"u8))
+        {
+            // Convert all lowercase ASCII to uppercase
+            for (int i = start; i < end; i++)
             {
-                // Check if this word is "and"
-                if (i + 3 < text.Length &&
-                    text[i] == 'a' && text[i + 1] == 'n' && text[i + 2] == 'd' &&
-                    (text[i + 3] == ' ' || text[i + 3] == '-' || text[i + 3] == ','))
+                byte b = raw[i];
+                if (b >= (byte)'a' && b <= (byte)'z')
                 {
-                    sb.Append("and");
-                    i += 3;
-                    capitalizeNext = false;
+                    raw[i] = (byte)(b - 32);
+                }
+            }
+
+            return;
+        }
+
+        if (casing.SequenceEqual("Ww"u8))
+        {
+            // Title case: capitalize first letter of each word, except "and"
+            bool capitalizeNext = true;
+            int i = start;
+            while (i < end)
+            {
+                byte b = raw[i];
+                if (b == (byte)' ' || b == (byte)'-' || b == (byte)',')
+                {
+                    capitalizeNext = true;
+                    i++;
+                }
+                else if (capitalizeNext)
+                {
+                    // Check if this word is "and"
+                    if (i + 3 < end &&
+                        raw[i] == (byte)'a' && raw[i + 1] == (byte)'n' && raw[i + 2] == (byte)'d' &&
+                        (raw[i + 3] == (byte)' ' || raw[i + 3] == (byte)'-' || raw[i + 3] == (byte)','))
+                    {
+                        i += 3;
+                        capitalizeNext = false;
+                    }
+                    else
+                    {
+                        if (b >= (byte)'a' && b <= (byte)'z')
+                        {
+                            raw[i] = (byte)(b - 32);
+                        }
+
+                        capitalizeNext = false;
+                        i++;
+                    }
                 }
                 else
                 {
-                    sb.Append(char.ToUpperInvariant(text[i]));
-                    capitalizeNext = false;
                     i++;
                 }
             }
-            else
-            {
-                sb.Append(text[i]);
-                i++;
-            }
         }
-
-        return sb.ToString();
     }
 
-    private static bool TryParseWordsToNumber(string str, bool isOrdinal, out long value)
+    private static bool TryParseWordsToNumber(ReadOnlySpan<byte> utf8, bool isOrdinal, out long value)
     {
         value = 0;
-        if (TryParseWordsToNumberDouble(str, isOrdinal, out double dblValue))
+        if (TryParseWordsToNumberDouble(utf8, isOrdinal, out double dblValue))
         {
             if (dblValue >= long.MinValue && dblValue <= long.MaxValue)
             {
@@ -2024,78 +2238,149 @@ internal static class XPathDateTimeFormatter
         return false;
     }
 
-    private static bool TryParseWordsToNumberDouble(string str, bool isOrdinal, out double value)
+    private static bool TryParseWordsToNumberDouble(ReadOnlySpan<byte> utf8, bool isOrdinal, out double value)
     {
         value = 0;
-        string text = str.Trim().ToLowerInvariant();
+
+        // Trim leading/trailing spaces
+        int trimStart = 0;
+        int trimEnd = utf8.Length;
+        while (trimStart < trimEnd && utf8[trimStart] == (byte)' ')
+        {
+            trimStart++;
+        }
+
+        while (trimEnd > trimStart && utf8[trimEnd - 1] == (byte)' ')
+        {
+            trimEnd--;
+        }
+
+        ReadOnlySpan<byte> text = utf8.Slice(trimStart, trimEnd - trimStart);
 
         if (text.Length == 0)
         {
             return false;
         }
 
-        if (text == "zero" || text == "zeroth")
+        if (Utf8EqualsAsciiIgnoreCase(text, "zero"u8) || Utf8EqualsAsciiIgnoreCase(text, "zeroth"u8))
         {
             value = 0;
             return true;
         }
 
-        // If ordinal, convert ordinal words back to cardinal
+        // If ordinal, convert ordinal words back to cardinal using a stack-allocated buffer
         if (isOrdinal)
         {
-            text = ConvertOrdinalToCardinal(text);
+            Span<byte> buffer = stackalloc byte[text.Length];
+            int cardinalLen = ConvertOrdinalToCardinal(text, buffer);
+            return TryParseCardinalWords(buffer.Slice(0, cardinalLen), out value);
         }
 
-        return TryParseCardinalWordsDouble(text, out value);
+        return TryParseCardinalWords(text, out value);
     }
 
-    private static string ConvertOrdinalToCardinal(string text)
+    /// <summary>
+    /// Converts the last ordinal word in the text to its cardinal form,
+    /// writing the result into <paramref name="buffer"/>.
+    /// Returns the number of bytes written.
+    /// </summary>
+    private static int ConvertOrdinalToCardinal(ReadOnlySpan<byte> text, Span<byte> buffer)
     {
-        // Try to find and replace the last ordinal word with its cardinal form
-        foreach (var kvp in OrdinalWordMap)
+        // Find the last word boundary (space or hyphen, searching from end)
+        int lastBoundary = -1;
+        for (int i = text.Length - 1; i >= 0; i--)
         {
-            string ordinal = kvp.Value.ToLowerInvariant();
-            if (text.EndsWith(ordinal, StringComparison.Ordinal))
+            if (text[i] == (byte)' ' || text[i] == (byte)'-')
             {
-                string cardinal = kvp.Key.ToLowerInvariant();
-                return text.Substring(0, text.Length - ordinal.Length) + cardinal;
+                lastBoundary = i;
+                break;
             }
         }
 
-        // Handle "-ieth" -> "-y"  (already handled by map for standard tens)
-        // Handle generic "th" suffix
-        if (text.EndsWith("th", StringComparison.Ordinal))
+        ReadOnlySpan<byte> lastWord = lastBoundary >= 0 ? text.Slice(lastBoundary + 1) : text;
+        int prefixLen = lastBoundary >= 0 ? lastBoundary + 1 : 0;
+
+        // Try OrdinalWordMap reverse lookup (check if last word is an ordinal form)
+        foreach (var (key, value) in OrdinalWordMap)
         {
-            return text.Substring(0, text.Length - 2);
+            if (Utf8EqualsAsciiIgnoreCase(lastWord, value))
+            {
+                text.Slice(0, prefixLen).CopyTo(buffer);
+                key.AsSpan().CopyTo(buffer.Slice(prefixLen));
+                return prefixLen + key.Length;
+            }
         }
 
-        return text;
+        // Handle generic "th" suffix
+        if (lastWord.Length > 2 && Utf8EndsWithAsciiIgnoreCase(lastWord, "th"u8))
+        {
+            text.Slice(0, text.Length - 2).CopyTo(buffer);
+            return text.Length - 2;
+        }
+
+        // No conversion needed — copy original
+        text.CopyTo(buffer);
+        return text.Length;
     }
 
-    private static bool TryParseCardinalWordsDouble(string text, out double value)
+    /// <summary>
+    /// Parses cardinal English words into a double value using UTF-8 byte tokenization.
+    /// Handles commas and "and" as separators, hyphenated tokens, and scale words.
+    /// </summary>
+    private static bool TryParseCardinalWords(ReadOnlySpan<byte> text, out double value)
     {
         value = 0;
-
-        string cleaned = text.Replace(",", " ").Replace(" and ", " ");
-        string[] tokens = cleaned.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
-
-        if (tokens.Length == 0)
-        {
-            return false;
-        }
+        bool hasTokens = false;
 
         double current = 0;
         double result = 0;
+        int pos = 0;
 
-        for (int i = 0; i < tokens.Length; i++)
+        while (pos < text.Length)
         {
-            string token = tokens[i];
-
-            int hyphen = token.IndexOf('-');
-            if (hyphen > 0)
+            // Skip whitespace and commas
+            while (pos < text.Length && (text[pos] == (byte)' ' || text[pos] == (byte)','))
             {
-                string left = token.Substring(0, hyphen);
-                string right = token.Substring(hyphen + 1);
+                pos++;
+            }
+
+            if (pos >= text.Length)
+            {
+                break;
+            }
+
+            // Find end of token
+            int tokenStart = pos;
+            while (pos < text.Length && text[pos] != (byte)' ' && text[pos] != (byte)',')
+            {
+                pos++;
+            }
+
+            ReadOnlySpan<byte> token = text.Slice(tokenStart, pos - tokenStart);
+
+            // Skip "and"
+            if (Utf8EqualsAsciiIgnoreCase(token, "and"u8))
+            {
+                continue;
+            }
+
+            hasTokens = true;
+
+            // Handle hyphenated tokens (e.g. "twenty-three")
+            int hyphenIdx = -1;
+            for (int i = 0; i < token.Length; i++)
+            {
+                if (token[i] == (byte)'-')
+                {
+                    hyphenIdx = i;
+                    break;
+                }
+            }
+
+            if (hyphenIdx > 0)
+            {
+                ReadOnlySpan<byte> left = token.Slice(0, hyphenIdx);
+                ReadOnlySpan<byte> right = token.Slice(hyphenIdx + 1);
                 long leftVal = WordToNumber(left);
                 long rightVal = WordToNumber(right);
                 if (leftVal < 0 || rightVal < 0)
@@ -2158,15 +2443,20 @@ internal static class XPathDateTimeFormatter
             current += numVal;
         }
 
+        if (!hasTokens)
+        {
+            return false;
+        }
+
         value = result + current;
         return true;
     }
 
-    private static long WordToNumber(string word)
+    private static long WordToNumber(ReadOnlySpan<byte> word)
     {
         for (int i = 0; i < Ones.Length; i++)
         {
-            if (string.Equals(word, Ones[i], StringComparison.OrdinalIgnoreCase))
+            if (Utf8EqualsAsciiIgnoreCase(word, Ones[i]))
             {
                 return i;
             }
@@ -2174,7 +2464,7 @@ internal static class XPathDateTimeFormatter
 
         for (int i = 2; i < Tens.Length; i++)
         {
-            if (string.Equals(word, Tens[i], StringComparison.OrdinalIgnoreCase))
+            if (Utf8EqualsAsciiIgnoreCase(word, Tens[i]))
             {
                 return i * 10;
             }
@@ -2183,11 +2473,11 @@ internal static class XPathDateTimeFormatter
         return -1;
     }
 
-    private static long GetScaleValue(string word)
+    private static long GetScaleValue(ReadOnlySpan<byte> word)
     {
         foreach (var (name, val) in ScaleWords)
         {
-            if (string.Equals(word, name, StringComparison.OrdinalIgnoreCase))
+            if (Utf8EqualsAsciiIgnoreCase(word, name))
             {
                 return val;
             }
@@ -2196,132 +2486,434 @@ internal static class XPathDateTimeFormatter
         return -1;
     }
 
-    private static bool TryParseDecimalDigit(string str, string presentation, bool isOrdinal, out long value)
+    /// <summary>
+    /// Case-insensitive ASCII comparison of two <see cref="ReadOnlySpan{T}"/> of <see cref="byte"/>
+    /// (UTF-8). Non-ASCII bytes (≥0x80) are compared exactly.
+    /// </summary>
+    private static bool Utf8EqualsAsciiIgnoreCase(ReadOnlySpan<byte> a, ReadOnlySpan<byte> b)
+    {
+        if (a.Length != b.Length)
+        {
+            return false;
+        }
+
+        for (int i = 0; i < a.Length; i++)
+        {
+            byte ba = a[i];
+            byte bb = b[i];
+            if (ba == bb)
+            {
+                continue;
+            }
+
+            if ((ba | 0x20) >= (byte)'a' && (ba | 0x20) <= (byte)'z' &&
+                (ba | 0x20) == (bb | 0x20))
+            {
+                continue;
+            }
+
+            return false;
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// Case-insensitive ASCII check for whether a <see cref="ReadOnlySpan{T}"/> of <see cref="byte"/>
+    /// (UTF-8) ends with a given pure-ASCII suffix.
+    /// </summary>
+    private static bool Utf8EndsWithAsciiIgnoreCase(ReadOnlySpan<byte> span, ReadOnlySpan<byte> suffix)
+    {
+        if (span.Length < suffix.Length)
+        {
+            return false;
+        }
+
+        return Utf8EqualsAsciiIgnoreCase(span.Slice(span.Length - suffix.Length), suffix);
+    }
+
+    private static bool TryParseDecimalDigit(ReadOnlySpan<byte> utf8, ReadOnlySpan<byte> presentation, bool isOrdinal, out long value)
     {
         value = 0;
-        string text = str;
+        ReadOnlySpan<byte> text = utf8;
 
         // Strip ordinal suffix
-        if (isOrdinal)
+        if (isOrdinal && text.Length >= 2)
         {
-            if (text.EndsWith("st", StringComparison.OrdinalIgnoreCase) ||
-                text.EndsWith("nd", StringComparison.OrdinalIgnoreCase) ||
-                text.EndsWith("rd", StringComparison.OrdinalIgnoreCase) ||
-                text.EndsWith("th", StringComparison.OrdinalIgnoreCase))
+            if (Utf8EndsWithAsciiIgnoreCase(text, "st"u8) ||
+                Utf8EndsWithAsciiIgnoreCase(text, "nd"u8) ||
+                Utf8EndsWithAsciiIgnoreCase(text, "rd"u8) ||
+                Utf8EndsWithAsciiIgnoreCase(text, "th"u8))
             {
-                text = text.Substring(0, text.Length - 2);
+                text = text.Slice(0, text.Length - 2);
             }
         }
 
         // Detect unicode digit base from presentation
         int unicodeBase = 0;
-        foreach (char c in presentation)
         {
-            int ug = GetUnicodeDecimalGroup(c);
-            if (ug >= 0)
+            int pi = 0;
+            while (pi < presentation.Length)
             {
-                unicodeBase = ug;
-                break;
-            }
-        }
-
-        // Find and strip grouping separators from the presentation
-        var groupChars = new HashSet<char>();
-        foreach (char c in presentation)
-        {
-            if (c != '0' && c != '#' && !(c >= '1' && c <= '9') && GetUnicodeDecimalGroup(c) < 0)
-            {
-                groupChars.Add(c);
-            }
-        }
-
-        // Remove grouping separator characters from text
-        if (groupChars.Count > 0)
-        {
-            var sb = new StringBuilder(text.Length);
-            foreach (char c in text)
-            {
-                if (!groupChars.Contains(c))
+                byte b = presentation[pi];
+                if (b < 0x80)
                 {
-                    sb.Append(c);
+                    int ug = GetUnicodeDecimalGroup((char)b);
+                    if (ug >= 0)
+                    {
+                        unicodeBase = ug;
+                        break;
+                    }
+
+                    pi++;
                 }
-            }
-
-            text = sb.ToString();
-        }
-
-        // Convert unicode digits to ASCII
-        if (unicodeBase != 0)
-        {
-            var sb = new StringBuilder(text.Length);
-            foreach (char c in text)
-            {
-                if (c >= (char)unicodeBase && c <= (char)(unicodeBase + 9))
+                else if (TryDecodeUtf8CodePoint(presentation.Slice(pi), out int cp, out int consumed))
                 {
-                    sb.Append((char)('0' + (c - unicodeBase)));
+                    int ug = GetUnicodeDecimalGroup((char)cp);
+                    if (ug >= 0)
+                    {
+                        unicodeBase = ug;
+                        break;
+                    }
+
+                    pi += consumed;
                 }
                 else
                 {
-                    sb.Append(c);
+                    pi++;
+                }
+            }
+        }
+
+        // Collect grouping separator byte sequences from the presentation.
+        // Since presentation is already UTF-8, we extract separator byte spans directly.
+        Span<byte> groupSepBuf = stackalloc byte[32];
+        Span<int> groupSepLengths = stackalloc int[8];
+        int groupCount = 0;
+        {
+            int pi = 0;
+            while (pi < presentation.Length)
+            {
+                byte b = presentation[pi];
+                int cpLen;
+                bool isDigitOrPlaceholder;
+
+                if (b < 0x80)
+                {
+                    cpLen = 1;
+                    isDigitOrPlaceholder = b == (byte)'0' || b == (byte)'#' || (b >= (byte)'1' && b <= (byte)'9');
+                    if (!isDigitOrPlaceholder)
+                    {
+                        int ug = GetUnicodeDecimalGroup((char)b);
+                        isDigitOrPlaceholder = ug >= 0;
+                    }
+                }
+                else if (TryDecodeUtf8CodePoint(presentation.Slice(pi), out int cp2, out int consumed))
+                {
+                    cpLen = consumed;
+                    isDigitOrPlaceholder = GetUnicodeDecimalGroup((char)cp2) >= 0;
+                }
+                else
+                {
+                    cpLen = 1;
+                    isDigitOrPlaceholder = false;
+                }
+
+                if (!isDigitOrPlaceholder)
+                {
+                    // This is a grouping separator — extract its UTF-8 bytes
+                    ReadOnlySpan<byte> sepBytes = presentation.Slice(pi, cpLen);
+                    int sepOffset = groupCount * 4;
+
+                    // Check for duplicates
+                    bool found = false;
+                    for (int j = 0; j < groupCount; j++)
+                    {
+                        int jOff = j * 4;
+                        if (groupSepLengths[j] == cpLen &&
+                            groupSepBuf.Slice(jOff, cpLen).SequenceEqual(sepBytes))
+                        {
+                            found = true;
+                            break;
+                        }
+                    }
+
+                    if (!found && groupCount < 8)
+                    {
+                        sepBytes.CopyTo(groupSepBuf.Slice(sepOffset));
+                        groupSepLengths[groupCount] = cpLen;
+                        groupCount++;
+                    }
+                }
+
+                pi += cpLen;
+            }
+        }
+
+        // For unicode digits, decode UTF-8 code points and accumulate manually
+        if (unicodeBase != 0)
+        {
+            bool negative = false;
+            long accum = 0;
+            bool hasDigits = false;
+            int pos = 0;
+
+            while (pos < text.Length)
+            {
+                byte b = text[pos];
+
+                // ASCII byte
+                if (b < 0x80)
+                {
+                    if (b == (byte)'-' && !hasDigits)
+                    {
+                        negative = true;
+                        pos++;
+                        continue;
+                    }
+
+                    // Check if it's an ASCII grouping separator
+                    bool isSep = false;
+                    for (int g = 0; g < groupCount; g++)
+                    {
+                        if (groupSepLengths[g] == 1 && groupSepBuf[g * 4] == b)
+                        {
+                            isSep = true;
+                            break;
+                        }
+                    }
+
+                    if (isSep)
+                    {
+                        pos++;
+                        continue;
+                    }
+
+                    // ASCII digit
+                    if (b >= (byte)'0' && b <= (byte)'9')
+                    {
+                        accum = (accum * 10) + (b - (byte)'0');
+                        hasDigits = true;
+                        pos++;
+                        continue;
+                    }
+
+                    break;
+                }
+
+                // Multi-byte UTF-8: decode code point
+                int cp;
+                int seqLen;
+                if ((b & 0xE0) == 0xC0 && pos + 1 < text.Length)
+                {
+                    cp = ((b & 0x1F) << 6) | (text[pos + 1] & 0x3F);
+                    seqLen = 2;
+                }
+                else if ((b & 0xF0) == 0xE0 && pos + 2 < text.Length)
+                {
+                    cp = ((b & 0x0F) << 12) | ((text[pos + 1] & 0x3F) << 6) | (text[pos + 2] & 0x3F);
+                    seqLen = 3;
+                }
+                else if ((b & 0xF8) == 0xF0 && pos + 3 < text.Length)
+                {
+                    cp = ((b & 0x07) << 18) | ((text[pos + 1] & 0x3F) << 12) | ((text[pos + 2] & 0x3F) << 6) | (text[pos + 3] & 0x3F);
+                    seqLen = 4;
+                }
+                else
+                {
+                    break;
+                }
+
+                // Check multi-byte grouping separator
+                bool isMultiSep = false;
+                for (int g = 0; g < groupCount; g++)
+                {
+                    int gOff = g * 4;
+                    int gLen = groupSepLengths[g];
+                    if (gLen == seqLen && text.Slice(pos, seqLen).SequenceEqual(groupSepBuf.Slice(gOff, gLen)))
+                    {
+                        isMultiSep = true;
+                        break;
+                    }
+                }
+
+                if (isMultiSep)
+                {
+                    pos += seqLen;
+                    continue;
+                }
+
+                // Unicode digit
+                if (cp >= unicodeBase && cp <= unicodeBase + 9)
+                {
+                    accum = (accum * 10) + (cp - unicodeBase);
+                    hasDigits = true;
+                    pos += seqLen;
+                    continue;
+                }
+
+                break;
+            }
+
+            if (!hasDigits)
+            {
+                return false;
+            }
+
+            value = negative ? -accum : accum;
+            return true;
+        }
+
+        // ASCII-only fast path: strip grouping separators and parse
+        bool needsStrip = groupCount > 0;
+        if (needsStrip)
+        {
+            Span<byte> buf = stackalloc byte[text.Length];
+            int bufLen = 0;
+
+            for (int i = 0; i < text.Length; i++)
+            {
+                byte b = text[i];
+                bool isSep = false;
+                for (int g = 0; g < groupCount; g++)
+                {
+                    if (groupSepLengths[g] == 1 && groupSepBuf[g * 4] == b)
+                    {
+                        isSep = true;
+                        break;
+                    }
+                }
+
+                if (!isSep)
+                {
+                    buf[bufLen++] = b;
                 }
             }
 
-            text = sb.ToString();
+            return TryParseAsciiLong(buf.Slice(0, bufLen), out value);
         }
 
-        return long.TryParse(text, NumberStyles.Integer, CultureInfo.InvariantCulture, out value);
+        return TryParseAsciiLong(text, out value);
+    }
+
+    /// <summary>
+    /// Parses an ASCII integer from a UTF-8 byte span. Handles optional leading minus sign.
+    /// </summary>
+    private static bool TryParseAsciiLong(ReadOnlySpan<byte> utf8, out long value)
+    {
+        value = 0;
+        if (utf8.Length == 0)
+        {
+            return false;
+        }
+
+        int pos = 0;
+        bool negative = false;
+        if (utf8[0] == (byte)'-')
+        {
+            negative = true;
+            pos++;
+        }
+        else if (utf8[0] == (byte)'+')
+        {
+            pos++;
+        }
+
+        if (pos >= utf8.Length)
+        {
+            return false;
+        }
+
+        bool hasDigits = false;
+        while (pos < utf8.Length)
+        {
+            byte b = utf8[pos];
+            if (b < (byte)'0' || b > (byte)'9')
+            {
+                break;
+            }
+
+            value = (value * 10) + (b - (byte)'0');
+            hasDigits = true;
+            pos++;
+        }
+
+        if (!hasDigits)
+        {
+            return false;
+        }
+
+        if (negative)
+        {
+            value = -value;
+        }
+
+        return true;
     }
 
     private struct PictureComponent
     {
         public bool IsLiteral;
-        public string? Literal;
-        public char Component;
-        public string Presentation;
+        public byte[]? Literal;
+        public byte Component;
+        public byte[] Presentation;
         public int DigitWidth;
     }
 
-    private static List<PictureComponent> ParsePictureString(string picture)
+    private static List<PictureComponent> ParsePictureString(ReadOnlySpan<byte> picture)
     {
         var components = new List<PictureComponent>();
         int i = 0;
+        Span<byte> stripBuf = stackalloc byte[64];
 
         while (i < picture.Length)
         {
-            if (picture[i] == '[')
+            byte b = picture[i];
+            if (b == (byte)'[')
             {
-                if (i + 1 < picture.Length && picture[i + 1] == '[')
+                if (i + 1 < picture.Length && picture[i + 1] == (byte)'[')
                 {
-                    components.Add(new PictureComponent { IsLiteral = true, Literal = "[" });
+                    components.Add(new PictureComponent { IsLiteral = true, Literal = "["u8.ToArray() });
                     i += 2;
                     continue;
                 }
 
-                int end = picture.IndexOf(']', i + 1);
+                int end = -1;
+                for (int j = i + 1; j < picture.Length; j++)
+                {
+                    if (picture[j] == (byte)']')
+                    {
+                        end = j;
+                        break;
+                    }
+                }
+
                 if (end < 0)
                 {
                     throw new JsonataException("D3135", SR.D3135_PictureStringContainsAWithNoMatching, 0);
                 }
 
-                string marker = picture.Substring(i + 1, end - i - 1);
-                string stripped = StripWhitespace(marker);
+                // Extract marker bytes and strip ALL ASCII whitespace
+                ReadOnlySpan<byte> marker = picture.Slice(i + 1, end - i - 1);
+                int strippedLen = StripAllAsciiWhitespace(marker, stripBuf);
+                ReadOnlySpan<byte> stripped = stripBuf.Slice(0, strippedLen);
 
-                if (stripped.Length == 0)
+                if (strippedLen == 0)
                 {
                     i = end + 1;
                     continue;
                 }
 
-                char comp = stripped[0];
-                string pres = stripped.Length > 1 ? stripped.Substring(1) : string.Empty;
+                byte comp = stripped[0];
+                ReadOnlySpan<byte> pres = strippedLen > 1 ? stripped.Slice(1, strippedLen - 1) : ReadOnlySpan<byte>.Empty;
 
                 // Remove width modifier using last-comma approach
                 int lastComma = -1;
                 for (int ci = pres.Length - 1; ci >= 0; ci--)
                 {
-                    if (pres[ci] == ',')
+                    if (pres[ci] == (byte)',')
                     {
-                        string candidate = pres.Substring(ci + 1);
+                        ReadOnlySpan<byte> candidate = pres.Slice(ci + 1);
                         if (IsValidWidthModifier(candidate))
                         {
                             lastComma = ci;
@@ -2334,15 +2926,16 @@ internal static class XPathDateTimeFormatter
                 int maxWidthFromPic = -1;
                 if (lastComma >= 0)
                 {
-                    string widthPart = pres.Substring(lastComma + 1);
-                    pres = pres.Substring(0, lastComma);
+                    ReadOnlySpan<byte> widthPart = pres.Slice(lastComma + 1);
+                    pres = pres.Slice(0, lastComma);
                     ParseWidthModifier(widthPart, out _, out maxWidthFromPic);
                 }
 
                 // Count digit positions in presentation for fixed-width parsing
-                foreach (char dc in pres)
+                for (int di = 0; di < pres.Length; di++)
                 {
-                    if ((dc >= '0' && dc <= '9') || dc == '#')
+                    byte dc = pres[di];
+                    if ((dc >= (byte)'0' && dc <= (byte)'9') || dc == (byte)'#')
                     {
                         digitWidth++;
                     }
@@ -2355,14 +2948,14 @@ internal static class XPathDateTimeFormatter
                 }
 
                 // Validate component
-                if (comp == 'Y' || comp == 'M' || comp == 'D' || comp == 'd' ||
-                    comp == 'H' || comp == 'h' || comp == 'm' || comp == 's' ||
-                    comp == 'f' || comp == 'P' || comp == 'Z' || comp == 'z' ||
-                    comp == 'F' || comp == 'C' || comp == 'E' || comp == 'W' ||
-                    comp == 'w' || comp == 'X' || comp == 'x')
+                if (comp == (byte)'Y' || comp == (byte)'M' || comp == (byte)'D' || comp == (byte)'d' ||
+                    comp == (byte)'H' || comp == (byte)'h' || comp == (byte)'m' || comp == (byte)'s' ||
+                    comp == (byte)'f' || comp == (byte)'P' || comp == (byte)'Z' || comp == (byte)'z' ||
+                    comp == (byte)'F' || comp == (byte)'C' || comp == (byte)'E' || comp == (byte)'W' ||
+                    comp == (byte)'w' || comp == (byte)'X' || comp == (byte)'x')
                 {
                     // Check for name presentation which is not supported for Y
-                    if (comp == 'Y' && (pres == "N" || pres == "Nn"))
+                    if (comp == (byte)'Y' && (pres.SequenceEqual("N"u8) || pres.SequenceEqual("Nn"u8)))
                     {
                         throw new JsonataException("D3133", SR.D3133_TheYearComponentCannotBeRepresentedAsAName, 0);
                     }
@@ -2371,102 +2964,103 @@ internal static class XPathDateTimeFormatter
                     {
                         IsLiteral = false,
                         Component = comp,
-                        Presentation = pres,
+                        Presentation = pres.ToArray(),
                         DigitWidth = digitWidth,
                     });
                 }
                 else
                 {
-                    throw new JsonataException("D3132", SR.Format(SR.D3132_UnknownComponentSpecifier, comp), 0);
+                    throw new JsonataException("D3132", SR.Format(SR.D3132_UnknownComponentSpecifier, (char)comp), 0);
                 }
 
                 i = end + 1;
             }
-            else if (picture[i] == ']')
+            else if (b == (byte)']')
             {
-                if (i + 1 < picture.Length && picture[i + 1] == ']')
+                if (i + 1 < picture.Length && picture[i + 1] == (byte)']')
                 {
-                    components.Add(new PictureComponent { IsLiteral = true, Literal = "]" });
+                    components.Add(new PictureComponent { IsLiteral = true, Literal = "]"u8.ToArray() });
                     i += 2;
                 }
                 else
                 {
-                    components.Add(new PictureComponent { IsLiteral = true, Literal = "]" });
+                    components.Add(new PictureComponent { IsLiteral = true, Literal = "]"u8.ToArray() });
                     i++;
                 }
             }
             else
             {
-                // Collect literal text
-                var sb = new StringBuilder();
-                while (i < picture.Length && picture[i] != '[' && picture[i] != ']')
+                // Collect literal bytes (may be multi-byte UTF-8)
+                int start = i;
+                while (i < picture.Length && picture[i] != (byte)'[' && picture[i] != (byte)']')
                 {
-                    sb.Append(picture[i]);
                     i++;
                 }
 
-                components.Add(new PictureComponent { IsLiteral = true, Literal = sb.ToString() });
+                components.Add(new PictureComponent { IsLiteral = true, Literal = picture.Slice(start, i - start).ToArray() });
             }
         }
 
         return components;
     }
 
-    private static int ParseIntegerValueFromString(string str, ref int pos, string presentation, int overrideMaxDigits = 0)
+    private static int ParseIntegerValue(ReadOnlySpan<byte> utf8, ref int pos, ReadOnlySpan<byte> presentation, int overrideMaxDigits = 0)
     {
-        if (pos >= str.Length)
+        if (pos >= utf8.Length)
         {
             return -1;
         }
 
         // Check for 'N' or 'Nn' name presentation (used for year names - not supported)
-        if (presentation == "N" || presentation == "Nn")
+        if (presentation.SequenceEqual("N"u8) || presentation.SequenceEqual("Nn"u8))
         {
             throw new JsonataException("D3133", SR.D3133_TheComponentCannotBeRepresentedAsAName, 0);
         }
 
         // Check for Roman numerals
-        if (presentation == "I" || presentation == "i")
+        if (presentation.SequenceEqual("I"u8) || presentation.SequenceEqual("i"u8))
         {
-            return ParseRomanFromString(str, ref pos);
+            return ParseRoman(utf8, ref pos);
         }
 
         // Check for words
-        if (presentation == "w" || presentation == "W" || presentation == "Ww")
+        if (presentation.SequenceEqual("w"u8) || presentation.SequenceEqual("W"u8) || presentation.SequenceEqual("Ww"u8))
         {
-            return ParseWordsFromString(str, ref pos, false);
+            return ParseWords(utf8, ref pos, false);
         }
 
         // Check for ordinal words
-        if (presentation == "wo" || presentation == "Wo" || presentation == "Wwo")
+        if (presentation.SequenceEqual("wo"u8) || presentation.SequenceEqual("Wo"u8) || presentation.SequenceEqual("Wwo"u8))
         {
-            return ParseWordsFromString(str, ref pos, true);
+            return ParseWords(utf8, ref pos, true);
         }
 
         // Check for alpha
-        if (presentation == "a" || presentation == "A")
+        if (presentation.SequenceEqual("a"u8))
         {
-            return ParseAlphaFromString(str, ref pos, presentation == "A");
+            return ParseAlpha(utf8, ref pos, false);
+        }
+
+        if (presentation.SequenceEqual("A"u8))
+        {
+            return ParseAlpha(utf8, ref pos, true);
         }
 
         // Check for ordinal suffix
         bool isOrdinal = false;
-        string pres = presentation;
-        if (pres.Length > 0 && pres[pres.Length - 1] == 'o')
+        ReadOnlySpan<byte> pres = presentation;
+        if (pres.Length > 0 && pres[pres.Length - 1] == (byte)'o')
         {
             isOrdinal = true;
-            pres = pres.Substring(0, pres.Length - 1);
+            pres = pres.Slice(0, pres.Length - 1);
         }
 
-        // Strip '#' from presentation
-        pres = pres.Replace("#", string.Empty);
-
-        // Count expected digits from presentation to limit consumption
-        // when adjacent components have no separator (e.g., "201802" with [Y0001][M01])
+        // Count expected digits from presentation (excluding '#')
         int maxDigits = 0;
-        foreach (char dc in pres)
+        for (int i = 0; i < pres.Length; i++)
         {
-            if (dc >= '0' && dc <= '9')
+            byte b = pres[i];
+            if (b >= (byte)'0' && b <= (byte)'9')
             {
                 maxDigits++;
             }
@@ -2485,15 +3079,17 @@ internal static class XPathDateTimeFormatter
         // Parse numeric value
         int start = pos;
         bool negative = false;
-        if (pos < str.Length && str[pos] == '-')
+        if (pos < utf8.Length && utf8[pos] == (byte)'-')
         {
             negative = true;
             pos++;
         }
 
         int digitsRead = 0;
-        while (pos < str.Length && str[pos] >= '0' && str[pos] <= '9')
+        int result = 0;
+        while (pos < utf8.Length && utf8[pos] >= (byte)'0' && utf8[pos] <= (byte)'9')
         {
+            result = (result * 10) + (utf8[pos] - (byte)'0');
             pos++;
             digitsRead++;
             if (fixedWidth && digitsRead >= maxDigits)
@@ -2502,22 +3098,23 @@ internal static class XPathDateTimeFormatter
             }
         }
 
-        if (pos == start || (negative && pos == start + 1))
+        if (digitsRead == 0)
         {
+            pos = start;
             return -1;
         }
 
-        string numStr = str.Substring(start, pos - start);
-        if (!int.TryParse(numStr, NumberStyles.Integer, CultureInfo.InvariantCulture, out int result))
+        if (negative)
         {
-            return -1;
+            result = -result;
         }
 
         // Skip ordinal suffix if present
-        if (isOrdinal && pos + 1 < str.Length)
+        if (isOrdinal && pos + 1 < utf8.Length)
         {
-            string suffix = str.Substring(pos, 2);
-            if (suffix == "st" || suffix == "nd" || suffix == "rd" || suffix == "th")
+            ReadOnlySpan<byte> suffix = utf8.Slice(pos, 2);
+            if (Utf8EqualsAsciiIgnoreCase(suffix, "st"u8) || Utf8EqualsAsciiIgnoreCase(suffix, "nd"u8) ||
+                Utf8EqualsAsciiIgnoreCase(suffix, "rd"u8) || Utf8EqualsAsciiIgnoreCase(suffix, "th"u8))
             {
                 pos += 2;
             }
@@ -2526,39 +3123,44 @@ internal static class XPathDateTimeFormatter
         return result;
     }
 
-    private static int ParseDateComponentFromString(string str, ref int pos, string presentation, string[] names, int overrideMaxDigits = 0)
+    private static int ParseDateComponent(ReadOnlySpan<byte> utf8, ref int pos, ReadOnlySpan<byte> presentation, byte[][] names, int overrideMaxDigits = 0)
     {
-        if (pos >= str.Length)
+        if (pos >= utf8.Length)
         {
             return -1;
         }
 
-        // Check for name-based parsing
-        if (presentation == "N" || presentation == "n" || presentation == "Nn" ||
-            (presentation.Length >= 2 && presentation[0] == 'N' && presentation[1] == 'n'))
+        // Check for name-based parsing (N, n, Nn, or starts with "Nn")
+        if (presentation.SequenceEqual("N"u8) || presentation.SequenceEqual("n"u8) || presentation.SequenceEqual("Nn"u8) ||
+            (presentation.Length >= 2 && presentation[0] == (byte)'N' && presentation[1] == (byte)'n'))
         {
-            return ParseNameFromString(str, ref pos, names);
+            return ParseName(utf8, ref pos, names);
         }
 
         // Check for Roman numerals
-        if (presentation == "I" || presentation == "i")
+        if (presentation.SequenceEqual("I"u8) || presentation.SequenceEqual("i"u8))
         {
-            return ParseRomanFromString(str, ref pos);
+            return ParseRoman(utf8, ref pos);
         }
 
         // Check for alpha
-        if (presentation == "A" || presentation == "a")
+        if (presentation.SequenceEqual("A"u8))
         {
-            return ParseAlphaFromString(str, ref pos, presentation == "A");
+            return ParseAlpha(utf8, ref pos, true);
+        }
+
+        if (presentation.SequenceEqual("a"u8))
+        {
+            return ParseAlpha(utf8, ref pos, false);
         }
 
         // Numeric
-        return ParseIntegerValueFromString(str, ref pos, presentation, overrideMaxDigits);
+        return ParseIntegerValue(utf8, ref pos, presentation, overrideMaxDigits);
     }
 
-    private static int ParseNameFromString(string str, ref int pos, string[] names)
+    private static int ParseName(ReadOnlySpan<byte> utf8, ref int pos, byte[][] names)
     {
-        string remaining = str.Substring(pos);
+        ReadOnlySpan<byte> remaining = utf8.Slice(pos);
 
         // Try to match from longest to shortest
         int bestMatch = -1;
@@ -2566,11 +3168,11 @@ internal static class XPathDateTimeFormatter
 
         for (int i = 0; i < names.Length; i++)
         {
-            string name = names[i];
+            byte[] name = names[i];
 
             // Try full name
             if (remaining.Length >= name.Length &&
-                string.Equals(remaining.Substring(0, name.Length), name, StringComparison.OrdinalIgnoreCase))
+                Utf8EqualsAsciiIgnoreCase(remaining.Slice(0, name.Length), name))
             {
                 if (name.Length > bestLength)
                 {
@@ -2582,11 +3184,9 @@ internal static class XPathDateTimeFormatter
             // Try abbreviations (3+ chars)
             for (int len = 3; len < name.Length; len++)
             {
-                string abbrev = name.Substring(0, len);
-                if (remaining.Length >= len &&
-                    string.Equals(remaining.Substring(0, len), abbrev, StringComparison.OrdinalIgnoreCase))
+                if (remaining.Length >= len)
                 {
-                    if (len > bestLength)
+                    if (Utf8EqualsAsciiIgnoreCase(remaining.Slice(0, len), name.AsSpan(0, len)) && len > bestLength)
                     {
                         bestMatch = i + 1;
                         bestLength = len;
@@ -2604,15 +3204,16 @@ internal static class XPathDateTimeFormatter
         return -1;
     }
 
-    private static int ParseRomanFromString(string str, ref int pos)
+    private static int ParseRoman(ReadOnlySpan<byte> utf8, ref int pos)
     {
         int start = pos;
 
         // Collect roman numeral characters
-        while (pos < str.Length)
+        while (pos < utf8.Length)
         {
-            char c = char.ToUpperInvariant(str[pos]);
-            if (c == 'M' || c == 'D' || c == 'C' || c == 'L' || c == 'X' || c == 'V' || c == 'I')
+            byte c = (byte)(utf8[pos] & 0xDF); // uppercase
+            if (c == (byte)'M' || c == (byte)'D' || c == (byte)'C' || c == (byte)'L' ||
+                c == (byte)'X' || c == (byte)'V' || c == (byte)'I')
             {
                 pos++;
             }
@@ -2627,20 +3228,23 @@ internal static class XPathDateTimeFormatter
             return -1;
         }
 
-        string roman = str.Substring(start, pos - start);
-        return (int)FromRomanNumerals(roman);
+        return (int)FromRomanNumerals(utf8.Slice(start, pos - start));
     }
 
-    private static int ParseWordsFromString(string str, ref int pos, bool isOrdinal)
+    private static int ParseWords(ReadOnlySpan<byte> utf8, ref int pos, bool isOrdinal)
     {
         int start = pos;
 
-        // Greedily match word characters (letters, hyphens, spaces, commas)
+        // Greedily match word characters (ASCII letters, hyphens, spaces, commas)
         int end = pos;
-        while (end < str.Length)
+        while (end < utf8.Length)
         {
-            char c = str[end];
-            if (char.IsLetter(c) || c == '-' || c == ' ' || c == ',')
+            byte b = utf8[end];
+            if ((b | 0x20) >= (byte)'a' && (b | 0x20) <= (byte)'z')
+            {
+                end++;
+            }
+            else if (b == (byte)'-' || b == (byte)' ' || b == (byte)',')
             {
                 end++;
             }
@@ -2651,7 +3255,7 @@ internal static class XPathDateTimeFormatter
         }
 
         // Trim trailing separators
-        while (end > start && (str[end - 1] == ' ' || str[end - 1] == ','))
+        while (end > start && (utf8[end - 1] == (byte)' ' || utf8[end - 1] == (byte)','))
         {
             end--;
         }
@@ -2665,11 +3269,11 @@ internal static class XPathDateTimeFormatter
         int tryEnd = end;
         while (tryEnd > start)
         {
-            string wordStr = str.Substring(start, tryEnd - start);
+            ReadOnlySpan<byte> wordSpan = utf8.Slice(start, tryEnd - start);
 
             // Try cardinal first, then ordinal (or vice versa based on isOrdinal)
-            if (TryParseWordsToNumber(wordStr, isOrdinal, out long value) ||
-                TryParseWordsToNumber(wordStr, !isOrdinal, out value))
+            if (TryParseWordsToNumber(wordSpan, isOrdinal, out long value) ||
+                TryParseWordsToNumber(wordSpan, !isOrdinal, out value))
             {
                 pos = tryEnd;
                 return (int)value;
@@ -2679,7 +3283,7 @@ internal static class XPathDateTimeFormatter
             int lastSpace = -1;
             for (int si = tryEnd - 1; si > start; si--)
             {
-                if (str[si] == ' ')
+                if (utf8[si] == (byte)' ')
                 {
                     lastSpace = si;
                     break;
@@ -2694,7 +3298,7 @@ internal static class XPathDateTimeFormatter
             tryEnd = lastSpace;
 
             // Trim trailing separators
-            while (tryEnd > start && (str[tryEnd - 1] == ' ' || str[tryEnd - 1] == ','))
+            while (tryEnd > start && (utf8[tryEnd - 1] == (byte)' ' || utf8[tryEnd - 1] == (byte)','))
             {
                 tryEnd--;
             }
@@ -2703,179 +3307,188 @@ internal static class XPathDateTimeFormatter
         return -1;
     }
 
-    private static int ParseAlphaFromString(string str, ref int pos, bool uppercase)
+    private static int ParseAlpha(ReadOnlySpan<byte> utf8, ref int pos, bool uppercase)
     {
         int start = pos;
-        while (pos < str.Length && char.IsLetter(str[pos]))
+        while (pos < utf8.Length)
         {
-            pos++;
-        }
-
-        if (pos == start)
-        {
-            return -1;
-        }
-
-        string alphaStr = str.Substring(start, pos - start);
-        return (int)FromAlpha(alphaStr, uppercase);
-    }
-
-    private static int ParseFractionalSeconds(string str, ref int pos, string presentation)
-    {
-        int start = pos;
-        while (pos < str.Length && str[pos] >= '0' && str[pos] <= '9')
-        {
-            pos++;
-        }
-
-        if (pos == start)
-        {
-            return -1;
-        }
-
-        string fracStr = str.Substring(start, pos - start);
-
-        // Pad or truncate to 3 digits for milliseconds
-        if (fracStr.Length > 3)
-        {
-            fracStr = fracStr.Substring(0, 3);
-        }
-        else if (fracStr.Length < 3)
-        {
-            fracStr = fracStr.PadRight(3, '0');
-        }
-
-        if (int.TryParse(fracStr, NumberStyles.Integer, CultureInfo.InvariantCulture, out int result))
-        {
-            return result;
-        }
-
-        return -1;
-    }
-
-    private static string ParseAmPm(string str, ref int pos)
-    {
-        if (pos + 2 <= str.Length)
-        {
-            string twoChar = str.Substring(pos, 2);
-            if (string.Equals(twoChar, "am", StringComparison.OrdinalIgnoreCase) ||
-                string.Equals(twoChar, "pm", StringComparison.OrdinalIgnoreCase))
+            byte b = utf8[pos];
+            if ((b | 0x20) >= (byte)'a' && (b | 0x20) <= (byte)'z')
             {
-                pos += 2;
-                return twoChar;
+                pos++;
+            }
+            else
+            {
+                break;
             }
         }
 
-        return string.Empty;
+        if (pos == start)
+        {
+            return -1;
+        }
+
+        return (int)FromAlpha(utf8.Slice(start, pos - start), uppercase);
     }
 
-    private static int? ParseTimezoneOffset(string str, ref int pos)
+    private static int ParseFractionalSeconds(ReadOnlySpan<byte> utf8, ref int pos)
     {
-        if (pos >= str.Length)
+        int start = pos;
+        while (pos < utf8.Length && utf8[pos] >= (byte)'0' && utf8[pos] <= (byte)'9')
+        {
+            pos++;
+        }
+
+        if (pos == start)
+        {
+            return -1;
+        }
+
+        int digitCount = pos - start;
+
+        // Accumulate first 3 digits (milliseconds)
+        int result = 0;
+        int take = digitCount > 3 ? 3 : digitCount;
+        for (int i = 0; i < take; i++)
+        {
+            result = (result * 10) + (utf8[start + i] - (byte)'0');
+        }
+
+        // Pad if fewer than 3 digits
+        for (int i = take; i < 3; i++)
+        {
+            result *= 10;
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// Parses AM/PM from UTF-8 bytes. Returns 0 if not found, 1 for AM, 2 for PM.
+    /// </summary>
+    private static int ParseAmPm(ReadOnlySpan<byte> utf8, ref int pos)
+    {
+        if (pos + 2 <= utf8.Length)
+        {
+            ReadOnlySpan<byte> twoBytes = utf8.Slice(pos, 2);
+            if (Utf8EqualsAsciiIgnoreCase(twoBytes, "am"u8))
+            {
+                pos += 2;
+                return 1;
+            }
+
+            if (Utf8EqualsAsciiIgnoreCase(twoBytes, "pm"u8))
+            {
+                pos += 2;
+                return 2;
+            }
+        }
+
+        return 0;
+    }
+
+    private static int? ParseTimezoneOffset(ReadOnlySpan<byte> utf8, ref int pos)
+    {
+        if (pos >= utf8.Length)
         {
             return null;
         }
 
         // "Z" for UTC
-        if (str[pos] == 'Z')
+        if (utf8[pos] == (byte)'Z')
         {
             pos++;
             return 0;
         }
 
         // +HH:MM or +HHMM or +HH
-        if (str[pos] != '+' && str[pos] != '-')
+        if (utf8[pos] != (byte)'+' && utf8[pos] != (byte)'-')
         {
             return null;
         }
 
-        char sign = str[pos];
+        byte sign = utf8[pos];
         pos++;
 
-        // Read hours
+        // Read hour digits
         int hStart = pos;
-        while (pos < str.Length && str[pos] >= '0' && str[pos] <= '9')
+        int hourVal = 0;
+        while (pos < utf8.Length && utf8[pos] >= (byte)'0' && utf8[pos] <= (byte)'9')
         {
+            hourVal = (hourVal * 10) + (utf8[pos] - (byte)'0');
             pos++;
         }
 
-        if (pos == hStart)
+        int hLen = pos - hStart;
+        if (hLen == 0)
         {
             return null;
         }
 
-        string hourStr = str.Substring(hStart, pos - hStart);
-
         int minutes = 0;
-        if (pos < str.Length && str[pos] == ':')
+        if (pos < utf8.Length && utf8[pos] == (byte)':')
         {
             pos++; // skip colon
             int mStart = pos;
-            while (pos < str.Length && str[pos] >= '0' && str[pos] <= '9')
+            while (pos < utf8.Length && utf8[pos] >= (byte)'0' && utf8[pos] <= (byte)'9')
             {
+                minutes = (minutes * 10) + (utf8[pos] - (byte)'0');
                 pos++;
             }
 
-            if (pos > mStart)
+            if (pos == mStart)
             {
-                string minStr = str.Substring(mStart, pos - mStart);
-                int.TryParse(minStr, NumberStyles.Integer, CultureInfo.InvariantCulture, out minutes);
+                minutes = 0;
             }
         }
-        else if (hourStr.Length == 4)
+        else if (hLen == 4)
         {
-            // HHMM format
-            string minStr = hourStr.Substring(2);
-            hourStr = hourStr.Substring(0, 2);
-            int.TryParse(minStr, NumberStyles.Integer, CultureInfo.InvariantCulture, out minutes);
+            // HHMM format: split hourVal into HH and MM
+            minutes = hourVal % 100;
+            hourVal /= 100;
         }
 
-        if (!int.TryParse(hourStr, NumberStyles.Integer, CultureInfo.InvariantCulture, out int hours))
-        {
-            return null;
-        }
-
-        int totalMinutes = (hours * 60) + minutes;
-        return sign == '-' ? -totalMinutes : totalMinutes;
+        int totalMinutes = (hourVal * 60) + minutes;
+        return sign == (byte)'-' ? -totalMinutes : totalMinutes;
     }
 
-    private static int? ParseTimezoneNameOffset(string str, ref int pos)
+    private static int? ParseTimezoneNameOffset(ReadOnlySpan<byte> utf8, ref int pos)
     {
         // Format: "GMT+HH:MM" or "GMT-HH:MM" or just "GMT"
-        if (pos + 3 <= str.Length && str.Substring(pos, 3).Equals("GMT", StringComparison.OrdinalIgnoreCase))
+        if (pos + 3 <= utf8.Length && Utf8EqualsAsciiIgnoreCase(utf8.Slice(pos, 3), "GMT"u8))
         {
             pos += 3;
-            if (pos < str.Length && (str[pos] == '+' || str[pos] == '-'))
+            if (pos < utf8.Length && (utf8[pos] == (byte)'+' || utf8[pos] == (byte)'-'))
             {
-                return ParseTimezoneOffset(str, ref pos);
+                return ParseTimezoneOffset(utf8, ref pos);
             }
 
             return 0;
         }
 
         // Try +/-HH:MM
-        return ParseTimezoneOffset(str, ref pos);
+        return ParseTimezoneOffset(utf8, ref pos);
     }
 
-    private static void SkipDayOfWeek(string str, ref int pos, string presentation)
+    private static void SkipDayOfWeek(ReadOnlySpan<byte> utf8, ref int pos, ReadOnlySpan<byte> presentation)
     {
-        if (pos >= str.Length)
+        if (pos >= utf8.Length)
         {
             return;
         }
 
-        // Check for name-based
-        if (presentation == "N" || presentation == "n" || presentation == "Nn" ||
-            presentation.StartsWith("Nn", StringComparison.Ordinal))
+        // Check for name-based (N, n, Nn, or starts with "Nn")
+        if (presentation.SequenceEqual("N"u8) || presentation.SequenceEqual("n"u8) || presentation.SequenceEqual("Nn"u8) ||
+            (presentation.Length >= 2 && presentation[0] == (byte)'N' && presentation[1] == (byte)'n'))
         {
-            ParseNameFromString(str, ref pos, DayNames);
+            ParseName(utf8, ref pos, DayNames);
             return;
         }
 
         // Check for numeric
-        if (str[pos] >= '0' && str[pos] <= '9')
+        if (utf8[pos] >= (byte)'0' && utf8[pos] <= (byte)'9')
         {
-            while (pos < str.Length && str[pos] >= '0' && str[pos] <= '9')
+            while (pos < utf8.Length && utf8[pos] >= (byte)'0' && utf8[pos] <= (byte)'9')
             {
                 pos++;
             }
@@ -2884,29 +3497,23 @@ internal static class XPathDateTimeFormatter
         }
 
         // Try name anyway
-        ParseNameFromString(str, ref pos, DayNames);
+        ParseName(utf8, ref pos, DayNames);
     }
 
-    private static void SkipWord(string str, ref int pos)
+    private static void SkipWord(ReadOnlySpan<byte> utf8, ref int pos)
     {
-        while (pos < str.Length && char.IsLetter(str[pos]))
+        while (pos < utf8.Length)
         {
-            pos++;
-        }
-    }
-
-    private static string StripWhitespace(string s)
-    {
-        var sb = new StringBuilder(s.Length);
-        foreach (char c in s)
-        {
-            if (!char.IsWhiteSpace(c))
+            byte b = utf8[pos];
+            if ((b | 0x20) >= (byte)'a' && (b | 0x20) <= (byte)'z')
             {
-                sb.Append(c);
+                pos++;
+            }
+            else
+            {
+                break;
             }
         }
-
-        return sb.ToString();
     }
 
     /// <summary>
@@ -2971,5 +3578,95 @@ internal static class XPathDateTimeFormatter
 
         var ts = new TimeSpan(hours, minutes, 0);
         return sign == '-' ? ts.Negate() : ts;
+    }
+
+    /// <summary>
+    /// Appends a single char as UTF-8 bytes (handles BMP characters up to U+FFFF).
+    /// </summary>
+    private static ReadOnlySpan<byte> TrimAsciiWhitespace(ReadOnlySpan<byte> span)
+    {
+        int start = 0;
+        while (start < span.Length && IsAsciiWhitespace(span[start]))
+        {
+            start++;
+        }
+
+        int end = span.Length;
+        while (end > start && IsAsciiWhitespace(span[end - 1]))
+        {
+            end--;
+        }
+
+        return span.Slice(start, end - start);
+    }
+
+    private static bool IsAsciiWhitespace(byte b) => b == (byte)' ' || b == (byte)'\t' || b == (byte)'\n' || b == (byte)'\r';
+
+    /// <summary>
+    /// Copies bytes from <paramref name="source"/> to <paramref name="destination"/>, skipping ASCII whitespace.
+    /// Returns the number of bytes written.
+    /// </summary>
+    private static int StripAllAsciiWhitespace(ReadOnlySpan<byte> source, Span<byte> destination)
+    {
+        int written = 0;
+        for (int i = 0; i < source.Length; i++)
+        {
+            byte b = source[i];
+            if (!IsAsciiWhitespace(b))
+            {
+                destination[written++] = b;
+            }
+        }
+
+        return written;
+    }
+
+    /// <summary>
+    /// Decodes a single UTF-8 code point from the start of the span.
+    /// Works on all TFMs without requiring System.Text.Rune.
+    /// </summary>
+    /// <returns><see langword="true"/> if a valid code point was decoded; <see langword="false"/> on invalid UTF-8.</returns>
+    private static bool TryDecodeUtf8CodePoint(ReadOnlySpan<byte> source, out int codePoint, out int bytesConsumed)
+    {
+        if (source.Length == 0)
+        {
+            codePoint = 0;
+            bytesConsumed = 0;
+            return false;
+        }
+
+        byte first = source[0];
+
+        if (first < 0x80)
+        {
+            codePoint = first;
+            bytesConsumed = 1;
+            return true;
+        }
+
+        if ((first & 0xE0) == 0xC0 && source.Length >= 2 && (source[1] & 0xC0) == 0x80)
+        {
+            codePoint = ((first & 0x1F) << 6) | (source[1] & 0x3F);
+            bytesConsumed = 2;
+            return codePoint >= 0x80;
+        }
+
+        if ((first & 0xF0) == 0xE0 && source.Length >= 3 && (source[1] & 0xC0) == 0x80 && (source[2] & 0xC0) == 0x80)
+        {
+            codePoint = ((first & 0x0F) << 12) | ((source[1] & 0x3F) << 6) | (source[2] & 0x3F);
+            bytesConsumed = 3;
+            return codePoint >= 0x800 && (codePoint < 0xD800 || codePoint > 0xDFFF);
+        }
+
+        if ((first & 0xF8) == 0xF0 && source.Length >= 4 && (source[1] & 0xC0) == 0x80 && (source[2] & 0xC0) == 0x80 && (source[3] & 0xC0) == 0x80)
+        {
+            codePoint = ((first & 0x07) << 18) | ((source[1] & 0x3F) << 12) | ((source[2] & 0x3F) << 6) | (source[3] & 0x3F);
+            bytesConsumed = 4;
+            return codePoint >= 0x10000 && codePoint <= 0x10FFFF;
+        }
+
+        codePoint = 0xFFFD;
+        bytesConsumed = 1;
+        return false;
     }
 }

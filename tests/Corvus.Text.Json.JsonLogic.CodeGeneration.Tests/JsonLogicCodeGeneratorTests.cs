@@ -101,6 +101,62 @@ public class JsonLogicCodeGeneratorTests
     }
 
     [Fact]
+    public void Generate_AndInIf_SharedVarDoesNotLeakScope()
+    {
+        // Regression: var "total" inside and's do-block leaked into _varCache,
+        // causing consequent/else branches to reference an out-of-scope variable (CS0103).
+        string result = JsonLogicCodeGenerator.Generate(
+            """
+            {"if":[
+                {"and":[
+                    {"==":[{"var":"tier"},"gold"]},
+                    {">=":[{"var":"total"},100]}
+                ]},
+                {"*":[{"var":"total"},0.8]},
+                {">=":[{"var":"total"},200]},
+                {"*":[{"var":"total"},0.9]},
+                {"var":"total"}
+            ]}
+            """,
+            "AndScopeLeakRule",
+            "Test.Generated");
+
+        Assert.Contains("class AndScopeLeakRule", result);
+
+        // The generated code must compile. If var cache leaked, "total" references
+        // outside the and's do-block would use an out-of-scope variable name.
+        // We verify by checking that each branch declares its own variable for "total".
+        // Count the number of TryGetProperty calls for "total" — there should be more
+        // than one, since each scope must re-declare.
+        int totalLookups = CountOccurrences(result, "\"total\"u8");
+        Assert.True(totalLookups > 1, $"Expected multiple 'total' lookups across scopes, got {totalLookups}");
+    }
+
+    [Fact]
+    public void Generate_OrInIf_SharedVarDoesNotLeakScope()
+    {
+        // Same regression as and, but for or's do-block.
+        string result = JsonLogicCodeGenerator.Generate(
+            """
+            {"if":[
+                {"or":[
+                    {"==":[{"var":"role"},"admin"]},
+                    {"==":[{"var":"role"},"owner"]}
+                ]},
+                {"cat":["Welcome, ",{"var":"role"}]},
+                {"var":"role"}
+            ]}
+            """,
+            "OrScopeLeakRule",
+            "Test.Generated");
+
+        Assert.Contains("class OrScopeLeakRule", result);
+
+        int roleLookups = CountOccurrences(result, "\"role\"u8");
+        Assert.True(roleLookups > 1, $"Expected multiple 'role' lookups across scopes, got {roleLookups}");
+    }
+
+    [Fact]
     public void Generate_Or_ProducesValidCode()
     {
         string result = JsonLogicCodeGenerator.Generate(
@@ -554,5 +610,18 @@ public class JsonLogicCodeGeneratorTests
             customOps);
 
         Assert.DoesNotContain("CustomOp_unused_op", result);
+    }
+
+    private static int CountOccurrences(string source, string value)
+    {
+        int count = 0;
+        int idx = 0;
+        while ((idx = source.IndexOf(value, idx, StringComparison.Ordinal)) >= 0)
+        {
+            count++;
+            idx += value.Length;
+        }
+
+        return count;
     }
 }

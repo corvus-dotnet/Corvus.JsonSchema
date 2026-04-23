@@ -1,23 +1,27 @@
 <Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
     <TargetFrameworks>net9.0;net10.0</TargetFrameworks>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <LangVersion>Preview</LangVersion>
     <NoWarn>$(NoWarn);CS8500;CS8969;CS8618;IDE0065;IDE0290;IDE0079;IDE0130;IDE1006;IDE0130</NoWarn>
-    <IsPackable>false</IsPackable>
+    <IsPackable>true</IsPackable>
+    <Description>Strongly-typed C# types generated from the Pulumi JSON Schema for the Sourcemeta benchmark suite.</Description>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
-
-  <ItemGroup>    <None Remove="pulumi-instances.jsonl" />
+  <ItemGroup>
+    <None Remove="pulumi-instances.jsonl" />
   </ItemGroup>
-
-  <ItemGroup>    <Content Include="pulumi-instances.jsonl">
+  <ItemGroup>
+    <Content Include="pulumi-instances.jsonl">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
-
-  <ItemGroup>    <ProjectReference Include="..\..\src\Corvus.Text.Json\Corvus.Text.Json.csproj" />
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Corvus.Text.Json\Corvus.Text.Json.csproj" />
   </ItemGroup>
-
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
 </Project>

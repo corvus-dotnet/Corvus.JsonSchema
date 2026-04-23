@@ -4,7 +4,7 @@
 
 `Corvus.Text.Json.SourceGenerator` is a Roslyn incremental source generator that produces strongly-typed C# models from JSON Schema at build time. Simply annotate a `partial struct` with `[JsonSchemaTypeGenerator]` pointing at a schema file, and the generator produces a complete implementation — type-safe property accessors, validation, serialization, implicit conversions, and mutable builder support — all without leaving your IDE.
 
-The source generator produces identical output to the [`generatejsonschematypes` CLI tool](/docs/code-generator.html), but runs automatically during the build with full IntelliSense support as you type.
+The source generator produces identical output to the [`corvusjson` CLI tool](/docs/code-generator.html), but runs automatically during the build with full IntelliSense support as you type.
 
 > **Tip:** If you only need validation and annotation collection without the full type system, you can also generate a [standalone schema evaluator](SchemaEvaluator.md) by setting `EmitEvaluator = true` on the attribute.
 
@@ -202,12 +202,12 @@ This keeps build times fast even in large projects with many generated types.
 
 ## Source Generator vs. CLI Tool
 
-Both the source generator and the [`generatejsonschematypes` CLI tool](/docs/code-generator.html) use the same code generation engine and produce identical output:
+Both the source generator and the [`corvusjson` CLI tool](/docs/code-generator.html) use the same code generation engine and produce identical output:
 
 | Aspect | Source Generator | CLI Tool |
 |--------|-----------------|----------|
 | **When it runs** | At build time, automatically | On demand, from the command line |
-| **Triggered by** | `[JsonSchemaTypeGenerator]` attribute | Explicit `generatejsonschematypes` command |
+| **Triggered by** | `[JsonSchemaTypeGenerator]` attribute | Explicit `corvusjson jsonschema` command |
 | **Output location** | In-memory (or `obj/` with `EmitCompilerGeneratedFiles`) | Any directory you specify |
 | **IDE integration** | Full IntelliSense as you type | IntelliSense after generation + build |
 | **Configuration** | MSBuild properties in `.csproj` | CLI arguments or JSON config file |

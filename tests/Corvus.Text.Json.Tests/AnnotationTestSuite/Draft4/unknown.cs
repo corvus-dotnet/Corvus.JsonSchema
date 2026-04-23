@@ -39,7 +39,7 @@ public class SuiteUnknownKeywordIsAnAnnotation : IClassFixture<SuiteUnknownKeywo
                 "annotations/unknown.json",
                 "{\r\n        \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n        \"x-unknownKeyword\": \"Foo\"\r\n      }",
                 "AnnotationTestSuite.Draft4.Unknown",
-                "D:\\source\\mwadams\\Corvus.Text.Json\\JSON-Schema-Test-Suite\\remotes",
+                "D:\\source\\corvus-dotnet\\Corvus.JsonSchema\\JSON-Schema-Test-Suite\\remotes",
                 "http://json-schema.org/draft-04/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());

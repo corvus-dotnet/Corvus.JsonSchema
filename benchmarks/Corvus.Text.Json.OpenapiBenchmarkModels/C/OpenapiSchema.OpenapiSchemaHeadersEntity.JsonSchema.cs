@@ -43,17 +43,17 @@ public readonly partial struct OpenapiSchema
             /// <summary>
             /// Gets a provider for the schema location from which this type was generated.
             /// </summary>
-            public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("https://spec.openapis.org/oas/3.1/schema/2022-10-07?dynamicScope=D%3A%2Fsource%2Fmwadams%2FCorvus.Text.Json%2Fbenchmarks%2FCorvus.Text.Json.OpenapiBenchmarkModels%2Fopenapi-schema.json#/$defs/response/properties/headers"u8, buffer, out written);
+            public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("https://spec.openapis.org/oas/3.1/schema/2022-10-07?dynamicScope=D%3A%2Fsource%2Fcorvus-dotnet%2FCorvus.JsonSchema%2Fbenchmarks%2FCorvus.Text.Json.OpenapiBenchmarkModels%2Fopenapi-schema.json#/$defs/response/properties/headers"u8, buffer, out written);
 
             /// <summary>
             /// Gets the schema location from which this type was generated.
             /// </summary>
-            public const string SchemaLocation = "https://spec.openapis.org/oas/3.1/schema/2022-10-07?dynamicScope=D%3A%2Fsource%2Fmwadams%2FCorvus.Text.Json%2Fbenchmarks%2FCorvus.Text.Json.OpenapiBenchmarkModels%2Fopenapi-schema.json#/$defs/response/properties/headers";
+            public const string SchemaLocation = "https://spec.openapis.org/oas/3.1/schema/2022-10-07?dynamicScope=D%3A%2Fsource%2Fcorvus-dotnet%2FCorvus.JsonSchema%2Fbenchmarks%2FCorvus.Text.Json.OpenapiBenchmarkModels%2Fopenapi-schema.json#/$defs/response/properties/headers";
 
             /// <summary>
             /// Gets the schema location from which this type was generated as a UTF-8 string.
             /// </summary>
-            public static ReadOnlySpan<byte> SchemaLocationUtf8 => "https://spec.openapis.org/oas/3.1/schema/2022-10-07?dynamicScope=D%3A%2Fsource%2Fmwadams%2FCorvus.Text.Json%2Fbenchmarks%2FCorvus.Text.Json.OpenapiBenchmarkModels%2Fopenapi-schema.json#/$defs/response/properties/headers"u8;
+            public static ReadOnlySpan<byte> SchemaLocationUtf8 => "https://spec.openapis.org/oas/3.1/schema/2022-10-07?dynamicScope=D%3A%2Fsource%2Fcorvus-dotnet%2FCorvus.JsonSchema%2Fbenchmarks%2FCorvus.Text.Json.OpenapiBenchmarkModels%2Fopenapi-schema.json#/$defs/response/properties/headers"u8;
 
             /// <summary>
             /// Applies the JSON schema semantics defined by this type to the instance determined by the given document and index.

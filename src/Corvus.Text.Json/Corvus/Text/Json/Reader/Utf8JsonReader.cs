@@ -4,7 +4,7 @@
 // <licensing>
 // Derived from code licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licensed this code under the MIT license.
-// https:// github.com/dotnet/runtime/blob/388a7c4814cb0d6e344621d017507b357902043a/LICENSE.TXT
+// https://github.com/dotnet/runtime/blob/388a7c4814cb0d6e344621d017507b357902043a/LICENSE.TXT
 // </licensing>
 using System.Buffers;
 using System.Diagnostics;
@@ -730,7 +730,7 @@ public ref partial struct Utf8JsonReader
 
         int sourceLength = ValueSpan.Length;
 
-        // Transcoding from UTF-16 to UTF-8 will change the length by somwhere between 1x and 3x.
+        // Transcoding from UTF-16 to UTF-8 will change the length by somewhere between 1x and 3x.
         // Unescaping the token value will at most shrink its length by 6x.
         // There is no point incurring the transcoding/unescaping/comparing cost if:
         // - The token value is smaller than charTextLength
@@ -1474,7 +1474,7 @@ public ref partial struct Utf8JsonReader
     // https:// tools.ietf.org/html/rfc7159#section-6
     private bool TryGetNumber(ReadOnlySpan<byte> data, out int consumed)
     {
-        // TODO: https:// github.com/dotnet/runtime/issues/27837
+        // TODO: https://github.com/dotnet/runtime/issues/27837
         Debug.Assert(data.Length > 0);
 
         consumed = 0;

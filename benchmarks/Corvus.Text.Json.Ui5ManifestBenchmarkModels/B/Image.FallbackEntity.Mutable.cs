@@ -1182,7 +1182,7 @@ public readonly partial struct Image
                 return JsonSchema.Evaluate(_parent, _idx, resultsCollector);
             }
 
-            private void CheckValidInstance()
+            private readonly void CheckValidInstance()
             {
                 if (_parent == null)
                 {
@@ -1392,6 +1392,48 @@ public readonly partial struct Image
 
             [DebuggerBrowsable(DebuggerBrowsableState.Never)]
             JsonValueKind IJsonElement.ValueKind => ValueKind;
+
+            /// <summary>
+            /// Gets a <see cref="FallbackEntity"/> which can be safely stored beyond the lifetime of the
+            /// original document.
+            /// </summary>
+            /// <returns>
+            /// A <see cref="FallbackEntity"/> which can be safely stored beyond the lifetime of the
+            /// original document.
+            /// </returns>
+            /// <remarks>
+            /// <para>
+            /// This serializes the element and re-parses it into a standalone heap-allocated
+            /// document. The result is independent of the workspace.
+            /// </para>
+            /// </remarks>
+            public readonly FallbackEntity Clone()
+            {
+                CheckValidInstance();
+                return _parent.CloneElement<FallbackEntity>(_idx);
+            }
+
+            /// <summary>
+            /// Creates a frozen (immutable) copy of this element, backed by a new
+            /// document builder registered in the same workspace.
+            /// </summary>
+            /// <returns>
+            /// An immutable <see cref="FallbackEntity"/> that lives for the lifetime of its
+            /// workspace and its associated documents.
+            /// </returns>
+            /// <remarks>
+            /// <para>
+            /// Unlike <see cref="Clone()"/>, which serializes the element and re-parses it
+            /// into a standalone heap-allocated document, <c>Freeze()</c> performs a cheap
+            /// blit of the metadata and value backing arrays. The resulting element is
+            /// immutable but is only valid for the lifetime of the workspace.
+            /// </para>
+            /// </remarks>
+            public readonly FallbackEntity Freeze()
+            {
+                CheckValidInstance();
+                return _parent.FreezeElement<FallbackEntity>(_idx);
+            }
 
             /// <summary>
             /// Matches the value against the composed values, and returns the result of calling the provided match function for the first match found.
@@ -2797,11 +2839,12 @@ public readonly partial struct Image
         /// </summary>
         /// <param name="workspace">The JSON workspace.</param>
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
         /// <returns>An empty mutable document builder.</returns>
         public static JsonDocumentBuilder<Mutable> CreateBuilder(
-            JsonWorkspace workspace, int initialCapacity = 30)
+            JsonWorkspace workspace, int initialCapacity = 30, int initialValueBufferSize = 8192)
         {
-            JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+            JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
             ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
             cvb.StartObject();
             cvb.EndObject();
@@ -2815,12 +2858,13 @@ public readonly partial struct Image
         /// <param name="workspace">The JSON workspace.</param>
         /// <param name="value">The value with which to initialize the builder.</param>
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
         /// <returns>An instance of a mutable document initialized with the given value.</returns>
         public static JsonDocumentBuilder<Mutable> CreateBuilder(
-            JsonWorkspace workspace, scoped in Corvus.Ui5ManifestBenchmark.Baseline.ImplementationsOfElement.ImplementationsOfElementRequiredType.Builder.Build value, int initialCapacity = 30)
+            JsonWorkspace workspace, scoped in Corvus.Ui5ManifestBenchmark.Baseline.ImplementationsOfElement.ImplementationsOfElementRequiredType.Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
         {
             // Create the document builder without a MetadataDb
-            JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+            JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
             ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
             var source = new Corvus.Ui5ManifestBenchmark.Baseline.ImplementationsOfElement.ImplementationsOfElementRequiredType.Source(value);
             source.AddAsItem(ref cvb);
@@ -2837,15 +2881,16 @@ public readonly partial struct Image
         /// <param name="context">The context to pass to the builder.</param>
         /// <param name="value">The value with which to initialize the builder.</param>
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
         /// <returns>An instance of a mutable document initialized with the given value.</returns>
         public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(
-            JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Baseline.ImplementationsOfElement.ImplementationsOfElementRequiredType.Builder.Build<TContext> value, int initialCapacity = 30)
+            JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Baseline.ImplementationsOfElement.ImplementationsOfElementRequiredType.Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif
         {
             // Create the document builder without a MetadataDb
-            JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+            JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
             ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
             var source = new Corvus.Ui5ManifestBenchmark.Baseline.ImplementationsOfElement.ImplementationsOfElementRequiredType.Source<TContext>(context, value);
             source.AddAsItem(ref cvb);
@@ -2860,12 +2905,13 @@ public readonly partial struct Image
         /// <param name="workspace">The JSON workspace.</param>
         /// <param name="value">The value with which to initialize the builder.</param>
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
         /// <returns>An instance of a mutable document initialized with the given value.</returns>
         public static JsonDocumentBuilder<Mutable> CreateBuilder(
-            JsonWorkspace workspace, scoped in Corvus.Ui5ManifestBenchmark.Baseline.ImplementationsOfElement.ImplementationsOfElementRequiredType1.Builder.Build value, int initialCapacity = 30)
+            JsonWorkspace workspace, scoped in Corvus.Ui5ManifestBenchmark.Baseline.ImplementationsOfElement.ImplementationsOfElementRequiredType1.Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
         {
             // Create the document builder without a MetadataDb
-            JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+            JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
             ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
             var source = new Corvus.Ui5ManifestBenchmark.Baseline.ImplementationsOfElement.ImplementationsOfElementRequiredType1.Source(value);
             source.AddAsItem(ref cvb);
@@ -2882,15 +2928,16 @@ public readonly partial struct Image
         /// <param name="context">The context to pass to the builder.</param>
         /// <param name="value">The value with which to initialize the builder.</param>
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
         /// <returns>An instance of a mutable document initialized with the given value.</returns>
         public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(
-            JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Baseline.ImplementationsOfElement.ImplementationsOfElementRequiredType1.Builder.Build<TContext> value, int initialCapacity = 30)
+            JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Baseline.ImplementationsOfElement.ImplementationsOfElementRequiredType1.Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif
         {
             // Create the document builder without a MetadataDb
-            JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+            JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
             ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
             var source = new Corvus.Ui5ManifestBenchmark.Baseline.ImplementationsOfElement.ImplementationsOfElementRequiredType1.Source<TContext>(context, value);
             source.AddAsItem(ref cvb);
@@ -2905,12 +2952,13 @@ public readonly partial struct Image
         /// <param name="workspace">The JSON workspace.</param>
         /// <param name="value">The value with which to initialize the builder.</param>
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
         /// <returns>An instance of a mutable document initialized with the given value.</returns>
         public static JsonDocumentBuilder<Mutable> CreateBuilder(
-            JsonWorkspace workspace, scoped in Corvus.Ui5ManifestBenchmark.Baseline.ImplementationsOfElement.ImplementationsOfElementRequiredType10.Builder.Build value, int initialCapacity = 30)
+            JsonWorkspace workspace, scoped in Corvus.Ui5ManifestBenchmark.Baseline.ImplementationsOfElement.ImplementationsOfElementRequiredType10.Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
         {
             // Create the document builder without a MetadataDb
-            JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+            JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
             ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
             var source = new Corvus.Ui5ManifestBenchmark.Baseline.ImplementationsOfElement.ImplementationsOfElementRequiredType10.Source(value);
             source.AddAsItem(ref cvb);
@@ -2927,15 +2975,16 @@ public readonly partial struct Image
         /// <param name="context">The context to pass to the builder.</param>
         /// <param name="value">The value with which to initialize the builder.</param>
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
         /// <returns>An instance of a mutable document initialized with the given value.</returns>
         public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(
-            JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Baseline.ImplementationsOfElement.ImplementationsOfElementRequiredType10.Builder.Build<TContext> value, int initialCapacity = 30)
+            JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Baseline.ImplementationsOfElement.ImplementationsOfElementRequiredType10.Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif
         {
             // Create the document builder without a MetadataDb
-            JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+            JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
             ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
             var source = new Corvus.Ui5ManifestBenchmark.Baseline.ImplementationsOfElement.ImplementationsOfElementRequiredType10.Source<TContext>(context, value);
             source.AddAsItem(ref cvb);
@@ -2950,12 +2999,13 @@ public readonly partial struct Image
         /// <param name="workspace">The JSON workspace.</param>
         /// <param name="value">The value with which to initialize the builder.</param>
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
         /// <returns>An instance of a mutable document initialized with the given value.</returns>
         public static JsonDocumentBuilder<Mutable> CreateBuilder(
-            JsonWorkspace workspace, scoped in Corvus.Ui5ManifestBenchmark.Baseline.ImplementationsOfElement.ImplementationsOfElementRequiredType11.Builder.Build value, int initialCapacity = 30)
+            JsonWorkspace workspace, scoped in Corvus.Ui5ManifestBenchmark.Baseline.ImplementationsOfElement.ImplementationsOfElementRequiredType11.Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
         {
             // Create the document builder without a MetadataDb
-            JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+            JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
             ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
             var source = new Corvus.Ui5ManifestBenchmark.Baseline.ImplementationsOfElement.ImplementationsOfElementRequiredType11.Source(value);
             source.AddAsItem(ref cvb);
@@ -2972,15 +3022,16 @@ public readonly partial struct Image
         /// <param name="context">The context to pass to the builder.</param>
         /// <param name="value">The value with which to initialize the builder.</param>
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
         /// <returns>An instance of a mutable document initialized with the given value.</returns>
         public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(
-            JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Baseline.ImplementationsOfElement.ImplementationsOfElementRequiredType11.Builder.Build<TContext> value, int initialCapacity = 30)
+            JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Baseline.ImplementationsOfElement.ImplementationsOfElementRequiredType11.Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif
         {
             // Create the document builder without a MetadataDb
-            JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+            JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
             ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
             var source = new Corvus.Ui5ManifestBenchmark.Baseline.ImplementationsOfElement.ImplementationsOfElementRequiredType11.Source<TContext>(context, value);
             source.AddAsItem(ref cvb);
@@ -2995,12 +3046,13 @@ public readonly partial struct Image
         /// <param name="workspace">The JSON workspace.</param>
         /// <param name="value">The value with which to initialize the builder.</param>
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
         /// <returns>An instance of a mutable document initialized with the given value.</returns>
         public static JsonDocumentBuilder<Mutable> CreateBuilder(
-            JsonWorkspace workspace, scoped in Corvus.Ui5ManifestBenchmark.Baseline.ImplementationsOfElement.ImplementationsOfElementRequiredType12.Builder.Build value, int initialCapacity = 30)
+            JsonWorkspace workspace, scoped in Corvus.Ui5ManifestBenchmark.Baseline.ImplementationsOfElement.ImplementationsOfElementRequiredType12.Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
         {
             // Create the document builder without a MetadataDb
-            JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+            JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
             ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
             var source = new Corvus.Ui5ManifestBenchmark.Baseline.ImplementationsOfElement.ImplementationsOfElementRequiredType12.Source(value);
             source.AddAsItem(ref cvb);
@@ -3017,15 +3069,16 @@ public readonly partial struct Image
         /// <param name="context">The context to pass to the builder.</param>
         /// <param name="value">The value with which to initialize the builder.</param>
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
         /// <returns>An instance of a mutable document initialized with the given value.</returns>
         public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(
-            JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Baseline.ImplementationsOfElement.ImplementationsOfElementRequiredType12.Builder.Build<TContext> value, int initialCapacity = 30)
+            JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Baseline.ImplementationsOfElement.ImplementationsOfElementRequiredType12.Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif
         {
             // Create the document builder without a MetadataDb
-            JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+            JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
             ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
             var source = new Corvus.Ui5ManifestBenchmark.Baseline.ImplementationsOfElement.ImplementationsOfElementRequiredType12.Source<TContext>(context, value);
             source.AddAsItem(ref cvb);
@@ -3040,12 +3093,13 @@ public readonly partial struct Image
         /// <param name="workspace">The JSON workspace.</param>
         /// <param name="value">The value with which to initialize the builder.</param>
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
         /// <returns>An instance of a mutable document initialized with the given value.</returns>
         public static JsonDocumentBuilder<Mutable> CreateBuilder(
-            JsonWorkspace workspace, scoped in Corvus.Ui5ManifestBenchmark.Baseline.ImplementationsOfElement.ImplementationsOfElementRequiredType13.Builder.Build value, int initialCapacity = 30)
+            JsonWorkspace workspace, scoped in Corvus.Ui5ManifestBenchmark.Baseline.ImplementationsOfElement.ImplementationsOfElementRequiredType13.Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
         {
             // Create the document builder without a MetadataDb
-            JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+            JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
             ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
             var source = new Corvus.Ui5ManifestBenchmark.Baseline.ImplementationsOfElement.ImplementationsOfElementRequiredType13.Source(value);
             source.AddAsItem(ref cvb);
@@ -3062,15 +3116,16 @@ public readonly partial struct Image
         /// <param name="context">The context to pass to the builder.</param>
         /// <param name="value">The value with which to initialize the builder.</param>
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
         /// <returns>An instance of a mutable document initialized with the given value.</returns>
         public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(
-            JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Baseline.ImplementationsOfElement.ImplementationsOfElementRequiredType13.Builder.Build<TContext> value, int initialCapacity = 30)
+            JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Baseline.ImplementationsOfElement.ImplementationsOfElementRequiredType13.Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif
         {
             // Create the document builder without a MetadataDb
-            JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+            JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
             ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
             var source = new Corvus.Ui5ManifestBenchmark.Baseline.ImplementationsOfElement.ImplementationsOfElementRequiredType13.Source<TContext>(context, value);
             source.AddAsItem(ref cvb);
@@ -3085,12 +3140,13 @@ public readonly partial struct Image
         /// <param name="workspace">The JSON workspace.</param>
         /// <param name="value">The value with which to initialize the builder.</param>
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
         /// <returns>An instance of a mutable document initialized with the given value.</returns>
         public static JsonDocumentBuilder<Mutable> CreateBuilder(
-            JsonWorkspace workspace, scoped in Corvus.Ui5ManifestBenchmark.Baseline.ImplementationsOfElement.ImplementationsOfElementRequiredType14.Builder.Build value, int initialCapacity = 30)
+            JsonWorkspace workspace, scoped in Corvus.Ui5ManifestBenchmark.Baseline.ImplementationsOfElement.ImplementationsOfElementRequiredType14.Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
         {
             // Create the document builder without a MetadataDb
-            JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+            JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
             ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
             var source = new Corvus.Ui5ManifestBenchmark.Baseline.ImplementationsOfElement.ImplementationsOfElementRequiredType14.Source(value);
             source.AddAsItem(ref cvb);
@@ -3107,15 +3163,16 @@ public readonly partial struct Image
         /// <param name="context">The context to pass to the builder.</param>
         /// <param name="value">The value with which to initialize the builder.</param>
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
         /// <returns>An instance of a mutable document initialized with the given value.</returns>
         public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(
-            JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Baseline.ImplementationsOfElement.ImplementationsOfElementRequiredType14.Builder.Build<TContext> value, int initialCapacity = 30)
+            JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Baseline.ImplementationsOfElement.ImplementationsOfElementRequiredType14.Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif
         {
             // Create the document builder without a MetadataDb
-            JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+            JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
             ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
             var source = new Corvus.Ui5ManifestBenchmark.Baseline.ImplementationsOfElement.ImplementationsOfElementRequiredType14.Source<TContext>(context, value);
             source.AddAsItem(ref cvb);
@@ -3130,12 +3187,13 @@ public readonly partial struct Image
         /// <param name="workspace">The JSON workspace.</param>
         /// <param name="value">The value with which to initialize the builder.</param>
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
         /// <returns>An instance of a mutable document initialized with the given value.</returns>
         public static JsonDocumentBuilder<Mutable> CreateBuilder(
-            JsonWorkspace workspace, scoped in Corvus.Ui5ManifestBenchmark.Baseline.ImplementationsOfElement.ImplementationsOfElementRequiredType2.Builder.Build value, int initialCapacity = 30)
+            JsonWorkspace workspace, scoped in Corvus.Ui5ManifestBenchmark.Baseline.ImplementationsOfElement.ImplementationsOfElementRequiredType2.Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
         {
             // Create the document builder without a MetadataDb
-            JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+            JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
             ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
             var source = new Corvus.Ui5ManifestBenchmark.Baseline.ImplementationsOfElement.ImplementationsOfElementRequiredType2.Source(value);
             source.AddAsItem(ref cvb);
@@ -3152,15 +3210,16 @@ public readonly partial struct Image
         /// <param name="context">The context to pass to the builder.</param>
         /// <param name="value">The value with which to initialize the builder.</param>
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
         /// <returns>An instance of a mutable document initialized with the given value.</returns>
         public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(
-            JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Baseline.ImplementationsOfElement.ImplementationsOfElementRequiredType2.Builder.Build<TContext> value, int initialCapacity = 30)
+            JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Baseline.ImplementationsOfElement.ImplementationsOfElementRequiredType2.Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif
         {
             // Create the document builder without a MetadataDb
-            JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+            JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
             ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
             var source = new Corvus.Ui5ManifestBenchmark.Baseline.ImplementationsOfElement.ImplementationsOfElementRequiredType2.Source<TContext>(context, value);
             source.AddAsItem(ref cvb);
@@ -3175,12 +3234,13 @@ public readonly partial struct Image
         /// <param name="workspace">The JSON workspace.</param>
         /// <param name="value">The value with which to initialize the builder.</param>
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
         /// <returns>An instance of a mutable document initialized with the given value.</returns>
         public static JsonDocumentBuilder<Mutable> CreateBuilder(
-            JsonWorkspace workspace, scoped in Corvus.Ui5ManifestBenchmark.Baseline.ImplementationsOfElement.ImplementationsOfElementRequiredType3.Builder.Build value, int initialCapacity = 30)
+            JsonWorkspace workspace, scoped in Corvus.Ui5ManifestBenchmark.Baseline.ImplementationsOfElement.ImplementationsOfElementRequiredType3.Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
         {
             // Create the document builder without a MetadataDb
-            JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+            JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
             ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
             var source = new Corvus.Ui5ManifestBenchmark.Baseline.ImplementationsOfElement.ImplementationsOfElementRequiredType3.Source(value);
             source.AddAsItem(ref cvb);
@@ -3197,15 +3257,16 @@ public readonly partial struct Image
         /// <param name="context">The context to pass to the builder.</param>
         /// <param name="value">The value with which to initialize the builder.</param>
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
         /// <returns>An instance of a mutable document initialized with the given value.</returns>
         public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(
-            JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Baseline.ImplementationsOfElement.ImplementationsOfElementRequiredType3.Builder.Build<TContext> value, int initialCapacity = 30)
+            JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Baseline.ImplementationsOfElement.ImplementationsOfElementRequiredType3.Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif
         {
             // Create the document builder without a MetadataDb
-            JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+            JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
             ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
             var source = new Corvus.Ui5ManifestBenchmark.Baseline.ImplementationsOfElement.ImplementationsOfElementRequiredType3.Source<TContext>(context, value);
             source.AddAsItem(ref cvb);
@@ -3220,12 +3281,13 @@ public readonly partial struct Image
         /// <param name="workspace">The JSON workspace.</param>
         /// <param name="value">The value with which to initialize the builder.</param>
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
         /// <returns>An instance of a mutable document initialized with the given value.</returns>
         public static JsonDocumentBuilder<Mutable> CreateBuilder(
-            JsonWorkspace workspace, scoped in Corvus.Ui5ManifestBenchmark.Baseline.ImplementationsOfElement.ImplementationsOfElementRequiredType4.Builder.Build value, int initialCapacity = 30)
+            JsonWorkspace workspace, scoped in Corvus.Ui5ManifestBenchmark.Baseline.ImplementationsOfElement.ImplementationsOfElementRequiredType4.Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
         {
             // Create the document builder without a MetadataDb
-            JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+            JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
             ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
             var source = new Corvus.Ui5ManifestBenchmark.Baseline.ImplementationsOfElement.ImplementationsOfElementRequiredType4.Source(value);
             source.AddAsItem(ref cvb);
@@ -3242,15 +3304,16 @@ public readonly partial struct Image
         /// <param name="context">The context to pass to the builder.</param>
         /// <param name="value">The value with which to initialize the builder.</param>
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
         /// <returns>An instance of a mutable document initialized with the given value.</returns>
         public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(
-            JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Baseline.ImplementationsOfElement.ImplementationsOfElementRequiredType4.Builder.Build<TContext> value, int initialCapacity = 30)
+            JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Baseline.ImplementationsOfElement.ImplementationsOfElementRequiredType4.Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif
         {
             // Create the document builder without a MetadataDb
-            JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+            JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
             ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
             var source = new Corvus.Ui5ManifestBenchmark.Baseline.ImplementationsOfElement.ImplementationsOfElementRequiredType4.Source<TContext>(context, value);
             source.AddAsItem(ref cvb);
@@ -3265,12 +3328,13 @@ public readonly partial struct Image
         /// <param name="workspace">The JSON workspace.</param>
         /// <param name="value">The value with which to initialize the builder.</param>
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
         /// <returns>An instance of a mutable document initialized with the given value.</returns>
         public static JsonDocumentBuilder<Mutable> CreateBuilder(
-            JsonWorkspace workspace, scoped in Corvus.Ui5ManifestBenchmark.Baseline.ImplementationsOfElement.ImplementationsOfElementRequiredType5.Builder.Build value, int initialCapacity = 30)
+            JsonWorkspace workspace, scoped in Corvus.Ui5ManifestBenchmark.Baseline.ImplementationsOfElement.ImplementationsOfElementRequiredType5.Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
         {
             // Create the document builder without a MetadataDb
-            JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+            JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
             ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
             var source = new Corvus.Ui5ManifestBenchmark.Baseline.ImplementationsOfElement.ImplementationsOfElementRequiredType5.Source(value);
             source.AddAsItem(ref cvb);
@@ -3287,15 +3351,16 @@ public readonly partial struct Image
         /// <param name="context">The context to pass to the builder.</param>
         /// <param name="value">The value with which to initialize the builder.</param>
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
         /// <returns>An instance of a mutable document initialized with the given value.</returns>
         public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(
-            JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Baseline.ImplementationsOfElement.ImplementationsOfElementRequiredType5.Builder.Build<TContext> value, int initialCapacity = 30)
+            JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Baseline.ImplementationsOfElement.ImplementationsOfElementRequiredType5.Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif
         {
             // Create the document builder without a MetadataDb
-            JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+            JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
             ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
             var source = new Corvus.Ui5ManifestBenchmark.Baseline.ImplementationsOfElement.ImplementationsOfElementRequiredType5.Source<TContext>(context, value);
             source.AddAsItem(ref cvb);
@@ -3310,12 +3375,13 @@ public readonly partial struct Image
         /// <param name="workspace">The JSON workspace.</param>
         /// <param name="value">The value with which to initialize the builder.</param>
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
         /// <returns>An instance of a mutable document initialized with the given value.</returns>
         public static JsonDocumentBuilder<Mutable> CreateBuilder(
-            JsonWorkspace workspace, scoped in Corvus.Ui5ManifestBenchmark.Baseline.ImplementationsOfElement.ImplementationsOfElementRequiredType6.Builder.Build value, int initialCapacity = 30)
+            JsonWorkspace workspace, scoped in Corvus.Ui5ManifestBenchmark.Baseline.ImplementationsOfElement.ImplementationsOfElementRequiredType6.Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
         {
             // Create the document builder without a MetadataDb
-            JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+            JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
             ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
             var source = new Corvus.Ui5ManifestBenchmark.Baseline.ImplementationsOfElement.ImplementationsOfElementRequiredType6.Source(value);
             source.AddAsItem(ref cvb);
@@ -3332,15 +3398,16 @@ public readonly partial struct Image
         /// <param name="context">The context to pass to the builder.</param>
         /// <param name="value">The value with which to initialize the builder.</param>
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
         /// <returns>An instance of a mutable document initialized with the given value.</returns>
         public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(
-            JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Baseline.ImplementationsOfElement.ImplementationsOfElementRequiredType6.Builder.Build<TContext> value, int initialCapacity = 30)
+            JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Baseline.ImplementationsOfElement.ImplementationsOfElementRequiredType6.Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif
         {
             // Create the document builder without a MetadataDb
-            JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+            JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
             ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
             var source = new Corvus.Ui5ManifestBenchmark.Baseline.ImplementationsOfElement.ImplementationsOfElementRequiredType6.Source<TContext>(context, value);
             source.AddAsItem(ref cvb);
@@ -3355,12 +3422,13 @@ public readonly partial struct Image
         /// <param name="workspace">The JSON workspace.</param>
         /// <param name="value">The value with which to initialize the builder.</param>
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
         /// <returns>An instance of a mutable document initialized with the given value.</returns>
         public static JsonDocumentBuilder<Mutable> CreateBuilder(
-            JsonWorkspace workspace, scoped in Corvus.Ui5ManifestBenchmark.Baseline.ImplementationsOfElement.ImplementationsOfElementRequiredType7.Builder.Build value, int initialCapacity = 30)
+            JsonWorkspace workspace, scoped in Corvus.Ui5ManifestBenchmark.Baseline.ImplementationsOfElement.ImplementationsOfElementRequiredType7.Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
         {
             // Create the document builder without a MetadataDb
-            JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+            JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
             ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
             var source = new Corvus.Ui5ManifestBenchmark.Baseline.ImplementationsOfElement.ImplementationsOfElementRequiredType7.Source(value);
             source.AddAsItem(ref cvb);
@@ -3377,15 +3445,16 @@ public readonly partial struct Image
         /// <param name="context">The context to pass to the builder.</param>
         /// <param name="value">The value with which to initialize the builder.</param>
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
         /// <returns>An instance of a mutable document initialized with the given value.</returns>
         public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(
-            JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Baseline.ImplementationsOfElement.ImplementationsOfElementRequiredType7.Builder.Build<TContext> value, int initialCapacity = 30)
+            JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Baseline.ImplementationsOfElement.ImplementationsOfElementRequiredType7.Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif
         {
             // Create the document builder without a MetadataDb
-            JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+            JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
             ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
             var source = new Corvus.Ui5ManifestBenchmark.Baseline.ImplementationsOfElement.ImplementationsOfElementRequiredType7.Source<TContext>(context, value);
             source.AddAsItem(ref cvb);
@@ -3400,12 +3469,13 @@ public readonly partial struct Image
         /// <param name="workspace">The JSON workspace.</param>
         /// <param name="value">The value with which to initialize the builder.</param>
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
         /// <returns>An instance of a mutable document initialized with the given value.</returns>
         public static JsonDocumentBuilder<Mutable> CreateBuilder(
-            JsonWorkspace workspace, scoped in Corvus.Ui5ManifestBenchmark.Baseline.ImplementationsOfElement.ImplementationsOfElementRequiredType8.Builder.Build value, int initialCapacity = 30)
+            JsonWorkspace workspace, scoped in Corvus.Ui5ManifestBenchmark.Baseline.ImplementationsOfElement.ImplementationsOfElementRequiredType8.Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
         {
             // Create the document builder without a MetadataDb
-            JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+            JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
             ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
             var source = new Corvus.Ui5ManifestBenchmark.Baseline.ImplementationsOfElement.ImplementationsOfElementRequiredType8.Source(value);
             source.AddAsItem(ref cvb);
@@ -3422,15 +3492,16 @@ public readonly partial struct Image
         /// <param name="context">The context to pass to the builder.</param>
         /// <param name="value">The value with which to initialize the builder.</param>
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
         /// <returns>An instance of a mutable document initialized with the given value.</returns>
         public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(
-            JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Baseline.ImplementationsOfElement.ImplementationsOfElementRequiredType8.Builder.Build<TContext> value, int initialCapacity = 30)
+            JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Baseline.ImplementationsOfElement.ImplementationsOfElementRequiredType8.Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif
         {
             // Create the document builder without a MetadataDb
-            JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+            JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
             ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
             var source = new Corvus.Ui5ManifestBenchmark.Baseline.ImplementationsOfElement.ImplementationsOfElementRequiredType8.Source<TContext>(context, value);
             source.AddAsItem(ref cvb);
@@ -3445,12 +3516,13 @@ public readonly partial struct Image
         /// <param name="workspace">The JSON workspace.</param>
         /// <param name="value">The value with which to initialize the builder.</param>
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
         /// <returns>An instance of a mutable document initialized with the given value.</returns>
         public static JsonDocumentBuilder<Mutable> CreateBuilder(
-            JsonWorkspace workspace, scoped in Corvus.Ui5ManifestBenchmark.Baseline.ImplementationsOfElement.ImplementationsOfElementRequiredType9.Builder.Build value, int initialCapacity = 30)
+            JsonWorkspace workspace, scoped in Corvus.Ui5ManifestBenchmark.Baseline.ImplementationsOfElement.ImplementationsOfElementRequiredType9.Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
         {
             // Create the document builder without a MetadataDb
-            JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+            JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
             ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
             var source = new Corvus.Ui5ManifestBenchmark.Baseline.ImplementationsOfElement.ImplementationsOfElementRequiredType9.Source(value);
             source.AddAsItem(ref cvb);
@@ -3467,15 +3539,16 @@ public readonly partial struct Image
         /// <param name="context">The context to pass to the builder.</param>
         /// <param name="value">The value with which to initialize the builder.</param>
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
         /// <returns>An instance of a mutable document initialized with the given value.</returns>
         public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(
-            JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Baseline.ImplementationsOfElement.ImplementationsOfElementRequiredType9.Builder.Build<TContext> value, int initialCapacity = 30)
+            JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Baseline.ImplementationsOfElement.ImplementationsOfElementRequiredType9.Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif
         {
             // Create the document builder without a MetadataDb
-            JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+            JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
             ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
             var source = new Corvus.Ui5ManifestBenchmark.Baseline.ImplementationsOfElement.ImplementationsOfElementRequiredType9.Source<TContext>(context, value);
             source.AddAsItem(ref cvb);
@@ -3490,12 +3563,13 @@ public readonly partial struct Image
         /// <param name="workspace">The JSON workspace.</param>
         /// <param name="value">The value with which to initialize the builder.</param>
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
         /// <returns>An instance of a mutable document initialized with the given value.</returns>
         public static JsonDocumentBuilder<Mutable> CreateBuilder(
-            JsonWorkspace workspace, scoped in Corvus.Ui5ManifestBenchmark.Baseline.ImplementationsOfElement.RequiredType.Builder.Build value, int initialCapacity = 30)
+            JsonWorkspace workspace, scoped in Corvus.Ui5ManifestBenchmark.Baseline.ImplementationsOfElement.RequiredType.Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
         {
             // Create the document builder without a MetadataDb
-            JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+            JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
             ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
             var source = new Corvus.Ui5ManifestBenchmark.Baseline.ImplementationsOfElement.RequiredType.Source(value);
             source.AddAsItem(ref cvb);
@@ -3512,15 +3586,16 @@ public readonly partial struct Image
         /// <param name="context">The context to pass to the builder.</param>
         /// <param name="value">The value with which to initialize the builder.</param>
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
         /// <returns>An instance of a mutable document initialized with the given value.</returns>
         public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(
-            JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Baseline.ImplementationsOfElement.RequiredType.Builder.Build<TContext> value, int initialCapacity = 30)
+            JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.Ui5ManifestBenchmark.Baseline.ImplementationsOfElement.RequiredType.Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif
         {
             // Create the document builder without a MetadataDb
-            JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+            JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
             ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
             var source = new Corvus.Ui5ManifestBenchmark.Baseline.ImplementationsOfElement.RequiredType.Source<TContext>(context, value);
             source.AddAsItem(ref cvb);

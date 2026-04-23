@@ -25,6 +25,10 @@ public class BenchmarkDeepNavigation
     private const string Expr10Level = "a.b.c.d.e.f.g.h.i.j.value";
     private const string Expr5Level = "a.b.c.d.e.value";
 
+    private static readonly byte[] Expr10LevelUtf8 = "a.b.c.d.e.f.g.h.i.j.value"u8.ToArray();
+    private static readonly byte[] Expr5LevelUtf8 = "a.b.c.d.e.value"u8.ToArray();
+
+
     private JsonataEvaluator evaluator = null!;
     private ParsedJsonDocument<JsonElement>? doc;
     private JsonElement data;
@@ -48,8 +52,8 @@ public class BenchmarkDeepNavigation
         this.evaluator = new JsonataEvaluator();
         this.workspace = JsonWorkspace.Create();
 
-        this.evaluator.Evaluate(Expr10Level, this.data);
-        this.evaluator.Evaluate(Expr5Level, this.data);
+        this.evaluator.Evaluate(Expr10LevelUtf8, this.data, this.workspace, cacheKey: Expr10Level);
+        this.evaluator.Evaluate(Expr5LevelUtf8, this.data, this.workspace, cacheKey: Expr5Level);
 
         DeepNavigationCodeGen.Evaluate(this.data, this.workspace);
         this.workspace.Reset();
@@ -81,7 +85,7 @@ public class BenchmarkDeepNavigation
     public JsonElement Corvus_10Level()
     {
         this.workspace.Reset();
-        return this.evaluator.Evaluate(Expr10Level, this.data, this.workspace);
+        return this.evaluator.Evaluate(Expr10LevelUtf8, this.data, this.workspace, cacheKey: Expr10Level);
     }
 
 #if !NETFRAMEWORK
@@ -113,7 +117,7 @@ public class BenchmarkDeepNavigation
     public JsonElement Corvus_5Level()
     {
         this.workspace.Reset();
-        return this.evaluator.Evaluate(Expr5Level, this.data, this.workspace);
+        return this.evaluator.Evaluate(Expr5LevelUtf8, this.data, this.workspace, cacheKey: Expr5Level);
     }
 
 #if !NETFRAMEWORK

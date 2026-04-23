@@ -52,3 +52,7 @@ Scenario Outline: validation of URI References
         | #/000/tests/013/data | false | unescaped non US-ASCII characters                                                |
         # https://example.org/foobar\.txt
         | #/000/tests/014/data | false | invalid backslash character                                                      |
+        # http://087.10.0.1/
+        | #/000/tests/015/data | true  | URI with leading-zero IPv4 is structurally valid as a reg-name                   |
+        # http://999.999.999.999/
+        | #/000/tests/016/data | true  | URI with out-of-bounds IPv4 is structurally valid as a reg-name                  |

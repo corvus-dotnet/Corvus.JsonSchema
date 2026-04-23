@@ -22,13 +22,16 @@
     <button class="theme-toggle-btn" @onclick="CycleTheme" title="@themeTooltip">@themeIcon</button>
 </div>
 
-<div class="jsonata-grid">
+<div class="jsonata-grid @(maximizedPanel is not null ? "has-maximized" : "")">
     @* Left column: JSON data (top) and Bindings (bottom) *@
-    <div class="playground-panel panel-data">
+    <div class="playground-panel panel-data @(GetPanelClass("data"))">
         <div class="panel-header">
             JSON Data
             <div class="spacer"></div>
             <button class="panel-copy-btn" @onclick="CopyData" title="Copy data">📋</button>
+            <button class="panel-maximize-btn" @onclick='() => ToggleMaximize("data")' title="@(maximizedPanel == "data" ? "Restore" : "Maximize")">
+                @(maximizedPanel == "data" ? "⊟" : "⊞")
+            </button>
         </div>
         <div class="panel-body">
             <StandaloneCodeEditor @ref="dataEditor"
@@ -38,7 +41,7 @@
         </div>
     </div>
 
-    <div class="playground-panel panel-bindings">
+    <div class="playground-panel panel-bindings @(GetPanelClass("bindings"))">
         <div class="panel-header">
             Bindings (C#)
             @if (bindingsError is not null)
@@ -47,6 +50,9 @@
             }
             <div class="spacer"></div>
             <button class="panel-copy-btn" @onclick="CopyBindings" title="Copy bindings">📋</button>
+            <button class="panel-maximize-btn" @onclick='() => ToggleMaximize("bindings")' title="@(maximizedPanel == "bindings" ? "Restore" : "Maximize")">
+                @(maximizedPanel == "bindings" ? "⊟" : "⊞")
+            </button>
         </div>
         <div class="panel-body">
             <StandaloneCodeEditor @ref="bindingsEditor"
@@ -57,11 +63,14 @@
     </div>
 
     @* Top-right: JSONata expression *@
-    <div class="playground-panel panel-expression">
+    <div class="playground-panel panel-expression @(GetPanelClass("expression"))">
         <div class="panel-header">
             JSONata Expression
             <div class="spacer"></div>
             <button class="panel-copy-btn" @onclick="CopyExpression" title="Copy expression">📋</button>
+            <button class="panel-maximize-btn" @onclick='() => ToggleMaximize("expression")' title="@(maximizedPanel == "expression" ? "Restore" : "Maximize")">
+                @(maximizedPanel == "expression" ? "⊟" : "⊞")
+            </button>
         </div>
         <div class="panel-body">
             <StandaloneCodeEditor @ref="expressionEditor"
@@ -72,7 +81,7 @@
     </div>
 
     @* Bottom-right: Result output *@
-    <div class="playground-panel panel-output">
+    <div class="playground-panel panel-output @(GetPanelClass("output"))">
         <div class="panel-header">
             Result
             <div class="spacer"></div>
@@ -84,6 +93,9 @@
                 </span>
             }
             <button class="panel-copy-btn" @onclick="CopyResult" title="Copy result">📋</button>
+            <button class="panel-maximize-btn" @onclick='() => ToggleMaximize("output")' title="@(maximizedPanel == "output" ? "Restore" : "Maximize")">
+                @(maximizedPanel == "output" ? "⊟" : "⊞")
+            </button>
         </div>
         <div class="panel-body" style="@(lastResult is not null && !lastResult.Success ? "display:none" : "")">
             <StandaloneCodeEditor @ref="outputEditor"
@@ -156,6 +168,7 @@
     private bool isCompiling;
     private bool isInitializing = true;
     private bool isLoadingSample;
+    private string? maximizedPanel;
 
     // Dirty checking
     private bool showDirtyConfirmation;
@@ -315,6 +328,7 @@
         if (isInitializing || isLoadingSample) { return; }
 
         activeSampleId = null;
+        _ = ClearDataMarkers();
         DebounceEvaluate();
         DebounceSave();
     }
@@ -324,6 +338,7 @@
         if (isInitializing || isLoadingSample) { return; }
 
         activeSampleId = null;
+        _ = ClearExpressionMarkers();
         DebounceEvaluate();
         DebounceSave();
     }
@@ -333,6 +348,7 @@
         if (isInitializing || isLoadingSample) { return; }
 
         activeSampleId = null;
+        _ = ClearBindingsMarkers();
         DebounceCompileBindings();
         DebounceSave();
     }
@@ -371,6 +387,7 @@
 
             await SyncCleanBaselines();
             await ClearLocalStorage();
+            await ClearAllMarkers();
             lastResult = null;
             if (outputEditor is not null)
             {
@@ -398,6 +415,7 @@
 
         await SyncCleanBaselines();
         await ClearLocalStorage();
+        await ClearAllMarkers();
         await CompileAndEvaluateAsync();
     }
 
@@ -526,6 +544,7 @@
             {
                 activeBindings = null;
                 bindingsError = null;
+                await ClearBindingsMarkers();
                 return;
             }
 
@@ -535,11 +554,19 @@
             {
                 activeBindings = result.Bindings;
                 bindingsError = null;
+                await ClearBindingsMarkers();
             }
             else
             {
                 activeBindings = null;
                 bindingsError = result.ErrorMessage;
+
+                // Set Monaco markers on the bindings editor
+                await SetBindingsMarkers(result.Diagnostics);
+
+                // Clear stale expression/data markers since we won't evaluate
+                await ClearExpressionMarkers();
+                await ClearDataMarkers();
 
                 // Show bindings errors in the Result panel
                 lastResult = new EvaluationResult
@@ -632,9 +659,32 @@
 
             lastResult = await EvalService.EvaluateAsync(expression, data, activeBindings);
 
-            if (lastResult.Success && outputEditor is not null)
+            if (lastResult.Success)
             {
-                await outputEditor.SetValue(lastResult.ResultJson ?? "");
+                await ClearExpressionMarkers();
+                await ClearDataMarkers();
+                if (outputEditor is not null)
+                {
+                    await outputEditor.SetValue(lastResult.ResultJson ?? "");
+                }
+            }
+            else
+            {
+                switch (lastResult.ErrorSource)
+                {
+                    case ErrorSource.Expression:
+                        await SetExpressionMarkers(lastResult, expression);
+                        await ClearDataMarkers();
+                        break;
+                    case ErrorSource.Data:
+                        await SetDataMarkers(lastResult);
+                        await ClearExpressionMarkers();
+                        break;
+                    default:
+                        await ClearExpressionMarkers();
+                        await ClearDataMarkers();
+                        break;
+                }
             }
         }
         catch (Exception ex)
@@ -790,6 +840,169 @@
         {
             // ignore
         }
+    }
+
+    // ── Maximize/minimize panels ──
+
+    private void ToggleMaximize(string panelName)
+    {
+        maximizedPanel = maximizedPanel == panelName ? null : panelName;
+    }
+
+    private string GetPanelClass(string panelName)
+    {
+        if (maximizedPanel is null)
+        {
+            return "";
+        }
+
+        return maximizedPanel == panelName ? "maximized" : "hidden";
+    }
+
+    // ── Monaco editor markers ──
+
+    private async Task SetBindingsMarkers(List<BindingsDiagnostic>? diagnostics)
+    {
+        var model = await bindingsEditor.GetModel();
+        if (model is null)
+        {
+            return;
+        }
+
+        if (diagnostics is null || diagnostics.Count == 0)
+        {
+            await BlazorMonaco.Editor.Global.SetModelMarkers(
+                JSRuntime, model, "bindings-errors", []);
+            return;
+        }
+
+        var markers = diagnostics.Select(d => new MarkerData
+        {
+            Message = d.Message,
+            Severity = d.IsError ? MarkerSeverity.Error : MarkerSeverity.Warning,
+            StartLineNumber = d.StartLine,
+            StartColumn = d.StartColumn,
+            EndLineNumber = d.EndLine,
+            EndColumn = d.EndColumn,
+        }).ToList();
+
+        await BlazorMonaco.Editor.Global.SetModelMarkers(
+            JSRuntime, model, "bindings-errors", markers);
+    }
+
+    private async Task ClearBindingsMarkers()
+    {
+        var model = await bindingsEditor.GetModel();
+        if (model is not null)
+        {
+            await BlazorMonaco.Editor.Global.SetModelMarkers(
+                JSRuntime, model, "bindings-errors", []);
+        }
+    }
+
+    private async Task SetExpressionMarkers(EvaluationResult result, string expressionText)
+    {
+        var model = await expressionEditor.GetModel();
+        if (model is null || result.ErrorPosition is not int position)
+        {
+            return;
+        }
+
+        var (line, col) = OffsetToLineCol(expressionText, position);
+
+        int endCol = col + 1;
+        if (result.ErrorToken is string token && token.Length > 0)
+        {
+            endCol = col + token.Length;
+        }
+
+        var markers = new List<MarkerData>
+        {
+            new MarkerData
+            {
+                Message = result.ErrorMessage ?? "Error",
+                Severity = MarkerSeverity.Error,
+                StartLineNumber = line,
+                StartColumn = col,
+                EndLineNumber = line,
+                EndColumn = endCol,
+            },
+        };
+
+        await BlazorMonaco.Editor.Global.SetModelMarkers(
+            JSRuntime, model, "expression-errors", markers);
+    }
+
+    private async Task ClearExpressionMarkers()
+    {
+        var model = await expressionEditor.GetModel();
+        if (model is not null)
+        {
+            await BlazorMonaco.Editor.Global.SetModelMarkers(
+                JSRuntime, model, "expression-errors", []);
+        }
+    }
+
+    private async Task SetDataMarkers(EvaluationResult result)
+    {
+        var model = await dataEditor.GetModel();
+        if (model is null || result.ErrorLine is not int line || result.ErrorColumn is not int col)
+        {
+            return;
+        }
+
+        var markers = new List<MarkerData>
+        {
+            new MarkerData
+            {
+                Message = result.ErrorMessage ?? "Error",
+                Severity = MarkerSeverity.Error,
+                StartLineNumber = line,
+                StartColumn = col,
+                EndLineNumber = line,
+                EndColumn = col + 1,
+            },
+        };
+
+        await BlazorMonaco.Editor.Global.SetModelMarkers(
+            JSRuntime, model, "data-errors", markers);
+    }
+
+    private async Task ClearDataMarkers()
+    {
+        var model = await dataEditor.GetModel();
+        if (model is not null)
+        {
+            await BlazorMonaco.Editor.Global.SetModelMarkers(
+                JSRuntime, model, "data-errors", []);
+        }
+    }
+
+    private async Task ClearAllMarkers()
+    {
+        await ClearBindingsMarkers();
+        await ClearExpressionMarkers();
+        await ClearDataMarkers();
+    }
+
+    private static (int line, int col) OffsetToLineCol(string text, int offset)
+    {
+        int line = 1, col = 1;
+        int limit = Math.Min(offset, text.Length);
+        for (int i = 0; i < limit; i++)
+        {
+            if (text[i] == '\n')
+            {
+                line++;
+                col = 1;
+            }
+            else
+            {
+                col++;
+            }
+        }
+
+        return (line, col);
     }
 
     // ── Dispose ──

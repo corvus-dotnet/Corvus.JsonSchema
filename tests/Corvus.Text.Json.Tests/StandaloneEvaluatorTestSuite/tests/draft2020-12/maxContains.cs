@@ -205,3 +205,46 @@ public class SuiteMinContainsMaxContains : IClassFixture<SuiteMinContainsMaxCont
         }
     }
 }
+
+[Trait("StandaloneEvaluatorTestSuite", "Draft202012")]
+public class SuiteMaxContains0WithMinContains0 : IClassFixture<SuiteMaxContains0WithMinContains0.Fixture>
+{
+    private readonly Fixture _fixture;
+    public SuiteMaxContains0WithMinContains0(Fixture fixture)
+    {
+        _fixture = fixture;
+    }
+
+    [Fact]
+    public void TestEmptyArray()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("[ ]");
+        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [Fact]
+    public void TestOneMatchingItem()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("[ 1 ]");
+        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    public class Fixture : IAsyncLifetime
+    {
+        public CompiledEvaluator Evaluator { get; private set; }
+
+        public Task DisposeAsync() => Task.CompletedTask;
+
+        public async Task InitializeAsync()
+        {
+            this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
+                "tests\\draft2020-12\\maxContains.json",
+                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"contains\": {\"const\": 1},\r\n            \"minContains\": 0,\r\n            \"maxContains\": 0\r\n        }",
+                "StandaloneEvaluatorTestSuite.Draft202012.MaxContains",
+                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "https://json-schema.org/draft/2020-12/schema",
+                validateFormat: false,
+                Assembly.GetExecutingAssembly());
+        }
+    }
+}

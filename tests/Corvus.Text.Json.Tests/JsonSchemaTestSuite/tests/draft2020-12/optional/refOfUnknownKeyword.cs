@@ -177,7 +177,7 @@ public class SuiteReferenceInternalsOfKnownNonApplicator : IClassFixture<SuiteRe
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests\\draft2020-12\\optional\\refOfUnknownKeyword.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"$id\": \"/base\",\r\n            \"examples\": [\r\n              { \"type\": \"string\" }\r\n            ],\r\n            \"$ref\": \"#/examples/0\"\r\n        }",
+                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"examples\": [\r\n              { \"type\": \"string\" }\r\n            ],\r\n            \"$ref\": \"#/examples/0\"\r\n        }",
                 "JsonSchemaTestSuite.Draft202012.Optional.RefOfUnknownKeyword",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",

@@ -45,7 +45,7 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
 
         IncrementalValueProvider<GlobalOptions> globalOptions = initializationContext.AnalyzerConfigOptionsProvider.Select((provider, token) => GetGlobalOptions(VocabularyRegistry, provider, token));
 
-        IncrementalValuesProvider<AdditionalText> jsonSourceFiles = initializationContext.AdditionalTextsProvider.Where(p => p.Path.EndsWith(".json"));
+        IncrementalValuesProvider<AdditionalText> jsonSourceFiles = initializationContext.AdditionalTextsProvider.Where(static p => p.Path.EndsWith(".json") || p.Path.EndsWith(".yaml") || p.Path.EndsWith(".yml"));
 
         IncrementalValueProvider<PrepopulatedDocumentResolver> documentResolver = jsonSourceFiles.Collect().Select(SourceGeneratorHelpers.BuildDocumentResolver);
 
@@ -80,7 +80,7 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
             location = normalizedLocation;
         }
 
-        bool rebaseToRootPath = attribute.ConstructorArguments[0].Value as bool? ?? false;
+        bool rebaseToRootPath = attribute.ConstructorArguments[1].Value as bool? ?? false;
 
         bool emitEvaluator = false;
         foreach (KeyValuePair<string, TypedConstant> namedArg in attribute.NamedArguments)
@@ -239,7 +239,7 @@ public class IncrementalSourceGenerator : IIncrementalGenerator
 
                         /// <summary>
                         /// Gets or sets a value indicating whether to emit a standalone
-                        /// schema evaluator in addition to (or instead of) the generated types.
+                        /// schema evaluator in addition to the generated types.
                         /// </summary>
                         public bool EmitEvaluator { get; set; }
                     }

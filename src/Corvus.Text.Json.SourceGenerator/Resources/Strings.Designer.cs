@@ -140,5 +140,110 @@ namespace Resources
         /// <summary>Destination array is too small.</summary>
         public static string @DestinationArrayTooSmall => GetResourceString("DestinationArrayTooSmall", @"Destination array is too small.");
 
+        /// <summary>Unexpected end of YAML input at line {0}, column {1}.</summary>
+        public static string @UnexpectedEndOfInput => GetResourceString("UnexpectedEndOfInput", @"Unexpected end of YAML input at line {0}, column {1}.");
+
+        /// <summary>Invalid indentation at line {0}, column {1}. Tabs are not allowed for indentation in YAML.</summary>
+        public static string @InvalidIndentation => GetResourceString("InvalidIndentation", @"Invalid indentation at line {0}, column {1}. Tabs are not allowed for indentation in YAML.");
+
+        /// <summary>Duplicate mapping key at line {0}, column {1}.</summary>
+        public static string @DuplicateKey => GetResourceString("DuplicateKey", @"Duplicate mapping key at line {0}, column {1}.");
+
+        /// <summary>Multiple documents found but single-document mode is configured.</summary>
+        public static string @MultipleDocumentsNotAllowed => GetResourceString("MultipleDocumentsNotAllowed", @"Multiple documents found but single-document mode is configured. Use YamlDocumentMode.MultiAsArray to allow multiple documents.");
+
+        /// <summary>Invalid escape sequence '\\{0}' in double-quoted scalar at line {1}, column {2}.</summary>
+        public static string @InvalidEscapeSequence => GetResourceString("InvalidEscapeSequence", @"Invalid escape sequence '\\{0}' in double-quoted scalar at line {1}, column {2}.");
+
+        /// <summary>Unterminated double-quoted scalar starting at line {0}, column {1}.</summary>
+        public static string @UnterminatedDoubleQuotedScalar => GetResourceString("UnterminatedDoubleQuotedScalar", @"Unterminated double-quoted scalar starting at line {0}, column {1}.");
+
+        /// <summary>Unterminated single-quoted scalar starting at line {0}, column {1}.</summary>
+        public static string @UnterminatedSingleQuotedScalar => GetResourceString("UnterminatedSingleQuotedScalar", @"Unterminated single-quoted scalar starting at line {0}, column {1}.");
+
+        /// <summary>Unterminated flow sequence starting at line {0}, column {1}.</summary>
+        public static string @UnterminatedFlowSequence => GetResourceString("UnterminatedFlowSequence", @"Unterminated flow sequence starting at line {0}, column {1}.");
+
+        /// <summary>Unterminated flow mapping starting at line {0}, column {1}.</summary>
+        public static string @UnterminatedFlowMapping => GetResourceString("UnterminatedFlowMapping", @"Unterminated flow mapping starting at line {0}, column {1}.");
+
+        /// <summary>Maximum nesting depth of {0} exceeded at line {1}, column {2}.</summary>
+        public static string @MaxNestingDepthExceeded => GetResourceString("MaxNestingDepthExceeded", @"Maximum nesting depth of {0} exceeded at line {1}, column {2}.");
+
+        /// <summary>Alias expansion depth limit of {0} exceeded.</summary>
+        public static string @AliasExpansionDepthExceeded => GetResourceString("AliasExpansionDepthExceeded", @"Alias expansion depth limit of {0} exceeded. This may indicate a circular or deeply nested anchor/alias structure.");
+
+        /// <summary>Alias expansion size limit of {0} nodes exceeded.</summary>
+        public static string @AliasExpansionSizeExceeded => GetResourceString("AliasExpansionSizeExceeded", @"Alias expansion size limit of {0} nodes exceeded. This may indicate a billion-laughs attack.");
+
+        /// <summary>Undefined alias '*{0}' at line {1}, column {2}.</summary>
+        public static string @UndefinedAlias => GetResourceString("UndefinedAlias", @"Undefined alias '*{0}' at line {1}, column {2}.");
+
+        /// <summary>Invalid anchor name at line {0}, column {1}.</summary>
+        public static string @InvalidAnchorName => GetResourceString("InvalidAnchorName", @"Invalid anchor name at line {0}, column {1}. Anchor names must contain at least one character.");
+
+        /// <summary>Invalid tag handle at line {0}, column {1}.</summary>
+        public static string @InvalidTagHandle => GetResourceString("InvalidTagHandle", @"Invalid tag handle at line {0}, column {1}.");
+
+        /// <summary>Invalid block scalar header at line {0}, column {1}.</summary>
+        public static string @InvalidBlockScalarHeader => GetResourceString("InvalidBlockScalarHeader", @"Invalid block scalar header at line {0}, column {1}.");
+
+        /// <summary>Expected mapping value after key at line {0}, column {1}.</summary>
+        public static string @ExpectedMappingValue => GetResourceString("ExpectedMappingValue", @"Expected mapping value after key at line {0}, column {1}.");
+
+        /// <summary>Invalid UTF-8 byte sequence at line {0}, column {1}.</summary>
+        public static string @InvalidUtf8 => GetResourceString("InvalidUtf8", @"Invalid UTF-8 byte sequence at line {0}, column {1}.");
+
+        /// <summary>Unexpected character '{0}' at line {1}, column {2}.</summary>
+        public static string @UnexpectedCharacter => GetResourceString("UnexpectedCharacter", @"Unexpected character '{0}' at line {1}, column {2}.");
+
+        /// <summary>Invalid directive at line {0}, column {1}.</summary>
+        public static string @InvalidDirective => GetResourceString("InvalidDirective", @"Invalid directive at line {0}, column {1}.");
+
+        /// <summary>Complex (non-scalar) mapping keys are not supported in JSON conversion at line {0}, column {1}.</summary>
+        public static string @ComplexKeysNotSupported => GetResourceString("ComplexKeysNotSupported", @"Complex (non-scalar) mapping keys are not supported in JSON conversion at line {0}, column {1}.");
+
+        /// <summary>Duplicate %YAML directive at line {0}, column {1}.</summary>
+        public static string @DuplicateYamlDirective => GetResourceString("DuplicateYamlDirective", @"Duplicate %YAML directive at line {0}, column {1}.");
+
+        /// <summary>Directives must be followed by a document start marker (---) at line {0}, column {1}.</summary>
+        public static string @DirectiveWithoutDocumentStart => GetResourceString("DirectiveWithoutDocumentStart", @"Directives must be followed by a document start marker (---) at line {0}, column {1}.");
+
+        /// <summary>Tabs are not allowed for indentation in YAML at line {0}, column {1}.</summary>
+        public static string @TabInIndentation => GetResourceString("TabInIndentation", @"Tabs are not allowed for indentation in YAML at line {0}, column {1}.");
+
+        /// <summary>Unexpected content after node at line {0}, column {1}.</summary>
+        public static string @TrailingContentAfterNode => GetResourceString("TrailingContentAfterNode", @"Unexpected content after node at line {0}, column {1}.");
+
+        /// <summary>Invalid flow sequence entry at line {0}, column {1}.</summary>
+        public static string @InvalidFlowSequenceEntry => GetResourceString("InvalidFlowSequenceEntry", @"Invalid flow sequence entry at line {0}, column {1}.");
+
+        /// <summary>Missing comma separator in flow collection at line {0}, column {1}.</summary>
+        public static string @MissingFlowSeparator => GetResourceString("MissingFlowSeparator", @"Missing comma separator in flow collection at line {0}, column {1}.");
+
+        /// <summary>A node may have at most one anchor at line {0}, column {1}.</summary>
+        public static string @MultipleAnchors => GetResourceString("MultipleAnchors", @"A node may have at most one anchor at line {0}, column {1}.");
+
+        /// <summary>Unexpected content after document end marker (...) at line {0}, column {1}.</summary>
+        public static string @ContentAfterDocumentEndMarker => GetResourceString("ContentAfterDocumentEndMarker", @"Unexpected content after document end marker (...) at line {0}, column {1}.");
+
+        /// <summary>Content is not allowed on the same line as the document start marker (---) at line {0}, column {1}.</summary>
+        public static string @ContentOnDocumentStartLine => GetResourceString("ContentOnDocumentStartLine", @"Content is not allowed on the same line as the document start marker (---) at line {0}, column {1}.");
+
+        /// <summary>A comment (#) must be preceded by whitespace at line {0}, column {1}.</summary>
+        public static string @CommentMustBePreceededByWhitespace => GetResourceString("CommentMustBePreceededByWhitespace", @"A comment (#) must be preceded by whitespace at line {0}, column {1}.");
+
+        /// <summary>Implicit mapping keys must not span multiple lines at line {0}, column {1}.</summary>
+        public static string @MultilineImplicitKeyNotAllowed => GetResourceString("MultilineImplicitKeyNotAllowed", @"Implicit mapping keys must not span multiple lines at line {0}, column {1}.");
+
+        /// <summary>A block collection must not appear on the same line as an implicit mapping value at line {0}, column {1}.</summary>
+        public static string @BlockCollectionOnSameLine => GetResourceString("BlockCollectionOnSameLine", @"A block collection must not appear on the same line as an implicit mapping value at line {0}, column {1}.");
+
+        /// <summary>Flow content continuation line is under-indented at line {0}, column {1}.</summary>
+        public static string @FlowContentUnderindented => GetResourceString("FlowContentUnderindented", @"Flow content continuation line is under-indented at line {0}, column {1}.");
+
+        /// <summary>A node must not have more than one anchor at line {0}, column {1}.</summary>
+        public static string @DuplicateAnchor => GetResourceString("DuplicateAnchor", @"A node must not have more than one anchor at line {0}, column {1}.");
+
     }
 }

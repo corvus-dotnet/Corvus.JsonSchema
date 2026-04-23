@@ -229,10 +229,10 @@ public class SuiteUnevaluatedPropertiesWithAdjacentPatternProperties : IClassFix
 }
 
 [Trait("StandaloneEvaluatorTestSuite", "Draft201909")]
-public class SuiteUnevaluatedPropertiesWithAdjacentAdditionalProperties : IClassFixture<SuiteUnevaluatedPropertiesWithAdjacentAdditionalProperties.Fixture>
+public class SuiteUnevaluatedPropertiesWithAdjacentBoolAdditionalProperties : IClassFixture<SuiteUnevaluatedPropertiesWithAdjacentBoolAdditionalProperties.Fixture>
 {
     private readonly Fixture _fixture;
-    public SuiteUnevaluatedPropertiesWithAdjacentAdditionalProperties(Fixture fixture)
+    public SuiteUnevaluatedPropertiesWithAdjacentBoolAdditionalProperties(Fixture fixture)
     {
         _fixture = fixture;
     }
@@ -262,6 +262,49 @@ public class SuiteUnevaluatedPropertiesWithAdjacentAdditionalProperties : IClass
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests\\draft2019-09\\unevaluatedProperties.json",
                 "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"type\": \"object\",\r\n            \"properties\": {\r\n                \"foo\": { \"type\": \"string\" }\r\n            },\r\n            \"additionalProperties\": true,\r\n            \"unevaluatedProperties\": false\r\n        }",
+                "StandaloneEvaluatorTestSuite.Draft201909.UnevaluatedProperties",
+                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "https://json-schema.org/draft/2019-09/schema",
+                validateFormat: false,
+                Assembly.GetExecutingAssembly());
+        }
+    }
+}
+
+[Trait("StandaloneEvaluatorTestSuite", "Draft201909")]
+public class SuiteUnevaluatedPropertiesWithAdjacentNonBoolAdditionalProperties : IClassFixture<SuiteUnevaluatedPropertiesWithAdjacentNonBoolAdditionalProperties.Fixture>
+{
+    private readonly Fixture _fixture;
+    public SuiteUnevaluatedPropertiesWithAdjacentNonBoolAdditionalProperties(Fixture fixture)
+    {
+        _fixture = fixture;
+    }
+
+    [Fact]
+    public void TestWithNoAdditionalProperties()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\r\n                    \"foo\": \"foo\"\r\n                }");
+        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [Fact]
+    public void TestWithAdditionalProperties()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\r\n                    \"foo\": \"foo\",\r\n                    \"bar\": \"bar\"\r\n                }");
+        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    public class Fixture : IAsyncLifetime
+    {
+        public CompiledEvaluator Evaluator { get; private set; }
+
+        public Task DisposeAsync() => Task.CompletedTask;
+
+        public async Task InitializeAsync()
+        {
+            this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
+                "tests\\draft2019-09\\unevaluatedProperties.json",
+                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"type\": \"object\",\r\n            \"properties\": {\r\n                \"foo\": { \"type\": \"string\" }\r\n            },\r\n            \"additionalProperties\": {\"type\": \"string\"},\r\n            \"unevaluatedProperties\": false\r\n        }",
                 "StandaloneEvaluatorTestSuite.Draft201909.UnevaluatedProperties",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",

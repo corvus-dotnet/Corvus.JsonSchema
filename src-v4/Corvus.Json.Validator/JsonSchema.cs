@@ -430,9 +430,24 @@ public readonly struct JsonSchema
         return ctx is null
             ? throw new InvalidOperationException("Unable to find compilation context.")
             : ((IEnumerable<MetadataReference> MetadataReferences, IEnumerable<string?> Defines))(from l in ctx.CompileLibraries
-                                                                                                  from r in l.ResolveReferencePaths()
+                                                                                                  from r in TryResolveReferencePaths(l)
                                                                                                   select MetadataReference.CreateFromFile(r),
                ctx.CompilationOptions.Defines.AsEnumerable().Union(["DYNAMIC_BUILD"]));
+    }
+
+    private static IEnumerable<string> TryResolveReferencePaths(CompilationLibrary library)
+    {
+        try
+        {
+            return library.ResolveReferencePaths();
+        }
+        catch (InvalidOperationException)
+        {
+            // Some reference assembly entries (e.g., System.ValueTuple.Reference) may not be
+            // resolvable when the framework reference assemblies are not available. These types
+            // are typically in-box in the target framework and reachable through other references.
+            return [];
+        }
     }
 
     private static IEnumerable<SyntaxTree> ParseSyntaxTrees(IReadOnlyCollection<GeneratedCodeFile> generatedTypes, IEnumerable<string?> defines)

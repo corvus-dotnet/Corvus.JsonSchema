@@ -45,7 +45,7 @@ Scenario Outline: maximum validation with unsigned integer
     Examples:
         | inputDataReference   | valid | description                                                                      |
         # 299.97
-        | #/001/tests/000/data | true  | below the maximum is invalid                                                     |
+        | #/001/tests/000/data | true  | below the maximum is valid                                                       |
         # 300
         | #/001/tests/001/data | true  | boundary point integer is valid                                                  |
         # 300.00

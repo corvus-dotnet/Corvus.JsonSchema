@@ -313,7 +313,7 @@ public readonly partial struct CmakePresetsSchema
                 return JsonSchema.Evaluate(_parent, _idx, resultsCollector);
             }
 
-            private void CheckValidInstance()
+            private readonly void CheckValidInstance()
             {
                 if (_parent == null)
                 {
@@ -701,6 +701,48 @@ public readonly partial struct CmakePresetsSchema
             JsonValueKind IJsonElement.ValueKind => ValueKind;
 
             /// <summary>
+            /// Gets a <see cref="BuildPresetsV2"/> which can be safely stored beyond the lifetime of the
+            /// original document.
+            /// </summary>
+            /// <returns>
+            /// A <see cref="BuildPresetsV2"/> which can be safely stored beyond the lifetime of the
+            /// original document.
+            /// </returns>
+            /// <remarks>
+            /// <para>
+            /// This serializes the element and re-parses it into a standalone heap-allocated
+            /// document. The result is independent of the workspace.
+            /// </para>
+            /// </remarks>
+            public readonly BuildPresetsV2 Clone()
+            {
+                CheckValidInstance();
+                return _parent.CloneElement<BuildPresetsV2>(_idx);
+            }
+
+            /// <summary>
+            /// Creates a frozen (immutable) copy of this element, backed by a new
+            /// document builder registered in the same workspace.
+            /// </summary>
+            /// <returns>
+            /// An immutable <see cref="BuildPresetsV2"/> that lives for the lifetime of its
+            /// workspace and its associated documents.
+            /// </returns>
+            /// <remarks>
+            /// <para>
+            /// Unlike <see cref="Clone()"/>, which serializes the element and re-parses it
+            /// into a standalone heap-allocated document, <c>Freeze()</c> performs a cheap
+            /// blit of the metadata and value backing arrays. The resulting element is
+            /// immutable but is only valid for the lifetime of the workspace.
+            /// </para>
+            /// </remarks>
+            public readonly BuildPresetsV2 Freeze()
+            {
+                CheckValidInstance();
+                return _parent.FreezeElement<BuildPresetsV2>(_idx);
+            }
+
+            /// <summary>
             /// Gets the value as a <see cref="Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.BuildPresetsItemsV2" />.
             /// </summary>
             /// <param name="result">The result of the conversions.</param>
@@ -1023,11 +1065,12 @@ public readonly partial struct CmakePresetsSchema
         /// </summary>
         /// <param name="workspace">The JSON workspace.</param>
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
         /// <returns>An empty mutable document builder.</returns>
         public static JsonDocumentBuilder<Mutable> CreateBuilder(
-            JsonWorkspace workspace, int initialCapacity = 30)
+            JsonWorkspace workspace, int initialCapacity = 30, int initialValueBufferSize = 8192)
         {
-            JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+            JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
             ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
             cvb.StartArray();
             cvb.EndArray();

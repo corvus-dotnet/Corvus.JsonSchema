@@ -118,10 +118,10 @@ public readonly partial struct Schema
             }
 
 #if NET8_0_OR_GREATER && !DYNAMIC_BUILD
-            [GeneratedRegex("^3\\.1\\.\\d+(-.+)?$")]
+            [GeneratedRegex("^3\\.1\\.[0-9]+(-[^\\n\\r\\u2028\\u2029]+)?$")]
             private static partial Regex CreatePattern();
 #else
-            private static Regex CreatePattern() => new("^3\\.1\\.\\d+(-.+)?$", RegexOptions.Compiled);
+            private static Regex CreatePattern() => new("^3\\.1\\.[0-9]+(-[^\\n\\r\\u2028\\u2029]+)?$", RegexOptions.Compiled);
 #endif
 
             /// <summary>

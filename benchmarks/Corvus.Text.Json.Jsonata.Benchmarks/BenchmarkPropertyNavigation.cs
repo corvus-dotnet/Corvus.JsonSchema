@@ -47,6 +47,11 @@ public class BenchmarkPropertyNavigation : JsonataBenchmarkBase
     private const string ExprQuotedProperty = "Account.`Account Name`";
     private const string ExprArrayIndex = "Account.Order[0].OrderID";
 
+    private static readonly byte[] ExprDeepPathUtf8 = "Account.Order.Product.Price"u8.ToArray();
+    private static readonly byte[] ExprQuotedPropertyUtf8 = "Account.`Account Name`"u8.ToArray();
+    private static readonly byte[] ExprArrayIndexUtf8 = "Account.Order[0].OrderID"u8.ToArray();
+
+
     private JsonataEvaluator evaluator = null!;
     private ParsedJsonDocument<JsonElement>? doc;
     private JsonElement data;
@@ -69,9 +74,9 @@ public class BenchmarkPropertyNavigation : JsonataBenchmarkBase
         this.data = this.doc.RootElement;
         this.evaluator = new JsonataEvaluator();
         this.workspace = JsonWorkspace.Create();
-        this.evaluator.Evaluate(ExprDeepPath, this.data);
-        this.evaluator.Evaluate(ExprQuotedProperty, this.data);
-        this.evaluator.Evaluate(ExprArrayIndex, this.data);
+        this.evaluator.Evaluate(ExprDeepPathUtf8, this.data, this.workspace, cacheKey: ExprDeepPath);
+        this.evaluator.Evaluate(ExprQuotedPropertyUtf8, this.data, this.workspace, cacheKey: ExprQuotedProperty);
+        this.evaluator.Evaluate(ExprArrayIndexUtf8, this.data, this.workspace, cacheKey: ExprArrayIndex);
 
         // Warm up source-generated evaluators (first call compiles + caches)
         DeepPathCodeGen.Evaluate(this.data, this.workspace);
@@ -107,7 +112,7 @@ public class BenchmarkPropertyNavigation : JsonataBenchmarkBase
     public JsonElement Corvus_DeepPath()
     {
         this.workspace.Reset();
-        return this.evaluator.Evaluate(ExprDeepPath, this.data, this.workspace);
+        return this.evaluator.Evaluate(ExprDeepPathUtf8, this.data, this.workspace, cacheKey: ExprDeepPath);
     }
 
 #if !NETFRAMEWORK
@@ -128,7 +133,7 @@ public class BenchmarkPropertyNavigation : JsonataBenchmarkBase
     public JsonElement Corvus_QuotedProperty()
     {
         this.workspace.Reset();
-        return this.evaluator.Evaluate(ExprQuotedProperty, this.data, this.workspace);
+        return this.evaluator.Evaluate(ExprQuotedPropertyUtf8, this.data, this.workspace, cacheKey: ExprQuotedProperty);
     }
 
 #if !NETFRAMEWORK
@@ -149,7 +154,7 @@ public class BenchmarkPropertyNavigation : JsonataBenchmarkBase
     public JsonElement Corvus_ArrayIndex()
     {
         this.workspace.Reset();
-        return this.evaluator.Evaluate(ExprArrayIndex, this.data, this.workspace);
+        return this.evaluator.Evaluate(ExprArrayIndexUtf8, this.data, this.workspace, cacheKey: ExprArrayIndex);
     }
 
 #if !NETFRAMEWORK

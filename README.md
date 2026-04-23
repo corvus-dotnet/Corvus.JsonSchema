@@ -6,12 +6,17 @@ High-performance, source-generated, strongly-typed C# models from JSON Schema �
 
 ## Features
 
-- **Source Generation** — Generate strongly-typed C# from JSON Schema at build time with the Roslyn incremental source generator, or ahead of time with the `generatejsonschematypes` CLI tool.
+- **Source Generation** — Generate strongly-typed C# from JSON Schema at build time with the Roslyn incremental source generator, or ahead of time with the `corvusjson` CLI tool.
 - **Schema Validation** — Full JSON Schema draft 4, 6, 7, 2019-09, and 2020-12 validation. Over 10× faster than other .NET JSON Schema validators.
 - **Pooled Memory** — `ParsedJsonDocument<T>` uses `ArrayPool<byte>` for minimal GC impact. Just 120B per-document vs 1,528B for `JsonNode` — 92% less memory.
 - **Mutable Documents** — `JsonDocumentBuilder<T>` and `JsonWorkspace` provide a builder pattern for creating and modifying JSON with pooled workspace memory.
 - **Extended Types** — `BigNumber` for arbitrary-precision decimals, `BigInteger` for large integers, plus NodaTime integration for `date`, `date-time`, `time`, and `duration` formats.
 - **Pattern Matching** — Type-safe `Match()` for `oneOf`/`anyOf` discriminated unions with exhaustive dispatch.
+- **[JSONata](#jsonata)** — Full [JSONata](https://jsonata.org/) query and transformation language with 100% test-suite conformance. Interpreted and code-generated evaluation modes.
+- **[JMESPath](#jmespath)** — Full [JMESPath](https://jmespath.org/) query language with 100% conformance against the official test suite. Interpreted and code-generated evaluation modes.
+- **JsonLogic** — Complete [JsonLogic](https://jsonlogic.com/) rule engine for evaluating business rules against JSON data with interpreted and code-generated modes.
+- **JSON Patch** — RFC 6902 JSON Patch with pooled-memory operations on `JsonElement`.
+- **[YAML](#yaml)** — High-performance YAML 1.2 to JSON converter with 100% yaml-test-suite conformance. Zero-allocation `ref struct` tokenizer.
 
 ## Quick Start
 
@@ -37,7 +42,7 @@ using var doc = ParsedJsonDocument<Person>.Parse(
 Person person = doc.RootElement;
 
 string name = (string)person.Name;           // "Alice"
-int age = person.Age;                        // 30
+int age = (int)person.Age;                        // 30
 
 // 4. Validate against the schema
 bool valid = person.EvaluateSchema();        // true
@@ -58,8 +63,18 @@ Console.WriteLine(root.ToString());
 |---|---|
 | **Corvus.Text.Json** | Core runtime library. Required by all generated types. |
 | **Corvus.Text.Json.SourceGenerator** | Roslyn incremental source generator. Generates C# from JSON Schema at build time. |
-| **Corvus.Json.CodeGenerator** | CLI tool (`generatejsonschematypes`) for ahead-of-time code generation. |
+| **Corvus.Json.Cli** | CLI tool (`corvusjson`) for ahead-of-time code generation. |
+| **Corvus.Json.CodeGenerator** | Legacy CLI tool (`generatejsonschematypes`). Delegates to the same engine; defaults to V4. |
 | **Corvus.Text.Json.Validator** | Dynamically load and validate JSON against JSON Schema at runtime using Roslyn. |
+| **Corvus.Text.Json.Jsonata** | JSONata query and transformation language — interpreted runtime evaluator. |
+| **Corvus.Text.Json.Jsonata.SourceGenerator** | Roslyn source generator for compile-time JSONata code generation. |
+| **Corvus.Text.Json.JMESPath** | JMESPath query language — interpreted runtime evaluator. |
+| **Corvus.Text.Json.JMESPath.SourceGenerator** | Roslyn source generator for compile-time JMESPath code generation. |
+| **Corvus.Text.Json.JsonLogic** | JsonLogic rule engine — interpreted runtime evaluator. |
+| **Corvus.Text.Json.JsonLogic.SourceGenerator** | Roslyn source generator for compile-time JsonLogic code generation. |
+| **Corvus.Text.Json.Patch** | RFC 6902 JSON Patch with pooled-memory operations. |
+| **Corvus.Text.Json.Yaml** | YAML 1.2 to JSON converter with Corvus document model integration. |
+| **Corvus.Yaml.SystemTextJson** | YAML 1.2 to JSON converter using only System.Text.Json (no Corvus dependency). |
 
 ### Install
 
@@ -68,7 +83,7 @@ Console.WriteLine(root.ToString());
 dotnet add package Corvus.Text.Json
 
 # CLI code generator
-dotnet tool install --global Corvus.Json.CodeGenerator
+dotnet tool install --global Corvus.Json.Cli
 ```
 
 For the source generator, add as an analyzer reference:
@@ -112,6 +127,9 @@ Then open http://localhost:5000.
 - [Source Generator](docs/SourceGenerator.md)
 - [CLI Code Generation](docs/CodeGenerator.md)
 - [Dynamic Schema Validation](docs/Validator.md)
+- [JSONata Query & Transformation](docs/Jsonata.md)
+- [JMESPath Query Language](docs/JMESPath.md)
+- [YAML to JSON Converter](docs/Yaml.md)
 - [Migrating from V4](docs/MigratingFromV4ToV5.md)
 
 ## Building
@@ -137,6 +155,80 @@ dotnet test Corvus.Text.Json.slnx --filter "category!=failing&category!=outerloo
 | Date/Time | `DateTime`, `DateTimeOffset` | All .NET types plus NodaTime |
 | Numeric precision | `decimal` (28 digits) | `BigNumber` (arbitrary precision), `Int128`, `Half` |
 | String/URI handling | .NET string allocation | Zero-allocation UTF-8/UTF-16 access |
+
+## JSONata
+
+`Corvus.Text.Json.Jsonata` implements [JSONata](https://jsonata.org/) — an expressive, Turing-complete functional query and transformation language for JSON. It supports path navigation, predicate filtering, higher-order functions (`$map`, `$filter`, `$reduce`, `$sort`), object construction, string manipulation, arithmetic, regular expressions, and user-defined functions.
+
+- **100% conformance** — passes all 1,665 tests in the official [JSONata test suite](https://github.com/jsonata-js/jsonata)
+- **Up to 8× faster** than [Jsonata.Net.Native](https://github.com/mikhail-barg/jsonata.net.native) with 90–100% less memory allocation
+- **Code-generated evaluation** — source generator and CLI tool produce optimized static C# (up to 12× faster)
+- **Zero-allocation hot path** — pooled workspace memory with `ArrayPool`-backed evaluation
+
+```csharp
+using Corvus.Text.Json.Jsonata;
+
+string? result = JsonataEvaluator.Default.EvaluateToString(
+    "Account.Order.Product.Price ~> $sum()",
+    """{"Account":{"Order":[{"Product":{"Price":10}},{"Product":{"Price":20}}]}}""");
+// result: "30"
+```
+
+See [JSONata documentation](docs/Jsonata.md) for the full API, code generation, and performance benchmarks.
+
+## JMESPath
+
+`Corvus.Text.Json.JMESPath` implements [JMESPath](https://jmespath.org/) — a query language for JSON that supports path navigation, sub-expressions, index access, slicing, list and object projections, flatten, filter expressions, multiselect lists and hashes, pipe expressions, comparisons, and built-in functions.
+
+- **100% conformance** — passes all 892 conformance test cases in the official [JMESPath Compliance Test Suite](https://github.com/jmespath/jmespath.test)
+- **Up to 150× faster** than [JmesPath.Net](https://github.com/jdevillard/JmesPath.Net) on common benchmarks with zero allocation
+- **Code-generated evaluation** — source generator and CLI tool produce optimized static C#
+- **Zero-allocation hot path** — pooled workspace memory with `ArrayPool`-backed evaluation
+
+```csharp
+using Corvus.Text.Json.JMESPath;
+
+JsonElement result = JMESPathEvaluator.Default.Search(
+    "locations[?state == 'WA'].name | sort(@) | {WashingtonCities: join(', ', @)}",
+    JsonElement.ParseValue("""
+    {
+      "locations": [
+        {"name": "Seattle", "state": "WA"},
+        {"name": "New York", "state": "NY"},
+        {"name": "Bellevue", "state": "WA"},
+        {"name": "Olympia", "state": "WA"}
+      ]
+    }
+    """u8));
+
+Console.WriteLine(result); // {"WashingtonCities":"Bellevue, Olympia, Seattle"}
+```
+
+See [JMESPath documentation](docs/JMESPath.md) for the full API, code generation, and performance benchmarks.
+
+## YAML
+
+`Corvus.Text.Json.Yaml` is a high-performance YAML 1.2 to JSON converter built on a custom `ref struct` tokenizer operating directly on UTF-8 bytes. It supports all YAML scalar styles, flow and block collections, anchors and aliases, multi-document streams, and four schema modes.
+
+- **100% conformance** — passes all 402 tests in the [yaml-test-suite](https://github.com/yaml/yaml-test-suite) (308 valid + 94 invalid)
+- **Zero-allocation** on the hot path with `stackalloc`/`ArrayPool` pattern
+- **Two packages**: `Corvus.Text.Json.Yaml` (full Corvus integration) and `Corvus.Yaml.SystemTextJson` (System.Text.Json only)
+
+```csharp
+using Corvus.Text.Json;
+using Corvus.Text.Json.Yaml;
+
+string yaml = """
+    name: Alice
+    age: 30
+    hobbies: [reading, cycling]
+    """;
+
+using ParsedJsonDocument<JsonElement> doc = YamlDocument.Parse<JsonElement>(yaml);
+Console.WriteLine(doc.RootElement.GetProperty("name").GetString()); // "Alice"
+```
+
+See [YAML documentation](docs/Yaml.md) for the full API, configuration options, and supported YAML features. **[Try the YAML Playground](docs/playground-yaml/)** to convert between YAML and JSON in your browser.
 
 ## Supported platforms
 

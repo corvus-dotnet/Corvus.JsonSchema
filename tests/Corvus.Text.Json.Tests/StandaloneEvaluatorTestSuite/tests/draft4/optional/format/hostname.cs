@@ -72,6 +72,13 @@ public class SuiteValidationOfHostNames : IClassFixture<SuiteValidationOfHostNam
     }
 
     [Fact]
+    public void TestHostnameWithConsecutiveHyphensRfc1123()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"ab--cd.example\"");
+        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [Fact]
     public void TestAHostNameStartingWithAnIllegalCharacter()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"-a-host-name-that-starts-with--\"");

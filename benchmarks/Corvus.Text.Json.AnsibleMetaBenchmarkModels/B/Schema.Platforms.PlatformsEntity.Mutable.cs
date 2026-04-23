@@ -2006,7 +2006,7 @@ public readonly partial struct Schema
                     return JsonSchema.Evaluate(_parent, _idx, resultsCollector);
                 }
 
-                private void CheckValidInstance()
+                private readonly void CheckValidInstance()
                 {
                     if (_parent == null)
                     {
@@ -2216,6 +2216,48 @@ public readonly partial struct Schema
 
                 [DebuggerBrowsable(DebuggerBrowsableState.Never)]
                 JsonValueKind IJsonElement.ValueKind => ValueKind;
+
+                /// <summary>
+                /// Gets a <see cref="PlatformsEntity"/> which can be safely stored beyond the lifetime of the
+                /// original document.
+                /// </summary>
+                /// <returns>
+                /// A <see cref="PlatformsEntity"/> which can be safely stored beyond the lifetime of the
+                /// original document.
+                /// </returns>
+                /// <remarks>
+                /// <para>
+                /// This serializes the element and re-parses it into a standalone heap-allocated
+                /// document. The result is independent of the workspace.
+                /// </para>
+                /// </remarks>
+                public readonly PlatformsEntity Clone()
+                {
+                    CheckValidInstance();
+                    return _parent.CloneElement<PlatformsEntity>(_idx);
+                }
+
+                /// <summary>
+                /// Creates a frozen (immutable) copy of this element, backed by a new
+                /// document builder registered in the same workspace.
+                /// </summary>
+                /// <returns>
+                /// An immutable <see cref="PlatformsEntity"/> that lives for the lifetime of its
+                /// workspace and its associated documents.
+                /// </returns>
+                /// <remarks>
+                /// <para>
+                /// Unlike <see cref="Clone()"/>, which serializes the element and re-parses it
+                /// into a standalone heap-allocated document, <c>Freeze()</c> performs a cheap
+                /// blit of the metadata and value backing arrays. The resulting element is
+                /// immutable but is only valid for the lifetime of the workspace.
+                /// </para>
+                /// </remarks>
+                public readonly PlatformsEntity Freeze()
+                {
+                    CheckValidInstance();
+                    return _parent.FreezeElement<PlatformsEntity>(_idx);
+                }
 
                 /// <summary>
                 /// Matches the value against the composed values, and returns the result of calling the provided match function for the first match found.
@@ -6717,11 +6759,12 @@ public readonly partial struct Schema
             /// </summary>
             /// <param name="workspace">The JSON workspace.</param>
             /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
             /// <returns>An empty mutable document builder.</returns>
             public static JsonDocumentBuilder<Mutable> CreateBuilder(
-                JsonWorkspace workspace, int initialCapacity = 30)
+                JsonWorkspace workspace, int initialCapacity = 30, int initialValueBufferSize = 8192)
             {
-                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
                 cvb.StartObject();
                 cvb.EndObject();
@@ -6735,12 +6778,13 @@ public readonly partial struct Schema
             /// <param name="workspace">The JSON workspace.</param>
             /// <param name="value">The value with which to initialize the builder.</param>
             /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
             /// <returns>An instance of a mutable document initialized with the given value.</returns>
             public static JsonDocumentBuilder<Mutable> CreateBuilder(
-                JsonWorkspace workspace, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.AixPlatformModel.Builder.Build value, int initialCapacity = 30)
+                JsonWorkspace workspace, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.AixPlatformModel.Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
             {
                 // Create the document builder without a MetadataDb
-                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
                 var source = new Corvus.AnsibleMetaBenchmark.Baseline.Schema.AixPlatformModel.Source(value);
                 source.AddAsItem(ref cvb);
@@ -6757,15 +6801,16 @@ public readonly partial struct Schema
             /// <param name="context">The context to pass to the builder.</param>
             /// <param name="value">The value with which to initialize the builder.</param>
             /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
             /// <returns>An instance of a mutable document initialized with the given value.</returns>
             public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(
-                JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.AixPlatformModel.Builder.Build<TContext> value, int initialCapacity = 30)
+                JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.AixPlatformModel.Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
                 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
                 #endif
             {
                 // Create the document builder without a MetadataDb
-                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
                 var source = new Corvus.AnsibleMetaBenchmark.Baseline.Schema.AixPlatformModel.Source<TContext>(context, value);
                 source.AddAsItem(ref cvb);
@@ -6780,12 +6825,13 @@ public readonly partial struct Schema
             /// <param name="workspace">The JSON workspace.</param>
             /// <param name="value">The value with which to initialize the builder.</param>
             /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
             /// <returns>An instance of a mutable document initialized with the given value.</returns>
             public static JsonDocumentBuilder<Mutable> CreateBuilder(
-                JsonWorkspace workspace, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.AlpinePlatformModel.Builder.Build value, int initialCapacity = 30)
+                JsonWorkspace workspace, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.AlpinePlatformModel.Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
             {
                 // Create the document builder without a MetadataDb
-                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
                 var source = new Corvus.AnsibleMetaBenchmark.Baseline.Schema.AlpinePlatformModel.Source(value);
                 source.AddAsItem(ref cvb);
@@ -6802,15 +6848,16 @@ public readonly partial struct Schema
             /// <param name="context">The context to pass to the builder.</param>
             /// <param name="value">The value with which to initialize the builder.</param>
             /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
             /// <returns>An instance of a mutable document initialized with the given value.</returns>
             public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(
-                JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.AlpinePlatformModel.Builder.Build<TContext> value, int initialCapacity = 30)
+                JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.AlpinePlatformModel.Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
                 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
                 #endif
             {
                 // Create the document builder without a MetadataDb
-                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
                 var source = new Corvus.AnsibleMetaBenchmark.Baseline.Schema.AlpinePlatformModel.Source<TContext>(context, value);
                 source.AddAsItem(ref cvb);
@@ -6825,12 +6872,13 @@ public readonly partial struct Schema
             /// <param name="workspace">The JSON workspace.</param>
             /// <param name="value">The value with which to initialize the builder.</param>
             /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
             /// <returns>An instance of a mutable document initialized with the given value.</returns>
             public static JsonDocumentBuilder<Mutable> CreateBuilder(
-                JsonWorkspace workspace, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.AmazonLinuxPlatformModel.Builder.Build value, int initialCapacity = 30)
+                JsonWorkspace workspace, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.AmazonLinuxPlatformModel.Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
             {
                 // Create the document builder without a MetadataDb
-                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
                 var source = new Corvus.AnsibleMetaBenchmark.Baseline.Schema.AmazonLinuxPlatformModel.Source(value);
                 source.AddAsItem(ref cvb);
@@ -6847,15 +6895,16 @@ public readonly partial struct Schema
             /// <param name="context">The context to pass to the builder.</param>
             /// <param name="value">The value with which to initialize the builder.</param>
             /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
             /// <returns>An instance of a mutable document initialized with the given value.</returns>
             public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(
-                JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.AmazonLinuxPlatformModel.Builder.Build<TContext> value, int initialCapacity = 30)
+                JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.AmazonLinuxPlatformModel.Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
                 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
                 #endif
             {
                 // Create the document builder without a MetadataDb
-                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
                 var source = new Corvus.AnsibleMetaBenchmark.Baseline.Schema.AmazonLinuxPlatformModel.Source<TContext>(context, value);
                 source.AddAsItem(ref cvb);
@@ -6870,12 +6919,13 @@ public readonly partial struct Schema
             /// <param name="workspace">The JSON workspace.</param>
             /// <param name="value">The value with which to initialize the builder.</param>
             /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
             /// <returns>An instance of a mutable document initialized with the given value.</returns>
             public static JsonDocumentBuilder<Mutable> CreateBuilder(
-                JsonWorkspace workspace, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.AmazonPlatformModel.Builder.Build value, int initialCapacity = 30)
+                JsonWorkspace workspace, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.AmazonPlatformModel.Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
             {
                 // Create the document builder without a MetadataDb
-                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
                 var source = new Corvus.AnsibleMetaBenchmark.Baseline.Schema.AmazonPlatformModel.Source(value);
                 source.AddAsItem(ref cvb);
@@ -6892,15 +6942,16 @@ public readonly partial struct Schema
             /// <param name="context">The context to pass to the builder.</param>
             /// <param name="value">The value with which to initialize the builder.</param>
             /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
             /// <returns>An instance of a mutable document initialized with the given value.</returns>
             public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(
-                JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.AmazonPlatformModel.Builder.Build<TContext> value, int initialCapacity = 30)
+                JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.AmazonPlatformModel.Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
                 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
                 #endif
             {
                 // Create the document builder without a MetadataDb
-                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
                 var source = new Corvus.AnsibleMetaBenchmark.Baseline.Schema.AmazonPlatformModel.Source<TContext>(context, value);
                 source.AddAsItem(ref cvb);
@@ -6915,12 +6966,13 @@ public readonly partial struct Schema
             /// <param name="workspace">The JSON workspace.</param>
             /// <param name="value">The value with which to initialize the builder.</param>
             /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
             /// <returns>An instance of a mutable document initialized with the given value.</returns>
             public static JsonDocumentBuilder<Mutable> CreateBuilder(
-                JsonWorkspace workspace, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.AosPlatformModel.Builder.Build value, int initialCapacity = 30)
+                JsonWorkspace workspace, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.AosPlatformModel.Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
             {
                 // Create the document builder without a MetadataDb
-                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
                 var source = new Corvus.AnsibleMetaBenchmark.Baseline.Schema.AosPlatformModel.Source(value);
                 source.AddAsItem(ref cvb);
@@ -6937,15 +6989,16 @@ public readonly partial struct Schema
             /// <param name="context">The context to pass to the builder.</param>
             /// <param name="value">The value with which to initialize the builder.</param>
             /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
             /// <returns>An instance of a mutable document initialized with the given value.</returns>
             public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(
-                JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.AosPlatformModel.Builder.Build<TContext> value, int initialCapacity = 30)
+                JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.AosPlatformModel.Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
                 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
                 #endif
             {
                 // Create the document builder without a MetadataDb
-                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
                 var source = new Corvus.AnsibleMetaBenchmark.Baseline.Schema.AosPlatformModel.Source<TContext>(context, value);
                 source.AddAsItem(ref cvb);
@@ -6960,12 +7013,13 @@ public readonly partial struct Schema
             /// <param name="workspace">The JSON workspace.</param>
             /// <param name="value">The value with which to initialize the builder.</param>
             /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
             /// <returns>An instance of a mutable document initialized with the given value.</returns>
             public static JsonDocumentBuilder<Mutable> CreateBuilder(
-                JsonWorkspace workspace, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.ArchLinuxPlatformModel.Builder.Build value, int initialCapacity = 30)
+                JsonWorkspace workspace, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.ArchLinuxPlatformModel.Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
             {
                 // Create the document builder without a MetadataDb
-                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
                 var source = new Corvus.AnsibleMetaBenchmark.Baseline.Schema.ArchLinuxPlatformModel.Source(value);
                 source.AddAsItem(ref cvb);
@@ -6982,15 +7036,16 @@ public readonly partial struct Schema
             /// <param name="context">The context to pass to the builder.</param>
             /// <param name="value">The value with which to initialize the builder.</param>
             /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
             /// <returns>An instance of a mutable document initialized with the given value.</returns>
             public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(
-                JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.ArchLinuxPlatformModel.Builder.Build<TContext> value, int initialCapacity = 30)
+                JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.ArchLinuxPlatformModel.Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
                 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
                 #endif
             {
                 // Create the document builder without a MetadataDb
-                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
                 var source = new Corvus.AnsibleMetaBenchmark.Baseline.Schema.ArchLinuxPlatformModel.Source<TContext>(context, value);
                 source.AddAsItem(ref cvb);
@@ -7005,12 +7060,13 @@ public readonly partial struct Schema
             /// <param name="workspace">The JSON workspace.</param>
             /// <param name="value">The value with which to initialize the builder.</param>
             /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
             /// <returns>An instance of a mutable document initialized with the given value.</returns>
             public static JsonDocumentBuilder<Mutable> CreateBuilder(
-                JsonWorkspace workspace, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.ClearLinuxPlatformModel.Builder.Build value, int initialCapacity = 30)
+                JsonWorkspace workspace, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.ClearLinuxPlatformModel.Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
             {
                 // Create the document builder without a MetadataDb
-                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
                 var source = new Corvus.AnsibleMetaBenchmark.Baseline.Schema.ClearLinuxPlatformModel.Source(value);
                 source.AddAsItem(ref cvb);
@@ -7027,15 +7083,16 @@ public readonly partial struct Schema
             /// <param name="context">The context to pass to the builder.</param>
             /// <param name="value">The value with which to initialize the builder.</param>
             /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
             /// <returns>An instance of a mutable document initialized with the given value.</returns>
             public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(
-                JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.ClearLinuxPlatformModel.Builder.Build<TContext> value, int initialCapacity = 30)
+                JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.ClearLinuxPlatformModel.Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
                 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
                 #endif
             {
                 // Create the document builder without a MetadataDb
-                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
                 var source = new Corvus.AnsibleMetaBenchmark.Baseline.Schema.ClearLinuxPlatformModel.Source<TContext>(context, value);
                 source.AddAsItem(ref cvb);
@@ -7050,12 +7107,13 @@ public readonly partial struct Schema
             /// <param name="workspace">The JSON workspace.</param>
             /// <param name="value">The value with which to initialize the builder.</param>
             /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
             /// <returns>An instance of a mutable document initialized with the given value.</returns>
             public static JsonDocumentBuilder<Mutable> CreateBuilder(
-                JsonWorkspace workspace, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.CumulusPlatformModel.Builder.Build value, int initialCapacity = 30)
+                JsonWorkspace workspace, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.CumulusPlatformModel.Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
             {
                 // Create the document builder without a MetadataDb
-                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
                 var source = new Corvus.AnsibleMetaBenchmark.Baseline.Schema.CumulusPlatformModel.Source(value);
                 source.AddAsItem(ref cvb);
@@ -7072,15 +7130,16 @@ public readonly partial struct Schema
             /// <param name="context">The context to pass to the builder.</param>
             /// <param name="value">The value with which to initialize the builder.</param>
             /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
             /// <returns>An instance of a mutable document initialized with the given value.</returns>
             public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(
-                JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.CumulusPlatformModel.Builder.Build<TContext> value, int initialCapacity = 30)
+                JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.CumulusPlatformModel.Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
                 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
                 #endif
             {
                 // Create the document builder without a MetadataDb
-                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
                 var source = new Corvus.AnsibleMetaBenchmark.Baseline.Schema.CumulusPlatformModel.Source<TContext>(context, value);
                 source.AddAsItem(ref cvb);
@@ -7095,12 +7154,13 @@ public readonly partial struct Schema
             /// <param name="workspace">The JSON workspace.</param>
             /// <param name="value">The value with which to initialize the builder.</param>
             /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
             /// <returns>An instance of a mutable document initialized with the given value.</returns>
             public static JsonDocumentBuilder<Mutable> CreateBuilder(
-                JsonWorkspace workspace, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.DebianPlatformModel.Builder.Build value, int initialCapacity = 30)
+                JsonWorkspace workspace, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.DebianPlatformModel.Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
             {
                 // Create the document builder without a MetadataDb
-                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
                 var source = new Corvus.AnsibleMetaBenchmark.Baseline.Schema.DebianPlatformModel.Source(value);
                 source.AddAsItem(ref cvb);
@@ -7117,15 +7177,16 @@ public readonly partial struct Schema
             /// <param name="context">The context to pass to the builder.</param>
             /// <param name="value">The value with which to initialize the builder.</param>
             /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
             /// <returns>An instance of a mutable document initialized with the given value.</returns>
             public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(
-                JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.DebianPlatformModel.Builder.Build<TContext> value, int initialCapacity = 30)
+                JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.DebianPlatformModel.Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
                 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
                 #endif
             {
                 // Create the document builder without a MetadataDb
-                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
                 var source = new Corvus.AnsibleMetaBenchmark.Baseline.Schema.DebianPlatformModel.Source<TContext>(context, value);
                 source.AddAsItem(ref cvb);
@@ -7140,12 +7201,13 @@ public readonly partial struct Schema
             /// <param name="workspace">The JSON workspace.</param>
             /// <param name="value">The value with which to initialize the builder.</param>
             /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
             /// <returns>An instance of a mutable document initialized with the given value.</returns>
             public static JsonDocumentBuilder<Mutable> CreateBuilder(
-                JsonWorkspace workspace, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.DellOsPlatformModel.Builder.Build value, int initialCapacity = 30)
+                JsonWorkspace workspace, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.DellOsPlatformModel.Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
             {
                 // Create the document builder without a MetadataDb
-                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
                 var source = new Corvus.AnsibleMetaBenchmark.Baseline.Schema.DellOsPlatformModel.Source(value);
                 source.AddAsItem(ref cvb);
@@ -7162,15 +7224,16 @@ public readonly partial struct Schema
             /// <param name="context">The context to pass to the builder.</param>
             /// <param name="value">The value with which to initialize the builder.</param>
             /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
             /// <returns>An instance of a mutable document initialized with the given value.</returns>
             public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(
-                JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.DellOsPlatformModel.Builder.Build<TContext> value, int initialCapacity = 30)
+                JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.DellOsPlatformModel.Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
                 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
                 #endif
             {
                 // Create the document builder without a MetadataDb
-                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
                 var source = new Corvus.AnsibleMetaBenchmark.Baseline.Schema.DellOsPlatformModel.Source<TContext>(context, value);
                 source.AddAsItem(ref cvb);
@@ -7185,12 +7248,13 @@ public readonly partial struct Schema
             /// <param name="workspace">The JSON workspace.</param>
             /// <param name="value">The value with which to initialize the builder.</param>
             /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
             /// <returns>An instance of a mutable document initialized with the given value.</returns>
             public static JsonDocumentBuilder<Mutable> CreateBuilder(
-                JsonWorkspace workspace, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.DevuanPlatformModel.Builder.Build value, int initialCapacity = 30)
+                JsonWorkspace workspace, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.DevuanPlatformModel.Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
             {
                 // Create the document builder without a MetadataDb
-                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
                 var source = new Corvus.AnsibleMetaBenchmark.Baseline.Schema.DevuanPlatformModel.Source(value);
                 source.AddAsItem(ref cvb);
@@ -7207,15 +7271,16 @@ public readonly partial struct Schema
             /// <param name="context">The context to pass to the builder.</param>
             /// <param name="value">The value with which to initialize the builder.</param>
             /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
             /// <returns>An instance of a mutable document initialized with the given value.</returns>
             public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(
-                JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.DevuanPlatformModel.Builder.Build<TContext> value, int initialCapacity = 30)
+                JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.DevuanPlatformModel.Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
                 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
                 #endif
             {
                 // Create the document builder without a MetadataDb
-                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
                 var source = new Corvus.AnsibleMetaBenchmark.Baseline.Schema.DevuanPlatformModel.Source<TContext>(context, value);
                 source.AddAsItem(ref cvb);
@@ -7230,12 +7295,13 @@ public readonly partial struct Schema
             /// <param name="workspace">The JSON workspace.</param>
             /// <param name="value">The value with which to initialize the builder.</param>
             /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
             /// <returns>An instance of a mutable document initialized with the given value.</returns>
             public static JsonDocumentBuilder<Mutable> CreateBuilder(
-                JsonWorkspace workspace, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.DragonFlyBsdPlatformModel.Builder.Build value, int initialCapacity = 30)
+                JsonWorkspace workspace, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.DragonFlyBsdPlatformModel.Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
             {
                 // Create the document builder without a MetadataDb
-                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
                 var source = new Corvus.AnsibleMetaBenchmark.Baseline.Schema.DragonFlyBsdPlatformModel.Source(value);
                 source.AddAsItem(ref cvb);
@@ -7252,15 +7318,16 @@ public readonly partial struct Schema
             /// <param name="context">The context to pass to the builder.</param>
             /// <param name="value">The value with which to initialize the builder.</param>
             /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
             /// <returns>An instance of a mutable document initialized with the given value.</returns>
             public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(
-                JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.DragonFlyBsdPlatformModel.Builder.Build<TContext> value, int initialCapacity = 30)
+                JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.DragonFlyBsdPlatformModel.Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
                 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
                 #endif
             {
                 // Create the document builder without a MetadataDb
-                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
                 var source = new Corvus.AnsibleMetaBenchmark.Baseline.Schema.DragonFlyBsdPlatformModel.Source<TContext>(context, value);
                 source.AddAsItem(ref cvb);
@@ -7275,12 +7342,13 @@ public readonly partial struct Schema
             /// <param name="workspace">The JSON workspace.</param>
             /// <param name="value">The value with which to initialize the builder.</param>
             /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
             /// <returns>An instance of a mutable document initialized with the given value.</returns>
             public static JsonDocumentBuilder<Mutable> CreateBuilder(
-                JsonWorkspace workspace, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.ElPlatformModel.Builder.Build value, int initialCapacity = 30)
+                JsonWorkspace workspace, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.ElPlatformModel.Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
             {
                 // Create the document builder without a MetadataDb
-                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
                 var source = new Corvus.AnsibleMetaBenchmark.Baseline.Schema.ElPlatformModel.Source(value);
                 source.AddAsItem(ref cvb);
@@ -7297,15 +7365,16 @@ public readonly partial struct Schema
             /// <param name="context">The context to pass to the builder.</param>
             /// <param name="value">The value with which to initialize the builder.</param>
             /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
             /// <returns>An instance of a mutable document initialized with the given value.</returns>
             public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(
-                JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.ElPlatformModel.Builder.Build<TContext> value, int initialCapacity = 30)
+                JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.ElPlatformModel.Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
                 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
                 #endif
             {
                 // Create the document builder without a MetadataDb
-                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
                 var source = new Corvus.AnsibleMetaBenchmark.Baseline.Schema.ElPlatformModel.Source<TContext>(context, value);
                 source.AddAsItem(ref cvb);
@@ -7320,12 +7389,13 @@ public readonly partial struct Schema
             /// <param name="workspace">The JSON workspace.</param>
             /// <param name="value">The value with which to initialize the builder.</param>
             /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
             /// <returns>An instance of a mutable document initialized with the given value.</returns>
             public static JsonDocumentBuilder<Mutable> CreateBuilder(
-                JsonWorkspace workspace, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.EosPlatformModel.Builder.Build value, int initialCapacity = 30)
+                JsonWorkspace workspace, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.EosPlatformModel.Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
             {
                 // Create the document builder without a MetadataDb
-                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
                 var source = new Corvus.AnsibleMetaBenchmark.Baseline.Schema.EosPlatformModel.Source(value);
                 source.AddAsItem(ref cvb);
@@ -7342,15 +7412,16 @@ public readonly partial struct Schema
             /// <param name="context">The context to pass to the builder.</param>
             /// <param name="value">The value with which to initialize the builder.</param>
             /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
             /// <returns>An instance of a mutable document initialized with the given value.</returns>
             public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(
-                JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.EosPlatformModel.Builder.Build<TContext> value, int initialCapacity = 30)
+                JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.EosPlatformModel.Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
                 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
                 #endif
             {
                 // Create the document builder without a MetadataDb
-                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
                 var source = new Corvus.AnsibleMetaBenchmark.Baseline.Schema.EosPlatformModel.Source<TContext>(context, value);
                 source.AddAsItem(ref cvb);
@@ -7365,12 +7436,13 @@ public readonly partial struct Schema
             /// <param name="workspace">The JSON workspace.</param>
             /// <param name="value">The value with which to initialize the builder.</param>
             /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
             /// <returns>An instance of a mutable document initialized with the given value.</returns>
             public static JsonDocumentBuilder<Mutable> CreateBuilder(
-                JsonWorkspace workspace, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.FedoraPlatformModel.Builder.Build value, int initialCapacity = 30)
+                JsonWorkspace workspace, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.FedoraPlatformModel.Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
             {
                 // Create the document builder without a MetadataDb
-                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
                 var source = new Corvus.AnsibleMetaBenchmark.Baseline.Schema.FedoraPlatformModel.Source(value);
                 source.AddAsItem(ref cvb);
@@ -7387,15 +7459,16 @@ public readonly partial struct Schema
             /// <param name="context">The context to pass to the builder.</param>
             /// <param name="value">The value with which to initialize the builder.</param>
             /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
             /// <returns>An instance of a mutable document initialized with the given value.</returns>
             public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(
-                JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.FedoraPlatformModel.Builder.Build<TContext> value, int initialCapacity = 30)
+                JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.FedoraPlatformModel.Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
                 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
                 #endif
             {
                 // Create the document builder without a MetadataDb
-                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
                 var source = new Corvus.AnsibleMetaBenchmark.Baseline.Schema.FedoraPlatformModel.Source<TContext>(context, value);
                 source.AddAsItem(ref cvb);
@@ -7410,12 +7483,13 @@ public readonly partial struct Schema
             /// <param name="workspace">The JSON workspace.</param>
             /// <param name="value">The value with which to initialize the builder.</param>
             /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
             /// <returns>An instance of a mutable document initialized with the given value.</returns>
             public static JsonDocumentBuilder<Mutable> CreateBuilder(
-                JsonWorkspace workspace, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.FreeBsdPlatformModel.Builder.Build value, int initialCapacity = 30)
+                JsonWorkspace workspace, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.FreeBsdPlatformModel.Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
             {
                 // Create the document builder without a MetadataDb
-                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
                 var source = new Corvus.AnsibleMetaBenchmark.Baseline.Schema.FreeBsdPlatformModel.Source(value);
                 source.AddAsItem(ref cvb);
@@ -7432,15 +7506,16 @@ public readonly partial struct Schema
             /// <param name="context">The context to pass to the builder.</param>
             /// <param name="value">The value with which to initialize the builder.</param>
             /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
             /// <returns>An instance of a mutable document initialized with the given value.</returns>
             public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(
-                JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.FreeBsdPlatformModel.Builder.Build<TContext> value, int initialCapacity = 30)
+                JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.FreeBsdPlatformModel.Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
                 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
                 #endif
             {
                 // Create the document builder without a MetadataDb
-                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
                 var source = new Corvus.AnsibleMetaBenchmark.Baseline.Schema.FreeBsdPlatformModel.Source<TContext>(context, value);
                 source.AddAsItem(ref cvb);
@@ -7455,12 +7530,13 @@ public readonly partial struct Schema
             /// <param name="workspace">The JSON workspace.</param>
             /// <param name="value">The value with which to initialize the builder.</param>
             /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
             /// <returns>An instance of a mutable document initialized with the given value.</returns>
             public static JsonDocumentBuilder<Mutable> CreateBuilder(
-                JsonWorkspace workspace, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.GenericBsdPlatformModel.Builder.Build value, int initialCapacity = 30)
+                JsonWorkspace workspace, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.GenericBsdPlatformModel.Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
             {
                 // Create the document builder without a MetadataDb
-                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
                 var source = new Corvus.AnsibleMetaBenchmark.Baseline.Schema.GenericBsdPlatformModel.Source(value);
                 source.AddAsItem(ref cvb);
@@ -7477,15 +7553,16 @@ public readonly partial struct Schema
             /// <param name="context">The context to pass to the builder.</param>
             /// <param name="value">The value with which to initialize the builder.</param>
             /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
             /// <returns>An instance of a mutable document initialized with the given value.</returns>
             public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(
-                JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.GenericBsdPlatformModel.Builder.Build<TContext> value, int initialCapacity = 30)
+                JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.GenericBsdPlatformModel.Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
                 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
                 #endif
             {
                 // Create the document builder without a MetadataDb
-                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
                 var source = new Corvus.AnsibleMetaBenchmark.Baseline.Schema.GenericBsdPlatformModel.Source<TContext>(context, value);
                 source.AddAsItem(ref cvb);
@@ -7500,12 +7577,13 @@ public readonly partial struct Schema
             /// <param name="workspace">The JSON workspace.</param>
             /// <param name="value">The value with which to initialize the builder.</param>
             /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
             /// <returns>An instance of a mutable document initialized with the given value.</returns>
             public static JsonDocumentBuilder<Mutable> CreateBuilder(
-                JsonWorkspace workspace, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.GenericLinuxPlatformModel.Builder.Build value, int initialCapacity = 30)
+                JsonWorkspace workspace, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.GenericLinuxPlatformModel.Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
             {
                 // Create the document builder without a MetadataDb
-                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
                 var source = new Corvus.AnsibleMetaBenchmark.Baseline.Schema.GenericLinuxPlatformModel.Source(value);
                 source.AddAsItem(ref cvb);
@@ -7522,15 +7600,16 @@ public readonly partial struct Schema
             /// <param name="context">The context to pass to the builder.</param>
             /// <param name="value">The value with which to initialize the builder.</param>
             /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
             /// <returns>An instance of a mutable document initialized with the given value.</returns>
             public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(
-                JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.GenericLinuxPlatformModel.Builder.Build<TContext> value, int initialCapacity = 30)
+                JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.GenericLinuxPlatformModel.Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
                 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
                 #endif
             {
                 // Create the document builder without a MetadataDb
-                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
                 var source = new Corvus.AnsibleMetaBenchmark.Baseline.Schema.GenericLinuxPlatformModel.Source<TContext>(context, value);
                 source.AddAsItem(ref cvb);
@@ -7545,12 +7624,13 @@ public readonly partial struct Schema
             /// <param name="workspace">The JSON workspace.</param>
             /// <param name="value">The value with which to initialize the builder.</param>
             /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
             /// <returns>An instance of a mutable document initialized with the given value.</returns>
             public static JsonDocumentBuilder<Mutable> CreateBuilder(
-                JsonWorkspace workspace, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.GenericUnixPlatformModel.Builder.Build value, int initialCapacity = 30)
+                JsonWorkspace workspace, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.GenericUnixPlatformModel.Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
             {
                 // Create the document builder without a MetadataDb
-                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
                 var source = new Corvus.AnsibleMetaBenchmark.Baseline.Schema.GenericUnixPlatformModel.Source(value);
                 source.AddAsItem(ref cvb);
@@ -7567,15 +7647,16 @@ public readonly partial struct Schema
             /// <param name="context">The context to pass to the builder.</param>
             /// <param name="value">The value with which to initialize the builder.</param>
             /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
             /// <returns>An instance of a mutable document initialized with the given value.</returns>
             public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(
-                JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.GenericUnixPlatformModel.Builder.Build<TContext> value, int initialCapacity = 30)
+                JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.GenericUnixPlatformModel.Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
                 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
                 #endif
             {
                 // Create the document builder without a MetadataDb
-                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
                 var source = new Corvus.AnsibleMetaBenchmark.Baseline.Schema.GenericUnixPlatformModel.Source<TContext>(context, value);
                 source.AddAsItem(ref cvb);
@@ -7590,12 +7671,13 @@ public readonly partial struct Schema
             /// <param name="workspace">The JSON workspace.</param>
             /// <param name="value">The value with which to initialize the builder.</param>
             /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
             /// <returns>An instance of a mutable document initialized with the given value.</returns>
             public static JsonDocumentBuilder<Mutable> CreateBuilder(
-                JsonWorkspace workspace, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.GentooPlatformModel.Builder.Build value, int initialCapacity = 30)
+                JsonWorkspace workspace, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.GentooPlatformModel.Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
             {
                 // Create the document builder without a MetadataDb
-                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
                 var source = new Corvus.AnsibleMetaBenchmark.Baseline.Schema.GentooPlatformModel.Source(value);
                 source.AddAsItem(ref cvb);
@@ -7612,15 +7694,16 @@ public readonly partial struct Schema
             /// <param name="context">The context to pass to the builder.</param>
             /// <param name="value">The value with which to initialize the builder.</param>
             /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
             /// <returns>An instance of a mutable document initialized with the given value.</returns>
             public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(
-                JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.GentooPlatformModel.Builder.Build<TContext> value, int initialCapacity = 30)
+                JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.GentooPlatformModel.Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
                 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
                 #endif
             {
                 // Create the document builder without a MetadataDb
-                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
                 var source = new Corvus.AnsibleMetaBenchmark.Baseline.Schema.GentooPlatformModel.Source<TContext>(context, value);
                 source.AddAsItem(ref cvb);
@@ -7635,12 +7718,13 @@ public readonly partial struct Schema
             /// <param name="workspace">The JSON workspace.</param>
             /// <param name="value">The value with which to initialize the builder.</param>
             /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
             /// <returns>An instance of a mutable document initialized with the given value.</returns>
             public static JsonDocumentBuilder<Mutable> CreateBuilder(
-                JsonWorkspace workspace, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.HardenedBsdPlatformModel.Builder.Build value, int initialCapacity = 30)
+                JsonWorkspace workspace, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.HardenedBsdPlatformModel.Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
             {
                 // Create the document builder without a MetadataDb
-                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
                 var source = new Corvus.AnsibleMetaBenchmark.Baseline.Schema.HardenedBsdPlatformModel.Source(value);
                 source.AddAsItem(ref cvb);
@@ -7657,15 +7741,16 @@ public readonly partial struct Schema
             /// <param name="context">The context to pass to the builder.</param>
             /// <param name="value">The value with which to initialize the builder.</param>
             /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
             /// <returns>An instance of a mutable document initialized with the given value.</returns>
             public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(
-                JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.HardenedBsdPlatformModel.Builder.Build<TContext> value, int initialCapacity = 30)
+                JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.HardenedBsdPlatformModel.Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
                 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
                 #endif
             {
                 // Create the document builder without a MetadataDb
-                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
                 var source = new Corvus.AnsibleMetaBenchmark.Baseline.Schema.HardenedBsdPlatformModel.Source<TContext>(context, value);
                 source.AddAsItem(ref cvb);
@@ -7680,12 +7765,13 @@ public readonly partial struct Schema
             /// <param name="workspace">The JSON workspace.</param>
             /// <param name="value">The value with which to initialize the builder.</param>
             /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
             /// <returns>An instance of a mutable document initialized with the given value.</returns>
             public static JsonDocumentBuilder<Mutable> CreateBuilder(
-                JsonWorkspace workspace, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.IosPlatformModel.Builder.Build value, int initialCapacity = 30)
+                JsonWorkspace workspace, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.IosPlatformModel.Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
             {
                 // Create the document builder without a MetadataDb
-                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
                 var source = new Corvus.AnsibleMetaBenchmark.Baseline.Schema.IosPlatformModel.Source(value);
                 source.AddAsItem(ref cvb);
@@ -7702,15 +7788,16 @@ public readonly partial struct Schema
             /// <param name="context">The context to pass to the builder.</param>
             /// <param name="value">The value with which to initialize the builder.</param>
             /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
             /// <returns>An instance of a mutable document initialized with the given value.</returns>
             public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(
-                JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.IosPlatformModel.Builder.Build<TContext> value, int initialCapacity = 30)
+                JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.IosPlatformModel.Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
                 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
                 #endif
             {
                 // Create the document builder without a MetadataDb
-                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
                 var source = new Corvus.AnsibleMetaBenchmark.Baseline.Schema.IosPlatformModel.Source<TContext>(context, value);
                 source.AddAsItem(ref cvb);
@@ -7725,12 +7812,13 @@ public readonly partial struct Schema
             /// <param name="workspace">The JSON workspace.</param>
             /// <param name="value">The value with which to initialize the builder.</param>
             /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
             /// <returns>An instance of a mutable document initialized with the given value.</returns>
             public static JsonDocumentBuilder<Mutable> CreateBuilder(
-                JsonWorkspace workspace, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.JunosPlatformModel.Builder.Build value, int initialCapacity = 30)
+                JsonWorkspace workspace, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.JunosPlatformModel.Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
             {
                 // Create the document builder without a MetadataDb
-                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
                 var source = new Corvus.AnsibleMetaBenchmark.Baseline.Schema.JunosPlatformModel.Source(value);
                 source.AddAsItem(ref cvb);
@@ -7747,15 +7835,16 @@ public readonly partial struct Schema
             /// <param name="context">The context to pass to the builder.</param>
             /// <param name="value">The value with which to initialize the builder.</param>
             /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
             /// <returns>An instance of a mutable document initialized with the given value.</returns>
             public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(
-                JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.JunosPlatformModel.Builder.Build<TContext> value, int initialCapacity = 30)
+                JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.JunosPlatformModel.Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
                 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
                 #endif
             {
                 // Create the document builder without a MetadataDb
-                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
                 var source = new Corvus.AnsibleMetaBenchmark.Baseline.Schema.JunosPlatformModel.Source<TContext>(context, value);
                 source.AddAsItem(ref cvb);
@@ -7770,12 +7859,13 @@ public readonly partial struct Schema
             /// <param name="workspace">The JSON workspace.</param>
             /// <param name="value">The value with which to initialize the builder.</param>
             /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
             /// <returns>An instance of a mutable document initialized with the given value.</returns>
             public static JsonDocumentBuilder<Mutable> CreateBuilder(
-                JsonWorkspace workspace, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.KaliPlatformModel.Builder.Build value, int initialCapacity = 30)
+                JsonWorkspace workspace, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.KaliPlatformModel.Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
             {
                 // Create the document builder without a MetadataDb
-                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
                 var source = new Corvus.AnsibleMetaBenchmark.Baseline.Schema.KaliPlatformModel.Source(value);
                 source.AddAsItem(ref cvb);
@@ -7792,15 +7882,16 @@ public readonly partial struct Schema
             /// <param name="context">The context to pass to the builder.</param>
             /// <param name="value">The value with which to initialize the builder.</param>
             /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
             /// <returns>An instance of a mutable document initialized with the given value.</returns>
             public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(
-                JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.KaliPlatformModel.Builder.Build<TContext> value, int initialCapacity = 30)
+                JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.KaliPlatformModel.Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
                 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
                 #endif
             {
                 // Create the document builder without a MetadataDb
-                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
                 var source = new Corvus.AnsibleMetaBenchmark.Baseline.Schema.KaliPlatformModel.Source<TContext>(context, value);
                 source.AddAsItem(ref cvb);
@@ -7815,12 +7906,13 @@ public readonly partial struct Schema
             /// <param name="workspace">The JSON workspace.</param>
             /// <param name="value">The value with which to initialize the builder.</param>
             /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
             /// <returns>An instance of a mutable document initialized with the given value.</returns>
             public static JsonDocumentBuilder<Mutable> CreateBuilder(
-                JsonWorkspace workspace, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.MacOsPlatformModel.Builder.Build value, int initialCapacity = 30)
+                JsonWorkspace workspace, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.MacOsPlatformModel.Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
             {
                 // Create the document builder without a MetadataDb
-                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
                 var source = new Corvus.AnsibleMetaBenchmark.Baseline.Schema.MacOsPlatformModel.Source(value);
                 source.AddAsItem(ref cvb);
@@ -7837,15 +7929,16 @@ public readonly partial struct Schema
             /// <param name="context">The context to pass to the builder.</param>
             /// <param name="value">The value with which to initialize the builder.</param>
             /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
             /// <returns>An instance of a mutable document initialized with the given value.</returns>
             public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(
-                JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.MacOsPlatformModel.Builder.Build<TContext> value, int initialCapacity = 30)
+                JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.MacOsPlatformModel.Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
                 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
                 #endif
             {
                 // Create the document builder without a MetadataDb
-                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
                 var source = new Corvus.AnsibleMetaBenchmark.Baseline.Schema.MacOsPlatformModel.Source<TContext>(context, value);
                 source.AddAsItem(ref cvb);
@@ -7860,12 +7953,13 @@ public readonly partial struct Schema
             /// <param name="workspace">The JSON workspace.</param>
             /// <param name="value">The value with which to initialize the builder.</param>
             /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
             /// <returns>An instance of a mutable document initialized with the given value.</returns>
             public static JsonDocumentBuilder<Mutable> CreateBuilder(
-                JsonWorkspace workspace, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.MacOsxPlatformModel.Builder.Build value, int initialCapacity = 30)
+                JsonWorkspace workspace, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.MacOsxPlatformModel.Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
             {
                 // Create the document builder without a MetadataDb
-                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
                 var source = new Corvus.AnsibleMetaBenchmark.Baseline.Schema.MacOsxPlatformModel.Source(value);
                 source.AddAsItem(ref cvb);
@@ -7882,15 +7976,16 @@ public readonly partial struct Schema
             /// <param name="context">The context to pass to the builder.</param>
             /// <param name="value">The value with which to initialize the builder.</param>
             /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
             /// <returns>An instance of a mutable document initialized with the given value.</returns>
             public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(
-                JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.MacOsxPlatformModel.Builder.Build<TContext> value, int initialCapacity = 30)
+                JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.MacOsxPlatformModel.Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
                 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
                 #endif
             {
                 // Create the document builder without a MetadataDb
-                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
                 var source = new Corvus.AnsibleMetaBenchmark.Baseline.Schema.MacOsxPlatformModel.Source<TContext>(context, value);
                 source.AddAsItem(ref cvb);
@@ -7905,12 +8000,13 @@ public readonly partial struct Schema
             /// <param name="workspace">The JSON workspace.</param>
             /// <param name="value">The value with which to initialize the builder.</param>
             /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
             /// <returns>An instance of a mutable document initialized with the given value.</returns>
             public static JsonDocumentBuilder<Mutable> CreateBuilder(
-                JsonWorkspace workspace, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.MageiaPlatformModel.Builder.Build value, int initialCapacity = 30)
+                JsonWorkspace workspace, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.MageiaPlatformModel.Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
             {
                 // Create the document builder without a MetadataDb
-                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
                 var source = new Corvus.AnsibleMetaBenchmark.Baseline.Schema.MageiaPlatformModel.Source(value);
                 source.AddAsItem(ref cvb);
@@ -7927,15 +8023,16 @@ public readonly partial struct Schema
             /// <param name="context">The context to pass to the builder.</param>
             /// <param name="value">The value with which to initialize the builder.</param>
             /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
             /// <returns>An instance of a mutable document initialized with the given value.</returns>
             public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(
-                JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.MageiaPlatformModel.Builder.Build<TContext> value, int initialCapacity = 30)
+                JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.MageiaPlatformModel.Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
                 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
                 #endif
             {
                 // Create the document builder without a MetadataDb
-                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
                 var source = new Corvus.AnsibleMetaBenchmark.Baseline.Schema.MageiaPlatformModel.Source<TContext>(context, value);
                 source.AddAsItem(ref cvb);
@@ -7950,12 +8047,13 @@ public readonly partial struct Schema
             /// <param name="workspace">The JSON workspace.</param>
             /// <param name="value">The value with which to initialize the builder.</param>
             /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
             /// <returns>An instance of a mutable document initialized with the given value.</returns>
             public static JsonDocumentBuilder<Mutable> CreateBuilder(
-                JsonWorkspace workspace, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.NetBsdPlatformModel.Builder.Build value, int initialCapacity = 30)
+                JsonWorkspace workspace, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.NetBsdPlatformModel.Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
             {
                 // Create the document builder without a MetadataDb
-                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
                 var source = new Corvus.AnsibleMetaBenchmark.Baseline.Schema.NetBsdPlatformModel.Source(value);
                 source.AddAsItem(ref cvb);
@@ -7972,15 +8070,16 @@ public readonly partial struct Schema
             /// <param name="context">The context to pass to the builder.</param>
             /// <param name="value">The value with which to initialize the builder.</param>
             /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
             /// <returns>An instance of a mutable document initialized with the given value.</returns>
             public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(
-                JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.NetBsdPlatformModel.Builder.Build<TContext> value, int initialCapacity = 30)
+                JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.NetBsdPlatformModel.Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
                 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
                 #endif
             {
                 // Create the document builder without a MetadataDb
-                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
                 var source = new Corvus.AnsibleMetaBenchmark.Baseline.Schema.NetBsdPlatformModel.Source<TContext>(context, value);
                 source.AddAsItem(ref cvb);
@@ -7995,12 +8094,13 @@ public readonly partial struct Schema
             /// <param name="workspace">The JSON workspace.</param>
             /// <param name="value">The value with which to initialize the builder.</param>
             /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
             /// <returns>An instance of a mutable document initialized with the given value.</returns>
             public static JsonDocumentBuilder<Mutable> CreateBuilder(
-                JsonWorkspace workspace, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.NxosPlatformModel.Builder.Build value, int initialCapacity = 30)
+                JsonWorkspace workspace, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.NxosPlatformModel.Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
             {
                 // Create the document builder without a MetadataDb
-                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
                 var source = new Corvus.AnsibleMetaBenchmark.Baseline.Schema.NxosPlatformModel.Source(value);
                 source.AddAsItem(ref cvb);
@@ -8017,15 +8117,16 @@ public readonly partial struct Schema
             /// <param name="context">The context to pass to the builder.</param>
             /// <param name="value">The value with which to initialize the builder.</param>
             /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
             /// <returns>An instance of a mutable document initialized with the given value.</returns>
             public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(
-                JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.NxosPlatformModel.Builder.Build<TContext> value, int initialCapacity = 30)
+                JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.NxosPlatformModel.Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
                 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
                 #endif
             {
                 // Create the document builder without a MetadataDb
-                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
                 var source = new Corvus.AnsibleMetaBenchmark.Baseline.Schema.NxosPlatformModel.Source<TContext>(context, value);
                 source.AddAsItem(ref cvb);
@@ -8040,12 +8141,13 @@ public readonly partial struct Schema
             /// <param name="workspace">The JSON workspace.</param>
             /// <param name="value">The value with which to initialize the builder.</param>
             /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
             /// <returns>An instance of a mutable document initialized with the given value.</returns>
             public static JsonDocumentBuilder<Mutable> CreateBuilder(
-                JsonWorkspace workspace, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.OpenBsdPlatformModel.Builder.Build value, int initialCapacity = 30)
+                JsonWorkspace workspace, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.OpenBsdPlatformModel.Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
             {
                 // Create the document builder without a MetadataDb
-                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
                 var source = new Corvus.AnsibleMetaBenchmark.Baseline.Schema.OpenBsdPlatformModel.Source(value);
                 source.AddAsItem(ref cvb);
@@ -8062,15 +8164,16 @@ public readonly partial struct Schema
             /// <param name="context">The context to pass to the builder.</param>
             /// <param name="value">The value with which to initialize the builder.</param>
             /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
             /// <returns>An instance of a mutable document initialized with the given value.</returns>
             public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(
-                JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.OpenBsdPlatformModel.Builder.Build<TContext> value, int initialCapacity = 30)
+                JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.OpenBsdPlatformModel.Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
                 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
                 #endif
             {
                 // Create the document builder without a MetadataDb
-                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
                 var source = new Corvus.AnsibleMetaBenchmark.Baseline.Schema.OpenBsdPlatformModel.Source<TContext>(context, value);
                 source.AddAsItem(ref cvb);
@@ -8085,12 +8188,13 @@ public readonly partial struct Schema
             /// <param name="workspace">The JSON workspace.</param>
             /// <param name="value">The value with which to initialize the builder.</param>
             /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
             /// <returns>An instance of a mutable document initialized with the given value.</returns>
             public static JsonDocumentBuilder<Mutable> CreateBuilder(
-                JsonWorkspace workspace, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.OpensusePlatformModel.Builder.Build value, int initialCapacity = 30)
+                JsonWorkspace workspace, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.OpensusePlatformModel.Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
             {
                 // Create the document builder without a MetadataDb
-                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
                 var source = new Corvus.AnsibleMetaBenchmark.Baseline.Schema.OpensusePlatformModel.Source(value);
                 source.AddAsItem(ref cvb);
@@ -8107,15 +8211,16 @@ public readonly partial struct Schema
             /// <param name="context">The context to pass to the builder.</param>
             /// <param name="value">The value with which to initialize the builder.</param>
             /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
             /// <returns>An instance of a mutable document initialized with the given value.</returns>
             public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(
-                JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.OpensusePlatformModel.Builder.Build<TContext> value, int initialCapacity = 30)
+                JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.OpensusePlatformModel.Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
                 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
                 #endif
             {
                 // Create the document builder without a MetadataDb
-                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
                 var source = new Corvus.AnsibleMetaBenchmark.Baseline.Schema.OpensusePlatformModel.Source<TContext>(context, value);
                 source.AddAsItem(ref cvb);
@@ -8130,12 +8235,13 @@ public readonly partial struct Schema
             /// <param name="workspace">The JSON workspace.</param>
             /// <param name="value">The value with which to initialize the builder.</param>
             /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
             /// <returns>An instance of a mutable document initialized with the given value.</returns>
             public static JsonDocumentBuilder<Mutable> CreateBuilder(
-                JsonWorkspace workspace, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.OpenWrtPlatformModel.Builder.Build value, int initialCapacity = 30)
+                JsonWorkspace workspace, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.OpenWrtPlatformModel.Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
             {
                 // Create the document builder without a MetadataDb
-                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
                 var source = new Corvus.AnsibleMetaBenchmark.Baseline.Schema.OpenWrtPlatformModel.Source(value);
                 source.AddAsItem(ref cvb);
@@ -8152,15 +8258,16 @@ public readonly partial struct Schema
             /// <param name="context">The context to pass to the builder.</param>
             /// <param name="value">The value with which to initialize the builder.</param>
             /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
             /// <returns>An instance of a mutable document initialized with the given value.</returns>
             public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(
-                JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.OpenWrtPlatformModel.Builder.Build<TContext> value, int initialCapacity = 30)
+                JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.OpenWrtPlatformModel.Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
                 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
                 #endif
             {
                 // Create the document builder without a MetadataDb
-                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
                 var source = new Corvus.AnsibleMetaBenchmark.Baseline.Schema.OpenWrtPlatformModel.Source<TContext>(context, value);
                 source.AddAsItem(ref cvb);
@@ -8175,12 +8282,13 @@ public readonly partial struct Schema
             /// <param name="workspace">The JSON workspace.</param>
             /// <param name="value">The value with which to initialize the builder.</param>
             /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
             /// <returns>An instance of a mutable document initialized with the given value.</returns>
             public static JsonDocumentBuilder<Mutable> CreateBuilder(
-                JsonWorkspace workspace, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.OracleLinuxPlatformModel.Builder.Build value, int initialCapacity = 30)
+                JsonWorkspace workspace, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.OracleLinuxPlatformModel.Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
             {
                 // Create the document builder without a MetadataDb
-                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
                 var source = new Corvus.AnsibleMetaBenchmark.Baseline.Schema.OracleLinuxPlatformModel.Source(value);
                 source.AddAsItem(ref cvb);
@@ -8197,15 +8305,16 @@ public readonly partial struct Schema
             /// <param name="context">The context to pass to the builder.</param>
             /// <param name="value">The value with which to initialize the builder.</param>
             /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
             /// <returns>An instance of a mutable document initialized with the given value.</returns>
             public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(
-                JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.OracleLinuxPlatformModel.Builder.Build<TContext> value, int initialCapacity = 30)
+                JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.OracleLinuxPlatformModel.Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
                 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
                 #endif
             {
                 // Create the document builder without a MetadataDb
-                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
                 var source = new Corvus.AnsibleMetaBenchmark.Baseline.Schema.OracleLinuxPlatformModel.Source<TContext>(context, value);
                 source.AddAsItem(ref cvb);
@@ -8220,12 +8329,13 @@ public readonly partial struct Schema
             /// <param name="workspace">The JSON workspace.</param>
             /// <param name="value">The value with which to initialize the builder.</param>
             /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
             /// <returns>An instance of a mutable document initialized with the given value.</returns>
             public static JsonDocumentBuilder<Mutable> CreateBuilder(
-                JsonWorkspace workspace, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.Os10PlatformModel.Builder.Build value, int initialCapacity = 30)
+                JsonWorkspace workspace, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.Os10PlatformModel.Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
             {
                 // Create the document builder without a MetadataDb
-                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
                 var source = new Corvus.AnsibleMetaBenchmark.Baseline.Schema.Os10PlatformModel.Source(value);
                 source.AddAsItem(ref cvb);
@@ -8242,15 +8352,16 @@ public readonly partial struct Schema
             /// <param name="context">The context to pass to the builder.</param>
             /// <param name="value">The value with which to initialize the builder.</param>
             /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
             /// <returns>An instance of a mutable document initialized with the given value.</returns>
             public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(
-                JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.Os10PlatformModel.Builder.Build<TContext> value, int initialCapacity = 30)
+                JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.Os10PlatformModel.Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
                 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
                 #endif
             {
                 // Create the document builder without a MetadataDb
-                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
                 var source = new Corvus.AnsibleMetaBenchmark.Baseline.Schema.Os10PlatformModel.Source<TContext>(context, value);
                 source.AddAsItem(ref cvb);
@@ -8265,12 +8376,13 @@ public readonly partial struct Schema
             /// <param name="workspace">The JSON workspace.</param>
             /// <param name="value">The value with which to initialize the builder.</param>
             /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
             /// <returns>An instance of a mutable document initialized with the given value.</returns>
             public static JsonDocumentBuilder<Mutable> CreateBuilder(
-                JsonWorkspace workspace, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.PanOsPlatformModel.Builder.Build value, int initialCapacity = 30)
+                JsonWorkspace workspace, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.PanOsPlatformModel.Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
             {
                 // Create the document builder without a MetadataDb
-                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
                 var source = new Corvus.AnsibleMetaBenchmark.Baseline.Schema.PanOsPlatformModel.Source(value);
                 source.AddAsItem(ref cvb);
@@ -8287,15 +8399,16 @@ public readonly partial struct Schema
             /// <param name="context">The context to pass to the builder.</param>
             /// <param name="value">The value with which to initialize the builder.</param>
             /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
             /// <returns>An instance of a mutable document initialized with the given value.</returns>
             public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(
-                JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.PanOsPlatformModel.Builder.Build<TContext> value, int initialCapacity = 30)
+                JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.PanOsPlatformModel.Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
                 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
                 #endif
             {
                 // Create the document builder without a MetadataDb
-                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
                 var source = new Corvus.AnsibleMetaBenchmark.Baseline.Schema.PanOsPlatformModel.Source<TContext>(context, value);
                 source.AddAsItem(ref cvb);
@@ -8310,12 +8423,13 @@ public readonly partial struct Schema
             /// <param name="workspace">The JSON workspace.</param>
             /// <param name="value">The value with which to initialize the builder.</param>
             /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
             /// <returns>An instance of a mutable document initialized with the given value.</returns>
             public static JsonDocumentBuilder<Mutable> CreateBuilder(
-                JsonWorkspace workspace, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.SlesPlatformModel.Builder.Build value, int initialCapacity = 30)
+                JsonWorkspace workspace, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.SlesPlatformModel.Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
             {
                 // Create the document builder without a MetadataDb
-                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
                 var source = new Corvus.AnsibleMetaBenchmark.Baseline.Schema.SlesPlatformModel.Source(value);
                 source.AddAsItem(ref cvb);
@@ -8332,15 +8446,16 @@ public readonly partial struct Schema
             /// <param name="context">The context to pass to the builder.</param>
             /// <param name="value">The value with which to initialize the builder.</param>
             /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
             /// <returns>An instance of a mutable document initialized with the given value.</returns>
             public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(
-                JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.SlesPlatformModel.Builder.Build<TContext> value, int initialCapacity = 30)
+                JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.SlesPlatformModel.Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
                 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
                 #endif
             {
                 // Create the document builder without a MetadataDb
-                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
                 var source = new Corvus.AnsibleMetaBenchmark.Baseline.Schema.SlesPlatformModel.Source<TContext>(context, value);
                 source.AddAsItem(ref cvb);
@@ -8355,12 +8470,13 @@ public readonly partial struct Schema
             /// <param name="workspace">The JSON workspace.</param>
             /// <param name="value">The value with which to initialize the builder.</param>
             /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
             /// <returns>An instance of a mutable document initialized with the given value.</returns>
             public static JsonDocumentBuilder<Mutable> CreateBuilder(
-                JsonWorkspace workspace, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.SmartOsPlatformModel.Builder.Build value, int initialCapacity = 30)
+                JsonWorkspace workspace, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.SmartOsPlatformModel.Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
             {
                 // Create the document builder without a MetadataDb
-                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
                 var source = new Corvus.AnsibleMetaBenchmark.Baseline.Schema.SmartOsPlatformModel.Source(value);
                 source.AddAsItem(ref cvb);
@@ -8377,15 +8493,16 @@ public readonly partial struct Schema
             /// <param name="context">The context to pass to the builder.</param>
             /// <param name="value">The value with which to initialize the builder.</param>
             /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
             /// <returns>An instance of a mutable document initialized with the given value.</returns>
             public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(
-                JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.SmartOsPlatformModel.Builder.Build<TContext> value, int initialCapacity = 30)
+                JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.SmartOsPlatformModel.Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
                 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
                 #endif
             {
                 // Create the document builder without a MetadataDb
-                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
                 var source = new Corvus.AnsibleMetaBenchmark.Baseline.Schema.SmartOsPlatformModel.Source<TContext>(context, value);
                 source.AddAsItem(ref cvb);
@@ -8400,12 +8517,13 @@ public readonly partial struct Schema
             /// <param name="workspace">The JSON workspace.</param>
             /// <param name="value">The value with which to initialize the builder.</param>
             /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
             /// <returns>An instance of a mutable document initialized with the given value.</returns>
             public static JsonDocumentBuilder<Mutable> CreateBuilder(
-                JsonWorkspace workspace, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.SolarisPlatformModel.Builder.Build value, int initialCapacity = 30)
+                JsonWorkspace workspace, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.SolarisPlatformModel.Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
             {
                 // Create the document builder without a MetadataDb
-                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
                 var source = new Corvus.AnsibleMetaBenchmark.Baseline.Schema.SolarisPlatformModel.Source(value);
                 source.AddAsItem(ref cvb);
@@ -8422,15 +8540,16 @@ public readonly partial struct Schema
             /// <param name="context">The context to pass to the builder.</param>
             /// <param name="value">The value with which to initialize the builder.</param>
             /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
             /// <returns>An instance of a mutable document initialized with the given value.</returns>
             public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(
-                JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.SolarisPlatformModel.Builder.Build<TContext> value, int initialCapacity = 30)
+                JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.SolarisPlatformModel.Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
                 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
                 #endif
             {
                 // Create the document builder without a MetadataDb
-                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
                 var source = new Corvus.AnsibleMetaBenchmark.Baseline.Schema.SolarisPlatformModel.Source<TContext>(context, value);
                 source.AddAsItem(ref cvb);
@@ -8445,12 +8564,13 @@ public readonly partial struct Schema
             /// <param name="workspace">The JSON workspace.</param>
             /// <param name="value">The value with which to initialize the builder.</param>
             /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
             /// <returns>An instance of a mutable document initialized with the given value.</returns>
             public static JsonDocumentBuilder<Mutable> CreateBuilder(
-                JsonWorkspace workspace, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.SynologyPlatformModel.Builder.Build value, int initialCapacity = 30)
+                JsonWorkspace workspace, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.SynologyPlatformModel.Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
             {
                 // Create the document builder without a MetadataDb
-                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
                 var source = new Corvus.AnsibleMetaBenchmark.Baseline.Schema.SynologyPlatformModel.Source(value);
                 source.AddAsItem(ref cvb);
@@ -8467,15 +8587,16 @@ public readonly partial struct Schema
             /// <param name="context">The context to pass to the builder.</param>
             /// <param name="value">The value with which to initialize the builder.</param>
             /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
             /// <returns>An instance of a mutable document initialized with the given value.</returns>
             public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(
-                JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.SynologyPlatformModel.Builder.Build<TContext> value, int initialCapacity = 30)
+                JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.SynologyPlatformModel.Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
                 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
                 #endif
             {
                 // Create the document builder without a MetadataDb
-                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
                 var source = new Corvus.AnsibleMetaBenchmark.Baseline.Schema.SynologyPlatformModel.Source<TContext>(context, value);
                 source.AddAsItem(ref cvb);
@@ -8490,12 +8611,13 @@ public readonly partial struct Schema
             /// <param name="workspace">The JSON workspace.</param>
             /// <param name="value">The value with which to initialize the builder.</param>
             /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
             /// <returns>An instance of a mutable document initialized with the given value.</returns>
             public static JsonDocumentBuilder<Mutable> CreateBuilder(
-                JsonWorkspace workspace, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.TmosPlatformModel.Builder.Build value, int initialCapacity = 30)
+                JsonWorkspace workspace, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.TmosPlatformModel.Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
             {
                 // Create the document builder without a MetadataDb
-                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
                 var source = new Corvus.AnsibleMetaBenchmark.Baseline.Schema.TmosPlatformModel.Source(value);
                 source.AddAsItem(ref cvb);
@@ -8512,15 +8634,16 @@ public readonly partial struct Schema
             /// <param name="context">The context to pass to the builder.</param>
             /// <param name="value">The value with which to initialize the builder.</param>
             /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
             /// <returns>An instance of a mutable document initialized with the given value.</returns>
             public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(
-                JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.TmosPlatformModel.Builder.Build<TContext> value, int initialCapacity = 30)
+                JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.TmosPlatformModel.Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
                 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
                 #endif
             {
                 // Create the document builder without a MetadataDb
-                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
                 var source = new Corvus.AnsibleMetaBenchmark.Baseline.Schema.TmosPlatformModel.Source<TContext>(context, value);
                 source.AddAsItem(ref cvb);
@@ -8535,12 +8658,13 @@ public readonly partial struct Schema
             /// <param name="workspace">The JSON workspace.</param>
             /// <param name="value">The value with which to initialize the builder.</param>
             /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
             /// <returns>An instance of a mutable document initialized with the given value.</returns>
             public static JsonDocumentBuilder<Mutable> CreateBuilder(
-                JsonWorkspace workspace, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.UbuntuPlatformModel.Builder.Build value, int initialCapacity = 30)
+                JsonWorkspace workspace, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.UbuntuPlatformModel.Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
             {
                 // Create the document builder without a MetadataDb
-                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
                 var source = new Corvus.AnsibleMetaBenchmark.Baseline.Schema.UbuntuPlatformModel.Source(value);
                 source.AddAsItem(ref cvb);
@@ -8557,15 +8681,16 @@ public readonly partial struct Schema
             /// <param name="context">The context to pass to the builder.</param>
             /// <param name="value">The value with which to initialize the builder.</param>
             /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
             /// <returns>An instance of a mutable document initialized with the given value.</returns>
             public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(
-                JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.UbuntuPlatformModel.Builder.Build<TContext> value, int initialCapacity = 30)
+                JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.UbuntuPlatformModel.Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
                 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
                 #endif
             {
                 // Create the document builder without a MetadataDb
-                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
                 var source = new Corvus.AnsibleMetaBenchmark.Baseline.Schema.UbuntuPlatformModel.Source<TContext>(context, value);
                 source.AddAsItem(ref cvb);
@@ -8580,12 +8705,13 @@ public readonly partial struct Schema
             /// <param name="workspace">The JSON workspace.</param>
             /// <param name="value">The value with which to initialize the builder.</param>
             /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
             /// <returns>An instance of a mutable document initialized with the given value.</returns>
             public static JsonDocumentBuilder<Mutable> CreateBuilder(
-                JsonWorkspace workspace, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.VCenterPlatformModel.Builder.Build value, int initialCapacity = 30)
+                JsonWorkspace workspace, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.VCenterPlatformModel.Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
             {
                 // Create the document builder without a MetadataDb
-                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
                 var source = new Corvus.AnsibleMetaBenchmark.Baseline.Schema.VCenterPlatformModel.Source(value);
                 source.AddAsItem(ref cvb);
@@ -8602,15 +8728,16 @@ public readonly partial struct Schema
             /// <param name="context">The context to pass to the builder.</param>
             /// <param name="value">The value with which to initialize the builder.</param>
             /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
             /// <returns>An instance of a mutable document initialized with the given value.</returns>
             public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(
-                JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.VCenterPlatformModel.Builder.Build<TContext> value, int initialCapacity = 30)
+                JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.VCenterPlatformModel.Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
                 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
                 #endif
             {
                 // Create the document builder without a MetadataDb
-                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
                 var source = new Corvus.AnsibleMetaBenchmark.Baseline.Schema.VCenterPlatformModel.Source<TContext>(context, value);
                 source.AddAsItem(ref cvb);
@@ -8625,12 +8752,13 @@ public readonly partial struct Schema
             /// <param name="workspace">The JSON workspace.</param>
             /// <param name="value">The value with which to initialize the builder.</param>
             /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
             /// <returns>An instance of a mutable document initialized with the given value.</returns>
             public static JsonDocumentBuilder<Mutable> CreateBuilder(
-                JsonWorkspace workspace, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.VoidLinuxPlatformModel.Builder.Build value, int initialCapacity = 30)
+                JsonWorkspace workspace, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.VoidLinuxPlatformModel.Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
             {
                 // Create the document builder without a MetadataDb
-                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
                 var source = new Corvus.AnsibleMetaBenchmark.Baseline.Schema.VoidLinuxPlatformModel.Source(value);
                 source.AddAsItem(ref cvb);
@@ -8647,15 +8775,16 @@ public readonly partial struct Schema
             /// <param name="context">The context to pass to the builder.</param>
             /// <param name="value">The value with which to initialize the builder.</param>
             /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
             /// <returns>An instance of a mutable document initialized with the given value.</returns>
             public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(
-                JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.VoidLinuxPlatformModel.Builder.Build<TContext> value, int initialCapacity = 30)
+                JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.VoidLinuxPlatformModel.Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
                 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
                 #endif
             {
                 // Create the document builder without a MetadataDb
-                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
                 var source = new Corvus.AnsibleMetaBenchmark.Baseline.Schema.VoidLinuxPlatformModel.Source<TContext>(context, value);
                 source.AddAsItem(ref cvb);
@@ -8670,12 +8799,13 @@ public readonly partial struct Schema
             /// <param name="workspace">The JSON workspace.</param>
             /// <param name="value">The value with which to initialize the builder.</param>
             /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
             /// <returns>An instance of a mutable document initialized with the given value.</returns>
             public static JsonDocumentBuilder<Mutable> CreateBuilder(
-                JsonWorkspace workspace, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.VSpherePlatformModel.Builder.Build value, int initialCapacity = 30)
+                JsonWorkspace workspace, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.VSpherePlatformModel.Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
             {
                 // Create the document builder without a MetadataDb
-                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
                 var source = new Corvus.AnsibleMetaBenchmark.Baseline.Schema.VSpherePlatformModel.Source(value);
                 source.AddAsItem(ref cvb);
@@ -8692,15 +8822,16 @@ public readonly partial struct Schema
             /// <param name="context">The context to pass to the builder.</param>
             /// <param name="value">The value with which to initialize the builder.</param>
             /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
             /// <returns>An instance of a mutable document initialized with the given value.</returns>
             public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(
-                JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.VSpherePlatformModel.Builder.Build<TContext> value, int initialCapacity = 30)
+                JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.VSpherePlatformModel.Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
                 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
                 #endif
             {
                 // Create the document builder without a MetadataDb
-                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
                 var source = new Corvus.AnsibleMetaBenchmark.Baseline.Schema.VSpherePlatformModel.Source<TContext>(context, value);
                 source.AddAsItem(ref cvb);
@@ -8715,12 +8846,13 @@ public readonly partial struct Schema
             /// <param name="workspace">The JSON workspace.</param>
             /// <param name="value">The value with which to initialize the builder.</param>
             /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
             /// <returns>An instance of a mutable document initialized with the given value.</returns>
             public static JsonDocumentBuilder<Mutable> CreateBuilder(
-                JsonWorkspace workspace, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.WindowsPlatformModel.Builder.Build value, int initialCapacity = 30)
+                JsonWorkspace workspace, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.WindowsPlatformModel.Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
             {
                 // Create the document builder without a MetadataDb
-                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
                 var source = new Corvus.AnsibleMetaBenchmark.Baseline.Schema.WindowsPlatformModel.Source(value);
                 source.AddAsItem(ref cvb);
@@ -8737,15 +8869,16 @@ public readonly partial struct Schema
             /// <param name="context">The context to pass to the builder.</param>
             /// <param name="value">The value with which to initialize the builder.</param>
             /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
             /// <returns>An instance of a mutable document initialized with the given value.</returns>
             public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(
-                JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.WindowsPlatformModel.Builder.Build<TContext> value, int initialCapacity = 30)
+                JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.AnsibleMetaBenchmark.Baseline.Schema.WindowsPlatformModel.Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
                 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
                 #endif
             {
                 // Create the document builder without a MetadataDb
-                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
                 var source = new Corvus.AnsibleMetaBenchmark.Baseline.Schema.WindowsPlatformModel.Source<TContext>(context, value);
                 source.AddAsItem(ref cvb);

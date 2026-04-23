@@ -11,7 +11,7 @@ public class ErrorHandlingTests
     public async Task Generate_MissingSchemaFile_ReturnsNonZeroExitCode()
     {
         ProcessResult result = await CodeGeneratorRunner.RunAsync(
-            "\"nonexistent-schema.json\" --rootNamespace TestGenerated");
+            "jsonschema \"nonexistent-schema.json\" --rootNamespace TestGenerated");
 
         Assert.NotEqual(0, result.ExitCode);
     }
@@ -54,7 +54,7 @@ public class ErrorHandlingTests
 
         // --rootNamespace is required; omitting it should fail
         ProcessResult result = await CodeGeneratorRunner.RunAsync(
-            $"\"{schema}\"");
+            $"jsonschema \"{schema}\"");
 
         Assert.NotEqual(0, result.ExitCode);
     }

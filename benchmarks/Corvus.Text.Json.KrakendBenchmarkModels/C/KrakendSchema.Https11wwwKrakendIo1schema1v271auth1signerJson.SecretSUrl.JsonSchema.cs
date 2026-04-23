@@ -162,10 +162,10 @@ public readonly partial struct KrakendSchema
                 }
 
 #if NET8_0_OR_GREATER && !DYNAMIC_BUILD
-                [GeneratedRegex("(base64key|awskms|azurekeyvault|gcpkms|hashivault)://(.*)")]
+                [GeneratedRegex("(base64key|awskms|azurekeyvault|gcpkms|hashivault)://([^\\n\\r\\u2028\\u2029]*)")]
                 private static partial Regex CreatePattern();
 #else
-                private static Regex CreatePattern() => new("(base64key|awskms|azurekeyvault|gcpkms|hashivault)://(.*)", RegexOptions.Compiled);
+                private static Regex CreatePattern() => new("(base64key|awskms|azurekeyvault|gcpkms|hashivault)://([^\\n\\r\\u2028\\u2029]*)", RegexOptions.Compiled);
 #endif
 
                 /// <summary>

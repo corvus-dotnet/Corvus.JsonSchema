@@ -4,7 +4,7 @@
 // <licensing>
 // Derived from code licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licensed this code under the MIT license.
-// https:// github.com/dotnet/runtime/blob/388a7c4814cb0d6e344621d017507b357902043a/LICENSE.TXT
+// https://github.com/dotnet/runtime/blob/388a7c4814cb0d6e344621d017507b357902043a/LICENSE.TXT
 // </licensing>
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
@@ -553,7 +553,7 @@ internal static partial class JsonHelpers
         }
 
         // This needs to allow leap seconds when appropriate.
-        // See https:// github.com/dotnet/runtime/issues/30135.
+        // See https://github.com/dotnet/runtime/issues/30135.
         if (((uint)parseData.Second) > 59)
         {
             value = default;

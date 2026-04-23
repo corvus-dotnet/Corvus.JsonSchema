@@ -92,8 +92,7 @@ public readonly partial struct Schema
                 }
                 else
                 {
-                    using UnescapedUtf8JsonString unescapedUtf8JsonString = parentDocument.GetUtf8JsonString(parentIndex, JsonTokenType.String);
-                    JsonSchemaEvaluation.MatchUri(unescapedUtf8JsonString.Span, "format"u8, ref context);
+                    context.IgnoredKeyword(JsonSchemaEvaluation.IgnoredFormatNotAsserted, "format"u8);
                 }
             }
 

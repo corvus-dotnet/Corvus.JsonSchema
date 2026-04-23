@@ -104,3 +104,27 @@ Scenario Outline: minContains  less than  maxContains
         | #/003/tests/001/data | true  | minContains < actual < maxContains                                               |
         # [ 1, 1, 1, 1 ]
         | #/003/tests/002/data | false | minContains < maxContains < actual                                               |
+
+Scenario Outline: maxContains  equals  0 with minContains  equals  0
+/* Schema: 
+{
+            "$schema": "https://json-schema.org/draft/2019-09/schema",
+            "contains": {"const": 1},
+            "minContains": 0,
+            "maxContains": 0
+        }
+*/
+    Given the input JSON file "maxContains.json"
+    And the schema at "#/4/schema"
+    And the input data at "<inputDataReference>"
+    And I generate a type for the schema
+    And I construct an instance of the schema type from the data
+    When I validate the instance
+    Then the result will be <valid>
+
+    Examples:
+        | inputDataReference   | valid | description                                                                      |
+        # [ ]
+        | #/004/tests/000/data | true  | empty array                                                                      |
+        # [ 1 ]
+        | #/004/tests/001/data | false | one matching item                                                                |

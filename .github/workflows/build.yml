@@ -79,7 +79,9 @@ jobs:
             ]
           }
       netSdkVersion: '10.0.x'
-      # additionalNetSdkVersion: '7.0.x'
+      additionalNetSdkVersion: |
+        8.0.x
+        9.0.x
       # workflow_dispatch inputs are always strings, the type property is just for the UI
       forcePublish: ${{ github.event.inputs.forcePublish == 'true' }}
       skipCleanup: ${{ github.event.inputs.skipCleanup == 'true' }}
@@ -91,7 +93,9 @@ jobs:
       publishPhaseEnv: ${{ needs.prepareConfig.outputs.RESOLVED_ENV_VARS }}
       additionalCachePaths: |
         JSON-Schema-Test-Suite
+        JMESPath-Test-Suite
         Jsonata-Test-Suite
+        yaml-test-suite
         tests/json-patch-tests
         docs/website/.endjin
         docs/website/.output
@@ -129,7 +133,9 @@ jobs:
             Solutions
             solutions
             JSON-Schema-Test-Suite
+            JMESPath-Test-Suite
             Jsonata-Test-Suite
+            yaml-test-suite
             tests/json-patch-tests
             docs/website/.endjin
             docs/website/.output
@@ -164,7 +170,9 @@ jobs:
             Solutions
             solutions
             JSON-Schema-Test-Suite
+            JMESPath-Test-Suite
             Jsonata-Test-Suite
+            yaml-test-suite
             tests/json-patch-tests
             docs/website/.endjin
             docs/website/.output

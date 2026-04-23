@@ -4,7 +4,7 @@
 // <licensing>
 // Derived from code licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licensed this code under the MIT license.
-// https:// github.com/dotnet/runtime/blob/388a7c4814cb0d6e344621d017507b357902043a/LICENSE.TXT
+// https://github.com/dotnet/runtime/blob/388a7c4814cb0d6e344621d017507b357902043a/LICENSE.TXT
 // </licensing>
 using System.Buffers;
 using System.Diagnostics;
@@ -1168,7 +1168,7 @@ public ref partial struct Utf8JsonReader
     // https:// tools.ietf.org/html/rfc7159#section-6
     private bool TryGetNumberMultiSegment(ReadOnlySpan<byte> data, out int consumed)
     {
-        // TODO: https:// github.com/dotnet/runtime/issues/27837
+        // TODO: https://github.com/dotnet/runtime/issues/27837
         Debug.Assert(data.Length > 0);
 
         PartialStateForRollback rollBackState = CaptureState();

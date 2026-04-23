@@ -12,7 +12,7 @@ This hands-on tutorial walks you through JSON Schema-based code generation with 
 
 ### What you will learn
 
-- Generate C# code from JSON Schema using the `generatejsonschematypes` CLI tool
+- Generate C# code from JSON Schema using the `corvusjson` CLI tool (with `--engine V4` for V4 output)
 - Serialize and deserialize JSON documents with the generated types
 - Validate JSON documents against schema
 - Navigate JSON documents — including additional properties, arrays, and union types

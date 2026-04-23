@@ -39,7 +39,7 @@ public class SuiteTitleIsAnAnnotation : IClassFixture<SuiteTitleIsAnAnnotation.F
                 "annotations/meta-data.json",
                 "{\r\n        \"title\": \"Foo\"\r\n      }",
                 "AnnotationTestSuite.Draft6.MetaData",
-                "D:\\source\\mwadams\\Corvus.Text.Json\\JSON-Schema-Test-Suite\\remotes",
+                "D:\\source\\corvus-dotnet\\Corvus.JsonSchema\\JSON-Schema-Test-Suite\\remotes",
                 "http://json-schema.org/draft-06/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -79,7 +79,7 @@ public class SuiteDescriptionIsAnAnnotation : IClassFixture<SuiteDescriptionIsAn
                 "annotations/meta-data.json",
                 "{\r\n        \"description\": \"Foo\"\r\n      }",
                 "AnnotationTestSuite.Draft6.MetaData",
-                "D:\\source\\mwadams\\Corvus.Text.Json\\JSON-Schema-Test-Suite\\remotes",
+                "D:\\source\\corvus-dotnet\\Corvus.JsonSchema\\JSON-Schema-Test-Suite\\remotes",
                 "http://json-schema.org/draft-06/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -119,7 +119,7 @@ public class SuiteDefaultIsAnAnnotation : IClassFixture<SuiteDefaultIsAnAnnotati
                 "annotations/meta-data.json",
                 "{\r\n        \"default\": \"Foo\"\r\n      }",
                 "AnnotationTestSuite.Draft6.MetaData",
-                "D:\\source\\mwadams\\Corvus.Text.Json\\JSON-Schema-Test-Suite\\remotes",
+                "D:\\source\\corvus-dotnet\\Corvus.JsonSchema\\JSON-Schema-Test-Suite\\remotes",
                 "http://json-schema.org/draft-06/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -159,7 +159,7 @@ public class SuiteExamplesIsAnAnnotation : IClassFixture<SuiteExamplesIsAnAnnota
                 "annotations/meta-data.json",
                 "{\r\n        \"examples\": [\"Foo\", \"Bar\"]\r\n      }",
                 "AnnotationTestSuite.Draft6.MetaData",
-                "D:\\source\\mwadams\\Corvus.Text.Json\\JSON-Schema-Test-Suite\\remotes",
+                "D:\\source\\corvus-dotnet\\Corvus.JsonSchema\\JSON-Schema-Test-Suite\\remotes",
                 "http://json-schema.org/draft-06/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());

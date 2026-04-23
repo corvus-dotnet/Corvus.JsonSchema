@@ -197,6 +197,118 @@ public class SuiteValidationOfDurationStrings : IClassFixture<SuiteValidationOfD
         Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
     }
 
+    [Fact]
+    public void TestAllDateAndTimeComponents()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"P1Y2M3DT4H5M6S\"");
+        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [Fact]
+    public void TestDateComponentsOnly()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"P1Y2M3D\"");
+        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [Fact]
+    public void TestTimeComponentsOnly()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"PT1H2M3S\"");
+        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [Fact]
+    public void TestMonthAndDay()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"P1M2D\"");
+        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [Fact]
+    public void TestHourAndMinute()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"PT1H30M\"");
+        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [Fact]
+    public void TestMultiDigitValuesInAllComponents()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"P10Y10M10DT10H10M10S\"");
+        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [Fact]
+    public void TestFractionalDurationIsNotAllowedByRfc3339Abnf()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"PT0.5S\"");
+        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [Fact]
+    public void TestLeadingWhitespaceIsInvalid()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\" P1D\"");
+        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [Fact]
+    public void TestTrailingWhitespaceIsInvalid()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"P1D \"");
+        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [Fact]
+    public void TestEmptyStringIsInvalid()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"\"");
+        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [Fact]
+    public void TestYearsAndMonthsCanAppearWithoutDays()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"P1Y2M\"");
+        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [Fact]
+    public void TestYearsAndDaysCannotAppearWithoutMonths()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"P1Y2D\"");
+        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [Fact]
+    public void TestMonthsAndDaysCanAppearWithoutYears()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"P1M2D\"");
+        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [Fact]
+    public void TestHoursAndMinutesCanAppearWithoutSeconds()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"PT1H2M\"");
+        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [Fact]
+    public void TestHoursAndSecondsCannotAppearWithoutMinutes()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"PT1H2S\"");
+        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [Fact]
+    public void TestMinutesAndSecondsCanAppearWithoutHour()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"PT1M2S\"");
+        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+    }
+
     public class Fixture : IAsyncLifetime
     {
         public CompiledEvaluator Evaluator { get; private set; }

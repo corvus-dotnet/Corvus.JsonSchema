@@ -89,11 +89,11 @@ public static class CorvusTextJsonPolyfills
         /// <summary>
         /// Create an instance from an arbitrary object, via System.Text.Json serialization.
         /// </summary>
-        /// <typeparam name="T">The type of the object from which to create the instance.</typeparam>
+        /// <typeparam name="TObject">The type of the object from which to create the instance.</typeparam>
         /// <param name="instance">The object from which to create the instance.</param>
         /// <param name="writerOptions">The (optional) <see cref="JsonWriterOptions"/>.</param>
         /// <param name="readerOptions">The (optional) <see cref="JsonReaderOptions"/>.</param>
-        /// <returns>A <see cref="JsonAny"/> derived from serializing the object.</returns>
+        /// <returns>An instance of <typeparamref name="T"/> derived from serializing the object.</returns>
         public static T CreateFromSerializedInstance<TObject>(TObject instance, JsonWriterOptions writerOptions = default, JsonReaderOptions readerOptions = default)
         {
             var abw = new ArrayBufferWriter<byte>();
@@ -103,9 +103,7 @@ public static class CorvusTextJsonPolyfills
 
             Utf8JsonReader reader = new(abw.WrittenMemory.Span, readerOptions);
 
-            // You do not need to dispose the document produced by ParseValue()
-            var document = ParsedJsonDocument<T>.ParseValue(ref reader);
-            return document.RootElement;
+            return JsonElementHelpers.ParseValue<T>(ref reader);
         }
 
         /// <summary>

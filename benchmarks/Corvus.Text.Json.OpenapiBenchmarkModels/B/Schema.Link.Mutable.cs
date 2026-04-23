@@ -316,11 +316,11 @@ public readonly partial struct Schema
             /// <summary>
             /// Gets the (optional) <c>operationRef</c> property.
             /// </summary>
-            public Corvus.OpenapiBenchmark.Baseline.JsonUriReference.Mutable OperationRef
+            public Corvus.OpenapiBenchmark.Baseline.JsonUriReferenceNotAsserted.Mutable OperationRef
             {
                 get
                 {
-                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.OperationRefUtf8, out Corvus.OpenapiBenchmark.Baseline.JsonUriReference.Mutable value))
+                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.OperationRefUtf8, out Corvus.OpenapiBenchmark.Baseline.JsonUriReferenceNotAsserted.Mutable value))
                     {
                         return value;
                     }
@@ -565,7 +565,7 @@ public readonly partial struct Schema
             /// Set the <c>operationRef</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetOperationRef(in Corvus.OpenapiBenchmark.Baseline.JsonUriReference.Source value)
+            public void SetOperationRef(in Corvus.OpenapiBenchmark.Baseline.JsonUriReferenceNotAsserted.Source value)
             {
                 CheckValidInstance();
 
@@ -885,7 +885,7 @@ public readonly partial struct Schema
                 return JsonSchema.Evaluate(_parent, _idx, resultsCollector);
             }
 
-            private void CheckValidInstance()
+            private readonly void CheckValidInstance()
             {
                 if (_parent == null)
                 {
@@ -1095,6 +1095,48 @@ public readonly partial struct Schema
 
             [DebuggerBrowsable(DebuggerBrowsableState.Never)]
             JsonValueKind IJsonElement.ValueKind => ValueKind;
+
+            /// <summary>
+            /// Gets a <see cref="Link"/> which can be safely stored beyond the lifetime of the
+            /// original document.
+            /// </summary>
+            /// <returns>
+            /// A <see cref="Link"/> which can be safely stored beyond the lifetime of the
+            /// original document.
+            /// </returns>
+            /// <remarks>
+            /// <para>
+            /// This serializes the element and re-parses it into a standalone heap-allocated
+            /// document. The result is independent of the workspace.
+            /// </para>
+            /// </remarks>
+            public readonly Link Clone()
+            {
+                CheckValidInstance();
+                return _parent.CloneElement<Link>(_idx);
+            }
+
+            /// <summary>
+            /// Creates a frozen (immutable) copy of this element, backed by a new
+            /// document builder registered in the same workspace.
+            /// </summary>
+            /// <returns>
+            /// An immutable <see cref="Link"/> that lives for the lifetime of its
+            /// workspace and its associated documents.
+            /// </returns>
+            /// <remarks>
+            /// <para>
+            /// Unlike <see cref="Clone()"/>, which serializes the element and re-parses it
+            /// into a standalone heap-allocated document, <c>Freeze()</c> performs a cheap
+            /// blit of the metadata and value backing arrays. The resulting element is
+            /// immutable but is only valid for the lifetime of the workspace.
+            /// </para>
+            /// </remarks>
+            public readonly Link Freeze()
+            {
+                CheckValidInstance();
+                return _parent.FreezeElement<Link>(_idx);
+            }
 
             /// <summary>
             /// Matches the value against the composed values, and returns the result of calling the provided match function for the first match found.
@@ -1438,7 +1480,7 @@ public readonly partial struct Schema
                 in Corvus.OpenapiBenchmark.Baseline.Schema.Server.Source body = default,
                 in Corvus.OpenapiBenchmark.Baseline.JsonString.Source description = default,
                 in Corvus.OpenapiBenchmark.Baseline.JsonString.Source operationId = default,
-                in Corvus.OpenapiBenchmark.Baseline.JsonUriReference.Source operationRef = default,
+                in Corvus.OpenapiBenchmark.Baseline.JsonUriReferenceNotAsserted.Source operationRef = default,
                 in Corvus.OpenapiBenchmark.Baseline.Schema.MapOfStrings.Source parameters = default,
                 in Corvus.Text.Json.JsonElement.Source requestBody = default)
             {
@@ -1457,7 +1499,7 @@ public readonly partial struct Schema
                 in Corvus.OpenapiBenchmark.Baseline.Schema.Server.Source body = default,
                 in Corvus.OpenapiBenchmark.Baseline.JsonString.Source description = default,
                 in Corvus.OpenapiBenchmark.Baseline.JsonString.Source operationId = default,
-                in Corvus.OpenapiBenchmark.Baseline.JsonUriReference.Source operationRef = default,
+                in Corvus.OpenapiBenchmark.Baseline.JsonUriReferenceNotAsserted.Source operationRef = default,
                 in Corvus.OpenapiBenchmark.Baseline.Schema.MapOfStrings.Source parameters = default,
                 in Corvus.Text.Json.JsonElement.Source requestBody = default)
             {
@@ -1473,7 +1515,7 @@ public readonly partial struct Schema
                 in Corvus.OpenapiBenchmark.Baseline.Schema.Server.Source<TContext> body = default,
                 in Corvus.OpenapiBenchmark.Baseline.JsonString.Source description = default,
                 in Corvus.OpenapiBenchmark.Baseline.JsonString.Source operationId = default,
-                in Corvus.OpenapiBenchmark.Baseline.JsonUriReference.Source operationRef = default,
+                in Corvus.OpenapiBenchmark.Baseline.JsonUriReferenceNotAsserted.Source operationRef = default,
                 in Corvus.OpenapiBenchmark.Baseline.Schema.MapOfStrings.Source<TContext> parameters = default,
                 in Corvus.Text.Json.JsonElement.Source<TContext> requestBody = default)
             #if NET9_0_OR_GREATER
@@ -1496,7 +1538,7 @@ public readonly partial struct Schema
                 in Corvus.OpenapiBenchmark.Baseline.Schema.Server.Source<TContext> body = default,
                 in Corvus.OpenapiBenchmark.Baseline.JsonString.Source description = default,
                 in Corvus.OpenapiBenchmark.Baseline.JsonString.Source operationId = default,
-                in Corvus.OpenapiBenchmark.Baseline.JsonUriReference.Source operationRef = default,
+                in Corvus.OpenapiBenchmark.Baseline.JsonUriReferenceNotAsserted.Source operationRef = default,
                 in Corvus.OpenapiBenchmark.Baseline.Schema.MapOfStrings.Source<TContext> parameters = default,
                 in Corvus.Text.Json.JsonElement.Source<TContext> requestBody = default)
             #if NET9_0_OR_GREATER
@@ -1672,12 +1714,13 @@ public readonly partial struct Schema
         /// <param name="workspace">The JSON workspace.</param>
         /// <param name="value">The value with which to initialize the builder.</param>
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
         /// <returns>An instance of a mutable document initialized with the given value.</returns>
         public static JsonDocumentBuilder<Mutable> CreateBuilder(
-            JsonWorkspace workspace, scoped in Builder.Build value, int initialCapacity = 30)
+            JsonWorkspace workspace, scoped in Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
         {
             // Create the document builder without a MetadataDb
-            JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+            JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
             ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
             var source = new Source(value);
             source.AddAsItem(ref cvb);
@@ -1694,15 +1737,16 @@ public readonly partial struct Schema
         /// <param name="context">The context to pass to the builder.</param>
         /// <param name="value">The value with which to initialize the builder.</param>
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
         /// <returns>An instance of a mutable document initialized with the given value.</returns>
         public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(
-            JsonWorkspace workspace, scoped in TContext context, scoped in Builder.Build<TContext> value, int initialCapacity = 30)
+            JsonWorkspace workspace, scoped in TContext context, scoped in Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif
         {
             // Create the document builder without a MetadataDb
-            JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+            JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
             ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
             var source = new Source<TContext>(context, value);
             source.AddAsItem(ref cvb);
@@ -1717,12 +1761,13 @@ public readonly partial struct Schema
         /// <param name="workspace">The JSON workspace.</param>
         /// <param name="value">The value with which to initialize the builder.</param>
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
         /// <returns>An instance of a mutable document initialized with the given value.</returns>
         public static JsonDocumentBuilder<Mutable> CreateBuilder(
-            JsonWorkspace workspace, scoped in Corvus.OpenapiBenchmark.Baseline.Schema.Link.RequiredOperationId.Builder.Build value, int initialCapacity = 30)
+            JsonWorkspace workspace, scoped in Corvus.OpenapiBenchmark.Baseline.Schema.Link.RequiredOperationId.Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
         {
             // Create the document builder without a MetadataDb
-            JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+            JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
             ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
             var source = new Corvus.OpenapiBenchmark.Baseline.Schema.Link.RequiredOperationId.Source(value);
             source.AddAsItem(ref cvb);
@@ -1739,15 +1784,16 @@ public readonly partial struct Schema
         /// <param name="context">The context to pass to the builder.</param>
         /// <param name="value">The value with which to initialize the builder.</param>
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
         /// <returns>An instance of a mutable document initialized with the given value.</returns>
         public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(
-            JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.OpenapiBenchmark.Baseline.Schema.Link.RequiredOperationId.Builder.Build<TContext> value, int initialCapacity = 30)
+            JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.OpenapiBenchmark.Baseline.Schema.Link.RequiredOperationId.Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif
         {
             // Create the document builder without a MetadataDb
-            JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+            JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
             ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
             var source = new Corvus.OpenapiBenchmark.Baseline.Schema.Link.RequiredOperationId.Source<TContext>(context, value);
             source.AddAsItem(ref cvb);
@@ -1762,12 +1808,13 @@ public readonly partial struct Schema
         /// <param name="workspace">The JSON workspace.</param>
         /// <param name="value">The value with which to initialize the builder.</param>
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
         /// <returns>An instance of a mutable document initialized with the given value.</returns>
         public static JsonDocumentBuilder<Mutable> CreateBuilder(
-            JsonWorkspace workspace, scoped in Corvus.OpenapiBenchmark.Baseline.Schema.Link.RequiredOperationRef.Builder.Build value, int initialCapacity = 30)
+            JsonWorkspace workspace, scoped in Corvus.OpenapiBenchmark.Baseline.Schema.Link.RequiredOperationRef.Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
         {
             // Create the document builder without a MetadataDb
-            JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+            JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
             ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
             var source = new Corvus.OpenapiBenchmark.Baseline.Schema.Link.RequiredOperationRef.Source(value);
             source.AddAsItem(ref cvb);
@@ -1784,15 +1831,16 @@ public readonly partial struct Schema
         /// <param name="context">The context to pass to the builder.</param>
         /// <param name="value">The value with which to initialize the builder.</param>
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
         /// <returns>An instance of a mutable document initialized with the given value.</returns>
         public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(
-            JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.OpenapiBenchmark.Baseline.Schema.Link.RequiredOperationRef.Builder.Build<TContext> value, int initialCapacity = 30)
+            JsonWorkspace workspace, scoped in TContext context, scoped in Corvus.OpenapiBenchmark.Baseline.Schema.Link.RequiredOperationRef.Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif
         {
             // Create the document builder without a MetadataDb
-            JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+            JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
             ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
             var source = new Corvus.OpenapiBenchmark.Baseline.Schema.Link.RequiredOperationRef.Source<TContext>(context, value);
             source.AddAsItem(ref cvb);
@@ -1813,7 +1861,7 @@ public readonly partial struct Schema
         /// <param name="requestBody">The value of the property.</param>
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
         /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-        public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.OpenapiBenchmark.Baseline.Schema.Server.Source body = default, in Corvus.OpenapiBenchmark.Baseline.JsonString.Source description = default, in Corvus.OpenapiBenchmark.Baseline.JsonString.Source operationId = default, in Corvus.OpenapiBenchmark.Baseline.JsonUriReference.Source operationRef = default, in Corvus.OpenapiBenchmark.Baseline.Schema.MapOfStrings.Source parameters = default, in Corvus.Text.Json.JsonElement.Source requestBody = default, int initialCapacity = 30)
+        public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.OpenapiBenchmark.Baseline.Schema.Server.Source body = default, in Corvus.OpenapiBenchmark.Baseline.JsonString.Source description = default, in Corvus.OpenapiBenchmark.Baseline.JsonString.Source operationId = default, in Corvus.OpenapiBenchmark.Baseline.JsonUriReferenceNotAsserted.Source operationRef = default, in Corvus.OpenapiBenchmark.Baseline.Schema.MapOfStrings.Source parameters = default, in Corvus.Text.Json.JsonElement.Source requestBody = default, int initialCapacity = 30)
         {
             JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
             ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
@@ -1840,7 +1888,7 @@ public readonly partial struct Schema
         /// <param name="requestBody">The value of the property.</param>
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
         /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-        public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.OpenapiBenchmark.Baseline.Schema.Server.Source<TContext> body = default, in Corvus.OpenapiBenchmark.Baseline.JsonString.Source description = default, in Corvus.OpenapiBenchmark.Baseline.JsonString.Source operationId = default, in Corvus.OpenapiBenchmark.Baseline.JsonUriReference.Source operationRef = default, in Corvus.OpenapiBenchmark.Baseline.Schema.MapOfStrings.Source<TContext> parameters = default, in Corvus.Text.Json.JsonElement.Source<TContext> requestBody = default, int initialCapacity = 30)
+        public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.OpenapiBenchmark.Baseline.Schema.Server.Source<TContext> body = default, in Corvus.OpenapiBenchmark.Baseline.JsonString.Source description = default, in Corvus.OpenapiBenchmark.Baseline.JsonString.Source operationId = default, in Corvus.OpenapiBenchmark.Baseline.JsonUriReferenceNotAsserted.Source operationRef = default, in Corvus.OpenapiBenchmark.Baseline.Schema.MapOfStrings.Source<TContext> parameters = default, in Corvus.Text.Json.JsonElement.Source<TContext> requestBody = default, int initialCapacity = 30)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif

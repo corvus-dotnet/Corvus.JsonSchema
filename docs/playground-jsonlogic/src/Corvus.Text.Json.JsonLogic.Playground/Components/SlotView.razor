@@ -1,0 +1,329 @@
+@* Scratch-style slot: renders empty holes, inline value inputs, or nested blocks. *@
+@using Corvus.Text.Json.JsonLogic.Playground.Models
+
+@if (Node is EmptySlotModel)
+{
+    @* Empty slot: shape matches the expected slot type *@
+    <span class="slot slot-empty slot-shape-@ShapeCss" @key="Node.Id" @onclick="OpenPicker" @onclick:stopPropagation="true">
+        @if (Accepts == SlotType.Boolean)
+        {
+            <span class="slot-empty__hex" title="Drop a condition here">?</span>
+        }
+        else
+        {
+            <input type="text" class="slot-empty__input"
+                   placeholder="@Placeholder"
+                   size="4"
+                   @onfocus="() => inputFocused = true"
+                   @onblur="OnInputBlur"
+                   @onkeydown="OnInputKeyDown"
+                   @oninput="OnInputChanged"
+                   @onclick:stopPropagation="true"
+                   value="@inputText" />
+        }
+        <button class="slot-empty__pick" @onclick="OpenPicker" @onclick:stopPropagation="true" title="Choose a block">▾</button>
+        @if (OnRemove.HasDelegate)
+        {
+            <button class="block-btn-remove block-btn-remove--slot" @onclick="OnRemove" @onclick:stopPropagation="true" title="Remove slot">✕</button>
+        }
+    </span>
+}
+else if (Node is ValueNodeModel val)
+{
+    @* Inline value with type chip *@
+    <span class="slot slot-value slot-shape-reporter" @key="Node.Id">
+        <button class="slot-value__type" @onclick="CycleValueType" @onclick:stopPropagation="true"
+                title="Click to change type">@TypeChip(val.Kind)</button>
+        @switch (val.Kind)
+        {
+            case ValueKind.String:
+                <span class="slot-value__quote">"</span>
+                <input type="text" class="slot-value__input"
+                       value="@val.RawValue" placeholder="text"
+                       size="@Math.Max(3, (val.RawValue?.Length ?? 3))"
+                       @oninput="e => OnValueInput(val, e)" />
+                <span class="slot-value__quote">"</span>
+                break;
+
+            case ValueKind.Number:
+                <input type="text" inputmode="decimal" class="slot-value__input slot-value__input--num"
+                       value="@val.RawValue" placeholder="0"
+                       size="@Math.Max(2, (val.RawValue?.Length ?? 2))"
+                       @oninput="e => OnValueInput(val, e)" />
+                break;
+
+            case ValueKind.Boolean:
+                <select class="slot-value__bool" value="@val.RawValue" @onchange="e => OnBoolChanged(val, e)">
+                    <option value="true">true</option>
+                    <option value="false">false</option>
+                </select>
+                break;
+
+            case ValueKind.Null:
+                <span class="slot-value__null">null</span>
+                break;
+        }
+        @if (OnRemove.HasDelegate)
+        {
+            <button class="block-btn-remove" @onclick="OnRemove" @onclick:stopPropagation="true" title="Remove">✕</button>
+        }
+    </span>
+}
+else
+{
+    @* Nested block — delegate to RuleNodeView *@
+    <span class="slot slot-filled slot-shape-@ShapeCss">
+        <RuleNodeView Node="@Node"
+                      OnChanged="OnChanged"
+                      OnRemove="OnRemove"
+                      OnReplace="OnReplace" />
+    </span>
+}
+
+@* Picker popup (rendered as portal-style overlay) *@
+@if (pickerOpen)
+{
+    <div class="picker-backdrop" @onclick="ClosePicker"></div>
+    <div class="picker-popup">
+        <div class="picker-popup__header">
+            <span>Choose a block</span>
+            <button class="picker-popup__close" @onclick="ClosePicker">✕</button>
+        </div>
+        <div class="picker-popup__body">
+            @if (Accepts != SlotType.Boolean)
+            {
+                <div class="picker-section">
+                    <div class="picker-section__title">Values</div>
+                    <button class="picker-item picker-item--value" @onclick='() => PickValue(ValueKind.String)'>
+                        <span class="picker-chip picker-chip--string">Abc</span> Text
+                    </button>
+                    <button class="picker-item picker-item--value" @onclick='() => PickValue(ValueKind.Number)'>
+                        <span class="picker-chip picker-chip--number">123</span> Number
+                    </button>
+                    <button class="picker-item picker-item--value" @onclick='() => PickValue(ValueKind.Boolean)'>
+                        <span class="picker-chip picker-chip--boolean">T/F</span> Boolean
+                    </button>
+                    <button class="picker-item picker-item--value" @onclick='() => PickValue(ValueKind.Null)'>
+                        <span class="picker-chip picker-chip--null">∅</span> Null
+                    </button>
+                    <button class="picker-item picker-item--value" @onclick="PickArray">
+                        <span class="picker-chip picker-chip--array">[ ]</span> Array
+                    </button>
+                </div>
+            }
+            @foreach (var group in OperatorRegistry.GetFilteredGroups(Accepts))
+            {
+                <div class="picker-section">
+                    <div class="picker-section__title">@group.GroupName</div>
+                    @foreach (var opInfo in group.Operators)
+                    {
+                        <button class="picker-item picker-item--@opInfo.CategoryCss"
+                                @onclick="() => PickOperator(opInfo.Key)">
+                            <span class="picker-shape picker-shape--@opInfo.Shape.ToString().ToLowerInvariant()">@opInfo.DisplayName</span>
+                            @if (opInfo.Key != opInfo.DisplayName)
+                            {
+                                <span class="picker-item__key">@opInfo.Key</span>
+                            }
+                        </button>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter, EditorRequired]
+    public RuleNodeModel Node { get; set; } = default!;
+
+    [Parameter]
+    public SlotType Accepts { get; set; } = SlotType.Any;
+
+    [Parameter]
+    public EventCallback OnChanged { get; set; }
+
+    [Parameter]
+    public EventCallback OnRemove { get; set; }
+
+    [Parameter]
+    public EventCallback<RuleNodeModel> OnReplace { get; set; }
+
+    private bool pickerOpen;
+    private bool inputFocused;
+    private string inputText = "";
+
+    private string ShapeCss => Accepts switch
+    {
+        SlotType.Boolean => "boolean",
+        SlotType.Reporter => "reporter",
+        _ => "any",
+    };
+
+    private string Placeholder => Accepts switch
+    {
+        SlotType.Boolean => "?",
+        _ => "type or ▾",
+    };
+
+    private static string TypeChip(ValueKind kind) => kind switch
+    {
+        ValueKind.String => "Abc",
+        ValueKind.Number => "123",
+        ValueKind.Boolean => "T/F",
+        ValueKind.Null => "∅",
+        _ => "?",
+    };
+
+    // ── Picker ──
+
+    private void OpenPicker()
+    {
+        if (!inputFocused)
+        {
+            pickerOpen = true;
+        }
+    }
+
+    private void ClosePicker()
+    {
+        pickerOpen = false;
+    }
+
+    private void PickOperator(string opKey)
+    {
+        pickerOpen = false;
+        var newNode = new OperatorNodeModel
+        {
+            Operator = opKey,
+            Operands = OperatorRegistry.CreateDefaultOperands(opKey),
+        };
+        ReplaceWith(newNode);
+    }
+
+    private void PickValue(ValueKind kind)
+    {
+        pickerOpen = false;
+        var newNode = new ValueNodeModel
+        {
+            Kind = kind,
+            RawValue = kind switch
+            {
+                ValueKind.Number => "0",
+                ValueKind.Boolean => "true",
+                _ => "",
+            },
+        };
+        ReplaceWith(newNode);
+    }
+
+    private void PickArray()
+    {
+        pickerOpen = false;
+        ReplaceWith(new ArrayNodeModel { Items = [new EmptySlotModel()] });
+    }
+
+    // ── Inline text input (empty reporter slot) ──
+
+    private void OnInputChanged(ChangeEventArgs e)
+    {
+        inputText = e.Value?.ToString() ?? "";
+    }
+
+    private void OnInputBlur()
+    {
+        inputFocused = false;
+        CommitInput();
+    }
+
+    private void OnInputKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            CommitInput();
+        }
+    }
+
+    private void CommitInput()
+    {
+        if (string.IsNullOrWhiteSpace(inputText))
+        {
+            return;
+        }
+
+        string text = inputText.Trim();
+        inputText = "";
+
+        // Auto-detect type from text
+        if (double.TryParse(text, System.Globalization.NumberStyles.Any,
+            System.Globalization.CultureInfo.InvariantCulture, out _))
+        {
+            ReplaceWith(new ValueNodeModel { Kind = ValueKind.Number, RawValue = text });
+        }
+        else if (text.Equals("true", StringComparison.OrdinalIgnoreCase) ||
+                 text.Equals("false", StringComparison.OrdinalIgnoreCase))
+        {
+            ReplaceWith(new ValueNodeModel { Kind = ValueKind.Boolean, RawValue = text.ToLowerInvariant() });
+        }
+        else if (text.Equals("null", StringComparison.OrdinalIgnoreCase))
+        {
+            ReplaceWith(new ValueNodeModel { Kind = ValueKind.Null, RawValue = "" });
+        }
+        else
+        {
+            ReplaceWith(new ValueNodeModel { Kind = ValueKind.String, RawValue = text });
+        }
+    }
+
+    // ── Value editing ──
+
+    private void OnValueInput(ValueNodeModel val, ChangeEventArgs e)
+    {
+        val.RawValue = e.Value?.ToString() ?? "";
+        NotifyChanged();
+    }
+
+    private void OnBoolChanged(ValueNodeModel val, ChangeEventArgs e)
+    {
+        val.RawValue = e.Value?.ToString() ?? "false";
+        NotifyChanged();
+    }
+
+    private void CycleValueType()
+    {
+        if (Node is not ValueNodeModel val) return;
+        val.Kind = val.Kind switch
+        {
+            ValueKind.String => ValueKind.Number,
+            ValueKind.Number => ValueKind.Boolean,
+            ValueKind.Boolean => ValueKind.Null,
+            ValueKind.Null => ValueKind.String,
+            _ => ValueKind.String,
+        };
+        val.RawValue = val.Kind switch
+        {
+            ValueKind.Number => "0",
+            ValueKind.Boolean => "true",
+            ValueKind.Null => "",
+            _ => val.RawValue,
+        };
+        NotifyChanged();
+    }
+
+    // ── Helpers ──
+
+    private void ReplaceWith(RuleNodeModel replacement)
+    {
+        if (OnReplace.HasDelegate)
+        {
+            OnReplace.InvokeAsync(replacement);
+        }
+    }
+
+    private void NotifyChanged()
+    {
+        if (OnChanged.HasDelegate)
+        {
+            OnChanged.InvokeAsync();
+        }
+    }
+}

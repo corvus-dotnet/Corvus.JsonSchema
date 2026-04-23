@@ -7,3 +7,9 @@
 [submodule "Jsonata-Test-Suite"]
 	path = Jsonata-Test-Suite
 	url = https://github.com/jsonata-js/jsonata.git
+[submodule "JMESPath-Test-Suite"]
+	path = JMESPath-Test-Suite
+	url = https://github.com/jmespath/jmespath.test
+[submodule "yaml-test-suite"]
+	path = yaml-test-suite
+	url = https://github.com/yaml/yaml-test-suite.git

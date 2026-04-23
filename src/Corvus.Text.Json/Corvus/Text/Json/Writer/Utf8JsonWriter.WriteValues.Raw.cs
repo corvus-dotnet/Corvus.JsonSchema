@@ -4,7 +4,7 @@
 // <licensing>
 // Derived from code licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licensed this code under the MIT license.
-// https:// github.com/dotnet/runtime/blob/388a7c4814cb0d6e344621d017507b357902043a/LICENSE.TXT
+// https://github.com/dotnet/runtime/blob/388a7c4814cb0d6e344621d017507b357902043a/LICENSE.TXT
 // </licensing>
 using System.Buffers;
 using System.Diagnostics;
@@ -175,7 +175,7 @@ public sealed partial class Utf8JsonWriter
         Debug.Assert(utf8JsonLen < int.MaxValue);
         int len = (int)utf8JsonLen;
 
-        // TODO (https:// github.com/dotnet/runtime/issues/29293):
+        // TODO (https://github.com/dotnet/runtime/issues/29293):
         // investigate writing this in chunks, rather than requesting one potentially long, contiguous buffer.
         int maxRequired = len + 1; // Optionally, 1 list separator. We've guarded against integer overflow earlier in the call stack.
 
@@ -266,7 +266,7 @@ public sealed partial class Utf8JsonWriter
             _tokenType = reader.TokenType;
         }
 
-        // TODO (https:// github.com/dotnet/runtime/issues/29293):
+        // TODO (https://github.com/dotnet/runtime/issues/29293):
         // investigate writing this in chunks, rather than requesting one potentially long, contiguous buffer.
         int maxRequired = len + 1; // Optionally, 1 list separator. We've guarded against integer overflow earlier in the call stack.
 

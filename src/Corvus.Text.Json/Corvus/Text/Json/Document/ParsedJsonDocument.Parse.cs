@@ -4,7 +4,7 @@
 // <licensing>
 // Derived from code licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licensed this code under the MIT license.
-// https:// github.com/dotnet/runtime/blob/388a7c4814cb0d6e344621d017507b357902043a/LICENSE.TXT
+// https://github.com/dotnet/runtime/blob/388a7c4814cb0d6e344621d017507b357902043a/LICENSE.TXT
 // </licensing>
 using System.Buffers;
 using System.Diagnostics;
@@ -88,6 +88,40 @@ public sealed partial class ParsedJsonDocument<T>
     public static ParsedJsonDocument<T> Parse(ReadOnlyMemory<byte> utf8Json, JsonDocumentOptions options = default)
     {
         return Parse(utf8Json, options.GetReaderOptions());
+    }
+
+    /// <summary>
+    /// Parse UTF-8 encoded text representing a single JSON value into a ParsedJsonDocument,
+    /// taking ownership of a rented <see cref="ArrayPool{T}"/> byte array that backs the memory.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The <paramref name="utf8Json"/> memory must be a slice of <paramref name="rentedArrayPoolBytes"/>.
+    /// The document takes ownership of the rented array and will return it to
+    /// <see cref="ArrayPool{T}.Shared"/> when the document is disposed.
+    /// </para>
+    /// <para>
+    /// The caller must not use <paramref name="rentedArrayPoolBytes"/> after calling this method.
+    /// </para>
+    /// </remarks>
+    /// <param name="utf8Json">JSON text to parse. Must be a slice of <paramref name="rentedArrayPoolBytes"/>.</param>
+    /// <param name="rentedArrayPoolBytes">
+    /// A byte array rented from <see cref="ArrayPool{T}.Shared"/> that backs <paramref name="utf8Json"/>.
+    /// Ownership is transferred to the returned document.
+    /// </param>
+    /// <param name="options">Options to control the reader behavior during parsing.</param>
+    /// <returns>
+    /// A ParsedJsonDocument{T} representation of the JSON value.
+    /// </returns>
+    /// <exception cref="JsonException">
+    /// <paramref name="utf8Json"/> does not represent a valid single JSON value.
+    /// </exception>
+    /// <exception cref="ArgumentException">
+    /// <paramref name="options"/> contains unsupported options.
+    /// </exception>
+    public static ParsedJsonDocument<T> Parse(ReadOnlyMemory<byte> utf8Json, byte[] rentedArrayPoolBytes, JsonDocumentOptions options = default)
+    {
+        return Parse(utf8Json, options.GetReaderOptions(), rentedArrayPoolBytes);
     }
 
     /// <summary>

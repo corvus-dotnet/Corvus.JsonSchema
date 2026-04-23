@@ -132,3 +132,56 @@ public class SuitePatternIsNotAnchored : IClassFixture<SuitePatternIsNotAnchored
         }
     }
 }
+
+[Trait("JsonSchemaTestSuite", "Draft202012")]
+public class SuitePatternWithUnicodePropertyEscapeRequiresUnicodeMode : IClassFixture<SuitePatternWithUnicodePropertyEscapeRequiresUnicodeMode.Fixture>
+{
+    private readonly Fixture _fixture;
+    public SuitePatternWithUnicodePropertyEscapeRequiresUnicodeMode(Fixture fixture)
+    {
+        _fixture = fixture;
+    }
+
+    [Fact]
+    public void TestAsciiLettersMatch()
+    {
+        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"Hello\"");
+        Assert.True(dynamicInstance.EvaluateSchema());
+    }
+
+    [Fact]
+    public void TestNonAsciiLettersMatch()
+    {
+        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"π\"");
+        Assert.True(dynamicInstance.EvaluateSchema());
+    }
+
+    [Fact]
+    public void TestDigitsDoNotMatch()
+    {
+        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"123\"");
+        Assert.False(dynamicInstance.EvaluateSchema());
+    }
+
+    public class Fixture : IAsyncLifetime
+    {
+        public DynamicJsonType DynamicJsonType { get; private set; }
+
+        public Task DisposeAsync() => Task.CompletedTask;
+
+        public async Task InitializeAsync()
+        {
+            this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
+                "tests\\draft2020-12\\pattern.json",
+                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"type\": \"string\",\r\n            \"pattern\": \"^\\\\p{Letter}+$\"\r\n        }",
+                "JsonSchemaTestSuite.Draft202012.Pattern",
+                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "https://json-schema.org/draft/2020-12/schema",
+                validateFormat: false,
+                optionalAsNullable: false,
+                useImplicitOperatorString: false,
+                addExplicitUsings: false,
+                Assembly.GetExecutingAssembly());
+        }
+    }
+}

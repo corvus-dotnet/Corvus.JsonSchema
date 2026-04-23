@@ -267,6 +267,62 @@ public class SuiteValidationOfUrIs : IClassFixture<SuiteValidationOfUrIs.Fixture
         Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
     }
 
+    [Fact]
+    public void TestUriWithLeadingZeroIPv4IsStructurallyValidAsARegName()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"http://087.10.0.1/\"");
+        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [Fact]
+    public void TestUriWithOutOfBoundsIPv4IsStructurallyValidAsARegName()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"http://999.999.999.999/\"");
+        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [Fact]
+    public void TestInvalidPercentEncodingWithNonHexDigits()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"http://example.com/%6G\"");
+        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [Fact]
+    public void TestIncompletePercentEncodingTriplet()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"http://example.com/%A\"");
+        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [Fact]
+    public void TestLonePercentSignIsInvalid()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"http://example.com/%\"");
+        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [Fact]
+    public void TestSchemeMustStartWithALetter()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"1http://example.com\"");
+        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [Fact]
+    public void TestInvalidCharacterInScheme()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"ht_tp://example.com\"");
+        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [Fact]
+    public void TestNonNumericPortIsInvalid()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"http://example.com:abc/path\"");
+        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+    }
+
     public class Fixture : IAsyncLifetime
     {
         public CompiledEvaluator Evaluator { get; private set; }

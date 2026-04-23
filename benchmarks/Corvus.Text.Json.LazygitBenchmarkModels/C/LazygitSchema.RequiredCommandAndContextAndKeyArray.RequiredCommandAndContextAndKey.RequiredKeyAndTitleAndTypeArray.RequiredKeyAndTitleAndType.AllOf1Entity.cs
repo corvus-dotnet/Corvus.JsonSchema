@@ -693,6 +693,56 @@ public readonly partial struct LazygitSchema
                         JsonValueKind IJsonElement.ValueKind => ValueKind;
 
                         /// <summary>
+                        /// Gets a <see cref="AllOf1Entity"/> which can be safely stored beyond the lifetime of the
+                        /// original document.
+                        /// </summary>
+                        /// <returns>
+                        /// A <see cref="AllOf1Entity"/> which can be safely stored beyond the lifetime of the
+                        /// original document.
+                        /// </returns>
+                        /// <remarks>
+                        /// <para>
+                        /// If this instance is already a clone (its backing document is not disposable),
+                        /// this method returns the same instance without additional allocation.
+                        /// </para>
+                        /// </remarks>
+                        public AllOf1Entity Clone()
+                        {
+                            CheckValidInstance();
+                            return _parent.CloneElement<AllOf1Entity>(_idx);
+                        }
+
+                        /// <summary>
+                        /// Creates a frozen (immutable) copy of this element if it is backed by a mutable document,
+                        /// or returns this instance if it is already immutable.
+                        /// </summary>
+                        /// <returns>
+                        /// An immutable <see cref="AllOf1Entity"/> that lives for the lifetime of its
+                        /// workspace and its associated documents.
+                        /// </returns>
+                        /// <remarks>
+                        /// <para>
+                        /// Unlike <see cref="Clone()"/>, which serializes the element and re-parses it
+                        /// into a standalone heap-allocated document, <c>Freeze()</c> performs a cheap
+                        /// blit of the metadata and value backing arrays. The resulting element is
+                        /// immutable but is only valid for the lifetime of the workspace.
+                        /// </para>
+                        /// <para>
+                        /// If this instance is already backed by an immutable document, it is returned as-is.
+                        /// </para>
+                        /// </remarks>
+                        public AllOf1Entity Freeze()
+                        {
+                            CheckValidInstance();
+                            if (_parent is global::Corvus.Text.Json.Internal.IMutableJsonDocument mutable)
+                            {
+                                return mutable.FreezeElement<AllOf1Entity>(_idx);
+                            }
+
+                            return this;
+                        }
+
+                        /// <summary>
                         /// Gets the value as a <see cref="Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.RequiredKeyAndTitleAndTypeArray.RequiredKeyAndTitleAndType.AllOf1Entity.WithTypeConfirm" />.
                         /// </summary>
                         /// <param name="result">The result of the conversions.</param>

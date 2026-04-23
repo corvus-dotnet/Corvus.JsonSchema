@@ -267,6 +267,62 @@ public class SuiteValidationOfUrIs : IClassFixture<SuiteValidationOfUrIs.Fixture
         Assert.False(dynamicInstance.EvaluateSchema());
     }
 
+    [Fact]
+    public void TestUriWithLeadingZeroIPv4IsStructurallyValidAsARegName()
+    {
+        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"http://087.10.0.1/\"");
+        Assert.True(dynamicInstance.EvaluateSchema());
+    }
+
+    [Fact]
+    public void TestUriWithOutOfBoundsIPv4IsStructurallyValidAsARegName()
+    {
+        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"http://999.999.999.999/\"");
+        Assert.True(dynamicInstance.EvaluateSchema());
+    }
+
+    [Fact]
+    public void TestInvalidPercentEncodingWithNonHexDigits()
+    {
+        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"http://example.com/%6G\"");
+        Assert.False(dynamicInstance.EvaluateSchema());
+    }
+
+    [Fact]
+    public void TestIncompletePercentEncodingTriplet()
+    {
+        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"http://example.com/%A\"");
+        Assert.False(dynamicInstance.EvaluateSchema());
+    }
+
+    [Fact]
+    public void TestLonePercentSignIsInvalid()
+    {
+        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"http://example.com/%\"");
+        Assert.False(dynamicInstance.EvaluateSchema());
+    }
+
+    [Fact]
+    public void TestSchemeMustStartWithALetter()
+    {
+        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"1http://example.com\"");
+        Assert.False(dynamicInstance.EvaluateSchema());
+    }
+
+    [Fact]
+    public void TestInvalidCharacterInScheme()
+    {
+        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"ht_tp://example.com\"");
+        Assert.False(dynamicInstance.EvaluateSchema());
+    }
+
+    [Fact]
+    public void TestNonNumericPortIsInvalid()
+    {
+        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"http://example.com:abc/path\"");
+        Assert.False(dynamicInstance.EvaluateSchema());
+    }
+
     public class Fixture : IAsyncLifetime
     {
         public DynamicJsonType DynamicJsonType { get; private set; }

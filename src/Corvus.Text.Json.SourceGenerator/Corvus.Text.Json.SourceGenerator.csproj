@@ -1,24 +1,23 @@
 <Project Sdk="Microsoft.NET.Sdk">
-
   <Import Project="$(EndjinProjectPropsPath)" Condition="$(EndjinProjectPropsPath) != ''" />
-
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <Nullable>enable</Nullable>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
-    <NoWarn>$(NoWarn);nullable;IDE0007;NU5128;RS2008;SA0001;NU1504</NoWarn>
+    <NoWarn>$(NoWarn);CS0436;nullable;IDE0007;NU5128;RS2008;SA0001;NU1504;CS3021</NoWarn>
     <CorvusTextJsonPath>..\Corvus.Text.Json\</CorvusTextJsonPath>
     <CorvusTextJsonCodeGenerationPath>..\Corvus.Text.Json.CodeGeneration\</CorvusTextJsonCodeGenerationPath>
     <CorvusV4Path>..\..\src-v4\</CorvusV4Path>
+    <CtjYamlSourceDir>..\Corvus.Text.Json.Yaml\Corvus\Text\Json\Yaml\</CtjYamlSourceDir>
+    <CtjYamlInternalDir>..\Corvus.Text.Json.Yaml\Corvus\Text\Json\Yaml\Internal\</CtjYamlInternalDir>
+    <ManagePackageVersionsCentrally>false</ManagePackageVersionsCentrally>
   </PropertyGroup>
-
   <PropertyGroup Label="SourceGenerator">
     <IsRoslynComponent>true</IsRoslynComponent>
     <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
     <IncludeSymbols>false</IncludeSymbols>
-    <DefineConstants>$(DefineConstants);BUILDING_SOURCE_GENERATOR</DefineConstants>
+    <DefineConstants>$(DefineConstants);BUILDING_SOURCE_GENERATOR;STJ</DefineConstants>
   </PropertyGroup>
-
   <PropertyGroup Label="Standard">
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <!-- For this project, we want warnings if there are public APIs/types without properly formatted XML comments. -->
@@ -39,15 +38,12 @@
     <Nullable>enable</Nullable>
     <DefineConstants>$(DefineConstants);CORVUS_TEXT_JSON_CODEGENERATION</DefineConstants>
   </PropertyGroup>
-
   <PropertyGroup Label="NuGet">
     <DevelopmentDependency>true</DevelopmentDependency>
     <NoWarn>$(NoWarn);nullable;NU5128;RS2008;SA0001</NoWarn>
     <IncludeBuildOutput>false</IncludeBuildOutput>
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
   </PropertyGroup>
-
-
   <ItemGroup>
     <Using Include="System" />
     <Using Include="System.IO" />
@@ -59,13 +55,11 @@
     <Using Include="System.Collections.Generic" />
     <Using Include="Resources.Strings" Alias="SR" />
   </ItemGroup>
-
   <ItemGroup>
     <Compile Include="SR.cs" />
     <Compile Include="Resources\Strings.Designer.cs" />
     <EmbeddedResource Include="Resources\Strings.resx" />
   </ItemGroup>
-
   <ItemGroup>
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.12.0" PrivateAssets="all" />
     <PackageReference Include="PolySharp" Version="1.15.0" PrivateAssets="all" />
@@ -76,7 +70,6 @@
     <PackageReference Include="NodaTime" Version="3.2.1" PrivateAssets="All" />
     <PackageReference Include="System.Reflection.Emit.Lightweight" Version="4.7.0" PrivateAssets="All" />
   </ItemGroup>
-
   <ItemGroup>
     <Compile Include="$(CorvusV4Path)Corvus.Json.ExtendedTypes\Corvus.Json\**\*.cs">
       <Link>Corvus.Json.ExtendedTypes\%(RecursiveDir)\%(Filename)%(Extension)</Link>
@@ -132,14 +125,21 @@
     <Compile Include="$(CorvusV4Path)Corvus.Json.JsonSchema.OpenApi31\OpenApi31\**\*.cs">
       <Link>Corvus.Json.CodeGeneration.OpenApi31\%(RecursiveDir)\%(Filename)%(Extension)</Link>
     </Compile>
-
     <Compile Remove="$(CorvusV4Path)Corvus.Json.CodeGeneration\Corvus.Json.CodeGeneration\**\FileSystemDocumentResolver.cs" />
     <Compile Remove="$(CorvusV4Path)Corvus.Json.CodeGeneration.CSharp\Corvus.Json.CodeGeneration\CSharp\**\NullableAttributes.cs" />
     <Compile Remove="$(CorvusV4Path)Corvus.Json.JsonReference\Corvus.Json\**\NullableAttributes.cs" />
     <Compile Remove="$(CorvusV4Path)Corvus.Json.ExtendedTypes\Corvus.Json\**\NullableAttributes.cs" />
     <Compile Remove="$(CorvusV4Path)Corvus.Json.CodeGeneration\Corvus.Json.CodeGeneration\NullableAttributes.cs" />
+    <Compile Include="$(CorvusTextJsonPath)Corvus\Text\Json\Regex\JsonRegexValidator.cs" Link="Regex\JsonRegexValidator.cs" />
+    <Compile Include="$(CorvusTextJsonPath)Corvus\Text\Json\Regex\JsonRegexNode.cs" Link="Regex\JsonRegexNode.cs" />
+    <Compile Include="$(CorvusTextJsonPath)Corvus\Text\Json\Regex\JsonRegexNodeKind.cs" Link="Regex\JsonRegexNodeKind.cs" />
+    <Compile Include="$(CorvusTextJsonPath)Corvus\Text\Json\Regex\JsonRegexOpCode.cs" Link="Regex\JsonRegexOpCode.cs" />
+    <Compile Include="$(CorvusTextJsonPath)Corvus\Text\Json\Regex\JsonRegexOptions.cs" Link="Regex\JsonRegexOptions.cs" />
+    <Compile Include="$(CorvusTextJsonPath)Corvus\Text\Json\Regex\JsonRegexCharClass.cs" Link="Regex\JsonRegexCharClass.cs" />
+    <Compile Include="$(CorvusTextJsonPath)Corvus\Text\Json\Regex\JsonRegexCaseBehavior.cs" Link="Regex\JsonRegexCaseBehavior.cs" />
+    <Compile Include="$(CorvusTextJsonPath)Corvus\Text\Json\Regex\JsonRegexReplacement.cs" Link="Regex\JsonRegexReplacement.cs" />
+    <Compile Include="..\..\Common\src\System\HexConverter.cs" Link="Common\System\HexConverter.cs" />
   </ItemGroup>
-
   <ItemGroup>
     <EmbeddedResource Include="metaschema\corvus\meta\corvus-extensions.json" />
     <EmbeddedResource Include="metaschema\corvus\schema.json" />
@@ -165,7 +165,6 @@
     <EmbeddedResource Include="metaschema\draft6\schema.json" />
     <EmbeddedResource Include="metaschema\draft7\schema.json" />
   </ItemGroup>
-  
   <ItemGroup>
     <Compile Include="$(CorvusTextJsonCodeGenerationPath)CodeFileBuilders\JsonSchemaPartial.cs" LinkBase="Corvus.Text.Json.CodeGeneration/CodeFileBuilders" />
     <Compile Include="$(CorvusTextJsonCodeGenerationPath)CodeFileBuilders\MutableCorePartial.cs" LinkBase="Corvus.Text.Json.CodeGeneration/CodeFileBuilders" />
@@ -193,6 +192,7 @@
     <Compile Include="$(CorvusTextJsonCodeGenerationPath)FormatHandlers\WellKnownNumericFormatHandler.cs" LinkBase="Corvus.Text.Json.CodeGeneration\FormatHandlers" />
     <Compile Include="$(CorvusTextJsonCodeGenerationPath)FormatHandlers\WellKnownStringFormatHandler.cs" LinkBase="Corvus.Text.Json.CodeGeneration\FormatHandlers" />
     <Compile Include="$(CorvusTextJsonCodeGenerationPath)Formatting.cs" LinkBase="Corvus.Text.Json.CodeGeneration" />
+    <Compile Include="$(CorvusTextJsonCodeGenerationPath)EcmaRegexTranslator.cs" LinkBase="Corvus.Text.Json.CodeGeneration" />
     <Compile Include="$(CorvusTextJsonCodeGenerationPath)StandaloneEvaluatorGenerator.cs" LinkBase="Corvus.Text.Json.CodeGeneration" />
     <Compile Include="$(CorvusTextJsonCodeGenerationPath)CodeGenerationMode.cs" LinkBase="Corvus.Text.Json.CodeGeneration" />
     <Compile Include="$(CorvusTextJsonCodeGenerationPath)RegexPatternCategory.cs" LinkBase="Corvus.Text.Json.CodeGeneration" />
@@ -259,7 +259,6 @@
     <Compile Include="$(CorvusTextJsonCodeGenerationPath)ValidationHandlers\FormatValidationHandler.cs" LinkBase="Corvus.Text.Json.CodeGeneration\ValidationHandlers" />
     <Compile Include="$(CorvusTextJsonCodeGenerationPath)ValidationHandlers\TypeValidationHandler.cs" LinkBase="Corvus.Text.Json.CodeGeneration\ValidationHandlers" />
   </ItemGroup>
-
   <ItemGroup>
     <!-- DateTimeParsing -->
     <Compile Include="$(CorvusTextJsonPath)Corvus\Text\Json\Internal\JsonElementHelpers.DateTime.Core.cs" Link="Corvus.Text.Json\JsonElementHelpers.DateTime.Core.cs" />
@@ -318,13 +317,32 @@
     <Compile Include="GeneratedTypeAccessibility.cs" />
     <Compile Include="IGlobalOptions.cs" />
   </ItemGroup>
-
+  <!-- YAML converter source files (linked with STJ define) -->
+  <ItemGroup>
+    <Compile Include="$(CtjYamlSourceDir)DuplicateKeyBehavior.cs" Link="Yaml\DuplicateKeyBehavior.cs" />
+    <Compile Include="$(CtjYamlSourceDir)YamlDocumentMode.cs" Link="Yaml\YamlDocumentMode.cs" />
+    <Compile Include="$(CtjYamlSourceDir)YamlException.cs" Link="Yaml\YamlException.cs" />
+    <Compile Include="$(CtjYamlSourceDir)YamlReaderOptions.cs" Link="Yaml\YamlReaderOptions.cs" />
+    <Compile Include="$(CtjYamlSourceDir)YamlSchema.cs" Link="Yaml\YamlSchema.cs" />
+    <Compile Include="$(CtjYamlSourceDir)YamlDocument.cs" Link="Yaml\YamlDocument.cs" />
+    <Compile Include="$(CtjYamlInternalDir)ScalarResolver.cs" Link="Yaml\Internal\ScalarResolver.cs" />
+    <Compile Include="$(CtjYamlInternalDir)YamlCharacters.cs" Link="Yaml\Internal\YamlCharacters.cs" />
+    <Compile Include="$(CtjYamlInternalDir)YamlConstants.cs" Link="Yaml\Internal\YamlConstants.cs" />
+    <Compile Include="$(CtjYamlInternalDir)..\YamlScalarStyle.cs" Link="Yaml\YamlScalarStyle.cs" />
+    <Compile Include="$(CtjYamlInternalDir)YamlTokenType.cs" Link="Yaml\Internal\YamlTokenType.cs" />
+    <Compile Include="$(CtjYamlInternalDir)YamlToJsonConverter.cs" Link="Yaml\Internal\YamlToJsonConverter.cs" />
+    <Compile Include="..\Common\JsonConstants.cs" Link="Yaml\Common\JsonConstants.cs" />
+    <Compile Include="..\Common\Utf8KeyHashSet.cs" Link="Yaml\Common\Utf8KeyHashSet.cs" />
+    <Compile Include="$(CorvusTextJsonPath)Corvus\Text\Json\Internal\Utf8Hash.cs" Link="Yaml\Internal\Utf8Hash.cs" />
+    <Compile Include="..\Corvus.Text.Json.Yaml\Corvus\Text\Json\Yaml\Internal\ArrayPoolBufferWriter.cs" Link="Yaml\Internal\ArrayPoolBufferWriter.cs" />
+    <Compile Include="..\..\System.Private.CoreLib\src\System\Collections\Generic\ValueListBuilder.cs" Link="Yaml\Common\ValueListBuilder.cs" />
+    <Compile Include="..\..\System.Private.CoreLib\src\System\Collections\Generic\ValueListBuilder.Pop.cs" Link="Yaml\Common\ValueListBuilder.Pop.cs" />
+  </ItemGroup>
   <ItemGroup>
     <Compile Include="IncrementalSourceGenerator.cs" />
     <Compile Include="Metaschema.cs" />
     <Compile Include="SourceGeneratorHelpers.cs" />
   </ItemGroup>
-
   <ItemGroup>
     <!-- System.Text.Json 8.x has a dependency on Microsoft.Bcl.AsyncInterfaces 8.0.0 -->
     <!-- System.Text.Json 9.x has a dependency on Microsoft.Bcl.AsyncInterfaces 9.0.0 -->
@@ -334,28 +352,23 @@
     <PackageReference Include="Microsoft.Bcl.HashCode" Version="6.0.0" PrivateAssets="all" GeneratePathProperty="true" />
     <PackageReference Include="Microsoft.Bcl.Memory" Version="9.0.14" PrivateAssets="all" GeneratePathProperty="true" />
   </ItemGroup>
-
   <PropertyGroup>
     <GetTargetPathDependsOn>$(GetTargetPathDependsOn);GetDependencyTargetPaths</GetTargetPathDependsOn>
   </PropertyGroup>
-
   <Target Name="GetDependencyTargetPaths">
     <ItemGroup>
       <TargetPathWithTargetPlatformMoniker Include="$(PKGSystem_Text_Json)\lib\netstandard2.0\System.Text.Json.dll" IncludeRuntimeDependency="false" />
       <TargetPathWithTargetPlatformMoniker Include="$(PKGMicrosoft_Bcl_HashCode)\lib\netstandard2.0\Microsoft.Bcl.HashCode.dll" IncludeRuntimeDependency="false" />
     </ItemGroup>
   </Target>
-
   <PropertyGroup>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <Description>Roslyn incremental source generator that produces strongly-typed C# from JSON Schema at build time. Supports draft 4, 6, 7, 2019-09, and 2020-12. Generated types are lightweight readonly struct wrappers with type-safe property accessors, validation, serialization, and implicit conversions.</Description>
   </PropertyGroup>
-
   <ItemGroup>
     <None Include="README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
-
   <ItemGroup>
     <!-- Package the generator in the analyzer directory of the nuget package -->
     <None Include="$(OutputPath)\$(AssemblyName).dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
@@ -365,5 +378,4 @@
     <!-- Package the props file -->
     <None Include="Corvus.Text.Json.SourceGenerator.props" Pack="true" PackagePath="build" Visible="false" />
   </ItemGroup>
-
 </Project>

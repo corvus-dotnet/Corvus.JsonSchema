@@ -139,10 +139,10 @@ public readonly partial struct JsconfigSchema
                             }
 
 #if NET8_0_OR_GREATER && !DYNAMIC_BUILD
-                            [GeneratedRegex("^[Ee][Ss]2020(\\.([Bb][Ii][Gg][Ii][Nn][Tt]|[Pp][Rr][Oo][Mm][Ii][Ss][Ee]|[Ss][Tt][Rr][Ii][Nn][Gg]|[Ss][Yy][Mm][Bb][Oo][Ll].[Ww][Ee][Ll][Ll][Kk][Nn][Oo][Ww][Nn]))?$")]
+                            [GeneratedRegex("^[Ee][Ss]2020(\\.([Bb][Ii][Gg][Ii][Nn][Tt]|[Pp][Rr][Oo][Mm][Ii][Ss][Ee]|[Ss][Tt][Rr][Ii][Nn][Gg]|[Ss][Yy][Mm][Bb][Oo][Ll][^\\n\\r\\u2028\\u2029][Ww][Ee][Ll][Ll][Kk][Nn][Oo][Ww][Nn]))?$")]
                             private static partial Regex CreatePattern();
 #else
-                            private static Regex CreatePattern() => new("^[Ee][Ss]2020(\\.([Bb][Ii][Gg][Ii][Nn][Tt]|[Pp][Rr][Oo][Mm][Ii][Ss][Ee]|[Ss][Tt][Rr][Ii][Nn][Gg]|[Ss][Yy][Mm][Bb][Oo][Ll].[Ww][Ee][Ll][Ll][Kk][Nn][Oo][Ww][Nn]))?$", RegexOptions.Compiled);
+                            private static Regex CreatePattern() => new("^[Ee][Ss]2020(\\.([Bb][Ii][Gg][Ii][Nn][Tt]|[Pp][Rr][Oo][Mm][Ii][Ss][Ee]|[Ss][Tt][Rr][Ii][Nn][Gg]|[Ss][Yy][Mm][Bb][Oo][Ll][^\\n\\r\\u2028\\u2029][Ww][Ee][Ll][Ll][Kk][Nn][Oo][Ww][Nn]))?$", RegexOptions.Compiled);
 #endif
 
                             /// <summary>

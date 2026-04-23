@@ -113,10 +113,10 @@ public readonly partial struct Ui5ManifestSchema
             }
 
 #if NET8_0_OR_GREATER && !DYNAMIC_BUILD
-            [GeneratedRegex("\\{.*\\}")]
+            [GeneratedRegex("\\{[^\\n\\r\\u2028\\u2029]*\\}")]
             private static partial Regex CreatePattern();
 #else
-            private static Regex CreatePattern() => new("\\{.*\\}", RegexOptions.Compiled);
+            private static Regex CreatePattern() => new("\\{[^\\n\\r\\u2028\\u2029]*\\}", RegexOptions.Compiled);
 #endif
 
             /// <summary>

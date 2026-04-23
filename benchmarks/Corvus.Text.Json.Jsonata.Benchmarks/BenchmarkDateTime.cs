@@ -26,6 +26,12 @@ public class BenchmarkDateTime : JsonataBenchmarkBase
     private const string ExprFromMillis = "$fromMillis(1617836400000)";
     private const string ExprToMillis = """$toMillis("2021-04-07T22:00:00.000Z")""";
 
+    private static readonly byte[] ExprNowUtf8 = "$now()"u8.ToArray();
+    private static readonly byte[] ExprMillisUtf8 = "$millis()"u8.ToArray();
+    private static readonly byte[] ExprFromMillisUtf8 = "$fromMillis(1617836400000)"u8.ToArray();
+    private static readonly byte[] ExprToMillisUtf8 = """$toMillis("2021-04-07T22:00:00.000Z")"""u8.ToArray();
+
+
     private JsonataEvaluator evaluator = null!;
     private ParsedJsonDocument<JsonElement>? doc;
     private JsonElement data;
@@ -50,10 +56,10 @@ public class BenchmarkDateTime : JsonataBenchmarkBase
         this.evaluator = new JsonataEvaluator();
         this.workspace = JsonWorkspace.Create();
 
-        this.evaluator.Evaluate(ExprNow, this.data);
-        this.evaluator.Evaluate(ExprMillis, this.data);
-        this.evaluator.Evaluate(ExprFromMillis, this.data);
-        this.evaluator.Evaluate(ExprToMillis, this.data);
+        this.evaluator.Evaluate(ExprNowUtf8, this.data, this.workspace, cacheKey: ExprNow);
+        this.evaluator.Evaluate(ExprMillisUtf8, this.data, this.workspace, cacheKey: ExprMillis);
+        this.evaluator.Evaluate(ExprFromMillisUtf8, this.data, this.workspace, cacheKey: ExprFromMillis);
+        this.evaluator.Evaluate(ExprToMillisUtf8, this.data, this.workspace, cacheKey: ExprToMillis);
 
         NowCodeGen.Evaluate(this.data, this.workspace); this.workspace.Reset();
         MillisCodeGen.Evaluate(this.data, this.workspace); this.workspace.Reset();
@@ -87,7 +93,7 @@ public class BenchmarkDateTime : JsonataBenchmarkBase
     public JsonElement Corvus_Now()
     {
         this.workspace.Reset();
-        return this.evaluator.Evaluate(ExprNow, this.data, this.workspace);
+        return this.evaluator.Evaluate(ExprNowUtf8, this.data, this.workspace, cacheKey: ExprNow);
     }
 
 #if !NETFRAMEWORK
@@ -114,7 +120,7 @@ public class BenchmarkDateTime : JsonataBenchmarkBase
     public JsonElement Corvus_Millis()
     {
         this.workspace.Reset();
-        return this.evaluator.Evaluate(ExprMillis, this.data, this.workspace);
+        return this.evaluator.Evaluate(ExprMillisUtf8, this.data, this.workspace, cacheKey: ExprMillis);
     }
 
 #if !NETFRAMEWORK
@@ -141,7 +147,7 @@ public class BenchmarkDateTime : JsonataBenchmarkBase
     public JsonElement Corvus_FromMillis()
     {
         this.workspace.Reset();
-        return this.evaluator.Evaluate(ExprFromMillis, this.data, this.workspace);
+        return this.evaluator.Evaluate(ExprFromMillisUtf8, this.data, this.workspace, cacheKey: ExprFromMillis);
     }
 
 #if !NETFRAMEWORK
@@ -168,7 +174,7 @@ public class BenchmarkDateTime : JsonataBenchmarkBase
     public JsonElement Corvus_ToMillis()
     {
         this.workspace.Reset();
-        return this.evaluator.Evaluate(ExprToMillis, this.data, this.workspace);
+        return this.evaluator.Evaluate(ExprToMillisUtf8, this.data, this.workspace, cacheKey: ExprToMillis);
     }
 
 #if !NETFRAMEWORK

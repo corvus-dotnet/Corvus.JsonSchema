@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Text;
 using Xunit;
 
 namespace Corvus.Text.Json.Jsonata.Tests;
@@ -11,10 +12,11 @@ public class LexerTests
     [Fact]
     public void SimpleFieldName()
     {
-        var lexer = new Lexer("foo");
+        byte[] utf8 = "foo"u8.ToArray();
+        var lexer = new Lexer(utf8);
         var token = lexer.Next();
         Assert.Equal(TokenType.Name, token.Type);
-        Assert.Equal("foo", token.Value);
+        Assert.Equal("foo", token.GetValue(utf8));
         Assert.Equal(0, token.Position);
         Assert.Equal(TokenType.End, lexer.Next().Type);
     }
@@ -22,18 +24,16 @@ public class LexerTests
     [Fact]
     public void NumberLiteral()
     {
-        var lexer = new Lexer("42");
+        var lexer = new Lexer("42"u8.ToArray());
         var token = lexer.Next();
         Assert.Equal(TokenType.Number, token.Type);
-        Assert.Equal("42", token.Value);
         Assert.Equal(42.0, token.NumericValue);
     }
 
     [Fact]
     public void NegativeSignIsOperator()
     {
-        // The lexer produces '-' as an operator; the parser handles unary negation
-        var lexer = new Lexer("-3.14");
+        var lexer = new Lexer("-3.14"u8.ToArray());
         var token = lexer.Next();
         Assert.Equal(TokenType.Operator, token.Type);
         Assert.Equal("-", token.Value);
@@ -45,7 +45,7 @@ public class LexerTests
     [Fact]
     public void ScientificNotation()
     {
-        var lexer = new Lexer("1.5e10");
+        var lexer = new Lexer("1.5e10"u8.ToArray());
         var token = lexer.Next();
         Assert.Equal(TokenType.Number, token.Type);
         Assert.Equal(1.5e10, token.NumericValue);
@@ -54,9 +54,9 @@ public class LexerTests
     [Fact]
     public void StringLiteralDoubleQuoted()
     {
-        var lexer = new Lexer("""
+        var lexer = new Lexer(Encoding.UTF8.GetBytes("""
             "hello world"
-            """.Trim());
+            """.Trim()));
         var token = lexer.Next();
         Assert.Equal(TokenType.String, token.Type);
         Assert.Equal("hello world", token.Value);
@@ -65,7 +65,7 @@ public class LexerTests
     [Fact]
     public void StringLiteralSingleQuoted()
     {
-        var lexer = new Lexer("'hello'");
+        var lexer = new Lexer("'hello'"u8.ToArray());
         var token = lexer.Next();
         Assert.Equal(TokenType.String, token.Type);
         Assert.Equal("hello", token.Value);
@@ -74,9 +74,9 @@ public class LexerTests
     [Fact]
     public void StringWithEscapeSequences()
     {
-        var lexer = new Lexer("""
+        var lexer = new Lexer(Encoding.UTF8.GetBytes("""
             "line1\nline2\ttab\\backslash"
-            """.Trim());
+            """.Trim()));
         var token = lexer.Next();
         Assert.Equal(TokenType.String, token.Type);
         Assert.Equal("line1\nline2\ttab\\backslash", token.Value);
@@ -85,9 +85,9 @@ public class LexerTests
     [Fact]
     public void StringWithUnicodeEscape()
     {
-        var lexer = new Lexer("""
+        var lexer = new Lexer(Encoding.UTF8.GetBytes("""
             "\u0041\u0042"
-            """.Trim());
+            """.Trim()));
         var token = lexer.Next();
         Assert.Equal(TokenType.String, token.Type);
         Assert.Equal("AB", token.Value);
@@ -96,25 +96,27 @@ public class LexerTests
     [Fact]
     public void Variable()
     {
-        var lexer = new Lexer("$count");
+        byte[] utf8 = "$count"u8.ToArray();
+        var lexer = new Lexer(utf8);
         var token = lexer.Next();
         Assert.Equal(TokenType.Variable, token.Type);
-        Assert.Equal("count", token.Value);
+        Assert.Equal("count", token.GetValue(utf8));
     }
 
     [Fact]
     public void DollarAlone()
     {
-        var lexer = new Lexer("$");
+        byte[] utf8 = "$"u8.ToArray();
+        var lexer = new Lexer(utf8);
         var token = lexer.Next();
         Assert.Equal(TokenType.Variable, token.Type);
-        Assert.Equal("", token.Value);
+        Assert.Equal("", token.GetValue(utf8));
     }
 
     [Fact]
     public void ValueLiterals()
     {
-        var lexer = new Lexer("true false null");
+        var lexer = new Lexer("true false null"u8.ToArray());
         Assert.Equal(TokenType.Value, lexer.Next().Type);
         Assert.Equal(TokenType.Value, lexer.Next().Type);
         Assert.Equal(TokenType.Value, lexer.Next().Type);
@@ -124,7 +126,7 @@ public class LexerTests
     [Fact]
     public void KeywordsAsOperators()
     {
-        var lexer = new Lexer("and or in");
+        var lexer = new Lexer("and or in"u8.ToArray());
         Assert.Equal(TokenType.Operator, lexer.Next().Type);
         Assert.Equal(TokenType.Operator, lexer.Next().Type);
         Assert.Equal(TokenType.Operator, lexer.Next().Type);
@@ -133,7 +135,7 @@ public class LexerTests
     [Fact]
     public void SingleCharOperators()
     {
-        var lexer = new Lexer(".[]{}(),;:?+-*/%|=<>^&@#");
+        var lexer = new Lexer(".[]{}(),;:?+-*/%|=<>^&@#"u8.ToArray());
         string[] expected = [".", "[", "]", "{", "}", "(", ")", ",", ";", ":", "?", "+", "-", "*", "/", "%", "|", "=", "<", ">", "^", "&", "@", "#"];
         foreach (var op in expected)
         {
@@ -146,7 +148,7 @@ public class LexerTests
     [Fact]
     public void DoubleCharOperators()
     {
-        var lexer = new Lexer(".. := != >= <= ** ~> ?: ??");
+        var lexer = new Lexer(".. := != >= <= ** ~> ?: ??"u8.ToArray());
         string[] expected = ["..", ":=", "!=", ">=", "<=", "**", "~>", "?:", "??"];
         foreach (var op in expected)
         {
@@ -159,16 +161,17 @@ public class LexerTests
     [Fact]
     public void BacktickQuotedName()
     {
-        var lexer = new Lexer("`field name`");
+        byte[] utf8 = "`field name`"u8.ToArray();
+        var lexer = new Lexer(utf8);
         var token = lexer.Next();
         Assert.Equal(TokenType.Name, token.Type);
-        Assert.Equal("field name", token.Value);
+        Assert.Equal("field name", token.GetValue(utf8));
     }
 
     [Fact]
     public void RegexLiteral()
     {
-        var lexer = new Lexer("/[a-z]+/im");
+        var lexer = new Lexer("/[a-z]+/im"u8.ToArray());
         var token = lexer.Next(prefixMode: false);
         Assert.Equal(TokenType.Regex, token.Type);
         Assert.Equal("[a-z]+", token.RegexPattern);
@@ -178,8 +181,7 @@ public class LexerTests
     [Fact]
     public void RegexVsDivision()
     {
-        // When prefixMode is true, / is treated as a division operator
-        var lexer = new Lexer("/2");
+        var lexer = new Lexer("/2"u8.ToArray());
         var token = lexer.Next(prefixMode: true);
         Assert.Equal(TokenType.Operator, token.Type);
         Assert.Equal("/", token.Value);
@@ -188,83 +190,131 @@ public class LexerTests
     [Fact]
     public void SkipsComments()
     {
-        var lexer = new Lexer("foo /* this is a comment */ bar");
+        byte[] utf8 = Encoding.UTF8.GetBytes("foo /* this is a comment */ bar");
+        var lexer = new Lexer(utf8);
         var first = lexer.Next();
-        Assert.Equal("foo", first.Value);
+        Assert.Equal("foo", first.GetValue(utf8));
         var second = lexer.Next();
-        Assert.Equal("bar", second.Value);
+        Assert.Equal("bar", second.GetValue(utf8));
     }
 
     [Fact]
     public void UnterminatedCommentThrows()
     {
-        var lexer = new Lexer("foo /* no end");
+        var lexer = new Lexer("foo /* no end"u8.ToArray());
         lexer.Next();
-        var ex = Assert.Throws<JsonataException>(() => lexer.Next());
+        JsonataException ex;
+        try
+        {
+            lexer.Next();
+            ex = null!;
+            Assert.Fail("Expected JsonataException");
+        }
+        catch (JsonataException e)
+        {
+            ex = e;
+        }
+
         Assert.Equal("S0106", ex.Code);
     }
 
     [Fact]
     public void UnterminatedStringThrows()
     {
-        var lexer = new Lexer("\"hello");
-        var ex = Assert.Throws<JsonataException>(() => lexer.Next());
+        var lexer = new Lexer("\"hello"u8.ToArray());
+        JsonataException ex;
+        try
+        {
+            lexer.Next();
+            ex = null!;
+            Assert.Fail("Expected JsonataException");
+        }
+        catch (JsonataException e)
+        {
+            ex = e;
+        }
+
         Assert.Equal("S0101", ex.Code);
     }
 
     [Fact]
     public void IllegalEscapeSequenceThrows()
     {
-        var lexer = new Lexer("\"\\x\"");
-        var ex = Assert.Throws<JsonataException>(() => lexer.Next());
+        var lexer = new Lexer("\"\\x\""u8.ToArray());
+        JsonataException ex;
+        try
+        {
+            lexer.Next();
+            ex = null!;
+            Assert.Fail("Expected JsonataException");
+        }
+        catch (JsonataException e)
+        {
+            ex = e;
+        }
+
         Assert.Equal("S0103", ex.Code);
     }
 
     [Fact]
     public void UnterminatedBacktickThrows()
     {
-        var lexer = new Lexer("`no end");
-        var ex = Assert.Throws<JsonataException>(() => lexer.Next());
+        var lexer = new Lexer("`no end"u8.ToArray());
+        JsonataException ex;
+        try
+        {
+            lexer.Next();
+            ex = null!;
+            Assert.Fail("Expected JsonataException");
+        }
+        catch (JsonataException e)
+        {
+            ex = e;
+        }
+
         Assert.Equal("S0105", ex.Code);
     }
 
     [Fact]
     public void WhitespaceVariations()
     {
-        var lexer = new Lexer("  foo\tbar\n  baz  ");
-        Assert.Equal("foo", lexer.Next().Value);
-        Assert.Equal("bar", lexer.Next().Value);
-        Assert.Equal("baz", lexer.Next().Value);
+        byte[] utf8 = Encoding.UTF8.GetBytes("  foo\tbar\n  baz  ");
+        var lexer = new Lexer(utf8);
+        Assert.Equal("foo", lexer.Next().GetValue(utf8));
+        Assert.Equal("bar", lexer.Next().GetValue(utf8));
+        Assert.Equal("baz", lexer.Next().GetValue(utf8));
         Assert.Equal(TokenType.End, lexer.Next().Type);
     }
 
     [Fact]
     public void ComplexExpression()
     {
-        var lexer = new Lexer("Account.Order.Product.Price");
-        Assert.Equal("Account", lexer.Next().Value);
+        byte[] utf8 = "Account.Order.Product.Price"u8.ToArray();
+        var lexer = new Lexer(utf8);
+        Assert.Equal("Account", lexer.Next().GetValue(utf8));
         Assert.Equal(".", lexer.Next(prefixMode: true).Value);
-        Assert.Equal("Order", lexer.Next().Value);
+        Assert.Equal("Order", lexer.Next().GetValue(utf8));
         Assert.Equal(".", lexer.Next(prefixMode: true).Value);
-        Assert.Equal("Product", lexer.Next().Value);
+        Assert.Equal("Product", lexer.Next().GetValue(utf8));
         Assert.Equal(".", lexer.Next(prefixMode: true).Value);
-        Assert.Equal("Price", lexer.Next().Value);
+        Assert.Equal("Price", lexer.Next().GetValue(utf8));
         Assert.Equal(TokenType.End, lexer.Next().Type);
     }
 
     [Fact]
     public void FunctionCallExpression()
     {
-        var lexer = new Lexer("$sum(Account.Order.Product.Price)");
+        byte[] utf8 = "$sum(Account.Order.Product.Price)"u8.ToArray();
+        var lexer = new Lexer(utf8);
         Assert.Equal(TokenType.Variable, lexer.Next().Type);
         Assert.Equal("(", lexer.Next(prefixMode: true).Value);
-        Assert.Equal("Account", lexer.Next().Value);
+        Assert.Equal("Account", lexer.Next().GetValue(utf8));
         Assert.Equal(".", lexer.Next(prefixMode: true).Value);
-        Assert.Equal("Order", lexer.Next().Value);
+        Assert.Equal("Order", lexer.Next().GetValue(utf8));
         Assert.Equal(".", lexer.Next(prefixMode: true).Value);
-        Assert.Equal("Product", lexer.Next().Value);
+        Assert.Equal("Product", lexer.Next().GetValue(utf8));
         Assert.Equal(".", lexer.Next(prefixMode: true).Value);
-        Assert.Equal("Price", lexer.Next().Value);
+        Assert.Equal("Price", lexer.Next().GetValue(utf8));
         Assert.Equal(")", lexer.Next(prefixMode: true).Value);
     }
 }

@@ -41,10 +41,6 @@ public class PatternPropertiesValidationHandler : IChildObjectPropertyValidation
 
         if (typeDeclaration.PatternProperties() is IReadOnlyDictionary<IObjectPatternPropertyValidationKeyword, IReadOnlyCollection<PatternPropertyDeclaration>> patternProperties)
         {
-            generator
-                .AppendSeparatorLine()
-                .AppendLineIndent("propertyNameAsString ??= property.Name.GetString();");
-
             foreach (IReadOnlyCollection<PatternPropertyDeclaration> patternPropertyCollection in patternProperties.Values)
             {
                 if (generator.IsCancellationRequested)
@@ -80,15 +76,16 @@ public class PatternPropertiesValidationHandler : IChildObjectPropertyValidation
             generator
                 .AppendSeparatorLine()
                 .AppendLineIndent(
-                    "if (",
+                    "if (property.Name.IsMatch(",
                     regexAccessor,
-                    ".IsMatch(propertyNameAsString))")
+                    "))")
                 .AppendLineIndent("{")
                 .PushIndent()
                     .AppendLineIndent("result = result.WithLocalProperty(propertyCount);")
                     .AppendLineIndent("if (level > ValidationLevel.Basic)")
                     .AppendLineIndent("{")
                     .PushIndent()
+                        .AppendLineIndent("propertyNameAsString ??= property.Name.GetString();")
                         .AppendLineIndent(
                             "result = result.PushValidationLocationReducedPathModifierAndProperty(new JsonReference(",
                             SymbolDisplay.FormatLiteral(property.KeywordPathModifier, true),

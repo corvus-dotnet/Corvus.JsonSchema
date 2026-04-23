@@ -1,5 +1,4 @@
 <Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFrameworks>net8.0</TargetFrameworks>
@@ -9,20 +8,17 @@
     <IsPackable>false</IsPackable>
     <PreserveCompilationContext>true</PreserveCompilationContext>
   </PropertyGroup>
-
   <ItemGroup>
-    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.14.0" />
-    <PackageReference Include="System.Collections.Immutable" Version="10.0.4" />
-    <PackageReference Include="System.Reflection.Metadata" Version="10.0.4" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
+    <PackageReference Include="System.Collections.Immutable" />
+    <PackageReference Include="System.Reflection.Metadata" />
   </ItemGroup>
-
   <ItemGroup>
     <ProjectReference Include="..\Corvus.Json.Benchmarking\Corvus.Json.Benchmarking.csproj" />
     <ProjectReference Include="..\Corvus.Json.CodeGeneration.CSharp.QuickStart\Corvus.Json.CodeGeneration.CSharp.QuickStart.csproj" />
     <ProjectReference Include="..\Corvus.Json.ExtendedTypes\Corvus.Json.ExtendedTypes.csproj" />
     <ProjectReference Include="..\Sandbox.SourceGenerator\Sandbox.SourceGenerator.csproj" />
   </ItemGroup>
-
   <ItemGroup>
     <None Update="CombinedDocumentSchema.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
@@ -34,6 +30,4 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
-
-  
 </Project>

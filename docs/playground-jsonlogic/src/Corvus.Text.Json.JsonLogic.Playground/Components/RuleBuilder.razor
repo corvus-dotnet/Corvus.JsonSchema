@@ -1,0 +1,265 @@
+@* Rule builder: toggleable Visual / JSON editor with bidirectional sync. *@
+@inject IJSRuntime JSRuntime
+
+<div class="rule-builder">
+    <div class="rule-builder__tabs">
+        <button class="rule-builder__tab @(IsVisualMode ? "active" : "")"
+                @onclick="() => SwitchToVisual()">
+            🧩 Visual
+        </button>
+        <button class="rule-builder__tab @(!IsVisualMode ? "active" : "")"
+                @onclick="() => SwitchToJson()">
+            { } JSON
+        </button>
+    </div>
+
+    @if (jsonParseError is not null)
+    {
+        <div class="rule-builder__error">⚠ @jsonParseError</div>
+    }
+
+    <div class="rule-builder__panels">
+        <div class="rule-builder__content @(IsVisualMode ? "rule-builder__content--active" : "rule-builder__content--hidden")">
+            <BlocklyEditor @ref="blocklyEditor"
+                           OnChanged="OnBlocklyChanged" />
+        </div>
+
+        <div class="rule-builder__content @(!IsVisualMode ? "rule-builder__content--active" : "rule-builder__content--hidden")">
+            <StandaloneCodeEditor @ref="jsonEditor"
+                                  Id="rule-json-editor"
+                                  ConstructionOptions="JsonEditorOptions"
+                                  OnDidChangeModelContent="OnJsonEditorChanged" />
+        </div>
+    </div>
+</div>
+
+@code {
+    private BlocklyEditor? blocklyEditor;
+    private StandaloneCodeEditor? jsonEditor;
+    private bool isVisualMode = true;
+    private string? jsonParseError;
+    private bool suppressBlocklySync;
+    private bool suppressJsonSync;
+    private string lastJson = "";
+
+    public bool IsVisualMode
+    {
+        get => isVisualMode;
+        private set => isVisualMode = value;
+    }
+
+    [Parameter]
+    public EventCallback<string> OnRuleChanged { get; set; }
+
+    /// <summary>
+    /// Fires after switching back to visual mode and the blocks have been rebuilt.
+    /// </summary>
+    [Parameter]
+    public EventCallback OnVisualModeRestored { get; set; }
+
+    /// <summary>
+    /// Gets the current rule JSON text.
+    /// </summary>
+    public string RuleJson => lastJson;
+
+    /// <summary>
+    /// Notify Blockly that the container size has changed.
+    /// </summary>
+    public async Task ResizeBlocklyAsync()
+    {
+        if (blocklyEditor is not null)
+        {
+            await blocklyEditor.ResizeAsync();
+        }
+    }
+
+    /// <summary>
+    /// Sets the rule from JSON, rebuilding both editors.
+    /// </summary>
+    public async void SetRule(string json, string? dataJson = null)
+    {
+        lastJson = json;
+        jsonParseError = null;
+
+        suppressBlocklySync = true;
+        suppressJsonSync = true;
+
+        try
+        {
+            if (blocklyEditor is not null)
+            {
+                await blocklyEditor.LoadJsonLogicAsync(json, dataJson);
+            }
+
+            await UpdateJsonEditorAsync(json);
+        }
+        catch (Exception ex)
+        {
+            jsonParseError = ex.Message;
+        }
+        finally
+        {
+            suppressBlocklySync = false;
+            suppressJsonSync = false;
+        }
+
+        StateHasChanged();
+    }
+
+    /// <summary>
+    /// Gets whether the rule has been modified from a given baseline.
+    /// </summary>
+    public bool IsDirty(string baseline)
+    {
+        return !string.Equals(
+            NormalizeJson(lastJson),
+            NormalizeJson(baseline),
+            StringComparison.Ordinal);
+    }
+
+    private StandaloneEditorConstructionOptions JsonEditorOptions(StandaloneCodeEditor editor)
+    {
+        return new StandaloneEditorConstructionOptions
+        {
+            Language = "json",
+            Theme = "vs-dark",
+            Value = lastJson,
+            AutomaticLayout = true,
+            Minimap = new EditorMinimapOptions { Enabled = false },
+            FontSize = 14,
+            ScrollBeyondLastLine = false,
+            TabSize = 2,
+        };
+    }
+
+    private async Task SwitchToVisual()
+    {
+        if (IsVisualMode) return;
+
+        // Sync JSON → Blockly
+        if (jsonEditor is not null)
+        {
+            string json = await jsonEditor.GetValue();
+            try
+            {
+                // Validate JSON first
+                using var doc = System.Text.Json.JsonDocument.Parse(json);
+                jsonParseError = null;
+
+                suppressBlocklySync = true;
+                if (blocklyEditor is not null)
+                {
+                    await blocklyEditor.LoadJsonLogicAsync(json);
+                }
+                suppressBlocklySync = false;
+                lastJson = json;
+            }
+            catch (Exception ex)
+            {
+                jsonParseError = $"Cannot switch to visual mode: {ex.Message}";
+                return;
+            }
+        }
+
+        IsVisualMode = true;
+
+        // Resize after visual becomes visible
+        StateHasChanged();
+        await Task.Yield();
+        if (blocklyEditor is not null)
+        {
+            await blocklyEditor.ResizeAsync();
+        }
+
+        await OnVisualModeRestored.InvokeAsync();
+    }
+
+    private async Task SwitchToJson()
+    {
+        if (!IsVisualMode) return;
+
+        // Sync Blockly → JSON
+        if (blocklyEditor is not null)
+        {
+            string json = await blocklyEditor.GetJsonLogicAsync();
+            lastJson = json;
+        }
+
+        IsVisualMode = false;
+
+        StateHasChanged();
+        await Task.Yield();
+        await UpdateJsonEditorAsync(lastJson);
+
+        if (jsonEditor is not null)
+        {
+            try
+            {
+                await JSRuntime.InvokeVoidAsync(
+                    "blazorMonaco.editor.layout", "rule-json-editor", null, null);
+            }
+            catch
+            {
+                // Editor not ready
+            }
+        }
+    }
+
+    private async Task OnBlocklyChanged(string jsonLogic)
+    {
+        if (suppressBlocklySync) return;
+
+        lastJson = jsonLogic;
+        jsonParseError = null;
+
+        suppressJsonSync = true;
+        await UpdateJsonEditorAsync(jsonLogic);
+        suppressJsonSync = false;
+
+        if (OnRuleChanged.HasDelegate)
+        {
+            await OnRuleChanged.InvokeAsync(jsonLogic);
+        }
+    }
+
+    private async Task OnJsonEditorChanged(ModelContentChangedEvent e)
+    {
+        if (suppressJsonSync || jsonEditor is null) return;
+
+        string json = await jsonEditor.GetValue();
+        lastJson = json;
+
+        if (OnRuleChanged.HasDelegate)
+        {
+            await OnRuleChanged.InvokeAsync(json);
+        }
+    }
+
+    private async Task UpdateJsonEditorAsync(string json)
+    {
+        if (jsonEditor is not null)
+        {
+            try
+            {
+                await jsonEditor.SetValue(json);
+            }
+            catch
+            {
+                // Editor not yet initialized
+            }
+        }
+    }
+
+    private static string NormalizeJson(string json)
+    {
+        try
+        {
+            using var doc = System.Text.Json.JsonDocument.Parse(json);
+            return doc.RootElement.GetRawText();
+        }
+        catch
+        {
+            return json.Trim();
+        }
+    }
+}

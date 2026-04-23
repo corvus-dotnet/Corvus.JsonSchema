@@ -4,7 +4,7 @@
 // <licensing>
 // Derived from code licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licensed this code under the MIT license.
-// https:// github.com/dotnet/runtime/blob/388a7c4814cb0d6e344621d017507b357902043a/LICENSE.TXT
+// https://github.com/dotnet/runtime/blob/388a7c4814cb0d6e344621d017507b357902043a/LICENSE.TXT
 // </licensing>
 using System.Buffers;
 
@@ -4082,5 +4082,261 @@ internal static class Utf8UriTools
 
         return true;
 #endif
+    }
+
+    /// <summary>
+    /// Escapes a UTF-8 string per RFC 3986 <c>EscapeDataString</c> semantics.
+    /// Unreserved characters (A-Z, a-z, 0-9, '-', '_', '.', '~') pass through;
+    /// all other bytes are percent-encoded as <c>%XX</c> with uppercase hex digits.
+    /// </summary>
+    /// <param name="source">The unescaped UTF-8 bytes to encode.</param>
+    /// <param name="destination">The buffer into which to write the escaped result.</param>
+    /// <param name="bytesWritten">The number of bytes written to <paramref name="destination"/>.</param>
+    /// <returns><see langword="true"/> if the entire source was escaped into the destination;
+    /// <see langword="false"/> if the destination was too small.</returns>
+    internal static bool TryEscapeDataString(ReadOnlySpan<byte> source, Span<byte> destination, out int bytesWritten)
+    {
+        int pos = 0;
+
+        for (int i = 0; i < source.Length; i++)
+        {
+            byte b = source[i];
+
+            if (IsUnreservedByte(b))
+            {
+                if (pos >= destination.Length)
+                {
+                    bytesWritten = 0;
+                    return false;
+                }
+
+                destination[pos++] = b;
+            }
+            else
+            {
+                if (pos + 3 > destination.Length)
+                {
+                    bytesWritten = 0;
+                    return false;
+                }
+
+                destination[pos++] = (byte)'%';
+                destination[pos++] = ToHexChar((byte)(b >> 4));
+                destination[pos++] = ToHexChar((byte)(b & 0x0F));
+            }
+        }
+
+        bytesWritten = pos;
+        return true;
+    }
+
+    /// <summary>
+    /// Unescapes a percent-encoded UTF-8 string, matching <c>Uri.UnescapeDataString</c> semantics.
+    /// Valid <c>%XX</c> sequences with ASCII results (decoded byte &lt; 0x80) are decoded directly.
+    /// Non-ASCII decoded bytes (&gt;= 0x80) are only decoded when consecutive <c>%XX</c> sequences
+    /// form a valid UTF-8 multi-byte sequence; invalid multi-byte sequences are left encoded.
+    /// Malformed sequences (invalid hex digits, truncated <c>%</c> at end of input) are copied
+    /// through literally.
+    /// </summary>
+    /// <param name="source">The percent-encoded UTF-8 bytes to decode.</param>
+    /// <param name="destination">The buffer into which to write the unescaped result.</param>
+    /// <param name="bytesWritten">The number of bytes written to <paramref name="destination"/>.</param>
+    /// <returns><see langword="true"/> if the entire source was unescaped into the destination;
+    /// <see langword="false"/> if the destination was too small.</returns>
+    internal static bool TryUnescapeDataString(ReadOnlySpan<byte> source, Span<byte> destination, out int bytesWritten)
+    {
+        int pos = 0;
+        int i = 0;
+
+        while (i < source.Length)
+        {
+            byte b = source[i];
+
+            if (b == (byte)'%' && i + 2 < source.Length)
+            {
+                char decoded = Utf8UriHelper.DecodeHexChars(source[i + 1], source[i + 2]);
+                if (decoded != c_DummyChar)
+                {
+                    byte decodedByte = (byte)decoded;
+
+                    if (decodedByte < 0x80)
+                    {
+                        // ASCII: emit directly
+                        if (pos >= destination.Length)
+                        {
+                            bytesWritten = 0;
+                            return false;
+                        }
+
+                        destination[pos++] = decodedByte;
+                        i += 3;
+                        continue;
+                    }
+
+                    // Non-ASCII: validate multi-byte UTF-8 from consecutive %XX sequences
+                    if (TryUnescapePercentEncodedUtf8(source, i, destination, ref pos, out int consumed))
+                    {
+                        i += consumed;
+                        continue;
+                    }
+                }
+
+                // Invalid hex or invalid multi-byte UTF-8: copy '%' literally
+                if (pos >= destination.Length)
+                {
+                    bytesWritten = 0;
+                    return false;
+                }
+
+                destination[pos++] = b;
+                i++;
+                continue;
+            }
+
+            // Non-% byte: copy literally
+            if (pos >= destination.Length)
+            {
+                bytesWritten = 0;
+                return false;
+            }
+
+            destination[pos++] = b;
+            i++;
+        }
+
+        bytesWritten = pos;
+        return true;
+    }
+
+    /// <summary>
+    /// Attempts to decode consecutive percent-encoded bytes as a valid UTF-8 multi-byte sequence.
+    /// Collects up to 4 consecutive <c>%XX</c> decoded bytes and validates them with
+    /// <see cref="Rune.DecodeFromUtf8"/>. If valid, writes the decoded UTF-8 bytes to the
+    /// destination. If invalid, returns <see langword="false"/> and leaves the caller to handle
+    /// the bytes individually.
+    /// </summary>
+    private static bool TryUnescapePercentEncodedUtf8(
+        ReadOnlySpan<byte> source,
+        int startIndex,
+        Span<byte> destination,
+        ref int destPos,
+        out int bytesConsumed)
+    {
+        Span<byte> utf8Bytes = stackalloc byte[4];
+        int utf8Count = 0;
+        int currentIndex = startIndex;
+
+        // Collect consecutive %XX decoded bytes
+        while (utf8Count < 4 &&
+               currentIndex + 2 < source.Length &&
+               source[currentIndex] == (byte)'%')
+        {
+            char decoded = Utf8UriHelper.DecodeHexChars(source[currentIndex + 1], source[currentIndex + 2]);
+            if (decoded == c_DummyChar)
+            {
+                break;
+            }
+
+            utf8Bytes[utf8Count++] = (byte)decoded;
+            currentIndex += 3;
+        }
+
+        if (utf8Count == 0)
+        {
+            bytesConsumed = 0;
+            return false;
+        }
+
+        // Validate as UTF-8
+        if (Rune.DecodeFromUtf8(utf8Bytes.Slice(0, utf8Count), out _, out int bytesRead) == System.Buffers.OperationStatus.Done)
+        {
+            if (destPos + bytesRead > destination.Length)
+            {
+                bytesConsumed = 0;
+                return false;
+            }
+
+            utf8Bytes.Slice(0, bytesRead).CopyTo(destination.Slice(destPos));
+            destPos += bytesRead;
+            bytesConsumed = bytesRead * 3; // Each decoded byte was %XX (3 source bytes)
+            return true;
+        }
+
+        bytesConsumed = 0;
+        return false;
+    }
+
+    /// <summary>
+    /// Escapes a UTF-8 string with URI semantics (matching JavaScript's <c>encodeURI</c>).
+    /// RFC 3986 unreserved characters plus reserved characters
+    /// (<c>: / ? # [ ] @ ! $ &amp; ' ( ) * + , ; =</c>) pass through unescaped;
+    /// all other bytes are percent-encoded as <c>%XX</c> with uppercase hex digits.
+    /// </summary>
+    /// <param name="source">The UTF-8 bytes to encode.</param>
+    /// <param name="destination">The buffer into which to write the escaped result.</param>
+    /// <param name="bytesWritten">The number of bytes written to <paramref name="destination"/>.</param>
+    /// <returns><see langword="true"/> if the entire source was escaped into the destination;
+    /// <see langword="false"/> if the destination was too small.</returns>
+    internal static bool TryEscapeUri(ReadOnlySpan<byte> source, Span<byte> destination, out int bytesWritten)
+    {
+        int pos = 0;
+
+        for (int i = 0; i < source.Length; i++)
+        {
+            byte b = source[i];
+
+            if (IsUnreservedByte(b) || IsReservedByte(b))
+            {
+                if (pos >= destination.Length)
+                {
+                    bytesWritten = 0;
+                    return false;
+                }
+
+                destination[pos++] = b;
+            }
+            else
+            {
+                if (pos + 3 > destination.Length)
+                {
+                    bytesWritten = 0;
+                    return false;
+                }
+
+                destination[pos++] = (byte)'%';
+                destination[pos++] = ToHexChar((byte)(b >> 4));
+                destination[pos++] = ToHexChar((byte)(b & 0x0F));
+            }
+        }
+
+        bytesWritten = pos;
+        return true;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static bool IsUnreservedByte(byte b)
+    {
+#if NET
+        return Utf8UriHelper.UnreservedBytes.Contains(b);
+#else
+        return Utf8UriHelper.UnreservedBytes.IndexOf(b) >= 0;
+#endif
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static bool IsReservedByte(byte b)
+    {
+        // RFC 3986 reserved = gen-delims / sub-delims
+        // gen-delims: : / ? # [ ] @
+        // sub-delims: ! $ & ' ( ) * + , ; =
+        return b switch
+        {
+            (byte)':' or (byte)'/' or (byte)'?' or (byte)'#' or
+            (byte)'[' or (byte)']' or (byte)'@' or (byte)'!' or
+            (byte)'$' or (byte)'&' or (byte)'\'' or (byte)'(' or
+            (byte)')' or (byte)'*' or (byte)'+' or (byte)',' or
+            (byte)';' or (byte)'=' => true,
+            _ => false,
+        };
     }
 }

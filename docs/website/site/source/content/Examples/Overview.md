@@ -46,6 +46,16 @@ dotnet run
 | [016](/examples/maps.html) | Maps | Typed map (object with `additionalProperties`), builder construction |
 | [017](/examples/mapping-input-and-output-values.html) | Mapping Input/Output | Cross-model mapping, `From()`, mutable pipeline |
 
+| [018](/examples/creating-and-mutating-objects.html) | Creating and Mutating Objects | Mutable document lifecycle, `SetProperty`, `RemoveProperty` |
+| [019](/examples/clone-and-freeze.html) | Clone and Freeze | `Clone()`, `Freeze()`, immutable snapshots |
+| [020](/examples/conditional-schemas.html) | Conditional Schemas | `if`/`then`/`else`, `dependentSchemas` |
+| [021](/examples/default-values.html) | Default Values | `default`, fallback values |
+| [022](/examples/format-validation.html) | Format Validation | `format` keyword, date-time, email, URI |
+| [023](/examples/json-patch.html) | JSON Patch | RFC 6902 operations, add/remove/replace/move/copy/test |
+| [024](/examples/json-logic.html) | JsonLogic | Declarative business rules, predicates, calculations |
+| [025](/examples/jsonata.html) | JSONata | JSONata query language, path navigation, filtering, functions, object construction |
+| [026](/examples/jmespath.html) | JMESPath | JMESPath query language, projections, filters, slicing, multiselect, functions |
+
 ## Related documentation
 
 - [Getting Started with Code Generation](/getting-started/index.html)

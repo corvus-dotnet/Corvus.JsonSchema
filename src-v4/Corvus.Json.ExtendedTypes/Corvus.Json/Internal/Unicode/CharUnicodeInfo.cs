@@ -329,18 +329,18 @@ namespace System.Globalization
         ////    return (codePoint & 0xFFFF0000u) | (ushort)((uint)delta + codePoint);
         ////}
 
-        /////*
-        //// * GetUnicodeCategory
-        //// * ==================
-        //// * Data derived from https://www.unicode.org/reports/tr44/#UnicodeData.txt. Returns the
-        //// * General_Category of this code point as encoded in field 2 of UnicodeData.txt, or "Cn"
-        //// * if the code point has not been assigned.
-        //// */
+        /*
+         * GetUnicodeCategory
+         * ==================
+         * Data derived from https://www.unicode.org/reports/tr44/#UnicodeData.txt. Returns the
+         * General_Category of this code point as encoded in field 2 of UnicodeData.txt, or "Cn"
+         * if the code point has not been assigned.
+         */
 
-        ////public static UnicodeCategory GetUnicodeCategory(char ch)
-        ////{
-        ////    return GetUnicodeCategoryNoBoundsChecks(ch);
-        ////}
+        public static UnicodeCategory GetUnicodeCategory(char ch)
+        {
+            return GetUnicodeCategoryNoBoundsChecks(ch);
+        }
 
         ////public static UnicodeCategory GetUnicodeCategory(int codePoint)
         ////{
@@ -393,14 +393,14 @@ namespace System.Globalization
         ////////    return GetUnicodeCategoryNoBoundsChecks(codePoint);
         ////////}
 
-        ////private static UnicodeCategory GetUnicodeCategoryNoBoundsChecks(uint codePoint)
-        ////{
-        ////    nuint offset = GetCategoryCasingTableOffsetNoBoundsChecks(codePoint);
+        private static UnicodeCategory GetUnicodeCategoryNoBoundsChecks(uint codePoint)
+        {
+            nuint offset = GetCategoryCasingTableOffsetNoBoundsChecks(codePoint);
 
-        ////    // Each entry of the 'CategoriesValues' table uses the low 5 bits to store the UnicodeCategory information.
+            // Each entry of the 'CategoriesValues' table uses the low 5 bits to store the UnicodeCategory information.
 
-        ////    return (UnicodeCategory)(Unsafe.AddByteOffset(ref MemoryMarshal.GetReference(CategoriesValues), offset) & 0x1F);
-        ////}
+            return (UnicodeCategory)(Unsafe.AddByteOffset(ref MemoryMarshal.GetReference(CategoriesValues), offset) & 0x1F);
+        }
 
         /*
          * HELPER AND TABLE LOOKUP ROUTINES
@@ -446,40 +446,40 @@ namespace System.Globalization
         ////    return codePoint;
         ////}
 
-        /////// <summary>
-        /////// Retrieves the offset into the "CategoryCasing" arrays where this code point's
-        /////// information is stored. Used for getting the Unicode category, bidi information,
-        /////// and whitespace information.
-        /////// </summary>
-        ////private static nuint GetCategoryCasingTableOffsetNoBoundsChecks(uint codePoint)
-        ////{
-        ////    // The code below is written with the assumption that the backing store is 11:5:4.
-        ////    AssertCategoryCasingTableLevels(11, 5, 4);
+        /// <summary>
+        /// Retrieves the offset into the "CategoryCasing" arrays where this code point's
+        /// information is stored. Used for getting the Unicode category, bidi information,
+        /// and whitespace information.
+        /// </summary>
+        private static nuint GetCategoryCasingTableOffsetNoBoundsChecks(uint codePoint)
+        {
+            // The code below is written with the assumption that the backing store is 11:5:4.
+            AssertCategoryCasingTableLevels(11, 5, 4);
 
-        ////    // Get the level index item from the high 11 bits of the code point.
+            // Get the level index item from the high 11 bits of the code point.
 
-        ////    uint index = Unsafe.AddByteOffset(ref MemoryMarshal.GetReference(CategoryCasingLevel1Index), codePoint >> 9);
+            uint index = Unsafe.AddByteOffset(ref MemoryMarshal.GetReference(CategoryCasingLevel1Index), codePoint >> 9);
 
-        ////    // Get the level 2 WORD offset from the next 5 bits of the code point.
-        ////    // This provides the base offset of the level 3 table.
-        ////    // Note that & has lower precedence than +, so remember the parens.
+            // Get the level 2 WORD offset from the next 5 bits of the code point.
+            // This provides the base offset of the level 3 table.
+            // Note that & has lower precedence than +, so remember the parens.
 
-        ////    ref byte level2Ref = ref Unsafe.AddByteOffset(ref MemoryMarshal.GetReference(CategoryCasingLevel2Index), (index << 6) + ((codePoint >> 3) & 0b_0011_1110));
+            ref byte level2Ref = ref Unsafe.AddByteOffset(ref MemoryMarshal.GetReference(CategoryCasingLevel2Index), (index << 6) + ((codePoint >> 3) & 0b_0011_1110));
 
-        ////    if (BitConverter.IsLittleEndian)
-        ////    {
-        ////        index = Unsafe.ReadUnaligned<ushort>(ref level2Ref);
-        ////    }
-        ////    else
-        ////    {
-        ////        index = BinaryPrimitives.ReverseEndianness(Unsafe.ReadUnaligned<ushort>(ref level2Ref));
-        ////    }
+            if (BitConverter.IsLittleEndian)
+            {
+                index = Unsafe.ReadUnaligned<ushort>(ref level2Ref);
+            }
+            else
+            {
+                index = BinaryPrimitives.ReverseEndianness(Unsafe.ReadUnaligned<ushort>(ref level2Ref));
+            }
 
-        ////    // Get the result from the low 4 bits of the code point.
-        ////    // This is the offset into the values table where the data is stored.
+            // Get the result from the low 4 bits of the code point.
+            // This is the offset into the values table where the data is stored.
 
-        ////    return Unsafe.AddByteOffset(ref MemoryMarshal.GetReference(CategoryCasingLevel3Index), (index << 4) + (codePoint & 0x0F));
-        ////}
+            return Unsafe.AddByteOffset(ref MemoryMarshal.GetReference(CategoryCasingLevel3Index), (index << 4) + (codePoint & 0x0F));
+        }
 
         /// <summary>
         /// Retrieves the offset into the "NumericGrapheme" arrays where this code point's

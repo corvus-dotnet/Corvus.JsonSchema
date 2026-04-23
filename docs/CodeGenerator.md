@@ -2,7 +2,7 @@
 
 ## Overview
 
-`generatejsonschematypes` is a .NET global tool that generates strongly-typed C# models from JSON Schema files. It produces the same output as the Roslyn incremental source generator, but runs ahead of time from the command line — making it suitable for CI/CD pipelines, pre-generation workflows, and scenarios where you need to inspect or version-control the generated code.
+`corvusjson` is the .NET global tool that generates strongly-typed C# models from JSON Schema files. It produces the same output as the Roslyn incremental source generator, but runs ahead of time from the command line — making it suitable for CI/CD pipelines, pre-generation workflows, and scenarios where you need to inspect or version-control the generated code.
 
 The tool supports all major JSON Schema drafts (Draft 4, 6, 7, 2019-09, and 2020-12), OpenAPI 3.0, and YAML input.
 
@@ -11,22 +11,24 @@ The tool supports all major JSON Schema drafts (Draft 4, 6, 7, 2019-09, and 2020
 ## Installation
 
 ```bash
-dotnet tool install --global Corvus.Json.CodeGenerator
+dotnet tool install --global Corvus.Json.Cli
 ```
 
 Or as a local tool:
 
 ```bash
 dotnet new tool-manifest
-dotnet tool install Corvus.Json.CodeGenerator
+dotnet tool install Corvus.Json.Cli
 ```
+
+> **Legacy shim:** The previous package `Corvus.Json.CodeGenerator` (command: `generatejsonschematypes`) still works but defaults to the V4 engine and displays a deprecation warning. New projects should use `Corvus.Json.Cli`.
 
 ## Quick Start
 
 Generate types from a schema file:
 
 ```bash
-generatejsonschematypes Schemas/person.json \
+corvusjson jsonschema Schemas/person.json \
     --rootNamespace MyApp.Models \
     --outputPath Generated/
 ```
@@ -37,10 +39,10 @@ This reads `person.json`, generates one or more C# files into `Generated/`, and 
 
 ### `generate` (Default)
 
-Generate C# types from a single schema file. This is the default command — you can omit the command name.
+Generate C# types from a single schema file. This is the default command when using the `jsonschema` subcommand — you can omit the command name.
 
 ```bash
-generatejsonschematypes <schemaFile> [OPTIONS]
+corvusjson jsonschema <schemaFile> [OPTIONS]
 ```
 
 **Required arguments:**
@@ -59,6 +61,9 @@ generatejsonschematypes <schemaFile> [OPTIONS]
 | `--assertFormat` | `true` | Enforce `format` keyword as a validation assertion |
 | `--optionalAsNullable` | `None` | How to handle optional properties: `None` or `NullOrUndefined` |
 | `--useImplicitOperatorString` | `false` | Use implicit (vs explicit) conversion to `string` |
+| `--disableOptionalNamingHeuristics` | `false` | Disable all optional naming heuristics at once (see [Naming Heuristics](#naming-heuristics)) |
+| `--disableNamingHeuristic` | — | Disable a specific naming heuristic by name (repeatable; see [Naming Heuristics](#naming-heuristics)) |
+| `--useUnixLineEndings` | `false` | Use Unix line endings (`\n`) instead of Windows (`\r\n`) in generated files |
 | `--yaml` | `false` | Enable YAML schema support |
 | `--addExplicitUsings` | `false` | Include explicit `using` statements for standard implicit usings |
 | `--engine` | `V5` | Code generation engine: `V5` (Corvus.Text.Json) or `V4` (legacy Corvus.Json.ExtendedTypes) |
@@ -69,20 +74,20 @@ generatejsonschematypes <schemaFile> [OPTIONS]
 
 ```bash
 # Generate with a custom root type name
-generatejsonschematypes Schemas/person.json \
+corvusjson jsonschema Schemas/person.json \
     --rootNamespace MyApp.Models \
     --outputPath Generated/ \
     --outputRootTypeName Person
 
 # Generate from a specific definition within a schema
-generatejsonschematypes Schemas/api.json \
+corvusjson jsonschema Schemas/api.json \
     --rootNamespace MyApp.Models \
     --outputPath Generated/ \
     --rootPath "#/definitions/Address" \
     --rebaseToRootPath
 
 # Treat optional properties as nullable
-generatejsonschematypes Schemas/config.json \
+corvusjson jsonschema Schemas/config.json \
     --rootNamespace MyApp.Config \
     --outputPath Generated/ \
     --optionalAsNullable NullOrUndefined
@@ -93,7 +98,7 @@ generatejsonschematypes Schemas/config.json \
 Generate types from a configuration file that specifies multiple schemas and shared settings:
 
 ```bash
-generatejsonschematypes config myconfig.json [--engine V5]
+corvusjson config myconfig.json [--engine V5]
 ```
 
 #### Example configuration file
@@ -152,7 +157,7 @@ The `config` command is ideal when you have multiple schemas to generate from, s
 | `namedTypes` | No | — | Explicitly assign .NET names to specific schema definitions that would otherwise get auto-generated names (see below). |
 | `namespaces` | No | — | A dictionary mapping schema base URIs to .NET namespaces. Any schema whose canonical URI starts with a given key is generated into the corresponding namespace. For example, `"https://example.com/schemas/": "MyApp.External"` places all schemas under that URI prefix into `MyApp.External`. |
 | `disableOptionalNameHeuristics` | No | `false` | When `true`, disables all optional naming heuristics at once. Cannot be combined with `disabledNamingHeuristics`. |
-| `disabledNamingHeuristics` | No | — | An array of specific naming heuristic names to disable. Use `generatejsonschematypes listNameHeuristics` to see available names. Cannot be combined with `disableOptionalNameHeuristics`. |
+| `disabledNamingHeuristics` | No | — | An array of specific naming heuristic names to disable. Use `corvusjson listNameHeuristics` to see available names. Cannot be combined with `disableOptionalNameHeuristics`. |
 | `useImplicitOperatorString` | No | `false` | When `true`, conversion operators to `string` are implicit rather than explicit. Use with care — implicit conversions can cause unintended string allocations. |
 | `useUnixLineEndings` | No | `false` | When `true`, generated files use Unix line endings (`\n`) instead of Windows (`\r\n`). |
 | `supportYaml` | No | `false` | When `true`, enables YAML support. Schema and document files can be YAML, JSON, or a mixture. |
@@ -196,7 +201,7 @@ By default, the generator derives .NET type names from the schema structure. Use
 Validate a JSON or YAML document against a schema:
 
 ```bash
-generatejsonschematypes validateDocument Schemas/person.json data.json
+corvusjson validateDocument Schemas/person.json data.json
 ```
 
 Output includes pass/fail status for each validation rule, with file path, line, column, and the schema evaluation location for failures.
@@ -206,7 +211,7 @@ Output includes pass/fail status for each validation rule, with file path, line,
 List all available naming heuristics. Some are optional and can be disabled with `--disableNamingHeuristic`:
 
 ```bash
-generatejsonschematypes listNameHeuristics
+corvusjson listNameHeuristics
 ```
 
 ### `version`
@@ -214,7 +219,7 @@ generatejsonschematypes listNameHeuristics
 Display the tool version and build information:
 
 ```bash
-generatejsonschematypes version
+corvusjson version
 ```
 
 ## Source Generator vs. CLI Tool
@@ -224,7 +229,7 @@ Both produce identical output — the same `readonly struct` types with the same
 | Aspect | Source Generator | CLI Tool |
 |--------|-----------------|----------|
 | **When** | At build time, automatically | On demand, from the command line |
-| **Triggered by** | `[JsonSchemaTypeGenerator]` attribute | Explicit `generatejsonschematypes` invocation |
+| **Triggered by** | `[JsonSchemaTypeGenerator]` attribute | Explicit `corvusjson jsonschema` invocation |
 | **Output location** | `obj/` (not checked in) | Any directory (can be checked in) |
 | **IDE integration** | Full IntelliSense as you type | IntelliSense after generation + build |
 | **Best for** | Most projects | CI pipelines, inspecting output, multi-schema configs |
@@ -286,7 +291,7 @@ The tool auto-detects the schema draft from the `$schema` keyword. Use `--useSch
 Use `--outputMapFile` to generate a JSON manifest of all generated files:
 
 ```bash
-generatejsonschematypes Schemas/person.json \
+corvusjson jsonschema Schemas/person.json \
     --rootNamespace MyApp.Models \
     --outputPath Generated/ \
     --outputMapFile generated.map.json
@@ -350,16 +355,16 @@ When a derived name collides with its parent type or a sibling, the tool automat
 
 ```bash
 # Disable a specific heuristic by name
-generatejsonschematypes Schemas/person.json \
+corvusjson jsonschema Schemas/person.json \
     --rootNamespace MyApp.Models \
     --outputPath Generated/ \
     --disableNamingHeuristic DocumentationNameHeuristic
 
 # Disable all optional heuristics at once
-generatejsonschematypes Schemas/person.json \
+corvusjson jsonschema Schemas/person.json \
     --rootNamespace MyApp.Models \
     --outputPath Generated/ \
     --disableOptionalNamingHeuristics
 ```
 
-Run `generatejsonschematypes listNameHeuristics` to see all available heuristics and which ones are optional.
+Run `corvusjson listNameHeuristics` to see all available heuristics and which ones are optional.

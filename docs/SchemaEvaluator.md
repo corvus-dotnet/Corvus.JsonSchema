@@ -39,13 +39,13 @@ If you only want the evaluator (no types), use the CLI tool with `--codeGenerati
 
 ```bash
 # Generate only the standalone evaluator (no types)
-generatejsonschematypes Schemas/person.json \
+corvusjson jsonschema Schemas/person.json \
     --rootNamespace MyApp.Evaluators \
     --outputPath Generated/ \
     --codeGenerationMode SchemaEvaluationOnly
 
 # Generate both types and evaluator
-generatejsonschematypes Schemas/person.json \
+corvusjson jsonschema Schemas/person.json \
     --rootNamespace MyApp.Models \
     --outputPath Generated/ \
     --codeGenerationMode Both

@@ -4,7 +4,7 @@
 // <licensing>
 // Derived from code licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licensed this code under the MIT license.
-// https:// github.com/dotnet/runtime/blob/388a7c4814cb0d6e344621d017507b357902043a/LICENSE.TXT
+// https://github.com/dotnet/runtime/blob/388a7c4814cb0d6e344621d017507b357902043a/LICENSE.TXT
 // </licensing>
 using System.Buffers;
 using System.Globalization;
@@ -18,7 +18,12 @@ namespace Corvus.Numerics;
 /// <summary>
 /// Zero-allocation formatting methods for <see cref="BigNumber"/>.
 /// </summary>
-public readonly partial struct BigNumber
+#if BUILDING_SOURCE_GENERATOR
+internal
+#else
+public
+#endif
+readonly partial struct BigNumber
 {
     /// <summary>
     /// Tries to format this instance into the provided UTF-16 span with zero allocations.

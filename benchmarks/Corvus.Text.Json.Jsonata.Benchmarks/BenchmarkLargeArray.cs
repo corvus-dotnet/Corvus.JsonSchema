@@ -27,6 +27,11 @@ public class BenchmarkLargeArray
     private const string ExprFilter = "$filter(items, function($v) { $v.value > 2500 })";
     private const string ExprReduce = "$reduce(items, function($prev, $curr) { $prev + $curr.value }, 0)";
 
+    private static readonly byte[] ExprMapUtf8 = "$map(items, function($v) { $v.value * 2 })"u8.ToArray();
+    private static readonly byte[] ExprFilterUtf8 = "$filter(items, function($v) { $v.value > 2500 })"u8.ToArray();
+    private static readonly byte[] ExprReduceUtf8 = "$reduce(items, function($prev, $curr) { $prev + $curr.value }, 0)"u8.ToArray();
+
+
     private JsonataEvaluator evaluator = null!;
     private ParsedJsonDocument<JsonElement>? doc;
     private JsonElement data;
@@ -52,9 +57,9 @@ public class BenchmarkLargeArray
         this.workspace = JsonWorkspace.Create();
 
         // Pre-warm the Corvus compilation cache
-        this.evaluator.Evaluate(ExprMap, this.data);
-        this.evaluator.Evaluate(ExprFilter, this.data);
-        this.evaluator.Evaluate(ExprReduce, this.data);
+        this.evaluator.Evaluate(ExprMapUtf8, this.data, this.workspace, cacheKey: ExprMap);
+        this.evaluator.Evaluate(ExprFilterUtf8, this.data, this.workspace, cacheKey: ExprFilter);
+        this.evaluator.Evaluate(ExprReduceUtf8, this.data, this.workspace, cacheKey: ExprReduce);
 
         // Warm up source-generated evaluators
         LargeMapCodeGen.Evaluate(this.data, this.workspace);
@@ -90,7 +95,7 @@ public class BenchmarkLargeArray
     public JsonElement Corvus_Map()
     {
         this.workspace.Reset();
-        var result = this.evaluator.Evaluate(ExprMap, this.data, this.workspace);
+        var result = this.evaluator.Evaluate(ExprMapUtf8, this.data, this.workspace, cacheKey: ExprMap);
         this.workspace.Reset();
         return result;
     }
@@ -124,7 +129,7 @@ public class BenchmarkLargeArray
     public JsonElement Corvus_Filter()
     {
         this.workspace.Reset();
-        var result = this.evaluator.Evaluate(ExprFilter, this.data, this.workspace);
+        var result = this.evaluator.Evaluate(ExprFilterUtf8, this.data, this.workspace, cacheKey: ExprFilter);
         this.workspace.Reset();
         return result;
     }
@@ -158,7 +163,7 @@ public class BenchmarkLargeArray
     public JsonElement Corvus_Reduce()
     {
         this.workspace.Reset();
-        var result = this.evaluator.Evaluate(ExprReduce, this.data, this.workspace);
+        var result = this.evaluator.Evaluate(ExprReduceUtf8, this.data, this.workspace, cacheKey: ExprReduce);
         this.workspace.Reset();
         return result;
     }

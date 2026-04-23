@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-This is **Corvus.Text.Json**, a high-performance JSON library for .NET that extends `System.Text.Json` with pooled-memory parsing, JSON Schema validation (draft 2019-09 and 2020-12), mutable document building, extended numeric types (`BigNumber`, `BigInteger`), and NodaTime integration. It includes a Roslyn incremental source generator and a CLI code generator (`generatejsonschematypes`) that produce strongly-typed C# from JSON Schema files.
+This is **Corvus.Text.Json**, a high-performance JSON library for .NET that extends `System.Text.Json` with pooled-memory parsing, JSON Schema validation (draft 2019-09 and 2020-12), mutable document building, extended numeric types (`BigNumber`, `BigInteger`), and NodaTime integration. It includes a Roslyn incremental source generator and a CLI code generator (`corvusjson`) that produce strongly-typed C# from JSON Schema files.
 
 The repo structure mirrors the dotnet/runtime repository conventions: shared source files in `Common/`, polyfills from `System.Private.CoreLib/`, and explicit `<Compile>` item groups (no glob includes).
 
@@ -50,11 +50,11 @@ Follow this pattern when adding functionality: keep the core struct untouched an
 
 Two code-gen mechanisms are used together:
 1. **Roslyn `IIncrementalGenerator`** (`src/Corvus.Text.Json.SourceGenerator/`) — triggered at build time via `JsonSchemaTypeGeneratorAttribute`. `EmitCompilerGeneratedFiles=true` writes output to `obj/` for inspection.
-2. **CLI tool** (`src/Corvus.Json.CodeGenerator/`) — `generatejsonschematypes` generates C# from JSON Schema for use outside the build pipeline (e.g., the `tests/Corvus.Text.Json.Tests.GeneratedModels/` project).
+2. **CLI tool** (`src/Corvus.Json.CodeGenerator/`) — `corvusjson` (package: `Corvus.Json.Cli`) generates C# from JSON Schema for use outside the build pipeline (e.g., the `tests/Corvus.Text.Json.Tests.GeneratedModels/` project). The legacy `generatejsonschematypes` command (package: `Corvus.Json.CodeGenerator`) still works as a shim but defaults to the V4 engine.
 
 **IMPORTANT:** When writing documentation, examples, or instructions that reference Source Generator attributes or CLI tool options, always verify the exact parameter names and types by checking the source code:
 - **Source Generator attribute:** `src/Corvus.Text.Json.SourceGenerator/IncrementalSourceGenerator.cs` — the `JsonSchemaTypeGeneratorAttribute` is emitted by the generator and defines: `Location` (string, required), `RebaseToRootPath` (bool), `EmitEvaluator` (bool).
-- **CLI tool options:** `src/Corvus.Json.CodeGenerator/GenerateCommand.cs` — defines all command-line settings including `--assertFormat` (bool, default true), `--rootNamespace`, `--outputPath`, `--outputRootTypeName`, `--engine`, `--codeGenerationMode`, etc.
+- **CLI tool options:** `src/Corvus.Json.CodeGenerator/GenerateCommand.cs` — defines all command-line settings including `--assertFormat` (bool, default true), `--rootNamespace`, `--outputPath`, `--outputRootTypeName`, `--engine`, `--codeGenerationMode`, etc. The new CLI package is `Corvus.Json.Cli` (command: `corvusjson`); the legacy `Corvus.Json.CodeGenerator` package (command: `generatejsonschematypes`) still works but defaults to the V4 engine.
 
 Do **not** invent or hallucinate option names. If unsure, read the source files above before writing.
 
@@ -131,6 +131,7 @@ Rules to follow:
 
 ## Key Conventions
 
+- **Tone** — avoid aggressive language (e.g. "crush", "destroy", "kill", "dominate") when describing benchmark results or performance comparisons. Use neutral terms like "faster", "ahead of", "leads", "wins".
 - **No glob `<Compile>` items** — every source file must be explicitly listed in the `.csproj`. Adding a new `.cs` file requires a corresponding `<Compile Include="..." />` entry.
 - **`LangVersion=preview`** — preview C# language features are intentionally used. Prefer raw string literals (`"""`) for JSON and multi-line strings to avoid escape sequences. Use UTF-8 string literals (`"..."u8`) where a `ReadOnlySpan<byte>` is needed.
 - **`AllowUnsafeBlocks=true`** — unsafe pointer arithmetic is used in numeric and UTF-8 hot paths; this is expected.
@@ -139,9 +140,10 @@ Rules to follow:
 - **`SR` alias** — `using SR = Resources.Strings;` (or the project-specific variant) is a global using. Use `SR.ExceptionMessageName` for all user-facing strings; define new strings in the `.resx` file.
 - **Disabled warnings** — `JSON001`, `xUnit1031`, `xUnit2013`, `CS8500`, `IDE0065`, `IDE0290` are suppressed project-wide; don't add `#pragma warning disable` for these.
 - **EditorConfig** — 4-space indentation, `csharp_new_line_before_open_brace = all`. Generated files must be marked `generated_code = true` in `.editorconfig` entries.
-- **JSON Schema test suite** — `JSON-Schema-Test-Suite/` is a git submodule. The `Corvus.JsonSchemaTestSuite.CodeGenerator` project regenerates the xUnit test classes from it; re-run it after updating the submodule.
+- **JSON Schema test suite** — `JSON-Schema-Test-Suite/` is a git submodule. Run `.\update-json-schema-test-suite.ps1` to update the submodule and regenerate all V5 test classes and V4 spec feature files. The script handles cleaning old files and running both V4 selectors (JsonSchema + OpenApi30). See `docs/RunningTests.md` for manual regeneration details.
 - **`BigNumber`** — the custom arbitrary-precision decimal struct lives in `Corvus.Numerics`. Prefer it over `decimal` when the JSON value may have precision beyond 28 significant digits.
 - **Test-first bug fixes** — never implement a fix for a suspected bug without first writing a test that reproduces the problem. The test must fail before the fix and pass after. If you cannot reproduce the bug with a test, do not change production code.
+- **Data-driven coverage improvement** — when working to improve code coverage, ONLY write tests that target specific uncovered branches/lines identified in Cobertura XML coverage reports. Never write generic tests for already-covered functions hoping they might help. The process is: (1) collect coverage with `--collect:"XPlat Code Coverage"`, (2) merge reports with `reportgenerator`, (3) parse the Cobertura XML to find exact uncovered line ranges, (4) read the actual source code at those lines to understand the uncovered logic, (5) devise expressions/inputs that exercise those specific code paths, (6) verify with the reference implementation where applicable. The coverage report is the sole source of truth for what needs testing — not guesswork about what "might" be uncovered.
 
 ## JsonWorkspace and Mutable Documents
 
@@ -258,6 +260,52 @@ After changing source files, you must rebuild the affected pipeline steps **and*
 
 The generator at `docs/website/tools/XmlDocToMarkdown/` processes XML docs + assemblies into markdown, taxonomy, Razor views, and per-type HTML pages. It supports multi-assembly input (V4 has 8 libraries), versioned output with engine switcher, and per-version search indices. Key entry points: `ApiViewGenerator.cs` (Razor view generation), `HtmlPageGenerator.cs` (per-type HTML), `MarkdownGenerator.cs` (namespace markdown).
 
+## Playgrounds
+
+Two Blazor WASM playgrounds provide interactive browser-based tools for trying out the libraries. They live under `docs/` and share the same architecture: a Blazor WASM app with Monaco editor integration bundled via esbuild.
+
+### JSONata Playground
+
+Located at `docs/playground-jsonata/`. Provides an interactive editor for JSONata expressions with live evaluation, custom bindings, and sample expressions.
+
+**Running the preview server:**
+
+```powershell
+# 1. Build the JavaScript bundle (only needed after changing JS/Monaco assets)
+cd docs/playground-jsonata
+npm ci
+npm run bundle
+
+# 2. Start the Blazor WASM dev server on a fixed port
+$env:ASPNETCORE_URLS = "http://127.0.0.1:5280"
+dotnet run --project docs/playground-jsonata/src/Corvus.Text.Json.Jsonata.Playground/Corvus.Text.Json.Jsonata.Playground.csproj
+```
+
+The app will be available at `http://127.0.0.1:5280/`. Use `ASPNETCORE_URLS` to pin the port — the `--urls` flag does not work with the WASM app host.
+
+**IMPORTANT:** Stop the server before rebuilding. The WASM host holds file locks that prevent rebuild from completing.
+
+**Error messages in WASM:** `SR.Format` does not work correctly in Blazor WASM because `System.Resources.UseSystemResourceKeys` returns `true`, causing it to fall back to `string.Join` instead of `string.Format`. The `EvaluationService.FixBrokenSRFormat()` method compensates for this by detecting unsubstituted `{0}` placeholders and re-applying `string.Format`. All exception messages displayed to the user must go through this method.
+
+### Corvus.Text.Json Playground
+
+Located at `docs/playground/`. Provides an interactive JSON Schema validation playground.
+
+**Running the preview server:**
+
+```powershell
+# 1. Build the JavaScript bundle (only needed after changing JS/Monaco assets)
+cd docs/playground
+npm ci
+npm run bundle
+
+# 2. Start the Blazor WASM dev server on a fixed port
+$env:ASPNETCORE_URLS = "http://127.0.0.1:5281"
+dotnet run --project docs/playground/src/Corvus.Text.Json.Playground/Corvus.Text.Json.Playground.csproj
+```
+
+The app will be available at `http://127.0.0.1:5281/`.
+
 ## Benchmarks
 
 The `benchmarks/` directory contains BenchmarkDotNet projects that compare validation performance against a frozen baseline. Each benchmark model project (e.g., `Corvus.Text.Json.AnsibleMetaBenchmarkModels`) has two subdirectories:
@@ -297,49 +345,67 @@ dotnet run -c Release -f net10.0 -- --filter='*<SchemaName>*' --buildTimeout 120
 
 The `--buildTimeout 1200` flag is required because the default 120s is too short for this solution with source generators. Always ask the user to confirm their PC is idle before running benchmarks (they are CPU-intensive and results are unreliable under load).
 
-## JSONata Benchmarks
+## Running BenchmarkDotNet (BDN) projects
 
-The `benchmarks/Corvus.Text.Json.Jsonata.Benchmarks/` project compares the JSONata **code generator (CG)** against the **runtime compiler (RT)** and a **Jsonata.Net.Native** baseline across 20 expression categories. There are 62 benchmarks total (20 CG + 20 RT + 22 Native). If results show fewer than 62, something went wrong — see troubleshooting below.
+Multiple benchmark projects live under `benchmarks/`. They all use BDN with out-of-process toolchains. The same rules apply to every one of them.
 
-### Building and running
+### General procedure
 
 ```powershell
-# 1. Build the code generator and runtime (must succeed before benchmarks)
-dotnet build src\Corvus.Text.Json.Jsonata -c Release -v q --no-restore
-dotnet build src\Corvus.Text.Json.Jsonata.CodeGeneration -c Release -v q --no-restore
+# 1. Build the projects under test in Release (must succeed before benchmarks)
+dotnet build <relevant-src-projects> -c Release -v q --no-restore
 
-# 2. Run conformance tests (always verify before benchmarking)
-dotnet test tests\Corvus.Text.Json.Jsonata.CodeGeneration.Tests -f net10.0 --filter "category=codegen-conformance" --no-restore -v q
+# 2. Run the relevant tests to verify correctness before benchmarking
+dotnet test <relevant-test-project> -f net10.0 --filter "category!=failing&category!=outerloop" -v q --no-restore
 
 # 3. Clean stale BDN artifacts (CRITICAL — stale Job-* dirs cause file locks)
-$benchDir = "benchmarks\Corvus.Text.Json.Jsonata.Benchmarks"
+$benchDir = "benchmarks\<BenchmarkProject>"
 Remove-Item "$benchDir\bin\Release\net10.0\Job-*" -Recurse -Force -ErrorAction SilentlyContinue
 Remove-Item "$benchDir\BenchmarkDotNet.Artifacts\results\*" -Force -ErrorAction SilentlyContinue
 
-# 4. Run benchmarks (takes ~15-25 minutes)
-cd benchmarks\Corvus.Text.Json.Jsonata.Benchmarks
+# 4. Run benchmarks
+cd $benchDir
 dotnet run -c Release -f net10.0 -- --filter '*'
 ```
 
 ### Critical rules
 
-1. **Always clean `Job-*` directories** before running. BDN uses out-of-process toolchains that create `Job-*` subdirectories under `bin\Release\net10.0\`. Stale ones cause file locks; BDN's build exits with code 1 and **silently drops CodeGen benchmarks** from results. You won't see an error — you'll just get fewer results.
+1. **Always clean `Job-*` directories** before running. BDN's out-of-process toolchain creates `Job-*` subdirectories under `bin\Release\net10.0\`. Stale ones cause file locks; BDN's build exits with code 1 and **silently drops benchmarks** from results. You won't see an error — you'll just get fewer results.
 2. **Never pipe BDN output through `Select-Object -First N`** or any truncating command. This kills the BDN host process mid-run, producing incomplete/corrupt results.
-3. **Use `mode="sync"` with `initial_wait=30`** when running from the Copilot shell. BDN runs for 15-25 minutes. After initial_wait expires it continues in background — you'll be notified on completion. Use `read_powershell` with `delay=600` (call twice if needed for the full output).
-4. **Build timeout is pre-configured** in `Program.cs` at 15 minutes (`WithBuildTimeout(TimeSpan.FromMinutes(15))`). No `--buildTimeout` flag needed.
-5. **Always pass `-- --filter '*'`** to run all benchmarks non-interactively. The `*` **must be single-quoted** in PowerShell to prevent glob expansion. Without quoting, PowerShell expands `*` to filenames, BDN receives no valid filter, and presents an interactive menu that blocks the shell.
+3. **Always pass `-- --filter '*'`** to run all benchmarks non-interactively. The `*` **must be single-quoted** in PowerShell to prevent glob expansion. Without quoting, PowerShell expands `*` to filenames, BDN receives no valid filter, and presents an interactive menu that blocks the shell.
+4. **Detect completion by polling for result files, not by waiting on shell output.** BDN output buffers in PowerShell and `read_powershell` may return no new output even after the run finishes. Instead, poll for result files to detect completion:
+   ```powershell
+   Get-ChildItem "$benchDir\BenchmarkDotNet.Artifacts\results\*-report-default.md"
+   ```
+   Once the expected number of result files appear, the run is complete. Read results directly from those files.
+5. **Use `mode="sync"` with `initial_wait=30`** when running from the Copilot shell. BDN typically runs for 15-30 minutes depending on the number of benchmarks. After initial_wait expires, the command continues in background. Poll for result files periodically rather than blocking on `read_powershell`.
 
-### Result locations and naming
+### Result locations
 
-- Results are at `benchmarks/Corvus.Text.Json.Jsonata.Benchmarks/BenchmarkDotNet.Artifacts/results/` (**not** the repo root).
+- Results are at `benchmarks/<BenchmarkProject>/BenchmarkDotNet.Artifacts/results/` (**not** the repo root).
+- Markdown reports: `*-report-default.md` files, one per benchmark class.
 - JSON reports: `*-report-full.json` files, one per benchmark class.
-- **Method naming convention:**
-  - `Corvus_<Category>` → RT (runtime compiler)
-  - `Corvus_CodeGen_<Category>` → CG (code generator)
-  - `Native_<Category>` → Jsonata.Net.Native baseline
-- **CG/RT ratio** = `CodeGen.Mean / Corvus.Mean`. CG WIN ≤ 0.95, RT WIN ≥ 1.05, PARITY otherwise.
 
-### Comparison table
+### Troubleshooting
+
+| Symptom | Cause | Fix |
+|---|---|---|
+| Fewer benchmarks than expected | Stale `Job-*` dirs caused build failure | Clean `Job-*` dirs and re-run |
+| BDN build exits code 1 | File lock from prior run | Clean `Job-*` dirs |
+| No source-generated methods in results | Source generator didn't run | Build in Release config, check `obj\Release\net10.0\generated\` for `.g.cs` files |
+| Results in wrong directory | Looking at repo root | Check `benchmarks\...\BenchmarkDotNet.Artifacts\results\` |
+
+### JSONata benchmarks
+
+The `benchmarks/Corvus.Text.Json.Jsonata.Benchmarks/` project compares the JSONata **code generator (CG)** against the **runtime compiler (RT)** and a **Jsonata.Net.Native** baseline across 20 expression categories. There are 62 benchmarks total (20 CG + 20 RT + 22 Native). If results show fewer than 62, something went wrong — see troubleshooting above.
+
+Build timeout is pre-configured in `Program.cs` at 15 minutes (`WithBuildTimeout(TimeSpan.FromMinutes(15))`). No `--buildTimeout` flag needed.
+
+**Method naming convention:**
+- `Corvus_<Category>` → RT (runtime compiler)
+- `Corvus_CodeGen_<Category>` → CG (code generator)
+- `Native_<Category>` → Jsonata.Net.Native baseline
+- **CG/RT ratio** = `CodeGen.Mean / Corvus.Mean`. CG WIN ≤ 0.95, RT WIN ≥ 1.05, PARITY otherwise.
 
 After running benchmarks, generate the full comparison table with:
 
@@ -349,14 +415,9 @@ node benchmarks/bench_table.js
 
 This reads `*-report-default.md` files and outputs a markdown table with Native/RT/CG columns for Mean, Ratio, and Allocated. Flags benchmarks where CG or RT exceeds parity (ratio > 1.0).
 
-### Troubleshooting
+### JSON Schema validation benchmarks
 
-| Symptom | Cause | Fix |
-|---|---|---|
-| Fewer than 62 benchmarks in results | Stale `Job-*` dirs caused build failure | Clean `Job-*` dirs and re-run |
-| BDN build exits code 1 | File lock from prior run | Clean `Job-*` dirs |
-| No `*CodeGen*` methods in results | Source generator didn't run | Build in Release config, check `obj\Release\net10.0\generated\` for `.g.cs` files |
-| Results in wrong directory | Looking at repo root | Check `benchmarks\...\BenchmarkDotNet.Artifacts\results\` |
+The `benchmarks/Corvus.Text.Json.Benchmarks/` project compares validation performance against a frozen baseline. The `--buildTimeout 1200` flag is required because the default 120s is too short for this solution with source generators.
 
 ## Namespaces
 

@@ -77,7 +77,7 @@ ValidationContext result = person.Validate(ValidationContext.ValidContext, Valid
 // After (V5)
 bool valid = person.EvaluateSchema();
 // For detailed results, use the collector overload:
-JsonSchemaResultsCollector collector = new();
+using JsonSchemaResultsCollector collector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
 bool valid = person.EvaluateSchema(collector);
 ```
 

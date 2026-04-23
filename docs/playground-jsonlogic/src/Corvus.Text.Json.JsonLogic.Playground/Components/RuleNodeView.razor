@@ -1,0 +1,388 @@
+@* Scratch-style block editor for JSON Logic rules.
+   Blocks are block-level elements. C-blocks have full-width mouths.
+   Reporter/boolean blocks become inline only when nested inside input holes.
+   SVG C-block shapes rendered by scratch-blocks.js. *@
+@using Corvus.Text.Json.JsonLogic.Playground.Models
+
+@if (Node is OperatorNodeModel op)
+{
+    var info = OperatorRegistry.GetOrDefault(op.Operator);
+    var effectiveStyle = GetEffectiveStyle(op, info);
+
+    @if (effectiveStyle == RenderStyle.Data)
+    {
+        @* Variable: blue rounded pill *@
+        <div class="block block-data" @key="Node.Id">
+            <span class="block-label">📌</span>
+            @if (op.Operands.Count > 0 && op.Operands[0] is ValueNodeModel varPath)
+            {
+                <input type="text" class="block-input block-input--var"
+                       value="@varPath.RawValue"
+                       placeholder="e.g. path"
+                       size="@Math.Max(4, (varPath.RawValue?.Length ?? 4))"
+                       @oninput="e => OnVarPathInput(varPath, e)" />
+            }
+            else
+            {
+                <span class="block-hint">(current)</span>
+            }
+            @if (op.Operands.Count > 1)
+            {
+                <span class="block-sep">default:</span>
+                <SlotView Node="@op.Operands[1]"
+                          Accepts="SlotType.Any"
+                          OnChanged="OnChanged"
+                          OnRemove="@(EventCallback.Factory.Create(this, () => RemoveOperand(op, 1)))"
+                          OnReplace="@(n => ReplaceOperand(op, 1, n))" />
+            }
+            @if (op.Operands.Count <= 1)
+            {
+                <button class="block-btn-add" @onclick="() => AddVarDefault(op)" title="Add default">+</button>
+            }
+            @if (OnRemove.HasDelegate)
+            {
+                <button class="block-btn-remove" @onclick="OnRemove" title="Remove">✕</button>
+            }
+        </div>
+    }
+    else if (effectiveStyle == RenderStyle.Control)
+    {
+        @* Scratch-style C-block: if <condition> then <mouth>, optionally else <mouth>.
+           No "else if" — nest an if block inside the else mouth instead.
+           SVG shape drawn by scratch-blocks.js. *@
+        <div class="block block-cblock" @key="Node.Id">
+            @{
+                bool hasElse = op.Operands.Count >= 3;
+            }
+            <div class="cblock-header">
+                <span class="cblock-keyword">if</span>
+                <SlotView Node="@op.Operands[0]"
+                          Accepts="SlotType.Boolean"
+                          OnChanged="OnChanged"
+                          OnRemove="@(EventCallback.Factory.Create(this, () => ClearToEmpty(op, 0)))"
+                          OnReplace="@(n => ReplaceOperand(op, 0, n))" />
+                <span class="cblock-keyword">then</span>
+            </div>
+            <div class="cblock-mouth">
+                @if (op.Operands.Count > 1)
+                {
+                    <RuleNodeView Node="@op.Operands[1]"
+                                  OnChanged="OnChanged"
+                                  OnRemove="@(EventCallback.Factory.Create(this, () => ClearToEmpty(op, 1)))"
+                                  OnReplace="@(n => ReplaceOperand(op, 1, n))" />
+                }
+            </div>
+            @if (hasElse)
+            {
+                <div class="cblock-header">
+                    <span class="cblock-keyword">else</span>
+                </div>
+                <div class="cblock-mouth">
+                    <RuleNodeView Node="@op.Operands[2]"
+                                  OnChanged="OnChanged"
+                                  OnRemove="@(EventCallback.Factory.Create(this, () => RemoveElse(op)))"
+                                  OnReplace="@(n => ReplaceOperand(op, 2, n))" />
+                </div>
+            }
+            <div class="cblock-footer">
+                @if (!hasElse)
+                {
+                    <button class="cblock-action" @onclick="() => AddElse(op)">+ else</button>
+                }
+                @if (OnRemove.HasDelegate)
+                {
+                    <button class="block-btn-remove" @onclick="OnRemove" title="Remove">✕</button>
+                }
+            </div>
+        </div>
+    }
+    else if (effectiveStyle == RenderStyle.Infix || effectiveStyle == RenderStyle.InfixKeyword)
+    {
+        @* Infix: [slot] op [slot], or between: [low] < [value] < [high] *@
+        <div class="block block-shape-@info.Shape.ToString().ToLowerInvariant()" @key="Node.Id">
+            @{
+                string infixLabel = op.Operator switch
+                {
+                    "between<" => "<",
+                    "between<=" => "≤",
+                    _ => info.DisplayName,
+                };
+            }
+            @for (int i = 0; i < op.Operands.Count; i++)
+            {
+                int idx = i;
+                @if (idx > 0)
+                {
+                    <span class="block-op-label">@infixLabel</span>
+                }
+                <SlotView Node="@op.Operands[idx]"
+                          Accepts="@info.GetSlotType(idx)"
+                          OnChanged="OnChanged"
+                          OnRemove="@GetSlotRemove(op, idx, info)"
+                          OnReplace="@(n => ReplaceOperand(op, idx, n))" />
+            }
+            @if (info.MaxArity is null || op.Operands.Count < info.MaxArity)
+            {
+                <button class="block-btn-add" @onclick="() => AddOperand(op)" title="Add operand">+</button>
+            }
+            @if (OnRemove.HasDelegate)
+            {
+                <button class="block-btn-remove" @onclick="OnRemove" title="Remove">✕</button>
+            }
+        </div>
+    }
+    else if (effectiveStyle == RenderStyle.Prefix)
+    {
+        @* Prefix: op [slot] *@
+        <div class="block block-shape-@info.Shape.ToString().ToLowerInvariant()" @key="Node.Id">
+            <span class="block-op-label">@info.DisplayName</span>
+            @for (int i = 0; i < op.Operands.Count; i++)
+            {
+                int idx = i;
+                <SlotView Node="@op.Operands[idx]"
+                          Accepts="@info.GetSlotType(idx)"
+                          OnChanged="OnChanged"
+                          OnRemove="@GetSlotRemove(op, idx, info)"
+                          OnReplace="@(n => ReplaceOperand(op, idx, n))" />
+            }
+            @if (OnRemove.HasDelegate)
+            {
+                <button class="block-btn-remove" @onclick="OnRemove" title="Remove">✕</button>
+            }
+        </div>
+    }
+    else
+    {
+        @* Function: name(slot, slot) *@
+        <div class="block block-shape-@info.Shape.ToString().ToLowerInvariant()" @key="Node.Id">
+            <span class="block-op-label">@info.DisplayName</span>
+            <span class="block-paren">(</span>
+            @for (int i = 0; i < op.Operands.Count; i++)
+            {
+                int idx = i;
+                @if (idx > 0)
+                {
+                    <span class="block-comma">,</span>
+                }
+                @if (info.ArgLabels is not null && idx < info.ArgLabels.Length)
+                {
+                    <span class="block-arg-label">@info.ArgLabels[idx]:</span>
+                }
+                <SlotView Node="@op.Operands[idx]"
+                          Accepts="@info.GetSlotType(idx)"
+                          OnChanged="OnChanged"
+                          OnRemove="@GetSlotRemove(op, idx, info)"
+                          OnReplace="@(n => ReplaceOperand(op, idx, n))" />
+            }
+            <span class="block-paren">)</span>
+            @if (info.MaxArity is null || op.Operands.Count < info.MaxArity)
+            {
+                <button class="block-btn-add" @onclick="() => AddOperand(op)" title="Add argument">+</button>
+            }
+            @if (OnRemove.HasDelegate)
+            {
+                <button class="block-btn-remove" @onclick="OnRemove" title="Remove">✕</button>
+            }
+        </div>
+    }
+}
+else if (Node is ArrayNodeModel arr)
+{
+    <div class="block block-array" @key="Node.Id">
+        <span class="block-bracket">[</span>
+        @for (int i = 0; i < arr.Items.Count; i++)
+        {
+            int idx = i;
+            @if (idx > 0)
+            {
+                <span class="block-comma">,</span>
+            }
+            <SlotView Node="@arr.Items[idx]"
+                      Accepts="SlotType.Any"
+                      OnChanged="OnChanged"
+                      OnRemove="@(EventCallback.Factory.Create(this, () => RemoveArrayItem(arr, idx)))"
+                      OnReplace="@(n => ReplaceArrayItem(arr, idx, n))" />
+        }
+        <span class="block-bracket">]</span>
+        <button class="block-btn-add" @onclick="() => AddArrayItem(arr)" title="Add item">+</button>
+        @if (OnRemove.HasDelegate)
+        {
+            <button class="block-btn-remove" @onclick="OnRemove" title="Remove">✕</button>
+        }
+    </div>
+}
+else if (Node is RawJsonNodeModel raw)
+{
+    <div class="block-raw" @key="Node.Id">
+        <span>⚠</span>
+        <code>@raw.Json</code>
+        @if (OnRemove.HasDelegate)
+        {
+            <button class="block-btn-remove" @onclick="OnRemove" title="Remove">✕</button>
+        }
+    </div>
+}
+else if (Node is ValueNodeModel)
+{
+    @* Literal value — delegate to SlotView for inline rendering *@
+    <SlotView Node="@Node"
+              Accepts="SlotType.Any"
+              OnChanged="OnChanged"
+              OnRemove="OnRemove"
+              OnReplace="OnReplace" />
+}
+else if (Node is EmptySlotModel)
+{
+    <SlotView Node="@Node"
+              Accepts="SlotType.Any"
+              OnChanged="OnChanged"
+              OnRemove="OnRemove"
+              OnReplace="OnReplace" />
+}
+
+@code {
+    [Parameter, EditorRequired]
+    public RuleNodeModel Node { get; set; } = default!;
+
+    [Parameter]
+    public EventCallback OnChanged { get; set; }
+
+    [Parameter]
+    public EventCallback OnRemove { get; set; }
+
+    [Parameter]
+    public EventCallback<RuleNodeModel> OnReplace { get; set; }
+
+    private void NotifyChanged()
+    {
+        if (OnChanged.HasDelegate)
+        {
+            OnChanged.InvokeAsync();
+        }
+    }
+
+    private static RenderStyle GetEffectiveStyle(OperatorNodeModel op, OperatorInfo info)
+    {
+        if (op.Operator is "+" or "-" && op.Operands.Count <= 1)
+        {
+            return RenderStyle.Prefix;
+        }
+
+        return info.Style;
+    }
+
+    private EventCallback GetSlotRemove(OperatorNodeModel op, int idx, OperatorInfo info)
+    {
+        bool isExtra = idx >= info.MinArity;
+        bool isEmpty = op.Operands[idx] is EmptySlotModel;
+
+        if (isEmpty && !isExtra)
+        {
+            return default;
+        }
+
+        if (isExtra)
+        {
+            return EventCallback.Factory.Create(this, () => RemoveOperand(op, idx));
+        }
+
+        return EventCallback.Factory.Create(this, () => ClearToEmpty(op, idx));
+    }
+
+    // ── Operand management ──
+
+    private void AddOperand(OperatorNodeModel op)
+    {
+        op.Operands.Add(new EmptySlotModel());
+        NotifyChanged();
+    }
+
+    private void RemoveOperand(OperatorNodeModel op, int index)
+    {
+        if (index >= 0 && index < op.Operands.Count)
+        {
+            op.Operands.RemoveAt(index);
+            NotifyChanged();
+        }
+    }
+
+    private void ClearToEmpty(OperatorNodeModel op, int index)
+    {
+        if (index >= 0 && index < op.Operands.Count)
+        {
+            op.Operands[index] = new EmptySlotModel();
+            NotifyChanged();
+        }
+    }
+
+    private void ReplaceOperand(OperatorNodeModel op, int index, RuleNodeModel replacement)
+    {
+        if (index >= 0 && index < op.Operands.Count)
+        {
+            op.Operands[index] = replacement;
+            NotifyChanged();
+        }
+    }
+
+    // ── var-specific ──
+
+    private void OnVarPathInput(ValueNodeModel varPath, ChangeEventArgs e)
+    {
+        varPath.RawValue = e.Value?.ToString() ?? string.Empty;
+        NotifyChanged();
+    }
+
+    private void AddVarDefault(OperatorNodeModel op)
+    {
+        op.Operands.Add(new EmptySlotModel());
+        NotifyChanged();
+    }
+
+    // ── if-specific ──
+
+    private void AddElse(OperatorNodeModel op)
+    {
+        // Add an else slot (operand index 2)
+        if (op.Operands.Count < 3)
+        {
+            op.Operands.Add(new EmptySlotModel());
+            NotifyChanged();
+        }
+    }
+
+    private void RemoveElse(OperatorNodeModel op)
+    {
+        if (op.Operands.Count >= 3)
+        {
+            op.Operands.RemoveAt(2);
+            NotifyChanged();
+        }
+    }
+
+    // ── Array ──
+
+    private void AddArrayItem(ArrayNodeModel arr)
+    {
+        arr.Items.Add(new EmptySlotModel());
+        NotifyChanged();
+    }
+
+    private void RemoveArrayItem(ArrayNodeModel arr, int index)
+    {
+        if (index >= 0 && index < arr.Items.Count)
+        {
+            arr.Items.RemoveAt(index);
+            NotifyChanged();
+        }
+    }
+
+    private void ReplaceArrayItem(ArrayNodeModel arr, int index, RuleNodeModel replacement)
+    {
+        if (index >= 0 && index < arr.Items.Count)
+        {
+            arr.Items[index] = replacement;
+            NotifyChanged();
+        }
+    }
+}
+

@@ -65,7 +65,7 @@ public class SuiteValidationOfIPv6Addresses : IClassFixture<SuiteValidationOfIPv
     }
 
     [Fact]
-    public void TestAnIPv6AddressWithOutOfRangeValues()
+    public void TestAGroupWith5HexDigitsIsInvalid()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"12345::\"");
         Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));

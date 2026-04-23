@@ -1,5 +1,4 @@
 <Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFrameworks>net9.0;net10.0</TargetFrameworks>
@@ -11,13 +10,11 @@
     <LangVersion>Preview</LangVersion>
     <PreserveCompilationContext>true</PreserveCompilationContext>
   </PropertyGroup>
-
   <ItemGroup>
-    <PackageReference Include="BenchmarkDotNet" Version="0.15.8" />
-    <PackageReference Include="BenchmarkDotNet.Diagnostics.Windows" Version="0.15.8" />
+    <PackageReference Include="BenchmarkDotNet" />
+    <PackageReference Include="BenchmarkDotNet.Diagnostics.Windows" />
     <ProjectReference Include="..\..\src\Corvus.Text.Json\Corvus.Text.Json.csproj" />
   </ItemGroup>
-
   <ItemGroup>
     <ProjectReference Include="..\Corvus.Text.Json.AnsibleMetaBenchmarkModels\Corvus.Text.Json.AnsibleMetaBenchmarkModels.csproj" />
     <ProjectReference Include="..\Corvus.Text.Json.AwsCdkBenchmarkModels\Corvus.Text.Json.AwsCdkBenchmarkModels.csproj" />
@@ -57,7 +54,6 @@
     <ProjectReference Include="..\Corvus.Text.Json.VercelBenchmarkModels\Corvus.Text.Json.VercelBenchmarkModels.csproj" />
     <ProjectReference Include="..\Corvus.Text.Json.YamllintBenchmarkModels\Corvus.Text.Json.YamllintBenchmarkModels.csproj" />
   </ItemGroup>
-
   <ItemGroup>
     <Content Include="..\Corvus.Text.Json.AnsibleMetaBenchmarkModels\ansible-meta-instances.jsonl" Link="ansible-meta-instances.jsonl">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
@@ -171,5 +167,4 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
-
 </Project>

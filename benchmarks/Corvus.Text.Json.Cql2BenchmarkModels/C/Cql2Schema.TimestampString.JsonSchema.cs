@@ -113,10 +113,10 @@ public readonly partial struct Cql2Schema
             }
 
 #if NET8_0_OR_GREATER && !DYNAMIC_BUILD
-            [GeneratedRegex("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?Z$")]
+            [GeneratedRegex("^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(?:\\.[0-9]+)?Z$")]
             private static partial Regex CreatePattern();
 #else
-            private static Regex CreatePattern() => new("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?Z$", RegexOptions.Compiled);
+            private static Regex CreatePattern() => new("^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(?:\\.[0-9]+)?Z$", RegexOptions.Compiled);
 #endif
 
             /// <summary>

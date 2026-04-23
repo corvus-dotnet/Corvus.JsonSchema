@@ -242,11 +242,11 @@ public readonly partial struct Schema
                 /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
                 /// </para>
                 /// </remarks>
-                public Corvus.OpenapiBenchmark.Baseline.JsonUri.Mutable AuthorizationUrl
+                public Corvus.OpenapiBenchmark.Baseline.JsonUriNotAsserted.Mutable AuthorizationUrl
                 {
                     get
                     {
-                        if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.AuthorizationUrlUtf8, out Corvus.OpenapiBenchmark.Baseline.JsonUri.Mutable value))
+                        if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.AuthorizationUrlUtf8, out Corvus.OpenapiBenchmark.Baseline.JsonUriNotAsserted.Mutable value))
                         {
                             return value;
                         }
@@ -258,11 +258,11 @@ public readonly partial struct Schema
                 /// <summary>
                 /// Gets the (optional) <c>refreshUrl</c> property.
                 /// </summary>
-                public Corvus.OpenapiBenchmark.Baseline.JsonUri.Mutable RefreshUrl
+                public Corvus.OpenapiBenchmark.Baseline.JsonUriNotAsserted.Mutable RefreshUrl
                 {
                     get
                     {
-                        if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.RefreshUrlUtf8, out Corvus.OpenapiBenchmark.Baseline.JsonUri.Mutable value))
+                        if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.RefreshUrlUtf8, out Corvus.OpenapiBenchmark.Baseline.JsonUriNotAsserted.Mutable value))
                         {
                             return value;
                         }
@@ -325,7 +325,7 @@ public readonly partial struct Schema
                 /// Set the <c>authorizationUrl</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetAuthorizationUrl(in Corvus.OpenapiBenchmark.Baseline.JsonUri.Source value)
+                public void SetAuthorizationUrl(in Corvus.OpenapiBenchmark.Baseline.JsonUriNotAsserted.Source value)
                 {
                     CheckValidInstance();
 
@@ -356,7 +356,7 @@ public readonly partial struct Schema
                 /// Set the <c>refreshUrl</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetRefreshUrl(in Corvus.OpenapiBenchmark.Baseline.JsonUri.Source value)
+                public void SetRefreshUrl(in Corvus.OpenapiBenchmark.Baseline.JsonUriNotAsserted.Source value)
                 {
                     CheckValidInstance();
 
@@ -543,7 +543,7 @@ public readonly partial struct Schema
                     return JsonSchema.Evaluate(_parent, _idx, resultsCollector);
                 }
 
-                private void CheckValidInstance()
+                private readonly void CheckValidInstance()
                 {
                     if (_parent == null)
                     {
@@ -753,6 +753,48 @@ public readonly partial struct Schema
 
                 [DebuggerBrowsable(DebuggerBrowsableState.Never)]
                 JsonValueKind IJsonElement.ValueKind => ValueKind;
+
+                /// <summary>
+                /// Gets a <see cref="RequiredAuthorizationUrlAndScopes"/> which can be safely stored beyond the lifetime of the
+                /// original document.
+                /// </summary>
+                /// <returns>
+                /// A <see cref="RequiredAuthorizationUrlAndScopes"/> which can be safely stored beyond the lifetime of the
+                /// original document.
+                /// </returns>
+                /// <remarks>
+                /// <para>
+                /// This serializes the element and re-parses it into a standalone heap-allocated
+                /// document. The result is independent of the workspace.
+                /// </para>
+                /// </remarks>
+                public readonly RequiredAuthorizationUrlAndScopes Clone()
+                {
+                    CheckValidInstance();
+                    return _parent.CloneElement<RequiredAuthorizationUrlAndScopes>(_idx);
+                }
+
+                /// <summary>
+                /// Creates a frozen (immutable) copy of this element, backed by a new
+                /// document builder registered in the same workspace.
+                /// </summary>
+                /// <returns>
+                /// An immutable <see cref="RequiredAuthorizationUrlAndScopes"/> that lives for the lifetime of its
+                /// workspace and its associated documents.
+                /// </returns>
+                /// <remarks>
+                /// <para>
+                /// Unlike <see cref="Clone()"/>, which serializes the element and re-parses it
+                /// into a standalone heap-allocated document, <c>Freeze()</c> performs a cheap
+                /// blit of the metadata and value backing arrays. The resulting element is
+                /// immutable but is only valid for the lifetime of the workspace.
+                /// </para>
+                /// </remarks>
+                public readonly RequiredAuthorizationUrlAndScopes Freeze()
+                {
+                    CheckValidInstance();
+                    return _parent.FreezeElement<RequiredAuthorizationUrlAndScopes>(_idx);
+                }
 
                 /// <summary>
                 /// Gets the value as a <see cref="Corvus.OpenapiBenchmark.Baseline.Schema.SpecificationExtensions" />.
@@ -997,9 +1039,9 @@ public readonly partial struct Schema
                 /// </summary>
                 internal static void Create(
                     ref ComplexValueBuilder builder,
-                    in Corvus.OpenapiBenchmark.Baseline.JsonUri.Source authorizationUrl,
+                    in Corvus.OpenapiBenchmark.Baseline.JsonUriNotAsserted.Source authorizationUrl,
                     in Corvus.OpenapiBenchmark.Baseline.Schema.MapOfStrings.Source scopes,
-                    in Corvus.OpenapiBenchmark.Baseline.JsonUri.Source refreshUrl = default)
+                    in Corvus.OpenapiBenchmark.Baseline.JsonUriNotAsserted.Source refreshUrl = default)
                 {
                     authorizationUrl.AddAsProperty(JsonPropertyNamesEscaped.AuthorizationUrl, ref builder, escapeName: false);
                     scopes.AddAsProperty(JsonPropertyNamesEscaped.Scopes, ref builder, escapeName: false);
@@ -1010,9 +1052,9 @@ public readonly partial struct Schema
                 /// Creates an instance of a <see cref="RequiredAuthorizationUrlAndScopes"/>.
                 /// </summary>
                 public void Create(
-                    in Corvus.OpenapiBenchmark.Baseline.JsonUri.Source authorizationUrl,
+                    in Corvus.OpenapiBenchmark.Baseline.JsonUriNotAsserted.Source authorizationUrl,
                     in Corvus.OpenapiBenchmark.Baseline.Schema.MapOfStrings.Source scopes,
-                    in Corvus.OpenapiBenchmark.Baseline.JsonUri.Source refreshUrl = default)
+                    in Corvus.OpenapiBenchmark.Baseline.JsonUriNotAsserted.Source refreshUrl = default)
                 {
                     Create(ref _builder, authorizationUrl, scopes, refreshUrl);
                 }
@@ -1023,9 +1065,9 @@ public readonly partial struct Schema
                 internal static void Create<TContext>(
                     in TContext context,
                     ref ComplexValueBuilder builder,
-                    in Corvus.OpenapiBenchmark.Baseline.JsonUri.Source authorizationUrl,
+                    in Corvus.OpenapiBenchmark.Baseline.JsonUriNotAsserted.Source authorizationUrl,
                     in Corvus.OpenapiBenchmark.Baseline.Schema.MapOfStrings.Source<TContext> scopes,
-                    in Corvus.OpenapiBenchmark.Baseline.JsonUri.Source refreshUrl = default)
+                    in Corvus.OpenapiBenchmark.Baseline.JsonUriNotAsserted.Source refreshUrl = default)
                 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
                 #endif
@@ -1040,9 +1082,9 @@ public readonly partial struct Schema
                 /// </summary>
                 public void Create<TContext>(
                     in TContext context,
-                    in Corvus.OpenapiBenchmark.Baseline.JsonUri.Source authorizationUrl,
+                    in Corvus.OpenapiBenchmark.Baseline.JsonUriNotAsserted.Source authorizationUrl,
                     in Corvus.OpenapiBenchmark.Baseline.Schema.MapOfStrings.Source<TContext> scopes,
-                    in Corvus.OpenapiBenchmark.Baseline.JsonUri.Source refreshUrl = default)
+                    in Corvus.OpenapiBenchmark.Baseline.JsonUriNotAsserted.Source refreshUrl = default)
                 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
                 #endif
@@ -1157,11 +1199,12 @@ public readonly partial struct Schema
             /// </summary>
             /// <param name="workspace">The JSON workspace.</param>
             /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
             /// <returns>An empty mutable document builder.</returns>
             public static JsonDocumentBuilder<Mutable> CreateBuilder(
-                JsonWorkspace workspace, int initialCapacity = 30)
+                JsonWorkspace workspace, int initialCapacity = 30, int initialValueBufferSize = 8192)
             {
-                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
                 cvb.StartObject();
                 cvb.EndObject();
@@ -1175,12 +1218,13 @@ public readonly partial struct Schema
             /// <param name="workspace">The JSON workspace.</param>
             /// <param name="value">The value with which to initialize the builder.</param>
             /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
             /// <returns>An instance of a mutable document initialized with the given value.</returns>
             public static JsonDocumentBuilder<Mutable> CreateBuilder(
-                JsonWorkspace workspace, scoped in Builder.Build value, int initialCapacity = 30)
+                JsonWorkspace workspace, scoped in Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
             {
                 // Create the document builder without a MetadataDb
-                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
                 var source = new Source(value);
                 source.AddAsItem(ref cvb);
@@ -1197,15 +1241,16 @@ public readonly partial struct Schema
             /// <param name="context">The context to pass to the builder.</param>
             /// <param name="value">The value with which to initialize the builder.</param>
             /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
             /// <returns>An instance of a mutable document initialized with the given value.</returns>
             public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(
-                JsonWorkspace workspace, scoped in TContext context, scoped in Builder.Build<TContext> value, int initialCapacity = 30)
+                JsonWorkspace workspace, scoped in TContext context, scoped in Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
                 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
                 #endif
             {
                 // Create the document builder without a MetadataDb
-                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
                 var source = new Source<TContext>(context, value);
                 source.AddAsItem(ref cvb);
@@ -1223,7 +1268,7 @@ public readonly partial struct Schema
             /// <param name="refreshUrl">The value of the property.</param>
             /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
             /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-            public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.OpenapiBenchmark.Baseline.JsonUri.Source authorizationUrl, in Corvus.OpenapiBenchmark.Baseline.Schema.MapOfStrings.Source scopes, in Corvus.OpenapiBenchmark.Baseline.JsonUri.Source refreshUrl = default, int initialCapacity = 30)
+            public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.OpenapiBenchmark.Baseline.JsonUriNotAsserted.Source authorizationUrl, in Corvus.OpenapiBenchmark.Baseline.Schema.MapOfStrings.Source scopes, in Corvus.OpenapiBenchmark.Baseline.JsonUriNotAsserted.Source refreshUrl = default, int initialCapacity = 30)
             {
                 JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
@@ -1247,7 +1292,7 @@ public readonly partial struct Schema
             /// <param name="refreshUrl">The value of the property.</param>
             /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
             /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-            public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.OpenapiBenchmark.Baseline.JsonUri.Source authorizationUrl, in Corvus.OpenapiBenchmark.Baseline.Schema.MapOfStrings.Source<TContext> scopes, in Corvus.OpenapiBenchmark.Baseline.JsonUri.Source refreshUrl = default, int initialCapacity = 30)
+            public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.OpenapiBenchmark.Baseline.JsonUriNotAsserted.Source authorizationUrl, in Corvus.OpenapiBenchmark.Baseline.Schema.MapOfStrings.Source<TContext> scopes, in Corvus.OpenapiBenchmark.Baseline.JsonUriNotAsserted.Source refreshUrl = default, int initialCapacity = 30)
                 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
                 #endif

@@ -20,7 +20,7 @@ Generate strongly-typed C# from JSON Schema at build time with the Roslyn increm
 
 ## [CLI Code Generation](/docs/code-generator.html)
 
-Generate strongly-typed C# models from JSON Schema files using the `generatejsonschematypes` CLI tool. Produces the same `readonly struct` types as the Roslyn source generator, but runs ahead of time from the command line. Supports single-schema generation, multi-schema configuration files, document validation, and all schema drafts. Ideal for CI/CD pipelines, pre-generation workflows, and inspecting generated output.
+Generate strongly-typed C# models from JSON Schema files using the `corvusjson` CLI tool. Produces the same `readonly struct` types as the Roslyn source generator, but runs ahead of time from the command line. Supports single-schema generation, multi-schema configuration files, document validation, and all schema drafts. Ideal for CI/CD pipelines, pre-generation workflows, and inspecting generated output.
 
 ## [Dynamic Schema Validation](/docs/validator.html)
 

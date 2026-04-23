@@ -118,10 +118,10 @@ public readonly partial struct Ui5ManifestSchema
                 }
 
 #if NET8_0_OR_GREATER && !DYNAMIC_BUILD
-                [GeneratedRegex("^\\{\\{[\\w][\\w\\.\\-]*\\}\\}$")]
+                [GeneratedRegex("^\\{\\{[a-zA-Z0-9_][a-zA-Z0-9_\\.\\-]*\\}\\}$")]
                 private static partial Regex CreatePattern();
 #else
-                private static Regex CreatePattern() => new("^\\{\\{[\\w][\\w\\.\\-]*\\}\\}$", RegexOptions.Compiled);
+                private static Regex CreatePattern() => new("^\\{\\{[a-zA-Z0-9_][a-zA-Z0-9_\\.\\-]*\\}\\}$", RegexOptions.Compiled);
 #endif
 
                 /// <summary>

@@ -10,7 +10,7 @@ If you're building APIs, data pipelines, or any system that processes JSON at vo
 
 - **92% fewer allocations** — `ArrayPool<byte>`-backed parsing eliminates GC pressure in high-throughput scenarios. Corvus.Text.Json uses just 120B per-document allocation vs 1,528 bytes for equivalent `JsonNode` operations.
 - **Full JSON Schema support** — Draft 4, 6, 7, 2019-09, and 2020-12 with complete validation diagnostics including schema location, evaluation path, and error messages for every failure. Over 10x faster than other .NET JSON Schema validators.
-- **Source-generated models** — A Roslyn incremental source generator or `generatejsonschematypes` CLI tool produces strongly-typed C# from any JSON Schema. You get type-safe property accessors, validation, serialization, and implicit conversions from a single schema file.
+- **Source-generated models** — A Roslyn incremental source generator or `corvusjson` CLI tool produces strongly-typed C# from any JSON Schema. You get type-safe property accessors, validation, serialization, and implicit conversions from a single schema file.
 - **NodaTime integration** — JSON Schema `date`, `date-time`, `time`, and `duration` formats map to NodaTime types (`LocalDate`, `OffsetDateTime`, `OffsetTime`, `Period`), not error-prone `System.DateTime`.
 - **Mutable builder pattern** — `JsonDocumentBuilder` with `JsonWorkspace`-managed pooled memory, not per-node allocations like `JsonNode`. Ideal for request/response cycles and data pipelines.
 - **Extended numeric types** — `BigNumber` for arbitrary-precision decimals and `BigInteger` for large integers, going beyond `decimal`'s 28 significant digits.

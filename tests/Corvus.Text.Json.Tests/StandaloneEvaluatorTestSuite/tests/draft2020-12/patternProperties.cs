@@ -311,3 +311,46 @@ public class SuitePatternPropertiesWithNullValuedInstanceProperties : IClassFixt
         }
     }
 }
+
+[Trait("StandaloneEvaluatorTestSuite", "Draft202012")]
+public class SuitePatternPropertiesWithUnicodePropertyEscape : IClassFixture<SuitePatternPropertiesWithUnicodePropertyEscape.Fixture>
+{
+    private readonly Fixture _fixture;
+    public SuitePatternPropertiesWithUnicodePropertyEscape(Fixture fixture)
+    {
+        _fixture = fixture;
+    }
+
+    [Fact]
+    public void TestUnicodeLetterPropertyNameMatches()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\r\n                    \"π\": 1\r\n                }");
+        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [Fact]
+    public void TestNonLetterPropertyNameDoesNotMatchPattern()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\r\n                    \"123\": 1\r\n                }");
+        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    public class Fixture : IAsyncLifetime
+    {
+        public CompiledEvaluator Evaluator { get; private set; }
+
+        public Task DisposeAsync() => Task.CompletedTask;
+
+        public async Task InitializeAsync()
+        {
+            this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
+                "tests\\draft2020-12\\patternProperties.json",
+                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"type\": \"object\",\r\n            \"patternProperties\": {\r\n                \"^\\\\p{Letter}+$\": {\r\n                    \"type\": \"number\"\r\n                }\r\n            }\r\n        }",
+                "StandaloneEvaluatorTestSuite.Draft202012.PatternProperties",
+                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "https://json-schema.org/draft/2020-12/schema",
+                validateFormat: false,
+                Assembly.GetExecutingAssembly());
+        }
+    }
+}

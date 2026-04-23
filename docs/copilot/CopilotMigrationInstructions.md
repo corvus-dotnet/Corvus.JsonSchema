@@ -672,11 +672,11 @@ v5.WriteTo(corvusWriter);
 ## CODE GENERATION CLI TRANSFORMATIONS
 
 ```bash
-# V4
+# Using the legacy CLI tool (V4 default)
 generatejsonschematypes --engine V4 --rootNamespace MyApp --outputPath generated/ schema.json
 
-# V5 (--engine V5 is default, can be omitted)
-generatejsonschematypes --rootNamespace MyApp --outputPath generated/ schema.json
+# Using the new corvusjson CLI tool (V5 default)
+corvusjson jsonschema --rootNamespace MyApp --outputPath generated/ schema.json
 ```
 
 ---

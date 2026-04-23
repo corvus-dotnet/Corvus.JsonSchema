@@ -1,0 +1,40 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "https://example.com/config.yaml"
+type: object
+required:
+  - appName
+  - database
+properties:
+  appName:
+    type: string
+  version:
+    type: string
+    pattern: "^\\d+\\.\\d+\\.\\d+$"
+  database:
+    $ref: "#/$defs/DatabaseConfig"
+  features:
+    type: array
+    items:
+      type: string
+  tags:
+    type: object
+    additionalProperties:
+      type: string
+$defs:
+  DatabaseConfig:
+    type: object
+    required:
+      - host
+      - port
+    properties:
+      host:
+        type: string
+      port:
+        type: integer
+        minimum: 1
+        maximum: 65535
+      name:
+        type: string
+      ssl:
+        type: boolean
+        default: false

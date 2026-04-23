@@ -29,6 +29,14 @@ public class BenchmarkEncoding : JsonataBenchmarkBase
     private const string ExprEncodeUrl = """$encodeUrl("https://example.com/path?q=hello world&x=1")""";
     private const string ExprDecodeUrl = """$decodeUrl("https://example.com/path?q=hello%20world&x=1")""";
 
+    private static readonly byte[] ExprBase64EncodeUtf8 = """$base64encode("hello world/test&value=1")"""u8.ToArray();
+    private static readonly byte[] ExprBase64DecodeUtf8 = """$base64decode("aGVsbG8gd29ybGQvdGVzdCZ2YWx1ZT0x")"""u8.ToArray();
+    private static readonly byte[] ExprEncodeUrlComponentUtf8 = """$encodeUrlComponent("hello world/test&value=1")"""u8.ToArray();
+    private static readonly byte[] ExprDecodeUrlComponentUtf8 = """$decodeUrlComponent("hello%20world%2Ftest%26value%3D1")"""u8.ToArray();
+    private static readonly byte[] ExprEncodeUrlUtf8 = """$encodeUrl("https://example.com/path?q=hello world&x=1")"""u8.ToArray();
+    private static readonly byte[] ExprDecodeUrlUtf8 = """$decodeUrl("https://example.com/path?q=hello%20world&x=1")"""u8.ToArray();
+
+
     private JsonataEvaluator evaluator = null!;
     private ParsedJsonDocument<JsonElement>? doc;
     private JsonElement data;
@@ -55,12 +63,12 @@ public class BenchmarkEncoding : JsonataBenchmarkBase
         this.evaluator = new JsonataEvaluator();
         this.workspace = JsonWorkspace.Create();
 
-        this.evaluator.Evaluate(ExprBase64Encode, this.data);
-        this.evaluator.Evaluate(ExprBase64Decode, this.data);
-        this.evaluator.Evaluate(ExprEncodeUrlComponent, this.data);
-        this.evaluator.Evaluate(ExprDecodeUrlComponent, this.data);
-        this.evaluator.Evaluate(ExprEncodeUrl, this.data);
-        this.evaluator.Evaluate(ExprDecodeUrl, this.data);
+        this.evaluator.Evaluate(ExprBase64EncodeUtf8, this.data, this.workspace, cacheKey: ExprBase64Encode);
+        this.evaluator.Evaluate(ExprBase64DecodeUtf8, this.data, this.workspace, cacheKey: ExprBase64Decode);
+        this.evaluator.Evaluate(ExprEncodeUrlComponentUtf8, this.data, this.workspace, cacheKey: ExprEncodeUrlComponent);
+        this.evaluator.Evaluate(ExprDecodeUrlComponentUtf8, this.data, this.workspace, cacheKey: ExprDecodeUrlComponent);
+        this.evaluator.Evaluate(ExprEncodeUrlUtf8, this.data, this.workspace, cacheKey: ExprEncodeUrl);
+        this.evaluator.Evaluate(ExprDecodeUrlUtf8, this.data, this.workspace, cacheKey: ExprDecodeUrl);
 
         Base64EncodeCodeGen.Evaluate(this.data, this.workspace); this.workspace.Reset();
         Base64DecodeCodeGen.Evaluate(this.data, this.workspace); this.workspace.Reset();
@@ -98,7 +106,7 @@ public class BenchmarkEncoding : JsonataBenchmarkBase
     public JsonElement Corvus_Base64Encode()
     {
         this.workspace.Reset();
-        return this.evaluator.Evaluate(ExprBase64Encode, this.data, this.workspace);
+        return this.evaluator.Evaluate(ExprBase64EncodeUtf8, this.data, this.workspace, cacheKey: ExprBase64Encode);
     }
 
 #if !NETFRAMEWORK
@@ -125,7 +133,7 @@ public class BenchmarkEncoding : JsonataBenchmarkBase
     public JsonElement Corvus_Base64Decode()
     {
         this.workspace.Reset();
-        return this.evaluator.Evaluate(ExprBase64Decode, this.data, this.workspace);
+        return this.evaluator.Evaluate(ExprBase64DecodeUtf8, this.data, this.workspace, cacheKey: ExprBase64Decode);
     }
 
 #if !NETFRAMEWORK
@@ -152,7 +160,7 @@ public class BenchmarkEncoding : JsonataBenchmarkBase
     public JsonElement Corvus_EncodeUrlComponent()
     {
         this.workspace.Reset();
-        return this.evaluator.Evaluate(ExprEncodeUrlComponent, this.data, this.workspace);
+        return this.evaluator.Evaluate(ExprEncodeUrlComponentUtf8, this.data, this.workspace, cacheKey: ExprEncodeUrlComponent);
     }
 
 #if !NETFRAMEWORK
@@ -179,7 +187,7 @@ public class BenchmarkEncoding : JsonataBenchmarkBase
     public JsonElement Corvus_DecodeUrlComponent()
     {
         this.workspace.Reset();
-        return this.evaluator.Evaluate(ExprDecodeUrlComponent, this.data, this.workspace);
+        return this.evaluator.Evaluate(ExprDecodeUrlComponentUtf8, this.data, this.workspace, cacheKey: ExprDecodeUrlComponent);
     }
 
 #if !NETFRAMEWORK
@@ -206,7 +214,7 @@ public class BenchmarkEncoding : JsonataBenchmarkBase
     public JsonElement Corvus_EncodeUrl()
     {
         this.workspace.Reset();
-        return this.evaluator.Evaluate(ExprEncodeUrl, this.data, this.workspace);
+        return this.evaluator.Evaluate(ExprEncodeUrlUtf8, this.data, this.workspace, cacheKey: ExprEncodeUrl);
     }
 
 #if !NETFRAMEWORK
@@ -233,7 +241,7 @@ public class BenchmarkEncoding : JsonataBenchmarkBase
     public JsonElement Corvus_DecodeUrl()
     {
         this.workspace.Reset();
-        return this.evaluator.Evaluate(ExprDecodeUrl, this.data, this.workspace);
+        return this.evaluator.Evaluate(ExprDecodeUrlUtf8, this.data, this.workspace, cacheKey: ExprDecodeUrl);
     }
 
 #if !NETFRAMEWORK

@@ -261,7 +261,7 @@ public class SuiteUnevaluatedPropertiesWithAdjacentBoolAdditionalProperties : IC
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests\\draft2020-12\\unevaluatedProperties.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"additionalProperties\": true,\r\n            \"unevaluatedProperties\": false\r\n        }",
+                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"type\": \"object\",\r\n            \"properties\": {\r\n                \"foo\": { \"type\": \"string\" }\r\n            },\r\n            \"additionalProperties\": true,\r\n            \"unevaluatedProperties\": false\r\n        }",
                 "StandaloneEvaluatorTestSuite.Draft202012.UnevaluatedProperties",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",
@@ -281,17 +281,17 @@ public class SuiteUnevaluatedPropertiesWithAdjacentNonBoolAdditionalProperties :
     }
 
     [Fact]
-    public void TestWithOnlyValidAdditionalProperties()
+    public void TestWithNoAdditionalProperties()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("{\r\n                    \"foo\": \"foo\"\r\n                }");
         Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
     }
 
     [Fact]
-    public void TestWithInvalidAdditionalProperties()
+    public void TestWithAdditionalProperties()
     {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\r\n                    \"foo\": \"foo\",\r\n                    \"bar\": 1\r\n                }");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\r\n                    \"foo\": \"foo\",\r\n                    \"bar\": \"bar\"\r\n                }");
+        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
     }
 
     public class Fixture : IAsyncLifetime
@@ -304,7 +304,7 @@ public class SuiteUnevaluatedPropertiesWithAdjacentNonBoolAdditionalProperties :
         {
             this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
                 "tests\\draft2020-12\\unevaluatedProperties.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"additionalProperties\": { \"type\": \"string\" },\r\n            \"unevaluatedProperties\": false\r\n        }",
+                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"type\": \"object\",\r\n            \"properties\": {\r\n                \"foo\": { \"type\": \"string\" }\r\n            },\r\n            \"additionalProperties\": {\"type\": \"string\"},\r\n            \"unevaluatedProperties\": false\r\n        }",
                 "StandaloneEvaluatorTestSuite.Draft202012.UnevaluatedProperties",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",

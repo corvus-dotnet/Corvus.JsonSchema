@@ -126,3 +126,53 @@ public class SuitePatternIsNotAnchored : IClassFixture<SuitePatternIsNotAnchored
         }
     }
 }
+
+[Trait("StandaloneEvaluatorTestSuite", "Draft202012")]
+public class SuitePatternWithUnicodePropertyEscapeRequiresUnicodeMode : IClassFixture<SuitePatternWithUnicodePropertyEscapeRequiresUnicodeMode.Fixture>
+{
+    private readonly Fixture _fixture;
+    public SuitePatternWithUnicodePropertyEscapeRequiresUnicodeMode(Fixture fixture)
+    {
+        _fixture = fixture;
+    }
+
+    [Fact]
+    public void TestAsciiLettersMatch()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"Hello\"");
+        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [Fact]
+    public void TestNonAsciiLettersMatch()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"π\"");
+        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [Fact]
+    public void TestDigitsDoNotMatch()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"123\"");
+        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    public class Fixture : IAsyncLifetime
+    {
+        public CompiledEvaluator Evaluator { get; private set; }
+
+        public Task DisposeAsync() => Task.CompletedTask;
+
+        public async Task InitializeAsync()
+        {
+            this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
+                "tests\\draft2020-12\\pattern.json",
+                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"type\": \"string\",\r\n            \"pattern\": \"^\\\\p{Letter}+$\"\r\n        }",
+                "StandaloneEvaluatorTestSuite.Draft202012.Pattern",
+                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "https://json-schema.org/draft/2020-12/schema",
+                validateFormat: false,
+                Assembly.GetExecutingAssembly());
+        }
+    }
+}

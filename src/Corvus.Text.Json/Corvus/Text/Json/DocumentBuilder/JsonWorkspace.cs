@@ -4,7 +4,7 @@
 // <licensing>
 // Derived from code licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licensed this code under the MIT license.
-// https:// github.com/dotnet/runtime/blob/388a7c4814cb0d6e344621d017507b357902043a/LICENSE.TXT
+// https://github.com/dotnet/runtime/blob/388a7c4814cb0d6e344621d017507b357902043a/LICENSE.TXT
 // </licensing>
 using System.Buffers;
 using System.Collections.Generic;
@@ -72,6 +72,21 @@ public class JsonWorkspace : IDisposable
     public Utf8JsonWriter RentWriterAndBuffer(int defaultBufferSize, out IByteBufferWriter bufferWriter)
     {
         Utf8JsonWriter result = Utf8JsonWriterCache.RentWriterAndBuffer(Options, defaultBufferSize, out PooledByteBufferWriter writer);
+        bufferWriter = writer;
+        return result;
+    }
+
+    /// <summary>
+    /// Rents a UTF-8 JSON writer and associated buffer writer from the pool,
+    /// using the specified writer options instead of the workspace defaults.
+    /// </summary>
+    /// <param name="options">The writer options to configure the returned writer instance.</param>
+    /// <param name="defaultBufferSize">The default buffer size to use for the buffer writer.</param>
+    /// <param name="bufferWriter">When this method returns, contains the rented buffer writer.</param>
+    /// <returns>A rented UTF-8 JSON writer configured with the specified options.</returns>
+    public Utf8JsonWriter RentWriterAndBuffer(JsonWriterOptions options, int defaultBufferSize, out IByteBufferWriter bufferWriter)
+    {
+        Utf8JsonWriter result = Utf8JsonWriterCache.RentWriterAndBuffer(options, defaultBufferSize, out PooledByteBufferWriter writer);
         bufferWriter = writer;
         return result;
     }

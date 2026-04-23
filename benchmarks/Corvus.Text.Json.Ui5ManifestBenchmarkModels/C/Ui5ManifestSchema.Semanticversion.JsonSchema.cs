@@ -118,10 +118,10 @@ public readonly partial struct Ui5ManifestSchema
             }
 
 #if NET8_0_OR_GREATER && !DYNAMIC_BUILD
-            [GeneratedRegex("^[0-9]{1,}.[0-9]{1,}.[0-9]{1,}$")]
+            [GeneratedRegex("^[0-9]{1,}[^\\n\\r\\u2028\\u2029][0-9]{1,}[^\\n\\r\\u2028\\u2029][0-9]{1,}$")]
             private static partial Regex CreatePattern();
 #else
-            private static Regex CreatePattern() => new("^[0-9]{1,}.[0-9]{1,}.[0-9]{1,}$", RegexOptions.Compiled);
+            private static Regex CreatePattern() => new("^[0-9]{1,}[^\\n\\r\\u2028\\u2029][0-9]{1,}[^\\n\\r\\u2028\\u2029][0-9]{1,}$", RegexOptions.Compiled);
 #endif
 
             /// <summary>

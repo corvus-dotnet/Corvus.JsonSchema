@@ -63,14 +63,14 @@ public readonly partial struct Schema
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext1 =
-                    Corvus.OpenapiBenchmark.Baseline.JsonMediaRange.JsonSchema.PushChildContextUnescaped(
+                    Corvus.OpenapiBenchmark.Baseline.JsonMediaRangeNotAsserted.JsonSchema.PushChildContextUnescaped(
                         parentDocument,
                         parentDocumentIndex,
                         ref context,
                         JsonPropertyNames.ContentTypeUtf8,
                         evaluationPath: ContentTypeSchemaEvaluationPath);
 
-                Corvus.OpenapiBenchmark.Baseline.JsonMediaRange.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext1);
+                Corvus.OpenapiBenchmark.Baseline.JsonMediaRangeNotAsserted.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext1);
                 context.CommitChildContext(childContext1.IsMatch, ref childContext1);
             }
 

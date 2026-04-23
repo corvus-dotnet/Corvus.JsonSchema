@@ -1,0 +1,3 @@
+source: Yaml.md
+navTitle: "YAML Converter"
+description: "Convert YAML to JSON with a high-performance, zero-allocation converter supporting YAML 1.2 Core, JSON, Failsafe, and 1.1 compatibility schemas with 100% yaml-test-suite conformance."

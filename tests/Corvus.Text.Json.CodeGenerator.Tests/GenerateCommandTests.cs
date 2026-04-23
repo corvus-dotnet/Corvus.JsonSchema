@@ -25,7 +25,7 @@ public class GenerateCommandTests : IDisposable
         string schema = CodeGeneratorRunner.GetFixturePath("Schemas", "simple-object.json");
 
         ProcessResult result = await CodeGeneratorRunner.RunAsync(
-            $"\"{schema}\" --rootNamespace TestGenerated --outputPath \"{_outputDir}\"");
+            $"jsonschema \"{schema}\" --rootNamespace TestGenerated --outputPath \"{_outputDir}\"");
 
         Assert.Equal(0, result.ExitCode);
         Assert.True(
@@ -39,7 +39,7 @@ public class GenerateCommandTests : IDisposable
         string schema = CodeGeneratorRunner.GetFixturePath("Schemas", "array-type.json");
 
         ProcessResult result = await CodeGeneratorRunner.RunAsync(
-            $"\"{schema}\" --rootNamespace TestGenerated --outputPath \"{_outputDir}\"");
+            $"jsonschema \"{schema}\" --rootNamespace TestGenerated --outputPath \"{_outputDir}\"");
 
         Assert.Equal(0, result.ExitCode);
         Assert.True(
@@ -53,7 +53,7 @@ public class GenerateCommandTests : IDisposable
         string schema = CodeGeneratorRunner.GetFixturePath("Schemas", "composed-type.json");
 
         ProcessResult result = await CodeGeneratorRunner.RunAsync(
-            $"\"{schema}\" --rootNamespace TestGenerated --outputPath \"{_outputDir}\"");
+            $"jsonschema \"{schema}\" --rootNamespace TestGenerated --outputPath \"{_outputDir}\"");
 
         Assert.Equal(0, result.ExitCode);
         Assert.True(
@@ -67,7 +67,7 @@ public class GenerateCommandTests : IDisposable
         string schema = CodeGeneratorRunner.GetFixturePath("Schemas", "simple-object.json");
 
         ProcessResult result = await CodeGeneratorRunner.RunAsync(
-            $"\"{schema}\" --rootNamespace TestGenerated --outputPath \"{_outputDir}\" --outputRootTypeName MyPerson");
+            $"jsonschema \"{schema}\" --rootNamespace TestGenerated --outputPath \"{_outputDir}\" --outputRootTypeName MyPerson");
 
         Assert.Equal(0, result.ExitCode);
 
@@ -86,7 +86,7 @@ public class GenerateCommandTests : IDisposable
         string mapFile = Path.Combine(_outputDir, "output.map.json");
 
         ProcessResult result = await CodeGeneratorRunner.RunAsync(
-            $"\"{schema}\" --rootNamespace TestGenerated --outputPath \"{_outputDir}\" --outputMapFile \"{mapFile}\"");
+            $"jsonschema \"{schema}\" --rootNamespace TestGenerated --outputPath \"{_outputDir}\" --outputMapFile \"{mapFile}\"");
 
         Assert.Equal(0, result.ExitCode);
         Assert.True(File.Exists(mapFile), $"Expected map file at {mapFile}. Stdout: {result.StandardOutput}");
@@ -101,7 +101,7 @@ public class GenerateCommandTests : IDisposable
         string schema = CodeGeneratorRunner.GetFixturePath("Schemas", "simple-object.json");
 
         ProcessResult result = await CodeGeneratorRunner.RunAsync(
-            $"\"{schema}\" --rootNamespace TestGenerated --outputPath \"{_outputDir}\" --engine V4");
+            $"jsonschema \"{schema}\" --rootNamespace TestGenerated --outputPath \"{_outputDir}\" --engine V4");
 
         Assert.Equal(0, result.ExitCode);
         Assert.True(
@@ -115,7 +115,7 @@ public class GenerateCommandTests : IDisposable
         string schema = CodeGeneratorRunner.GetFixturePath("Schemas", "simple-object.json");
 
         ProcessResult result = await CodeGeneratorRunner.RunAsync(
-            $"\"{schema}\" --rootNamespace TestGenerated --outputPath \"{_outputDir}\" --optionalAsNullable NullOrUndefined");
+            $"jsonschema \"{schema}\" --rootNamespace TestGenerated --outputPath \"{_outputDir}\" --optionalAsNullable NullOrUndefined");
 
         Assert.Equal(0, result.ExitCode);
         Assert.True(

@@ -37,8 +37,6 @@ Scenario Outline: validation of an internationalized e-mail addresses
         # 실례@실례.테스트
         | #/000/tests/006/data | true  | a valid idn e-mail (example@example.test in Hangul)                              |
         # 2962
-        | #/000/tests/007/data | false | an invalid idn e-mail address                                                    |
+        | #/000/tests/007/data | false | an invalid e-mail/idn e-mail address                                             |
         # joe.bloggs@example.com
         | #/000/tests/008/data | true  | a valid e-mail address                                                           |
-        # 2962
-        | #/000/tests/009/data | false | an invalid e-mail address                                                        |

@@ -46,14 +46,14 @@ public readonly partial struct OpenapiSchema
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext =
-                    Corvus.OpenapiBenchmark.Current.JsonEmail.JsonSchema.PushChildContextUnescaped(
+                    Corvus.OpenapiBenchmark.Current.JsonEmailNotAsserted.JsonSchema.PushChildContextUnescaped(
                         parentDocument,
                         parentDocumentIndex,
                         ref context,
                         JsonPropertyNames.EmailUtf8,
                         evaluationPath: EmailSchemaEvaluationPath);
 
-                Corvus.OpenapiBenchmark.Current.JsonEmail.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext);
+                Corvus.OpenapiBenchmark.Current.JsonEmailNotAsserted.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext);
                 context.CommitChildContext(childContext.IsMatch, ref childContext);
             }
 
@@ -76,14 +76,14 @@ public readonly partial struct OpenapiSchema
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext2 =
-                    Corvus.OpenapiBenchmark.Current.JsonUri.JsonSchema.PushChildContextUnescaped(
+                    Corvus.OpenapiBenchmark.Current.JsonUriNotAsserted.JsonSchema.PushChildContextUnescaped(
                         parentDocument,
                         parentDocumentIndex,
                         ref context,
                         JsonPropertyNames.UrlUtf8,
                         evaluationPath: UrlSchemaEvaluationPath);
 
-                Corvus.OpenapiBenchmark.Current.JsonUri.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext2);
+                Corvus.OpenapiBenchmark.Current.JsonUriNotAsserted.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext2);
                 context.CommitChildContext(childContext2.IsMatch, ref childContext2);
             }
 

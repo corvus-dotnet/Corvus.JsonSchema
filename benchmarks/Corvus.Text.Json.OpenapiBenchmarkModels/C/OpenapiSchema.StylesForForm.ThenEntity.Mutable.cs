@@ -439,7 +439,7 @@ public readonly partial struct OpenapiSchema
                     return JsonSchema.Evaluate(_parent, _idx, resultsCollector);
                 }
 
-                private void CheckValidInstance()
+                private readonly void CheckValidInstance()
                 {
                     if (_parent == null)
                     {
@@ -649,6 +649,48 @@ public readonly partial struct OpenapiSchema
 
                 [DebuggerBrowsable(DebuggerBrowsableState.Never)]
                 JsonValueKind IJsonElement.ValueKind => ValueKind;
+
+                /// <summary>
+                /// Gets a <see cref="ThenEntity"/> which can be safely stored beyond the lifetime of the
+                /// original document.
+                /// </summary>
+                /// <returns>
+                /// A <see cref="ThenEntity"/> which can be safely stored beyond the lifetime of the
+                /// original document.
+                /// </returns>
+                /// <remarks>
+                /// <para>
+                /// This serializes the element and re-parses it into a standalone heap-allocated
+                /// document. The result is independent of the workspace.
+                /// </para>
+                /// </remarks>
+                public readonly ThenEntity Clone()
+                {
+                    CheckValidInstance();
+                    return _parent.CloneElement<ThenEntity>(_idx);
+                }
+
+                /// <summary>
+                /// Creates a frozen (immutable) copy of this element, backed by a new
+                /// document builder registered in the same workspace.
+                /// </summary>
+                /// <returns>
+                /// An immutable <see cref="ThenEntity"/> that lives for the lifetime of its
+                /// workspace and its associated documents.
+                /// </returns>
+                /// <remarks>
+                /// <para>
+                /// Unlike <see cref="Clone()"/>, which serializes the element and re-parses it
+                /// into a standalone heap-allocated document, <c>Freeze()</c> performs a cheap
+                /// blit of the metadata and value backing arrays. The resulting element is
+                /// immutable but is only valid for the lifetime of the workspace.
+                /// </para>
+                /// </remarks>
+                public readonly ThenEntity Freeze()
+                {
+                    CheckValidInstance();
+                    return _parent.FreezeElement<ThenEntity>(_idx);
+                }
             }
 
             public ref struct Source
@@ -994,11 +1036,12 @@ public readonly partial struct OpenapiSchema
             /// </summary>
             /// <param name="workspace">The JSON workspace.</param>
             /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
             /// <returns>An empty mutable document builder.</returns>
             public static JsonDocumentBuilder<Mutable> CreateBuilder(
-                JsonWorkspace workspace, int initialCapacity = 30)
+                JsonWorkspace workspace, int initialCapacity = 30, int initialValueBufferSize = 8192)
             {
-                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
                 cvb.StartObject();
                 cvb.EndObject();
@@ -1012,12 +1055,13 @@ public readonly partial struct OpenapiSchema
             /// <param name="workspace">The JSON workspace.</param>
             /// <param name="value">The value with which to initialize the builder.</param>
             /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
             /// <returns>An instance of a mutable document initialized with the given value.</returns>
             public static JsonDocumentBuilder<Mutable> CreateBuilder(
-                JsonWorkspace workspace, scoped in Builder.Build value, int initialCapacity = 30)
+                JsonWorkspace workspace, scoped in Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
             {
                 // Create the document builder without a MetadataDb
-                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
                 var source = new Source(value);
                 source.AddAsItem(ref cvb);
@@ -1034,15 +1078,16 @@ public readonly partial struct OpenapiSchema
             /// <param name="context">The context to pass to the builder.</param>
             /// <param name="value">The value with which to initialize the builder.</param>
             /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+            /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
             /// <returns>An instance of a mutable document initialized with the given value.</returns>
             public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(
-                JsonWorkspace workspace, scoped in TContext context, scoped in Builder.Build<TContext> value, int initialCapacity = 30)
+                JsonWorkspace workspace, scoped in TContext context, scoped in Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
                 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
                 #endif
             {
                 // Create the document builder without a MetadataDb
-                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+                JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
                 var source = new Source<TContext>(context, value);
                 source.AddAsItem(ref cvb);

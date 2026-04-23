@@ -133,10 +133,10 @@ public readonly partial struct Schema
             }
 
 #if NET8_0_OR_GREATER && !DYNAMIC_BUILD
-            [GeneratedRegex("^(?=!+[^!*,;{}[\\]~\\n]+$)(?=(.*\\w)).+$")]
+            [GeneratedRegex("^(?=!+[^!*,;{}[\\]~\\n]+$)(?=([^\\n\\r\\u2028\\u2029]*[a-zA-Z0-9_]))[^\\n\\r\\u2028\\u2029]+$")]
             private static partial Regex CreatePattern();
 #else
-            private static Regex CreatePattern() => new("^(?=!+[^!*,;{}[\\]~\\n]+$)(?=(.*\\w)).+$", RegexOptions.Compiled);
+            private static Regex CreatePattern() => new("^(?=!+[^!*,;{}[\\]~\\n]+$)(?=([^\\n\\r\\u2028\\u2029]*[a-zA-Z0-9_]))[^\\n\\r\\u2028\\u2029]+$", RegexOptions.Compiled);
 #endif
 
             /// <summary>

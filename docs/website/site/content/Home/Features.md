@@ -6,7 +6,7 @@ Title: "Features"
 ---
 ## 🔧 Source Generation
 
-Generate strongly-typed C# from JSON Schema at build time with the Roslyn incremental source generator, or ahead of time with the `generatejsonschematypes` CLI tool. Your models get type-safe property accessors, validation, serialization, and implicit conversions — all from a single schema file. The generator walks the schema tree and produces `readonly struct` types that are lightweight indexes into pooled JSON data.
+Generate strongly-typed C# from JSON Schema at build time with the Roslyn incremental source generator, or ahead of time with the `corvusjson` CLI tool. Your models get type-safe property accessors, validation, serialization, and implicit conversions — all from a single schema file. The generator walks the schema tree and produces `readonly struct` types that are lightweight indexes into pooled JSON data.
 
 ## 📋 Schema Validation
 

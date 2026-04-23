@@ -139,10 +139,10 @@ public readonly partial struct JsconfigSchema
                             }
 
 #if NET8_0_OR_GREATER && !DYNAMIC_BUILD
-                            [GeneratedRegex("^[Ee][Ss]2016(\\.[Aa][Rr][Rr][Aa][Yy].[Ii][Nn][Cc][Ll][Uu][Dd][Ee])?$")]
+                            [GeneratedRegex("^[Ee][Ss]2016(\\.[Aa][Rr][Rr][Aa][Yy][^\\n\\r\\u2028\\u2029][Ii][Nn][Cc][Ll][Uu][Dd][Ee])?$")]
                             private static partial Regex CreatePattern();
 #else
-                            private static Regex CreatePattern() => new("^[Ee][Ss]2016(\\.[Aa][Rr][Rr][Aa][Yy].[Ii][Nn][Cc][Ll][Uu][Dd][Ee])?$", RegexOptions.Compiled);
+                            private static Regex CreatePattern() => new("^[Ee][Ss]2016(\\.[Aa][Rr][Rr][Aa][Yy][^\\n\\r\\u2028\\u2029][Ii][Nn][Cc][Ll][Uu][Dd][Ee])?$", RegexOptions.Compiled);
 #endif
 
                             /// <summary>

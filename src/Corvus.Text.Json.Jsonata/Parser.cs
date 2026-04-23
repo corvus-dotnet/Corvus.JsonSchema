@@ -15,7 +15,7 @@ namespace Corvus.Text.Json.Jsonata;
 /// This follows the reference jsonata-js parser closely, adapted to C# with
 /// strongly-typed AST nodes.
 /// </remarks>
-internal sealed class Parser
+internal ref struct Parser
 {
     // Parser binding powers for infix operators.
     // Delimiters (: ; , ) ] } |) have BP 0 — they terminate expressions.
@@ -54,19 +54,19 @@ internal sealed class Parser
         ["&"] = 50,
     };
 
-    private readonly string source;
+    private readonly byte[] utf8Source;
     private Lexer lexer;
     private Token current;
 
     // Ancestry tracking for parent operator resolution
     private int ancestorLabel;
     private int ancestorIndex;
-    private readonly List<ParentNode> ancestry = [];
+    private List<ParentNode>? ancestry;
 
-    private Parser(string source)
+    private Parser(byte[] utf8Source)
     {
-        this.source = source;
-        this.lexer = new Lexer(source);
+        this.utf8Source = utf8Source;
+        this.lexer = new Lexer(utf8Source);
     }
 
     /// <summary>
@@ -76,17 +76,41 @@ internal sealed class Parser
     /// <returns>The root AST node.</returns>
     public static JsonataNode Parse(string expression)
     {
-        var parser = new Parser(expression);
+        byte[] utf8 = System.Text.Encoding.UTF8.GetBytes(expression);
+        return Parse(expression, utf8);
+    }
+
+    /// <summary>
+    /// Parses a JSONata expression from pre-encoded UTF-8 bytes, bypassing
+    /// the string-to-UTF-8 transcode.
+    /// </summary>
+    /// <param name="utf8Source">The UTF-8 encoded expression bytes.</param>
+    /// <returns>The root AST node.</returns>
+    public static JsonataNode Parse(byte[] utf8Source)
+    {
+        return Parse(string.Empty, utf8Source);
+    }
+
+    /// <summary>
+    /// Parses a JSONata expression from pre-encoded UTF-8 bytes.
+    /// </summary>
+    /// <param name="expression">The original expression string (unused, kept for API compatibility).</param>
+    /// <param name="utf8Source">The UTF-8 encoded expression bytes.</param>
+    /// <returns>The root AST node.</returns>
+    public static JsonataNode Parse(string expression, byte[] utf8Source)
+    {
+        var parser = new Parser(utf8Source);
         parser.Advance();
         var ast = parser.Expression(0);
 
         if (parser.current.Type != TokenType.End)
         {
+            string tokenValue = parser.current.GetValue(utf8Source);
             throw new JsonataException(
                 "S0201",
-                SR.Format(SR.S0201_UnexpectedToken, parser.current.Value),
+                SR.Format(SR.S0201_UnexpectedToken, tokenValue),
                 parser.current.Position,
-                parser.current.Value);
+                tokenValue);
         }
 
         ast = parser.ProcessAst(ast);
@@ -110,11 +134,12 @@ internal sealed class Parser
             && !(this.current.Type == TokenType.Operator && this.current.Value == expectedOperator))
         {
             string code = this.current.Type == TokenType.End ? "S0203" : "S0202";
+            string tokenValue = this.current.GetValue(this.utf8Source);
             throw new JsonataException(
                 code,
-                $"Expected '{expectedOperator}', got '{this.current.Value}'",
+                $"Expected '{expectedOperator}', got '{tokenValue}'",
                 this.current.Position,
-                this.current.Value);
+                tokenValue);
         }
 
         this.current = this.lexer.Next(prefixMode: infix);
@@ -144,7 +169,7 @@ internal sealed class Parser
     /// </summary>
     private int GetLbp()
     {
-        if (this.current.Type == TokenType.Operator && OperatorPrecedence.TryGetValue(this.current.Value, out int bp))
+        if (this.current.Type == TokenType.Operator && this.current.Value is not null && OperatorPrecedence.TryGetValue(this.current.Value, out int bp))
         {
             return bp;
         }
@@ -162,8 +187,8 @@ internal sealed class Parser
             TokenType.Name => this.NudName(token),
             TokenType.Variable => this.NudVariable(token),
             TokenType.Number => new NumberNode { Value = token.NumericValue, Position = token.Position },
-            TokenType.String => new StringNode { Value = token.Value, Position = token.Position },
-            TokenType.Value => new ValueNode { Value = token.Value, Position = token.Position },
+            TokenType.String => new StringNode { Value = token.Value!, Position = token.Position },
+            TokenType.Value => new ValueNode { Value = token.Value!, Position = token.Position },
             TokenType.Regex => new RegexNode
             {
                 Pattern = token.RegexPattern ?? string.Empty,
@@ -175,23 +200,28 @@ internal sealed class Parser
                 "S0207",
                 SR.S0207_UnexpectedEndOfExpression,
                 token.Position,
-                token.Value),
+                token.GetValue(this.utf8Source)),
             _ => throw new JsonataException(
                 "S0211",
-                SR.Format(SR.S0211_UnexpectedToken, token.Value),
+                SR.Format(SR.S0211_UnexpectedToken, token.GetValue(this.utf8Source)),
                 token.Position,
-                token.Value),
+                token.GetValue(this.utf8Source)),
         };
     }
 
     private JsonataNode NudName(Token token)
     {
+        if (token.Value is null)
+        {
+            return NameNode.FromUtf8Source(this.utf8Source, token.ValueOffset, token.ValueLength, token.Position);
+        }
+
         return new NameNode { Value = token.Value, Position = token.Position };
     }
 
     private JsonataNode NudVariable(Token token)
     {
-        return new VariableNode { Name = token.Value, Position = token.Position };
+        return new VariableNode { Name = token.GetValue(this.utf8Source), Position = token.Position };
     }
 
     private JsonataNode NudOperator(Token token)
@@ -217,7 +247,7 @@ internal sealed class Parser
             "|" => this.NudTransform(token),
 
             // 'and', 'or', 'in' can appear as names when used in prefix position
-            "and" or "or" or "in" => new NameNode { Value = token.Value, Position = token.Position },
+            "and" or "or" or "in" => new NameNode { Value = token.Value!, Position = token.Position },
             _ => throw new JsonataException(
                 "S0211",
                 SR.Format(SR.S0211_UnexpectedOperatorInPrefixPosition, token.Value),
@@ -395,11 +425,11 @@ internal sealed class Parser
 
     private JsonataNode LedBinary(Token token, JsonataNode left)
     {
-        int bp = OperatorPrecedence[token.Value];
+        int bp = OperatorPrecedence[token.Value!];
         var rhs = this.Expression(bp);
         return new BinaryNode
         {
-            Operator = token.Value,
+            Operator = token.Value!,
             Lhs = left,
             Rhs = rhs,
             Position = token.Position,
@@ -512,7 +542,7 @@ internal sealed class Parser
                     depth++;
                 }
 
-                sig += this.current.Value;
+                sig += this.current.GetValue(this.utf8Source);
             }
 
             this.Advance(">");
@@ -748,7 +778,7 @@ internal sealed class Parser
                     Level = 1,
                     Index = this.ancestorIndex++,
                 };
-                this.ancestry.Add(parent);
+                (this.ancestry ??= []).Add(parent);
                 return parent;
 
             // Terminal nodes pass through unchanged
@@ -807,47 +837,77 @@ internal sealed class Parser
 
     private JsonataNode ProcessDot(BinaryNode binary)
     {
-        var lstep = this.ProcessAst(binary.Lhs);
-
         PathNode result;
-        if (lstep is PathNode existingPath)
+
+        // Fast path for bare NameNode LHS: create PathNode directly without going
+        // through ProcessAst (which would create the same PathNode wrapper).
+        if (binary.Lhs is NameNode bareLhs && bareLhs.Annotations is null && bareLhs.SeekingParent is null)
         {
-            result = existingPath;
+            result = new PathNode { Position = bareLhs.Position };
+            result.Steps.Add(bareLhs);
+            if (bareLhs.KeepArray)
+            {
+                result.KeepSingletonArray = true;
+            }
         }
         else
         {
-            result = new PathNode { Position = lstep.Position };
-            result.Steps.Add(lstep);
-        }
+            var lstep = this.ProcessAst(binary.Lhs);
 
-        if (lstep is ParentNode parentLhs)
-        {
-            result.SeekingParent ??= [];
-            result.SeekingParent.Add(parentLhs.Slot);
-        }
+            if (lstep is PathNode existingPath)
+            {
+                result = existingPath;
+            }
+            else
+            {
+                result = new PathNode { Position = lstep.Position };
+                result.Steps.Add(lstep);
+            }
 
-        var rest = this.ProcessAst(binary.Rhs);
-        if (rest is PathNode restPath)
-        {
-            result.Steps.AddRange(restPath.Steps);
-
-            // Merge unresolved parent slots from the sub-path so multi-level
-            // parent operators (e.g. %.%.AccountName) propagate correctly.
-            if (restPath.SeekingParent is not null)
+            if (lstep is ParentNode parentLhs)
             {
                 result.SeekingParent ??= [];
-                result.SeekingParent.AddRange(restPath.SeekingParent);
+                result.SeekingParent.Add(parentLhs.Slot);
+            }
+        }
+
+        // Fast path: bare NameNode RHS avoids ProcessAst wrapping it in an
+        // intermediate PathNode + List that would be immediately merged and discarded.
+        // This is the common case for simple dot chains like a.b.c.
+        // We must still handle KeepArray (from postfix []).
+        if (binary.Rhs is NameNode bareRhs && bareRhs.Annotations is null && bareRhs.SeekingParent is null)
+        {
+            result.Steps.Add(bareRhs);
+            if (bareRhs.KeepArray)
+            {
+                result.KeepSingletonArray = true;
             }
         }
         else
         {
-            // Move predicate to stages when attaching to a path
-            if (rest is NameNode nn && nn.Annotations?.Stages.Count > 0)
+            var rest = this.ProcessAst(binary.Rhs);
+            if (rest is PathNode restPath)
             {
-                // Already has stages, nothing to move
-            }
+                result.Steps.AddRange(restPath.Steps);
 
-            result.Steps.Add(rest);
+                // Merge unresolved parent slots from the sub-path so multi-level
+                // parent operators (e.g. %.%.AccountName) propagate correctly.
+                if (restPath.SeekingParent is not null)
+                {
+                    result.SeekingParent ??= [];
+                    result.SeekingParent.AddRange(restPath.SeekingParent);
+                }
+            }
+            else
+            {
+                // Move predicate to stages when attaching to a path
+                if (rest is NameNode nn && nn.Annotations?.Stages.Count > 0)
+                {
+                    // Already has stages, nothing to move
+                }
+
+                result.Steps.Add(rest);
+            }
         }
 
         // String literals in paths become names; numbers and values are errors
@@ -1281,22 +1341,59 @@ internal sealed class Parser
 
     private JsonataNode ProcessCondition(ConditionNode cond)
     {
-        var result = new ConditionNode
+        // Detect desugared coalesce: $exists(lhs) ? lhs : rhs
+        // LedCoalesce sets Arguments[0] === Then (same reference).
+        // Process the shared node once to preserve ReferenceEquals for
+        // the coalesce fusion in CompileCondition.
+        if (cond.Condition is FunctionCallNode existsCall
+            && existsCall.Procedure is VariableNode { Name: "exists" }
+            && existsCall.Arguments.Count == 1
+            && ReferenceEquals(existsCall.Arguments[0], cond.Then))
+        {
+            var processedLhs = this.ProcessAst(cond.Then);
+            var processedExistsCall = new FunctionCallNode
+            {
+                Procedure = this.ProcessAst(existsCall.Procedure),
+                Position = existsCall.Position,
+                KeepArray = existsCall.KeepArray,
+            };
+            processedExistsCall.Arguments.Add(processedLhs);
+            PushAncestry(processedExistsCall, processedLhs);
+
+            var result = new ConditionNode
+            {
+                Condition = processedExistsCall,
+                Then = processedLhs,
+                Position = cond.Position,
+            };
+            PushAncestry(result, result.Condition);
+            PushAncestry(result, result.Then);
+
+            if (cond.Else is not null)
+            {
+                result.Else = this.ProcessAst(cond.Else);
+                PushAncestry(result, result.Else);
+            }
+
+            return result;
+        }
+
+        var general = new ConditionNode
         {
             Condition = this.ProcessAst(cond.Condition),
             Then = this.ProcessAst(cond.Then),
             Position = cond.Position,
         };
-        PushAncestry(result, result.Condition);
-        PushAncestry(result, result.Then);
+        PushAncestry(general, general.Condition);
+        PushAncestry(general, general.Then);
 
         if (cond.Else is not null)
         {
-            result.Else = this.ProcessAst(cond.Else);
-            PushAncestry(result, result.Else);
+            general.Else = this.ProcessAst(cond.Else);
+            PushAncestry(general, general.Else);
         }
 
-        return result;
+        return general;
     }
 
     private JsonataNode ProcessBlock(BlockNode block)

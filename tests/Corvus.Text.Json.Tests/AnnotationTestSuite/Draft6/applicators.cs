@@ -94,7 +94,7 @@ public class SuitePropertiesPatternPropertiesAndAdditionalProperties : IClassFix
                 "annotations/applicators.json",
                 "{\r\n        \"properties\": {\r\n          \"foo\": {\r\n            \"title\": \"Foo\"\r\n          }\r\n        },\r\n        \"patternProperties\": {\r\n          \"^a\": {\r\n            \"title\": \"Bar\"\r\n          }\r\n        },\r\n        \"additionalProperties\": {\r\n          \"title\": \"Baz\"\r\n        }\r\n      }",
                 "AnnotationTestSuite.Draft6.Applicators",
-                "D:\\source\\mwadams\\Corvus.Text.Json\\JSON-Schema-Test-Suite\\remotes",
+                "D:\\source\\corvus-dotnet\\Corvus.JsonSchema\\JSON-Schema-Test-Suite\\remotes",
                 "http://json-schema.org/draft-06/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -134,7 +134,7 @@ public class SuitePropertyNamesDoesnTAnnotatePropertyValues : IClassFixture<Suit
                 "annotations/applicators.json",
                 "{\r\n        \"propertyNames\": {\r\n          \"const\": \"foo\",\r\n          \"title\": \"Foo\"\r\n        }\r\n      }",
                 "AnnotationTestSuite.Draft6.Applicators",
-                "D:\\source\\mwadams\\Corvus.Text.Json\\JSON-Schema-Test-Suite\\remotes",
+                "D:\\source\\corvus-dotnet\\Corvus.JsonSchema\\JSON-Schema-Test-Suite\\remotes",
                 "http://json-schema.org/draft-06/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -207,7 +207,7 @@ public class SuiteContains : IClassFixture<SuiteContains.Fixture>
                 "annotations/applicators.json",
                 "{\r\n        \"contains\": {\r\n          \"type\": \"number\",\r\n          \"title\": \"Foo\"\r\n        }\r\n      }",
                 "AnnotationTestSuite.Draft6.Applicators",
-                "D:\\source\\mwadams\\Corvus.Text.Json\\JSON-Schema-Test-Suite\\remotes",
+                "D:\\source\\corvus-dotnet\\Corvus.JsonSchema\\JSON-Schema-Test-Suite\\remotes",
                 "http://json-schema.org/draft-06/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -247,7 +247,7 @@ public class SuiteAllOf : IClassFixture<SuiteAllOf.Fixture>
                 "annotations/applicators.json",
                 "{\r\n        \"allOf\": [\r\n          {\r\n            \"title\": \"Foo\"\r\n          },\r\n          {\r\n            \"title\": \"Bar\"\r\n          }\r\n        ]\r\n      }",
                 "AnnotationTestSuite.Draft6.Applicators",
-                "D:\\source\\mwadams\\Corvus.Text.Json\\JSON-Schema-Test-Suite\\remotes",
+                "D:\\source\\corvus-dotnet\\Corvus.JsonSchema\\JSON-Schema-Test-Suite\\remotes",
                 "http://json-schema.org/draft-06/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -298,7 +298,7 @@ public class SuiteAnyOf : IClassFixture<SuiteAnyOf.Fixture>
                 "annotations/applicators.json",
                 "{\r\n        \"anyOf\": [\r\n          {\r\n            \"type\": \"integer\",\r\n            \"title\": \"Foo\"\r\n          },\r\n          {\r\n            \"type\": \"number\",\r\n            \"title\": \"Bar\"\r\n          }\r\n        ]\r\n      }",
                 "AnnotationTestSuite.Draft6.Applicators",
-                "D:\\source\\mwadams\\Corvus.Text.Json\\JSON-Schema-Test-Suite\\remotes",
+                "D:\\source\\corvus-dotnet\\Corvus.JsonSchema\\JSON-Schema-Test-Suite\\remotes",
                 "http://json-schema.org/draft-06/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -349,7 +349,7 @@ public class SuiteOneOf : IClassFixture<SuiteOneOf.Fixture>
                 "annotations/applicators.json",
                 "{\r\n        \"oneOf\": [\r\n          {\r\n            \"type\": \"string\",\r\n            \"title\": \"Foo\"\r\n          },\r\n          {\r\n            \"type\": \"number\",\r\n            \"title\": \"Bar\"\r\n          }\r\n        ]\r\n      }",
                 "AnnotationTestSuite.Draft6.Applicators",
-                "D:\\source\\mwadams\\Corvus.Text.Json\\JSON-Schema-Test-Suite\\remotes",
+                "D:\\source\\corvus-dotnet\\Corvus.JsonSchema\\JSON-Schema-Test-Suite\\remotes",
                 "http://json-schema.org/draft-06/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());
@@ -389,7 +389,7 @@ public class SuiteNot : IClassFixture<SuiteNot.Fixture>
                 "annotations/applicators.json",
                 "{\r\n        \"title\": \"Foo\",\r\n        \"not\": {\r\n          \"not\": {\r\n            \"title\": \"Bar\"\r\n          }\r\n        }\r\n      }",
                 "AnnotationTestSuite.Draft6.Applicators",
-                "D:\\source\\mwadams\\Corvus.Text.Json\\JSON-Schema-Test-Suite\\remotes",
+                "D:\\source\\corvus-dotnet\\Corvus.JsonSchema\\JSON-Schema-Test-Suite\\remotes",
                 "http://json-schema.org/draft-06/schema#",
                 validateFormat: false,
                 Assembly.GetExecutingAssembly());

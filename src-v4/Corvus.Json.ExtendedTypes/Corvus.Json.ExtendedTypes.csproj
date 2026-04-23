@@ -1,53 +1,69 @@
 <Project Sdk="Microsoft.NET.Sdk">
-	<Import Project="$(EndjinProjectPropsPath)" Condition="$(EndjinProjectPropsPath) != ''" />
-
-	<PropertyGroup>
-		<TargetFrameworks>netstandard2.0;netstandard2.1;net8.0;net9.0;net10.0</TargetFrameworks>
-		<ImplicitUsings>enable</ImplicitUsings>
-		<Nullable>enable</Nullable>
-		<GenerateDocumentationFile>true</GenerateDocumentationFile>
-		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-	</PropertyGroup>
-
-	<PropertyGroup>
-		<PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
-		<Description>Defines .NET types representing data types found in JSON, including numerous types for specialized string forms such as JsonUuid and JsonDateTime.</Description>
-	</PropertyGroup>
-
-	<!-- CS1591: Linked V5 source files have public types without XML docs -->
-	<PropertyGroup>
-		<NoWarn>$(NoWarn);CS1591</NoWarn>
-	</PropertyGroup>
-
-	<PropertyGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
-		<NoWarn>$(NoWarn);nullable</NoWarn>
-	</PropertyGroup>
-
-	<ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
-		<PackageReference Include="System.Reflection.Emit.Lightweight" Version="4.7.0" />
-	</ItemGroup>
-
-	<ItemGroup>
-		<PackageReference Include="Endjin.RecommendedPractices.GitHub" Version="2.1.18">
-			<PrivateAssets>all</PrivateAssets>
-			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-		</PackageReference>
-    <PackageReference Include="Corvus.UriTemplates" Version="2.3.2" />
-		<PackageReference Include="NodaTime" Version="3.3.1" />
-		<PackageReference Include="System.Collections.Immutable" Version="10.0.4" />
-    <PackageReference Include="System.Text.Json" Version="10.0.4" />
+  <Import Project="$(EndjinProjectPropsPath)" Condition="$(EndjinProjectPropsPath) != ''" />
+  <PropertyGroup>
+    <TargetFrameworks>netstandard2.0;netstandard2.1;net8.0;net9.0;net10.0</TargetFrameworks>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+  <PropertyGroup>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+    <Description>Defines .NET types representing data types found in JSON, including numerous types for specialized string forms such as JsonUuid and JsonDateTime.</Description>
+  </PropertyGroup>
+  <!-- CS1591: Linked V5 source files have public types without XML docs -->
+  <!-- CS1574: XML comment cref references in linked V5 Regex files reference internal enum members -->
+  <!-- CS8500: HexConverter takes address of managed type (suppressed in V5 too) -->
+  <PropertyGroup>
+    <NoWarn>$(NoWarn);CS0436;CS1591;CS1574;CS8500</NoWarn>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
+    <NoWarn>$(NoWarn);nullable</NoWarn>
+  </PropertyGroup>
+  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
+    <PackageReference Include="System.Reflection.Emit.Lightweight" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Endjin.RecommendedPractices.GitHub">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Corvus.UriTemplates" />
+    <PackageReference Include="NodaTime" />
+    <PackageReference Include="System.Collections.Immutable" />
+    <PackageReference Include="System.Text.Json" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Corvus.Json.JsonReference\Corvus.Json.JsonReference.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Update="StyleCop.Analyzers" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Update="Roslynator.Analyzers" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
 
-	<ItemGroup>
-	  <ProjectReference Include="..\Corvus.Json.JsonReference\Corvus.Json.JsonReference.csproj" />
-	</ItemGroup>
-
-	<ItemGroup>
-		<PackageReference Update="StyleCop.Analyzers" Version="1.2.0-beta.435" />
-	</ItemGroup>
-
-	<ItemGroup>
-	  <PackageReference Update="Roslynator.Analyzers" Version="4.12.9" />
-	</ItemGroup>
-
+  <!-- V5 ECMA-262 regex validator (linked source) -->
+  <PropertyGroup>
+    <RegexSourceDir>..\..\src\Corvus.Text.Json\Corvus\Text\Json\Regex\</RegexSourceDir>
+    <CoreLibSharedDir>..\..\System.Private.CoreLib\src\</CoreLibSharedDir>
+    <CommonPath>..\..\Common\src\</CommonPath>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="$(RegexSourceDir)JsonRegexValidator.cs" Link="Regex\JsonRegexValidator.cs" />
+    <Compile Include="$(RegexSourceDir)JsonRegexNode.cs" Link="Regex\JsonRegexNode.cs" />
+    <Compile Include="$(RegexSourceDir)JsonRegexNodeKind.cs" Link="Regex\JsonRegexNodeKind.cs" />
+    <Compile Include="$(RegexSourceDir)JsonRegexOpCode.cs" Link="Regex\JsonRegexOpCode.cs" />
+    <Compile Include="$(RegexSourceDir)JsonRegexOptions.cs" Link="Regex\JsonRegexOptions.cs" />
+    <Compile Include="$(RegexSourceDir)JsonRegexCharClass.cs" Link="Regex\JsonRegexCharClass.cs" />
+    <Compile Include="$(RegexSourceDir)JsonRegexCaseBehavior.cs" Link="Regex\JsonRegexCaseBehavior.cs" />
+    <Compile Include="$(RegexSourceDir)JsonRegexReplacement.cs" Link="Regex\JsonRegexReplacement.cs" />
+    <Compile Include="$(CommonPath)System\HexConverter.cs" Link="Common\System\HexConverter.cs" />
+    <Compile Include="$(CoreLibSharedDir)System\Collections\Generic\ValueListBuilder.cs" Link="Common\System\Collections\Generic\ValueListBuilder.cs" />
+    <Compile Include="$(CoreLibSharedDir)System\Collections\Generic\ValueListBuilder.Pop.cs" Link="Common\System\Collections\Generic\ValueListBuilder.Pop.cs" />
+  </ItemGroup>
 </Project>

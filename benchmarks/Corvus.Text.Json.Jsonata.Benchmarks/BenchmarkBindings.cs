@@ -43,6 +43,10 @@ public class BenchmarkBindings : JsonataBenchmarkBase
     private const string ExprLetBinding = """($total := $sum(Account.Order.Product.(Price * Quantity)); $total > 100 ? "high" : "low")""";
     private const string ExprBindingInHof = """$map(Account.Order.Product, function($v) { ($p := $v.Price * $v.Quantity; $p > 50 ? "big" : "small") })""";
 
+    private static readonly byte[] ExprLetBindingUtf8 = """($total := $sum(Account.Order.Product.(Price * Quantity)); $total > 100 ? "high" : "low")"""u8.ToArray();
+    private static readonly byte[] ExprBindingInHofUtf8 = """$map(Account.Order.Product, function($v) { ($p := $v.Price * $v.Quantity; $p > 50 ? "big" : "small") })"""u8.ToArray();
+
+
     private JsonataEvaluator evaluator = null!;
     private ParsedJsonDocument<JsonElement>? doc;
     private JsonElement data;
@@ -66,8 +70,8 @@ public class BenchmarkBindings : JsonataBenchmarkBase
         this.workspace = JsonWorkspace.Create();
 
         // Warm up RT
-        this.evaluator.Evaluate(ExprLetBinding, this.data);
-        this.evaluator.Evaluate(ExprBindingInHof, this.data);
+        this.evaluator.Evaluate(ExprLetBindingUtf8, this.data, this.workspace, cacheKey: ExprLetBinding);
+        this.evaluator.Evaluate(ExprBindingInHofUtf8, this.data, this.workspace, cacheKey: ExprBindingInHof);
 
         // Warm up CG
         LetBindingCodeGen.Evaluate(this.data, this.workspace); this.workspace.Reset();
@@ -98,7 +102,7 @@ public class BenchmarkBindings : JsonataBenchmarkBase
     public JsonElement Corvus_LetBinding()
     {
         this.workspace.Reset();
-        return this.evaluator.Evaluate(ExprLetBinding, this.data, this.workspace);
+        return this.evaluator.Evaluate(ExprLetBindingUtf8, this.data, this.workspace, cacheKey: ExprLetBinding);
     }
 
 #if !NETFRAMEWORK
@@ -125,7 +129,7 @@ public class BenchmarkBindings : JsonataBenchmarkBase
     public JsonElement Corvus_BindingInHof()
     {
         this.workspace.Reset();
-        return this.evaluator.Evaluate(ExprBindingInHof, this.data, this.workspace);
+        return this.evaluator.Evaluate(ExprBindingInHofUtf8, this.data, this.workspace, cacheKey: ExprBindingInHof);
     }
 
 #if !NETFRAMEWORK

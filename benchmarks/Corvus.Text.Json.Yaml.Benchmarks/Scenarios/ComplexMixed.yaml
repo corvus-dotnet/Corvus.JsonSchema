@@ -1,0 +1,108 @@
+# Complex mixed YAML exercising all features
+%YAML 1.2
+---
+# Anchors and aliases
+base_config: &base
+  retry_count: 3
+  timeout: 30
+  backoff: exponential
+
+# Block and flow collections mixed
+services:
+  - name: auth-service
+    config:
+      <<: *base
+      endpoint: https://auth.example.com
+      port: 443
+    tags: [auth, security, critical]
+    metadata: {owner: security-team, oncall: true}
+    
+  - name: data-pipeline
+    config:
+      <<: *base
+      timeout: 120
+      endpoint: https://data.example.com
+    tags: [data, etl, batch]
+    schedule: "0 */6 * * *"
+
+# All scalar types
+scalars:
+  # Strings
+  plain: hello world
+  double_quoted: "hello\nworld\ttab"
+  single_quoted: 'it''s a test'
+  
+  # Numbers
+  integer: 42
+  negative: -17
+  hex: 0xFF
+  octal: 0o77
+  float: 3.14159
+  scientific: 6.022e23
+  negative_float: -273.15
+  
+  # Booleans and null
+  enabled: true
+  disabled: false
+  empty_value: null
+  tilde_null: ~
+  
+# Block scalars
+documentation: |
+  # API Reference
+  
+  ## Authentication
+  
+  All requests must include a Bearer token
+  in the Authorization header.
+  
+  ## Rate Limiting
+  
+  - 1000 requests per minute for standard tier
+  - 10000 requests per minute for premium tier
+  
+  ## Error Codes
+  
+  | Code | Meaning |
+  |------|---------|
+  | 400  | Bad Request |
+  | 401  | Unauthorized |
+  | 429  | Rate Limited |
+  | 500  | Internal Error |
+
+folded_text: >
+  This is a long description that
+  would be very hard to read if it
+  were all on one line. The folded
+  scalar style converts these line
+  breaks to spaces.
+
+  A blank line creates a real
+  line break in the output.
+
+# Nested structures
+deployment:
+  replicas: 3
+  containers:
+    - name: app
+      image: myapp:latest
+      ports:
+        - containerPort: 8080
+          protocol: TCP
+        - containerPort: 9090
+          protocol: TCP
+      env:
+        DATABASE_URL: postgresql://db:5432/app
+        REDIS_URL: redis://cache:6379
+        LOG_LEVEL: info
+      resources:
+        requests: {cpu: 250m, memory: 256Mi}
+        limits: {cpu: "1", memory: 1Gi}
+    - name: sidecar
+      image: envoy:v1.28
+      ports:
+        - containerPort: 15001
+
+# Empty nodes
+empty_mapping: {}
+empty_sequence: []

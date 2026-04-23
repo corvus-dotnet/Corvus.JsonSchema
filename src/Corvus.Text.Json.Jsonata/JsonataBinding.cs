@@ -149,7 +149,7 @@ public readonly struct JsonataBinding
     /// <see cref="JsonWorkspace"/>. Returns a <see cref="Sequence"/> result.
     /// Use <see cref="Sequence.TryGetDouble"/>, <see cref="Sequence.AsElement()"/>, etc. to
     /// read argument values, and <see cref="Sequence.FromDouble"/>, <see cref="Sequence.FromString"/>,
-    /// <see cref="Sequence.FromBool"/>, or the <see cref="Sequence(in JsonElement)"/> constructor
+    /// <see cref="Sequence.FromBool"/>, or the implicit conversion from <see cref="JsonElement"/>
     /// to produce results.
     /// </param>
     /// <param name="parameterCount">The number of parameters the function expects.</param>

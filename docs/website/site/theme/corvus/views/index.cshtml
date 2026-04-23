@@ -10,12 +10,15 @@
         <h1 class="hero__title">High-performance <span class="brand">JSON</span> for .NET</h1>
         <p class="hero__subtitle">
             Source-generated strongly-typed C# from JSON Schema. Zero-allocation parsing,
-            full validation for all drafts, mutable documents, JSONata, JsonLogic, JSON Patch, and more.
+            full validation for all drafts, mutable documents, JSONata, JMESPath, JsonLogic, YAML, JSON Patch, and more.
         </p>
         <div class="hero__actions">
             <a href="/getting-started/index.html" class="btn btn--primary btn--lg">Get Started</a>
             <a href="/playground/" class="btn btn--secondary btn--lg" target="_blank" rel="noopener noreferrer">Try the Playground</a>
             <a href="/playground-jsonata/" class="btn btn--secondary btn--lg" target="_blank" rel="noopener noreferrer">Try JSONata</a>
+            <a href="/playground-jmespath/" class="btn btn--secondary btn--lg" target="_blank" rel="noopener noreferrer">Try JMESPath</a>
+            <a href="/playground-jsonlogic/" class="btn btn--secondary btn--lg" target="_blank" rel="noopener noreferrer">Try JSON Logic</a>
+            <a href="/playground-yaml/" class="btn btn--secondary btn--lg" target="_blank" rel="noopener noreferrer">Try YAML</a>
             <a href="@ViewBag.GitHubUrl"
                class="btn btn--secondary btn--lg" target="_blank" rel="noopener noreferrer">View on GitHub</a>
         </div>
@@ -88,6 +91,11 @@
                 <p class="card__body">Full <a href="https://jsonata.org/">JSONata</a> query and transformation language. 100% test-suite conformance with both interpreted and code-generated evaluation modes. <a href="/docs/jsonata.html">Learn more &rarr;</a></p>
             </div>
             <div class="card">
+                <div class="card__icon">🔍</div>
+                <h3 class="card__title">JMESPath</h3>
+                <p class="card__body">Full <a href="https://jmespath.org/">JMESPath</a> query language. 100% conformance with the official test suite, with interpreted and code-generated evaluation modes. <a href="/docs/jmes-path.html">Learn more &rarr;</a></p>
+            </div>
+            <div class="card">
                 <div class="card__icon"><img src="/assets/images/logo-jsonlogic.png" alt="JsonLogic logo" style="filter:invert(1);"></div>
                 <h3 class="card__title">JsonLogic</h3>
                 <p class="card__body">Complete <a href="https://jsonlogic.com/">JsonLogic</a> rule engine for evaluating business rules against JSON data. Interpreted and code-generated modes with custom operator support. <a href="/docs/json-logic.html">Learn more &rarr;</a></p>
@@ -96,6 +104,11 @@
                 <div class="card__icon">🩹</div>
                 <h3 class="card__title">JSON Patch</h3>
                 <p class="card__body">RFC 6902 JSON Patch with pooled-memory operations. Apply, generate, and diff patches on <code>JsonElement</code> without string allocations.</p>
+            </div>
+            <div class="card">
+                <div class="card__icon">📄</div>
+                <h3 class="card__title">YAML</h3>
+                <p class="card__body">High-performance YAML 1.2 to JSON converter. 100% <a href="https://github.com/yaml/yaml-test-suite">yaml-test-suite</a> conformance with a zero-allocation <code>ref struct</code> tokenizer on UTF-8 bytes. <a href="/docs/yaml.html">Learn more &rarr;</a></p>
             </div>
         </div>
     </div>
@@ -202,6 +215,11 @@ root.SetAge(31);
                 <pre style="margin-top:var(--space-sm)"><code class="language-bash">dotnet add package Corvus.Text.Json.Jsonata</code></pre>
             </div>
             <div class="card">
+                <h3 class="card__title"><a href="/docs/jmes-path.html" style="color:inherit">Corvus.Text.Json.JMESPath</a></h3>
+                <p class="card__body">JMESPath query language for extracting and reshaping JSON data. Interpreted and code-generated modes. <a href="/docs/jmes-path.html">Read the docs &rarr;</a></p>
+                <pre style="margin-top:var(--space-sm)"><code class="language-bash">dotnet add package Corvus.Text.Json.JMESPath</code></pre>
+            </div>
+            <div class="card">
                 <h3 class="card__title"><a href="/docs/json-logic.html" style="color:inherit">Corvus.Text.Json.JsonLogic</a></h3>
                 <p class="card__body">JsonLogic rule engine for evaluating business rules against JSON data. <a href="/docs/json-logic.html">Read the docs &rarr;</a></p>
                 <pre style="margin-top:var(--space-sm)"><code class="language-bash">dotnet add package Corvus.Text.Json.JsonLogic</code></pre>
@@ -210,6 +228,16 @@ root.SetAge(31);
                 <h3 class="card__title">Corvus.Text.Json.Patch</h3>
                 <p class="card__body">RFC 6902 JSON Patch with pooled-memory operations on <code>JsonElement</code>.</p>
                 <pre style="margin-top:var(--space-sm)"><code class="language-bash">dotnet add package Corvus.Text.Json.Patch</code></pre>
+            </div>
+            <div class="card">
+                <h3 class="card__title"><a href="/docs/yaml.html" style="color:inherit">Corvus.Text.Json.Yaml</a></h3>
+                <p class="card__body">YAML 1.2 to JSON converter with full Corvus document model integration. <a href="/docs/yaml.html">Read the docs &rarr;</a></p>
+                <pre style="margin-top:var(--space-sm)"><code class="language-bash">dotnet add package Corvus.Text.Json.Yaml</code></pre>
+            </div>
+            <div class="card">
+                <h3 class="card__title"><a href="/docs/yaml.html" style="color:inherit">Corvus.Yaml.SystemTextJson</a></h3>
+                <p class="card__body">Lightweight YAML 1.2 to JSON converter using only System.Text.Json — no Corvus dependency required. <a href="/docs/yaml.html">Read the docs &rarr;</a></p>
+                <pre style="margin-top:var(--space-sm)"><code class="language-bash">dotnet add package Corvus.Yaml.SystemTextJson</code></pre>
             </div>
         </div>
     </div>
@@ -225,6 +253,9 @@ root.SetAge(31);
                 <a href="/getting-started/index.html" class="btn btn--primary btn--lg">Get Started</a>
                 <a href="/playground/" class="btn btn--secondary btn--lg" target="_blank" rel="noopener noreferrer">Try the Playground</a>
                 <a href="/playground-jsonata/" class="btn btn--secondary btn--lg" target="_blank" rel="noopener noreferrer">Try JSONata</a>
+                <a href="/playground-jmespath/" class="btn btn--secondary btn--lg" target="_blank" rel="noopener noreferrer">Try JMESPath</a>
+                <a href="/playground-jsonlogic/" class="btn btn--secondary btn--lg" target="_blank" rel="noopener noreferrer">Try JSON Logic</a>
+                <a href="/playground-yaml/" class="btn btn--secondary btn--lg" target="_blank" rel="noopener noreferrer">Try YAML</a>
                 <a href="/examples/index.html" class="btn btn--secondary btn--lg">Browse Examples</a>
             </div>
         </div>

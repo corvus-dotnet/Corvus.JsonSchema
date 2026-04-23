@@ -9,6 +9,21 @@ using Corvus.Text.Json.Jsonata;
 namespace Corvus.Text.Json.Jsonata.Playground.Services;
 
 /// <summary>
+/// Identifies which editor an evaluation error originated from.
+/// </summary>
+public enum ErrorSource
+{
+    /// <summary>No specific editor (generic error).</summary>
+    None,
+
+    /// <summary>Error in the JSONata expression (parse or runtime).</summary>
+    Expression,
+
+    /// <summary>Error parsing the JSON data input.</summary>
+    Data,
+}
+
+/// <summary>
 /// Result of a JSONata evaluation.
 /// </summary>
 public sealed class EvaluationResult
@@ -20,6 +35,33 @@ public sealed class EvaluationResult
     public string? ErrorMessage { get; init; }
 
     public double ElapsedMs { get; init; }
+
+    /// <summary>Gets which editor the error originated from.</summary>
+    public ErrorSource ErrorSource { get; init; }
+
+    /// <summary>
+    /// Gets the zero-based character offset in the expression where the error occurred.
+    /// Only set when <see cref="ErrorSource"/> is <see cref="Services.ErrorSource.Expression"/>.
+    /// </summary>
+    public int? ErrorPosition { get; init; }
+
+    /// <summary>
+    /// Gets the token or fragment relevant to the error.
+    /// Only set when <see cref="ErrorSource"/> is <see cref="Services.ErrorSource.Expression"/>.
+    /// </summary>
+    public string? ErrorToken { get; init; }
+
+    /// <summary>
+    /// Gets the 1-based line number where a JSON data parse error occurred.
+    /// Only set when <see cref="ErrorSource"/> is <see cref="Services.ErrorSource.Data"/>.
+    /// </summary>
+    public int? ErrorLine { get; init; }
+
+    /// <summary>
+    /// Gets the 1-based column number where a JSON data parse error occurred.
+    /// Only set when <see cref="ErrorSource"/> is <see cref="Services.ErrorSource.Data"/>.
+    /// </summary>
+    public int? ErrorColumn { get; init; }
 }
 
 /// <summary>
@@ -66,6 +108,32 @@ public sealed class EvaluationService
                 {
                     Success = true,
                     ResultJson = resultText,
+                    ElapsedMs = sw.Elapsed.TotalMilliseconds,
+                };
+            }
+            catch (JsonataException jex)
+            {
+                sw.Stop();
+                return new EvaluationResult
+                {
+                    Success = false,
+                    ErrorMessage = FixBrokenSRFormat(jex.Message),
+                    ErrorSource = ErrorSource.Expression,
+                    ErrorPosition = jex.Position,
+                    ErrorToken = jex.Token,
+                    ElapsedMs = sw.Elapsed.TotalMilliseconds,
+                };
+            }
+            catch (JsonException jsonEx)
+            {
+                sw.Stop();
+                return new EvaluationResult
+                {
+                    Success = false,
+                    ErrorMessage = FixBrokenSRFormat(jsonEx.Message),
+                    ErrorSource = ErrorSource.Data,
+                    ErrorLine = jsonEx.LineNumber.HasValue ? (int)jsonEx.LineNumber.Value + 1 : null,
+                    ErrorColumn = jsonEx.BytePositionInLine.HasValue ? (int)jsonEx.BytePositionInLine.Value + 1 : null,
                     ElapsedMs = sw.Elapsed.TotalMilliseconds,
                 };
             }

@@ -3,6 +3,7 @@
 // </copyright>
 
 using System.Buffers;
+using System.Buffers.Text;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -32,6 +33,14 @@ namespace Corvus.Text.Json.Jsonata;
 public static class JsonataCodeGenHelpers
 {
     private static readonly JsonataEvaluator SharedEvaluator = new();
+
+    private static readonly JsonElement TypeNullElement = ParsedJsonDocument<JsonElement>.StringConstant("\"null\""u8.ToArray());
+    private static readonly JsonElement TypeNumberElement = ParsedJsonDocument<JsonElement>.StringConstant("\"number\""u8.ToArray());
+    private static readonly JsonElement TypeStringElement = ParsedJsonDocument<JsonElement>.StringConstant("\"string\""u8.ToArray());
+    private static readonly JsonElement TypeBooleanElement = ParsedJsonDocument<JsonElement>.StringConstant("\"boolean\""u8.ToArray());
+    private static readonly JsonElement TypeArrayElement = ParsedJsonDocument<JsonElement>.StringConstant("\"array\""u8.ToArray());
+    private static readonly JsonElement TypeObjectElement = ParsedJsonDocument<JsonElement>.StringConstant("\"object\""u8.ToArray());
+    private static readonly JsonElement TypeUndefinedElement = ParsedJsonDocument<JsonElement>.StringConstant("\"undefined\""u8.ToArray());
 
     /// <summary>
     /// Gets a cached <see cref="JsonElement"/> representing JSON <c>true</c>.
@@ -502,7 +511,117 @@ public static class JsonataCodeGenHelpers
     }
 
     /// <summary>
-    /// Navigates a property chain with fused constant-index and string-equality predicates.
+    /// Navigates a property chain using zero-copy <see cref="Utf8Name"/> references.
+    /// Internal overload for the runtime compiler.
+    /// </summary>
+    internal static void NavigatePropertyChainInto(
+        in JsonElement data,
+        Utf8Name[] names,
+        ref ElementBuffer buffer)
+    {
+        NavigatePropertyChainInto(data, names, 0, ref buffer);
+    }
+
+    /// <summary>
+    /// Navigates a property chain using zero-copy <see cref="Utf8Name"/> references,
+    /// starting at <paramref name="startIndex"/>.
+    /// </summary>
+    internal static void NavigatePropertyChainInto(
+        in JsonElement data,
+        Utf8Name[] names,
+        int startIndex,
+        ref ElementBuffer buffer)
+    {
+        JsonElement current = data;
+
+        for (int i = startIndex; i < names.Length; i++)
+        {
+            if (current.ValueKind == JsonValueKind.Object)
+            {
+                if (!current.TryGetProperty(names[i].Span, out current))
+                {
+                    return;
+                }
+            }
+            else if (current.ValueKind == JsonValueKind.Array)
+            {
+                CollectChainFlatInto(current, names, i, ref buffer);
+                return;
+            }
+            else
+            {
+                return;
+            }
+        }
+
+        buffer.AddFlatten(current);
+    }
+
+    private static void CollectChainFlatInto(
+        in JsonElement array,
+        Utf8Name[] names,
+        int stepIndex,
+        ref ElementBuffer buffer)
+    {
+        Utf8Name name = names[stepIndex];
+        int nextStep = stepIndex + 1;
+        bool isLastStep = nextStep >= names.Length;
+
+        foreach (JsonElement item in array.EnumerateArray())
+        {
+            if (item.ValueKind == JsonValueKind.Object)
+            {
+                if (item.TryGetProperty(name.Span, out var val))
+                {
+                    if (isLastStep)
+                    {
+                        buffer.AddFlatten(val);
+                    }
+                    else
+                    {
+                        ContinueChainFlatInto(val, names, nextStep, ref buffer);
+                    }
+                }
+            }
+            else if (item.ValueKind == JsonValueKind.Array)
+            {
+                CollectChainFlatInto(item, names, stepIndex, ref buffer);
+            }
+        }
+    }
+
+    private static void ContinueChainFlatInto(
+        in JsonElement value,
+        Utf8Name[] names,
+        int nextIndex,
+        ref ElementBuffer buffer)
+    {
+        JsonElement current = value;
+
+        for (int i = nextIndex; i < names.Length; i++)
+        {
+            if (current.ValueKind == JsonValueKind.Object)
+            {
+                if (!current.TryGetProperty(names[i].Span, out current))
+                {
+                    return;
+                }
+            }
+            else if (current.ValueKind == JsonValueKind.Array)
+            {
+                CollectChainFlatInto(current, names, i, ref buffer);
+                return;
+            }
+            else
+            {
+                return;
+            }
+        }
+
+        buffer.AddFlatten(current);
+    }
+
+    /// <summary>
     /// This is the codegen equivalent of the runtime's EvalPropertyChainWithPredicates —
     /// a single tight loop handles the entire path including predicates, avoiding all
     /// delegate dispatch and intermediate element allocations.
@@ -2069,6 +2188,188 @@ public static class JsonataCodeGenHelpers
     }
 
     /// <summary>
+    /// Fused <c>$sum</c> over a property chain. Navigates the chain into an
+    /// <see cref="ElementBuffer"/> (no builder document) and sums the numeric elements
+    /// directly, eliminating the intermediate array allocation.
+    /// </summary>
+    /// <param name="data">The input data element.</param>
+    /// <param name="chainNames">The UTF-8 encoded property names for each step.</param>
+    /// <param name="workspace">The workspace for the final result document.</param>
+    /// <returns>The sum as a <see cref="JsonElement"/> number, or <c>default</c> if undefined.</returns>
+    public static JsonElement SumOverChain(
+        in JsonElement data,
+        byte[][] chainNames,
+        JsonWorkspace workspace)
+    {
+        var buffer = default(ElementBuffer);
+        try
+        {
+            NavigatePropertyChainInto(data, chainNames, ref buffer);
+            return SumBuffer(ref buffer, workspace);
+        }
+        finally
+        {
+            buffer.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Fused <c>$count</c> over a property chain. Navigates the chain into an
+    /// <see cref="ElementBuffer"/> and counts the elements directly.
+    /// </summary>
+    public static JsonElement CountOverChain(
+        in JsonElement data,
+        byte[][] chainNames,
+        JsonWorkspace workspace)
+    {
+        var buffer = default(ElementBuffer);
+        try
+        {
+            NavigatePropertyChainInto(data, chainNames, ref buffer);
+            return buffer.Count == 0 ? default : JsonataHelpers.NumberFromDouble(buffer.Count, workspace);
+        }
+        finally
+        {
+            buffer.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Fused <c>$max</c> over a property chain.
+    /// </summary>
+    public static JsonElement MaxOverChain(
+        in JsonElement data,
+        byte[][] chainNames,
+        JsonWorkspace workspace)
+    {
+        var buffer = default(ElementBuffer);
+        try
+        {
+            NavigatePropertyChainInto(data, chainNames, ref buffer);
+            return AggregateBuffer(ref buffer, double.MinValue, static (acc, val) => val > acc ? val : acc, workspace);
+        }
+        finally
+        {
+            buffer.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Fused <c>$min</c> over a property chain.
+    /// </summary>
+    public static JsonElement MinOverChain(
+        in JsonElement data,
+        byte[][] chainNames,
+        JsonWorkspace workspace)
+    {
+        var buffer = default(ElementBuffer);
+        try
+        {
+            NavigatePropertyChainInto(data, chainNames, ref buffer);
+            return AggregateBuffer(ref buffer, double.MaxValue, static (acc, val) => val < acc ? val : acc, workspace);
+        }
+        finally
+        {
+            buffer.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Fused <c>$average</c> over a property chain.
+    /// </summary>
+    public static JsonElement AverageOverChain(
+        in JsonElement data,
+        byte[][] chainNames,
+        JsonWorkspace workspace)
+    {
+        var buffer = default(ElementBuffer);
+        try
+        {
+            NavigatePropertyChainInto(data, chainNames, ref buffer);
+            if (buffer.Count == 0)
+            {
+                return default;
+            }
+
+            double sum = 0;
+            int count = 0;
+            for (int i = 0; i < buffer.Count; i++)
+            {
+                JsonElement item = buffer[i];
+                if (item.ValueKind == JsonValueKind.Number)
+                {
+                    sum += item.GetDouble();
+                    count++;
+                }
+                else if (!item.IsNullOrUndefined())
+                {
+                    throw new JsonataException("T0412", SR.T0412_Argument1OfFunctionAverageMustBeAnArrayOfNumbers, 0);
+                }
+            }
+
+            return count == 0 ? default : JsonataHelpers.NumberFromDouble(sum / count, workspace);
+        }
+        finally
+        {
+            buffer.Dispose();
+        }
+    }
+
+    private static JsonElement SumBuffer(ref ElementBuffer buffer, JsonWorkspace workspace)
+    {
+        if (buffer.Count == 0)
+        {
+            return default;
+        }
+
+        double sum = 0;
+        for (int i = 0; i < buffer.Count; i++)
+        {
+            JsonElement item = buffer[i];
+            if (item.ValueKind == JsonValueKind.Number)
+            {
+                sum += item.GetDouble();
+            }
+            else if (!item.IsNullOrUndefined())
+            {
+                throw new JsonataException("T0412", SR.T0412_Argument1OfFunctionSumMustBeAnArrayOfNumbers, 0);
+            }
+        }
+
+        return JsonataHelpers.NumberFromDouble(sum, workspace);
+    }
+
+    private static JsonElement AggregateBuffer(
+        ref ElementBuffer buffer,
+        double seed,
+        Func<double, double, double> accumulate,
+        JsonWorkspace workspace)
+    {
+        if (buffer.Count == 0)
+        {
+            return default;
+        }
+
+        double result = seed;
+        bool found = false;
+        for (int i = 0; i < buffer.Count; i++)
+        {
+            JsonElement item = buffer[i];
+            if (item.ValueKind == JsonValueKind.Number)
+            {
+                result = accumulate(result, item.GetDouble());
+                found = true;
+            }
+            else if (!item.IsNullOrUndefined())
+            {
+                throw new JsonataException("T0412", SR.T0412_Argument1OfFunctionMaxMustBeAnArrayOfNumbers, 0);
+            }
+        }
+
+        return found ? JsonataHelpers.NumberFromDouble(result, workspace) : default;
+    }
+
+    /// <summary>
     /// Fused <c>$sum</c> over per-element double-producing step. Evaluates the step function
     /// per element and sums the raw doubles directly, avoiding the intermediate
     /// <see cref="JsonElement"/> array and per-element <c>NumberFromDouble</c> materialisation.
@@ -2744,6 +3045,96 @@ public static class JsonataCodeGenHelpers
     }
 
     /// <summary>
+    /// Fused <c>$exists(chain)</c> — walks the property chain and returns a boolean
+    /// indicating whether at least one value exists. Short-circuits on the first found
+    /// element — never allocates an <see cref="ElementBuffer"/> or builds intermediate arrays.
+    /// </summary>
+    public static JsonElement ExistsOverChain(in JsonElement data, byte[][] names, JsonWorkspace workspace)
+    {
+        return BooleanElement(AnyPropertyChain(data, names, 0));
+    }
+
+    /// <summary>
+    /// Fused <c>$exists(chain)</c> variant starting from <paramref name="startIndex"/>.
+    /// </summary>
+    public static JsonElement ExistsOverChain(in JsonElement data, byte[][] names, int startIndex, JsonWorkspace workspace)
+    {
+        return BooleanElement(AnyPropertyChain(data, names, startIndex));
+    }
+
+    /// <summary>
+    /// Returns <see langword="true"/> if the property chain starting at <paramref name="startIndex"/>
+    /// produces at least one value from <paramref name="data"/>. Short-circuits on the first match.
+    /// </summary>
+    private static bool AnyPropertyChain(in JsonElement data, byte[][] names, int startIndex)
+    {
+        JsonElement current = data;
+
+        for (int step = startIndex; step < names.Length; step++)
+        {
+            if (current.ValueKind == JsonValueKind.Object)
+            {
+                if (!current.TryGetProperty((ReadOnlySpan<byte>)names[step], out current))
+                {
+                    return false;
+                }
+            }
+            else if (current.ValueKind == JsonValueKind.Array)
+            {
+                return AnyPropertyOverArray(current, names, step);
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private static bool AnyPropertyOverArray(in JsonElement array, byte[][] names, int fromStep)
+    {
+        foreach (JsonElement item in array.EnumerateArray())
+        {
+            JsonElement current = item;
+            bool found = true;
+            for (int step = fromStep; step < names.Length; step++)
+            {
+                if (current.ValueKind == JsonValueKind.Object)
+                {
+                    if (!current.TryGetProperty((ReadOnlySpan<byte>)names[step], out current))
+                    {
+                        found = false;
+                        break;
+                    }
+                }
+                else if (current.ValueKind == JsonValueKind.Array)
+                {
+                    if (AnyPropertyOverArray(current, names, step))
+                    {
+                        return true;
+                    }
+
+                    found = false;
+                    break;
+                }
+                else
+                {
+                    found = false;
+                    break;
+                }
+            }
+
+            if (found)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>
     /// JSONata <c>$type</c> function — returns a string describing the input type.
     /// </summary>
     public static JsonElement Type(in JsonElement input, JsonWorkspace workspace)
@@ -2753,18 +3144,16 @@ public static class JsonataCodeGenHelpers
             return default;
         }
 
-        string typeName = input.ValueKind switch
+        return input.ValueKind switch
         {
-            JsonValueKind.Null => "null",
-            JsonValueKind.Number => "number",
-            JsonValueKind.String => "string",
-            JsonValueKind.True or JsonValueKind.False => "boolean",
-            JsonValueKind.Array => "array",
-            JsonValueKind.Object => "object",
-            _ => "undefined",
+            JsonValueKind.Null => TypeNullElement,
+            JsonValueKind.Number => TypeNumberElement,
+            JsonValueKind.String => TypeStringElement,
+            JsonValueKind.True or JsonValueKind.False => TypeBooleanElement,
+            JsonValueKind.Array => TypeArrayElement,
+            JsonValueKind.Object => TypeObjectElement,
+            _ => TypeUndefinedElement,
         };
-
-        return StringElement(typeName, workspace);
     }
 
     /// <summary>
@@ -3650,7 +4039,7 @@ public static class JsonataCodeGenHelpers
             {
                 byte b = str[pos];
                 int cpLen = b < 0x80 ? 1 : b < 0xE0 ? 2 : b < 0xF0 ? 3 : 4;
-                arrayRoot.AddItem(JsonataHelpers.StringFromUnescapedUtf8(str.Slice(pos, cpLen), workspace));
+                arrayRoot.AddItem(str.Slice(pos, cpLen));
                 pos += cpLen;
             }
 
@@ -3692,20 +4081,96 @@ public static class JsonataCodeGenHelpers
             for (int i = 0; i < resultCount - 1; i++)
             {
                 int idx = str.Slice(searchStart).IndexOf(sep);
-                arrayRoot.AddItem(JsonataHelpers.StringFromUnescapedUtf8(str.Slice(searchStart, idx), workspace));
+                arrayRoot.AddItem(str.Slice(searchStart, idx));
                 searchStart += idx + sep.Length;
             }
 
             if (exhausted)
             {
-                arrayRoot.AddItem(JsonataHelpers.StringFromUnescapedUtf8(str.Slice(searchStart), workspace));
+                arrayRoot.AddItem(str.Slice(searchStart));
             }
             else
             {
                 int idx = str.Slice(searchStart).IndexOf(sep);
                 int partLen = idx >= 0 ? idx : str.Length - searchStart;
-                arrayRoot.AddItem(JsonataHelpers.StringFromUnescapedUtf8(str.Slice(searchStart, partLen), workspace));
+                arrayRoot.AddItem(str.Slice(searchStart, partLen));
             }
+
+            return (JsonElement)arrayRoot;
+        }
+    }
+
+    /// <summary>
+    /// JSONata <c>$split</c> function — constant string separator, no limit.
+    /// Takes pre-computed UTF-8 separator bytes directly, skipping
+    /// <c>GetUtf8String()</c> on the separator and all limit processing.
+    /// </summary>
+    public static JsonElement SplitByConstantString(in JsonElement input, byte[] separator, JsonWorkspace workspace)
+    {
+        if (input.ValueKind != JsonValueKind.String)
+        {
+            throw new JsonataException("T0410", SR.T0410_Argument1OfFunctionSplitIsNotOfTheCorrectType, 0);
+        }
+
+        using UnescapedUtf8JsonString utf8Str = input.GetUtf8String();
+        ReadOnlySpan<byte> str = utf8Str.Span;
+        ReadOnlySpan<byte> sep = separator;
+
+        if (sep.Length == 0)
+        {
+            // Split into individual UTF-8 code points
+            int cpCount = 0;
+            for (int i = 0; i < str.Length;)
+            {
+                cpCount++;
+                byte b = str[i];
+                i += b < 0x80 ? 1 : b < 0xE0 ? 2 : b < 0xF0 ? 3 : 4;
+            }
+
+            JsonDocumentBuilder<JsonElement.Mutable> arrayDoc = JsonElement.CreateArrayBuilder(workspace, cpCount);
+            JsonElement.Mutable arrayRoot = arrayDoc.RootElement;
+            int pos = 0;
+            for (int c = 0; c < cpCount; c++)
+            {
+                byte b = str[pos];
+                int cpLen = b < 0x80 ? 1 : b < 0xE0 ? 2 : b < 0xF0 ? 3 : 4;
+                arrayRoot.AddItem(str.Slice(pos, cpLen));
+                pos += cpLen;
+            }
+
+            return (JsonElement)arrayRoot;
+        }
+        else
+        {
+            // Count all splits (unlimited)
+            int matchCount = 0;
+            int searchStart = 0;
+            int idx;
+            while ((idx = str.Slice(searchStart).IndexOf(sep)) >= 0)
+            {
+                matchCount++;
+                searchStart += idx + sep.Length;
+
+                if (searchStart > str.Length)
+                {
+                    break;
+                }
+            }
+
+            int resultCount = matchCount + 1;
+            JsonDocumentBuilder<JsonElement.Mutable> arrayDoc = JsonElement.CreateArrayBuilder(workspace, resultCount);
+            JsonElement.Mutable arrayRoot = arrayDoc.RootElement;
+
+            searchStart = 0;
+            for (int i = 0; i < matchCount; i++)
+            {
+                idx = str.Slice(searchStart).IndexOf(sep);
+                arrayRoot.AddItem(str.Slice(searchStart, idx));
+                searchStart += idx + sep.Length;
+            }
+
+            // Add remainder
+            arrayRoot.AddItem(str.Slice(searchStart));
 
             return (JsonElement)arrayRoot;
         }
@@ -4271,19 +4736,29 @@ public static class JsonataCodeGenHelpers
             return buffer[0].ValueKind == JsonValueKind.Object ? buffer[0] : default;
         }
 
+#if NET
+        Span<int> buckets = stackalloc int[Utf8KeyHashSet.StackAllocBucketSize];
+        Span<byte> entries = stackalloc byte[Utf8KeyHashSet.StackAllocEntrySize];
+        Span<byte> keyBuf = stackalloc byte[Utf8KeyHashSet.StackAllocKeyBufferSize];
+
+        var ctx = new MergeDedupBufferContext(buffer, buffer.Count * 4, buckets, entries, keyBuf);
         JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateBuilder(
             workspace,
-            buffer,
-            static (in ElementBuffer ctx, ref JsonElement.ObjectBuilder builder) =>
+            ctx,
+            static (in MergeDedupBufferContext c, ref JsonElement.ObjectBuilder builder) =>
             {
-                for (int i = 0; i < ctx.Count; i++)
+                using var hashSet = new Utf8KeyHashSet(c.EstimatedCount, c.Buckets, c.Entries, c.KeyBuffer);
+                for (int i = c.Buffer.Count - 1; i >= 0; i--)
                 {
-                    if (ctx[i].ValueKind == JsonValueKind.Object)
+                    if (c.Buffer[i].ValueKind == JsonValueKind.Object)
                     {
-                        foreach (var prop in ctx[i].EnumerateObject())
+                        foreach (var prop in c.Buffer[i].EnumerateObject())
                         {
                             using UnescapedUtf8JsonString nameUtf8 = prop.Utf8NameSpan;
-                            builder.AddProperty(nameUtf8.Span, prop.Value, escapeName: false, nameRequiresUnescaping: false);
+                            if (hashSet.AddIfNotExists(nameUtf8.Span))
+                            {
+                                builder.AddProperty(nameUtf8.Span, prop.Value, escapeName: false, nameRequiresUnescaping: false);
+                            }
                         }
                     }
                 }
@@ -4291,6 +4766,46 @@ public static class JsonataCodeGenHelpers
             estimatedMemberCount: 16);
 
         return (JsonElement)doc.RootElement;
+#else
+        int[] rentedBuckets = ArrayPool<int>.Shared.Rent(Utf8KeyHashSet.StackAllocBucketSize);
+        byte[] rentedEntries = ArrayPool<byte>.Shared.Rent(Utf8KeyHashSet.StackAllocEntrySize);
+        byte[] rentedKeyBuf = ArrayPool<byte>.Shared.Rent(Utf8KeyHashSet.StackAllocKeyBufferSize);
+
+        try
+        {
+            var ctx = new MergeDedupArrayBufferContext(buffer, rentedBuckets, rentedEntries, rentedKeyBuf);
+            JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateBuilder(
+                workspace,
+                ctx,
+                static (in MergeDedupArrayBufferContext c, ref JsonElement.ObjectBuilder builder) =>
+                {
+                    using var hashSet = new Utf8KeyHashSet(c.Buffer.Count * 4, c.Buckets, c.Entries, c.KeyBuffer);
+                    for (int i = c.Buffer.Count - 1; i >= 0; i--)
+                    {
+                        if (c.Buffer[i].ValueKind == JsonValueKind.Object)
+                        {
+                            foreach (var prop in c.Buffer[i].EnumerateObject())
+                            {
+                                using UnescapedUtf8JsonString nameUtf8 = prop.Utf8NameSpan;
+                                if (hashSet.AddIfNotExists(nameUtf8.Span))
+                                {
+                                    builder.AddProperty(nameUtf8.Span, prop.Value, escapeName: false, nameRequiresUnescaping: false);
+                                }
+                            }
+                        }
+                    }
+                },
+                estimatedMemberCount: 16);
+
+            return (JsonElement)doc.RootElement;
+        }
+        finally
+        {
+            ArrayPool<int>.Shared.Return(rentedBuckets);
+            ArrayPool<byte>.Shared.Return(rentedEntries);
+            ArrayPool<byte>.Shared.Return(rentedKeyBuf);
+        }
+#endif
     }
 
     /// <summary>
@@ -4525,6 +5040,7 @@ public static class JsonataCodeGenHelpers
 
     /// <summary>
     /// JSONata <c>$merge</c> function — merges an array of objects.
+    /// Last-wins for duplicate property names.
     /// </summary>
     public static JsonElement Merge(in JsonElement input, JsonWorkspace workspace)
     {
@@ -4543,22 +5059,43 @@ public static class JsonataCodeGenHelpers
             return default;
         }
 
-        // Use CVB ObjectBuilder — AddProperty is forward-only append (no O(n) scan).
-        // Last-wins semantics are handled by the fact that the document builder
-        // keeps the last value for duplicate property names when serialised.
+        return MergeArrayOfObjects(input, workspace);
+    }
+
+    /// <summary>
+    /// Merges an array of objects into a single object with last-wins duplicate key semantics.
+    /// Iterates in reverse so that properties from later objects win. Uses <see cref="Utf8KeyHashSet"/>
+    /// for O(1) duplicate detection, and <see cref="JsonElement.ObjectBuilder.AddProperty{T}(ReadOnlySpan{byte}, T, bool, bool)"/>
+    /// for O(1) append — no O(n) property scan per insertion.
+    /// </summary>
+    internal static JsonElement MergeArrayOfObjects(in JsonElement input, JsonWorkspace workspace)
+    {
+#if NET
+        int arrayLen = input.GetArrayLength();
+        Span<int> buckets = stackalloc int[Utf8KeyHashSet.StackAllocBucketSize];
+        Span<byte> entries = stackalloc byte[Utf8KeyHashSet.StackAllocEntrySize];
+        Span<byte> keyBuf = stackalloc byte[Utf8KeyHashSet.StackAllocKeyBufferSize];
+
+        var ctx = new MergeDedupElementContext(input, arrayLen * 4, buckets, entries, keyBuf);
         JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateBuilder(
             workspace,
-            input,
-            static (in JsonElement ctx, ref JsonElement.ObjectBuilder builder) =>
+            ctx,
+            static (in MergeDedupElementContext c, ref JsonElement.ObjectBuilder builder) =>
             {
-                foreach (var item in ctx.EnumerateArray())
+                using var hashSet = new Utf8KeyHashSet(c.EstimatedCount, c.Buckets, c.Entries, c.KeyBuffer);
+                int len = c.Input.GetArrayLength();
+                for (int i = len - 1; i >= 0; i--)
                 {
+                    var item = c.Input[i];
                     if (item.ValueKind == JsonValueKind.Object)
                     {
                         foreach (var prop in item.EnumerateObject())
                         {
                             using UnescapedUtf8JsonString nameUtf8 = prop.Utf8NameSpan;
-                            builder.AddProperty(nameUtf8.Span, prop.Value, escapeName: false, nameRequiresUnescaping: false);
+                            if (hashSet.AddIfNotExists(nameUtf8.Span))
+                            {
+                                builder.AddProperty(nameUtf8.Span, prop.Value, escapeName: false, nameRequiresUnescaping: false);
+                            }
                         }
                     }
                 }
@@ -4566,7 +5103,184 @@ public static class JsonataCodeGenHelpers
             estimatedMemberCount: 16);
 
         return (JsonElement)doc.RootElement;
+#else
+        int arrayLen = input.GetArrayLength();
+        int[] rentedBuckets = ArrayPool<int>.Shared.Rent(Utf8KeyHashSet.StackAllocBucketSize);
+        byte[] rentedEntries = ArrayPool<byte>.Shared.Rent(Utf8KeyHashSet.StackAllocEntrySize);
+        byte[] rentedKeyBuf = ArrayPool<byte>.Shared.Rent(Utf8KeyHashSet.StackAllocKeyBufferSize);
+
+        try
+        {
+            var ctx = new MergeDedupArrayElementContext(input, rentedBuckets, rentedEntries, rentedKeyBuf, arrayLen);
+            JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateBuilder(
+                workspace,
+                ctx,
+                static (in MergeDedupArrayElementContext c, ref JsonElement.ObjectBuilder builder) =>
+                {
+                    using var hashSet = new Utf8KeyHashSet(c.ArrayLen * 4, c.Buckets, c.Entries, c.KeyBuffer);
+                    int len = c.Input.GetArrayLength();
+                    for (int i = len - 1; i >= 0; i--)
+                    {
+                        var item = c.Input[i];
+                        if (item.ValueKind == JsonValueKind.Object)
+                        {
+                            foreach (var prop in item.EnumerateObject())
+                            {
+                                using UnescapedUtf8JsonString nameUtf8 = prop.Utf8NameSpan;
+                                if (hashSet.AddIfNotExists(nameUtf8.Span))
+                                {
+                                    builder.AddProperty(nameUtf8.Span, prop.Value, escapeName: false, nameRequiresUnescaping: false);
+                                }
+                            }
+                        }
+                    }
+                },
+                estimatedMemberCount: 16);
+
+            return (JsonElement)doc.RootElement;
+        }
+        finally
+        {
+            ArrayPool<int>.Shared.Return(rentedBuckets);
+            ArrayPool<byte>.Shared.Return(rentedEntries);
+            ArrayPool<byte>.Shared.Return(rentedKeyBuf);
+        }
+#endif
     }
+
+    /// <summary>
+    /// Merges a <see cref="Sequence"/> of objects into a single object with last-wins semantics.
+    /// Used by the RT <c>$merge</c> path when the argument evaluates to a multi-element sequence.
+    /// </summary>
+    internal static JsonElement MergeSequenceOfObjects(in Sequence input, JsonWorkspace workspace)
+    {
+#if NET
+        Span<int> buckets = stackalloc int[Utf8KeyHashSet.StackAllocBucketSize];
+        Span<byte> entries = stackalloc byte[Utf8KeyHashSet.StackAllocEntrySize];
+        Span<byte> keyBuf = stackalloc byte[Utf8KeyHashSet.StackAllocKeyBufferSize];
+
+        var ctx = new MergeDedupSequenceContext(input, input.Count * 4, buckets, entries, keyBuf);
+        JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateBuilder(
+            workspace,
+            ctx,
+            static (in MergeDedupSequenceContext c, ref JsonElement.ObjectBuilder builder) =>
+            {
+                using var hashSet = new Utf8KeyHashSet(c.EstimatedCount, c.Buckets, c.Entries, c.KeyBuffer);
+                for (int i = c.Sequence.Count - 1; i >= 0; i--)
+                {
+                    var item = c.Sequence[i];
+                    if (item.ValueKind == JsonValueKind.Object)
+                    {
+                        foreach (var prop in item.EnumerateObject())
+                        {
+                            using UnescapedUtf8JsonString nameUtf8 = prop.Utf8NameSpan;
+                            if (hashSet.AddIfNotExists(nameUtf8.Span))
+                            {
+                                builder.AddProperty(nameUtf8.Span, prop.Value, escapeName: false, nameRequiresUnescaping: false);
+                            }
+                        }
+                    }
+                }
+            },
+            estimatedMemberCount: 16);
+
+        return (JsonElement)doc.RootElement;
+#else
+        int[] rentedBuckets = ArrayPool<int>.Shared.Rent(Utf8KeyHashSet.StackAllocBucketSize);
+        byte[] rentedEntries = ArrayPool<byte>.Shared.Rent(Utf8KeyHashSet.StackAllocEntrySize);
+        byte[] rentedKeyBuf = ArrayPool<byte>.Shared.Rent(Utf8KeyHashSet.StackAllocKeyBufferSize);
+
+        try
+        {
+            var ctx = new MergeDedupArraySequenceContext(input, rentedBuckets, rentedEntries, rentedKeyBuf);
+            JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateBuilder(
+                workspace,
+                ctx,
+                static (in MergeDedupArraySequenceContext c, ref JsonElement.ObjectBuilder builder) =>
+                {
+                    using var hashSet = new Utf8KeyHashSet(c.Sequence.Count * 4, c.Buckets, c.Entries, c.KeyBuffer);
+                    for (int i = c.Sequence.Count - 1; i >= 0; i--)
+                    {
+                        var item = c.Sequence[i];
+                        if (item.ValueKind == JsonValueKind.Object)
+                        {
+                            foreach (var prop in item.EnumerateObject())
+                            {
+                                using UnescapedUtf8JsonString nameUtf8 = prop.Utf8NameSpan;
+                                if (hashSet.AddIfNotExists(nameUtf8.Span))
+                                {
+                                    builder.AddProperty(nameUtf8.Span, prop.Value, escapeName: false, nameRequiresUnescaping: false);
+                                }
+                            }
+                        }
+                    }
+                },
+                estimatedMemberCount: 16);
+
+            return (JsonElement)doc.RootElement;
+        }
+        finally
+        {
+            ArrayPool<int>.Shared.Return(rentedBuckets);
+            ArrayPool<byte>.Shared.Return(rentedEntries);
+            ArrayPool<byte>.Shared.Return(rentedKeyBuf);
+        }
+#endif
+    }
+
+#if NET
+    private readonly ref struct MergeDedupElementContext(JsonElement input, int estimatedCount, Span<int> buckets, Span<byte> entries, Span<byte> keyBuffer)
+    {
+        public readonly JsonElement Input = input;
+        public readonly int EstimatedCount = estimatedCount;
+        public readonly Span<int> Buckets = buckets;
+        public readonly Span<byte> Entries = entries;
+        public readonly Span<byte> KeyBuffer = keyBuffer;
+    }
+
+    private readonly ref struct MergeDedupBufferContext(ElementBuffer buffer, int estimatedCount, Span<int> buckets, Span<byte> entries, Span<byte> keyBuffer)
+    {
+        public readonly ElementBuffer Buffer = buffer;
+        public readonly int EstimatedCount = estimatedCount;
+        public readonly Span<int> Buckets = buckets;
+        public readonly Span<byte> Entries = entries;
+        public readonly Span<byte> KeyBuffer = keyBuffer;
+    }
+
+    private readonly ref struct MergeDedupSequenceContext(Sequence sequence, int estimatedCount, Span<int> buckets, Span<byte> entries, Span<byte> keyBuffer)
+    {
+        public readonly Sequence Sequence = sequence;
+        public readonly int EstimatedCount = estimatedCount;
+        public readonly Span<int> Buckets = buckets;
+        public readonly Span<byte> Entries = entries;
+        public readonly Span<byte> KeyBuffer = keyBuffer;
+    }
+#else
+    private readonly struct MergeDedupArrayElementContext(JsonElement input, int[] buckets, byte[] entries, byte[] keyBuffer, int arrayLen)
+    {
+        public readonly JsonElement Input = input;
+        public readonly int[] Buckets = buckets;
+        public readonly byte[] Entries = entries;
+        public readonly byte[] KeyBuffer = keyBuffer;
+        public readonly int ArrayLen = arrayLen;
+    }
+
+    private readonly struct MergeDedupArrayBufferContext(ElementBuffer buffer, int[] buckets, byte[] entries, byte[] keyBuffer)
+    {
+        public readonly ElementBuffer Buffer = buffer;
+        public readonly int[] Buckets = buckets;
+        public readonly byte[] Entries = entries;
+        public readonly byte[] KeyBuffer = keyBuffer;
+    }
+
+    private readonly struct MergeDedupArraySequenceContext(Sequence sequence, int[] buckets, byte[] entries, byte[] keyBuffer)
+    {
+        public readonly Sequence Sequence = sequence;
+        public readonly int[] Buckets = buckets;
+        public readonly byte[] Entries = entries;
+        public readonly byte[] KeyBuffer = keyBuffer;
+    }
+#endif
 
     /// <summary>
     /// JSONata <c>$spread</c> function — expands each property into a single-property object.
@@ -4949,8 +5663,7 @@ public static class JsonataCodeGenHelpers
     /// </summary>
     public static JsonElement Now(JsonWorkspace workspace)
     {
-        return JsonataHelpers.StringFromString(
-            DateTimeOffset.UtcNow.ToString("yyyy-MM-ddTHH:mm:ss.fffZ", CultureInfo.InvariantCulture), workspace);
+        return BuiltInFunctions.FormatIso8601Utc(DateTimeOffset.UtcNow, workspace);
     }
 
     /// <summary>
@@ -4973,9 +5686,33 @@ public static class JsonataCodeGenHelpers
             return default;
         }
 
+        if (input.ValueKind == JsonValueKind.String)
+        {
+            using UnescapedUtf8JsonString utf8 = input.GetUtf8String();
+            ReadOnlySpan<byte> source = utf8.Span;
+            int maxLen = Base64.GetMaxEncodedToUtf8Length(source.Length);
+            byte[]? rented = null;
+            Span<byte> dest = maxLen <= JsonConstants.StackallocByteThreshold
+                ? stackalloc byte[JsonConstants.StackallocByteThreshold]
+                : (rented = ArrayPool<byte>.Shared.Rent(maxLen));
+
+            try
+            {
+                Base64.EncodeToUtf8(source, dest, out _, out int written);
+                return JsonataHelpers.StringFromUnescapedUtf8(dest.Slice(0, written), workspace);
+            }
+            finally
+            {
+                if (rented != null)
+                {
+                    ArrayPool<byte>.Shared.Return(rented);
+                }
+            }
+        }
+
         string str = FunctionalCompiler.CoerceElementToString(input);
         return JsonataHelpers.StringFromString(
-            Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(str)), workspace);
+            Convert.ToBase64String(Encoding.UTF8.GetBytes(str)), workspace);
     }
 
     /// <summary>
@@ -4988,9 +5725,33 @@ public static class JsonataCodeGenHelpers
             return default;
         }
 
+        if (input.ValueKind == JsonValueKind.String)
+        {
+            using UnescapedUtf8JsonString utf8 = input.GetUtf8String();
+            ReadOnlySpan<byte> source = utf8.Span;
+            int maxLen = Base64.GetMaxDecodedFromUtf8Length(source.Length);
+            byte[]? rented = null;
+            Span<byte> dest = maxLen <= JsonConstants.StackallocByteThreshold
+                ? stackalloc byte[JsonConstants.StackallocByteThreshold]
+                : (rented = ArrayPool<byte>.Shared.Rent(maxLen));
+
+            try
+            {
+                Base64.DecodeFromUtf8(source, dest, out _, out int written);
+                return JsonataHelpers.StringFromUnescapedUtf8(dest.Slice(0, written), workspace);
+            }
+            finally
+            {
+                if (rented != null)
+                {
+                    ArrayPool<byte>.Shared.Return(rented);
+                }
+            }
+        }
+
         string str = FunctionalCompiler.CoerceElementToString(input);
         return JsonataHelpers.StringFromString(
-            System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(str)), workspace);
+            Encoding.UTF8.GetString(Convert.FromBase64String(str)), workspace);
     }
 
     /// <summary>
@@ -5001,6 +5762,19 @@ public static class JsonataCodeGenHelpers
         if (input.IsNullOrUndefined())
         {
             return default;
+        }
+
+        if (input.ValueKind == JsonValueKind.String)
+        {
+            using UnescapedUtf8JsonString utf8 = input.GetUtf8String();
+            ReadOnlySpan<byte> source = utf8.Span;
+
+            if (BuiltInFunctions.ContainsUtf8Surrogate(source))
+            {
+                throw new JsonataException("D3140", SR.D3140_MalformedUrlEncodeUrlComponent, 0);
+            }
+
+            return EscapeDataStringToElement(source, workspace);
         }
 
         string str;
@@ -5027,6 +5801,19 @@ public static class JsonataCodeGenHelpers
             return default;
         }
 
+        if (input.ValueKind == JsonValueKind.String)
+        {
+            using UnescapedUtf8JsonString utf8 = input.GetUtf8String();
+            ReadOnlySpan<byte> source = utf8.Span;
+
+            if (BuiltInFunctions.HasInvalidPercentEncoding(source))
+            {
+                throw new JsonataException("D3140", SR.Format(SR.D3140_MalformedUrlPassedToDecodeUrlComponent, input.GetString()!), 0);
+            }
+
+            return UnescapeDataStringToElement(source, workspace);
+        }
+
         string str = FunctionalCompiler.CoerceElementToString(input);
 
         if (BuiltInFunctions.HasInvalidPercentEncoding(str))
@@ -5044,7 +5831,6 @@ public static class JsonataCodeGenHelpers
         }
     }
 
-#pragma warning disable SYSLIB0013 // Uri.EscapeUriString is obsolete
     /// <summary>
     /// JSONata <c>$encodeUrl</c> function.
     /// </summary>
@@ -5053,6 +5839,19 @@ public static class JsonataCodeGenHelpers
         if (input.IsNullOrUndefined())
         {
             return default;
+        }
+
+        if (input.ValueKind == JsonValueKind.String)
+        {
+            using UnescapedUtf8JsonString utf8 = input.GetUtf8String();
+            ReadOnlySpan<byte> source = utf8.Span;
+
+            if (BuiltInFunctions.ContainsUtf8Surrogate(source))
+            {
+                throw new JsonataException("D3140", SR.D3140_MalformedUrlEncodeUrl, 0);
+            }
+
+            return EscapeUriToElement(source, workspace);
         }
 
         string str;
@@ -5066,9 +5865,10 @@ public static class JsonataCodeGenHelpers
         }
 
         BuiltInFunctions.ValidateNoUnpairedSurrogates(str, "$encodeUrl");
-        return JsonataHelpers.StringFromString(Uri.EscapeUriString(str), workspace);
+
+        byte[] sourceBytes = Encoding.UTF8.GetBytes(str);
+        return EscapeUriToElement(sourceBytes, workspace);
     }
-#pragma warning restore SYSLIB0013
 
     /// <summary>
     /// JSONata <c>$decodeUrl</c> function.
@@ -5078,6 +5878,19 @@ public static class JsonataCodeGenHelpers
         if (input.IsNullOrUndefined())
         {
             return default;
+        }
+
+        if (input.ValueKind == JsonValueKind.String)
+        {
+            using UnescapedUtf8JsonString utf8 = input.GetUtf8String();
+            ReadOnlySpan<byte> source = utf8.Span;
+
+            if (BuiltInFunctions.HasInvalidPercentEncoding(source))
+            {
+                throw new JsonataException("D3140", SR.Format(SR.D3140_MalformedUrlPassedToDecodeUrl, input.GetString()!), 0);
+            }
+
+            return UnescapeDataStringToElement(source, workspace);
         }
 
         string str = FunctionalCompiler.CoerceElementToString(input);
@@ -5094,6 +5907,71 @@ public static class JsonataCodeGenHelpers
         catch (Exception ex) when (ex is UriFormatException or ArgumentException or FormatException)
         {
             throw new JsonataException("D3140", SR.Format(SR.D3140_MalformedUrlPassedToDecodeUrl, str), 0);
+        }
+    }
+
+    private static JsonElement EscapeDataStringToElement(ReadOnlySpan<byte> source, JsonWorkspace workspace)
+    {
+        int maxLen = source.Length * 3;
+        byte[]? rented = null;
+        Span<byte> dest = maxLen <= JsonConstants.StackallocByteThreshold
+            ? stackalloc byte[JsonConstants.StackallocByteThreshold]
+            : (rented = ArrayPool<byte>.Shared.Rent(maxLen));
+
+        try
+        {
+            Utf8Uri.TryEscapeDataString(source, dest, out int written);
+            return JsonataHelpers.StringFromUnescapedUtf8(dest.Slice(0, written), workspace);
+        }
+        finally
+        {
+            if (rented != null)
+            {
+                ArrayPool<byte>.Shared.Return(rented);
+            }
+        }
+    }
+
+    private static JsonElement UnescapeDataStringToElement(ReadOnlySpan<byte> source, JsonWorkspace workspace)
+    {
+        byte[]? rented = null;
+        Span<byte> dest = source.Length <= JsonConstants.StackallocByteThreshold
+            ? stackalloc byte[JsonConstants.StackallocByteThreshold]
+            : (rented = ArrayPool<byte>.Shared.Rent(source.Length));
+
+        try
+        {
+            Utf8Uri.TryUnescapeDataString(source, dest, out int written);
+            return JsonataHelpers.StringFromUnescapedUtf8(dest.Slice(0, written), workspace);
+        }
+        finally
+        {
+            if (rented != null)
+            {
+                ArrayPool<byte>.Shared.Return(rented);
+            }
+        }
+    }
+
+    private static JsonElement EscapeUriToElement(ReadOnlySpan<byte> source, JsonWorkspace workspace)
+    {
+        int maxLen = source.Length * 3;
+        byte[]? rented = null;
+        Span<byte> dest = maxLen <= JsonConstants.StackallocByteThreshold
+            ? stackalloc byte[JsonConstants.StackallocByteThreshold]
+            : (rented = ArrayPool<byte>.Shared.Rent(maxLen));
+
+        try
+        {
+            Utf8Uri.TryEscapeUri(source, dest, out int written);
+            return JsonataHelpers.StringFromUnescapedUtf8(dest.Slice(0, written), workspace);
+        }
+        finally
+        {
+            if (rented != null)
+            {
+                ArrayPool<byte>.Shared.Return(rented);
+            }
         }
     }
 
@@ -6279,6 +7157,84 @@ public static class JsonataCodeGenHelpers
         }
     }
 
+    /// <summary>
+    /// Default sort fused with chain navigation — collects elements into an
+    /// <see cref="ElementBuffer"/> instead of materializing an intermediate builder document.
+    /// </summary>
+    public static JsonElement SortDefaultChain(in JsonElement data, byte[][] names, JsonWorkspace workspace)
+    {
+        var buffer = default(ElementBuffer);
+        try
+        {
+            NavigatePropertyChainInto(data, names, ref buffer);
+            buffer.GetContents(out JsonElement[]? elements, out int count);
+
+            if (elements is null || count == 0)
+            {
+                return default;
+            }
+
+            if (count == 1)
+            {
+                // Single element — wrap in array
+                var singleDoc = JsonElement.CreateArrayBuilder(workspace, 1);
+                singleDoc.RootElement.AddItem(elements[0]);
+                return (JsonElement)singleDoc.RootElement;
+            }
+
+            // Check for objects/arrays — D3070
+            for (int i = 0; i < count; i++)
+            {
+                if (elements[i].ValueKind is JsonValueKind.Object or JsonValueKind.Array)
+                {
+                    throw new JsonataException("D3070", SR.D3070_SortSingleArgRequiresStringsOrNumbers, 0);
+                }
+            }
+
+            // Build index array for stable sort
+            int[] indices = ArrayPool<int>.Shared.Rent(count);
+            for (int i = 0; i < count; i++)
+            {
+                indices[i] = i;
+            }
+
+            try
+            {
+                Array.Sort(indices, 0, count, Comparer<int>.Create((a, b) =>
+                {
+                    JsonElement aEl = elements[a];
+                    JsonElement bEl = elements[b];
+
+                    if (aEl.ValueKind == JsonValueKind.Number && bEl.ValueKind == JsonValueKind.Number)
+                    {
+                        int cmp = aEl.GetDouble().CompareTo(bEl.GetDouble());
+                        return cmp != 0 ? cmp : a.CompareTo(b);
+                    }
+
+                    int strCmp = FunctionalCompiler.Utf8CompareOrdinal(aEl, bEl);
+                    return strCmp != 0 ? strCmp : a.CompareTo(b);
+                }));
+
+                var doc = JsonElement.CreateArrayBuilder(workspace, count);
+                JsonElement.Mutable root = doc.RootElement;
+                for (int i = 0; i < count; i++)
+                {
+                    root.AddItem(elements[indices[i]]);
+                }
+
+                return (JsonElement)root;
+            }
+            finally
+            {
+                ArrayPool<int>.Shared.Return(indices);
+            }
+        }
+        finally
+        {
+            buffer.Dispose();
+        }
+    }
+
     // ===== Phase 1g: Date/Time Formatting =====
 
     /// <summary>
@@ -6312,17 +7268,31 @@ public static class JsonataCodeGenHelpers
         {
             if (hasTz)
             {
-                return JsonataHelpers.StringFromString(
-                    BuiltInFunctions.FormatIso8601WithOffset(dt, offset), workspace);
+                return BuiltInFunctions.FormatIso8601WithOffset(dt, offset, workspace);
             }
 
-            return JsonataHelpers.StringFromString(
-                dt.ToString("yyyy-MM-ddTHH:mm:ss.fffZ", CultureInfo.InvariantCulture), workspace);
+            return BuiltInFunctions.FormatIso8601Utc(dt, workspace);
         }
 
-        string picture = FunctionalCompiler.CoerceElementToString(pictureElement);
-        string result = XPathDateTimeFormatter.FormatDateTime(dt, picture);
-        return JsonataHelpers.StringFromString(result, workspace);
+        if (pictureElement.ValueKind == JsonValueKind.String)
+        {
+            using UnescapedUtf8JsonString picUtf8 = pictureElement.GetUtf8String();
+            Utf8ValueStringBuilder sb = new(stackalloc byte[256]);
+            XPathDateTimeFormatter.FormatDateTime(dt, picUtf8.Span, ref sb);
+            JsonElement element = JsonataHelpers.StringFromUnescapedUtf8(sb.AsSpan(), workspace);
+            sb.Dispose();
+            return element;
+        }
+        else
+        {
+            string picture = FunctionalCompiler.CoerceElementToString(pictureElement);
+            byte[] pictureBytes = Encoding.UTF8.GetBytes(picture);
+            Utf8ValueStringBuilder sb = new(stackalloc byte[256]);
+            XPathDateTimeFormatter.FormatDateTime(dt, pictureBytes, ref sb);
+            JsonElement element = JsonataHelpers.StringFromUnescapedUtf8(sb.AsSpan(), workspace);
+            sb.Dispose();
+            return element;
+        }
     }
 
     /// <summary>
@@ -6348,19 +7318,29 @@ public static class JsonataCodeGenHelpers
             return result.IsUndefined ? default : result.FirstOrDefault;
         }
 
-        string strVal = FunctionalCompiler.CoerceElementToString(input);
-        string picture = FunctionalCompiler.CoerceElementToString(pictureElement);
-
-        try
+        if (input.ValueKind != JsonValueKind.String)
         {
-            if (XPathDateTimeFormatter.TryParseDateTime(strVal, picture, out long millis))
+            return default;
+        }
+
+        if (pictureElement.ValueKind == JsonValueKind.String)
+        {
+            using UnescapedUtf8JsonString picUtf8 = pictureElement.GetUtf8String();
+            using UnescapedUtf8JsonString utf8 = input.GetUtf8String();
+            if (XPathDateTimeFormatter.TryParseDateTime(utf8.Span, picUtf8.Span, out long millis))
             {
                 return JsonataHelpers.NumberFromDouble(millis, workspace);
             }
         }
-        catch (JsonataException)
+        else
         {
-            throw;
+            string pictureStr = FunctionalCompiler.CoerceElementToString(pictureElement);
+            byte[] pictureBytes = Encoding.UTF8.GetBytes(pictureStr);
+            using UnescapedUtf8JsonString utf8 = input.GetUtf8String();
+            if (XPathDateTimeFormatter.TryParseDateTime(utf8.Span, pictureBytes, out long millis))
+            {
+                return JsonataHelpers.NumberFromDouble(millis, workspace);
+            }
         }
 
         return default;
@@ -6474,14 +7454,10 @@ public static class JsonataCodeGenHelpers
         }
 
         long numLong = (long)Math.Round(num, MidpointRounding.ToEven);
-        bool negative = numLong < 0;
-        string result = BuiltInFunctions.ConvertToBase(Math.Abs(numLong), radixInt);
-        if (negative)
-        {
-            result = "-" + result;
-        }
 
-        return JsonataHelpers.StringFromString(result, workspace);
+        Span<byte> buffer = stackalloc byte[65];
+        int written = BuiltInFunctions.ConvertToBaseUtf8(numLong, radixInt, buffer);
+        return JsonataHelpers.StringFromUnescapedUtf8(buffer.Slice(0, written), workspace);
     }
 
     /// <summary>
@@ -6494,30 +7470,52 @@ public static class JsonataCodeGenHelpers
             return default;
         }
 
-        string picture = FunctionalCompiler.CoerceElementToString(pictureElement);
-        string result;
-
-        if (input.ValueKind == JsonValueKind.Number && input.TryGetInt64(out long longVal))
+        static JsonElement FormatWithPicture(in JsonElement input, ReadOnlySpan<byte> picture, JsonWorkspace workspace)
         {
-            result = XPathDateTimeFormatter.FormatInteger(longVal, picture);
-        }
-        else if (FunctionalCompiler.TryCoerceToNumber(input, out double numVal))
-        {
-            if (numVal >= long.MinValue && numVal <= long.MaxValue)
+            if (input.ValueKind == JsonValueKind.Number && input.TryGetInt64(out long longVal))
             {
-                result = XPathDateTimeFormatter.FormatInteger((long)numVal, picture);
+                Utf8ValueStringBuilder sb = new(stackalloc byte[64]);
+                XPathDateTimeFormatter.FormatInteger(longVal, picture, ref sb);
+                JsonElement element = JsonataHelpers.StringFromUnescapedUtf8(sb.AsSpan(), workspace);
+                sb.Dispose();
+                return element;
+            }
+            else if (FunctionalCompiler.TryCoerceToNumber(input, out double numVal))
+            {
+                if (numVal >= long.MinValue && numVal <= long.MaxValue)
+                {
+                    Utf8ValueStringBuilder sb = new(stackalloc byte[64]);
+                    XPathDateTimeFormatter.FormatInteger((long)numVal, picture, ref sb);
+                    JsonElement element = JsonataHelpers.StringFromUnescapedUtf8(sb.AsSpan(), workspace);
+                    sb.Dispose();
+                    return element;
+                }
+                else
+                {
+                    Utf8ValueStringBuilder sb = new(stackalloc byte[128]);
+                    XPathDateTimeFormatter.FormatInteger(numVal, picture, ref sb);
+                    JsonElement element = JsonataHelpers.StringFromUnescapedUtf8(sb.AsSpan(), workspace);
+                    sb.Dispose();
+                    return element;
+                }
             }
             else
             {
-                result = XPathDateTimeFormatter.FormatInteger(numVal, picture);
+                return default;
             }
+        }
+
+        if (pictureElement.ValueKind == JsonValueKind.String)
+        {
+            using UnescapedUtf8JsonString picUtf8 = pictureElement.GetUtf8String();
+            return FormatWithPicture(in input, picUtf8.Span, workspace);
         }
         else
         {
-            return default;
+            string s = FunctionalCompiler.CoerceElementToString(pictureElement);
+            byte[] pictureBytes = Encoding.UTF8.GetBytes(s);
+            return FormatWithPicture(in input, pictureBytes, workspace);
         }
-
-        return JsonataHelpers.StringFromString(result, workspace);
     }
 
     /// <summary>
@@ -6530,12 +7528,29 @@ public static class JsonataCodeGenHelpers
             return default;
         }
 
-        string str = FunctionalCompiler.CoerceElementToString(input);
-        string picture = FunctionalCompiler.CoerceElementToString(pictureElement);
-
-        if (XPathDateTimeFormatter.TryParseInteger(str, picture, out double dblValue))
+        if (input.ValueKind != JsonValueKind.String)
         {
-            return JsonataHelpers.NumberFromDouble(dblValue, workspace);
+            return default;
+        }
+
+        if (pictureElement.ValueKind == JsonValueKind.String)
+        {
+            using UnescapedUtf8JsonString picUtf8 = pictureElement.GetUtf8String();
+            using UnescapedUtf8JsonString utf8 = input.GetUtf8String();
+            if (XPathDateTimeFormatter.TryParseInteger(utf8.Span, picUtf8.Span, out double dblValue))
+            {
+                return JsonataHelpers.NumberFromDouble(dblValue, workspace);
+            }
+        }
+        else
+        {
+            string pictureStr = FunctionalCompiler.CoerceElementToString(pictureElement);
+            byte[] pictureBytes = Encoding.UTF8.GetBytes(pictureStr);
+            using UnescapedUtf8JsonString utf8 = input.GetUtf8String();
+            if (XPathDateTimeFormatter.TryParseInteger(utf8.Span, pictureBytes, out double dblValue))
+            {
+                return JsonataHelpers.NumberFromDouble(dblValue, workspace);
+            }
         }
 
         return default;
@@ -6606,70 +7621,6 @@ public static class JsonataCodeGenHelpers
         }
 
         return charIdx;
-    }
-
-    /// <summary>
-    /// JSONata <c>$sort</c> function — sorts array elements using a comparator.
-    /// </summary>
-    public static JsonElement Sort(
-        in JsonElement input,
-        Func<JsonElement, JsonElement, JsonWorkspace, bool> comparator,
-        JsonWorkspace workspace)
-    {
-        if (input.IsNullOrUndefined())
-        {
-            return default;
-        }
-
-        if (input.ValueKind != JsonValueKind.Array)
-        {
-            return input;
-        }
-
-        int count = input.GetArrayLength();
-        if (count <= 1)
-        {
-            return input;
-        }
-
-        // Collect elements into a rented array
-        JsonElement[] elements = ArrayPool<JsonElement>.Shared.Rent(count);
-        try
-        {
-            int idx = 0;
-            foreach (JsonElement item in input.EnumerateArray())
-            {
-                elements[idx++] = item;
-            }
-
-            // Stable insertion sort: comparator returns true if a should be placed AFTER b
-            for (int i = 1; i < count; i++)
-            {
-                JsonElement key = elements[i];
-                int j = i - 1;
-                while (j >= 0 && comparator(elements[j], key, workspace))
-                {
-                    elements[j + 1] = elements[j];
-                    j--;
-                }
-
-                elements[j + 1] = key;
-            }
-
-            // Build result array
-            var doc = JsonElement.CreateArrayBuilder(workspace, count);
-            JsonElement.Mutable root = doc.RootElement;
-            for (int i = 0; i < count; i++)
-            {
-                root.AddItem(elements[i]);
-            }
-
-            return (JsonElement)root;
-        }
-        finally
-        {
-            ArrayPool<JsonElement>.Shared.Return(elements, clearArray: true);
-        }
     }
 
     // ===== HOF Inline Helpers =====
@@ -7650,68 +8601,6 @@ public static class JsonataCodeGenHelpers
         return (JsonElement)root;
     }
 
-    // ===== Array Flattening =====
-
-    /// <summary>
-    /// Flattens one level of array nesting. Implements the JSONata <c>[]</c> flatten
-    /// operator when used as a path step: <c>expr.[]</c>.
-    /// For arrays of arrays, inner array elements are expanded into the outer array.
-    /// Non-array elements pass through unchanged.
-    /// </summary>
-    /// <param name="data">The input value.</param>
-    /// <param name="workspace">The workspace for intermediate allocations.</param>
-    /// <returns>The flattened result, or <c>default</c> if undefined.</returns>
-    public static JsonElement FlattenArray(in JsonElement data, JsonWorkspace workspace)
-    {
-        if (data.IsNullOrUndefined())
-        {
-            return default;
-        }
-
-        if (data.ValueKind != JsonValueKind.Array)
-        {
-            return data;
-        }
-
-        // Check if any element is an array — if not, return as-is
-        bool hasNestedArrays = false;
-        foreach (JsonElement item in data.EnumerateArray())
-        {
-            if (item.ValueKind == JsonValueKind.Array)
-            {
-                hasNestedArrays = true;
-                break;
-            }
-        }
-
-        if (!hasNestedArrays)
-        {
-            return data;
-        }
-
-        // Flatten one level: expand inner arrays into the result
-        int capacity = data.GetArrayLength();
-        var doc = JsonElement.CreateArrayBuilder(workspace, capacity * 2);
-        JsonElement.Mutable root = doc.RootElement;
-
-        foreach (JsonElement item in data.EnumerateArray())
-        {
-            if (item.ValueKind == JsonValueKind.Array)
-            {
-                foreach (JsonElement child in item.EnumerateArray())
-                {
-                    root.AddItem(child);
-                }
-            }
-            else
-            {
-                root.AddItem(item);
-            }
-        }
-
-        return (JsonElement)root;
-    }
-
     // ===== Fallback Evaluation =====
 
     /// <summary>
@@ -7736,49 +8625,6 @@ public static class JsonataCodeGenHelpers
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static JsonElement StringElement(string value, JsonWorkspace workspace) =>
         JsonataHelpers.StringFromString(value, workspace);
-
-    /// <summary>
-    /// Creates a JSON object from parallel arrays of keys and values.
-    /// </summary>
-    /// <param name="keys">The property names.</param>
-    /// <param name="values">The property values (undefined values are omitted).</param>
-    /// <param name="workspace">The workspace for intermediate allocations.</param>
-    /// <returns>A <see cref="JsonElement"/> of kind <see cref="JsonValueKind.Object"/>.</returns>
-    public static JsonElement CreateObject(string[] keys, JsonElement[] values, JsonWorkspace workspace)
-    {
-        var doc = JsonElement.CreateObjectBuilder(workspace, keys.Length);
-        JsonElement.Mutable root = doc.RootElement;
-        for (int i = 0; i < keys.Length; i++)
-        {
-            if (values[i].ValueKind != JsonValueKind.Undefined)
-            {
-                root.SetProperty(keys[i], values[i]);
-            }
-        }
-
-        return root.Clone();
-    }
-
-    /// <summary>
-    /// Creates a JSON array from an array of elements.
-    /// </summary>
-    /// <param name="elements">The array elements (undefined elements are omitted).</param>
-    /// <param name="workspace">The workspace for intermediate allocations.</param>
-    /// <returns>A <see cref="JsonElement"/> of kind <see cref="JsonValueKind.Array"/>.</returns>
-    public static JsonElement CreateArray(JsonElement[] elements, JsonWorkspace workspace)
-    {
-        var doc = JsonElement.CreateArrayBuilder(workspace, elements.Length);
-        JsonElement.Mutable root = doc.RootElement;
-        foreach (JsonElement el in elements)
-        {
-            if (el.ValueKind != JsonValueKind.Undefined)
-            {
-                root.AddItem(el);
-            }
-        }
-
-        return root.Clone();
-    }
 
     /// <summary>
     /// Creates a JSON array from elements, where some elements may need auto-flattening.
@@ -7823,83 +8669,6 @@ public static class JsonataCodeGenHelpers
         }
 
         return root.Clone();
-    }
-
-    /// <summary>
-    /// Collects results from an array element by applying the current property step
-    /// to each array item, then continuing the chain. All results are added to the
-    /// same <paramref name="root"/> builder — no nested builders are created.
-    /// </summary>
-    private static void CollectChainFlat(
-        in JsonElement array,
-        byte[][] names,
-        int stepIndex,
-        JsonElement.Mutable root,
-        ref int count)
-    {
-        byte[] name = names[stepIndex];
-        int nextStep = stepIndex + 1;
-        bool isLastStep = nextStep >= names.Length;
-
-        foreach (JsonElement item in array.EnumerateArray())
-        {
-            if (item.ValueKind == JsonValueKind.Object)
-            {
-                if (item.TryGetProperty((ReadOnlySpan<byte>)name, out var val))
-                {
-                    if (isLastStep)
-                    {
-                        count = AddResultWithFlatten(root, val, count);
-                    }
-                    else
-                    {
-                        ContinueChainFlat(val, names, nextStep, root, ref count);
-                    }
-                }
-            }
-            else if (item.ValueKind == JsonValueKind.Array)
-            {
-                // Nested array auto-flatten: apply same step to inner array
-                CollectChainFlat(item, names, stepIndex, root, ref count);
-            }
-        }
-    }
-
-    /// <summary>
-    /// Continues navigating remaining chain steps from a single value,
-    /// collecting all results into the shared <paramref name="root"/> builder.
-    /// </summary>
-    private static void ContinueChainFlat(
-        in JsonElement value,
-        byte[][] names,
-        int nextIndex,
-        JsonElement.Mutable root,
-        ref int count)
-    {
-        // Walk through object steps until we complete the chain or hit an array.
-        JsonElement current = value;
-
-        for (int i = nextIndex; i < names.Length; i++)
-        {
-            if (current.ValueKind == JsonValueKind.Object)
-            {
-                if (!current.TryGetProperty((ReadOnlySpan<byte>)names[i], out current))
-                {
-                    return;
-                }
-            }
-            else if (current.ValueKind == JsonValueKind.Array)
-            {
-                CollectChainFlat(current, names, i, root, ref count);
-                return;
-            }
-            else
-            {
-                return;
-            }
-        }
-
-        count = AddResultWithFlatten(root, current, count);
     }
 
     private static JsonElement NavigatePropertyOverArray(
@@ -8169,7 +8938,7 @@ public static class JsonataCodeGenHelpers
     /// Non-integer values use G15 formatting directly to UTF-8 (zero alloc on .NET 8+
     /// for the common non-exponent case; falls back to string allocation for exponent forms).
     /// </summary>
-    private static void AppendFormattedNumber(in JsonElement element, ref Utf8ValueStringBuilder sb)
+    internal static void AppendFormattedNumber(in JsonElement element, ref Utf8ValueStringBuilder sb)
     {
         double value = element.GetDouble();
         if (double.IsNaN(value) || double.IsInfinity(value))

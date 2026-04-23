@@ -174,7 +174,7 @@ public sealed class JsonLogicSourceGenerator : IIncrementalGenerator
 
         try
         {
-            string generated = JsonLogicCodeGenerator.Generate(ruleJson!, spec.TypeName, spec.NamespaceName, customOperators);
+            string generated = JsonLogicCodeGenerator.Generate(ruleJson!, spec.TypeName, spec.NamespaceName, customOperators, maxDepth: 512);
 
             // The code generator emits a static class; we need to transform it into
             // a partial type body. Replace the generated class wrapper with a partial

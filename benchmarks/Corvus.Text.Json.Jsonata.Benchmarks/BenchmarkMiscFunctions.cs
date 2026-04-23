@@ -45,6 +45,12 @@ public class BenchmarkMiscFunctions : JsonataBenchmarkBase
     private const string ExprSpread = """$spread(Account.Order[0].Product[0])""";
     private const string ExprLookup = """$lookup(Account.Order[0].Product[0], "Price")""";
 
+    private static readonly byte[] ExprSingleUtf8 = """$single(Account.Order[0].Product, function($v) { $v.Price > 30 })"""u8.ToArray();
+    private static readonly byte[] ExprPadUtf8 = """$pad(Account.Order[0].Product[0]."Product Name", 20)"""u8.ToArray();
+    private static readonly byte[] ExprSpreadUtf8 = """$spread(Account.Order[0].Product[0])"""u8.ToArray();
+    private static readonly byte[] ExprLookupUtf8 = """$lookup(Account.Order[0].Product[0], "Price")"""u8.ToArray();
+
+
     private JsonataEvaluator evaluator = null!;
     private ParsedJsonDocument<JsonElement>? doc;
     private JsonElement data;
@@ -70,10 +76,10 @@ public class BenchmarkMiscFunctions : JsonataBenchmarkBase
         this.workspace = JsonWorkspace.Create();
 
         // Warm up RT
-        this.evaluator.Evaluate(ExprSingle, this.data);
-        this.evaluator.Evaluate(ExprPad, this.data);
-        this.evaluator.Evaluate(ExprSpread, this.data);
-        this.evaluator.Evaluate(ExprLookup, this.data);
+        this.evaluator.Evaluate(ExprSingleUtf8, this.data, this.workspace, cacheKey: ExprSingle);
+        this.evaluator.Evaluate(ExprPadUtf8, this.data, this.workspace, cacheKey: ExprPad);
+        this.evaluator.Evaluate(ExprSpreadUtf8, this.data, this.workspace, cacheKey: ExprSpread);
+        this.evaluator.Evaluate(ExprLookupUtf8, this.data, this.workspace, cacheKey: ExprLookup);
 
         // Warm up CG
         SingleCodeGen.Evaluate(this.data, this.workspace); this.workspace.Reset();
@@ -108,7 +114,7 @@ public class BenchmarkMiscFunctions : JsonataBenchmarkBase
     public JsonElement Corvus_Single()
     {
         this.workspace.Reset();
-        return this.evaluator.Evaluate(ExprSingle, this.data, this.workspace);
+        return this.evaluator.Evaluate(ExprSingleUtf8, this.data, this.workspace, cacheKey: ExprSingle);
     }
 
 #if !NETFRAMEWORK
@@ -135,7 +141,7 @@ public class BenchmarkMiscFunctions : JsonataBenchmarkBase
     public JsonElement Corvus_Pad()
     {
         this.workspace.Reset();
-        return this.evaluator.Evaluate(ExprPad, this.data, this.workspace);
+        return this.evaluator.Evaluate(ExprPadUtf8, this.data, this.workspace, cacheKey: ExprPad);
     }
 
 #if !NETFRAMEWORK
@@ -162,7 +168,7 @@ public class BenchmarkMiscFunctions : JsonataBenchmarkBase
     public JsonElement Corvus_Spread()
     {
         this.workspace.Reset();
-        return this.evaluator.Evaluate(ExprSpread, this.data, this.workspace);
+        return this.evaluator.Evaluate(ExprSpreadUtf8, this.data, this.workspace, cacheKey: ExprSpread);
     }
 
 #if !NETFRAMEWORK
@@ -189,7 +195,7 @@ public class BenchmarkMiscFunctions : JsonataBenchmarkBase
     public JsonElement Corvus_Lookup()
     {
         this.workspace.Reset();
-        return this.evaluator.Evaluate(ExprLookup, this.data, this.workspace);
+        return this.evaluator.Evaluate(ExprLookupUtf8, this.data, this.workspace, cacheKey: ExprLookup);
     }
 
 #if !NETFRAMEWORK

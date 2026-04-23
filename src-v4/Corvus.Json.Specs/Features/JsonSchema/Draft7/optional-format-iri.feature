@@ -43,7 +43,7 @@ Scenario Outline: validation of IRIs
         # http://[2001:0db8:85a3:0000:0000:8a2e:0370:7334]
         | #/000/tests/010/data | true  | a valid IRI based on IPv6                                                        |
         # http://2001:0db8:85a3:0000:0000:8a2e:0370:7334
-        | #/000/tests/011/data | false | an invalid IRI based on IPv6                                                     |
+        | #/000/tests/011/data | false | an IPv6 address without enclosing brackets is invalid                            |
         # /abc
         | #/000/tests/012/data | false | an invalid relative IRI Reference                                                |
         # \\WINDOWS\filëßåré

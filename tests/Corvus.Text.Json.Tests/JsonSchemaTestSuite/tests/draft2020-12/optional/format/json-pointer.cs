@@ -281,6 +281,20 @@ public class SuiteValidationOfJsonPointersJsonStringRepresentation : IClassFixtu
         Assert.False(dynamicInstance.EvaluateSchema());
     }
 
+    [Fact]
+    public void TestValidJsonPointerUnicodeCharactersAllowedByRfc6901()
+    {
+        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"/foo/bar/😎\"");
+        Assert.True(dynamicInstance.EvaluateSchema());
+    }
+
+    [Fact]
+    public void TestValidJsonPointerControlCharactersAllowedAfterJsonUnescaping()
+    {
+        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"/foo\\u0000bar\\n\\tbaz\"");
+        Assert.True(dynamicInstance.EvaluateSchema());
+    }
+
     public class Fixture : IAsyncLifetime
     {
         public DynamicJsonType DynamicJsonType { get; private set; }

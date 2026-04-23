@@ -76,39 +76,41 @@ Scenario Outline: validation of time strings
         | #/000/tests/026/data | true  | a valid time string with plus offset                                             |
         # 08:30:06-08:00
         | #/000/tests/027/data | true  | a valid time string with minus offset                                            |
+        # 12:34:56-00:00
+        | #/000/tests/028/data | true  | time with unknown local offset is valid                                          |
         # 08:30:06-8:000
-        | #/000/tests/028/data | false | hour, minute in time-offset must be two digits                                   |
+        | #/000/tests/029/data | false | hour, minute in time-offset must be two digits                                   |
         # 08:30:06z
-        | #/000/tests/029/data | true  | a valid time string with case-insensitive Z                                      |
+        | #/000/tests/030/data | true  | a valid time string with case-insensitive Z                                      |
         # 24:00:00Z
-        | #/000/tests/030/data | false | an invalid time string with invalid hour                                         |
+        | #/000/tests/031/data | false | an invalid time string with invalid hour                                         |
         # 00:60:00Z
-        | #/000/tests/031/data | false | an invalid time string with invalid minute                                       |
+        | #/000/tests/032/data | false | an invalid time string with invalid minute                                       |
         # 00:00:61Z
-        | #/000/tests/032/data | false | an invalid time string with invalid second                                       |
+        | #/000/tests/033/data | false | an invalid time string with invalid second                                       |
         # 22:59:60Z
-        | #/000/tests/033/data | false | an invalid time string with invalid leap second (wrong hour)                     |
+        | #/000/tests/034/data | false | an invalid time string with invalid leap second (wrong hour)                     |
         # 23:58:60Z
-        | #/000/tests/034/data | false | an invalid time string with invalid leap second (wrong minute)                   |
+        | #/000/tests/035/data | false | an invalid time string with invalid leap second (wrong minute)                   |
         # 01:02:03+24:00
-        | #/000/tests/035/data | false | an invalid time string with invalid time numoffset hour                          |
+        | #/000/tests/036/data | false | an invalid time string with invalid time numoffset hour                          |
         # 01:02:03+00:60
-        | #/000/tests/036/data | false | an invalid time string with invalid time numoffset minute                        |
+        | #/000/tests/037/data | false | an invalid time string with invalid time numoffset minute                        |
         # 01:02:03Z+00:30
-        | #/000/tests/037/data | false | an invalid time string with invalid time with both Z and numoffset               |
+        | #/000/tests/038/data | false | an invalid time string with invalid time with both Z and numoffset               |
         # 08:30:06 PST
-        | #/000/tests/038/data | false | an invalid offset indicator                                                      |
+        | #/000/tests/039/data | false | an invalid offset indicator                                                      |
         # 01:01:01,1111
-        | #/000/tests/039/data | false | only RFC3339 not all of ISO 8601 are valid                                       |
+        | #/000/tests/040/data | false | only RFC3339 not all of ISO 8601 are valid                                       |
         # 12:00:00
-        | #/000/tests/040/data | false | no time offset                                                                   |
+        | #/000/tests/041/data | false | no time offset                                                                   |
         # 12:00:00.52
-        | #/000/tests/041/data | false | no time offset with second fraction                                              |
+        | #/000/tests/042/data | false | no time offset with second fraction                                              |
         # 1২:00:00Z
-        | #/000/tests/042/data | false | invalid non-ASCII '২' (a Bengali 2)                                              |
+        | #/000/tests/043/data | false | invalid non-ASCII '২' (a Bengali 2)                                              |
         # 08:30:06#00:20
-        | #/000/tests/043/data | false | offset not starting with plus or minus                                           |
+        | #/000/tests/044/data | false | offset not starting with plus or minus                                           |
         # ab:cd:ef
-        | #/000/tests/044/data | false | contains letters                                                                 |
+        | #/000/tests/045/data | false | contains letters                                                                 |
         # 2020-11-28T23:55:45Z
-        | #/000/tests/045/data | false | an invalid time string in date-time format                                       |
+        | #/000/tests/046/data | false | an invalid time string in date-time format                                       |

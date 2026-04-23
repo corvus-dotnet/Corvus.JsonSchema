@@ -3,6 +3,7 @@
 // </copyright>
 
 using System.Collections.Concurrent;
+using Corvus.Text.Json.Internal;
 
 namespace Corvus.Text.Json.JsonLogic;
 
@@ -26,7 +27,7 @@ public sealed class JsonLogicEvaluator
     private readonly ConcurrentDictionary<string, RuleEvaluator> cache = new();
     private readonly IReadOnlyDictionary<string, IOperatorCompiler>? customOperators;
     private RuleEvaluator? _lastCompiled;
-    private JsonElement _lastRule;
+    private (IJsonDocument? document, int index) _lastRuleIdentity;
 
     private JsonLogicEvaluator()
     {
@@ -131,20 +132,14 @@ public sealed class JsonLogicEvaluator
     private RuleEvaluator GetOrCompile(in JsonLogicRule rule)
     {
         // Fast path: same rule element as last call (zero allocation).
-        // The cached element may outlive the document that owned it,
-        // so guard against ObjectDisposedException.
+        // We compare by document identity + index rather than deep structural
+        // equality, which is O(1) instead of O(n) in tree depth.
         if (_lastCompiled is not null)
         {
-            try
+            var (doc, idx) = JsonElementHelpers.GetParentDocumentAndIndex(rule.Rule);
+            if (ReferenceEquals(doc, _lastRuleIdentity.document) && idx == _lastRuleIdentity.index)
             {
-                if (rule.Rule.Equals(_lastRule))
-                {
-                    return _lastCompiled;
-                }
-            }
-            catch (ObjectDisposedException)
-            {
-                _lastCompiled = null;
+                return _lastCompiled;
             }
         }
 
@@ -152,14 +147,14 @@ public sealed class JsonLogicEvaluator
 
         if (this.cache.TryGetValue(key, out RuleEvaluator? existing))
         {
-            _lastRule = rule.Rule;
+            _lastRuleIdentity = JsonElementHelpers.GetParentDocumentAndIndex(rule.Rule);
             _lastCompiled = existing;
             return existing;
         }
 
         RuleEvaluator compiled = FunctionalEvaluator.Compile(rule.Rule, this.customOperators);
         this.cache.TryAdd(key, compiled);
-        _lastRule = rule.Rule;
+        _lastRuleIdentity = JsonElementHelpers.GetParentDocumentAndIndex(rule.Rule);
         _lastCompiled = compiled;
         return compiled;
     }

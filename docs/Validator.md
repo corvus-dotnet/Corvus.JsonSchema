@@ -219,7 +219,7 @@ Under the hood, the Validator uses the same code generation engine as the source
 
 1. **Parse** the JSON Schema document
 2. **Resolve** all `$ref` references using registered document resolvers
-3. **Generate** C# source code for strongly-typed validators (identical output to `generatejsonschematypes`)
+3. **Generate** C# source code for strongly-typed validators (identical output to the `corvusjson` CLI tool)
 4. **Compile** the generated code using Roslyn (`Microsoft.CodeAnalysis.CSharp`) into an in-memory assembly
 5. **Load** the compiled assembly and create a validation pipeline
 6. **Cache** the pipeline for subsequent validations against the same schema

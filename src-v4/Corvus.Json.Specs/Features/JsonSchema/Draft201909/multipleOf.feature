@@ -50,8 +50,10 @@ Scenario Outline: by number
         | #/001/tests/000/data | true  | zero is multiple of anything                                                     |
         # 4.5
         | #/001/tests/001/data | true  | 4.5 is multiple of 1.5                                                           |
+        # -4.5
+        | #/001/tests/002/data | true  | -4.5 is multiple of 1.5                                                          |
         # 35
-        | #/001/tests/002/data | false | 35 is not multiple of 1.5                                                        |
+        | #/001/tests/003/data | false | 35 is not multiple of 1.5                                                        |
 
 Scenario Outline: by small number
 /* Schema: 

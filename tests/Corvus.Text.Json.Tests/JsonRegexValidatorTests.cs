@@ -936,7 +936,7 @@ public partial class JsonRegexValidatorTests
     [InlineData(@"\uD87E\uDC94aaa(?Pabc", JsonRegexOptions.None, false)]
     [InlineData(@"\uD87E\uDC94\uD87E\uDC94\uD87E\uDC94(?Pabc", JsonRegexOptions.None, false)]
 #endif
-    public void Validate_Validates(string pattern, JsonRegexOptions options, bool expected)
+    internal void Validate_Validates(string pattern, JsonRegexOptions options, bool expected)
     {
         bool actual = JsonRegexValidator.Validate(pattern, options);
 

@@ -19,7 +19,7 @@ In JSON Schema Draft 2020-12, the `format` keyword is an *annotation* by default
 If you need the standard annotation-only behaviour, you can disable format assertion via code generation options:
 
 - **Source Generator:** set `<CorvusTextJsonAlwaysAssertFormat>false</CorvusTextJsonAlwaysAssertFormat>` in the `.csproj` file.
-- **CLI tool (`generatejsonschematypes`):** pass the `--assertFormat false` flag
+- **CLI tool (`corvusjson`):** pass the `--assertFormat false` flag (e.g., `corvusjson jsonschema schema.json --assertFormat false`)
 
 ## Format Mapping
 

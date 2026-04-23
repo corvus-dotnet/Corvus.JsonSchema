@@ -276,7 +276,7 @@ public class SuiteUnevaluatedPropertiesWithAdjacentBoolAdditionalProperties : IC
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests\\draft2020-12\\unevaluatedProperties.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"additionalProperties\": true,\r\n            \"unevaluatedProperties\": false\r\n        }",
+                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"type\": \"object\",\r\n            \"properties\": {\r\n                \"foo\": { \"type\": \"string\" }\r\n            },\r\n            \"additionalProperties\": true,\r\n            \"unevaluatedProperties\": false\r\n        }",
                 "JsonSchemaTestSuite.Draft202012.UnevaluatedProperties",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",
@@ -299,17 +299,17 @@ public class SuiteUnevaluatedPropertiesWithAdjacentNonBoolAdditionalProperties :
     }
 
     [Fact]
-    public void TestWithOnlyValidAdditionalProperties()
+    public void TestWithNoAdditionalProperties()
     {
         var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("{\r\n                    \"foo\": \"foo\"\r\n                }");
         Assert.True(dynamicInstance.EvaluateSchema());
     }
 
     [Fact]
-    public void TestWithInvalidAdditionalProperties()
+    public void TestWithAdditionalProperties()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("{\r\n                    \"foo\": \"foo\",\r\n                    \"bar\": 1\r\n                }");
-        Assert.False(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("{\r\n                    \"foo\": \"foo\",\r\n                    \"bar\": \"bar\"\r\n                }");
+        Assert.True(dynamicInstance.EvaluateSchema());
     }
 
     public class Fixture : IAsyncLifetime
@@ -322,7 +322,7 @@ public class SuiteUnevaluatedPropertiesWithAdjacentNonBoolAdditionalProperties :
         {
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests\\draft2020-12\\unevaluatedProperties.json",
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"additionalProperties\": { \"type\": \"string\" },\r\n            \"unevaluatedProperties\": false\r\n        }",
+                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"type\": \"object\",\r\n            \"properties\": {\r\n                \"foo\": { \"type\": \"string\" }\r\n            },\r\n            \"additionalProperties\": {\"type\": \"string\"},\r\n            \"unevaluatedProperties\": false\r\n        }",
                 "JsonSchemaTestSuite.Draft202012.UnevaluatedProperties",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2020-12/schema",

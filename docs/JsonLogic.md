@@ -6,15 +6,71 @@
 
 [JsonLogic](https://jsonlogic.com/) is a standard for expressing business rules as JSON. Rules are portable, storable in databases, and safely evaluated without allowing arbitrary code execution. The Corvus implementation passes the full [official test suite](https://jsonlogic.com/tests.json) and adds support for extended numeric types (`BigNumber`) via custom operators.
 
+> **Choosing between JsonLogic and JSONata:** JsonLogic is ideal for **declarative business rules** — branching logic, predicates, and simple calculations expressed as JSON. If you need to **query, reshape, or transform** JSON data (path navigation, filtering, object construction), see [JSONata](Jsonata.md) instead.
+
+> **Try it now:** The [JSON Logic Playground](/playground-jsonlogic/) lets you build rules visually and evaluate them against live data — no setup required.
+
 Three evaluation modes are available:
 
 | Mode | When to use | Package |
 |------|-------------|---------|
 | **Interpreted** | Rules are dynamic, determined at runtime | `Corvus.Text.Json.JsonLogic` |
 | **Source generator** | Rules are known at build time, embedded in your project | `Corvus.Text.Json.JsonLogic.SourceGenerator` |
-| **CLI code generation** | Rules are known ahead of time, generated outside the build | `Corvus.Json.CodeGenerator` (the `jsonlogic` command) |
+| **CLI code generation** | Rules are known ahead of time, generated outside the build | `Corvus.Json.Cli` (the `jsonlogic` command) |
 
-The source generator and CLI tool produce optimized static C# that eliminates delegate dispatch and can constant-fold literal expressions. Benchmarks show generated code is **60–95% faster** than interpreted evaluation and **60–95% faster** than JsonEverything.
+The source generator and CLI tool produce optimized static C# that eliminates delegate dispatch and can constant-fold literal expressions. Benchmarks show generated code is typically **70–98% faster** than JsonEverything across 19 scenarios, with zero or near-zero allocations (see [benchmark summary](#benchmark-summary)).
+
+**Requirements:** The runtime packages target `net9.0`, `net10.0`, `netstandard2.0`, and `netstandard2.1`. The source generator is an analyzer package and does not impose additional runtime requirements.
+
+## Quick start
+
+Install the packages:
+
+```bash
+dotnet add package Corvus.Text.Json
+dotnet add package Corvus.Text.Json.JsonLogic
+```
+
+**Simplest approach — string in, string out:**
+
+```csharp
+using Corvus.Text.Json.JsonLogic;
+
+string? result = JsonLogicEvaluator.Default.EvaluateToString(
+    """{"+":[{"var":"a"},{"var":"b"}]}""",
+    """{"a":3,"b":4}""");
+
+Console.WriteLine(result); // "7"
+```
+
+`EvaluateToString` parses the rule and data, evaluates the rule, and returns the result as a JSON string. It is the simplest way to get started — no document parsing, workspace management, or disposal needed.
+
+**Full API — zero-allocation evaluation:**
+
+```csharp
+using Corvus.Text.Json;
+using Corvus.Text.Json.JsonLogic;
+
+// Parse the rule and data (using statements ensure pooled memory is returned)
+using var ruleDoc = ParsedJsonDocument<JsonElement>.Parse(
+    """{"+":[{"var":"a"},{"var":"b"}]}"""u8);
+using var dataDoc = ParsedJsonDocument<JsonElement>.Parse(
+    """{"a":3,"b":4}"""u8);
+
+// Create a workspace for zero-allocation evaluation
+using JsonWorkspace workspace = JsonWorkspace.Create();
+
+// Evaluate
+JsonLogicRule rule = new(ruleDoc.RootElement);
+JsonElement result = JsonLogicEvaluator.Default.Evaluate(
+    rule, dataDoc.RootElement, workspace);
+
+Console.WriteLine(result.GetRawText()); // "7"
+```
+
+The evaluator compiles the rule into a delegate tree on first use and caches it. Subsequent evaluations of the same rule skip compilation entirely. Create one `JsonLogicEvaluator` instance and reuse it — `JsonLogicEvaluator.Default` provides a shared static instance.
+
+The workspace provides pooled memory for the result — **zero GC allocation** per evaluation for most rules. The result remains valid until the workspace is disposed or reset.
 
 ## Installation
 
@@ -38,12 +94,14 @@ The source generator package is a development dependency — it runs at build ti
 ### CLI tool
 
 ```bash
-dotnet tool install --global Corvus.Json.CodeGenerator
+dotnet tool install --global Corvus.Json.Cli
 ```
 
-The `generatejsonschematypes` tool includes a `jsonlogic` subcommand. See [CLI code generation](#cli-code-generation) below.
+The `corvusjson` tool includes a `jsonlogic` subcommand. See [CLI code generation](#cli-code-generation) below.
 
 ## Interpreted evaluation
+
+### Basic evaluation
 
 Parse a rule, wrap it in a `JsonLogicRule`, and evaluate it against data:
 
@@ -53,9 +111,9 @@ using Corvus.Text.Json.JsonLogic;
 
 // Parse the rule and data
 using var ruleDoc = ParsedJsonDocument<JsonElement>.Parse(
-    """{"+":[{"var":"a"},{"var":"b"}]}""");
+    """{"+":[{"var":"a"},{"var":"b"}]}"""u8);
 using var dataDoc = ParsedJsonDocument<JsonElement>.Parse(
-    """{"a":3,"b":4}""");
+    """{"a":3,"b":4}"""u8);
 
 // Evaluate
 JsonLogicRule rule = new(ruleDoc.RootElement);
@@ -65,7 +123,7 @@ JsonElement result = JsonLogicEvaluator.Default.Evaluate(rule, dataDoc.RootEleme
 Console.WriteLine(result.GetRawText()); // "7"
 ```
 
-The evaluator compiles the rule into a delegate tree on first use and caches it. Subsequent evaluations of the same rule skip compilation entirely.
+When you omit the workspace, the evaluator creates one internally and returns a cloned, self-contained result.
 
 ### Caller-managed workspace
 
@@ -78,9 +136,7 @@ JsonElement result = JsonLogicEvaluator.Default.Evaluate(
     rule, dataDoc.RootElement, workspace);
 ```
 
-When you provide a workspace, the result element is backed by the workspace's memory. It remains valid until the workspace is disposed.
-
-When you omit the workspace, the evaluator creates one internally and returns a cloned, self-contained result.
+When you provide a workspace, the result element is backed by the workspace's memory. It remains valid until the workspace is disposed or reset.
 
 ## Source generator
 
@@ -143,10 +199,10 @@ The generated `Evaluate` method is a static method that directly evaluates the r
 
 ## CLI code generation
 
-The `generatejsonschematypes` CLI tool includes a `jsonlogic` subcommand for ahead-of-time code generation:
+The `corvusjson` CLI tool includes a `jsonlogic` subcommand for ahead-of-time code generation:
 
 ```bash
-generatejsonschematypes jsonlogic <ruleFile> \
+corvusjson jsonlogic <ruleFile> \
     --className <ClassName> \
     --namespace <Namespace> \
     [--outputPath <output.cs>]
@@ -162,7 +218,7 @@ generatejsonschematypes jsonlogic <ruleFile> \
 Example:
 
 ```bash
-generatejsonschematypes jsonlogic rules/pricing.json \
+corvusjson jsonlogic rules/pricing.json \
     --className PricingRule \
     --namespace MyApp.Rules \
     --outputPath Generated/PricingRule.cs
@@ -556,7 +612,7 @@ All custom operators from all `.jlops` files are available to all `[JsonLogicRul
 Pass the `--operators` flag pointing to a `.jlops` file:
 
 ```bash
-generatejsonschematypes jsonlogic rules/pricing.json \
+corvusjson jsonlogic rules/pricing.json \
     --className PricingRule \
     --namespace MyApp.Rules \
     --operators operators/custom-ops.jlops
@@ -579,18 +635,104 @@ The code generator validates that each use of a custom operator passes the exact
 - **With workspace**: Results are allocated from the workspace. No heap allocations on the hot path. The caller is responsible for disposing the workspace.
 - **Without workspace**: The evaluator creates a temporary workspace internally and clones the result before disposing it.
 
-For best performance in tight loops or request-processing pipelines, reuse a workspace:
+For best performance in tight loops or request-processing pipelines, reuse a workspace and call `Reset()` between iterations:
 
 ```csharp
 using JsonWorkspace workspace = JsonWorkspace.Create();
 
 foreach (var request in requests)
 {
+    workspace.Reset();
     using var dataDoc = ParsedJsonDocument<JsonElement>.Parse(request.Json);
     JsonElement result = JsonLogicEvaluator.Default.Evaluate(
         rule, dataDoc.RootElement, workspace);
     ProcessResult(result);
 }
+```
+
+This pattern achieves **zero GC allocation** per evaluation for most rules. The workspace pools memory internally via `ArrayPool<byte>` and reuses it across evaluations.
+
+**Clearing the expression cache:**
+
+The evaluator caches compiled delegate trees per rule. If your application dynamically generates many unique rules over time, the cache can grow unbounded. Use `ClearCache()` to release all cached compilations:
+
+```csharp
+var evaluator = new JsonLogicEvaluator();
+// ... many evaluations with unique rules ...
+
+evaluator.ClearCache(); // releases all cached delegate trees
+```
+
+## Common pitfalls
+
+### Always dispose `ParsedJsonDocument`
+
+`ParsedJsonDocument<T>` rents memory from `ArrayPool<byte>`. Forgetting to dispose it leaks pooled memory:
+
+```csharp
+// ❌ BAD — leaks pooled memory
+var doc = ParsedJsonDocument<JsonElement>.Parse(json);
+var result = evaluator.Evaluate(rule, doc.RootElement);
+
+// ✅ GOOD — using statement returns memory to the pool
+using var doc = ParsedJsonDocument<JsonElement>.Parse(json);
+var result = evaluator.Evaluate(rule, doc.RootElement);
+```
+
+### Reset the workspace in loops
+
+Without `Reset()`, workspace memory grows with each evaluation. The workspace remains valid, but old results consume pooled memory unnecessarily:
+
+```csharp
+// ❌ BAD — workspace grows unboundedly
+foreach (var item in items)
+{
+    var result = evaluator.Evaluate(rule, item, workspace);
+    ProcessResult(result);
+}
+
+// ✅ GOOD — reset frees previous results
+foreach (var item in items)
+{
+    workspace.Reset();
+    var result = evaluator.Evaluate(rule, item, workspace);
+    ProcessResult(result);
+}
+```
+
+### Don't forget `AdditionalFiles` for the source generator
+
+The source generator reads rule files from `AdditionalFiles`. Without the MSBuild item, the generator can't find the rule and produces diagnostic `JLSG001`:
+
+```xml
+<!-- ❌ Missing — generator produces JLSG001 -->
+<ItemGroup>
+  <None Include="Rules\discount.json" />
+</ItemGroup>
+
+<!-- ✅ Correct -->
+<ItemGroup>
+  <AdditionalFiles Include="Rules\discount.json" />
+</ItemGroup>
+```
+
+### Result lifetime is tied to the workspace
+
+When you pass a workspace, the returned `JsonElement` is backed by that workspace's memory. Using the result after the workspace is disposed or reset produces undefined behavior:
+
+```csharp
+// ❌ BAD — result is invalid after workspace disposal
+JsonElement result;
+using (JsonWorkspace workspace = JsonWorkspace.Create())
+{
+    result = evaluator.Evaluate(rule, data, workspace);
+}
+Console.WriteLine(result.GetRawText()); // undefined behavior
+
+// ✅ GOOD — use result before workspace is disposed
+using JsonWorkspace workspace = JsonWorkspace.Create();
+JsonElement result = evaluator.Evaluate(rule, data, workspace);
+Console.WriteLine(result.GetRawText()); // safe
 ```
 
 ## Comparison with other libraries
@@ -610,18 +752,61 @@ The Corvus JsonLogic implementation is designed for high-throughput scenarios wh
 
 ### Benchmark summary
 
-Measured on .NET 10.0 (13th Gen Intel Core i7-13800H) across 9 representative scenarios:
+Measured on .NET 10.0 (13th Gen Intel Core i7-13800H) across 19 scenarios. **RT** = Corvus runtime (interpreted), **CG** = Corvus code-gen (source generator), **JE** = JsonEverything. Ratios < 1 mean faster than JE; lower is better.
 
-| Scenario | Corvus (interpreted) | Corvus (code-gen) | JsonEverything | Corvus alloc | JE alloc |
-|----------|---------------------|-------------------|----------------|-------------|----------|
-| Simple var access | 115 ns | 62 ns | 189 ns | 0 B | 248 B |
-| Arithmetic | 870 ns | 269 ns | 970 ns | 0 B | 656 B |
-| Comparison | 571 ns | 75 ns | 629 ns | 0 B | 512 B |
-| String concatenation | 499 ns | 205 ns | 560 ns | 0 B | 728 B |
-| Logic short-circuit | 1,493 ns | 292 ns | 1,666 ns | 0 B | 1,304 B |
-| Missing data | 1,909 ns | 803 ns | 2,183 ns | 120 B | 2,184 B |
-| Complex rule | 2,939 ns | 481 ns | 2,296 ns | 0 B | 2,040 B |
-| Array filter | 2,390 ns | 1,873 ns | 5,189 ns | 120 B | 4,032 B |
-| Array map/reduce | 2,616 ns | 725 ns | 14,124 ns | 0 B | 12,856 B |
+#### Time comparison
 
-Code-generated evaluators are **60–95% faster** than JsonEverything across all scenarios, with **zero or near-zero allocations**. The interpreted evaluator is comparable to or faster than JsonEverything in most scenarios, with consistently lower memory usage. JsonEverything allocates 248 B–12,856 B per evaluation, while both Corvus modes allocate 0 B in 7 of 9 scenarios (the two that allocate 120 B involve array construction in `missing` and `filter` results).
+| Scenario | JE (ns) | RT (ns) | CG (ns) | RT/JE | CG/JE |
+|---|---:|---:|---:|---:|---:|
+| Simple var | 64 | 18 | 16 | 0.29 | 0.25 |
+| Comparison | 223 | 65 | 34 | 0.29 | 0.15 |
+| Arithmetic | 332 | 113 | 98 | 0.34 | 0.30 |
+| String cat | 244 | 129 | 115 | 0.53 | 0.47 |
+| Substr | 305 | 94 | 93 | 0.31 | 0.30 |
+| Min/max | 48 | 668 | 405 | **14.0** | **8.5** |
+| In (array) | 457 | 115 | 106 | 0.25 | 0.23 |
+| Logic short-circuit | 620 | 306 | 226 | 0.49 | 0.36 |
+| Quantifier (all) | 1,179 | 227 | 190 | 0.19 | 0.16 |
+| Complex rule | 828 | 219 | 160 | 0.26 | 0.19 |
+| Deep nested | 4,936 | 110 | 103 | 0.02 | 0.02 |
+| Missing data | 1,361 | 218 | 184 | 0.16 | 0.14 |
+| Merge (constant) | 1,725 | 390 | 12 | 0.23 | **0.007** |
+| Merge (mixed) | 1,604 | 462 | 509 | 0.29 | 0.32 |
+| Reduce (strings) | 2,640 | 2,058 | 2,811 | 0.78 | 1.06 |
+| Array filter | 1,839 | 758 | 386 | 0.41 | 0.21 |
+| Object filter | 2,359 | 644 | 543 | 0.27 | 0.23 |
+| Map (strings) | 1,726 | 735 | 710 | 0.43 | 0.41 |
+| Array map/reduce | 5,227 | 563 | 278 | 0.11 | 0.05 |
+
+#### Memory comparison
+
+| Scenario | JE (B) | RT (B) | CG (B) |
+|---|---:|---:|---:|
+| Simple var | 248 | 0 | 0 |
+| Comparison | 512 | 0 | 0 |
+| Arithmetic | 656 | 0 | 0 |
+| String cat | 728 | 0 | 0 |
+| Substr | 560 | 0 | 0 |
+| Min/max | 136 | 0 | 0 |
+| In (array) | 1,472 | 0 | 0 |
+| Logic short-circuit | 1,304 | 0 | 0 |
+| Quantifier (all) | 2,776 | 0 | 0 |
+| Complex rule | 2,040 | 0 | 0 |
+| Deep nested | 10,120 | 0 | 0 |
+| Missing data | 2,184 | 0 | 0 |
+| Merge (constant) | 4,376 | 120 | 0 |
+| Merge (mixed) | 3,800 | 120 | 120 |
+| Reduce (strings) | 9,368 | 120 | 120 |
+| Array filter | 4,032 | 120 | 120 |
+| Object filter | 6,280 | 120 | 120 |
+| Map (strings) | 2,912 | 120 | 120 |
+| Array map/reduce | 12,856 | 0 | 0 |
+
+#### Summary
+
+- **RT is faster than JE in 18/19 scenarios** (0.02×–0.78× JE), with a geometric mean of **0.22× JE** across those 18.
+- **CG is faster than JE in 17/19 scenarios** (0.007×–0.47× JE), with a geometric mean of **0.16× JE** across those 17.
+- **Min/max** is the notable outlier where JE is faster: JE's `JsonNode` stores pre-parsed `double` values, while Corvus's `JsonElement` re-parses UTF-8 bytes to `double` on each call. Both RT and CG still allocate 0 B vs JE's 136 B.
+- **Reduce (strings)** is at parity for CG (1.06× JE); RT is faster at 0.78×.
+- **Memory**: RT allocates 0 B in 13/19 scenarios, CG in 14/19. The remaining scenarios allocate exactly 120 B (a single `ElementBuffer` array). JE allocates 136–12,856 B in every scenario.
+- **Merge (constant)** showcases compile-time constant folding: CG evaluates at 12 ns (0.007× JE) by pre-computing the entire merged array as a static field.

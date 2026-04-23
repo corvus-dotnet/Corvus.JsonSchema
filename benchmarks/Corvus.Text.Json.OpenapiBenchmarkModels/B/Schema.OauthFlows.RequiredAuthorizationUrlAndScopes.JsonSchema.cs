@@ -65,14 +65,14 @@ public readonly partial struct Schema
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext =
-                        Corvus.OpenapiBenchmark.Baseline.JsonUri.JsonSchema.PushChildContextUnescaped(
+                        Corvus.OpenapiBenchmark.Baseline.JsonUriNotAsserted.JsonSchema.PushChildContextUnescaped(
                             parentDocument,
                             parentDocumentIndex,
                             ref context,
                             JsonPropertyNames.AuthorizationUrlUtf8,
                             evaluationPath: AuthorizationUrlSchemaEvaluationPath);
 
-                    Corvus.OpenapiBenchmark.Baseline.JsonUri.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext);
+                    Corvus.OpenapiBenchmark.Baseline.JsonUriNotAsserted.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext);
                     context.CommitChildContext(childContext.IsMatch, ref childContext);
 
                     if (!context.HasCollector && !context.IsMatch)
@@ -87,14 +87,14 @@ public readonly partial struct Schema
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext1 =
-                        Corvus.OpenapiBenchmark.Baseline.JsonUri.JsonSchema.PushChildContextUnescaped(
+                        Corvus.OpenapiBenchmark.Baseline.JsonUriNotAsserted.JsonSchema.PushChildContextUnescaped(
                             parentDocument,
                             parentDocumentIndex,
                             ref context,
                             JsonPropertyNames.RefreshUrlUtf8,
                             evaluationPath: RefreshUrlSchemaEvaluationPath);
 
-                    Corvus.OpenapiBenchmark.Baseline.JsonUri.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext1);
+                    Corvus.OpenapiBenchmark.Baseline.JsonUriNotAsserted.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext1);
                     context.CommitChildContext(childContext1.IsMatch, ref childContext1);
                 }
 

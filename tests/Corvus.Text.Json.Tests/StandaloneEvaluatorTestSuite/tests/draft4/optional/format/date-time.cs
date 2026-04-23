@@ -86,6 +86,27 @@ public class SuiteValidationOfDateTimeStrings : IClassFixture<SuiteValidationOfD
     }
 
     [Fact]
+    public void TestAnInvalidHourInDateTimeString()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"1990-12-31T24:00:00Z\"");
+        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [Fact]
+    public void TestAnInvalidMinuteInDateTimeString()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"1990-12-31T15:60:00Z\"");
+        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [Fact]
+    public void TestAnInvalidOffsetMinuteInDateTimeString()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"1990-12-31T10:00:00+10:60\"");
+        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [Fact]
     public void TestAnInvalidDayInDateTimeString()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"1990-02-31T15:59:59.123-08:00\"");

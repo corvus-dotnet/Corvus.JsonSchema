@@ -4,7 +4,7 @@
 // <licensing>
 // Derived from code licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licensed this code under the MIT license.
-// https:// github.com/dotnet/runtime/blob/388a7c4814cb0d6e344621d017507b357902043a/LICENSE.TXT
+// https://github.com/dotnet/runtime/blob/388a7c4814cb0d6e344621d017507b357902043a/LICENSE.TXT
 // </licensing>
 using System.Buffers;
 using System.Buffers.Text;
@@ -44,7 +44,7 @@ internal static partial class JsonReaderHelper
     // Reject any invalid UTF-8 data rather than silently replacing.
     public static readonly UTF8Encoding s_utf8Encoding = new(encoderShouldEmitUTF8Identifier: false, throwOnInvalidBytes: true);
 
-    // TODO: Similar to escaping, replace the unescaping logic with publicly shipping APIs from https:// github.com/dotnet/runtime/issues/27919
+    // TODO: Similar to escaping, replace the unescaping logic with publicly shipping APIs from https://github.com/dotnet/runtime/issues/27919
     public static string GetUnescapedString(ReadOnlySpan<byte> utf8Source)
     {
         // The escaped name is always >= than the unescaped, so it is safe to use escaped name for the buffer length.

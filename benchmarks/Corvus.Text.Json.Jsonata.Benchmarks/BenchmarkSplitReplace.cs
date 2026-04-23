@@ -29,6 +29,11 @@ public class BenchmarkSplitReplace
     private const string ExprSplitString = "$split(text, \". \")";
     private const string ExprReplaceString = "$replace(text, \"555\", \"XXX\")";
 
+    private static readonly byte[] ExprSplitRegexUtf8 = "$split(text, /\\d{3}-\\d{3}-\\d{4}/)"u8.ToArray();
+    private static readonly byte[] ExprSplitStringUtf8 = "$split(text, \". \")"u8.ToArray();
+    private static readonly byte[] ExprReplaceStringUtf8 = "$replace(text, \"555\", \"XXX\")"u8.ToArray();
+
+
     private JsonataEvaluator evaluator = null!;
     private ParsedJsonDocument<JsonElement>? doc;
     private JsonElement data;
@@ -53,9 +58,9 @@ public class BenchmarkSplitReplace
         this.workspace = JsonWorkspace.Create();
 
         // Warm up RT
-        this.evaluator.Evaluate(ExprSplitRegex, this.data);
-        this.evaluator.Evaluate(ExprSplitString, this.data);
-        this.evaluator.Evaluate(ExprReplaceString, this.data);
+        this.evaluator.Evaluate(ExprSplitRegexUtf8, this.data, this.workspace, cacheKey: ExprSplitRegex);
+        this.evaluator.Evaluate(ExprSplitStringUtf8, this.data, this.workspace, cacheKey: ExprSplitString);
+        this.evaluator.Evaluate(ExprReplaceStringUtf8, this.data, this.workspace, cacheKey: ExprReplaceString);
 
         // Warm up CG
         SplitRegexCodeGen.Evaluate(this.data, this.workspace);
@@ -93,7 +98,7 @@ public class BenchmarkSplitReplace
     public JsonElement Corvus_SplitRegex()
     {
         this.workspace.Reset();
-        return this.evaluator.Evaluate(ExprSplitRegex, this.data, this.workspace);
+        return this.evaluator.Evaluate(ExprSplitRegexUtf8, this.data, this.workspace, cacheKey: ExprSplitRegex);
     }
 
 #if !NETFRAMEWORK
@@ -127,7 +132,7 @@ public class BenchmarkSplitReplace
     public JsonElement Corvus_SplitString()
     {
         this.workspace.Reset();
-        return this.evaluator.Evaluate(ExprSplitString, this.data, this.workspace);
+        return this.evaluator.Evaluate(ExprSplitStringUtf8, this.data, this.workspace, cacheKey: ExprSplitString);
     }
 
 #if !NETFRAMEWORK
@@ -161,7 +166,7 @@ public class BenchmarkSplitReplace
     public JsonElement Corvus_ReplaceString()
     {
         this.workspace.Reset();
-        return this.evaluator.Evaluate(ExprReplaceString, this.data, this.workspace);
+        return this.evaluator.Evaluate(ExprReplaceStringUtf8, this.data, this.workspace, cacheKey: ExprReplaceString);
     }
 
 #if !NETFRAMEWORK

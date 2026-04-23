@@ -4,7 +4,7 @@
 // <licensing>
 // Derived from code licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licensed this code under the MIT license.
-// https:// github.com/dotnet/runtime/blob/388a7c4814cb0d6e344621d017507b357902043a/LICENSE.TXT
+// https://github.com/dotnet/runtime/blob/388a7c4814cb0d6e344621d017507b357902043a/LICENSE.TXT
 // </licensing>
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -240,7 +240,7 @@ public readonly partial struct JsonElement
     /// </summary>
     /// <typeparam name="T">The type of the source element.</typeparam>
     /// <param name="instance">The instance of the source element.</param>
-    /// <returns>An instance of a <see cref="JsonELement"/>.</returns>
+    /// <returns>An instance of a <see cref="JsonElement"/>.</returns>
     [CLSCompliant(false)]
     public static JsonElement From<T>(in T instance)
         where T : struct, IJsonElement<T>

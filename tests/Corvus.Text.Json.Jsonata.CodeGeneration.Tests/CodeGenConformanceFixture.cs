@@ -186,7 +186,7 @@ public sealed class CodeGenConformanceFixture : IDisposable
         {
             references = (
                 from l in ctx.CompileLibraries
-                from r in l.ResolveReferencePaths()
+                from r in TryResolveReferencePaths(l)
                 select (MetadataReference)MetadataReference.CreateFromFile(r)).ToList();
 
             defines.AddRange(ctx.CompilationOptions.Defines.Where(d => d is not null)!);
@@ -217,6 +217,18 @@ public sealed class CodeGenConformanceFixture : IDisposable
             .WithPreprocessorSymbols(defines);
 
         return (references, parseOptions);
+    }
+
+    private static IEnumerable<string> TryResolveReferencePaths(CompilationLibrary library)
+    {
+        try
+        {
+            return library.ResolveReferencePaths();
+        }
+        catch (InvalidOperationException)
+        {
+            return [];
+        }
     }
 
     private sealed class DynamicAssemblyLoadContext : AssemblyLoadContext

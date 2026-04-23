@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="$(EndjinProjectPropsPath)" Condition="$(EndjinProjectPropsPath) != ''" />
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFrameworks>net9.0;net10.0</TargetFrameworks>
+    <AssemblyName>Corvus.Json.Cli</AssemblyName>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <PreserveCompilationContext>true</PreserveCompilationContext>
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>corvusjson</ToolCommandName>
+    <PackageOutputPath>./nupkg</PackageOutputPath>
+    <NoWarn>$(NoWarn);NU1504;CS1591</NoWarn>
+    <EndjinDisableCreateEditorConfig>true</EndjinDisableCreateEditorConfig>
+    <EndjinDisableAutoPackagesLock>true</EndjinDisableAutoPackagesLock>
+  </PropertyGroup>
+  <PropertyGroup>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <Description>CLI tool for generating strongly-typed C# from JSON Schema, JSONata, JMESPath, and JSON Logic. Supports both Corvus.Text.Json (V5) and Corvus.Json (V4) output. Covers JSON Schema draft 4, 6, 7, 2019-09, and 2020-12.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <None Include="..\Corvus.Json.CodeGenerator\README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Corvus.Json.Cli.Core\Corvus.Json.Cli.Core.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Endjin.RecommendedPractices.GitHub" PrivateAssets="All" />
+    <PackageReference Include="StyleCop.Analyzers" PrivateAssets="All" />
+    <PackageReference Include="Roslynator.Analyzers" PrivateAssets="All" />
+  </ItemGroup>
+</Project>

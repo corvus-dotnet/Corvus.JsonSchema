@@ -44,6 +44,11 @@ public class BenchmarkArithmetic : JsonataBenchmarkBase
     private const string ExprMapArithmetic = "Account.Order.Product.(Price * Quantity)";
     private const string ExprPureArithmetic = "1 + 2 * 3 - 4 / 2 + 10 % 3";
 
+    private static readonly byte[] ExprSumProductUtf8 = "$sum(Account.Order.Product.(Price * Quantity))"u8.ToArray();
+    private static readonly byte[] ExprMapArithmeticUtf8 = "Account.Order.Product.(Price * Quantity)"u8.ToArray();
+    private static readonly byte[] ExprPureArithmeticUtf8 = "1 + 2 * 3 - 4 / 2 + 10 % 3"u8.ToArray();
+
+
     private JsonataEvaluator evaluator = null!;
     private ParsedJsonDocument<JsonElement>? doc;
     private JsonElement data;
@@ -66,9 +71,9 @@ public class BenchmarkArithmetic : JsonataBenchmarkBase
         this.data = this.doc.RootElement;
         this.evaluator = new JsonataEvaluator();
         this.workspace = JsonWorkspace.Create();
-        this.evaluator.Evaluate(ExprSumProduct, this.data);
-        this.evaluator.Evaluate(ExprMapArithmetic, this.data);
-        this.evaluator.Evaluate(ExprPureArithmetic, this.data);
+        this.evaluator.Evaluate(ExprSumProductUtf8, this.data, this.workspace, cacheKey: ExprSumProduct);
+        this.evaluator.Evaluate(ExprMapArithmeticUtf8, this.data, this.workspace, cacheKey: ExprMapArithmetic);
+        this.evaluator.Evaluate(ExprPureArithmeticUtf8, this.data, this.workspace, cacheKey: ExprPureArithmetic);
 
         // Warm up source-generated evaluators (first call compiles + caches)
         SumProductCodeGen.Evaluate(this.data, this.workspace);
@@ -104,7 +109,7 @@ public class BenchmarkArithmetic : JsonataBenchmarkBase
     public JsonElement Corvus_SumProduct()
     {
         this.workspace.Reset();
-        return this.evaluator.Evaluate(ExprSumProduct, this.data, this.workspace);
+        return this.evaluator.Evaluate(ExprSumProductUtf8, this.data, this.workspace, cacheKey: ExprSumProduct);
     }
 
 #if !NETFRAMEWORK
@@ -125,7 +130,7 @@ public class BenchmarkArithmetic : JsonataBenchmarkBase
     public JsonElement Corvus_MapArithmetic()
     {
         this.workspace.Reset();
-        return this.evaluator.Evaluate(ExprMapArithmetic, this.data, this.workspace);
+        return this.evaluator.Evaluate(ExprMapArithmeticUtf8, this.data, this.workspace, cacheKey: ExprMapArithmetic);
     }
 
 #if !NETFRAMEWORK
@@ -146,7 +151,7 @@ public class BenchmarkArithmetic : JsonataBenchmarkBase
     public JsonElement Corvus_PureArithmetic()
     {
         this.workspace.Reset();
-        return this.evaluator.Evaluate(ExprPureArithmetic, this.data, this.workspace);
+        return this.evaluator.Evaluate(ExprPureArithmeticUtf8, this.data, this.workspace, cacheKey: ExprPureArithmetic);
     }
 
 #if !NETFRAMEWORK
