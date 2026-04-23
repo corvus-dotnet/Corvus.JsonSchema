@@ -123,10 +123,10 @@ public readonly partial struct Ui5ManifestSchema
             }
 
 #if NET8_0_OR_GREATER && !DYNAMIC_BUILD
-            [GeneratedRegex("^[A-Za-z]{2,}.[A-Za-z]{2,}")]
+            [GeneratedRegex("^[A-Za-z]{2,}[^\\n\\r\\u2028\\u2029][A-Za-z]{2,}")]
             private static partial Regex CreatePattern();
 #else
-            private static Regex CreatePattern() => new("^[A-Za-z]{2,}.[A-Za-z]{2,}", RegexOptions.Compiled);
+            private static Regex CreatePattern() => new("^[A-Za-z]{2,}[^\\n\\r\\u2028\\u2029][A-Za-z]{2,}", RegexOptions.Compiled);
 #endif
 
             /// <summary>

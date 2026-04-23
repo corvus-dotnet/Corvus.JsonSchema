@@ -102,23 +102,14 @@ public readonly partial struct ImplementationsOfElement
             if (!context.HasCollector)
             {
                 int anyOfDiscriminatorBranch = -1;
-                var anyOfDiscriminatorEnum = new ObjectEnumerator(parentDocument, parentIndex);
-                while (anyOfDiscriminatorEnum.MoveNext())
+                if (parentDocument.GetJsonTokenType(parentIndex) == JsonTokenType.StartObject)
                 {
-                    using (UnescapedUtf8JsonString anyOfDiscriminatorPropName = parentDocument.GetPropertyNameUnescaped(anyOfDiscriminatorEnum.CurrentIndex))
+                    if (parentDocument.TryGetNamedPropertyValue(parentIndex, "type"u8, out IJsonDocument? anyOfDiscriminator_doc, out int anyOfDiscriminator_idx))
                     {
-                        if (anyOfDiscriminatorPropName.Span.SequenceEqual("type"u8))
+                        if (anyOfDiscriminator_doc.GetJsonTokenType(anyOfDiscriminator_idx) == JsonTokenType.String)
                         {
-                            if (parentDocument.GetJsonTokenType(anyOfDiscriminatorEnum.CurrentIndex) == JsonTokenType.String)
-                            {
-                                using UnescapedUtf8JsonString discriminatorValue = parentDocument.GetUtf8JsonString(anyOfDiscriminatorEnum.CurrentIndex, JsonTokenType.String);
-                                if (AnyOfDiscriminatorMap.TryGetValue(discriminatorValue.Span, out anyOfDiscriminatorBranch))
-                                {
-                                    break;
-                                }
-                            }
-
-                            break;
+                            using UnescapedUtf8JsonString discriminatorValue = anyOfDiscriminator_doc.GetUtf8JsonString(anyOfDiscriminator_idx, JsonTokenType.String);
+                            AnyOfDiscriminatorMap.TryGetValue(discriminatorValue.Span, out anyOfDiscriminatorBranch);
                         }
                     }
                 }

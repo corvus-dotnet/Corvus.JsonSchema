@@ -118,10 +118,10 @@ public readonly partial struct Schema
             }
 
 #if NET8_0_OR_GREATER && !DYNAMIC_BUILD
-            [GeneratedRegex("^(![-\\w_\\s]+)(,![-\\w_\\s]+)*$")]
+            [GeneratedRegex("^(![-a-zA-Z0-9__\\t\\n\\v\\f\\r \\u00A0\\uFEFF\\u1680\\u2000-\\u200A\\u2028\\u2029\\u202F\\u205F\\u3000]+)(,![-a-zA-Z0-9__\\t\\n\\v\\f\\r \\u00A0\\uFEFF\\u1680\\u2000-\\u200A\\u2028\\u2029\\u202F\\u205F\\u3000]+)*$")]
             private static partial Regex CreatePattern();
 #else
-            private static Regex CreatePattern() => new("^(![-\\w_\\s]+)(,![-\\w_\\s]+)*$", RegexOptions.Compiled);
+            private static Regex CreatePattern() => new("^(![-a-zA-Z0-9__\\t\\n\\v\\f\\r \\u00A0\\uFEFF\\u1680\\u2000-\\u200A\\u2028\\u2029\\u202F\\u205F\\u3000]+)(,![-a-zA-Z0-9__\\t\\n\\v\\f\\r \\u00A0\\uFEFF\\u1680\\u2000-\\u200A\\u2028\\u2029\\u202F\\u205F\\u3000]+)*$", RegexOptions.Compiled);
 #endif
 
             /// <summary>

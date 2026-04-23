@@ -148,10 +148,10 @@ public readonly partial struct Schema
                                 }
 
 #if NET8_0_OR_GREATER && !DYNAMIC_BUILD
-                                [GeneratedRegex("^(User[.]env|UserDefault(.extended)?)[.][^.]+$")]
+                                [GeneratedRegex("^(User[.]env|UserDefault([^\\n\\r\\u2028\\u2029]extended)?)[.][^.]+$")]
                                 private static partial Regex CreatePattern();
 #else
-                                private static Regex CreatePattern() => new("^(User[.]env|UserDefault(.extended)?)[.][^.]+$", RegexOptions.Compiled);
+                                private static Regex CreatePattern() => new("^(User[.]env|UserDefault([^\\n\\r\\u2028\\u2029]extended)?)[.][^.]+$", RegexOptions.Compiled);
 #endif
 
                                 /// <summary>

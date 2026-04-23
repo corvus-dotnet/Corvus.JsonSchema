@@ -118,10 +118,10 @@ public readonly partial struct Schema
             }
 
 #if NET8_0_OR_GREATER && !DYNAMIC_BUILD
-            [GeneratedRegex("^.*\\.(?:txt|trie)(?:\\.gz)?$")]
+            [GeneratedRegex("^[^\\n\\r\\u2028\\u2029]*\\.(?:txt|trie)(?:\\.gz)?$")]
             private static partial Regex CreatePattern();
 #else
-            private static Regex CreatePattern() => new("^.*\\.(?:txt|trie)(?:\\.gz)?$", RegexOptions.Compiled);
+            private static Regex CreatePattern() => new("^[^\\n\\r\\u2028\\u2029]*\\.(?:txt|trie)(?:\\.gz)?$", RegexOptions.Compiled);
 #endif
 
             /// <summary>

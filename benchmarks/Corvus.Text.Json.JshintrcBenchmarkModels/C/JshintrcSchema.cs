@@ -539,11 +539,11 @@ public readonly partial struct JshintrcSchema
     /// Prohibits overwriting prototypes of native objects such as Array, Date and so on
     /// </para>
     /// </remarks>
-    public Corvus.JshintrcBenchmark.Current.JshintrcSchema.FreezeEntity Freeze
+    public Corvus.JshintrcBenchmark.Current.JshintrcSchema.FreezeEntity FreezeValue
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.FreezeUtf8, out Corvus.JshintrcBenchmark.Current.JshintrcSchema.FreezeEntity value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.FreezeValueUtf8, out Corvus.JshintrcBenchmark.Current.JshintrcSchema.FreezeEntity value))
             {
                 return value;
             }
@@ -2000,6 +2000,56 @@ public readonly partial struct JshintrcSchema
     JsonValueKind IJsonElement.ValueKind => ValueKind;
 
     /// <summary>
+    /// Gets a <see cref="JshintrcSchema"/> which can be safely stored beyond the lifetime of the
+    /// original document.
+    /// </summary>
+    /// <returns>
+    /// A <see cref="JshintrcSchema"/> which can be safely stored beyond the lifetime of the
+    /// original document.
+    /// </returns>
+    /// <remarks>
+    /// <para>
+    /// If this instance is already a clone (its backing document is not disposable),
+    /// this method returns the same instance without additional allocation.
+    /// </para>
+    /// </remarks>
+    public JshintrcSchema Clone()
+    {
+        CheckValidInstance();
+        return _parent.CloneElement<JshintrcSchema>(_idx);
+    }
+
+    /// <summary>
+    /// Creates a frozen (immutable) copy of this element if it is backed by a mutable document,
+    /// or returns this instance if it is already immutable.
+    /// </summary>
+    /// <returns>
+    /// An immutable <see cref="JshintrcSchema"/> that lives for the lifetime of its
+    /// workspace and its associated documents.
+    /// </returns>
+    /// <remarks>
+    /// <para>
+    /// Unlike <see cref="Clone()"/>, which serializes the element and re-parses it
+    /// into a standalone heap-allocated document, <c>Freeze()</c> performs a cheap
+    /// blit of the metadata and value backing arrays. The resulting element is
+    /// immutable but is only valid for the lifetime of the workspace.
+    /// </para>
+    /// <para>
+    /// If this instance is already backed by an immutable document, it is returned as-is.
+    /// </para>
+    /// </remarks>
+    public JshintrcSchema Freeze()
+    {
+        CheckValidInstance();
+        if (_parent is global::Corvus.Text.Json.Internal.IMutableJsonDocument mutable)
+        {
+            return mutable.FreezeElement<JshintrcSchema>(_idx);
+        }
+
+        return this;
+    }
+
+    /// <summary>
     /// Provides UTF8 and string versions of the JSON property names on the object.
     /// </summary>
     public static class JsonPropertyNames
@@ -2095,9 +2145,9 @@ public readonly partial struct JshintrcSchema
         public const string Forin = "forin";
 
         /// <summary>
-        /// Gets the JSON property name for <see cref="Freeze"/>.
+        /// Gets the JSON property name for <see cref="FreezeValue"/>.
         /// </summary>
-        public const string Freeze = "freeze";
+        public const string FreezeValue = "freeze";
 
         /// <summary>
         /// Gets the JSON property name for <see cref="Funcscope"/>.
@@ -2445,9 +2495,9 @@ public readonly partial struct JshintrcSchema
         public static ReadOnlySpan<byte> ForinUtf8 => "forin"u8;
 
         /// <summary>
-        /// Gets the JSON property name for <see cref="Freeze"/>.
+        /// Gets the JSON property name for <see cref="FreezeValue"/>.
         /// </summary>
-        public static ReadOnlySpan<byte> FreezeUtf8 => "freeze"u8;
+        public static ReadOnlySpan<byte> FreezeValueUtf8 => "freeze"u8;
 
         /// <summary>
         /// Gets the JSON property name for <see cref="Funcscope"/>.
@@ -2801,9 +2851,9 @@ public readonly partial struct JshintrcSchema
         public static ReadOnlySpan<byte> Forin => "forin"u8;
 
         /// <summary>
-        /// Gets the escaped UTF-8 JSON property name for <see cref="Freeze"/>.
+        /// Gets the escaped UTF-8 JSON property name for <see cref="FreezeValue"/>.
         /// </summary>
-        public static ReadOnlySpan<byte> Freeze => "freeze"u8;
+        public static ReadOnlySpan<byte> FreezeValue => "freeze"u8;
 
         /// <summary>
         /// Gets the escaped UTF-8 JSON property name for <see cref="Funcscope"/>.

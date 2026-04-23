@@ -45,7 +45,7 @@ public readonly partial struct Schema
         private static readonly JsonSchemaPathProvider ExprSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/expr"u8, buffer, out written);
         private static readonly JsonSchemaPathProvider ExtendsSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/extends"u8, buffer, out written);
         private static readonly JsonSchemaPathProvider ForinSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/forin"u8, buffer, out written);
-        private static readonly JsonSchemaPathProvider FreezeSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/freeze"u8, buffer, out written);
+        private static readonly JsonSchemaPathProvider FreezeValueSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/freeze"u8, buffer, out written);
         private static readonly JsonSchemaPathProvider FuncscopeSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/funcscope"u8, buffer, out written);
         private static readonly JsonSchemaPathProvider FuturehostileSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/futurehostile"u8, buffer, out written);
         private static readonly JsonSchemaPathProvider GlobalsSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/globals"u8, buffer, out written);
@@ -368,7 +368,7 @@ public readonly partial struct Schema
             context.CommitChildContext(childContext17.IsMatch, ref childContext17);
         }
 
-        private static void MatchFreeze(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchFreezeValue(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext18 =
@@ -376,8 +376,8 @@ public readonly partial struct Schema
                     parentDocument,
                     parentDocumentIndex,
                     ref context,
-                    JsonPropertyNames.FreezeUtf8,
-                    evaluationPath: FreezeSchemaEvaluationPath);
+                    JsonPropertyNames.FreezeValueUtf8,
+                    evaluationPath: FreezeValueSchemaEvaluationPath);
 
             Corvus.JshintrcBenchmark.Baseline.Schema.FreezeEntity.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext18);
             context.CommitChildContext(childContext18.IsMatch, ref childContext18);
@@ -1169,7 +1169,7 @@ public readonly partial struct Schema
                 (static () => JsonPropertyNames.ExprUtf8, MatchExpr),
                 (static () => JsonPropertyNames.ExtendsUtf8, MatchExtends),
                 (static () => JsonPropertyNames.ForinUtf8, MatchForin),
-                (static () => JsonPropertyNames.FreezeUtf8, MatchFreeze),
+                (static () => JsonPropertyNames.FreezeValueUtf8, MatchFreezeValue),
                 (static () => JsonPropertyNames.FuncscopeUtf8, MatchFuncscope),
                 (static () => JsonPropertyNames.FuturehostileUtf8, MatchFuturehostile),
                 (static () => JsonPropertyNames.GlobalsUtf8, MatchGlobals),

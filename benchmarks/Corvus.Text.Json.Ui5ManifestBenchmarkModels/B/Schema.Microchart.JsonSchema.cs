@@ -75,29 +75,21 @@ public readonly partial struct Schema
                 if (!context.HasCollector)
                 {
                     int oneOfDiscriminatorBranch = -1;
-                    var oneOfDiscriminatorEnum = new ObjectEnumerator(parentDocument, parentIndex);
-                    while (oneOfDiscriminatorEnum.MoveNext())
+                    if (parentDocument.GetJsonTokenType(parentIndex) == JsonTokenType.StartObject)
                     {
-                        using (UnescapedUtf8JsonString oneOfDiscriminatorPropName = parentDocument.GetPropertyNameUnescaped(oneOfDiscriminatorEnum.CurrentIndex))
+                        if (parentDocument.TryGetNamedPropertyValue(parentIndex, "type"u8, out IJsonDocument? oneOfDiscriminator_doc, out int oneOfDiscriminator_idx))
                         {
-                            if (oneOfDiscriminatorPropName.Span.SequenceEqual("type"u8))
+                            if (oneOfDiscriminator_doc.GetJsonTokenType(oneOfDiscriminator_idx) == JsonTokenType.String)
                             {
-                                if (parentDocument.GetJsonTokenType(oneOfDiscriminatorEnum.CurrentIndex) == JsonTokenType.String)
+                                using UnescapedUtf8JsonString discriminatorValue = oneOfDiscriminator_doc.GetUtf8JsonString(oneOfDiscriminator_idx, JsonTokenType.String);
+                                if (discriminatorValue.Span.SequenceEqual("Bullet"u8))
                                 {
-                                    using UnescapedUtf8JsonString discriminatorValue = parentDocument.GetUtf8JsonString(oneOfDiscriminatorEnum.CurrentIndex, JsonTokenType.String);
-                                    if (discriminatorValue.Span.SequenceEqual("Bullet"u8))
-                                    {
-                                        oneOfDiscriminatorBranch = 0;
-                                        break;
-                                    }
-                                    if (discriminatorValue.Span.SequenceEqual("StackedBar"u8))
-                                    {
-                                        oneOfDiscriminatorBranch = 1;
-                                        break;
-                                    }
+                                    oneOfDiscriminatorBranch = 0;
                                 }
-
-                                break;
+                                else if (discriminatorValue.Span.SequenceEqual("StackedBar"u8))
+                                {
+                                    oneOfDiscriminatorBranch = 1;
+                                }
                             }
                         }
                     }

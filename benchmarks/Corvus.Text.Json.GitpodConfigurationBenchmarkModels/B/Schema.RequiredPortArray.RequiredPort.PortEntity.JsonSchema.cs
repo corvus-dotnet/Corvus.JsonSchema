@@ -145,10 +145,10 @@ public readonly partial struct Schema
                     }
 
 #if NET8_0_OR_GREATER && !DYNAMIC_BUILD
-                    [GeneratedRegex("^\\d+[:-]\\d+$")]
+                    [GeneratedRegex("^[0-9]+[:-][0-9]+$")]
                     private static partial Regex CreatePattern();
 #else
-                    private static Regex CreatePattern() => new("^\\d+[:-]\\d+$", RegexOptions.Compiled);
+                    private static Regex CreatePattern() => new("^[0-9]+[:-][0-9]+$", RegexOptions.Compiled);
 #endif
 
                     /// <summary>

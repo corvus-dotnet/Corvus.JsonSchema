@@ -128,10 +128,10 @@ public readonly partial struct Ui5ManifestSchema
                     }
 
 #if NET8_0_OR_GREATER && !DYNAMIC_BUILD
-                    [GeneratedRegex("^[\\w\\*]{0,30}$")]
+                    [GeneratedRegex("^[a-zA-Z0-9_\\*]{0,30}$")]
                     private static partial Regex CreatePattern();
 #else
-                    private static Regex CreatePattern() => new("^[\\w\\*]{0,30}$", RegexOptions.Compiled);
+                    private static Regex CreatePattern() => new("^[a-zA-Z0-9_\\*]{0,30}$", RegexOptions.Compiled);
 #endif
 
                     /// <summary>
