@@ -1750,6 +1750,10 @@ public static class JsonLogicCodeGenerator
                 return v;
             }
 
+            // Save var cache — the do-block creates a new C# scope, so variables
+            // declared inside must not leak into the cache for outer code.
+            Dictionary<string, string> savedCache = new(_varCache);
+
             string result = NextVar();
             L(sb, indent, $"JsonElement {result};");
             L(sb, indent, "do");
@@ -1777,6 +1781,14 @@ public static class JsonLogicCodeGenerator
             L(sb, indent, "}");
             L(sb, indent, "while (false);");
             Blank(sb);
+
+            // Restore original cache
+            _varCache.Clear();
+            foreach (KeyValuePair<string, string> kvp in savedCache)
+            {
+                _varCache[kvp.Key] = kvp.Value;
+            }
+
             return result;
         }
 
@@ -1788,6 +1800,10 @@ public static class JsonLogicCodeGenerator
                 L(sb, indent, $"JsonElement {v} = JsonLogicHelpers.BooleanElement(false);");
                 return v;
             }
+
+            // Save var cache — the do-block creates a new C# scope, so variables
+            // declared inside must not leak into the cache for outer code.
+            Dictionary<string, string> savedCache = new(_varCache);
 
             string result = NextVar();
             L(sb, indent, $"JsonElement {result};");
@@ -1816,6 +1832,14 @@ public static class JsonLogicCodeGenerator
             L(sb, indent, "}");
             L(sb, indent, "while (false);");
             Blank(sb);
+
+            // Restore original cache
+            _varCache.Clear();
+            foreach (KeyValuePair<string, string> kvp in savedCache)
+            {
+                _varCache[kvp.Key] = kvp.Value;
+            }
+
             return result;
         }
 
