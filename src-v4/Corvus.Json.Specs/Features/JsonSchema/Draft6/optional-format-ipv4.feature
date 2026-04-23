@@ -44,11 +44,45 @@ Scenario Outline: validation of IP addresses
         | #/000/tests/010/data | false | an IP address as an integer                                                      |
         # 2130706433
         | #/000/tests/011/data | false | an IP address as an integer (decimal)                                            |
-        # 087.10.0.1
-        | #/000/tests/012/data | false | invalid leading zeroes, as they are treated as octals                            |
-        # 87.10.0.1
-        | #/000/tests/013/data | true  | value without leading zero is valid                                              |
         # 1২7.0.0.1
-        | #/000/tests/014/data | false | invalid non-ASCII '২' (a Bengali 2)                                              |
+        | #/000/tests/012/data | false | invalid non-ASCII '২' (a Bengali 2)                                              |
         # 192.168.1.0/24
-        | #/000/tests/015/data | false | netmask is not a part of ipv4 address                                            |
+        | #/000/tests/013/data | false | netmask is not a part of ipv4 address                                            |
+        #  192.168.0.1
+        | #/000/tests/014/data | false | leading whitespace is invalid                                                    |
+        # 192.168.0.1 
+        | #/000/tests/015/data | false | trailing whitespace is invalid                                                   |
+        # 192.168.0.1 
+        | #/000/tests/016/data | false | trailing newline is invalid                                                      |
+        # 0x7f.0.0.1
+        | #/000/tests/017/data | false | hexadecimal notation is invalid                                                  |
+        # 0o10.0.0.1
+        | #/000/tests/018/data | false | octal notation explicit is invalid                                               |
+        # 192.168..1
+        | #/000/tests/019/data | false | empty part (double dot) is invalid                                               |
+        # .192.168.0.1
+        | #/000/tests/020/data | false | leading dot is invalid                                                           |
+        # 192.168.0.1.
+        | #/000/tests/021/data | false | trailing dot is invalid                                                          |
+        # 0.0.0.0
+        | #/000/tests/022/data | true  | minimum valid IPv4 address                                                       |
+        # 255.255.255.255
+        | #/000/tests/023/data | true  | maximum valid IPv4 address                                                       |
+        # 
+        | #/000/tests/024/data | false | empty string is invalid                                                          |
+        # +1.2.3.4
+        | #/000/tests/025/data | false | plus sign is invalid                                                             |
+        # -1.2.3.4
+        | #/000/tests/026/data | false | negative sign is invalid                                                         |
+        # 1e2.0.0.1
+        | #/000/tests/027/data | false | exponential notation is invalid                                                  |
+        # 192.168.a.1
+        | #/000/tests/028/data | false | alpha characters are invalid                                                     |
+        # 192. 168.0.1
+        | #/000/tests/029/data | false | internal whitespace is invalid                                                   |
+        # 192.168.0.1 
+        | #/000/tests/030/data | false | tab character is invalid                                                         |
+        # 192.168.0.1:80
+        | #/000/tests/031/data | false | with port number is invalid                                                      |
+        # 192.168.0.256
+        | #/000/tests/032/data | false | single octet out of range in last position                                       |

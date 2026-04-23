@@ -244,10 +244,10 @@ public class SuiteUnevaluatedPropertiesWithAdjacentPatternProperties : IClassFix
 }
 
 [Trait("JsonSchemaTestSuite", "Draft201909")]
-public class SuiteUnevaluatedPropertiesWithAdjacentAdditionalProperties : IClassFixture<SuiteUnevaluatedPropertiesWithAdjacentAdditionalProperties.Fixture>
+public class SuiteUnevaluatedPropertiesWithAdjacentBoolAdditionalProperties : IClassFixture<SuiteUnevaluatedPropertiesWithAdjacentBoolAdditionalProperties.Fixture>
 {
     private readonly Fixture _fixture;
-    public SuiteUnevaluatedPropertiesWithAdjacentAdditionalProperties(Fixture fixture)
+    public SuiteUnevaluatedPropertiesWithAdjacentBoolAdditionalProperties(Fixture fixture)
     {
         _fixture = fixture;
     }
@@ -277,6 +277,52 @@ public class SuiteUnevaluatedPropertiesWithAdjacentAdditionalProperties : IClass
             this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
                 "tests\\draft2019-09\\unevaluatedProperties.json",
                 "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"type\": \"object\",\r\n            \"properties\": {\r\n                \"foo\": { \"type\": \"string\" }\r\n            },\r\n            \"additionalProperties\": true,\r\n            \"unevaluatedProperties\": false\r\n        }",
+                "JsonSchemaTestSuite.Draft201909.UnevaluatedProperties",
+                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "https://json-schema.org/draft/2019-09/schema",
+                validateFormat: false,
+                optionalAsNullable: false,
+                useImplicitOperatorString: false,
+                addExplicitUsings: false,
+                Assembly.GetExecutingAssembly());
+        }
+    }
+}
+
+[Trait("JsonSchemaTestSuite", "Draft201909")]
+public class SuiteUnevaluatedPropertiesWithAdjacentNonBoolAdditionalProperties : IClassFixture<SuiteUnevaluatedPropertiesWithAdjacentNonBoolAdditionalProperties.Fixture>
+{
+    private readonly Fixture _fixture;
+    public SuiteUnevaluatedPropertiesWithAdjacentNonBoolAdditionalProperties(Fixture fixture)
+    {
+        _fixture = fixture;
+    }
+
+    [Fact]
+    public void TestWithNoAdditionalProperties()
+    {
+        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("{\r\n                    \"foo\": \"foo\"\r\n                }");
+        Assert.True(dynamicInstance.EvaluateSchema());
+    }
+
+    [Fact]
+    public void TestWithAdditionalProperties()
+    {
+        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("{\r\n                    \"foo\": \"foo\",\r\n                    \"bar\": \"bar\"\r\n                }");
+        Assert.True(dynamicInstance.EvaluateSchema());
+    }
+
+    public class Fixture : IAsyncLifetime
+    {
+        public DynamicJsonType DynamicJsonType { get; private set; }
+
+        public Task DisposeAsync() => Task.CompletedTask;
+
+        public async Task InitializeAsync()
+        {
+            this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
+                "tests\\draft2019-09\\unevaluatedProperties.json",
+                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"type\": \"object\",\r\n            \"properties\": {\r\n                \"foo\": { \"type\": \"string\" }\r\n            },\r\n            \"additionalProperties\": {\"type\": \"string\"},\r\n            \"unevaluatedProperties\": false\r\n        }",
                 "JsonSchemaTestSuite.Draft201909.UnevaluatedProperties",
                 "../../../../../JSON-Schema-Test-Suite/remotes",
                 "https://json-schema.org/draft/2019-09/schema",

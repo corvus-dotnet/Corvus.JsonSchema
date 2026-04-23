@@ -114,6 +114,13 @@ public class SuiteValidationOfTimeStrings : IClassFixture<SuiteValidationOfTimeS
     }
 
     [Fact]
+    public void TestTimeWithUnknownLocalOffsetIsValid()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"12:34:56-00:00\"");
+        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [Fact]
     public void TestHourMinuteInTimeOffsetMustBeTwoDigits()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"08:30:06-8:000\"");

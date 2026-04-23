@@ -351,3 +351,33 @@ Scenario Outline: nul characters in strings
         | #/013/tests/000/data | true  | match string with nul                                                            |
         # hellothere
         | #/013/tests/001/data | false | do not match string lacking nul                                                  |
+
+Scenario Outline: empty enum
+/* Schema: 
+{
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "enum": []
+        }
+*/
+    Given the input JSON file "enum.json"
+    And the schema at "#/14/schema"
+    And the input data at "<inputDataReference>"
+    And I generate a type for the schema
+    And I construct an instance of the schema type from the data
+    When I validate the instance
+    Then the result will be <valid>
+
+    Examples:
+        | inputDataReference   | valid | description                                                                      |
+        # foo
+        | #/014/tests/000/data | false | string is invalid                                                                |
+        # 42
+        | #/014/tests/001/data | false | number is invalid                                                                |
+        # 
+        | #/014/tests/002/data | false | null is invalid                                                                  |
+        # {}
+        | #/014/tests/003/data | false | object is invalid                                                                |
+        # []
+        | #/014/tests/004/data | false | array is invalid                                                                 |
+        # False
+        | #/014/tests/005/data | false | boolean is invalid                                                               |

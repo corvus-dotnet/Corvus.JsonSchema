@@ -38,7 +38,7 @@ Scenario Outline: validation of IPv6 addresses
         # ::1
         | #/000/tests/006/data | true  | a valid IPv6 address                                                             |
         # 12345::
-        | #/000/tests/007/data | false | an IPv6 address with out-of-range values                                         |
+        | #/000/tests/007/data | false | a group with 5 hex digits is invalid                                             |
         # ::abef
         | #/000/tests/008/data | true  | trailing 4 hex symbols is valid                                                  |
         # ::abcef

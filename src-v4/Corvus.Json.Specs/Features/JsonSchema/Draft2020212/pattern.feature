@@ -58,3 +58,28 @@ Scenario Outline: pattern is not anchored
         | inputDataReference   | valid | description                                                                      |
         # xxaayy
         | #/001/tests/000/data | true  | matches a substring                                                              |
+
+Scenario Outline: pattern with Unicode property escape requires unicode mode
+/* Schema: 
+{
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "type": "string",
+            "pattern": "^\\p{Letter}+$"
+        }
+*/
+    Given the input JSON file "pattern.json"
+    And the schema at "#/2/schema"
+    And the input data at "<inputDataReference>"
+    And I generate a type for the schema
+    And I construct an instance of the schema type from the data
+    When I validate the instance
+    Then the result will be <valid>
+
+    Examples:
+        | inputDataReference   | valid | description                                                                      |
+        # Hello
+        | #/002/tests/000/data | true  | ASCII letters match                                                              |
+        # π
+        | #/002/tests/001/data | true  | Non-ASCII letters match                                                          |
+        # 123
+        | #/002/tests/002/data | false | Digits do not match                                                              |

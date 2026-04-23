@@ -83,6 +83,13 @@ public class SuiteByNumber : IClassFixture<SuiteByNumber.Fixture>
     }
 
     [Fact]
+    public void Test45IsMultipleOf151()
+    {
+        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("-4.5");
+        Assert.True(dynamicInstance.EvaluateSchema());
+    }
+
+    [Fact]
     public void Test35IsNotMultipleOf15()
     {
         var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("35");

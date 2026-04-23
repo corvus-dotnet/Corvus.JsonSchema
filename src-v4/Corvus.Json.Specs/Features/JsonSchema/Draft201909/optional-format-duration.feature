@@ -74,3 +74,35 @@ Scenario Outline: validation of duration strings
         | #/000/tests/024/data | false | invalid non-ASCII '২' (a Bengali 2)                                              |
         # P1
         | #/000/tests/025/data | false | element without unit                                                             |
+        # P1Y2M3DT4H5M6S
+        | #/000/tests/026/data | true  | all date and time components                                                     |
+        # P1Y2M3D
+        | #/000/tests/027/data | true  | date components only                                                             |
+        # PT1H2M3S
+        | #/000/tests/028/data | true  | time components only                                                             |
+        # P1M2D
+        | #/000/tests/029/data | true  | month and day                                                                    |
+        # PT1H30M
+        | #/000/tests/030/data | true  | hour and minute                                                                  |
+        # P10Y10M10DT10H10M10S
+        | #/000/tests/031/data | true  | multi-digit values in all components                                             |
+        # PT0.5S
+        | #/000/tests/032/data | false | fractional duration is not allowed by RFC 3339 ABNF                              |
+        #  P1D
+        | #/000/tests/033/data | false | leading whitespace is invalid                                                    |
+        # P1D 
+        | #/000/tests/034/data | false | trailing whitespace is invalid                                                   |
+        # 
+        | #/000/tests/035/data | false | empty string is invalid                                                          |
+        # P1Y2M
+        | #/000/tests/036/data | true  | years and months can appear without days                                         |
+        # P1Y2D
+        | #/000/tests/037/data | false | years and days cannot appear without months                                      |
+        # P1M2D
+        | #/000/tests/038/data | true  | months and days can appear without years                                         |
+        # PT1H2M
+        | #/000/tests/039/data | true  | hours and minutes can appear without seconds                                     |
+        # PT1H2S
+        | #/000/tests/040/data | false | hours and seconds cannot appear without minutes                                  |
+        # PT1M2S
+        | #/000/tests/041/data | true  | minutes and seconds can appear without hour                                      |

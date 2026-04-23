@@ -54,3 +54,9 @@ Scenario Outline: validation of e-mail addresses
         | #/000/tests/015/data | false | two email addresses is not valid                                                 |
         # "Winston Smith" <winston.smith@recdep.minitrue> (Records Department)
         | #/000/tests/016/data | false | full "From" header is invalid                                                    |
+        # @example.com
+        | #/000/tests/017/data | false | local part is required                                                           |
+        # joe.bloggs@
+        | #/000/tests/018/data | false | domain is required                                                               |
+        # joe bloggs@example.com
+        | #/000/tests/019/data | false | unquoted space in local part is invalid                                          |

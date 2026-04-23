@@ -281,6 +281,20 @@ public class SuiteValidationOfJsonPointersJsonStringRepresentation : IClassFixtu
         Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
     }
 
+    [Fact]
+    public void TestValidJsonPointerUnicodeCharactersAllowedByRfc6901()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"/foo/bar/😎\"");
+        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [Fact]
+    public void TestValidJsonPointerControlCharactersAllowedAfterJsonUnescaping()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"/foo\\u0000bar\\n\\tbaz\"");
+        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+    }
+
     public class Fixture : IAsyncLifetime
     {
         public CompiledEvaluator Evaluator { get; private set; }

@@ -73,7 +73,7 @@ public class SuiteMaximumValidationWithUnsignedInteger : IClassFixture<SuiteMaxi
     }
 
     [Fact]
-    public void TestBelowTheMaximumIsInvalid()
+    public void TestBelowTheMaximumIsValid()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("299.97");
         Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));

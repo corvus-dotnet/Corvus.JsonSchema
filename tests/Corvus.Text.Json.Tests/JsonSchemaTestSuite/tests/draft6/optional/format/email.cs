@@ -134,6 +134,27 @@ public class SuiteValidationOfEMailAddresses : IClassFixture<SuiteValidationOfEM
         Assert.False(dynamicInstance.EvaluateSchema());
     }
 
+    [Fact]
+    public void TestLocalPartIsRequired()
+    {
+        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"@example.com\"");
+        Assert.False(dynamicInstance.EvaluateSchema());
+    }
+
+    [Fact]
+    public void TestDomainIsRequired()
+    {
+        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"joe.bloggs@\"");
+        Assert.False(dynamicInstance.EvaluateSchema());
+    }
+
+    [Fact]
+    public void TestUnquotedSpaceInLocalPartIsInvalid()
+    {
+        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"joe bloggs@example.com\"");
+        Assert.False(dynamicInstance.EvaluateSchema());
+    }
+
     public class Fixture : IAsyncLifetime
     {
         public DynamicJsonType DynamicJsonType { get; private set; }

@@ -80,6 +80,13 @@ public class SuiteByNumber : IClassFixture<SuiteByNumber.Fixture>
     }
 
     [Fact]
+    public void Test45IsMultipleOf151()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("-4.5");
+        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [Fact]
     public void Test35IsNotMultipleOf15()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("35");

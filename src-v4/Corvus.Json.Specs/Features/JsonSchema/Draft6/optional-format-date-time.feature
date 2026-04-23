@@ -50,25 +50,31 @@ Scenario Outline: validation of date-time strings
         | #/000/tests/013/data | false | an invalid date-time with leap second on a wrong minute, UTC                     |
         # 1998-12-31T22:59:60Z
         | #/000/tests/014/data | false | an invalid date-time with leap second on a wrong hour, UTC                       |
+        # 1990-12-31T24:00:00Z
+        | #/000/tests/015/data | false | an invalid hour in date-time string                                              |
+        # 1990-12-31T15:60:00Z
+        | #/000/tests/016/data | false | an invalid minute in date-time string                                            |
+        # 1990-12-31T10:00:00+10:60
+        | #/000/tests/017/data | false | an invalid offset minute in date-time string                                     |
         # 1990-02-31T15:59:59.123-08:00
-        | #/000/tests/015/data | false | an invalid day in date-time string                                               |
+        | #/000/tests/018/data | false | an invalid day in date-time string                                               |
         # 1990-12-31T15:59:59-24:00
-        | #/000/tests/016/data | false | an invalid offset in date-time string                                            |
+        | #/000/tests/019/data | false | an invalid offset in date-time string                                            |
         # 1963-06-19T08:30:06.28123+01:00Z
-        | #/000/tests/017/data | false | an invalid closing Z after time-zone offset                                      |
+        | #/000/tests/020/data | false | an invalid closing Z after time-zone offset                                      |
         # 06/19/1963 08:30:06 PST
-        | #/000/tests/018/data | false | an invalid date-time string                                                      |
+        | #/000/tests/021/data | false | an invalid date-time string                                                      |
         # 1963-06-19t08:30:06.283185z
-        | #/000/tests/019/data | true  | case-insensitive T and Z                                                         |
+        | #/000/tests/022/data | true  | case-insensitive T and Z                                                         |
         # 2013-350T01:01:01
-        | #/000/tests/020/data | false | only RFC3339 not all of ISO 8601 are valid                                       |
+        | #/000/tests/023/data | false | only RFC3339 not all of ISO 8601 are valid                                       |
         # 1963-6-19T08:30:06.283185Z
-        | #/000/tests/021/data | false | invalid non-padded month dates                                                   |
+        | #/000/tests/024/data | false | invalid non-padded month dates                                                   |
         # 1963-06-1T08:30:06.283185Z
-        | #/000/tests/022/data | false | invalid non-padded day dates                                                     |
+        | #/000/tests/025/data | false | invalid non-padded day dates                                                     |
         # 1963-06-1৪T00:00:00Z
-        | #/000/tests/023/data | false | invalid non-ASCII '৪' (a Bengali 4) in date portion                              |
+        | #/000/tests/026/data | false | invalid non-ASCII '৪' (a Bengali 4) in date portion                              |
         # 1963-06-11T0৪:00:00Z
-        | #/000/tests/024/data | false | invalid non-ASCII '৪' (a Bengali 4) in time portion                              |
+        | #/000/tests/027/data | false | invalid non-ASCII '৪' (a Bengali 4) in time portion                              |
         # +11963-06-19T08:30:06.283185Z
-        | #/000/tests/025/data | false | invalid extended year                                                            |
+        | #/000/tests/028/data | false | invalid extended year                                                            |

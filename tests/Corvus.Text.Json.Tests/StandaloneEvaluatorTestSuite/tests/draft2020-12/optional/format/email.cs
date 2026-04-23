@@ -183,6 +183,27 @@ public class SuiteValidationOfEMailAddresses : IClassFixture<SuiteValidationOfEM
         Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
     }
 
+    [Fact]
+    public void TestLocalPartIsRequired()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"@example.com\"");
+        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [Fact]
+    public void TestDomainIsRequired()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"joe.bloggs@\"");
+        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [Fact]
+    public void TestUnquotedSpaceInLocalPartIsInvalid()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"joe bloggs@example.com\"");
+        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+    }
+
     public class Fixture : IAsyncLifetime
     {
         public CompiledEvaluator Evaluator { get; private set; }

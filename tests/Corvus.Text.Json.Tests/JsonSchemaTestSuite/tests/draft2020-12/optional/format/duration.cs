@@ -197,6 +197,118 @@ public class SuiteValidationOfDurationStrings : IClassFixture<SuiteValidationOfD
         Assert.False(dynamicInstance.EvaluateSchema());
     }
 
+    [Fact]
+    public void TestAllDateAndTimeComponents()
+    {
+        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"P1Y2M3DT4H5M6S\"");
+        Assert.True(dynamicInstance.EvaluateSchema());
+    }
+
+    [Fact]
+    public void TestDateComponentsOnly()
+    {
+        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"P1Y2M3D\"");
+        Assert.True(dynamicInstance.EvaluateSchema());
+    }
+
+    [Fact]
+    public void TestTimeComponentsOnly()
+    {
+        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"PT1H2M3S\"");
+        Assert.True(dynamicInstance.EvaluateSchema());
+    }
+
+    [Fact]
+    public void TestMonthAndDay()
+    {
+        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"P1M2D\"");
+        Assert.True(dynamicInstance.EvaluateSchema());
+    }
+
+    [Fact]
+    public void TestHourAndMinute()
+    {
+        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"PT1H30M\"");
+        Assert.True(dynamicInstance.EvaluateSchema());
+    }
+
+    [Fact]
+    public void TestMultiDigitValuesInAllComponents()
+    {
+        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"P10Y10M10DT10H10M10S\"");
+        Assert.True(dynamicInstance.EvaluateSchema());
+    }
+
+    [Fact]
+    public void TestFractionalDurationIsNotAllowedByRfc3339Abnf()
+    {
+        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"PT0.5S\"");
+        Assert.False(dynamicInstance.EvaluateSchema());
+    }
+
+    [Fact]
+    public void TestLeadingWhitespaceIsInvalid()
+    {
+        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\" P1D\"");
+        Assert.False(dynamicInstance.EvaluateSchema());
+    }
+
+    [Fact]
+    public void TestTrailingWhitespaceIsInvalid()
+    {
+        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"P1D \"");
+        Assert.False(dynamicInstance.EvaluateSchema());
+    }
+
+    [Fact]
+    public void TestEmptyStringIsInvalid()
+    {
+        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"\"");
+        Assert.False(dynamicInstance.EvaluateSchema());
+    }
+
+    [Fact]
+    public void TestYearsAndMonthsCanAppearWithoutDays()
+    {
+        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"P1Y2M\"");
+        Assert.True(dynamicInstance.EvaluateSchema());
+    }
+
+    [Fact]
+    public void TestYearsAndDaysCannotAppearWithoutMonths()
+    {
+        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"P1Y2D\"");
+        Assert.False(dynamicInstance.EvaluateSchema());
+    }
+
+    [Fact]
+    public void TestMonthsAndDaysCanAppearWithoutYears()
+    {
+        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"P1M2D\"");
+        Assert.True(dynamicInstance.EvaluateSchema());
+    }
+
+    [Fact]
+    public void TestHoursAndMinutesCanAppearWithoutSeconds()
+    {
+        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"PT1H2M\"");
+        Assert.True(dynamicInstance.EvaluateSchema());
+    }
+
+    [Fact]
+    public void TestHoursAndSecondsCannotAppearWithoutMinutes()
+    {
+        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"PT1H2S\"");
+        Assert.False(dynamicInstance.EvaluateSchema());
+    }
+
+    [Fact]
+    public void TestMinutesAndSecondsCanAppearWithoutHour()
+    {
+        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"PT1M2S\"");
+        Assert.True(dynamicInstance.EvaluateSchema());
+    }
+
     public class Fixture : IAsyncLifetime
     {
         public DynamicJsonType DynamicJsonType { get; private set; }

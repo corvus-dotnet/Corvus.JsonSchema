@@ -130,6 +130,10 @@ Scenario Outline: unevaluatedProperties with adjacent bool additionalProperties
 /* Schema: 
 {
             "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "type": "object",
+            "properties": {
+                "foo": { "type": "string" }
+            },
             "additionalProperties": true,
             "unevaluatedProperties": false
         }
@@ -153,7 +157,11 @@ Scenario Outline: unevaluatedProperties with adjacent non-bool additionalPropert
 /* Schema: 
 {
             "$schema": "https://json-schema.org/draft/2020-12/schema",
-            "additionalProperties": { "type": "string" },
+            "type": "object",
+            "properties": {
+                "foo": { "type": "string" }
+            },
+            "additionalProperties": {"type": "string"},
             "unevaluatedProperties": false
         }
 */
@@ -168,9 +176,9 @@ Scenario Outline: unevaluatedProperties with adjacent non-bool additionalPropert
     Examples:
         | inputDataReference   | valid | description                                                                      |
         # { "foo": "foo" }
-        | #/006/tests/000/data | true  | with only valid additional properties                                            |
-        # { "foo": "foo", "bar": 1 }
-        | #/006/tests/001/data | false | with invalid additional properties                                               |
+        | #/006/tests/000/data | true  | with no additional properties                                                    |
+        # { "foo": "foo", "bar": "bar" }
+        | #/006/tests/001/data | true  | with additional properties                                                       |
 
 Scenario Outline: unevaluatedProperties with nested properties
 /* Schema: 

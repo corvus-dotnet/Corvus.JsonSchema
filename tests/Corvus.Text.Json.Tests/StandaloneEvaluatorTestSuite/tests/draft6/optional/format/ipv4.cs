@@ -100,20 +100,6 @@ public class SuiteValidationOfIpAddresses : IClassFixture<SuiteValidationOfIpAdd
     }
 
     [Fact]
-    public void TestInvalidLeadingZeroesAsTheyAreTreatedAsOctals()
-    {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"087.10.0.1\"");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
-    }
-
-    [Fact]
-    public void TestValueWithoutLeadingZeroIsValid()
-    {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"87.10.0.1\"");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
-    }
-
-    [Fact]
     public void TestInvalidNonAscii২ABengali2()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"1২7.0.0.1\"");
@@ -124,6 +110,139 @@ public class SuiteValidationOfIpAddresses : IClassFixture<SuiteValidationOfIpAdd
     public void TestNetmaskIsNotAPartOfIpv4Address()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"192.168.1.0/24\"");
+        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [Fact]
+    public void TestLeadingWhitespaceIsInvalid()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\" 192.168.0.1\"");
+        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [Fact]
+    public void TestTrailingWhitespaceIsInvalid()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"192.168.0.1 \"");
+        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [Fact]
+    public void TestTrailingNewlineIsInvalid()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"192.168.0.1\\n\"");
+        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [Fact]
+    public void TestHexadecimalNotationIsInvalid()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"0x7f.0.0.1\"");
+        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [Fact]
+    public void TestOctalNotationExplicitIsInvalid()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"0o10.0.0.1\"");
+        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [Fact]
+    public void TestEmptyPartDoubleDotIsInvalid()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"192.168..1\"");
+        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [Fact]
+    public void TestLeadingDotIsInvalid()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\".192.168.0.1\"");
+        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [Fact]
+    public void TestTrailingDotIsInvalid()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"192.168.0.1.\"");
+        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [Fact]
+    public void TestMinimumValidIPv4Address()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"0.0.0.0\"");
+        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [Fact]
+    public void TestMaximumValidIPv4Address()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"255.255.255.255\"");
+        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [Fact]
+    public void TestEmptyStringIsInvalid()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"\"");
+        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [Fact]
+    public void TestPlusSignIsInvalid()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"+1.2.3.4\"");
+        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [Fact]
+    public void TestNegativeSignIsInvalid()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"-1.2.3.4\"");
+        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [Fact]
+    public void TestExponentialNotationIsInvalid()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"1e2.0.0.1\"");
+        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [Fact]
+    public void TestAlphaCharactersAreInvalid()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"192.168.a.1\"");
+        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [Fact]
+    public void TestInternalWhitespaceIsInvalid()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"192. 168.0.1\"");
+        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [Fact]
+    public void TestTabCharacterIsInvalid()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"192.168.0.1\\t\"");
+        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [Fact]
+    public void TestWithPortNumberIsInvalid()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"192.168.0.1:80\"");
+        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [Fact]
+    public void TestSingleOctetOutOfRangeInLastPosition()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"192.168.0.256\"");
         Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
     }
 

@@ -36,41 +36,43 @@ Scenario Outline: validation of host names
         | #/000/tests/006/data | true  | a valid host name                                                                |
         # xn--4gbwdl.xn--wgbh1c
         | #/000/tests/007/data | true  | a valid punycoded IDN hostname                                                   |
+        # ab--cd.example
+        | #/000/tests/008/data | true  | hostname with consecutive hyphens (RFC1123)                                      |
         # -a-host-name-that-starts-with--
-        | #/000/tests/008/data | false | a host name starting with an illegal character                                   |
+        | #/000/tests/009/data | false | a host name starting with an illegal character                                   |
         # not_a_valid_host_name
-        | #/000/tests/009/data | false | a host name containing illegal characters                                        |
+        | #/000/tests/010/data | false | a host name containing illegal characters                                        |
         # a-vvvvvvvvvvvvvvvveeeeeeeeeeeeeeeerrrrrrrrrrrrrrrryyyyyyyyyyyyyyyy-long-host-name-component
-        | #/000/tests/010/data | false | a host name with a component too long                                            |
+        | #/000/tests/011/data | false | a host name with a component too long                                            |
         # -hostname
-        | #/000/tests/011/data | false | starts with hyphen                                                               |
+        | #/000/tests/012/data | false | starts with hyphen                                                               |
         # hostname-
-        | #/000/tests/012/data | false | ends with hyphen                                                                 |
+        | #/000/tests/013/data | false | ends with hyphen                                                                 |
         # _hostname
-        | #/000/tests/013/data | false | starts with underscore                                                           |
+        | #/000/tests/014/data | false | starts with underscore                                                           |
         # hostname_
-        | #/000/tests/014/data | false | ends with underscore                                                             |
+        | #/000/tests/015/data | false | ends with underscore                                                             |
         # host_name
-        | #/000/tests/015/data | false | contains underscore                                                              |
+        | #/000/tests/016/data | false | contains underscore                                                              |
         # abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijk.com
-        | #/000/tests/016/data | true  | maximum label length                                                             |
+        | #/000/tests/017/data | true  | maximum label length                                                             |
         # abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijkl.com
-        | #/000/tests/017/data | false | exceeds maximum label length                                                     |
+        | #/000/tests/018/data | false | exceeds maximum label length                                                     |
         # hostname
-        | #/000/tests/018/data | true  | single label                                                                     |
+        | #/000/tests/019/data | true  | single label                                                                     |
         # host-name
-        | #/000/tests/019/data | true  | single label with hyphen                                                         |
+        | #/000/tests/020/data | true  | single label with hyphen                                                         |
         # h0stn4me
-        | #/000/tests/020/data | true  | single label with digits                                                         |
+        | #/000/tests/021/data | true  | single label with digits                                                         |
         # hostnam3
-        | #/000/tests/021/data | true  | single label ending with digit                                                   |
+        | #/000/tests/022/data | true  | single label ending with digit                                                   |
         # 
-        | #/000/tests/022/data | false | empty string                                                                     |
+        | #/000/tests/023/data | false | empty string                                                                     |
         # .
-        | #/000/tests/023/data | false | single dot                                                                       |
+        | #/000/tests/024/data | false | single dot                                                                       |
         # .example
-        | #/000/tests/024/data | false | leading dot                                                                      |
+        | #/000/tests/025/data | false | leading dot                                                                      |
         # example.
-        | #/000/tests/025/data | false | trailing dot                                                                     |
+        | #/000/tests/026/data | false | trailing dot                                                                     |
         # example．com
-        | #/000/tests/026/data | false | IDN label separator                                                              |
+        | #/000/tests/027/data | false | IDN label separator                                                              |

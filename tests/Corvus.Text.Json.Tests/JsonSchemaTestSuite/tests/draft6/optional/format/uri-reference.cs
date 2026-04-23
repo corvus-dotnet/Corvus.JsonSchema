@@ -120,6 +120,20 @@ public class SuiteValidationOfUriReferences : IClassFixture<SuiteValidationOfUri
         Assert.False(dynamicInstance.EvaluateSchema());
     }
 
+    [Fact]
+    public void TestUriWithLeadingZeroIPv4IsStructurallyValidAsARegName()
+    {
+        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"http://087.10.0.1/\"");
+        Assert.True(dynamicInstance.EvaluateSchema());
+    }
+
+    [Fact]
+    public void TestUriWithOutOfBoundsIPv4IsStructurallyValidAsARegName()
+    {
+        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"http://999.999.999.999/\"");
+        Assert.True(dynamicInstance.EvaluateSchema());
+    }
+
     public class Fixture : IAsyncLifetime
     {
         public DynamicJsonType DynamicJsonType { get; private set; }

@@ -84,7 +84,6 @@ Scenario Outline: reference internals of known non-applicator
 /* Schema: 
 {
             "$schema": "https://json-schema.org/draft/2019-09/schema",
-            "$id": "/base",
             "examples": [
               { "type": "string" }
             ],

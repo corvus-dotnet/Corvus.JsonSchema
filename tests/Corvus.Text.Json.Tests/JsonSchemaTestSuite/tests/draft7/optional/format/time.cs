@@ -114,6 +114,13 @@ public class SuiteValidationOfTimeStrings : IClassFixture<SuiteValidationOfTimeS
     }
 
     [Fact]
+    public void TestTimeWithUnknownLocalOffsetIsValid()
+    {
+        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"12:34:56-00:00\"");
+        Assert.True(dynamicInstance.EvaluateSchema());
+    }
+
+    [Fact]
     public void TestHourMinuteInTimeOffsetMustBeTwoDigits()
     {
         var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"08:30:06-8:000\"");

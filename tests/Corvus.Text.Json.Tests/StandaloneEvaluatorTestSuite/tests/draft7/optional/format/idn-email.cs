@@ -65,7 +65,7 @@ public class SuiteValidationOfAnInternationalizedEMailAddresses : IClassFixture<
     }
 
     [Fact]
-    public void TestAnInvalidIdnEMailAddress()
+    public void TestAnInvalidEMailIdnEMailAddress()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"2962\"");
         Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
@@ -76,13 +76,6 @@ public class SuiteValidationOfAnInternationalizedEMailAddresses : IClassFixture<
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"joe.bloggs@example.com\"");
         Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
-    }
-
-    [Fact]
-    public void TestAnInvalidEMailAddress()
-    {
-        using var doc = ParsedJsonDocument<JsonElement>.Parse("\"2962\"");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
     }
 
     public class Fixture : IAsyncLifetime

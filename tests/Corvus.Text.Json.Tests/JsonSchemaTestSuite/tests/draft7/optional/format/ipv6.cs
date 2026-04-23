@@ -65,7 +65,7 @@ public class SuiteValidationOfIPv6Addresses : IClassFixture<SuiteValidationOfIPv
     }
 
     [Fact]
-    public void TestAnIPv6AddressWithOutOfRangeValues()
+    public void TestAGroupWith5HexDigitsIsInvalid()
     {
         var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"12345::\"");
         Assert.False(dynamicInstance.EvaluateSchema());

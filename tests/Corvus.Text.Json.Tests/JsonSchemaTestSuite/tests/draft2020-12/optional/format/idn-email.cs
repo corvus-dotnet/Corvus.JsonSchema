@@ -65,7 +65,7 @@ public class SuiteValidationOfAnInternationalizedEMailAddresses : IClassFixture<
     }
 
     [Fact]
-    public void TestAnInvalidIdnEMailAddress()
+    public void TestAnInvalidEMailIdnEMailAddress()
     {
         var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"2962\"");
         Assert.False(dynamicInstance.EvaluateSchema());
@@ -76,13 +76,6 @@ public class SuiteValidationOfAnInternationalizedEMailAddresses : IClassFixture<
     {
         var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"joe.bloggs@example.com\"");
         Assert.True(dynamicInstance.EvaluateSchema());
-    }
-
-    [Fact]
-    public void TestAnInvalidEMailAddress()
-    {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"2962\"");
-        Assert.False(dynamicInstance.EvaluateSchema());
     }
 
     public class Fixture : IAsyncLifetime

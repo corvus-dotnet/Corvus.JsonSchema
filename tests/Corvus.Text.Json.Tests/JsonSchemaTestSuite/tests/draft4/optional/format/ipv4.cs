@@ -100,20 +100,6 @@ public class SuiteValidationOfIpAddresses : IClassFixture<SuiteValidationOfIpAdd
     }
 
     [Fact]
-    public void TestInvalidLeadingZeroesAsTheyAreTreatedAsOctals()
-    {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"087.10.0.1\"");
-        Assert.False(dynamicInstance.EvaluateSchema());
-    }
-
-    [Fact]
-    public void TestValueWithoutLeadingZeroIsValid()
-    {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"87.10.0.1\"");
-        Assert.True(dynamicInstance.EvaluateSchema());
-    }
-
-    [Fact]
     public void TestInvalidNonAscii২ABengali2()
     {
         var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"1২7.0.0.1\"");
@@ -124,6 +110,139 @@ public class SuiteValidationOfIpAddresses : IClassFixture<SuiteValidationOfIpAdd
     public void TestNetmaskIsNotAPartOfIpv4Address()
     {
         var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"192.168.1.0/24\"");
+        Assert.False(dynamicInstance.EvaluateSchema());
+    }
+
+    [Fact]
+    public void TestLeadingWhitespaceIsInvalid()
+    {
+        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\" 192.168.0.1\"");
+        Assert.False(dynamicInstance.EvaluateSchema());
+    }
+
+    [Fact]
+    public void TestTrailingWhitespaceIsInvalid()
+    {
+        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"192.168.0.1 \"");
+        Assert.False(dynamicInstance.EvaluateSchema());
+    }
+
+    [Fact]
+    public void TestTrailingNewlineIsInvalid()
+    {
+        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"192.168.0.1\\n\"");
+        Assert.False(dynamicInstance.EvaluateSchema());
+    }
+
+    [Fact]
+    public void TestHexadecimalNotationIsInvalid()
+    {
+        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"0x7f.0.0.1\"");
+        Assert.False(dynamicInstance.EvaluateSchema());
+    }
+
+    [Fact]
+    public void TestOctalNotationExplicitIsInvalid()
+    {
+        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"0o10.0.0.1\"");
+        Assert.False(dynamicInstance.EvaluateSchema());
+    }
+
+    [Fact]
+    public void TestEmptyPartDoubleDotIsInvalid()
+    {
+        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"192.168..1\"");
+        Assert.False(dynamicInstance.EvaluateSchema());
+    }
+
+    [Fact]
+    public void TestLeadingDotIsInvalid()
+    {
+        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\".192.168.0.1\"");
+        Assert.False(dynamicInstance.EvaluateSchema());
+    }
+
+    [Fact]
+    public void TestTrailingDotIsInvalid()
+    {
+        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"192.168.0.1.\"");
+        Assert.False(dynamicInstance.EvaluateSchema());
+    }
+
+    [Fact]
+    public void TestMinimumValidIPv4Address()
+    {
+        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"0.0.0.0\"");
+        Assert.True(dynamicInstance.EvaluateSchema());
+    }
+
+    [Fact]
+    public void TestMaximumValidIPv4Address()
+    {
+        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"255.255.255.255\"");
+        Assert.True(dynamicInstance.EvaluateSchema());
+    }
+
+    [Fact]
+    public void TestEmptyStringIsInvalid()
+    {
+        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"\"");
+        Assert.False(dynamicInstance.EvaluateSchema());
+    }
+
+    [Fact]
+    public void TestPlusSignIsInvalid()
+    {
+        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"+1.2.3.4\"");
+        Assert.False(dynamicInstance.EvaluateSchema());
+    }
+
+    [Fact]
+    public void TestNegativeSignIsInvalid()
+    {
+        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"-1.2.3.4\"");
+        Assert.False(dynamicInstance.EvaluateSchema());
+    }
+
+    [Fact]
+    public void TestExponentialNotationIsInvalid()
+    {
+        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"1e2.0.0.1\"");
+        Assert.False(dynamicInstance.EvaluateSchema());
+    }
+
+    [Fact]
+    public void TestAlphaCharactersAreInvalid()
+    {
+        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"192.168.a.1\"");
+        Assert.False(dynamicInstance.EvaluateSchema());
+    }
+
+    [Fact]
+    public void TestInternalWhitespaceIsInvalid()
+    {
+        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"192. 168.0.1\"");
+        Assert.False(dynamicInstance.EvaluateSchema());
+    }
+
+    [Fact]
+    public void TestTabCharacterIsInvalid()
+    {
+        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"192.168.0.1\\t\"");
+        Assert.False(dynamicInstance.EvaluateSchema());
+    }
+
+    [Fact]
+    public void TestWithPortNumberIsInvalid()
+    {
+        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"192.168.0.1:80\"");
+        Assert.False(dynamicInstance.EvaluateSchema());
+    }
+
+    [Fact]
+    public void TestSingleOctetOutOfRangeInLastPosition()
+    {
+        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"192.168.0.256\"");
         Assert.False(dynamicInstance.EvaluateSchema());
     }
 

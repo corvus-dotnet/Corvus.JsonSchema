@@ -153,3 +153,30 @@ Scenario Outline: patternProperties with null valued instance properties
         | inputDataReference   | valid | description                                                                      |
         # {"foobar": null}
         | #/004/tests/000/data | true  | allows null values                                                               |
+
+Scenario Outline: patternProperties with Unicode property escape
+/* Schema: 
+{
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "type": "object",
+            "patternProperties": {
+                "^\\p{Letter}+$": {
+                    "type": "number"
+                }
+            }
+        }
+*/
+    Given the input JSON file "patternProperties.json"
+    And the schema at "#/5/schema"
+    And the input data at "<inputDataReference>"
+    And I generate a type for the schema
+    And I construct an instance of the schema type from the data
+    When I validate the instance
+    Then the result will be <valid>
+
+    Examples:
+        | inputDataReference   | valid | description                                                                      |
+        # { "π": 1 }
+        | #/005/tests/000/data | true  | Unicode letter property name matches                                             |
+        # { "123": 1 }
+        | #/005/tests/001/data | true  | Non-letter property name does not match pattern                                  |

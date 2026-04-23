@@ -86,6 +86,27 @@ public class SuiteValidationOfDateTimeStrings : IClassFixture<SuiteValidationOfD
     }
 
     [Fact]
+    public void TestAnInvalidHourInDateTimeString()
+    {
+        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"1990-12-31T24:00:00Z\"");
+        Assert.False(dynamicInstance.EvaluateSchema());
+    }
+
+    [Fact]
+    public void TestAnInvalidMinuteInDateTimeString()
+    {
+        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"1990-12-31T15:60:00Z\"");
+        Assert.False(dynamicInstance.EvaluateSchema());
+    }
+
+    [Fact]
+    public void TestAnInvalidOffsetMinuteInDateTimeString()
+    {
+        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"1990-12-31T10:00:00+10:60\"");
+        Assert.False(dynamicInstance.EvaluateSchema());
+    }
+
+    [Fact]
     public void TestAnInvalidDayInDateTimeString()
     {
         var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"1990-02-31T15:59:59.123-08:00\"");

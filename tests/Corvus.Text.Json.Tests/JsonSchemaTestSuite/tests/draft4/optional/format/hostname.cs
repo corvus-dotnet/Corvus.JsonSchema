@@ -72,6 +72,13 @@ public class SuiteValidationOfHostNames : IClassFixture<SuiteValidationOfHostNam
     }
 
     [Fact]
+    public void TestHostnameWithConsecutiveHyphensRfc1123()
+    {
+        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"ab--cd.example\"");
+        Assert.True(dynamicInstance.EvaluateSchema());
+    }
+
+    [Fact]
     public void TestAHostNameStartingWithAnIllegalCharacter()
     {
         var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"-a-host-name-that-starts-with--\"");

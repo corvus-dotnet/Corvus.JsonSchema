@@ -76,7 +76,7 @@ public class SuiteMaximumValidationWithUnsignedInteger : IClassFixture<SuiteMaxi
     }
 
     [Fact]
-    public void TestBelowTheMaximumIsInvalid()
+    public void TestBelowTheMaximumIsValid()
     {
         var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("299.97");
         Assert.True(dynamicInstance.EvaluateSchema());
