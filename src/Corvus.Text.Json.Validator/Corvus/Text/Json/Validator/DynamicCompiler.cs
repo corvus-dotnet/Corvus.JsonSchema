@@ -93,7 +93,7 @@ public static class DynamicCompiler
         {
             return (
                 from l in ctx.CompileLibraries
-                from r in l.ResolveReferencePaths()
+                from r in TryResolveReferencePaths(l)
                 select MetadataReference.CreateFromFile(r),
                 ctx.CompilationOptions.Defines.AsEnumerable().Union(["DYNAMIC_BUILD"]));
         }
@@ -101,6 +101,21 @@ public static class DynamicCompiler
         // Fallback for .NET Framework where DependencyContext is not available.
         // Scan all DLLs in the host assembly's directory to pick up transitive dependencies.
         return (BuildMetadataReferencesFromDirectory(hostAssembly), new[] { "DYNAMIC_BUILD" });
+    }
+
+    private static IEnumerable<string> TryResolveReferencePaths(CompilationLibrary library)
+    {
+        try
+        {
+            return library.ResolveReferencePaths();
+        }
+        catch (InvalidOperationException)
+        {
+            // Some reference assembly entries (e.g., System.ValueTuple.Reference) may not be
+            // resolvable when the framework reference assemblies are not available. These types
+            // are typically in-box in the target framework and reachable through other references.
+            return [];
+        }
     }
 
     private static IEnumerable<MetadataReference> BuildMetadataReferencesFromDirectory(Assembly hostAssembly)
