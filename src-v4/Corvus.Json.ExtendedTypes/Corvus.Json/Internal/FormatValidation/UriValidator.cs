@@ -84,6 +84,15 @@ internal static class UriValidator
                     case (byte)'`':
                     case (byte)'"':
                         return false;
+                    case (byte)'%':
+                        // RFC 3986 §2.1: pct-encoded = "%" HEXDIG HEXDIG
+                        if (i + 2 >= utf8Value.Length || !IsHexDigit(utf8Value[i + 1]) || !IsHexDigit(utf8Value[i + 2]))
+                        {
+                            return false;
+                        }
+
+                        i += 2; // skip hex digits (loop increment handles the %)
+                        break;
                 }
             }
             else if (b == 0x7F)
@@ -201,4 +210,9 @@ internal static class UriValidator
     private static bool IsAlpha(byte b) => (b >= (byte)'A' && b <= (byte)'Z') || (b >= (byte)'a' && b <= (byte)'z');
 
     private static bool IsDigit(byte b) => b >= (byte)'0' && b <= (byte)'9';
+
+    private static bool IsHexDigit(byte b) =>
+        (b >= (byte)'0' && b <= (byte)'9') ||
+        (b >= (byte)'A' && b <= (byte)'F') ||
+        (b >= (byte)'a' && b <= (byte)'f');
 }

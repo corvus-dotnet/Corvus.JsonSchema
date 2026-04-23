@@ -112,15 +112,16 @@ finally {
 }
 
 $v4GeneratorExe = "$repoRoot\src-v4\Corvus.JsonSchema.SpecGenerator\bin\Release\net8.0\Corvus.JsonSchema.SpecGenerator.exe"
+$v4GeneratorDir = "$repoRoot\src-v4\Corvus.JsonSchema.SpecGenerator"
 
 # Run with JsonSchema selector (uses JSON-Schema-Test-Suite)
 Write-Host "  Running V4 generator (JsonSchema)..."
-& $v4GeneratorExe "$repoRoot\JSON-Schema-Test-Suite" $v4OutputDir JsonSchemaOrgTestSuiteSelector.jsonc > $null
+& $v4GeneratorExe "$repoRoot\JSON-Schema-Test-Suite" $v4OutputDir "$v4GeneratorDir\JsonSchemaOrgTestSuiteSelector.jsonc" > $null
 if ($LASTEXITCODE -ne 0) { throw "V4 JsonSchema generator failed" }
 
 # Run with OpenApi selector (uses OpenApi-Test-Suite)
 Write-Host "  Running V4 generator (OpenApi30)..."
-& $v4GeneratorExe "$repoRoot\OpenApi-Test-Suite" $v4OutputDir OpenApiTestSuiteSelector.jsonc > $null
+& $v4GeneratorExe "$repoRoot\OpenApi-Test-Suite" $v4OutputDir "$v4GeneratorDir\OpenApiTestSuiteSelector.jsonc" > $null
 if ($LASTEXITCODE -ne 0) { throw "V4 OpenApi generator failed" }
 
 $jsonSchemaCount = (Get-ChildItem $v4OutputDir -Filter "*.feature" -Recurse -Exclude "OpenApi30" |

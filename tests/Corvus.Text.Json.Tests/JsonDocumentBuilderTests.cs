@@ -4945,7 +4945,7 @@ public static class JsonDocumentBuilderTests
     [Fact]
     public static void SetProperty_Period_Works()
     {
-        Period dto1 = new Period(1, 2, 3, 4, 5, 6, 7, 8, 9, 1).Normalize();
+        Period dto1 = new Period(1, 2, 0, 4, 5, 6, 7, 0, 0, 0).Normalize();
         Period dto2 = Period.Zero;
         using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"a\":\"P1W\"}");
         using var workspace = JsonWorkspace.Create();
@@ -6039,7 +6039,7 @@ public static class JsonDocumentBuilderTests
         var od = new OffsetDate(new LocalDate(2025, 1, 1), Offset.Zero);
         var ot = new OffsetTime(new LocalTime(14, 0, 3), Offset.Zero);
         var ld = new LocalDate(2025, 1, 1);
-        Period period = new Period(1, 2, 3, 4, 5, 6, 7, 8, 9, 10).Normalize();
+        Period period = new Period(1, 2, 0, 4, 5, 6, 7, 0, 0, 0).Normalize();
 
         // Test data for various numeric types
         byte[] byteArray = [1, 2, 3];
@@ -6468,7 +6468,7 @@ public static class JsonDocumentBuilderTests
         var od = new OffsetDate(new LocalDate(2025, 1, 1), Offset.Zero);
         var ot = new OffsetTime(new LocalTime(14, 0, 3), Offset.Zero);
         var ld = new LocalDate(2025, 1, 1);
-        Period period = new Period(1, 2, 3, 4, 5, 6, 7, 8, 9, 10).Normalize();
+        Period period = new Period(1, 2, 0, 4, 5, 6, 7, 0, 0, 0).Normalize();
 
         // Test data for various numeric types
         byte[] byteArray = [1, 2, 3];
@@ -6729,7 +6729,7 @@ public static class JsonDocumentBuilderTests
         var od = new OffsetDate(new LocalDate(2025, 1, 1), Offset.Zero);
         var ot = new OffsetTime(new LocalTime(14, 0, 3), Offset.Zero);
         var ld = new LocalDate(2025, 1, 1);
-        Period period = new Period(1, 2, 3, 4, 5, 6, 7, 8, 9, 10).Normalize();
+        Period period = new Period(1, 2, 0, 4, 5, 6, 7, 0, 0, 0).Normalize();
 
         // Test data for various numeric types
         byte[] byteArray = [1, 2, 3];
@@ -7172,7 +7172,7 @@ public static class JsonDocumentBuilderTests
         using JsonDocumentBuilder<JsonElement.Mutable> builderDoc = doc.RootElement.CreateBuilder(workspace);
         JsonElement.Mutable root = builderDoc.RootElement;
 
-        Period p1 = new Period(1, 2, 3, 4, 5, 6, 7, 8, 9, 1).Normalize();
+        Period p1 = new Period(1, 2, 0, 4, 5, 6, 7, 0, 0, 0).Normalize();
         Period p2 = Period.Zero;
 
         root.SetItem(0, p1);

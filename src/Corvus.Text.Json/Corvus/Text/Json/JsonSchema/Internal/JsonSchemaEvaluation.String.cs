@@ -1165,17 +1165,16 @@ public static partial class JsonSchemaEvaluation
 
             if (lastAscii == (byte)'-' && value[i] == (byte)'-')
             {
-                // Look for punicode signature
-                if (characterCount != 3 ||
-                    !((value[i - 3] == (byte)'x' || value[i - 3] == (byte)'X') &&
-                      (value[i - 2] == (byte)'n' || value[i - 2] == (byte)'N')))
+                // Detect punycode ACE prefix "xn--" at positions 3-4 of a label
+                if (characterCount == 3 &&
+                    (value[i - 3] == (byte)'x' || value[i - 3] == (byte)'X') &&
+                    (value[i - 2] == (byte)'n' || value[i - 2] == (byte)'N'))
                 {
-                    // Disallow "--" for non-punicode signature
-                    return false;
+                    decodePunicode = true;
+                    break;
                 }
 
-                decodePunicode = true;
-                break;
+                // RFC 1123 allows consecutive hyphens — continue processing
             }
 
             lastAscii = value[i];
@@ -1224,13 +1223,6 @@ public static partial class JsonSchemaEvaluation
         }
 
         if (value[0] == '.')
-        {
-            return false;
-        }
-
-        if (value.Length > 3 &&
-            value[2] == '-' &&
-            value[3] == '-')
         {
             return false;
         }

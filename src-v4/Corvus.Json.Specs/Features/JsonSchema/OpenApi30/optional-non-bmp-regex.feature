@@ -34,35 +34,3 @@ Scenario Outline: Proper UTF-16 surrogate pair handling: pattern
         | #/000/tests/005/data | false | doesn't match one ASCII                                                          |
         # DD
         | #/000/tests/006/data | false | doesn't match two ASCII                                                          |
-
-Scenario Outline: Proper UTF-16 surrogate pair handling: patternProperties
-/* Schema: 
-{
-            "patternProperties": {
-                "^🐲*$": {
-                    "type": "integer"
-                }
-            }
-        }
-*/
-    Given the input JSON file "optional/non-bmp-regex.json"
-    And the schema at "#/1/schema"
-    And the input data at "<inputDataReference>"
-    And I assert format
-    And I generate a type for the schema
-    And I construct an instance of the schema type from the data
-    When I validate the instance
-    Then the result will be <valid>
-
-    Examples:
-        | inputDataReference   | valid | description                                                                      |
-        # { "": 1 }
-        | #/001/tests/000/data | true  | matches empty                                                                    |
-        # { "🐲": 1 }
-        | #/001/tests/001/data | true  | matches single                                                                   |
-        # { "🐲🐲": 1 }
-        | #/001/tests/002/data | true  | matches two                                                                      |
-        # { "🐲": "hello" }
-        | #/001/tests/003/data | false | doesn't match one                                                                |
-        # { "🐲🐲": "hello" }
-        | #/001/tests/004/data | false | doesn't match two                                                                |

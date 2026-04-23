@@ -1,44 +1,34 @@
 {
   "version": 2,
   "dependencies": {
-    "net8.0": {
-      "Endjin.RecommendedPractices.GitHub": {
+    "net10.0": {
+      "Microsoft.DotNet.ILCompiler": {
         "type": "Direct",
-        "requested": "[2.1.18, )",
-        "resolved": "2.1.18",
-        "contentHash": "5zdIpj3qn+hQKvpkJO77wW74S4w8UKE0l8oDIm6jq70X7O0iNfgD+0FzEKXIYM17JtqnVSVaBd4ZyuDxHqVnLg==",
+        "requested": "[10.0.7, )",
+        "resolved": "10.0.7",
+        "contentHash": "2H7j1NltkQx04sPWBkUtFrZNBtro7vwsxRtdThP0oDj6Sn3ouGHCQlxATZ4Me2aJE67+KiXMX2V1IHDjt1uIpw=="
+      },
+      "Microsoft.NET.ILLink.Tasks": {
+        "type": "Direct",
+        "requested": "[10.0.7, )",
+        "resolved": "10.0.7",
+        "contentHash": "AA/yhzFHNtQZXLdqjzujPy25G8EWwGWsAnxOE2zYSBoT/8QHP6ketN3CToD3DFreO653ipUwnKHo22B8AlBMCw=="
+      }
+    },
+    "net10.0/win-x64": {
+      "Microsoft.DotNet.ILCompiler": {
+        "type": "Direct",
+        "requested": "[10.0.7, )",
+        "resolved": "10.0.7",
+        "contentHash": "2H7j1NltkQx04sPWBkUtFrZNBtro7vwsxRtdThP0oDj6Sn3ouGHCQlxATZ4Me2aJE67+KiXMX2V1IHDjt1uIpw==",
         "dependencies": {
-          "Endjin.RecommendedPractices": "2.1.18",
-          "Microsoft.SourceLink.GitHub": "1.1.1"
+          "runtime.win-x64.Microsoft.DotNet.ILCompiler": "10.0.7"
         }
       },
-      "Endjin.RecommendedPractices": {
+      "runtime.win-x64.Microsoft.DotNet.ILCompiler": {
         "type": "Transitive",
-        "resolved": "2.1.18",
-        "contentHash": "AAD5aVVKTdFYsMpdHft4Q4rPdLaBt/IG4K2ozmB0qkotXpIWBhNUDtguBZCkYvTt0o2UXS5fQDP3os86F03lpw==",
-        "dependencies": {
-          "Microsoft.Build.Tasks.Git": "1.1.1"
-        }
-      },
-      "Microsoft.Build.Tasks.Git": {
-        "type": "Transitive",
-        "resolved": "1.1.1",
-        "contentHash": "AT3HlgTjsqHnWpBHSNeR0KxbLZD7bztlZVj7I8vgeYG9SYqbeFGh0TM/KVtC6fg53nrWHl3VfZFvb5BiQFcY6Q=="
-      },
-      "Microsoft.SourceLink.Common": {
-        "type": "Transitive",
-        "resolved": "1.1.1",
-        "contentHash": "WMcGpWKrmJmzrNeuaEb23bEMnbtR/vLmvZtkAP5qWu7vQsY59GqfRJd65sFpBszbd2k/bQ8cs8eWawQKAabkVg=="
-      },
-      "Microsoft.SourceLink.GitHub": {
-        "type": "CentralTransitive",
-        "requested": "[10.0.203, )",
-        "resolved": "1.1.1",
-        "contentHash": "IaJGnOv/M7UQjRJks7B6p7pbPnOwisYGOIzqCz5ilGFTApZ3ktOR+6zJ12ZRPInulBmdAf1SrGdDG2MU8g6XTw==",
-        "dependencies": {
-          "Microsoft.Build.Tasks.Git": "1.1.1",
-          "Microsoft.SourceLink.Common": "1.1.1"
-        }
+        "resolved": "10.0.7",
+        "contentHash": "pdlgAPDgcAMCi1XMrgKTPcovBzM0IG9j8LbsIyXS8XXXIrPRyygByqJPJnPtTPDIHxXsLmd3tlMEDULglbBdKA=="
       }
     }
   }

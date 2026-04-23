@@ -21,6 +21,17 @@ What we now call the V4 Engine continues to be maintained in this library - and 
 - V5 generated types use the `Corvus.Text.Json` namespace and require the `Corvus.Text.Json` NuGet package at runtime, rather than `Corvus.Json.ExtendedTypes`.
 - The immutable functional API from V4 (`WithProperty()`, `SetItem()`, etc.) is replaced by the mutable builder pattern (`CreateBuilder()`, `SetProperty()`, etc.).
 
+### Bug fixes
+
+- **Duration format validation** — Now strictly validates against RFC 3339 Appendix A grammar. Previously accepted fractional values (`PT0.5S`), non-contiguous designators (`P1Y2D` skipping Months), and other ISO 8601 extensions that are not part of RFC 3339. Both V5 and V4 engines are fixed.
+- **URI percent-encoding validation** — Now rejects invalid percent-encoded sequences (`%`, `%A`, `%6G`). Previously these were accepted by the URI validator. Both V5 and V4 engines are fixed.
+- **Hostname validation** — Now correctly allows consecutive hyphens in hostnames per RFC 1123 (`ab--cd.example`). Previously all `--` sequences were rejected due to overly strict IDNA/punycode detection. Both V5 and V4 engines are fixed.
+
+### V4 test infrastructure
+
+- **Name-based test exclusions** — The V4 spec generator now uses name-based test exclusions (matching by scenario and test description) instead of brittle index-based exclusions. This makes the V4 test suite stable across JSON Schema Test Suite updates that reorder tests.
+- **OpenAPI 3.0 patternProperties exclusions** — Tests for `patternProperties` in the OpenAPI 3.0 test suite are now excluded, as `patternProperties` is not a supported keyword in the [OpenAPI 3.0 Schema Object](https://spec.openapis.org/oas/v3.0.4.html#schema-object).
+
 ## V4.6 Updates
 
 ### Breaking changes
