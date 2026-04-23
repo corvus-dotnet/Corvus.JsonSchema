@@ -9,7 +9,7 @@
 namespace Corvus.Text.Json.Internal;
 
 [Flags]
-public enum JsonRegexOptions
+internal enum JsonRegexOptions
 {
     /// <summary>Use default behavior.</summary>
     None = 0x0000,

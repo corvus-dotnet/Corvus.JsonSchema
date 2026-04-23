@@ -22,7 +22,6 @@
                     "subdirectories": {
                         "format": {
                             "excludeFromThisDirectory": [
-                                "ecmascript-regex\\.json"
                             ],
                             "testExclusions": {
                                 "optional/format/date-time.json": {
@@ -58,7 +57,6 @@
                     "subdirectories": {
                         "format": {
                             "excludeFromThisDirectory": [
-                                "ecmascript-regex\\.json"
                             ],
                             "testExclusions": {
                                 "optional/format/date-time.json": {
@@ -95,7 +93,6 @@
                     "subdirectories": {
                         "format": {
                             "excludeFromThisDirectory": [
-                                "ecmascript-regex\\.json"
                             ],
                             "testExclusions": {
                                 "optional/format/date-time.json": {
@@ -146,8 +143,7 @@
                     "subdirectories": {
                         "format": {
                             "excludeFromThisDirectory": [
-                                "unknown\\.json",
-                                "ecmascript-regex\\.json"
+                                "unknown\\.json"
                             ],
                             "testExclusions": {
                                 "optional/format/date-time.json": {
@@ -199,9 +195,6 @@
                     "subdirectories": {
                         "format": {
                             "assertFormat": true,
-                            "excludeFromThisDirectory": [
-                                "ecmascript-regex\\.json"
-                            ],
                             "testExclusions": {
                                 "optional/format/date-time.json": {
                                     "validation of date-time strings": {

@@ -4,7 +4,7 @@
     <TargetFramework>netstandard2.0</TargetFramework>
     <Nullable>enable</Nullable>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
-    <NoWarn>$(NoWarn);nullable;IDE0007;NU5128;RS2008;SA0001;NU1504;CS3021</NoWarn>
+    <NoWarn>$(NoWarn);CS0436;nullable;IDE0007;NU5128;RS2008;SA0001;NU1504;CS3021</NoWarn>
     <CorvusTextJsonPath>..\Corvus.Text.Json\</CorvusTextJsonPath>
     <CorvusTextJsonCodeGenerationPath>..\Corvus.Text.Json.CodeGeneration\</CorvusTextJsonCodeGenerationPath>
     <CorvusV4Path>..\..\src-v4\</CorvusV4Path>
@@ -130,6 +130,15 @@
     <Compile Remove="$(CorvusV4Path)Corvus.Json.JsonReference\Corvus.Json\**\NullableAttributes.cs" />
     <Compile Remove="$(CorvusV4Path)Corvus.Json.ExtendedTypes\Corvus.Json\**\NullableAttributes.cs" />
     <Compile Remove="$(CorvusV4Path)Corvus.Json.CodeGeneration\Corvus.Json.CodeGeneration\NullableAttributes.cs" />
+    <Compile Include="$(CorvusTextJsonPath)Corvus\Text\Json\Regex\JsonRegexValidator.cs" Link="Regex\JsonRegexValidator.cs" />
+    <Compile Include="$(CorvusTextJsonPath)Corvus\Text\Json\Regex\JsonRegexNode.cs" Link="Regex\JsonRegexNode.cs" />
+    <Compile Include="$(CorvusTextJsonPath)Corvus\Text\Json\Regex\JsonRegexNodeKind.cs" Link="Regex\JsonRegexNodeKind.cs" />
+    <Compile Include="$(CorvusTextJsonPath)Corvus\Text\Json\Regex\JsonRegexOpCode.cs" Link="Regex\JsonRegexOpCode.cs" />
+    <Compile Include="$(CorvusTextJsonPath)Corvus\Text\Json\Regex\JsonRegexOptions.cs" Link="Regex\JsonRegexOptions.cs" />
+    <Compile Include="$(CorvusTextJsonPath)Corvus\Text\Json\Regex\JsonRegexCharClass.cs" Link="Regex\JsonRegexCharClass.cs" />
+    <Compile Include="$(CorvusTextJsonPath)Corvus\Text\Json\Regex\JsonRegexCaseBehavior.cs" Link="Regex\JsonRegexCaseBehavior.cs" />
+    <Compile Include="$(CorvusTextJsonPath)Corvus\Text\Json\Regex\JsonRegexReplacement.cs" Link="Regex\JsonRegexReplacement.cs" />
+    <Compile Include="..\..\Common\src\System\HexConverter.cs" Link="Common\System\HexConverter.cs" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="metaschema\corvus\meta\corvus-extensions.json" />

@@ -9,6 +9,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using Corvus.Json.Internal;
+using Corvus.Text.Json.Internal;
 
 namespace Corvus.Json;
 
@@ -3456,32 +3457,56 @@ public static partial class Validate
             }
         }
 
-        JsonRegex regexInstance = instance.As<JsonRegex>();
+        ValidationContext result;
 
-        if (!regexInstance.TryGetRegex(out Regex _))
+        if (level >= ValidationLevel.Verbose)
         {
-            if (level >= ValidationLevel.Detailed)
-            {
-                return validationContext.WithResult(isValid: false, $"Validation {formatKeyword ?? "format"} - should have been 'regex' but was '{regexInstance}'.", formatKeyword ?? "format");
-            }
-            else if (level >= ValidationLevel.Basic)
-            {
-                return validationContext.WithResult(isValid: false, "Validation format - should have been 'regex'.", formatKeyword ?? "format");
-            }
-            else
-            {
-                return ValidationContext.InvalidContext;
-            }
+            result = validationContext
+                .WithResult(isValid: true, $"Validation {typeKeyword ?? "type"} - was 'string'.", typeKeyword ?? "type");
+        }
+        else
+        {
+            result = validationContext;
         }
 
-        if (level == ValidationLevel.Verbose)
+        instance.AsString.TryGetValue(RegexValidator, new ValidationContextWrapperWithFormatKeyword(result, level, formatKeyword), out result);
+
+        if (level == ValidationLevel.Flag && !result.IsValid)
         {
-            return validationContext
-                .WithResult(isValid: true, $"Validation {typeKeyword ?? "type"} - was 'string'.", typeKeyword ?? "type")
-                .WithResult(isValid: true, $"Validation {formatKeyword ?? "format"} - was 'regex'.", formatKeyword ?? "format");
+            return result;
         }
 
-        return validationContext;
+        return result;
+
+        static bool RegexValidator(ReadOnlySpan<char> input, in ValidationContextWrapperWithFormatKeyword context, out ValidationContext result)
+        {
+            result = context.Context;
+
+            if (!JsonRegexValidator.Validate(input, JsonRegexOptions.ECMAScript))
+            {
+                if (context.Level >= ValidationLevel.Detailed)
+                {
+                    result = context.Context.WithResult(isValid: false, $"Validation {context.FormatKeyword ?? "format"} - should have been 'regex' but was '{input.ToString()}'.", context.FormatKeyword ?? "format");
+                }
+                else if (context.Level >= ValidationLevel.Basic)
+                {
+                    result = context.Context.WithResult(isValid: false, "Validation format - should have been 'regex'.", context.FormatKeyword ?? "format");
+                }
+                else
+                {
+                    result = context.Context.WithResult(isValid: false);
+                }
+
+                return true;
+            }
+
+            if (context.Level == ValidationLevel.Verbose)
+            {
+                result = context.Context.WithResult(isValid: true, $"Validation {context.FormatKeyword ?? "format"} - was 'regex'.", context.FormatKeyword ?? "format");
+            }
+
+            return true;
+        }
     }
 
     /// <summary>

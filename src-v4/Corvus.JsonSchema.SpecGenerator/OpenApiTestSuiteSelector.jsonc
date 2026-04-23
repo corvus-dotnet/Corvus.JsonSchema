@@ -14,8 +14,6 @@
                 "optional": {
                     "excludeFromThisDirectory": [
                         "bignum\\.json",
-                        "ecmascript-regex\\.json",
-                        "non-bmp-regex\\.json",
                         "zeroTerminatedFloats\\.json"
                     ],
                     "subdirectories": {
