@@ -25,8 +25,4 @@
     <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
     <RestoreLockedMode Condition="$(ContinuousIntegrationBuild) == 'true'">true</RestoreLockedMode>
   </PropertyGroup>
-  <ItemGroup>
-    <PackageReference Update="StyleCop.Analyzers" />
-    <PackageReference Update="Roslynator.Analyzers" />
-  </ItemGroup>
 </Project>

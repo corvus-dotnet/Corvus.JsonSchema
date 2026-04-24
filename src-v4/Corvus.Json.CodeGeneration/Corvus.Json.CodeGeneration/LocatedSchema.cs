@@ -55,7 +55,7 @@ public class LocatedSchema
     public IVocabulary Vocabulary { get; }
 
     /// <summary>
-    /// Gets or sets the JSON Pointer from the root document to this schema.
+    /// Gets the JSON Pointer from the root document to this schema.
     /// </summary>
     /// <remarks>
     /// <para>

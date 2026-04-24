@@ -30,12 +30,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Corvus.Json.JsonReference\Corvus.Json.JsonReference.csproj" />
   </ItemGroup>
-  <ItemGroup>
-    <PackageReference Update="StyleCop.Analyzers" />
-  </ItemGroup>
-  <ItemGroup>
-    <PackageReference Update="Roslynator.Analyzers" />
-  </ItemGroup>
+
   <ItemGroup>
     <None Include="README.md" Pack="true" PackagePath="\" />
   </ItemGroup>

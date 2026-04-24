@@ -34,12 +34,7 @@
   <ItemGroup>
     <Compile Include="..\..\src\Corvus.Text.Json.CodeGeneration\EcmaRegexTranslator.cs" Link="EcmaRegexTranslator.cs" />
   </ItemGroup>
-  <ItemGroup>
-    <PackageReference Update="StyleCop.Analyzers" />
-  </ItemGroup>
-  <ItemGroup>
-    <PackageReference Update="Roslynator.Analyzers" />
-  </ItemGroup>
+
   <ItemGroup>
     <None Include="README.md" Pack="true" PackagePath="\" />
   </ItemGroup>

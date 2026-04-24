@@ -1,0 +1,23 @@
+<Project>
+
+  <!--
+    Endjin.RecommendedPractices.targets injects StyleCop.Analyzers and Roslynator.Analyzers
+    with explicit Version attributes. Under CPM (ManagePackageVersionsCentrally=true), any
+    explicit Version on a PackageReference causes NU1008. The dotnet CLI NuGet client handles
+    this via special Update evaluation, but the VS (devenv) NuGet client follows strict MSBuild
+    evaluation order where the project-file Update runs before the .targets Include exists.
+
+    Directory.Build.targets is imported after package .targets files, so Remove+Include here
+    replaces the version-bearing entries with clean CPM-managed ones.
+
+    Projects that opt out of CPM (ManagePackageVersionsCentrally=false) are skipped — they
+    manage their own versions and the Endjin-injected Version is acceptable.
+  -->
+  <ItemGroup Condition="'$(ManagePackageVersionsCentrally)' != 'false'">
+    <PackageReference Remove="StyleCop.Analyzers" />
+    <PackageReference Remove="Roslynator.Analyzers" />
+    <PackageReference Include="StyleCop.Analyzers" PrivateAssets="All" />
+    <PackageReference Include="Roslynator.Analyzers" PrivateAssets="All" />
+  </ItemGroup>
+
+</Project>

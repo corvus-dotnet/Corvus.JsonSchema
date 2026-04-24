@@ -23,12 +23,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Corvus.Json.ExtendedTypes\Corvus.Json.ExtendedTypes.csproj" />
   </ItemGroup>
-  <ItemGroup>
-    <PackageReference Update="StyleCop.Analyzers" />
-  </ItemGroup>
-  <ItemGroup>
-    <PackageReference Update="Roslynator.Analyzers" />
-  </ItemGroup>
+
   <ItemGroup>
     <Folder Include="Draft4\" />
   </ItemGroup>
