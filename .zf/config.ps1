@@ -44,6 +44,9 @@ $IncludeAssembliesInCodeCoverage = @("Corvus*")
 $ExcludeAssembliesInCodeCoverage = @("Corvus*.Tests")
 $ExcludeFilesInCodeCoverage = @('*.g.cs', '*.designer.cs')
 
+# When running GHA honour the TFM that the matrix build passes via an environment variable
+$TargetFrameworkMoniker = property BUILDVAR_TargetFrameworkMoniker ''
+
 # Run test assemblies sequentially to avoid OOM on CI runners (7 GB).
 # The solution has 7 test assemblies; running them all in parallel exhausts memory.
 # Exclude 'outerloop' (memory stress tests) and 'failing' (known failures) categories
@@ -143,3 +146,5 @@ task BuildWebsite -If { $BuildWebsite } {
 
     exec { & pwsh -File (Join-Path $websiteDir "build.ps1") @websiteBuildArgs }
 }
+
+$TargetFrameworkMoniker = 'net10.0'
