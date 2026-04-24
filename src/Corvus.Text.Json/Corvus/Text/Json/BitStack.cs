@@ -62,13 +62,13 @@ internal struct BitStack
     {
         _currentDepth--;
         bool inObject;
-        if (_currentDepth < AllocationFreeMaxDepth)
+        if (_currentDepth <= AllocationFreeMaxDepth)
         {
-            _allocationFreeContainer >>= 1;
-            inObject = (_allocationFreeContainer & 1) != 0;
-        }
-        else if (_currentDepth == AllocationFreeMaxDepth)
-        {
+            if (_currentDepth < AllocationFreeMaxDepth)
+            {
+                _allocationFreeContainer >>= 1;
+            }
+
             inObject = (_allocationFreeContainer & 1) != 0;
         }
         else
