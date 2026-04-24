@@ -100,7 +100,9 @@ The `--force` flag ensures NuGet re-evaluates sources. The `--no-incremental` fl
 
 - A local clone of the [bowtie](https://github.com/bowtie-json-schema/bowtie) repository
 - Podman or Docker available on `PATH`
-- Python 3.12+ and [nox](https://nox.thea.codes/) installed
+- Python 3.13+ and [uv](https://docs.astral.sh/uv/) (or pip) installed
+
+For detailed installation instructions, see [Bowtie Prerequisites (Windows)](BowtiePrerequisites.md).
 
 #### Setting up the bowtie venv
 

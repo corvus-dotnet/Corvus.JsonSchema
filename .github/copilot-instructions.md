@@ -50,11 +50,11 @@ Follow this pattern when adding functionality: keep the core struct untouched an
 
 Two code-gen mechanisms are used together:
 1. **Roslyn `IIncrementalGenerator`** (`src/Corvus.Text.Json.SourceGenerator/`) — triggered at build time via `JsonSchemaTypeGeneratorAttribute`. `EmitCompilerGeneratedFiles=true` writes output to `obj/` for inspection.
-2. **CLI tool** (`src/Corvus.Json.CodeGenerator/`) — `corvusjson` (package: `Corvus.Json.Cli`) generates C# from JSON Schema for use outside the build pipeline (e.g., the `tests/Corvus.Text.Json.Tests.GeneratedModels/` project). The legacy `generatejsonschematypes` command (package: `Corvus.Json.CodeGenerator`) still works as a shim but defaults to the V4 engine.
+2. **CLI tool** (`src/Corvus.Json.Cli.Core/`) — `corvusjson jsonschema` (package: `Corvus.Json.Cli`) generates C# from JSON Schema for use outside the build pipeline (e.g., the `tests/Corvus.Text.Json.Tests.GeneratedModels/` project). The legacy `generatejsonschematypes` command (package: `Corvus.Json.CodeGenerator`) still works as a shim but defaults to the V4 engine.
 
 **IMPORTANT:** When writing documentation, examples, or instructions that reference Source Generator attributes or CLI tool options, always verify the exact parameter names and types by checking the source code:
-- **Source Generator attribute:** `src/Corvus.Text.Json.SourceGenerator/IncrementalSourceGenerator.cs` — the `JsonSchemaTypeGeneratorAttribute` is emitted by the generator and defines: `Location` (string, required), `RebaseToRootPath` (bool), `EmitEvaluator` (bool).
-- **CLI tool options:** `src/Corvus.Json.CodeGenerator/GenerateCommand.cs` — defines all command-line settings including `--assertFormat` (bool, default true), `--rootNamespace`, `--outputPath`, `--outputRootTypeName`, `--engine`, `--codeGenerationMode`, etc. The new CLI package is `Corvus.Json.Cli` (command: `corvusjson`); the legacy `Corvus.Json.CodeGenerator` package (command: `generatejsonschematypes`) still works but defaults to the V4 engine.
+- **Source Generator attribute:** `src/Corvus.Text.Json.SourceGenerator/IncrementalSourceGenerator.cs` — the `JsonSchemaTypeGeneratorAttribute` is emitted by the generator. Constructor: `(string location, bool rebaseToRootPath = false)`; settable property: `EmitEvaluator` (bool). Applies to `partial struct` only (`AttributeTargets.Struct`).
+- **CLI tool options:** `src/Corvus.Json.Cli.Core/GenerateCommand.cs` — defines all command-line settings including `--assertFormat` (bool, default true), `--rootNamespace`, `--outputPath`, `--outputRootTypeName`, `--engine`, `--codeGenerationMode`, etc. The CLI command is `corvusjson jsonschema` (package: `Corvus.Json.Cli`); the legacy `Corvus.Json.CodeGenerator` package (command: `generatejsonschematypes`) still works but defaults to the V4 engine.
 
 Do **not** invent or hallucinate option names. If unsure, read the source files above before writing.
 
@@ -173,7 +173,7 @@ using ParsedJsonDocument<JsonElement> sourceDoc = ParsedJsonDocument<JsonElement
 
 // Convert an immutable element into a mutable builder document
 using JsonDocumentBuilder<JsonElement.Mutable> builder =
-    sourceDoc.RootElement.BuildDocument(workspace);
+    sourceDoc.RootElement.CreateBuilder(workspace);
 
 JsonElement.Mutable root = builder.RootElement;
 // ... manipulate root ...
@@ -187,15 +187,15 @@ using JsonWorkspace workspace = JsonWorkspace.Create();
 using ParsedJsonDocument<JsonElement> doc1 = ParsedJsonDocument<JsonElement>.Parse(json1);
 using ParsedJsonDocument<JsonElement> doc2 = ParsedJsonDocument<JsonElement>.Parse(json2);
 
-using JsonDocumentBuilder<JsonElement.Mutable> builder1 = doc1.RootElement.BuildDocument(workspace);
-using JsonDocumentBuilder<JsonElement.Mutable> builder2 = doc2.RootElement.BuildDocument(workspace);
+using JsonDocumentBuilder<JsonElement.Mutable> builder1 = doc1.RootElement.CreateBuilder(workspace);
+using JsonDocumentBuilder<JsonElement.Mutable> builder2 = doc2.RootElement.CreateBuilder(workspace);
 ```
 
 You can also create an empty builder (no source document):
 
 ```csharp
 using JsonDocumentBuilder<JsonElement.Mutable> builder =
-    workspace.BuildDocument<JsonElement.Mutable>(initialCapacity: 30, initialValueBufferSize: 8192);
+    workspace.CreateBuilder<JsonElement.Mutable>(initialCapacity: 30, initialValueBufferSize: 8192);
 ```
 
 ### Clones
@@ -205,7 +205,7 @@ Calling `.Clone()` on a mutable element produces an immutable `ParsedJsonDocumen
 ```csharp
 using (JsonWorkspace workspace = JsonWorkspace.Create())
 using (ParsedJsonDocument<JsonElement> parsedDoc = ParsedJsonDocument<JsonElement>.Parse("[[[]]]"))
-using (JsonDocumentBuilder<JsonElement.Mutable> doc = parsedDoc.RootElement.BuildDocument(workspace))
+using (JsonDocumentBuilder<JsonElement.Mutable> doc = parsedDoc.RootElement.CreateBuilder(workspace))
 {
     clone = doc.RootElement[0].Clone(); // clone survives after the using blocks
 }
