@@ -21,7 +21,7 @@ public abstract partial class JsonDocument
     /// <summary>
     /// Represents a property map structure for efficient property lookup in JSON objects.
     /// </summary>
-    [StructLayout(LayoutKind.Sequential)]
+    [StructLayout(LayoutKind.Sequential, Pack = 4)]
     internal struct PropertyMap
     {
         /// <summary>
@@ -50,6 +50,12 @@ public abstract partial class JsonDocument
         public int LengthOfEndToken; // The length of the end token
 
         /// <summary>
+        /// The precomputed reciprocal for Lemire's fastmod algorithm, used on 64-bit runtimes
+        /// to replace expensive modulo division with a multiply+shift in bucket lookups.
+        /// </summary>
+        public ulong FastModMultiplier;
+
+        /// <summary>
         /// The offset of the length of the end token in the property map.
         /// </summary>
         internal const int LengthOfEndTokenOffset = 16; // The offset of the length of the end token in the property map
@@ -57,7 +63,7 @@ public abstract partial class JsonDocument
         /// <summary>
         /// The size in bytes of a PropertyMap structure.
         /// </summary>
-        internal const int Size = 20;
+        internal const int Size = 28;
 
 #if DEBUG
 
@@ -77,9 +83,10 @@ public abstract partial class JsonDocument
         /// <param name="count">The number of entries.</param>
         /// <param name="destination">The destination span to write to.</param>
         /// <param name="lengthOfEndToken">The length of the end token.</param>
-        internal static void Write(int bucketOffset, int entryOffset, int bucketCount, int count, Span<byte> destination, int lengthOfEndToken)
+        /// <param name="fastModMultiplier">The precomputed fastmod multiplier for bucket lookups.</param>
+        internal static void Write(int bucketOffset, int entryOffset, int bucketCount, int count, Span<byte> destination, int lengthOfEndToken, ulong fastModMultiplier)
         {
-            var propertyMap = new PropertyMap() { BucketCount = bucketCount, Count = count, BucketOffset = bucketOffset, EntryOffset = entryOffset, LengthOfEndToken = lengthOfEndToken };
+            var propertyMap = new PropertyMap() { BucketCount = bucketCount, Count = count, BucketOffset = bucketOffset, EntryOffset = entryOffset, LengthOfEndToken = lengthOfEndToken, FastModMultiplier = fastModMultiplier };
             MemoryMarshal.Write(destination, ref propertyMap);
         }
 
@@ -107,11 +114,22 @@ public abstract partial class JsonDocument
         /// <param name="buckets">The buckets span.</param>
         /// <param name="hashCode">The hash code to find the bucket for.</param>
         /// <param name="size">The size of the bucket array.</param>
+        /// <param name="fastModMultiplier">The precomputed fastmod multiplier.</param>
         /// <returns>A reference to the appropriate bucket.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal static ref int GetBucket(Span<int> buckets, ulong hashCode, int size)
+        internal static ref int GetBucket(Span<int> buckets, ulong hashCode, int size, ulong fastModMultiplier)
         {
-            return ref buckets[(int)(hashCode % (ulong)size)];
+            if (IntPtr.Size == 8)
+            {
+                // On 64-bit: Lemire's fastmod replaces expensive division with multiply+shift.
+                // XOR-fold the 64-bit hash to 32 bits to preserve entropy from upper bytes
+                // (e.g., keys 5–7 bytes have meaningful data in bits 32–48).
+                return ref buckets[(int)HashHelpers.FastMod((uint)(hashCode ^ (hashCode >> 32)), (uint)size, fastModMultiplier)];
+            }
+            else
+            {
+                return ref buckets[(int)(hashCode % (ulong)size)];
+            }
         }
 
         /// <summary>
@@ -126,6 +144,16 @@ public abstract partial class JsonDocument
             public const int Size = 24;
 
             /// <summary>
+            /// The hash code for this entry.
+            /// </summary>
+            /// <remarks>
+            /// Placed first for cache locality: the lookup loop reads HashCode on every
+            /// iteration, then Next/ValueIndex only on match. Keeping all three in the
+            /// first 16 bytes minimises cache-line splits.
+            /// </remarks>
+            public ulong HashCode;
+
+            /// <summary>
             /// The index of the next entry in the chain.
             /// </summary>
             public int Next;
@@ -134,11 +162,6 @@ public abstract partial class JsonDocument
             /// The index of the value for this entry.
             /// </summary>
             public int ValueIndex;
-
-            /// <summary>
-            /// The hash code for this entry.
-            /// </summary>
-            public ulong HashCode;
 
             /// <summary>
             /// The key offset for dynamic unescaped keys. Top bit indicates if the value is present.
@@ -279,6 +302,7 @@ public abstract partial class JsonDocument
         int lengthOfEnd = endObjectRow.SizeOrLengthOrPropertyMapIndex;
         int propertyCount = startObjectRow.SizeOrLengthOrPropertyMapIndex;
         int size = HashHelpers.GetPrime(propertyCount);
+        ulong fastModMultiplier = HashHelpers.GetFastModMultiplier((uint)size);
         int entriesSize = size * PropertyMap.Entry.Size;
 
         // Make sure we have space for the buckets
@@ -317,9 +341,8 @@ public abstract partial class JsonDocument
         buckets.Clear();
         entries.Clear();
 
-        Span<byte> buffer = stackalloc byte[JsonConstants.StackallocByteThreshold];
-
         int propertyIndex = 0;
+        int entryOffset = 0;
 
         int index = startObjectIndex + DbRow.Size;
 
@@ -334,22 +357,22 @@ public abstract partial class JsonDocument
             {
                 Debug.Assert(propertyRow.LocationOrIndex >= 0, "The property must be local if it has complex children");
 
-                ReadOnlyMemory<byte> rawName = GetRawSimpleValueUnsafe(index, false);
+                ReadOnlyMemory<byte> rawName = GetRawSimpleValueFromRowUnsafe(propertyRow);
                 ReadOnlySpan<byte> unescapedName = UnescapeAndStoreUnescapedStringValue(rawName.Span, out int dynamicValueOffset);
                 ulong hashCode = PropertyMap.GetHashCode(unescapedName);
-                ref int bucket = ref PropertyMap.GetBucket(buckets, hashCode, size);
-                int entryIndex = propertyIndex * PropertyMap.Entry.Size;
-                PropertyMap.Entry.Write(entries.Slice(entryIndex, PropertyMap.Entry.Size), hashCode, bucket - 1, valueIndex, dynamicValueOffset);
+                ref int bucket = ref PropertyMap.GetBucket(buckets, hashCode, size, fastModMultiplier);
+                PropertyMap.Entry.Write(entries.Slice(entryOffset, PropertyMap.Entry.Size), hashCode, bucket - 1, valueIndex, dynamicValueOffset);
+                entryOffset += PropertyMap.Entry.Size;
                 propertyIndex++;
                 bucket = propertyIndex; // Value in buckets is 1-based
             }
             else
             {
-                ReadOnlyMemory<byte> rawName = GetRawSimpleValueUnsafe(index, false);
+                ReadOnlyMemory<byte> rawName = GetRawSimpleValueFromRowUnsafe(propertyRow);
                 ulong hashCode = PropertyMap.GetHashCode(rawName.Span);
-                ref int bucket = ref PropertyMap.GetBucket(buckets, hashCode, size);
-                int entryIndex = propertyIndex * PropertyMap.Entry.Size;
-                PropertyMap.Entry.Write(entries.Slice(entryIndex, PropertyMap.Entry.Size), hashCode, bucket - 1, valueIndex);
+                ref int bucket = ref PropertyMap.GetBucket(buckets, hashCode, size, fastModMultiplier);
+                PropertyMap.Entry.Write(entries.Slice(entryOffset, PropertyMap.Entry.Size), hashCode, bucket - 1, valueIndex);
+                entryOffset += PropertyMap.Entry.Size;
                 propertyIndex++;
                 bucket = propertyIndex; // Value in buckets is 1-based
             }
@@ -366,7 +389,7 @@ public abstract partial class JsonDocument
             }
         }
 
-        PropertyMap.Write(_bucketOffset, _entryOffset, size, propertyCount, _propertyMapBacking.AsSpan(_propertyMapOffset), lengthOfEnd);
+        PropertyMap.Write(_bucketOffset, _entryOffset, size, propertyCount, _propertyMapBacking.AsSpan(_propertyMapOffset), lengthOfEnd, fastModMultiplier);
 
         int propertyMapIndex = _propertyMapOffset;
 
@@ -437,7 +460,7 @@ public abstract partial class JsonDocument
         Span<byte> entries = _entriesBacking.AsSpan(propertyMap.EntryOffset, propertyMap.Count * PropertyMap.Entry.Size);
 
         ulong hashCode = PropertyMap.GetHashCode(unescapedUtf8Name);
-        int i = PropertyMap.GetBucket(buckets, hashCode, propertyMap.BucketCount);
+        int i = PropertyMap.GetBucket(buckets, hashCode, propertyMap.BucketCount, propertyMap.FastModMultiplier);
         uint collisionCount = 0;
         PropertyMap.Entry entry;
 

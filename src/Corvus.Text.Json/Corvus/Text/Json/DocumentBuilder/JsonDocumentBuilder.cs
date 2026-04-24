@@ -1110,6 +1110,27 @@ public sealed partial class JsonDocumentBuilder<T> : JsonDocument, IMutableJsonD
         return ReadRawSimpleDynamicValue(offset);
     }
 
+    /// <inheritdoc />
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private protected override ReadOnlyMemory<byte> GetRawSimpleValueFromRowUnsafe(in DbRow row)
+    {
+        Debug.Assert(row.IsSimpleValue);
+
+        if (row.FromExternalDocument)
+        {
+            IJsonDocument document = _workspace.GetDocument(row.WorkspaceDocumentId);
+            return document.GetRawSimpleValue(row.LocationOrIndex);
+        }
+
+        int offset = row.LocationOrIndex;
+        if (offset < _rawJsonLength)
+        {
+            return _valueBacking.AsMemory(offset, row.SizeOrLengthOrPropertyMapIndex);
+        }
+
+        return ReadRawSimpleDynamicValue(offset);
+    }
+
     /// <summary>
     /// Reads a simple value directly from the raw JSON backing region of <c>_valueBacking</c>.
     /// </summary>

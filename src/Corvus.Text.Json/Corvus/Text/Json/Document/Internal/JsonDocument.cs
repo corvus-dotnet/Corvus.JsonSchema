@@ -176,6 +176,14 @@ public abstract partial class JsonDocument
     protected abstract ReadOnlyMemory<byte> GetRawSimpleValueUnsafe(ref MetadataDb parsedData, int index);
 
     /// <summary>
+    /// Gets the raw simple value as a memory span directly from the specified database row,
+    /// avoiding a redundant row lookup when the caller has already read the row.
+    /// </summary>
+    /// <param name="row">The already-read database row for the element.</param>
+    /// <returns>The raw value as a memory span (without quotes).</returns>
+    private protected abstract ReadOnlyMemory<byte> GetRawSimpleValueFromRowUnsafe(in DbRow row);
+
+    /// <summary>
     /// Checks that the actual token type matches the expected token type, throwing an exception if not.
     /// </summary>
     /// <param name="expected">The expected token type.</param>

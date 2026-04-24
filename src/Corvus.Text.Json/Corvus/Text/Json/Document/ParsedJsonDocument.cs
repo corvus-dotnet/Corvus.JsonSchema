@@ -356,6 +356,13 @@ public sealed partial class ParsedJsonDocument<T> : JsonDocument, IJsonDocument,
 
     /// <inheritdoc />
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private protected override ReadOnlyMemory<byte> GetRawSimpleValueFromRowUnsafe(in DbRow row)
+    {
+        return _utf8Json.Slice(row.LocationOrIndex, row.SizeOrLengthOrPropertyMapIndex);
+    }
+
+    /// <inheritdoc />
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     string? IJsonDocument.GetString(int index, JsonTokenType expectedType)
     {
         CheckNotDisposed();
@@ -1652,7 +1659,47 @@ public sealed partial class ParsedJsonDocument<T> : JsonDocument, IJsonDocument,
             Debug.Assert(reader.TokenStartIndex <= int.MaxValue);
             int tokenStart = (int)reader.TokenStartIndex;
 
-            if (tokenType == JsonTokenType.StartObject)
+            if (tokenType == JsonTokenType.PropertyName)
+            {
+                // PropertyName is the most frequent token in object-heavy JSON,
+                // so checking it first reduces branch mispredictions.
+                numberOfRowsForValues++;
+                numberOfRowsForMembers++;
+                arrayItemsOrPropertyCount++;
+
+                // Adding 1 to skip the start quote will never overflow
+                Debug.Assert(tokenStart < int.MaxValue);
+
+                database.AppendStringOrPropertyName(tokenType, tokenStart + 1, reader.ValueSpan.Length, reader.ValueIsEscaped);
+
+                Debug.Assert(!inArray);
+            }
+            else if (tokenType >= JsonTokenType.String)
+            {
+                // Scalar values (String, Number, True, False, Null) are the second most
+                // frequent tokens. JsonTokenType.String == 6, Null == 10.
+                Debug.Assert(tokenType <= JsonTokenType.Null);
+                numberOfRowsForValues++;
+                numberOfRowsForMembers++;
+
+                if (inArray)
+                {
+                    arrayItemsOrPropertyCount++;
+                }
+
+                if (tokenType == JsonTokenType.String)
+                {
+                    // Adding 1 to skip the start quote will never overflow
+                    Debug.Assert(tokenStart < int.MaxValue);
+
+                    database.AppendStringOrPropertyName(tokenType, tokenStart + 1, reader.ValueSpan.Length, reader.ValueIsEscaped);
+                }
+                else
+                {
+                    database.Append(tokenType, tokenStart, reader.ValueSpan.Length);
+                }
+            }
+            else if (tokenType == JsonTokenType.StartObject)
             {
                 if (inArray)
                 {
@@ -1660,15 +1707,20 @@ public sealed partial class ParsedJsonDocument<T> : JsonDocument, IJsonDocument,
                 }
 
                 numberOfRowsForValues++;
+                int startIndex = database.Length;
                 database.Append(tokenType, tokenStart, DbRow.UnknownSize);
-                var row = new StackRow(arrayItemsOrPropertyCount, numberOfRowsForMembers + 1);
+                var row = new StackRow(arrayItemsOrPropertyCount, numberOfRowsForMembers + 1, startIndex);
                 stack.Push(row);
                 arrayItemsOrPropertyCount = 0;
                 numberOfRowsForMembers = 0;
             }
             else if (tokenType == JsonTokenType.EndObject)
             {
-                int rowIndex = database.FindIndexOfFirstUnsetSizeOrLength(JsonTokenType.StartObject);
+                StackRow row = stack.Pop();
+                int rowIndex = row.StartIndex;
+
+                Debug.Assert(database.GetJsonTokenType(rowIndex) == JsonTokenType.StartObject);
+                Debug.Assert(database.IsUnknownSizeAt(rowIndex));
 
                 numberOfRowsForValues++;
                 numberOfRowsForMembers++;
@@ -1679,7 +1731,6 @@ public sealed partial class ParsedJsonDocument<T> : JsonDocument, IJsonDocument,
                 database.SetNumberOfRows(rowIndex, numberOfRowsForMembers);
                 database.SetNumberOfRows(newRowIndex, numberOfRowsForMembers);
 
-                StackRow row = stack.Pop();
                 arrayItemsOrPropertyCount = row.SizeOrLength;
                 numberOfRowsForMembers += row.NumberOfRows;
             }
@@ -1691,15 +1742,20 @@ public sealed partial class ParsedJsonDocument<T> : JsonDocument, IJsonDocument,
                 }
 
                 numberOfRowsForMembers++;
+                int startIndex = database.Length;
                 database.Append(tokenType, tokenStart, DbRow.UnknownSize);
-                var row = new StackRow(arrayItemsOrPropertyCount, numberOfRowsForValues + 1);
+                var row = new StackRow(arrayItemsOrPropertyCount, numberOfRowsForValues + 1, startIndex);
                 stack.Push(row);
                 arrayItemsOrPropertyCount = 0;
                 numberOfRowsForValues = 0;
             }
             else if (tokenType == JsonTokenType.EndArray)
             {
-                int rowIndex = database.FindIndexOfFirstUnsetSizeOrLength(JsonTokenType.StartArray);
+                StackRow row = stack.Pop();
+                int rowIndex = row.StartIndex;
+
+                Debug.Assert(database.GetJsonTokenType(rowIndex) == JsonTokenType.StartArray);
+                Debug.Assert(database.IsUnknownSizeAt(rowIndex));
 
                 numberOfRowsForValues++;
                 numberOfRowsForMembers++;
@@ -1723,55 +1779,8 @@ public sealed partial class ParsedJsonDocument<T> : JsonDocument, IJsonDocument,
                 database.Append(tokenType, tokenStart, reader.ValueSpan.Length);
                 database.SetNumberOfRows(newRowIndex, numberOfRowsForValues);
 
-                StackRow row = stack.Pop();
                 arrayItemsOrPropertyCount = row.SizeOrLength;
                 numberOfRowsForValues += row.NumberOfRows;
-            }
-            else if (tokenType == JsonTokenType.PropertyName)
-            {
-                numberOfRowsForValues++;
-                numberOfRowsForMembers++;
-                arrayItemsOrPropertyCount++;
-
-                // Adding 1 to skip the start quote will never overflow
-                Debug.Assert(tokenStart < int.MaxValue);
-
-                database.Append(tokenType, tokenStart + 1, reader.ValueSpan.Length);
-
-                if (reader.ValueIsEscaped)
-                {
-                    database.SetHasComplexChildren(database.Length - DbRow.Size);
-                }
-
-                Debug.Assert(!inArray);
-            }
-            else
-            {
-                Debug.Assert(tokenType >= JsonTokenType.String && tokenType <= JsonTokenType.Null);
-                numberOfRowsForValues++;
-                numberOfRowsForMembers++;
-
-                if (inArray)
-                {
-                    arrayItemsOrPropertyCount++;
-                }
-
-                if (tokenType == JsonTokenType.String)
-                {
-                    // Adding 1 to skip the start quote will never overflow
-                    Debug.Assert(tokenStart < int.MaxValue);
-
-                    database.Append(tokenType, tokenStart + 1, reader.ValueSpan.Length);
-
-                    if (reader.ValueIsEscaped)
-                    {
-                        database.SetHasComplexChildren(database.Length - DbRow.Size);
-                    }
-                }
-                else
-                {
-                    database.Append(tokenType, tokenStart, reader.ValueSpan.Length);
-                }
             }
 
             inArray = reader.IsInArray;
