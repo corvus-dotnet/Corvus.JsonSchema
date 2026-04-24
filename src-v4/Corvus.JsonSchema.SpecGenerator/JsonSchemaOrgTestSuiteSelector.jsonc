@@ -1,6 +1,6 @@
 {
   // This defines selectors that build test suites based on the files in the
-  // draft2019-09 and draft2020-12 folders of the JSON Schema spec suite.
+  // JSON-Schema-Test-Suite.
 
   "includeInThisDirectory": [],
     "subdirectories": {
@@ -24,10 +24,34 @@
                             "testExclusions": {
                                 "optional/format/date-time.json": {
                                     "validation of date-time strings": {
-                                        // Leap seconds
-                                        "testsToIgnoreIndices": [
-                                            10,
-                                            11
+                                        "testsToIgnore": [
+                                            { "name": "a valid date-time with a leap second, UTC", "reason": "Leap seconds are not supported." },
+                                            { "name": "a valid date-time with a leap second, with minus offset", "reason": "Leap seconds are not supported." },
+                                            { "name": "an invalid date-time past leap second, UTC", "reason": "Leap seconds are not supported." },
+                                            { "name": "an invalid date-time with leap second on a wrong minute, UTC", "reason": "Leap seconds are not supported." },
+                                            { "name": "an invalid date-time with leap second on a wrong hour, UTC", "reason": "Leap seconds are not supported." }
+                                        ]
+                                    }
+                                },
+                                "optional/format/time.json": {
+                                    "validation of time strings": {
+                                        "testsToIgnore": [
+                                            { "name": "a valid time string with leap second, Zulu", "reason": "Leap seconds are not supported." },
+                                            { "name": "invalid leap second, Zulu (wrong hour)", "reason": "Leap seconds are not supported." },
+                                            { "name": "invalid leap second, Zulu (wrong minute)", "reason": "Leap seconds are not supported." },
+                                            { "name": "valid leap second, zero time-offset", "reason": "Leap seconds are not supported." },
+                                            { "name": "invalid leap second, zero time-offset (wrong hour)", "reason": "Leap seconds are not supported." },
+                                            { "name": "invalid leap second, zero time-offset (wrong minute)", "reason": "Leap seconds are not supported." },
+                                            { "name": "valid leap second, positive time-offset", "reason": "Leap seconds are not supported." },
+                                            { "name": "valid leap second, large positive time-offset", "reason": "Leap seconds are not supported." },
+                                            { "name": "invalid leap second, positive time-offset (wrong hour)", "reason": "Leap seconds are not supported." },
+                                            { "name": "invalid leap second, positive time-offset (wrong minute)", "reason": "Leap seconds are not supported." },
+                                            { "name": "valid leap second, negative time-offset", "reason": "Leap seconds are not supported." },
+                                            { "name": "valid leap second, large negative time-offset", "reason": "Leap seconds are not supported." },
+                                            { "name": "invalid leap second, negative time-offset (wrong hour)", "reason": "Leap seconds are not supported." },
+                                            { "name": "invalid leap second, negative time-offset (wrong minute)", "reason": "Leap seconds are not supported." },
+                                            { "name": "an invalid time string with invalid leap second (wrong hour)", "reason": "Leap seconds are not supported." },
+                                            { "name": "an invalid time string with invalid leap second (wrong minute)", "reason": "Leap seconds are not supported." }
                                         ]
                                     }
                                 }
@@ -57,10 +81,34 @@
                             "testExclusions": {
                                 "optional/format/date-time.json": {
                                     "validation of date-time strings": {
-                                        // Leap seconds
-                                        "testsToIgnoreIndices": [
-                                            10,
-                                            11
+                                        "testsToIgnore": [
+                                            { "name": "a valid date-time with a leap second, UTC", "reason": "Leap seconds are not supported." },
+                                            { "name": "a valid date-time with a leap second, with minus offset", "reason": "Leap seconds are not supported." },
+                                            { "name": "an invalid date-time past leap second, UTC", "reason": "Leap seconds are not supported." },
+                                            { "name": "an invalid date-time with leap second on a wrong minute, UTC", "reason": "Leap seconds are not supported." },
+                                            { "name": "an invalid date-time with leap second on a wrong hour, UTC", "reason": "Leap seconds are not supported." }
+                                        ]
+                                    }
+                                },
+                                "optional/format/time.json": {
+                                    "validation of time strings": {
+                                        "testsToIgnore": [
+                                            { "name": "a valid time string with leap second, Zulu", "reason": "Leap seconds are not supported." },
+                                            { "name": "invalid leap second, Zulu (wrong hour)", "reason": "Leap seconds are not supported." },
+                                            { "name": "invalid leap second, Zulu (wrong minute)", "reason": "Leap seconds are not supported." },
+                                            { "name": "valid leap second, zero time-offset", "reason": "Leap seconds are not supported." },
+                                            { "name": "invalid leap second, zero time-offset (wrong hour)", "reason": "Leap seconds are not supported." },
+                                            { "name": "invalid leap second, zero time-offset (wrong minute)", "reason": "Leap seconds are not supported." },
+                                            { "name": "valid leap second, positive time-offset", "reason": "Leap seconds are not supported." },
+                                            { "name": "valid leap second, large positive time-offset", "reason": "Leap seconds are not supported." },
+                                            { "name": "invalid leap second, positive time-offset (wrong hour)", "reason": "Leap seconds are not supported." },
+                                            { "name": "invalid leap second, positive time-offset (wrong minute)", "reason": "Leap seconds are not supported." },
+                                            { "name": "valid leap second, negative time-offset", "reason": "Leap seconds are not supported." },
+                                            { "name": "valid leap second, large negative time-offset", "reason": "Leap seconds are not supported." },
+                                            { "name": "invalid leap second, negative time-offset (wrong hour)", "reason": "Leap seconds are not supported." },
+                                            { "name": "invalid leap second, negative time-offset (wrong minute)", "reason": "Leap seconds are not supported." },
+                                            { "name": "an invalid time string with invalid leap second (wrong hour)", "reason": "Leap seconds are not supported." },
+                                            { "name": "an invalid time string with invalid leap second (wrong minute)", "reason": "Leap seconds are not supported." }
                                         ]
                                     }
                                 }
@@ -91,22 +139,34 @@
                             "testExclusions": {
                                 "optional/format/date-time.json": {
                                     "validation of date-time strings": {
-                                        "testsToIgnoreIndices": [
-                                            10,
-                                            11
+                                        "testsToIgnore": [
+                                            { "name": "a valid date-time with a leap second, UTC", "reason": "Leap seconds are not supported." },
+                                            { "name": "a valid date-time with a leap second, with minus offset", "reason": "Leap seconds are not supported." },
+                                            { "name": "an invalid date-time past leap second, UTC", "reason": "Leap seconds are not supported." },
+                                            { "name": "an invalid date-time with leap second on a wrong minute, UTC", "reason": "Leap seconds are not supported." },
+                                            { "name": "an invalid date-time with leap second on a wrong hour, UTC", "reason": "Leap seconds are not supported." }
                                         ]
                                     }
                                 },
                                 "optional/format/time.json": {
                                     "validation of time strings": {
-                                        "testsToIgnoreIndices": [
-                                            //// Leap seconds
-                                            10,
-                                            13,
-                                            16,
-                                            17,
-                                            20,
-                                            21
+                                        "testsToIgnore": [
+                                            { "name": "a valid time string with leap second, Zulu", "reason": "Leap seconds are not supported." },
+                                            { "name": "invalid leap second, Zulu (wrong hour)", "reason": "Leap seconds are not supported." },
+                                            { "name": "invalid leap second, Zulu (wrong minute)", "reason": "Leap seconds are not supported." },
+                                            { "name": "valid leap second, zero time-offset", "reason": "Leap seconds are not supported." },
+                                            { "name": "invalid leap second, zero time-offset (wrong hour)", "reason": "Leap seconds are not supported." },
+                                            { "name": "invalid leap second, zero time-offset (wrong minute)", "reason": "Leap seconds are not supported." },
+                                            { "name": "valid leap second, positive time-offset", "reason": "Leap seconds are not supported." },
+                                            { "name": "valid leap second, large positive time-offset", "reason": "Leap seconds are not supported." },
+                                            { "name": "invalid leap second, positive time-offset (wrong hour)", "reason": "Leap seconds are not supported." },
+                                            { "name": "invalid leap second, positive time-offset (wrong minute)", "reason": "Leap seconds are not supported." },
+                                            { "name": "valid leap second, negative time-offset", "reason": "Leap seconds are not supported." },
+                                            { "name": "valid leap second, large negative time-offset", "reason": "Leap seconds are not supported." },
+                                            { "name": "invalid leap second, negative time-offset (wrong hour)", "reason": "Leap seconds are not supported." },
+                                            { "name": "invalid leap second, negative time-offset (wrong minute)", "reason": "Leap seconds are not supported." },
+                                            { "name": "an invalid time string with invalid leap second (wrong hour)", "reason": "Leap seconds are not supported." },
+                                            { "name": "an invalid time string with invalid leap second (wrong minute)", "reason": "Leap seconds are not supported." }
                                         ]
                                     }
                                 }
@@ -140,22 +200,34 @@
                             "testExclusions": {
                                 "optional/format/date-time.json": {
                                     "validation of date-time strings": {
-                                        "testsToIgnoreIndices": [
-                                            10,
-                                            11
+                                        "testsToIgnore": [
+                                            { "name": "a valid date-time with a leap second, UTC", "reason": "Leap seconds are not supported." },
+                                            { "name": "a valid date-time with a leap second, with minus offset", "reason": "Leap seconds are not supported." },
+                                            { "name": "an invalid date-time past leap second, UTC", "reason": "Leap seconds are not supported." },
+                                            { "name": "an invalid date-time with leap second on a wrong minute, UTC", "reason": "Leap seconds are not supported." },
+                                            { "name": "an invalid date-time with leap second on a wrong hour, UTC", "reason": "Leap seconds are not supported." }
                                         ]
                                     }
                                 },
                                 "optional/format/time.json": {
                                     "validation of time strings": {
-                                        "testsToIgnoreIndices": [
-                                            // Leap seconds
-                                            10,
-                                            13,
-                                            16,
-                                            17,
-                                            20,
-                                            21
+                                        "testsToIgnore": [
+                                            { "name": "a valid time string with leap second, Zulu", "reason": "Leap seconds are not supported." },
+                                            { "name": "invalid leap second, Zulu (wrong hour)", "reason": "Leap seconds are not supported." },
+                                            { "name": "invalid leap second, Zulu (wrong minute)", "reason": "Leap seconds are not supported." },
+                                            { "name": "valid leap second, zero time-offset", "reason": "Leap seconds are not supported." },
+                                            { "name": "invalid leap second, zero time-offset (wrong hour)", "reason": "Leap seconds are not supported." },
+                                            { "name": "invalid leap second, zero time-offset (wrong minute)", "reason": "Leap seconds are not supported." },
+                                            { "name": "valid leap second, positive time-offset", "reason": "Leap seconds are not supported." },
+                                            { "name": "valid leap second, large positive time-offset", "reason": "Leap seconds are not supported." },
+                                            { "name": "invalid leap second, positive time-offset (wrong hour)", "reason": "Leap seconds are not supported." },
+                                            { "name": "invalid leap second, positive time-offset (wrong minute)", "reason": "Leap seconds are not supported." },
+                                            { "name": "valid leap second, negative time-offset", "reason": "Leap seconds are not supported." },
+                                            { "name": "valid leap second, large negative time-offset", "reason": "Leap seconds are not supported." },
+                                            { "name": "invalid leap second, negative time-offset (wrong hour)", "reason": "Leap seconds are not supported." },
+                                            { "name": "invalid leap second, negative time-offset (wrong minute)", "reason": "Leap seconds are not supported." },
+                                            { "name": "an invalid time string with invalid leap second (wrong hour)", "reason": "Leap seconds are not supported." },
+                                            { "name": "an invalid time string with invalid leap second (wrong minute)", "reason": "Leap seconds are not supported." }
                                         ]
                                     }
                                 }
@@ -188,23 +260,34 @@
                             "testExclusions": {
                                 "optional/format/date-time.json": {
                                     "validation of date-time strings": {
-                                        // Leap seconds
-                                        "testsToIgnoreIndices": [
-                                            10,
-                                            11
+                                        "testsToIgnore": [
+                                            { "name": "a valid date-time with a leap second, UTC", "reason": "Leap seconds are not supported." },
+                                            { "name": "a valid date-time with a leap second, with minus offset", "reason": "Leap seconds are not supported." },
+                                            { "name": "an invalid date-time past leap second, UTC", "reason": "Leap seconds are not supported." },
+                                            { "name": "an invalid date-time with leap second on a wrong minute, UTC", "reason": "Leap seconds are not supported." },
+                                            { "name": "an invalid date-time with leap second on a wrong hour, UTC", "reason": "Leap seconds are not supported." }
                                         ]
                                     }
                                 },
                                 "optional/format/time.json": {
                                     "validation of time strings": {
-                                        "testsToIgnoreIndices": [
-                                            // Leap seconds
-                                            10,
-                                            13,
-                                            16,
-                                            17,
-                                            20,
-                                            21
+                                        "testsToIgnore": [
+                                            { "name": "a valid time string with leap second, Zulu", "reason": "Leap seconds are not supported." },
+                                            { "name": "invalid leap second, Zulu (wrong hour)", "reason": "Leap seconds are not supported." },
+                                            { "name": "invalid leap second, Zulu (wrong minute)", "reason": "Leap seconds are not supported." },
+                                            { "name": "valid leap second, zero time-offset", "reason": "Leap seconds are not supported." },
+                                            { "name": "invalid leap second, zero time-offset (wrong hour)", "reason": "Leap seconds are not supported." },
+                                            { "name": "invalid leap second, zero time-offset (wrong minute)", "reason": "Leap seconds are not supported." },
+                                            { "name": "valid leap second, positive time-offset", "reason": "Leap seconds are not supported." },
+                                            { "name": "valid leap second, large positive time-offset", "reason": "Leap seconds are not supported." },
+                                            { "name": "invalid leap second, positive time-offset (wrong hour)", "reason": "Leap seconds are not supported." },
+                                            { "name": "invalid leap second, positive time-offset (wrong minute)", "reason": "Leap seconds are not supported." },
+                                            { "name": "valid leap second, negative time-offset", "reason": "Leap seconds are not supported." },
+                                            { "name": "valid leap second, large negative time-offset", "reason": "Leap seconds are not supported." },
+                                            { "name": "invalid leap second, negative time-offset (wrong hour)", "reason": "Leap seconds are not supported." },
+                                            { "name": "invalid leap second, negative time-offset (wrong minute)", "reason": "Leap seconds are not supported." },
+                                            { "name": "an invalid time string with invalid leap second (wrong hour)", "reason": "Leap seconds are not supported." },
+                                            { "name": "an invalid time string with invalid leap second (wrong minute)", "reason": "Leap seconds are not supported." }
                                         ]
                                     }
                                 }
@@ -214,65 +297,6 @@
                 }
             }
         }
-
-        //"draft-next": {
-        //  "testSet": "draft-next",
-        //  "outputFolder": "DraftNext",
-        //  "excludeFromThisDirectory": [
-        //    // We don't support custom metaschema (yet!)
-        //    "vocabulary\\.json"
-        //  ],
-        //  "testExclusions": {
-        //  },
-        //  "subdirectories": {
-        //    "optional": {
-        //      "excludeFromThisDirectory": [
-        //        "cross-draft\\.json",
-        //        "bignum\\.json",
-        //        "ecmascript-regex\\.json",
-        //        "non-bmp-regex\\.json"
-        //      ],
-        //      "subdirectories": {
-        //        "format": {
-        //          "excludeFromThisDirectory": [
-        //          ],
-        //          "testExclusions": {
-        //            "optional/format/date-time.json": {
-        //              "validation of date-time strings": {
-        //                // Leap seconds
-        //                "testsToIgnoreIndices": [
-        //                  //10,
-        //                  //11
-        //                ]
-        //              }
-        //            },
-        //            "optional/format/time.json": {
-        //              "validation of time strings": {
-        //                "testsToIgnoreIndices": [
-        //                  // Leap seconds
-        //                  //10,
-        //                  //11,
-        //                  //12,
-        //                  //13,
-        //                  //14,
-        //                  //15,
-        //                  //16,
-        //                  //17,
-        //                  //18,
-        //                  //19,
-        //                  //20,
-        //                  //21,
-        //                  //22,
-        //                  //23
-        //                ]
-        //              }
-        //            }
-        //          }
-        //        }
-        //      }
-        //    }
-        //  }
-        //}
 
     }
 }

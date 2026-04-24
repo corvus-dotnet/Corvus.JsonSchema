@@ -59,8 +59,50 @@ internal static partial class SpecWriter
     {
         string inputSchemaReference = $"#/{scenarioIndex}/schema";
 
-        string scenarioTitleBase = scenarioDefinition.GetProperty("description").GetString()!;
-        scenarioTitleBase = NormalizeTitleForDeduplication(scenarioTitleBase!);
+        string scenarioDescription = scenarioDefinition.GetProperty("description").GetString()!;
+
+        // Use the raw scenario description for exclusion lookup (not the normalized/deduped title)
+        if (!testSet.TestsToIgnoreByScenarioName.TryGetValue(scenarioDescription, out IReadOnlySet<string>? testsToIgnore))
+        {
+            testsToIgnore = new HashSet<string>();
+        }
+
+        // Validate that test descriptions are unique within this scenario
+        HashSet<string> seenDescriptions = [];
+        foreach (JsonElement test in scenarioDefinition.GetProperty("tests").EnumerateArray())
+        {
+            string desc = test.GetProperty("description").GetString()!;
+            if (!seenDescriptions.Add(desc))
+            {
+                throw new InvalidOperationException(
+                    $"Duplicate test description '{desc}' in scenario '{scenarioDescription}' of file '{testSet.InputFileSpecFolderRelativePath}'. " +
+                    "Name-based exclusions require unique test descriptions within a scenario.");
+            }
+        }
+
+        // Check if ALL tests would be excluded — if so, skip the entire scenario
+        // (a Scenario Outline with no examples causes a SpecFlow build error)
+        bool allExcluded = true;
+        foreach (JsonElement test in scenarioDefinition.GetProperty("tests").EnumerateArray())
+        {
+            string testDescription = test.GetProperty("description").GetString()!;
+            if (!testsToIgnore.Contains(testDescription))
+            {
+                allExcluded = false;
+                break;
+            }
+        }
+
+        if (allExcluded && testsToIgnore.Count > 0)
+        {
+            Console.ForegroundColor = ConsoleColor.DarkGray;
+            Console.WriteLine(
+                $"  Skipping scenario '{scenarioDescription}' in '{testSet.InputFileSpecFolderRelativePath}' — all tests excluded.");
+            Console.ResetColor();
+            return;
+        }
+
+        string scenarioTitleBase = NormalizeTitleForDeduplication(scenarioDescription);
         string scenarioTitle = scenarioTitleBase;
         int dupIndex = 1;
         while (writtenScenarios.Contains(scenarioTitle))
@@ -93,16 +135,34 @@ internal static partial class SpecWriter
         builder.AppendLine("    Examples:");
         builder.AppendLine("        | inputDataReference   | valid | description                                                                      |");
 
-        if (!testSet.TestsToIgnoreIndicesByScenarioName.TryGetValue(scenarioTitle, out IReadOnlySet<int>? testsToIgnoreIndices))
-        {
-            testsToIgnoreIndices = new HashSet<int>();
-        }
+        // Track which exclusion names were actually matched
+        HashSet<string> matchedExclusions = [];
 
         int testIndex = 0;
         foreach (JsonElement test in scenarioDefinition.GetProperty("tests").EnumerateArray())
         {
-            WriteExample(scenarioIndex, testIndex, test, builder, testsToIgnoreIndices.Contains(testIndex));
+            string testDescription = test.GetProperty("description").GetString()!;
+            bool omit = testsToIgnore.Contains(testDescription);
+            if (omit)
+            {
+                matchedExclusions.Add(testDescription);
+            }
+
+            WriteExample(scenarioIndex, testIndex, test, builder, omit);
             ++testIndex;
+        }
+
+        // Warn about stale exclusions that didn't match any test
+        foreach (string exclusionName in testsToIgnore)
+        {
+            if (!matchedExclusions.Contains(exclusionName))
+            {
+                Console.ForegroundColor = ConsoleColor.Yellow;
+                Console.WriteLine(
+                    $"WARNING: Exclusion '{exclusionName}' in scenario '{scenarioDescription}' " +
+                    $"of file '{testSet.InputFileSpecFolderRelativePath}' did not match any test.");
+                Console.ResetColor();
+            }
         }
     }
 

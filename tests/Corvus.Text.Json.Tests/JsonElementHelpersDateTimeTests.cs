@@ -164,28 +164,9 @@ public class JsonElementHelpersDateTimeTests
         Assert.True(JsonElementHelpers.TryParsePeriod(buffer[..written], out parsed));
         Assert.Equal(timeOnly, parsed);
 
-        // Edge case: fractional seconds (milliseconds)
-        Period fractionalMillis = Period.FromMilliseconds(123).Normalize();
-        Assert.True(JsonElementHelpers.TryFormatPeriod(fractionalMillis, buffer, out written));
-        Assert.True(JsonElementHelpers.TryParsePeriod(buffer[..written], out parsed));
-        Assert.Equal(fractionalMillis, parsed);
-
-        // Edge case: fractional seconds (microseconds)
-        Period fractionalMicros = Period.FromTicks(1).Normalize(); // 100ns = 0.0001ms = 0.0000001s
-        Assert.True(JsonElementHelpers.TryFormatPeriod(fractionalMicros, buffer, out written));
-        Assert.True(JsonElementHelpers.TryParsePeriod(buffer[..written], out parsed));
-        Assert.Equal(fractionalMicros, parsed);
-
-        // Edge case: negative period
-        Period negative = (Period.FromDays(-1) + Period.FromHours(-2)).Normalize();
-        Assert.True(JsonElementHelpers.TryFormatPeriod(negative, buffer, out written));
-        Assert.True(JsonElementHelpers.TryParsePeriod(buffer[..written], out parsed));
-        Assert.Equal(negative.Normalize(), parsed.Normalize());
-
-        // Edge case: maximum supported values
+        // Edge case: maximum supported values (whole seconds only for RFC 3339)
         Period max = (Period.FromYears(9999) + Period.FromMonths(12) + Period.FromDays(31) +
-                  Period.FromHours(23) + Period.FromMinutes(59) + Period.FromSeconds(59) +
-                  Period.FromMilliseconds(999)).Normalize();
+                  Period.FromHours(23) + Period.FromMinutes(59) + Period.FromSeconds(59)).Normalize();
         Assert.True(JsonElementHelpers.TryFormatPeriod(max, buffer, out written));
         Assert.True(JsonElementHelpers.TryParsePeriod(buffer[..written], out parsed));
         Assert.Equal(max.Normalize(), parsed.Normalize());
@@ -266,9 +247,8 @@ public class JsonElementHelpersDateTimeTests
             Period.FromHours(4) + Period.FromMinutes(5) + Period.FromSeconds(6)).Normalize(),
             periodFull);
 
-        byte[] validFractional = Encoding.UTF8.GetBytes("PT0.5S");
-        Assert.True(JsonElementHelpers.TryParsePeriod(validFractional, out Period periodFractional));
-        Assert.Equal(Period.FromMilliseconds(500).Normalize(), periodFractional);
+        byte[] invalidFractional = Encoding.UTF8.GetBytes("PT0.5S");
+        Assert.False(JsonElementHelpers.TryParsePeriod(invalidFractional, out _));
 
         // Invalid examples
         byte[] invalid = Encoding.UTF8.GetBytes("notaperiod");

@@ -606,27 +606,13 @@ internal static partial class StandaloneEvaluatorGenerator
     }
 
     /// <summary>
-    /// Extracts the JSON Pointer fragment from a TypeDeclaration's location for use as the
-    /// schema evaluation path. Returns the fragment without "#" but with leading "/"
+    /// Gets the JSON Pointer from the root document to the schema for use as the
+    /// schema evaluation path. Returns the pointer without "#" but with leading "/"
     /// (e.g., "/$defs/foo"). The annotation producer prepends "#" to form the full location.
     /// </summary>
     private static string GetSchemaLocationFragment(TypeDeclaration typeDeclaration)
     {
-        JsonReference location = typeDeclaration.LocatedSchema.Location;
-        if (location.HasFragment)
-        {
-            string fragment = location.Fragment.ToString();
-
-            // Fragment includes the "#" prefix — strip it.
-            if (fragment.StartsWith("#", StringComparison.Ordinal))
-            {
-                fragment = fragment[1..];
-            }
-
-            return fragment;
-        }
-
-        return string.Empty;
+        return typeDeclaration.LocatedSchema.RootDocumentPointer;
     }
 
     private static Dictionary<string, PropertyMatcherInfo> CollectPropertyMatcherInfo(

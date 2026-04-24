@@ -140,7 +140,8 @@ internal static class Utf8UriTools
         BackslashInPath = 0x10,
         ReservedFound = 0x20,
         NotIriCanonical = 0x40,
-        FoundNonAscii = 0x8
+        FoundNonAscii = 0x8,
+        BadPercentEncoding = 0x100,
     }
 
     internal static bool MakeRelative(ReadOnlySpan<byte> baseUri, in Utf8UriOffset baseUriOffsets, Flags baseUriFlags, ReadOnlySpan<byte> uriToMakeRelative, in Utf8UriOffset uriToMakeRelativeOffsets, Flags uriToMakeRelativeFlags, Span<byte> destination, out int written, bool allowIri = false)
@@ -2051,7 +2052,7 @@ internal static class Utf8UriTools
                 }
 
                 Check result = CheckCanonical(str, ref idx, length, (queryIdx >= 0) ? (byte)'?' : (hashIdx >= 0) ? (byte)'#' : c_EOL, iriParsing, queryIdx >= 0, hashIdx >= 0);
-                if ((result & (Check.BackslashInPath | Check.ReservedFound | Check.NotIriCanonical)) != 0)
+                if ((result & (Check.BackslashInPath | Check.ReservedFound | Check.NotIriCanonical | Check.BadPercentEncoding)) != 0)
                 {
                     return false;
                 }
@@ -2079,7 +2080,7 @@ internal static class Utf8UriTools
                 fixed (byte* str = uriString)
                 {
                     Check result = CheckCanonical(str, ref idx, length, (hashIdx >= 0) ? (byte)'#' : c_EOL, iriParsing, queryIdx >= 0, hashIdx >= 0);
-                    if ((result & (Check.BackslashInPath | Check.ReservedFound | Check.NotIriCanonical)) != 0)
+                    if ((result & (Check.BackslashInPath | Check.ReservedFound | Check.NotIriCanonical | Check.BadPercentEncoding)) != 0)
                     {
                         return false;
                     }
@@ -2103,7 +2104,7 @@ internal static class Utf8UriTools
                 fixed (byte* str = uriString)
                 {
                     Check result = CheckCanonical(str, ref idx, length, c_EOL, iriParsing, queryIdx >= 0, hashIdx >= 0);
-                    if ((result & (Check.BackslashInPath | Check.ReservedFound | Check.NotIriCanonical)) != 0)
+                    if ((result & (Check.BackslashInPath | Check.ReservedFound | Check.NotIriCanonical | Check.BadPercentEncoding)) != 0)
                     {
                         return false;
                     }
@@ -2624,6 +2625,13 @@ internal static class Utf8UriTools
             {
                 idx = info.User;
                 result = CheckCanonical(str, ref idx, info.Host, (byte)'@', syntax, ref flags);
+
+                if ((result & Check.BadPercentEncoding) != 0)
+                {
+                    uriInfo = default;
+                    return false;
+                }
+
                 if ((result & Check.DisplayCanonical) == 0)
                 {
                     cF |= Flags.UserNotCanonical;
@@ -2659,6 +2667,12 @@ internal static class Utf8UriTools
             {
                 result = CheckCanonical(str, ref idx, length, (((syntaxFlags & Utf8UriSyntaxFlags.MayHaveQuery) != 0)
                     ? (byte)'?' : syntax.InFact(Utf8UriSyntaxFlags.MayHaveFragment) ? (byte)'#' : c_EOL), syntax, ref flags);
+            }
+
+            if ((result & Check.BadPercentEncoding) != 0)
+            {
+                uriInfo = default;
+                return false;
             }
 
             // ATTN:
@@ -2762,6 +2776,12 @@ internal static class Utf8UriTools
                 result = CheckCanonical(str, ref idx, length, ((syntaxFlags & (Utf8UriSyntaxFlags.MayHaveFragment)) != 0)
                     ? (byte)'#' : c_EOL, syntax, ref flags);
 
+                if ((result & Check.BadPercentEncoding) != 0)
+                {
+                    uriInfo = default;
+                    return false;
+                }
+
                 if ((result & Check.DisplayCanonical) == 0)
                 {
                     cF |= Flags.QueryNotCanonical;
@@ -2794,6 +2814,13 @@ internal static class Utf8UriTools
 
                 // We don't using c_DummyChar since want to allow '?' and '#' as unescaped
                 result = CheckCanonical(str, ref idx, length, c_EOL, syntax, ref flags);
+
+                if ((result & Check.BadPercentEncoding) != 0)
+                {
+                    uriInfo = default;
+                    return false;
+                }
+
                 if ((result & Check.DisplayCanonical) == 0)
                 {
                     cF |= Flags.FragmentNotCanonical;
@@ -2961,8 +2988,8 @@ internal static class Utf8UriTools
                     }
                 }
 
-                // otherwise we follow to non escaped case
-                needsEscaping = true;
+                // Invalid percent-encoding: bare '%' or invalid hex digits
+                res |= Check.BadPercentEncoding;
             }
 
             i += bytesConsumed;
@@ -3125,8 +3152,8 @@ internal static class Utf8UriTools
                     }
                 }
 
-                // otherwise we follow to non escaped case
-                needsEscaping = true;
+                // Invalid percent-encoding: bare '%' or invalid hex digits
+                res |= Check.BadPercentEncoding;
             }
 
             i += bytesConsumed;

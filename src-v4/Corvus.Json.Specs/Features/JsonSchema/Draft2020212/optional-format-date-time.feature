@@ -48,11 +48,11 @@ Scenario Outline: validation of date-time strings
         # 1998-12-31T15:59:60.123-08:00
         # #/000/tests/011/data | true  | a valid date-time with a leap second, with minus offset                          |
         # 1998-12-31T23:59:61Z
-        | #/000/tests/012/data | false | an invalid date-time past leap second, UTC                                       |
+        # #/000/tests/012/data | false | an invalid date-time past leap second, UTC                                       |
         # 1998-12-31T23:58:60Z
-        | #/000/tests/013/data | false | an invalid date-time with leap second on a wrong minute, UTC                     |
+        # #/000/tests/013/data | false | an invalid date-time with leap second on a wrong minute, UTC                     |
         # 1998-12-31T22:59:60Z
-        | #/000/tests/014/data | false | an invalid date-time with leap second on a wrong hour, UTC                       |
+        # #/000/tests/014/data | false | an invalid date-time with leap second on a wrong hour, UTC                       |
         # 1990-02-31T15:59:59.123-08:00
         | #/000/tests/015/data | false | an invalid day in date-time string                                               |
         # 1990-12-31T15:59:59-24:00

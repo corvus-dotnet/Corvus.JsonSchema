@@ -45,31 +45,31 @@ Scenario Outline: validation of time strings
         # 23:59:60Z
         # #/000/tests/010/data | true  | a valid time string with leap second, Zulu                                       |
         # 22:59:60Z
-        | #/000/tests/011/data | false | invalid leap second, Zulu (wrong hour)                                           |
+        # #/000/tests/011/data | false | invalid leap second, Zulu (wrong hour)                                           |
         # 23:58:60Z
-        | #/000/tests/012/data | false | invalid leap second, Zulu (wrong minute)                                         |
+        # #/000/tests/012/data | false | invalid leap second, Zulu (wrong minute)                                         |
         # 23:59:60+00:00
         # #/000/tests/013/data | true  | valid leap second, zero time-offset                                              |
         # 22:59:60+00:00
-        | #/000/tests/014/data | false | invalid leap second, zero time-offset (wrong hour)                               |
+        # #/000/tests/014/data | false | invalid leap second, zero time-offset (wrong hour)                               |
         # 23:58:60+00:00
-        | #/000/tests/015/data | false | invalid leap second, zero time-offset (wrong minute)                             |
+        # #/000/tests/015/data | false | invalid leap second, zero time-offset (wrong minute)                             |
         # 01:29:60+01:30
         # #/000/tests/016/data | true  | valid leap second, positive time-offset                                          |
         # 23:29:60+23:30
         # #/000/tests/017/data | true  | valid leap second, large positive time-offset                                    |
         # 23:59:60+01:00
-        | #/000/tests/018/data | false | invalid leap second, positive time-offset (wrong hour)                           |
+        # #/000/tests/018/data | false | invalid leap second, positive time-offset (wrong hour)                           |
         # 23:59:60+00:30
-        | #/000/tests/019/data | false | invalid leap second, positive time-offset (wrong minute)                         |
+        # #/000/tests/019/data | false | invalid leap second, positive time-offset (wrong minute)                         |
         # 15:59:60-08:00
         # #/000/tests/020/data | true  | valid leap second, negative time-offset                                          |
         # 00:29:60-23:30
         # #/000/tests/021/data | true  | valid leap second, large negative time-offset                                    |
         # 23:59:60-01:00
-        | #/000/tests/022/data | false | invalid leap second, negative time-offset (wrong hour)                           |
+        # #/000/tests/022/data | false | invalid leap second, negative time-offset (wrong hour)                           |
         # 23:59:60-00:30
-        | #/000/tests/023/data | false | invalid leap second, negative time-offset (wrong minute)                         |
+        # #/000/tests/023/data | false | invalid leap second, negative time-offset (wrong minute)                         |
         # 23:20:50.52Z
         | #/000/tests/024/data | true  | a valid time string with second fraction                                         |
         # 08:30:06.283185Z
@@ -91,9 +91,9 @@ Scenario Outline: validation of time strings
         # 00:00:61Z
         | #/000/tests/033/data | false | an invalid time string with invalid second                                       |
         # 22:59:60Z
-        | #/000/tests/034/data | false | an invalid time string with invalid leap second (wrong hour)                     |
+        # #/000/tests/034/data | false | an invalid time string with invalid leap second (wrong hour)                     |
         # 23:58:60Z
-        | #/000/tests/035/data | false | an invalid time string with invalid leap second (wrong minute)                   |
+        # #/000/tests/035/data | false | an invalid time string with invalid leap second (wrong minute)                   |
         # 01:02:03+24:00
         | #/000/tests/036/data | false | an invalid time string with invalid time numoffset hour                          |
         # 01:02:03+00:60

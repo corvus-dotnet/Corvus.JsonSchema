@@ -70,15 +70,16 @@ internal static class HostnameValidator
 
             if (lastAscii == (byte)'-' && value[i] == (byte)'-')
             {
-                if (characterCount != 3 ||
-                    !((value[i - 3] == (byte)'x' || value[i - 3] == (byte)'X') &&
-                      (value[i - 2] == (byte)'n' || value[i - 2] == (byte)'N')))
+                // Detect punycode ACE prefix "xn--" at positions 3-4 of a label
+                if (characterCount == 3 &&
+                    (value[i - 3] == (byte)'x' || value[i - 3] == (byte)'X') &&
+                    (value[i - 2] == (byte)'n' || value[i - 2] == (byte)'N'))
                 {
-                    return false;
+                    decodePunicode = true;
+                    break;
                 }
 
-                decodePunicode = true;
-                break;
+                // RFC 1123 allows consecutive hyphens — continue processing
             }
 
             lastAscii = value[i];
@@ -127,13 +128,6 @@ internal static class HostnameValidator
         }
 
         if (value[0] == '.')
-        {
-            return false;
-        }
-
-        if (value.Length > 3 &&
-            value[2] == '-' &&
-            value[3] == '-')
         {
             return false;
         }

@@ -532,7 +532,12 @@ public readonly struct Period : IEquatable<Period>
                 waitingforTime = false;
             }
 
-            bool negative = valueCursor.Current == (byte)'-';
+            // RFC 3339 Appendix A: dur-* = 1*DIGIT designator — no negative values
+            if (valueCursor.Current == (byte)'-')
+            {
+                return false;
+            }
+
             if (!valueCursor.ParseInt64(out long unitValue))
             {
                 return false;
@@ -550,6 +555,7 @@ public readonly struct Period : IEquatable<Period>
             // - Unit is in incorrect order (e.g. P5D1Y)
             // - Unit is invalid (e.g. P5J)
             // - Unit is missing (e.g. P5)
+            // - Fractional values (e.g. PT0.5S) — RFC 3339 does not allow fractions
             PeriodUnits unit;
             switch (valueCursor.Current)
             {
@@ -559,8 +565,6 @@ public readonly struct Period : IEquatable<Period>
                 case (byte)'D': unit = PeriodUnits.Days; break;
                 case (byte)'H': unit = PeriodUnits.Hours; break;
                 case (byte)'S': unit = PeriodUnits.Seconds; break;
-                case (byte)',':
-                case (byte)'.': unit = PeriodUnits.Nanoseconds; break; // Special handling below
                 default: return false;
             }
 
@@ -569,8 +573,13 @@ public readonly struct Period : IEquatable<Period>
                 return false;
             }
 
-            // You cannot have weeks and any other higher-level unit
+            // RFC 3339: dur-week is exclusive — weeks cannot be combined with other units
             if (unit == PeriodUnits.Weeks && unitsSoFar != 0)
+            {
+                return false;
+            }
+
+            if (unitsSoFar == PeriodUnits.Weeks)
             {
                 return false;
             }
@@ -589,50 +598,18 @@ public readonly struct Period : IEquatable<Period>
                 return false;
             }
 
-            // Seen a . or, which need special handling.
-            if (unit == PeriodUnits.Nanoseconds)
+            // RFC 3339 contiguity: dur-year = Y [dur-month], dur-month = M [dur-day]
+            // Days after Years requires Months in between
+            if (unit == PeriodUnits.Days && (unitsSoFar & PeriodUnits.Years) != 0 && (unitsSoFar & PeriodUnits.Months) == 0)
             {
-                // Check for already having seen seconds, e.g. PT5S0.5
-                if ((unitsSoFar & PeriodUnits.Seconds) != 0)
-                {
-                    return false;
-                }
+                return false;
+            }
 
-                builder.Seconds = unitValue;
-
-                if (!valueCursor.MoveNext())
-                {
-                    return false;
-                }
-
-                // Can cope with at most 999999999 nanoseconds
-                if (!valueCursor.ParseFraction(9, 9, out int totalNanoseconds, 1))
-                {
-                    return false;
-                }
-
-                // Use whether or not the seconds value was negative (even if 0)
-                // as the indication of whether this value is negative.
-                if (negative)
-                {
-                    totalNanoseconds = -totalNanoseconds;
-                }
-
-                builder.Milliseconds = (totalNanoseconds / NodaConstants.NanosecondsPerMillisecond) % NodaConstants.MillisecondsPerSecond;
-                builder.Ticks = (totalNanoseconds / NodaConstants.NanosecondsPerTick) % NodaConstants.TicksPerMillisecond;
-                builder.Nanoseconds = totalNanoseconds % NodaConstants.NanosecondsPerTick;
-
-                if (valueCursor.Current != (byte)'S')
-                {
-                    return false;
-                }
-
-                if (valueCursor.MoveNext())
-                {
-                    return false;
-                }
-
-                return true;
+            // RFC 3339 contiguity: dur-hour = H [dur-minute], dur-minute = M [dur-second]
+            // Seconds after Hours requires Minutes in between
+            if (unit == PeriodUnits.Seconds && (unitsSoFar & PeriodUnits.Hours) != 0 && (unitsSoFar & PeriodUnits.Minutes) == 0)
+            {
+                return false;
             }
 
             builder[unit] = unitValue;

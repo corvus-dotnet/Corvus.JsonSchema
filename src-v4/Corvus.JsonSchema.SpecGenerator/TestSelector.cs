@@ -25,11 +25,13 @@ public class TestSelector
 
     /// <summary>
     /// Gets or sets a dictionary in which each key is the relative path to a JSON Schema Test
-    /// Suite test file, and the value is a list of numbers indicating the indices of tests
-    /// within that test file that should be excluded.
+    /// Suite test file, and the value maps scenario descriptions to lists of test names to
+    /// exclude.
     /// </summary>
     /// <remarks>
-    /// We use this to when we only want to exclude some of the tests in a file.
+    /// We use this when we only want to exclude some of the tests in a file. Tests are
+    /// identified by their description string (not by index), making the configuration
+    /// resilient to upstream test reordering.
     /// </remarks>
     public IReadOnlyDictionary<string, IReadOnlyDictionary<string, TestExclusion>> TestExclusions { get; set; } = new Dictionary<string, IReadOnlyDictionary<string, TestExclusion>>();
 
@@ -71,8 +73,16 @@ public class TestSelector
     /// <summary>
     /// Details for a test exclusion.
     /// </summary>
-    /// <param name="TestsToIgnoreIndices">
-    /// Indices of tests to ignore in a JSON Schema Test Suite input file, grouped by scenario name.
+    /// <param name="TestsToIgnore">
+    /// Tests to ignore in a JSON Schema Test Suite input file, grouped by scenario name.
+    /// Each entry identifies a test by its description string.
     /// </param>
-    public record TestExclusion(IReadOnlyList<int> TestsToIgnoreIndices);
+    public record TestExclusion(IReadOnlyList<TestToIgnore> TestsToIgnore);
+
+    /// <summary>
+    /// An individual test to ignore.
+    /// </summary>
+    /// <param name="Name">The test description (must match exactly).</param>
+    /// <param name="Reason">Optional reason for the exclusion.</param>
+    public record TestToIgnore(string Name, string? Reason);
 }

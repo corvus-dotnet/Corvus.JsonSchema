@@ -280,7 +280,7 @@ internal static partial class CodeGeneratorExtensions
             /// </summary>
             """)
             .AppendIndent("public static string SchemaLocation { get; } = ")
-            .Append(SymbolDisplay.FormatLiteral(typeDeclaration.RelativeSchemaLocation, true))
+            .Append(SymbolDisplay.FormatLiteral(typeDeclaration.LocatedSchema.RootDocumentPointer, true))
             .AppendLine(";");
     }
 

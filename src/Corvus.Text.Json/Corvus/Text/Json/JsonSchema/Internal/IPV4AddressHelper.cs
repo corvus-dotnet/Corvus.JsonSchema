@@ -205,13 +205,23 @@ internal static partial class IPv4AddressHelper
 
                     if (ch == 'x' || ch == 'X')
                     {
+                        if (requireCanonical)
+                        {
+                            return Invalid;
+                        }
+
                         numberBase = IPv4AddressHelper.Hex;
 
                         current++;
                         atLeastOneChar = false;
                     }
-                    else
+                    else if (ch != '.')
                     {
+                        if (requireCanonical)
+                        {
+                            return Invalid;
+                        }
+
                         numberBase = IPv4AddressHelper.Octal;
                     }
                 }

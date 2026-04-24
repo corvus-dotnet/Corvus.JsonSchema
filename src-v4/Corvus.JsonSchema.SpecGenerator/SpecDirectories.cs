@@ -133,22 +133,22 @@ internal struct SpecDirectories
                     }
 
                     string inputRelativePath = Path.GetRelativePath(testSetInputDirectory, inputFile).Replace('\\', '/');
-                    IReadOnlyDictionary<string, TestSelector.TestExclusion> testToIgnoreIndicesByScenarioName =
+                    IReadOnlyDictionary<string, TestSelector.TestExclusion> testToIgnoreByScenarioName =
                         selector.TestExclusions.TryGetValue(inputRelativePath, out IReadOnlyDictionary<string, TestSelector.TestExclusion>? exclusions)
                             ? exclusions
                             : new Dictionary<string, TestSelector.TestExclusion>();
 
-                    IReadOnlyDictionary<string, IReadOnlySet<int>> testToIgnoreIndicesAsSetByScenarioName = testToIgnoreIndicesByScenarioName
+                    IReadOnlyDictionary<string, IReadOnlySet<string>> testToIgnoreAsSetByScenarioName = testToIgnoreByScenarioName
                         .ToDictionary(
                             kv => kv.Key,
-                            kv => (IReadOnlySet<int>)new HashSet<int>(kv.Value.TestsToIgnoreIndices));
+                            kv => (IReadOnlySet<string>)new HashSet<string>(kv.Value.TestsToIgnore.Select(t => t.Name)));
                     yield return new(
                         currentTestSet,
                         inputFile,
                         inputRelativePath,
                         Path.Combine(outputDirectory, Path.ChangeExtension(Path.GetFileName(inputRelativePath.Replace("/", "-")), ".feature")),
                         localAssertFormat,
-                        testToIgnoreIndicesAsSetByScenarioName);
+                        testToIgnoreAsSetByScenarioName);
                 }
             }
 
@@ -210,5 +210,5 @@ internal struct SpecDirectories
         string InputFileSpecFolderRelativePath,
         string OutputFile,
         bool AssertFormat,
-        IReadOnlyDictionary<string, IReadOnlySet<int>> TestsToIgnoreIndicesByScenarioName);
+        IReadOnlyDictionary<string, IReadOnlySet<string>> TestsToIgnoreByScenarioName);
 }
