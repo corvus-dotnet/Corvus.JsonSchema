@@ -1,4 +1,4 @@
-// Derived from code licensed to the .NET Foundation under one or more agreements.
+﻿// Derived from code licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licensed this code under the MIT license.
 using System.Collections.Generic;
 using System.Linq;
@@ -479,7 +479,7 @@ public static class AssertExtensions
     /// <summary>
     /// Validates that the actual collection contains same items as expected collection. If the test fails, this will display:
     /// 1. Count if two collection count are different;
-
+    ///
     /// 2. Missed expected collection item when found
     /// </summary>
     /// <param name="expected">The collection that <paramref name="actual"/> should contain same items as</param>

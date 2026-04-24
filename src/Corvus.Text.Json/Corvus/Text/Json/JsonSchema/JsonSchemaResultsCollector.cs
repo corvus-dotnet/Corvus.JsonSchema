@@ -1,4 +1,4 @@
-// <copyright file="JsonSchemaResultsCollector.cs" company="Endjin Limited">
+﻿// <copyright file="JsonSchemaResultsCollector.cs" company="Endjin Limited">
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 // <licensing>
@@ -115,13 +115,13 @@ namespace Corvus.Text.Json;
 /// <para>Basic validation with pooled collector:</para>
 /// <code>
 /// using var collector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Basic, estimatedCapacity: 50);
-
+///
 ///
 /// // Perform validation operations...
 /// int context = collector.BeginChildContext(0, evaluationPath, schemaPath, documentPath);
-
+///
 /// collector.CommitChildContext(context, parentMatch: true, childMatch: false, messageProvider);
-
+///
 ///
 /// // Enumerate results
 /// foreach (var result in collector.EnumerateResults())
@@ -129,13 +129,13 @@ namespace Corvus.Text.Json;
 /// if (!result.IsMatch)
 /// {
 /// Console.WriteLine($"Validation failed: {result.GetMessageText()}");
-
+///
 /// Console.WriteLine($"  Location: {result.GetDocumentEvaluationLocationText()}");
-
+///
 /// }
-
+///
 /// }
-
+///
 /// </code>
 /// </example>
 /// <example>
@@ -145,53 +145,53 @@ namespace Corvus.Text.Json;
 /// using var collector = JsonSchemaResultsCollector.Create(
 /// JsonSchemaResultsLevel.Basic,
 /// estimatedCapacity: documentSize / 10);
-
+///
 ///
 /// // Use UTF-8 paths for optimal performance
 /// ReadOnlySpan&lt;byte&gt; propertyName = "username"u8;
-
+///
 /// int context = collector.BeginChildContext(0, propertyName, evaluationPath, schemaPath);
-
+///
 ///
 /// // Minimal overhead result reporting
 /// collector.CommitChildContext(context, true, validationResult, messageProvider);
-
+///
 ///
 /// // Fast result access
 /// int resultCount = collector.GetResultCount();
-
+///
 /// if (resultCount > 0)
 /// {
 /// var enumerator = collector.EnumerateResults();
-
+///
 /// while (enumerator.MoveNext())
 /// {
 /// ProcessResult(enumerator.Current);
-
+///
 /// }
-
+///
 /// }
-
+///
 /// </code>
 /// </example>
 /// <example>
 /// <para>Debugging with verbose output:</para>
 /// <code>
 /// using var collector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Verbose, 100);
-
+///
 ///
 /// // Verbose mode captures all validation steps
 /// int rootContext = collector.BeginChildContext(0, rootEvalPath, rootSchemaPath, rootDocPath);
-
+///
 ///
 /// // All keyword evaluations are recorded
 /// collector.EvaluatedKeyword(true, successMessageProvider, "type"u8);
-
+///
 /// collector.EvaluatedKeyword(false, failureMessageProvider, "pattern"u8);
-
+///
 ///
 /// collector.CommitChildContext(rootContext, true, false, summaryMessageProvider);
-
+///
 ///
 /// // Comprehensive result analysis
 /// foreach (var result in collector.EnumerateResults())
@@ -202,9 +202,9 @@ namespace Corvus.Text.Json;
 /// result.GetSchemaEvaluationLocationText(),
 /// result.GetDocumentEvaluationLocationText(),
 /// result.GetMessageText());
-
+///
 /// }
-
+///
 /// </code>
 /// </example>
 public sealed class JsonSchemaResultsCollector : IJsonSchemaResultsCollector
@@ -425,11 +425,11 @@ public sealed class JsonSchemaResultsCollector : IJsonSchemaResultsCollector
     /// <code>
     /// // Estimate capacity based on schema complexity
     /// int expectedResults = schemaKeywordCount * documentDepth / 4;
-
+    ///
     /// using var collector = JsonSchemaResultsCollector.Create(
     /// JsonSchemaResultsLevel.Basic,
     /// expectedResults);
-
+    ///
     ///
     /// // Validation operations...
     /// </code>
@@ -441,7 +441,7 @@ public sealed class JsonSchemaResultsCollector : IJsonSchemaResultsCollector
     /// using var collector = JsonSchemaResultsCollector.Create(
     /// JsonSchemaResultsLevel.Verbose,
     /// estimatedCapacity: 200);
-
+    ///
     ///
     /// // All validation steps will be captured
     /// </code>
@@ -485,7 +485,7 @@ public sealed class JsonSchemaResultsCollector : IJsonSchemaResultsCollector
     /// using var collector = JsonSchemaResultsCollector.CreateUnrented(
     /// JsonSchemaResultsLevel.Detailed,
     /// estimatedCapacity: 75);
-
+    ///
     ///
     /// // Validation operations with complete memory isolation...
     /// </code>
@@ -726,11 +726,11 @@ public sealed class JsonSchemaResultsCollector : IJsonSchemaResultsCollector
     /// <para>High-performance result processing:</para>
     /// <code>
     /// var enumerator = collector.EnumerateResults();
-
+    ///
     /// while (enumerator.MoveNext())
     /// {
     /// var result = enumerator.Current;
-
+    ///
     /// if (!result.IsMatch)
     /// {
     /// // Direct UTF-8 processing for optimal performance
@@ -738,11 +738,11 @@ public sealed class JsonSchemaResultsCollector : IJsonSchemaResultsCollector
     /// result.Message,
     /// result.DocumentEvaluationLocation,
     /// result.SchemaEvaluationLocation);
-
+    ///
     /// }
-
+    ///
     /// }
-
+    ///
     /// </code>
     /// </example>
     /// <example>
@@ -751,17 +751,17 @@ public sealed class JsonSchemaResultsCollector : IJsonSchemaResultsCollector
     /// foreach (var result in collector.EnumerateResults())
     /// {
     /// Console.WriteLine($"Match: {result.IsMatch}");
-
+    ///
     /// Console.WriteLine($"Message: {result.GetMessageText()}");
-
+    ///
     /// Console.WriteLine($"Document Path: {result.GetDocumentEvaluationLocationText()}");
-
+    ///
     /// Console.WriteLine($"Schema Path: {result.GetSchemaEvaluationLocationText()}");
-
+    ///
     /// Console.WriteLine();
-
+    ///
     /// }
-
+    ///
     /// </code>
     /// </example>
     [CLSCompliant(false)]
@@ -797,30 +797,30 @@ public sealed class JsonSchemaResultsCollector : IJsonSchemaResultsCollector
     /// <example>
     /// <code>
     /// int resultCount = collector.GetResultCount();
-
+    ///
     /// if (resultCount > 0)
     /// {
     /// Console.WriteLine($"Validation produced {resultCount} results");
-
+    ///
     ///
     /// // Pre-size collections if needed
     /// var issues = new List&lt;ValidationIssue&gt;(resultCount);
-
+    ///
     ///
     /// foreach (var result in collector.EnumerateResults())
     /// {
     /// issues.Add(ConvertToIssue(result));
-
+    ///
     /// }
-
+    ///
     /// }
-
+    ///
     /// else
     /// {
     /// Console.WriteLine("Validation completed successfully with no issues");
-
+    ///
     /// }
-
+    ///
     /// </code>
     /// </example>
     public int GetResultCount()

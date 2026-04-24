@@ -1,4 +1,4 @@
-// <copyright file="Utf8JsonWriter.WriteValues.String.cs" company="Endjin Limited">
+﻿// <copyright file="Utf8JsonWriter.WriteValues.String.cs" company="Endjin Limited">
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 // <licensing>
@@ -373,13 +373,13 @@ public sealed partial class Utf8JsonWriter
     //// internal void WriteStringValueUnescaped(ReadOnlySpan<byte> utf8Value)
     //// {
     //// JsonWriterHelper.ValidateValue(utf8Value);
-
+    ////
     //// WriteStringByOptions(utf8Value);
-
+    ////
     //// SetFlagToAddListSeparatorBeforeNextItem();
-
+    ////
     //// _tokenType = JsonTokenType.String;
-
+    ////
     //// }
     // TODO: https://github.com/dotnet/runtime/issues/29293
     private void WriteStringMinimized(ReadOnlySpan<byte> escapedValue)

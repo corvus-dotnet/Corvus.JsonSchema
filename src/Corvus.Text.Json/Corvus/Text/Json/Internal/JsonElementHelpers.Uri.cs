@@ -1,4 +1,4 @@
-// <copyright file="JsonElementHelpers.Uri.cs" company="Endjin Limited">
+﻿// <copyright file="JsonElementHelpers.Uri.cs" company="Endjin Limited">
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 // <licensing>
@@ -70,7 +70,7 @@ public static partial class JsonElementHelpers
     /// <param name="uri">The URI to format.</param>
     /// <param name="isDisplay">
     /// <see langword="true"/> to produce the display form with percent-encoded sequences decoded;
-
+    ///
     /// <see langword="false"/> to produce the canonical form with all required characters percent-encoded.
     /// </param>
     /// <param name="destination">The destination buffer.</param>
@@ -111,7 +111,7 @@ public static partial class JsonElementHelpers
     /// <param name="uriReference">The URI reference to format.</param>
     /// <param name="isDisplay">
     /// <see langword="true"/> to produce the display form with percent-encoded sequences decoded;
-
+    ///
     /// <see langword="false"/> to produce the canonical form with all required characters percent-encoded.
     /// </param>
     /// <param name="result">The formatted string, or <see langword="null"/> if formatting failed.</param>
@@ -159,7 +159,7 @@ public static partial class JsonElementHelpers
     /// <param name="uriReference">The URI reference to format.</param>
     /// <param name="isDisplay">
     /// <see langword="true"/> to produce the display form with percent-encoded sequences decoded;
-
+    ///
     /// <see langword="false"/> to produce the canonical form with all required characters percent-encoded.
     /// </param>
     /// <param name="destination">The destination buffer.</param>
@@ -200,7 +200,7 @@ public static partial class JsonElementHelpers
     /// <param name="iri">The IRI to format.</param>
     /// <param name="isDisplay">
     /// <see langword="true"/> to produce the display form with percent-encoded sequences decoded;
-
+    ///
     /// <see langword="false"/> to produce the canonical form with all required characters percent-encoded.
     /// </param>
     /// <param name="result">The formatted string, or <see langword="null"/> if formatting failed.</param>
@@ -248,7 +248,7 @@ public static partial class JsonElementHelpers
     /// <param name="iri">The IRI to format.</param>
     /// <param name="isDisplay">
     /// <see langword="true"/> to produce the display form with percent-encoded sequences decoded;
-
+    ///
     /// <see langword="false"/> to produce the canonical form with all required characters percent-encoded.
     /// </param>
     /// <param name="destination">The destination buffer.</param>
@@ -289,7 +289,7 @@ public static partial class JsonElementHelpers
     /// <param name="iriReference">The IRI reference to format.</param>
     /// <param name="isDisplay">
     /// <see langword="true"/> to produce the display form with percent-encoded sequences decoded;
-
+    ///
     /// <see langword="false"/> to produce the canonical form with all required characters percent-encoded.
     /// </param>
     /// <param name="result">The formatted string, or <see langword="null"/> if formatting failed.</param>
@@ -337,7 +337,7 @@ public static partial class JsonElementHelpers
     /// <param name="iriReference">The IRI reference to format.</param>
     /// <param name="isDisplay">
     /// <see langword="true"/> to produce the display form with percent-encoded sequences decoded;
-
+    ///
     /// <see langword="false"/> to produce the canonical form with all required characters percent-encoded.
     /// </param>
     /// <param name="destination">The destination buffer.</param>

@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <Import Project="$(EndjinProjectPropsPath)" Condition="$(EndjinProjectPropsPath) != ''" />
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
@@ -27,7 +27,7 @@
     <NoWarn>$(NoWarn);nullable;CS1591;CS3021;NU5128;RS2008;SA0001;NU1504;CS8500;CS8969;IDE0065;IDE0290;IDE0079;IDE0130</NoWarn>
     <NoWarn>$(NoWarn);CA1510;CA1511;CA1512;CA1513;CA1845;CA1846;CA1847;CS8600;CS8602</NoWarn>
     <!-- XML doc warnings in linked files we cannot modify -->
-    <NoWarn>$(NoWarn);CS1570;CS1572;CS1573;CS1574;CS1584;CS1658</NoWarn>
+    <NoWarn>$(NoWarn);CS1572;CS1573;CS1574;CS1584;CS1658</NoWarn>
     <IsPackable>true</IsPackable>
     <EndjinDisableCreateEditorConfig>true</EndjinDisableCreateEditorConfig>
     <GenerateDocumentationFile>false</GenerateDocumentationFile>

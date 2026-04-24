@@ -1,4 +1,4 @@
-// Derived from code licensed to the .NET Foundation under one or more agreements.
+﻿// Derived from code licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licensed this code under the MIT license.
 
 using System.Buffers;
@@ -2792,28 +2792,28 @@ public static class JsonDocumentBuilderCreateDynamicTests
 
     ////    Span<byte> valuesSpan = utf8Json.AsSpan(1);
     ////    StandardFormat format = StandardFormat.Parse("D6");
-
+    ///
     ////    for (int i = 0; i < NumberOfNumbers; i++)
     ////    {
     ////        // Just inside the quote
     ////        Span<byte> curDest = valuesSpan.Slice(9 * i + 1);
-
+    ///
     ////        if (!Utf8Formatter.TryFormat(i, curDest, out int bytesWritten, format) || bytesWritten != 6)
     ////        {
     ////            throw new InvalidOperationException("" + i);
     ////        }
-
+    ///
     ////        curDest[7] = (byte)',';
     ////    }
-
+    ///
     ////    // Replace last comma with ]
     ////    utf8Json[NumberOfBytes - 1] = (byte)']';
-
+    ///
     ////    using (ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(utf8Json))
     ////    {
     ////        JsonElement.Mutable root = builderDoc.RootElement;
     ////        int count = root.GetArrayLength();
-
+    ///
     ////        for (int i = 0; i < count; i++)
     ////        {
     ////            Assert.Equal(i, int.Parse(root[i].GetString()));

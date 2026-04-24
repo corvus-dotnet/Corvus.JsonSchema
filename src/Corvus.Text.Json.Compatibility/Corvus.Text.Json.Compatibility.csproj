@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <Import Project="$(EndjinProjectPropsPath)" Condition="$(EndjinProjectPropsPath) != ''" />
   <PropertyGroup>
     <TargetFrameworks>net9.0;net10.0;netstandard2.0;netstandard2.1</TargetFrameworks>
@@ -12,7 +12,7 @@
     <WarningsNotAsErrors>$(WarningsNotAsErrors);NU1901;NU1902;NU1903;NU1904</WarningsNotAsErrors>
     <NoWarn Condition="$(TargetFrameworks.Contains('netstandard'))">$(NoWarn);CA1510;CA1511;CA1512;CA1513;CA1845;CA1846;CA1847</NoWarn>
     <!-- Warnings to always disable -->
-    <NoWarn>$(NoWarn);CS8500;CS8969;IDE0065;IDE0290;IDE0079;IDE0130;NU1504;CS1591;CS1573;CS1572;CS1570;CS1574;CS1584;CS1658;CS1711;CS1712;CS1734;SA1620</NoWarn>
+    <NoWarn>$(NoWarn);CS8500;CS8969;IDE0065;IDE0290;IDE0079;IDE0130;NU1504;CS1591;CS1573;CS1572;CS1574;CS1584;CS1658;CS1711;CS1712;CS1734;SA1620</NoWarn>
     <IncludeInternalObsoleteAttribute>true</IncludeInternalObsoleteAttribute>
     <IsPackable>true</IsPackable>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>

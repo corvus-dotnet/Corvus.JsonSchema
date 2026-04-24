@@ -15,16 +15,17 @@ namespace Corvus.Text.Json.Internal;
 #pragma warning disable RCS1243 // Duplicate word in a comment - ABNF grammar
 /// <summary>
 /// Provides validation functionality for URI Templates as defined in RFC 6570.
-///
+/// <para>
 /// This implementation follows the complete ABNF grammar from RFC 6570:
-///
+/// </para>
+/// <code>
 /// URI-Template = *( literals / expression )
 /// literals     = %x21 / %x23-24 / %x26 / %x28-3B / %x3D / %x3F-5B
-/// / %x5D / %x5F / %x61-7A / %x7E / ucschar / pct-encoded
+///               / %x5D / %x5F / %x61-7A / %x7E / ucschar / pct-encoded
 /// expression   = "{" [ operator ] variable-list "}"
 /// operator     = op-level2 / op-level3 / op-reserve
 /// op-level2    = "+" / "#"
-/// op-level3    = "." / "/" / ";" / "?" / "&"
+/// op-level3    = "." / "/" / ";" / "?" / "&amp;"
 /// op-reserve   = "=" / "," / "!" / "@" / "|"
 /// variable-list = varspec *( "," varspec )
 /// varspec      = varname [ modifier ]
@@ -35,6 +36,7 @@ namespace Corvus.Text.Json.Internal;
 /// explode      = "*"
 /// max-length   = %x31-39 0*3DIGIT; positive integer up to 9999
 /// pct-encoded  = "%" HEXDIG HEXDIG
+/// </code>
 /// </summary>
 #pragma warning restore RCS1243
 internal static class Utf8UriTemplate

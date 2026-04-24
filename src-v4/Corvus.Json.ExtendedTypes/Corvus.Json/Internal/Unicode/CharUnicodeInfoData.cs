@@ -1,4 +1,4 @@
-// <copyright file="CharUnicodeInfoData.cs" company="Endjin Limited">
+﻿// <copyright file="CharUnicodeInfoData.cs" company="Endjin Limited">
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 // <licensing>
@@ -1403,7 +1403,7 @@ namespace System.Globalization
         ////    0xd8, 0xff, 0x00, 0x00, 0xd9, 0xff, 0x00, 0x00, 0x00, 0x00, 0xc0, 0xff, 0x00, 0x00, 0x00, 0x00,
         ////    0xde, 0xff
         ////];
-
+        ///
         ////// Contains simple culture-invariant lowercase mappings
         ////private static ReadOnlySpan<byte> LowercaseValues => // 466
         ////[
@@ -2320,7 +2320,7 @@ namespace System.Globalization
         ////    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
         ////    0x00
         ////];
-
+        ///
         ////// Contains numeric values
         ////private static ReadOnlySpan<byte> NumericValues => // 1416
         ////[

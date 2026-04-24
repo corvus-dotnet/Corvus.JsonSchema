@@ -152,7 +152,7 @@ public static partial class ArrayExtensions
     ////{
     ////    ref T r0 = ref array.DangerousGetReference();
     ////    nint length = RuntimeHelpers.GetArrayNativeLength(array);
-
+    ////
     ////    return SpanHelper.GetDjb2HashCode(ref r0, length);
     ////}
 

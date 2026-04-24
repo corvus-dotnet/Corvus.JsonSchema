@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <Import Project="$(EndjinProjectPropsPath)" Condition="$(EndjinProjectPropsPath) != ''" />
   <PropertyGroup>
     <TargetFrameworks>net9.0;net10.0;netstandard2.0;netstandard2.1</TargetFrameworks>
@@ -15,7 +15,7 @@
     <!-- Warnings to always disable -->
     <NoWarn>$(NoWarn);CS8500;CS8969;IDE0065;IDE0290;IDE0079;IDE0130</NoWarn>
     <!-- XML doc warnings in linked Common/System.Private.CoreLib files we cannot modify -->
-    <NoWarn>$(NoWarn);CS1570;CS1584;CS1658</NoWarn>
+    <NoWarn>$(NoWarn);CS1584;CS1658</NoWarn>
     <!-- XML doc completeness warnings - to be addressed in a later pass -->
     <NoWarn>$(NoWarn);CS1591;CS1573;CS1574;CS1572;CS0419;CS1571;CS1734;CS1712</NoWarn>
     <IncludeInternalObsoleteAttribute>true</IncludeInternalObsoleteAttribute>

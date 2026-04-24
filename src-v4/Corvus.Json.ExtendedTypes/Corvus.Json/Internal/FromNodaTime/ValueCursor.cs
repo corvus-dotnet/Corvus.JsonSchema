@@ -208,17 +208,17 @@ internal ref struct ValueCursor
     ////        {
     ////            return false;
     ////        }
-
+    ////
     ////        if (this.Value.Slice(this.Index, match.Length).SequenceEqual(match))
     ////        {
     ////            this.Move(this.Index + match.Length);
     ////            return true;
     ////        }
-
+    ////
     ////        return false;
     ////    }
     ////}
-
+    ////
     /////// <summary>
     /////// Attempts to match the specified string with the current point in the string in a case-insensitive
     /////// manner, according to the given comparison info. The cursor is optionally updated to the end of the match.
@@ -235,7 +235,7 @@ internal ref struct ValueCursor
     ////        {
     ////            return false;
     ////        }
-
+    ////
     ////        // Note: This will fail if the length in the input string is different to the length in the
     ////        // match string for culture-specific reasons. It's not clear how to handle that...
     ////        // See issue 210 for details - we're not intending to fix this, but it's annoying.
@@ -245,14 +245,14 @@ internal ref struct ValueCursor
     ////            {
     ////                this.Move(this.Index + match.Length);
     ////            }
-
+    ////
     ////            return true;
     ////        }
-
+    ////
     ////        return false;
     ////    }
     ////}
-
+    ////
     /////// <summary>
     /////// Compares the value from the current cursor position with the given match. If the
     /////// given match string is longer than the remaining length, the comparison still goes
@@ -274,7 +274,7 @@ internal ref struct ValueCursor
     ////        int ret = this.Value[this.Index..].CompareTo(match[..remaining], StringComparison.Ordinal);
     ////        return ret == 0 ? -1 : ret;
     ////    }
-
+    ////
     ////    return this.Value.Slice(this.Index, match.Length).CompareTo(match, StringComparison.Ordinal);
     ////}
 
