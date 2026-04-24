@@ -8,7 +8,7 @@ $zerofailedExtensions = @(
         # References the extension from its GitHub repository. If not already installed, use latest version from 'main' will be downloaded.
         Name = "ZeroFailed.Build.DotNet"
         GitRepository = "https://github.com/zerofailed/ZeroFailed.Build.DotNet"
-        GitRef = "main"
+        GitRef = "feature/fix-missing-code-coverage"
     }
     @{
         # References the extension from its GitHub repository. If not already installed, use latest version from 'main' will be downloaded.
@@ -40,8 +40,9 @@ $SkipPublish = $true
 $SolutionToBuild = (Resolve-Path (Join-Path $here ".\Corvus.Text.Json.slnx")).Path
 $ProjectsToPublish = @()
 $NugetPublishSource = property ZF_NUGET_PUBLISH_SOURCE "$here/_local-nuget-feed"
-$IncludeAssembliesInCodeCoverage = "Corvus*"
-$ExcludeAssembliesInCodeCoverage = "Corvus*.Tests*"
+$IncludeAssembliesInCodeCoverage = @("Corvus*")
+$ExcludeAssembliesInCodeCoverage = @("Corvus*.Tests")
+$ExcludeFilesInCodeCoverage = @('*.g.cs', '*.designer.cs')
 
 # Run test assemblies sequentially to avoid OOM on CI runners (7 GB).
 # The solution has 7 test assemblies; running them all in parallel exhausts memory.
