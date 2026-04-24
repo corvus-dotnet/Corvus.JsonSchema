@@ -24,6 +24,7 @@
     <ProjectReference Include="..\Corvus.Json.CodeGeneration\Corvus.Json.CodeGeneration.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Update="StyleCop.Analyzers" />
     <PackageReference Update="Roslynator.Analyzers" />
   </ItemGroup>
   <ItemGroup>
