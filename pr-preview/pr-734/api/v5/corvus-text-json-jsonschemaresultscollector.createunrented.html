@@ -101,6 +101,7 @@
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
 <strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/v5/src/Corvus.Text.Json/Corvus/Text/Json/JsonSchema/JsonSchemaResultsCollector.cs#L495">JsonSchemaResultsCollector.cs</a></p>
 <h2 id="createunrented-jsonschemaresultslevel-int">CreateUnrented(JsonSchemaResultsLevel, int)</h2>
+<p>Creates a non-pooled JSON schema results collector for standalone or specialized usage scenarios.</p>
 <pre><code class="language-csharp">public static JsonSchemaResultsCollector CreateUnrented(JsonSchemaResultsLevel level, int estimatedCapacity)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
@@ -116,17 +117,20 @@
 <tr>
 <td><code>level</code></td>
 <td><a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonschemaresultslevel.html"><code>JsonSchemaResultsLevel</code></a></td>
-<td></td>
+<td>Controls result verbosity and collection overhead.</td>
 </tr>
 <tr>
 <td><code>estimatedCapacity</code></td>
 <td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>int</code></a></td>
-<td><em>(optional)</em></td>
+<td>Expected number of validation results for buffer pre-sizing. <em>(optional)</em></td>
 </tr>
 </tbody>
 </table>
 <h3 id="returns">Returns</h3>
 <p><a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonschemaresultscollector.html"><code>JsonSchemaResultsCollector</code></a></p>
+<p>A standalone <a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonschemaresultscollector.html"><code>JsonSchemaResultsCollector</code></a> instance that is not managed by the thread-local pool. Resources are released directly on disposal without pool interaction.</p>
+<h3 id="remarks">Remarks</h3>
+<p>Use Cases: - Long-lived Instances: When the collector lifetime exceeds typical validation scope - Memory Isolation: When pool interaction is undesirable for security or debugging - Testing: When predictable memory behavior is required for unit tests - Single-use: When validation frequency doesn't justify pooling overhead Performance Considerations: Non-pooled instances have higher allocation overhead but provide complete memory isolation. Each instance allocates fresh buffers from ArrayPool and returns them directly on disposal. Use when pool interaction is problematic or when instance lifetime is unpredictable.</p>
 <h2 id="applies-to">Applies To</h2>
 <table>
 <thead>

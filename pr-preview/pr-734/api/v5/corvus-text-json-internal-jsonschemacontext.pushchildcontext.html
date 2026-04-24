@@ -110,11 +110,11 @@
 <tbody>
 <tr>
 <td><a href="#pushchildcontext-ijsondocument-int-bool-bool-readonlyspan-byte-jsonschemapathprovider-jsonschemapathprovider">PushChildContext(IJsonDocument, int, bool, bool, ReadOnlySpan&lt;byte&gt;, JsonSchemaPathProvider, JsonSchemaPathProvider)</a></td>
-<td></td>
+<td>Creates a new child context for schema evaluation with escaped property name tracking.</td>
 </tr>
 <tr>
 <td><a href="#pushchildcontext-ijsondocument-int-bool-bool-int-jsonschemapathprovider-jsonschemapathprovider">PushChildContext(IJsonDocument, int, bool, bool, int, JsonSchemaPathProvider, JsonSchemaPathProvider)</a></td>
-<td></td>
+<td>Creates a new child context for schema evaluation with item index tracking.</td>
 </tr>
 <tr>
 <td><a href="#pushchildcontext-ijsondocument-int-bool-bool-tprovidercontext-jsonschemapathprovider-tprovidercontext-jsonschemapathprovider-tprovidercontext-jsonschemapathprovider-tprovidercontext">PushChildContext(IJsonDocument, int, bool, bool, TProviderContext, JsonSchemaPathProvider&lt;TProviderContext&gt;, JsonSchemaPathProvider&lt;TProviderContext&gt;, JsonSchemaPathProvider&lt;TProviderContext&gt;)</a></td>
@@ -128,6 +128,7 @@
 </table>
 <h2 id="pushchildcontext-ijsondocument-int-bool-bool-readonlyspan-byte-jsonschemapathprovider-jsonschemapathprovider">PushChildContext(IJsonDocument, int, bool, bool, ReadOnlySpan&lt;byte&gt;, JsonSchemaPathProvider, JsonSchemaPathProvider)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/v5/src/Corvus.Text.Json/Corvus/Text/Json/JsonSchema/Internal/JsonSchemaContext.cs#L352">JsonSchemaContext.cs</a></p>
+<p>Creates a new child context for schema evaluation with escaped property name tracking.</p>
 <pre><code class="language-csharp">public JsonSchemaContext PushChildContext(IJsonDocument parentDocument, int parentDocumentIndex, bool useEvaluatedItems, bool useEvaluatedProperties, ReadOnlySpan&lt;byte&gt; escapedPropertyName, JsonSchemaPathProvider evaluationPath, JsonSchemaPathProvider schemaEvaluationPath)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
@@ -143,42 +144,45 @@
 <tr>
 <td><code>parentDocument</code></td>
 <td><a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-internal-ijsondocument.html"><code>IJsonDocument</code></a></td>
-<td></td>
+<td>The JSON document containing the element being evaluated.</td>
 </tr>
 <tr>
 <td><code>parentDocumentIndex</code></td>
 <td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>int</code></a></td>
-<td></td>
+<td>The index of the parent element in the document.</td>
 </tr>
 <tr>
 <td><code>useEvaluatedItems</code></td>
 <td><a href="https://learn.microsoft.com/dotnet/api/system.boolean"><code>bool</code></a></td>
-<td></td>
+<td>Whether this child context should track evaluated array items.</td>
 </tr>
 <tr>
 <td><code>useEvaluatedProperties</code></td>
 <td><a href="https://learn.microsoft.com/dotnet/api/system.boolean"><code>bool</code></a></td>
-<td></td>
+<td>Whether this child context should track evaluated object properties.</td>
 </tr>
 <tr>
 <td><code>escapedPropertyName</code></td>
 <td><a href="https://learn.microsoft.com/dotnet/api/system.readonlyspan-1"><code>ReadOnlySpan&lt;byte&gt;</code></a></td>
-<td></td>
+<td>The escaped property name for path tracking in validation results.</td>
 </tr>
 <tr>
 <td><code>evaluationPath</code></td>
 <td><a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonschemapathprovider.html"><code>JsonSchemaPathProvider</code></a></td>
-<td><em>(optional)</em></td>
+<td>Optional provider for the reduced evaluation path in the schema. <em>(optional)</em></td>
 </tr>
 <tr>
 <td><code>schemaEvaluationPath</code></td>
 <td><a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonschemapathprovider.html"><code>JsonSchemaPathProvider</code></a></td>
-<td><em>(optional)</em></td>
+<td>Optional provider for the full schema evaluation path. <em>(optional)</em></td>
 </tr>
 </tbody>
 </table>
 <h3 id="returns">Returns</h3>
 <p><a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-internal-jsonschemacontext.html"><code>JsonSchemaContext</code></a></p>
+<p>A new child context initialized for the specified element.</p>
+<h3 id="remarks">Remarks</h3>
+<p>This method is part of the context lifecycle management system for JSON Schema validation. Child contexts inherit buffer space and configuration from their parent but maintain separate tracking for evaluated properties and items. The child context shares the same underlying buffer as the parent but uses a different offset to avoid conflicts. When the child context is committed via <a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-internal-jsonschemacontext.commitchildcontext.html"><code>CommitChildContext</code></a>, its results are merged back into the parent's validation results. Usage Pattern: <code>csharp // Push child context for validating a property JsonSchemaContext childContext = parentContext.PushChildContext( document, propertyIndex, useItems: false, useProperties: true, propertyName); // Perform validation using child context bool isValid = ValidateProperty(ref childContext); // Commit results back to parent parentContext.CommitChildContext(isValid, ref childContext); </code></p>
 <h2 id="applies-to">Applies To</h2>
 <table>
 <thead>
@@ -201,6 +205,7 @@
 <hr />
 <h2 id="pushchildcontext-ijsondocument-int-bool-bool-int-jsonschemapathprovider-jsonschemapathprovider">PushChildContext(IJsonDocument, int, bool, bool, int, JsonSchemaPathProvider, JsonSchemaPathProvider)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/v5/src/Corvus.Text.Json/Corvus/Text/Json/JsonSchema/Internal/JsonSchemaContext.cs#L406">JsonSchemaContext.cs</a></p>
+<p>Creates a new child context for schema evaluation with item index tracking.</p>
 <pre><code class="language-csharp">public JsonSchemaContext PushChildContext(IJsonDocument parentDocument, int parentDocumentIndex, bool useEvaluatedItems, bool useEvaluatedProperties, int itemIndex, JsonSchemaPathProvider evaluationPath, JsonSchemaPathProvider schemaEvaluationPath)
 </code></pre>
 <h3 id="parameters-1">Parameters</h3>
@@ -216,42 +221,45 @@
 <tr>
 <td><code>parentDocument</code></td>
 <td><a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-internal-ijsondocument.html"><code>IJsonDocument</code></a></td>
-<td></td>
+<td>The JSON document containing the element being evaluated.</td>
 </tr>
 <tr>
 <td><code>parentDocumentIndex</code></td>
 <td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>int</code></a></td>
-<td></td>
+<td>The index of the parent element in the document.</td>
 </tr>
 <tr>
 <td><code>useEvaluatedItems</code></td>
 <td><a href="https://learn.microsoft.com/dotnet/api/system.boolean"><code>bool</code></a></td>
-<td></td>
+<td>Whether this child context should track evaluated array items.</td>
 </tr>
 <tr>
 <td><code>useEvaluatedProperties</code></td>
 <td><a href="https://learn.microsoft.com/dotnet/api/system.boolean"><code>bool</code></a></td>
-<td></td>
+<td>Whether this child context should track evaluated object properties.</td>
 </tr>
 <tr>
 <td><code>itemIndex</code></td>
 <td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>int</code></a></td>
-<td></td>
+<td>The item index for path tracking in validation results.</td>
 </tr>
 <tr>
 <td><code>evaluationPath</code></td>
 <td><a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonschemapathprovider.html"><code>JsonSchemaPathProvider</code></a></td>
-<td><em>(optional)</em></td>
+<td>Optional provider for the reduced evaluation path in the schema. <em>(optional)</em></td>
 </tr>
 <tr>
 <td><code>schemaEvaluationPath</code></td>
 <td><a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonschemapathprovider.html"><code>JsonSchemaPathProvider</code></a></td>
-<td><em>(optional)</em></td>
+<td>Optional provider for the full schema evaluation path. <em>(optional)</em></td>
 </tr>
 </tbody>
 </table>
 <h3 id="returns-1">Returns</h3>
 <p><a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-internal-jsonschemacontext.html"><code>JsonSchemaContext</code></a></p>
+<p>A new child context initialized for the specified element.</p>
+<h3 id="remarks-1">Remarks</h3>
+<p>This method is part of the context lifecycle management system for JSON Schema validation. Child contexts inherit buffer space and configuration from their parent but maintain separate tracking for evaluated properties and items. The child context shares the same underlying buffer as the parent but uses a different offset to avoid conflicts. When the child context is committed via <a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-internal-jsonschemacontext.commitchildcontext.html"><code>CommitChildContext</code></a>, its results are merged back into the parent's validation results. Usage Pattern: <code>csharp // Push child context for validating a property JsonSchemaContext childContext = parentContext.PushChildContext( document, propertyIndex, useItems: false, useProperties: true, propertyName); // Perform validation using child context bool isValid = ValidateProperty(ref childContext); // Commit results back to parent parentContext.CommitChildContext(isValid, ref childContext); </code></p>
 <h2 id="applies-to-1">Applies To</h2>
 <table>
 <thead>
@@ -347,7 +355,7 @@
 <h3 id="returns-2">Returns</h3>
 <p><a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-internal-jsonschemacontext.html"><code>JsonSchemaContext</code></a></p>
 <p>A new child context initialized for the specified element.</p>
-<h3 id="remarks">Remarks</h3>
+<h3 id="remarks-2">Remarks</h3>
 <p>This overload provides strongly-typed context support for custom path providers. The <code>providerContext</code> is passed to each of the path provider delegates, allowing for stateful or computed path generation based on validation context. This is particularly useful for complex validation scenarios where path generation depends on runtime state, computed values, or external configuration.</p>
 <h2 id="applies-to-2">Applies To</h2>
 <table>
@@ -424,7 +432,7 @@
 <h3 id="returns-3">Returns</h3>
 <p><a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-internal-jsonschemacontext.html"><code>JsonSchemaContext</code></a></p>
 <p>A new child context initialized for the specified element.</p>
-<h3 id="remarks-1">Remarks</h3>
+<h3 id="remarks-3">Remarks</h3>
 <p>This is the most flexible overload for child context creation, allowing custom path providers for all three path types: evaluation path, schema evaluation path, and document evaluation path. These paths are used for generating detailed validation error messages and tracing schema evaluation flow. Use this overload when you need full control over path generation without requiring a typed provider context object.</p>
 <h2 id="applies-to-3">Applies To</h2>
 <table>

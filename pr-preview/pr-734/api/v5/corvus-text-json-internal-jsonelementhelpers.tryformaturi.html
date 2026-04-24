@@ -114,7 +114,7 @@
 </tr>
 <tr>
 <td><a href="#tryformaturi-utf8uri-bool-span-char-ref-int">TryFormatUri(Utf8Uri, bool, Span&lt;char&gt;, ref int)</a></td>
-<td></td>
+<td>Tries to format a <a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-utf8uri.html"><code>Utf8Uri</code></a> as a display (human-readable) or canonical (percent-encoded) string into a...</td>
 </tr>
 </tbody>
 </table>
@@ -175,6 +175,7 @@
 <hr />
 <h2 id="tryformaturi-utf8uri-bool-span-char-ref-int">TryFormatUri(Utf8Uri, bool, Span&lt;char&gt;, ref int)</h2>
 <p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/v5/src/Corvus.Text.Json/Corvus/Text/Json/Internal/JsonElementHelpers.Uri.cs#L81">JsonElementHelpers.Uri.cs</a></p>
+<p>Tries to format a <a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-utf8uri.html"><code>Utf8Uri</code></a> as a display (human-readable) or canonical (percent-encoded) string into a <a href="https://learn.microsoft.com/dotnet/api/system.span-1"><code>Span</code></a> of <a href="https://learn.microsoft.com/dotnet/api/system.char"><code>Char</code></a>.</p>
 <pre><code class="language-csharp">public static bool TryFormatUri(Utf8Uri uri, bool isDisplay, Span&lt;char&gt; destination, ref int charsWritten)
 </code></pre>
 <h3 id="parameters-1">Parameters</h3>
@@ -190,27 +191,28 @@
 <tr>
 <td><code>uri</code></td>
 <td><a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-utf8uri.html"><code>Utf8Uri</code></a></td>
-<td></td>
+<td>The URI to format.</td>
 </tr>
 <tr>
 <td><code>isDisplay</code></td>
 <td><a href="https://learn.microsoft.com/dotnet/api/system.boolean"><code>bool</code></a></td>
-<td></td>
+<td><code>true</code> to produce the display form with percent-encoded sequences decoded; <code>false</code> to produce the canonical form with all required characters percent-encoded.</td>
 </tr>
 <tr>
 <td><code>destination</code></td>
 <td><a href="https://learn.microsoft.com/dotnet/api/system.span-1"><code>Span&lt;char&gt;</code></a></td>
-<td></td>
+<td>The destination buffer.</td>
 </tr>
 <tr>
 <td><code>charsWritten</code></td>
 <td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>ref int</code></a></td>
-<td></td>
+<td>The number of characters written.</td>
 </tr>
 </tbody>
 </table>
 <h3 id="returns-1">Returns</h3>
 <p><a href="https://learn.microsoft.com/dotnet/api/system.boolean"><code>bool</code></a></p>
+<p><code>true</code> if formatting succeeded.</p>
 <h2 id="applies-to-1">Applies To</h2>
 <table>
 <thead>

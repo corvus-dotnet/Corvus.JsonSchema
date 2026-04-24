@@ -100,8 +100,11 @@
 <p><strong>Namespace:</strong> Corvus.Text.Json<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
 <strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/v5/src/Corvus.Text.Json/Corvus/Text/Json/JsonSchema/JsonSchemaResultsCollector.cs#L210">JsonSchemaResultsCollector.cs</a></p>
+<p>Collects and manages results from JSON schema validation operations with high-performance memory management, stack-based evaluation tracking, and configurable verbosity levels.</p>
 <pre><code class="language-csharp">public sealed class JsonSchemaResultsCollector : IJsonSchemaResultsCollector, IDisposable
 </code></pre>
+<h2 id="remarks">Remarks</h2>
+<p>Core Architecture: The <a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonschemaresultscollector.html"><code>JsonSchemaResultsCollector</code></a> provides a sophisticated result collection system optimized for JSON schema validation workflows. It manages multiple evaluation paths simultaneously and supports hierarchical validation contexts through a stack-based approach. - Multi-Path Tracking: Maintains evaluation, schema, and document paths separately for precise error reporting - Stack-Based Contexts: Hierarchical validation contexts with proper nesting and cleanup - Pooled Memory Management: Thread-local pooling for high-throughput validation scenarios - Configurable Verbosity: Three levels from basic failures to comprehensive validation logs - UTF-8 Optimized: Direct UTF-8 processing for reduced encoding overhead Lifecycle Management: The collector follows a strict lifecycle pattern designed for efficient resource management: - Creation: Use <a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonschemaresultscollector.create.html"><code>Create</code></a> for pooled instances or <a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonschemaresultscollector.createunrented.html"><code>CreateUnrented</code></a> for standalone use - Configuration: Set verbosity level and capacity estimates during creation - Collection: Use context methods to track validation hierarchy and results - Enumeration: Access results through <a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonschemaresultscollector.enumerateresults.html"><code>EnumerateResults</code></a> after validation completion - Disposal: Always dispose to return pooled resources and clear sensitive data Memory Management: Designed for high-performance scenarios with minimal garbage collection pressure: - Pooled Instances: Thread-local caching reduces allocation overhead in high-throughput scenarios - ArrayPool Integration: Uses shared array pools for internal buffers with proper cleanup - Stack Allocation: ValueStack structures minimize heap allocations for context management - Capacity Estimation: Pre-sizing based on expected result count prevents reallocations - Security Clearing: Sensitive data is explicitly cleared on disposal Performance Characteristics: - Time Complexity: O(1) result insertion, O(n) enumeration where n is result count - Space Complexity: O(d + r) where d is max validation depth, r is result count - Memory Overhead: ~32 bytes per path segment, ~128 bytes per message (configurable) - Thread Safety: Not thread-safe; use separate instances per thread Verbosity Level Guidance: - Basic: Failure messages only - minimal overhead, use for production validation - Detailed: Failure messages with detailed context - moderate overhead, use for debugging - Verbose: All validation events including successes - high overhead, use for comprehensive analysis Usage Patterns: - High-Throughput: Use pooled instances with accurate capacity estimation - One-Off Validation: Use unpooled instances for occasional validation - Debugging: Use Detailed or Verbose levels with comprehensive result analysis - Production: Use Basic level with pooled instances for optimal performance Context Hierarchy: The collector maintains a stack-based context system where each validation step creates a child context. Contexts must be completed in reverse order (stack discipline) using either commit or pop operations. This enables precise error location tracking and efficient resource cleanup. Thread Safety: This class is not thread-safe. Each thread must use its own collector instance. The internal thread-local pooling system handles concurrent access to the cache safely.</p>
 <h2 id="inheritance">Inheritance</h2>
 <p><a href="https://learn.microsoft.com/dotnet/api/system.object"><code>Object</code></a> → <strong>JsonSchemaResultsCollector</strong></p>
 <h2 id="implements">Implements</h2>
@@ -117,11 +120,11 @@
 <tbody>
 <tr>
 <td><a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonschemaresultscollector.create.html#create-jsonschemaresultslevel-int">Create(JsonSchemaResultsLevel, int)</a> <code>static</code></td>
-<td></td>
+<td>Creates a JSON schema results collector from the thread-local pool with optimal memory management.</td>
 </tr>
 <tr>
 <td><a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonschemaresultscollector.createunrented.html#createunrented-jsonschemaresultslevel-int">CreateUnrented(JsonSchemaResultsLevel, int)</a> <code>static</code></td>
-<td></td>
+<td>Creates a non-pooled JSON schema results collector for standalone or specialized usage scenarios.</td>
 </tr>
 <tr>
 <td><a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonschemaresultscollector.dispose.html#dispose">Dispose()</a></td>
@@ -129,14 +132,16 @@
 </tr>
 <tr>
 <td><a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonschemaresultscollector.enumerateresults.html#enumerateresults">EnumerateResults()</a></td>
-<td></td>
+<td>Enumerates validation results in collection order with efficient memory access patterns.</td>
 </tr>
 <tr>
 <td><a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonschemaresultscollector.getresultcount.html#getresultcount">GetResultCount()</a></td>
-<td></td>
+<td>Gets the total count of committed validation results with O(1) performance.</td>
 </tr>
 </tbody>
 </table>
+<h2 id="example">Example</h2>
+<p>Basic validation with pooled collector: <code>csharp using var collector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Basic, estimatedCapacity: 50); // Perform validation operations... int context = collector.BeginChildContext(0, evaluationPath, schemaPath, documentPath); collector.CommitChildContext(context, parentMatch: true, childMatch: false, messageProvider); // Enumerate results foreach (var result in collector.EnumerateResults()) { if (!result.IsMatch) { Console.WriteLine($&quot;Validation failed: {result.GetMessageText()}&quot;); Console.WriteLine($&quot; Location: {result.GetDocumentEvaluationLocationText()}&quot;); } } </code></p>
 <h2 id="applies-to">Applies To</h2>
 <table>
 <thead>

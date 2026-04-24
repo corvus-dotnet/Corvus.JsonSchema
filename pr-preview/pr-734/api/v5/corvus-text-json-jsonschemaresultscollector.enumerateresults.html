@@ -101,10 +101,14 @@
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
 <strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/v5/src/Corvus.Text.Json/Corvus/Text/Json/JsonSchema/JsonSchemaResultsCollector.cs#L770">JsonSchemaResultsCollector.cs</a></p>
 <h2 id="enumerateresults">EnumerateResults()</h2>
+<p>Enumerates validation results in collection order with efficient memory access patterns.</p>
 <pre><code class="language-csharp">public JsonSchemaResultsCollector.ResultsEnumerator EnumerateResults()
 </code></pre>
 <h3 id="returns">Returns</h3>
 <p><a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonschemaresultscollector-resultsenumerator.html"><code>JsonSchemaResultsCollector.ResultsEnumerator</code></a></p>
+<p>A <a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonschemaresultscollector-resultsenumerator.html"><code>ResultsEnumerator</code></a> that provides forward-only iteration over committed validation results. The enumerator is a value type optimized for minimal allocation overhead.</p>
+<h3 id="remarks">Remarks</h3>
+<p>Enumeration Characteristics: - Order: Results are returned in the order they were committed to the collector - Stability: Result order and content remain stable until collector disposal - Performance: O(1) per result access with minimal memory allocation - Thread Safety: Not thread-safe; do not enumerate concurrently with result collection Memory Access Pattern: The enumerator provides direct access to UTF-8 result data stored in internal buffers. Result strings are accessed as ReadOnlySpan<byte> for optimal performance, with helper methods available for string conversion when needed. Usage Guidelines: - Performance Critical: Use UTF-8 span accessors (e.g., <a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonschemaresultscollector-result.message.html"><code>Message</code></a>) when possible - Convenience: Use string accessors (e.g., <a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonschemaresultscollector-result.getmessagetext.html"><code>GetMessageText</code></a>) for display purposes - Filtering: Check <a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonschemaresultscollector-result.ismatch.html"><code>IsMatch</code></a> early to optimize result processing</p>
 <h2 id="applies-to">Applies To</h2>
 <table>
 <thead>

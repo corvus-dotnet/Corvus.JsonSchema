@@ -101,10 +101,13 @@
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
 <strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/v5/src/Corvus.Text.Json/Corvus/Text/Json/Reader/Utf8JsonReader.cs#L181">Utf8JsonReader.cs</a></p>
 <h2 id="valuesequence">ValueSequence()</h2>
+<p>Gets the value of the last processed token as a ReadOnlySpan<byte> slice of the input payload. If the JSON is provided within a ReadOnlySequence<byte> and the slice that represents the token value fits in a single segment, then <a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-utf8jsonreader.valuespan.html"><code>ValueSpan</code></a> will contain the sliced value since it can be represented as a span. Otherwise, the <a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-utf8jsonreader.valuesequence.html"><code>ValueSequence</code></a> will contain the token value.</p>
 <pre><code class="language-csharp">public ReadOnlySequence&lt;byte&gt; ValueSequence { get; set; }
 </code></pre>
 <h3 id="returns">Returns</h3>
 <p><a href="https://learn.microsoft.com/dotnet/api/system.buffers.readonlysequence-1"><code>ReadOnlySequence&lt;byte&gt;</code></a></p>
+<h3 id="remarks">Remarks</h3>
+<p>If <a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-utf8jsonreader.hasvaluesequence.html"><code>HasValueSequence</code></a> is false, <a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-utf8jsonreader.valuesequence.html"><code>ValueSequence</code></a> contains useless data, likely for a previous multi-segment token. Therefore, only access <a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-utf8jsonreader.valuesequence.html"><code>ValueSequence</code></a> if <a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-utf8jsonreader.hasvaluesequence.html"><code>HasValueSequence</code></a> is true. Otherwise, the token value must be accessed from <a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-utf8jsonreader.valuespan.html"><code>ValueSpan</code></a>.</p>
 <h2 id="applies-to">Applies To</h2>
 <table>
 <thead>

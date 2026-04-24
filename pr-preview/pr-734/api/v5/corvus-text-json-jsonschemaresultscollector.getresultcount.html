@@ -101,10 +101,14 @@
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
 <strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/v5/src/Corvus.Text.Json/Corvus/Text/Json/JsonSchema/JsonSchemaResultsCollector.cs#L828">JsonSchemaResultsCollector.cs</a></p>
 <h2 id="getresultcount">GetResultCount()</h2>
+<p>Gets the total count of committed validation results with O(1) performance.</p>
 <pre><code class="language-csharp">public int GetResultCount()
 </code></pre>
 <h3 id="returns">Returns</h3>
 <p><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>int</code></a></p>
+<p>The number of validation results that have been committed and are available for enumeration. This count includes both successful and failed validation results based on the configured verbosity level.</p>
+<h3 id="remarks">Remarks</h3>
+<p>Result Counting by Verbosity Level: - Basic: Counts failure results only - Detailed: Counts failure results with enhanced context - Verbose: Counts all validation events (successes and failures) Performance: This operation is O(1) as it returns the length of the committed results stack without enumeration. Use this method to determine if enumeration is necessary or to pre-size result processing structures.</p>
 <h2 id="applies-to">Applies To</h2>
 <table>
 <thead>
