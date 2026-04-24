@@ -24,8 +24,4 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\Corvus.Text.Json.Analyzers\Corvus.Text.Json.Analyzers.csproj" />
   </ItemGroup>
-  <ItemGroup>
-    <PackageReference Update="StyleCop.Analyzers" />
-    <PackageReference Update="Roslynator.Analyzers" />
-  </ItemGroup>
 </Project>

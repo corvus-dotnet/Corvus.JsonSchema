@@ -139,10 +139,6 @@
     <RestoreLockedMode Condition="$(ContinuousIntegrationBuild) == 'true'">true</RestoreLockedMode>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Update="StyleCop.Analyzers" />
-    <PackageReference Update="Roslynator.Analyzers" />
-  </ItemGroup>
-  <ItemGroup>
     <Folder Include="Features\ImplicitConversionToString\" />
   </ItemGroup>
 </Project>

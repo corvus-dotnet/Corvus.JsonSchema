@@ -145,10 +145,6 @@
     <PackageReference Include="System.Threading.Tasks.Extensions" VersionOverride="4.6.3" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Update="StyleCop.Analyzers" />
-    <PackageReference Update="Roslynator.Analyzers" />
-  </ItemGroup>
-  <ItemGroup>
     <Folder Include="Community.HighPerformance\Buffers\Views\" />
   </ItemGroup>
 </Project>
