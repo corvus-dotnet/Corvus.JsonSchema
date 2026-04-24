@@ -262,14 +262,18 @@ public readonly struct JsonSchema
                 new JsonReference(jsonSchemaUri),
                 options.FallbackVocabulary);
 
-        // Check for built-in types before code generation
-        if (rootType.IsBuiltInJsonAnyType())
+        // Check for built-in types before code generation.
+        // We also check the reduced type to handle cases like $ref to a boolean schema,
+        // where the root type itself is a $ref but reduces to JsonAny or JsonNotAny.
+        TypeDeclaration reducedRootType = rootType.ReducedTypeDeclaration().ReducedType;
+
+        if (rootType.IsBuiltInJsonAnyType() || reducedRootType.IsBuiltInJsonAnyType())
         {
             var alwaysTruePipeline = ValidatorPipeline.Create(isAlwaysTrue: true, isAlwaysFalse: false);
             return new(CachedSchema.GetOrAdd(cacheKey, alwaysTruePipeline));
         }
 
-        if (rootType.IsBuiltInJsonNotAnyType())
+        if (rootType.IsBuiltInJsonNotAnyType() || reducedRootType.IsBuiltInJsonNotAnyType())
         {
             var alwaysFalsePipeline = ValidatorPipeline.Create(isAlwaysTrue: false, isAlwaysFalse: true);
             return new(CachedSchema.GetOrAdd(cacheKey, alwaysFalsePipeline));
