@@ -1,4 +1,4 @@
-// Derived from code licensed to the .NET Foundation under one or more agreements.
+﻿// Derived from code licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licensed this code under the MIT license.
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -14,7 +14,7 @@ namespace TestUtilities;
 /// Example usage:
 /// // Put the following line into your test method:
 /// using var listener = new TestEventListener(_output, TestEventListener.NetworkingEvents);
-
+///
 /// </summary>
 public sealed class TestEventListener : EventListener
 {

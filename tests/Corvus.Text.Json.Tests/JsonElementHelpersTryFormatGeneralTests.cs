@@ -7,7 +7,7 @@ namespace Corvus.Text.Json.Tests;
 
 /// <summary>
 /// Tests for TryFormatGeneral which outputs the normalized significand with optional exponent.
-/// This outputs: [sign]<integral><fractional>[exponentChar][exponentSign]<exponent>
+/// This outputs: [sign]&lt;integral&gt;&lt;fractional&gt;[exponentChar][exponentSign]&lt;exponent&gt;
 /// For example: "123456e-3" or "-999"
 /// </summary>
 public class JsonElementHelpersTryFormatGeneralTests

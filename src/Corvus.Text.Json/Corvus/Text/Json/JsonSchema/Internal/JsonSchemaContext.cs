@@ -1,4 +1,4 @@
-// <copyright file="JsonSchemaContext.cs" company="Endjin Limited">
+﻿// <copyright file="JsonSchemaContext.cs" company="Endjin Limited">
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 // <licensing>
@@ -328,15 +328,15 @@ public struct JsonSchemaContext
     /// // Push child context for validating a property
     /// JsonSchemaContext childContext = parentContext.PushChildContext(
     /// document, propertyIndex, useItems: false, useProperties: true, propertyName);
-
+    ///
     ///
     /// // Perform validation using child context
     /// bool isValid = ValidateProperty(ref childContext);
-
+    ///
     ///
     /// // Commit results back to parent
     /// parentContext.CommitChildContext(isValid, ref childContext);
-
+    ///
     /// </code>
     /// </para>
     /// </remarks>
@@ -382,15 +382,15 @@ public struct JsonSchemaContext
     /// // Push child context for validating a property
     /// JsonSchemaContext childContext = parentContext.PushChildContext(
     /// document, propertyIndex, useItems: false, useProperties: true, propertyName);
-
+    ///
     ///
     /// // Perform validation using child context
     /// bool isValid = ValidateProperty(ref childContext);
-
+    ///
     ///
     /// // Commit results back to parent
     /// parentContext.CommitChildContext(isValid, ref childContext);
-
+    ///
     /// </code>
     /// </para>
     /// </remarks>

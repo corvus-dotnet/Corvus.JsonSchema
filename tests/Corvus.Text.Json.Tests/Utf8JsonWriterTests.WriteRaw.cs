@@ -571,15 +571,15 @@ public partial class Utf8JsonWriterTests
     ////            // Next write forces a grow beyond max array length
 
     ////            Assert.Throws<OutOfMemoryException>(() => writer.WriteRawValue(WrapInQuotes(text3.EncodedUtf8Bytes)));
-
+    ///
     ////            Assert.Equal(2_100_097_542, writer.BytesPending);
-
+    ///
     ////            var text4 = JsonEncodedText.Encode(largeArray.AsSpan(0, 1));
     ////            for (int i = 0; i < 10_000_000; i++)
     ////            {
     ////                writer.WriteRawValue(WrapInQuotes(text4.EncodedUtf8Bytes));
     ////            }
-
+    ///
     ////            Assert.Equal(2_100_097_542 + (4 * 10_000_000), writer.BytesPending);
     ////        }
     ////    }

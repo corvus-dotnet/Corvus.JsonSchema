@@ -159,6 +159,7 @@ public abstract partial class JsonDocument
     /// <returns>The raw value as a memory span.</returns>
     protected abstract ReadOnlyMemory<byte> GetRawSimpleValueUnsafe(ref MetadataDb parsedData, int index, bool includeQuotes);
 
+    /// <summary>
     /// Gets the raw simple value as a memory span for the specified index.
     /// </summary>
     /// <param name="index">The index of the element.</param>

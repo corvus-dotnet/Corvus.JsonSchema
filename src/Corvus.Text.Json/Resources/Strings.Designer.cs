@@ -1330,7 +1330,7 @@ namespace Corvus.Text.Json.Resources {
         /// <summary>
         /// Looks up a localized string similar to Deserialization failed for one of these reasons:
         /// 1. {0}
-
+        ///
         /// 2. {1}.
         /// </summary>
         internal static string MetadataPreservedArrayFailed {

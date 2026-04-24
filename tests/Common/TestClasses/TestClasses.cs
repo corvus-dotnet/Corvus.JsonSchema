@@ -1,4 +1,4 @@
-// Derived from code licensed to the .NET Foundation under one or more agreements.
+﻿// Derived from code licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licensed this code under the MIT license.
 
 using System.Collections;
@@ -1899,17 +1899,17 @@ public class ClassWithType<T>
 ////        {
 ////            return 25;
 ////        }
-
+///
 ////        public override void Write(Utf8JsonWriter writer, int value, JsonSerializerOptions options)
 ////        {
 ////            throw new NotImplementedException("Converter was called");
 ////        }
-
+///
 ////        // In source-gen, internal converters are not used as fallbacks when custom converters don't provide an implementation.
 ////#if BUILDING_SOURCE_GENERATOR_TESTS
 ////        public override int ReadAsPropertyName(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
 ////            => int.Parse(reader.GetString());
-
+///
 ////        public override void WriteAsPropertyName(Utf8JsonWriter writer, int value, JsonSerializerOptions options)
 ////            => writer.WritePropertyName(value.ToString());
 ////#endif
@@ -1946,7 +1946,7 @@ public static class ReflectionExtensions
 ////        yield return typeof(List<TElement>).WithConstructors(); // ListOfTConverter
 ////        yield return typeof(Queue<TElement>).WithConstructors(); // QueueOfTConverter
 ////    }
-
+///
 ////    public static IEnumerable<Type> DeserializableGenericEnumerableTypes<TElement>()
 ////    {
 ////        yield return typeof(TElement[]).WithConstructors(); // ArrayConverter
@@ -1959,13 +1959,13 @@ public static class ReflectionExtensions
 ////        yield return typeof(List<TElement>).WithConstructors(); // ListOfTConverter
 ////        yield return typeof(Queue<TElement>).WithConstructors(); // QueueOfTConverter
 ////    }
-
+///
 ////    public static IEnumerable<Type> DeserializableNonGenericEnumerableTypes()
 ////    {
 ////        yield return typeof(Queue).WithConstructors(); // IEnumerableWithAddMethodConverter
 ////        yield return typeof(WrapperForIList).WithConstructors(); // IListConverter
 ////    }
-
+///
 ////    public static IEnumerable<Type> DictionaryTypes<TElement>()
 ////    {
 ////        yield return typeof(Dictionary<string, TElement>).WithConstructors(); // DictionaryOfStringTValueConverter
@@ -1975,7 +1975,7 @@ public static class ReflectionExtensions
 ////        yield return typeof(ImmutableDictionary<string, TElement>).WithConstructors(); // ImmutableDictionaryOfStringTValueConverter
 ////        yield return typeof(GenericIReadOnlyDictionaryWrapper<string, TElement>).WithConstructors(); // IReadOnlyDictionaryOfStringTValueConverter
 ////    }
-
+///
 ////    public static IEnumerable<Type> DeserializableDictionaryTypes<TKey, TValue>()
 ////    {
 ////        yield return typeof(Dictionary<TKey, TValue>).WithConstructors(); // DictionaryOfStringTValueConverter
@@ -1987,7 +1987,7 @@ public static class ReflectionExtensions
 ////        yield return typeof(ImmutableDictionary<TKey, TValue>).WithConstructors(); // ImmutableDictionaryOfStringTValueConverter
 ////        yield return typeof(IReadOnlyDictionary<TKey, TValue>).WithConstructors(); // IReadOnlyDictionaryOfStringTValueConverter
 ////    }
-
+///
 ////    public static IEnumerable<Type> DeserializableNonGenericDictionaryTypes()
 ////    {
 ////        yield return typeof(Hashtable).WithConstructors(); // IDictionaryConverter

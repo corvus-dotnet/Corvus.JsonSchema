@@ -8,7 +8,6 @@ using Xunit;
 namespace Corvus.Text.Json.Tests;
 
 /// <summary>
-/// <summary>
 /// Tests for the Copy and Move operations on <see cref="IMutableJsonDocument"/>,
 /// including CopyValueToProperty, CopyValueToArrayIndex, CopyValueToArrayEnd,
 /// and the Move methods (MovePropertyToProperty, MoveItemToArray, etc.).

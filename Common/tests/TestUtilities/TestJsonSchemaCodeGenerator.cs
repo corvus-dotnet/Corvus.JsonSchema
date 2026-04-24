@@ -133,7 +133,7 @@ public class TestJsonSchemaCodeGenerator
     /// <param name="useImplicitOperatorString">Whether to generate implicit conversions to string.</param>
     /// <param name="addExplicitUsings">Whether to add explicit usings for the generated code, or rely on the global usings.</param>
     /// <param name="hostAssembly">The host assembly with preserved compilation context.</param>
-    /// <returns>A task which, when complete, provides the <see cref="DynamicJsonType/> for the schema.</returns>
+    /// <returns>A task which, when complete, provides the <see cref="DynamicJsonType"/> for the schema.</returns>
     public static async ValueTask<DynamicJsonType> GenerateTypeForVirtualFile(
         string virtualFilename,
         string schemaText,
@@ -179,7 +179,7 @@ public class TestJsonSchemaCodeGenerator
     /// <param name="useImplicitOperatorString">Whether to generate implicit conversions to string.</param>
     /// <param name="addExplicitUsings">Whether to add explicit usings for the generated code, or rely on the global usings.</param>
     /// <param name="hostAssembly">The host assembly with preserved compilation context.</param>
-    /// <returns>A task which, when complete, provides the <see cref="DynamicJsonType/> for the schema.</returns>
+    /// <returns>A task which, when complete, provides the <see cref="DynamicJsonType"/> for the schema.</returns>
     public static async ValueTask<DynamicJsonType> GenerateTypeForVirtualFile(
         string virtualFilename,
         string schemaText,
@@ -225,7 +225,7 @@ public class TestJsonSchemaCodeGenerator
     /// <param name="useImplicitOperatorString">Whether to generate implicit conversions to string.</param>
     /// <param name="addExplicitUsings">Whether to add explicit usings for the generated code, or rely on the global usings.</param>
     /// <param name="hostAssembly">The host assembly with preserved compilation context.</param>
-    /// <returns>The <see cref="DynamicJsonType/> for the schema.</returns>
+    /// <returns>The <see cref="DynamicJsonType"/> for the schema.</returns>
 
     public static DynamicJsonType SynchronouslyGenerateTypeForVirtualFile(
         string virtualFilename,
@@ -272,7 +272,7 @@ public class TestJsonSchemaCodeGenerator
     /// <param name="useImplicitOperatorString">Whether to generate implicit conversions to string.</param>
     /// <param name="addExplicitUsings">Whether to add explicit usings for the generated code, or rely on the global usings.</param>
     /// <param name="hostAssembly">The host assembly with preserved compilation context.</param>
-    /// <returns>The <see cref="DynamicJsonType/> for the schema.</returns>
+    /// <returns>The <see cref="DynamicJsonType"/> for the schema.</returns>
 
     public static DynamicJsonType SynchronouslyGenerateTypeForVirtualFile(
         string virtualFilename,

@@ -1,4 +1,4 @@
-// Derived from code licensed to the .NET Foundation under one or more agreements.
+﻿// Derived from code licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licensed this code under the MIT license.
 
 using System.Collections.Generic;
@@ -193,7 +193,7 @@ internal static partial class JsonTestHelper
     ////        }
     ////    }
     ////}
-
+    ///
     /// <summary>
     /// Linq Cartesian product
     /// </summary>
