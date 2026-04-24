@@ -100,7 +100,25 @@ The `--force` flag ensures NuGet re-evaluates sources. The `--no-incremental` fl
 
 - A local clone of the [bowtie](https://github.com/bowtie-json-schema/bowtie) repository
 - Podman or Docker available on `PATH`
-- Python environment with bowtie installed (see bowtie's own docs)
+- Python 3.12+ and [nox](https://nox.thea.codes/) installed
+
+#### Setting up the bowtie venv
+
+You must run bowtie from the local checkout's virtual environment — **not** a system-wide install. The checkout may contain fixes (e.g. Windows encoding) that have not yet been released.
+
+```powershell
+cd D:\source\bowtie
+python -m venv .venv
+.\.venv\Scripts\pip.exe install -e .
+```
+
+All `bowtie` commands below assume you are using the venv binary:
+
+```powershell
+$bowtie = "D:\source\bowtie\.venv\Scripts\bowtie.exe"
+```
+
+> **Tip:** You can activate the venv instead (`D:\source\bowtie\.venv\Scripts\Activate.ps1`) so that plain `bowtie` resolves to the checkout version.
 
 ### Setup
 
@@ -129,7 +147,9 @@ After setup, run the bowtie test suite from the bowtie repo using the **`localho
 
 ```powershell
 cd D:\source\bowtie
-bowtie suite -i localhost/dotnet-corvus-jsonschema 2020-12 | bowtie summary --show failures
+# Use the venv bowtie — not the system install
+$bowtie = ".\.venv\Scripts\bowtie.exe"
+& $bowtie suite -i localhost/dotnet-corvus-jsonschema 2020-12 | & $bowtie summary --show failures
 ```
 
 ### Teardown
@@ -145,6 +165,8 @@ This restores the original `Dockerfile`, `.csproj`, and `.dockerignore` from bac
 ### Iteration loop
 
 ```powershell
+$bowtie = "D:\source\bowtie\.venv\Scripts\bowtie.exe"
+
 # 1. Make changes to library source
 
 # 2. Teardown previous config (increments version to bust caches)
@@ -155,5 +177,5 @@ This restores the original `Dockerfile`, `.csproj`, and `.dockerignore` from bac
 
 # 4. Run suite (note: localhost/ prefix uses the locally-built image)
 cd D:\source\bowtie
-bowtie suite -i localhost/dotnet-corvus-jsonschema 2020-12 | bowtie summary --show failures
+& $bowtie suite -i localhost/dotnet-corvus-jsonschema 2020-12 | & $bowtie summary --show failures
 ```
