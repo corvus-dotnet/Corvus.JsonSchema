@@ -440,7 +440,43 @@ public sealed partial class JsonDocumentBuilder<T>
             Debug.Assert(reader.TokenStartIndex <= int.MaxValue);
             int tokenStart = (int)reader.TokenStartIndex;
 
-            if (tokenType == JsonTokenType.StartObject)
+            if (tokenType == JsonTokenType.PropertyName)
+            {
+                numberOfRowsForValues++;
+                numberOfRowsForMembers++;
+                arrayItemsOrPropertyCount++;
+
+                // Adding 1 to skip the start quote will never overflow.
+                Debug.Assert(tokenStart < int.MaxValue);
+
+                _parsedData.AppendStringOrPropertyName(tokenType, tokenStart + 1, reader.ValueSpan.Length, reader.ValueIsEscaped);
+
+                Debug.Assert(!inArray);
+            }
+            else if (tokenType >= JsonTokenType.String)
+            {
+                Debug.Assert(tokenType <= JsonTokenType.Null);
+                numberOfRowsForValues++;
+                numberOfRowsForMembers++;
+
+                if (inArray)
+                {
+                    arrayItemsOrPropertyCount++;
+                }
+
+                if (tokenType == JsonTokenType.String)
+                {
+                    // Adding 1 to skip the start quote will never overflow.
+                    Debug.Assert(tokenStart < int.MaxValue);
+
+                    _parsedData.AppendStringOrPropertyName(tokenType, tokenStart + 1, reader.ValueSpan.Length, reader.ValueIsEscaped);
+                }
+                else
+                {
+                    _parsedData.Append(tokenType, tokenStart, reader.ValueSpan.Length);
+                }
+            }
+            else if (tokenType == JsonTokenType.StartObject)
             {
                 if (inArray)
                 {
@@ -448,15 +484,20 @@ public sealed partial class JsonDocumentBuilder<T>
                 }
 
                 numberOfRowsForValues++;
+                int startIndex = _parsedData.Length;
                 _parsedData.Append(tokenType, tokenStart, DbRow.UnknownSize);
-                var row = new StackRow(arrayItemsOrPropertyCount, numberOfRowsForMembers + 1);
+                var row = new StackRow(arrayItemsOrPropertyCount, numberOfRowsForMembers + 1, startIndex);
                 stack.Push(row);
                 arrayItemsOrPropertyCount = 0;
                 numberOfRowsForMembers = 0;
             }
             else if (tokenType == JsonTokenType.EndObject)
             {
-                int rowIndex = _parsedData.FindIndexOfFirstUnsetSizeOrLength(JsonTokenType.StartObject);
+                StackRow row = stack.Pop();
+                int rowIndex = row.StartIndex;
+
+                Debug.Assert(_parsedData.GetJsonTokenType(rowIndex) == JsonTokenType.StartObject);
+                Debug.Assert(_parsedData.IsUnknownSizeAt(rowIndex));
 
                 numberOfRowsForValues++;
                 numberOfRowsForMembers++;
@@ -467,7 +508,6 @@ public sealed partial class JsonDocumentBuilder<T>
                 _parsedData.SetNumberOfRows(rowIndex, numberOfRowsForMembers);
                 _parsedData.SetNumberOfRows(newRowIndex, numberOfRowsForMembers);
 
-                StackRow row = stack.Pop();
                 arrayItemsOrPropertyCount = row.SizeOrLength;
                 numberOfRowsForMembers += row.NumberOfRows;
             }
@@ -479,15 +519,20 @@ public sealed partial class JsonDocumentBuilder<T>
                 }
 
                 numberOfRowsForMembers++;
+                int startIndex = _parsedData.Length;
                 _parsedData.Append(tokenType, tokenStart, DbRow.UnknownSize);
-                var row = new StackRow(arrayItemsOrPropertyCount, numberOfRowsForValues + 1);
+                var row = new StackRow(arrayItemsOrPropertyCount, numberOfRowsForValues + 1, startIndex);
                 stack.Push(row);
                 arrayItemsOrPropertyCount = 0;
                 numberOfRowsForValues = 0;
             }
             else if (tokenType == JsonTokenType.EndArray)
             {
-                int rowIndex = _parsedData.FindIndexOfFirstUnsetSizeOrLength(JsonTokenType.StartArray);
+                StackRow row = stack.Pop();
+                int rowIndex = row.StartIndex;
+
+                Debug.Assert(_parsedData.GetJsonTokenType(rowIndex) == JsonTokenType.StartArray);
+                Debug.Assert(_parsedData.IsUnknownSizeAt(rowIndex));
 
                 numberOfRowsForValues++;
                 numberOfRowsForMembers++;
@@ -503,55 +548,8 @@ public sealed partial class JsonDocumentBuilder<T>
                 _parsedData.Append(tokenType, tokenStart, reader.ValueSpan.Length);
                 _parsedData.SetNumberOfRows(newRowIndex, numberOfRowsForValues);
 
-                StackRow row = stack.Pop();
                 arrayItemsOrPropertyCount = row.SizeOrLength;
                 numberOfRowsForValues += row.NumberOfRows;
-            }
-            else if (tokenType == JsonTokenType.PropertyName)
-            {
-                numberOfRowsForValues++;
-                numberOfRowsForMembers++;
-                arrayItemsOrPropertyCount++;
-
-                // Adding 1 to skip the start quote will never overflow.
-                Debug.Assert(tokenStart < int.MaxValue);
-
-                _parsedData.Append(tokenType, tokenStart + 1, reader.ValueSpan.Length);
-
-                if (reader.ValueIsEscaped)
-                {
-                    _parsedData.SetHasComplexChildren(_parsedData.Length - DbRow.Size);
-                }
-
-                Debug.Assert(!inArray);
-            }
-            else
-            {
-                Debug.Assert(tokenType >= JsonTokenType.String && tokenType <= JsonTokenType.Null);
-                numberOfRowsForValues++;
-                numberOfRowsForMembers++;
-
-                if (inArray)
-                {
-                    arrayItemsOrPropertyCount++;
-                }
-
-                if (tokenType == JsonTokenType.String)
-                {
-                    // Adding 1 to skip the start quote will never overflow.
-                    Debug.Assert(tokenStart < int.MaxValue);
-
-                    _parsedData.Append(tokenType, tokenStart + 1, reader.ValueSpan.Length);
-
-                    if (reader.ValueIsEscaped)
-                    {
-                        _parsedData.SetHasComplexChildren(_parsedData.Length - DbRow.Size);
-                    }
-                }
-                else
-                {
-                    _parsedData.Append(tokenType, tokenStart, reader.ValueSpan.Length);
-                }
             }
 
             inArray = reader.IsInArray;

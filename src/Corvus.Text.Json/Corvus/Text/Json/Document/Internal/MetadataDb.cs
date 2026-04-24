@@ -284,6 +284,7 @@ public struct MetadataDb : IDisposable
     /// <param name="tokenType">The JSON token type.</param>
     /// <param name="startLocation">The start location of the token in the source.</param>
     /// <param name="length">The length of the token, or -1 for containers.</param>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal void Append(JsonTokenType tokenType, int startLocation, int length)
     {
         // StartArray or StartObject should have length -1, otherwise the length should not be -1.
@@ -297,6 +298,41 @@ public struct MetadataDb : IDisposable
         }
 
         Unsafe.WriteUnaligned(ref _data[Length], new DbRow(tokenType, startLocation, length));
+        Length += DbRow.Size;
+    }
+
+    /// <summary>
+    /// Appends a string or property name token to the metadata database, optionally setting the
+    /// HasComplexChildren flag (indicating the value requires unescaping) in a single write
+    /// instead of a separate read-modify-write via <see cref="SetHasComplexChildren"/>.
+    /// </summary>
+    /// <param name="tokenType">The JSON token type (must be String or PropertyName).</param>
+    /// <param name="startLocation">The start location of the token in the source.</param>
+    /// <param name="length">The length of the token value.</param>
+    /// <param name="isEscaped">Whether the value requires unescaping.</param>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal void AppendStringOrPropertyName(JsonTokenType tokenType, int startLocation, int length, bool isEscaped)
+    {
+        Debug.Assert(tokenType == JsonTokenType.String || tokenType == JsonTokenType.PropertyName);
+        Debug.Assert(length >= 0);
+
+        if (Length >= (_data.Length - DbRow.Size))
+        {
+            Enlarge();
+        }
+
+        Unsafe.WriteUnaligned(ref _data[Length], new DbRow(tokenType, startLocation, length));
+
+        if (isEscaped)
+        {
+            // Batch-set the HasComplexChildren bit on the row we just wrote,
+            // avoiding a separate call to SetHasComplexChildren with its
+            // read-modify-write pattern.
+            Unsafe.WriteUnaligned(
+                ref _data[Length + SizeOrLengthOffset],
+                length | unchecked((int)0x80000000));
+        }
+
         Length += DbRow.Size;
     }
 
@@ -641,6 +677,7 @@ public struct MetadataDb : IDisposable
     /// </summary>
     /// <param name="index">The index of the database row.</param>
     /// <param name="length">The length value to set.</param>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal void SetLength(int index, int length)
     {
         AssertValidIndex(index);
@@ -654,6 +691,7 @@ public struct MetadataDb : IDisposable
     /// </summary>
     /// <param name="index">The index of the database row.</param>
     /// <param name="numberOfRows">The number of rows value to set (must be between 1 and 0x0FFFFFFF).</param>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal void SetNumberOfRows(int index, int numberOfRows)
     {
         AssertValidIndex(index);
@@ -686,6 +724,7 @@ public struct MetadataDb : IDisposable
     /// Sets the HasComplexChildren flag for the database row at the specified index.
     /// </summary>
     /// <param name="index">The index of the database row.</param>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal void SetHasComplexChildren(int index)
     {
         AssertValidIndex(index);
@@ -785,6 +824,19 @@ public struct MetadataDb : IDisposable
         uint union = MemoryMarshal.Read<uint>(_data.AsSpan(index + NumberOfRowsOffset));
 
         return (JsonTokenType)(union >> 28);
+    }
+
+    /// <summary>
+    /// Gets a value indicating whether the database row at the specified index
+    /// has an unknown size (i.e. is an unclosed container).
+    /// </summary>
+    /// <param name="index">The index of the database row.</param>
+    /// <returns><see langword="true"/> if the row has unknown size; otherwise <see langword="false"/>.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal bool IsUnknownSizeAt(int index)
+    {
+        AssertValidIndex(index);
+        return MemoryMarshal.Read<int>(_data.AsSpan(index + SizeOrLengthOffset)) == DbRow.UnknownSize;
     }
 
     /// <summary>
