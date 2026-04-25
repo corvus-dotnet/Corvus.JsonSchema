@@ -485,7 +485,7 @@ root.Name = "Alice";
 > | Method | Mean | Allocated |
 > |---|---:|---:|
 > | V4 `Create()` | 831.9 ns | 2,080 B |
-> | V5 `CreateBuilder()` | 631.0 ns | 120 B |
+> | V5 `CreateBuilder()` | 631.0 ns | 136 B |
 
 ---
 

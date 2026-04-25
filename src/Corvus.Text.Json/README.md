@@ -3,7 +3,7 @@
 High-performance JSON library for .NET that builds on the patterns of `System.Text.Json` with:
 
 - **Source-generated types** from JSON Schema (draft 4, 6, 7, 2019-09, 2020-12)
-- **Pooled-memory parsing** via `ParsedJsonDocument<T>` — just 120B per-document allocation (92% less than `JsonNode`)
+- **Pooled-memory parsing** via `ParsedJsonDocument<T>` — just 136B per-document allocation (91% less than `JsonNode`)
 - **Mutable document building** via `JsonDocumentBuilder<T>` and `JsonWorkspace`
 - **Full schema validation** with `EvaluateSchema()` — 10× faster than other .NET validators
 - **Extended numeric types** — `BigNumber` (arbitrary precision), `BigInteger`, `Int128`, `Half`
