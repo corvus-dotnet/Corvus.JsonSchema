@@ -17,30 +17,30 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace Corvus.Benchmark.Current;
+namespace Corvus.PersonBenchmark.Current;
 /// <summary>
 /// JSON Schema for a Person entity coming back from a 3rd party API (e.g. a storage format in a database)
 /// </summary>
 [DebuggerDisplay("{DebuggerDisplay,nq}")]
-public readonly partial struct Schema
-    : IJsonElement<Schema>
+public readonly partial struct PersonSchema
+    : IJsonElement<PersonSchema>
 {
     public static partial class JsonSchema
     {
         /// <summary>
         /// Gets a provider for the schema location from which this type was generated.
         /// </summary>
-        public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("person-schema.json"u8, buffer, out written);
+        public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath(""u8, buffer, out written);
 
         /// <summary>
         /// Gets the schema location from which this type was generated.
         /// </summary>
-        public const string SchemaLocation = "person-schema.json";
+        public const string SchemaLocation = "";
 
         /// <summary>
         /// Gets the schema location from which this type was generated as a UTF-8 string.
         /// </summary>
-        public static ReadOnlySpan<byte> SchemaLocationUtf8 => "person-schema.json"u8;
+        public static ReadOnlySpan<byte> SchemaLocationUtf8 => ""u8;
         private static readonly JsonSchemaPathProvider Ref0SchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/$ref"u8, buffer, out written);
 
         /// <summary>
@@ -78,8 +78,8 @@ public readonly partial struct Schema
             bool refComposedIsMatch = true;
 
             JsonSchemaContext refContext0 =
-                Corvus.Benchmark.Current.Schema.Person.JsonSchema.PushChildContext(parentDocument, parentIndex, ref context, schemaEvaluationPath: Ref0SchemaEvaluationPath);
-            Corvus.Benchmark.Current.Schema.Person.JsonSchema.Evaluate(parentDocument, parentIndex, ref refContext0);
+                Corvus.PersonBenchmark.Current.PersonSchema.Person.JsonSchema.PushChildContext(parentDocument, parentIndex, ref context, schemaEvaluationPath: Ref0SchemaEvaluationPath);
+            Corvus.PersonBenchmark.Current.PersonSchema.Person.JsonSchema.Evaluate(parentDocument, parentIndex, ref refContext0);
             refComposedIsMatch = refComposedIsMatch && refContext0.IsMatch;
             context.ApplyEvaluated(ref refContext0);
             context.CommitChildContext(refContext0.IsMatch, ref refContext0);

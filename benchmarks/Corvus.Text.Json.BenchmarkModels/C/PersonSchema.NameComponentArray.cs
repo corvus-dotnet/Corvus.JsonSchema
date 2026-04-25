@@ -17,25 +17,25 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace Corvus.Benchmark.Current;
+namespace Corvus.PersonBenchmark.Current;
 
 /// <summary>
 /// JSON Schema for a Person entity coming back from a 3rd party API (e.g. a storage format in a database)
 /// </summary>
-public readonly partial struct Schema
+public readonly partial struct PersonSchema
 {
     /// <summary>
     /// Generated from JSON Schema.
     /// </summary>
     [DebuggerDisplay("{DebuggerDisplay,nq}")]
-    public readonly partial struct OtherNames
+    public readonly partial struct NameComponentArray
 #if NET8_0_OR_GREATER
-        : IJsonElement<OtherNames>,
+        : IJsonElement<NameComponentArray>,
           IFormattable,
           ISpanFormattable,
           IUtf8SpanFormattable
 #else
-        : IJsonElement<OtherNames>,
+        : IJsonElement<NameComponentArray>,
           IFormattable
 #endif
     {
@@ -45,10 +45,10 @@ public readonly partial struct Schema
 
         #pragma warning restore CS8618 // JsonDocument nullability
         /// <summary>
-        /// Initializes a new instance of the <see cref="OtherNames"/> struct.
+        /// Initializes a new instance of the <see cref="NameComponentArray"/> struct.
         /// </summary>
         /// <param name="value">The value from which to construct the instance.</param>
-        internal OtherNames(IJsonDocument parent, int idx)
+        internal NameComponentArray(IJsonDocument parent, int idx)
         {
             Debug.Assert(idx >= 0);
             _parent = parent;
@@ -58,7 +58,12 @@ public readonly partial struct Schema
         /// <summary>
         /// Gets the default instance.
         /// </summary>
-        public static OtherNames DefaultInstance { get; }
+        public static NameComponentArray DefaultInstance { get; }
+
+        /// <summary>
+        /// Gets the rank of the array.
+        /// </summary>
+        public static int Rank => 1;
 
         /// <summary>
         /// Gets the item at the given index.
@@ -67,26 +72,14 @@ public readonly partial struct Schema
         /// <returns>The item at the given index.</returns>
         /// <exception cref="IndexOutOfRangeException">The index was outside the bounds of the array.</exception>
         /// <exception cref="InvalidOperationException">The value is not an array.</exception>
-        public JsonElement this[int index]
+        public Corvus.PersonBenchmark.Current.PersonSchema.NameComponent this[int index]
         {
             get
             {
                 CheckValidInstance();
-                return _parent.GetArrayIndexElement<JsonElement>(_idx, index);
+                return _parent.GetArrayIndexElement<Corvus.PersonBenchmark.Current.PersonSchema.NameComponent>(_idx, index);
             }
         }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool TryGetValue(out string? value) { CheckValidInstance(); return _parent.TryGetString(_idx, JsonTokenType.String, out value); }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public UnescapedUtf8JsonString GetUtf8String() { CheckValidInstance(); return _parent.GetUtf8JsonString(_idx, JsonTokenType.String); }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public UnescapedUtf16JsonString GetUtf16String() { CheckValidInstance(); return _parent.GetUtf16JsonString(_idx, JsonTokenType.String); }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public string? GetString() { CheckValidInstance(); return _parent.GetString(_idx, JsonTokenType.String); }
 
         /// <summary>
         /// Gets the array length.
@@ -102,10 +95,10 @@ public readonly partial struct Schema
         /// Enumerates the array.
         /// </summary>
         /// <exception cref="InvalidOperationException">The value is not an array.</exception>
-        public ArrayEnumerator<JsonElement> EnumerateArray()
+        public ArrayEnumerator<Corvus.PersonBenchmark.Current.PersonSchema.NameComponent> EnumerateArray()
         {
             CheckValidInstance();
-            return EnumeratorCreator.CreateArrayEnumerator<JsonElement>(_parent, _idx);
+            return EnumeratorCreator.CreateArrayEnumerator<Corvus.PersonBenchmark.Current.PersonSchema.NameComponent>(_parent, _idx);
         }
 
         /// <inheritdoc/>
@@ -115,45 +108,6 @@ public readonly partial struct Schema
         private JsonTokenType TokenType => _parent?.GetJsonTokenType(_idx) ?? JsonTokenType.None;
 
         /// <summary>
-        /// Conversion to <see cref="Corvus.Benchmark.Current.Schema.NameComponent"/>.
-        /// </summary>
-        /// <param name="value">The value from which to convert.</param>
-        public static explicit operator Corvus.Benchmark.Current.Schema.NameComponent(OtherNames value)
-        {
-            return Corvus.Benchmark.Current.Schema.NameComponent.From(value);
-        }
-
-        /// <summary>
-        /// Conversion from <see cref="Corvus.Benchmark.Current.Schema.NameComponent"/>.
-        /// </summary>
-        /// <param name="value">The value from which to convert.</param>
-        public static implicit operator OtherNames(Corvus.Benchmark.Current.Schema.NameComponent value)
-        {
-            return From(value);
-        }
-
-        /// <summary>
-        /// Conversion to <see cref="Corvus.Benchmark.Current.Schema.NameComponentArray"/>.
-        /// </summary>
-        /// <param name="value">The value from which to convert.</param>
-        public static explicit operator Corvus.Benchmark.Current.Schema.NameComponentArray(OtherNames value)
-        {
-            return Corvus.Benchmark.Current.Schema.NameComponentArray.From(value);
-        }
-
-        /// <summary>
-        /// Conversion from <see cref="Corvus.Benchmark.Current.Schema.NameComponentArray"/>.
-        /// </summary>
-        /// <param name="value">The value from which to convert.</param>
-        public static implicit operator OtherNames(Corvus.Benchmark.Current.Schema.NameComponentArray value)
-        {
-            return From(value);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static explicit operator string(OtherNames value) => value._parent.GetString(value._idx, JsonTokenType.String) ?? throw new FormatException();
-
-        /// <summary>
         /// Operator ==.
         /// </summary>
         /// <param name="left">The lhs of the operator.</param>
@@ -161,7 +115,7 @@ public readonly partial struct Schema
         /// <returns>
         /// <c>True</c> if the values are equal.
         /// </returns>
-        public static bool operator ==(in OtherNames left, in OtherNames right)
+        public static bool operator ==(in NameComponentArray left, in NameComponentArray right)
         {
             return left.Equals(right);
         }
@@ -174,7 +128,7 @@ public readonly partial struct Schema
         /// <returns>
         /// <c>True</c> if the values are not equal.
         /// </returns>
-        public static bool operator !=(in OtherNames left, in OtherNames right)
+        public static bool operator !=(in NameComponentArray left, in NameComponentArray right)
         {
             return !left.Equals(right);
         }
@@ -187,7 +141,7 @@ public readonly partial struct Schema
         /// <returns>
         /// <c>True</c> if the values are equal.
         /// </returns>
-        public static bool operator ==(in OtherNames left, in JsonElement right)
+        public static bool operator ==(in NameComponentArray left, in JsonElement right)
         {
             return left.Equals(right);
         }
@@ -200,7 +154,7 @@ public readonly partial struct Schema
         /// <returns>
         /// <c>True</c> if the values are not equal.
         /// </returns>
-        public static bool operator !=(in OtherNames left, in JsonElement right)
+        public static bool operator !=(in NameComponentArray left, in JsonElement right)
         {
             return !left.Equals(right);
         }
@@ -211,7 +165,7 @@ public readonly partial struct Schema
         /// <param name="value">The instance of this type.</param>
         /// <returns>An instance of JsonElement, initialized from the <see cref="IJsonElement{T}"/>.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static implicit operator JsonElement(OtherNames instance)
+        public static implicit operator JsonElement(NameComponentArray instance)
         {
             return JsonElement.From(instance);
         }
@@ -222,9 +176,9 @@ public readonly partial struct Schema
         /// <param name="value">The instance of this type as a JsonElement.</param>
         /// <returns>An instance of the type, initialized from the <see cref="JsonElement"/>.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static implicit operator OtherNames(JsonElement instance)
+        public static implicit operator NameComponentArray(JsonElement instance)
         {
-            return OtherNames.From(instance);
+            return NameComponentArray.From(instance);
         }
 
         /// <summary>
@@ -233,7 +187,7 @@ public readonly partial struct Schema
         /// <param name="value">The <see cref="IJsonElement{T}"/> value from which to instantiate the instance.</param>
         /// <returns>An instance of this type, initialized from the JSON element.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static OtherNames From<T>(in T instance)
+        public static NameComponentArray From<T>(in T instance)
             where T : struct, IJsonElement<T>
         {
             return new(instance.ParentDocument, instance.ParentDocumentIndex);
@@ -257,9 +211,9 @@ public readonly partial struct Schema
         ///   A value could not be read from the span.
         /// </exception>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static OtherNames ParseValue(ReadOnlySpan<byte> utf8Json, JsonDocumentOptions options = default)
+        public static NameComponentArray ParseValue(ReadOnlySpan<byte> utf8Json, JsonDocumentOptions options = default)
         {
-            return JsonElementHelpers.ParseValue<OtherNames>(utf8Json, options);
+            return JsonElementHelpers.ParseValue<NameComponentArray>(utf8Json, options);
         }
 
         /// <summary>
@@ -280,9 +234,9 @@ public readonly partial struct Schema
         ///   A value could not be read from the span.
         /// </exception>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static OtherNames ParseValue(ReadOnlySpan<char> json, JsonDocumentOptions options = default)
+        public static NameComponentArray ParseValue(ReadOnlySpan<char> json, JsonDocumentOptions options = default)
         {
-            return JsonElementHelpers.ParseValue<OtherNames>(json, options);
+            return JsonElementHelpers.ParseValue<NameComponentArray>(json, options);
         }
 
         /// <summary>
@@ -303,9 +257,9 @@ public readonly partial struct Schema
         ///   A value could not be read from the text.
         /// </exception>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static OtherNames ParseValue(string json, JsonDocumentOptions options = default)
+        public static NameComponentArray ParseValue(string json, JsonDocumentOptions options = default)
         {
-            return JsonElementHelpers.ParseValue<OtherNames>(json, options);
+            return JsonElementHelpers.ParseValue<NameComponentArray>(json, options);
         }
 
         /// <summary>
@@ -343,9 +297,9 @@ public readonly partial struct Schema
         /// <exception cref="JsonException">
         ///   A value could not be read from the reader.
         /// </exception>
-        public static OtherNames ParseValue(ref Utf8JsonReader reader)
+        public static NameComponentArray ParseValue(ref Utf8JsonReader reader)
         {
-            return JsonElementHelpers.ParseValue<OtherNames>(ref reader);
+            return JsonElementHelpers.ParseValue<NameComponentArray>(ref reader);
         }
 
         /// <summary>
@@ -386,16 +340,16 @@ public readonly partial struct Schema
         /// <exception cref="JsonException">
         ///   A value could not be read from the reader.
         /// </exception>
-        public static bool TryParseValue(ref Utf8JsonReader reader, out OtherNames? result)
+        public static bool TryParseValue(ref Utf8JsonReader reader, out NameComponentArray? result)
         {
-            return JsonElementHelpers.TryParseValue<OtherNames>(ref reader, out result);
+            return JsonElementHelpers.TryParseValue<NameComponentArray>(ref reader, out result);
         }
 
         /// <inheritdoc/>
         public override bool Equals(object? obj)
         {
             return
-                (obj is IJsonElement value && Equals(new OtherNames(value.ParentDocument, value.ParentDocumentIndex))) ||
+                (obj is IJsonElement value && Equals(new NameComponentArray(value.ParentDocument, value.ParentDocumentIndex))) ||
                 (obj is null && this.IsNull());
         }
 
@@ -408,57 +362,6 @@ public readonly partial struct Schema
             where T : struct, IJsonElement
         {
             return JsonElementHelpers.DeepEquals(this, other);
-        }
-
-        /// <summary>
-        /// Compare with a UTF-8 string.
-        /// </summary>
-        /// <param ref="utf8Text">The UTF-8 text to compare with.</param>
-        /// <returns><see langword="true"/> if the values are equal.</returns>
-        public bool ValueEquals(ReadOnlySpan<byte> utf8Text)
-        {
-            CheckValidInstance();
-
-            if (TokenType != JsonTokenType.String)
-            {
-                return false;
-            }
-
-            return _parent.TextEquals(_idx, utf8Text, isPropertyName: false, shouldUnescape: true);
-        }
-
-        /// <summary>
-        /// Compare with a string.
-        /// </summary>
-        /// <param ref="utf8Text">The text to compare with.</param>
-        /// <returns><see langword="true"/> if the values are equal.</returns>
-        public bool ValueEquals(ReadOnlySpan<char> text)
-        {
-            CheckValidInstance();
-
-            if (TokenType != JsonTokenType.String)
-            {
-                return false;
-            }
-
-            return _parent.TextEquals(_idx, text, isPropertyName: false);
-        }
-
-        /// <summary>
-        /// Compare with a string.
-        /// </summary>
-        /// <param ref="utf8Text">The text to compare with.</param>
-        /// <returns><see langword="true"/> if the values are equal.</returns>
-        public bool ValueEquals(string text)
-        {
-            CheckValidInstance();
-
-            if (TokenType != JsonTokenType.String)
-            {
-                return false;
-            }
-
-            return _parent.TextEquals(_idx, text, isPropertyName: false);
         }
 
         /// <inheritdoc/>
@@ -536,11 +439,11 @@ public readonly partial struct Schema
         void IJsonElement.CheckValidInstance() => CheckValidInstance();
 
 #if NET
-        static OtherNames IJsonElement<OtherNames>.CreateInstance(IJsonDocument parentDocument, int parentDocumentIndex) => new(parentDocument, parentDocumentIndex);
+        static NameComponentArray IJsonElement<NameComponentArray>.CreateInstance(IJsonDocument parentDocument, int parentDocumentIndex) => new(parentDocument, parentDocumentIndex);
 #endif
 
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-        private string DebuggerDisplay => $"OtherNames: ValueKind = {ValueKind} : \"{ToString()}\"";
+        private string DebuggerDisplay => $"NameComponentArray: ValueKind = {ValueKind} : \"{ToString()}\"";
 
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         IJsonDocument IJsonElement.ParentDocument => _parent;
@@ -555,95 +458,53 @@ public readonly partial struct Schema
         JsonValueKind IJsonElement.ValueKind => ValueKind;
 
         /// <summary>
-        /// Gets the value as a <see cref="Corvus.Benchmark.Current.Schema.NameComponent" />.
+        /// Gets a <see cref="NameComponentArray"/> which can be safely stored beyond the lifetime of the
+        /// original document.
         /// </summary>
-        /// <param name="result">The result of the conversions.</param>
-        /// <returns><see langword="true" /> if the conversion was valid.</returns>
-        public bool TryGetAsNameComponent(out Corvus.Benchmark.Current.Schema.NameComponent result)
+        /// <returns>
+        /// A <see cref="NameComponentArray"/> which can be safely stored beyond the lifetime of the
+        /// original document.
+        /// </returns>
+        /// <remarks>
+        /// <para>
+        /// If this instance is already a clone (its backing document is not disposable),
+        /// this method returns the same instance without additional allocation.
+        /// </para>
+        /// </remarks>
+        public NameComponentArray Clone()
         {
-            if (Corvus.Benchmark.Current.Schema.NameComponent.JsonSchema.Evaluate(_parent, _idx))
-            {
-                result = Corvus.Benchmark.Current.Schema.NameComponent.From(this);
-                return true;
-            }
-
-            result = default;
-            return false;
+            CheckValidInstance();
+            return _parent.CloneElement<NameComponentArray>(_idx);
         }
 
         /// <summary>
-        /// Gets the value as a <see cref="Corvus.Benchmark.Current.Schema.NameComponentArray" />.
+        /// Creates a frozen (immutable) copy of this element if it is backed by a mutable document,
+        /// or returns this instance if it is already immutable.
         /// </summary>
-        /// <param name="result">The result of the conversions.</param>
-        /// <returns><see langword="true" /> if the conversion was valid.</returns>
-        public bool TryGetAsNameComponentArray(out Corvus.Benchmark.Current.Schema.NameComponentArray result)
+        /// <returns>
+        /// An immutable <see cref="NameComponentArray"/> that lives for the lifetime of its
+        /// workspace and its associated documents.
+        /// </returns>
+        /// <remarks>
+        /// <para>
+        /// Unlike <see cref="Clone()"/>, which serializes the element and re-parses it
+        /// into a standalone heap-allocated document, <c>Freeze()</c> performs a cheap
+        /// blit of the metadata and value backing arrays. The resulting element is
+        /// immutable but is only valid for the lifetime of the workspace.
+        /// </para>
+        /// <para>
+        /// If this instance is already backed by an immutable document, it is returned as-is.
+        /// </para>
+        /// </remarks>
+        public NameComponentArray Freeze()
         {
-            if (Corvus.Benchmark.Current.Schema.NameComponentArray.JsonSchema.Evaluate(_parent, _idx))
+            CheckValidInstance();
+            if (_parent is global::Corvus.Text.Json.Internal.IMutableJsonDocument mutable)
             {
-                result = Corvus.Benchmark.Current.Schema.NameComponentArray.From(this);
-                return true;
+                return mutable.FreezeElement<NameComponentArray>(_idx);
             }
 
-            result = default;
-            return false;
-        }
-
-        /// <summary>
-        /// Matches the value against the composed values, and returns the result of calling the provided match function for the first match found.
-        /// </summary>
-        /// <typeparam name="TContext">The type of the immutable context to pass in to the match function.</typeparam>
-        /// <typeparam name="TResult">The result of calling the match function.</typeparam>
-        /// <param name="context">The context to pass to the match function.</param>
-        /// <param name="matchNameComponent">Match a <see cref="Corvus.Benchmark.Current.Schema.NameComponent"/>.</param>
-        /// <param name="matchNameComponentArray">Match a <see cref="Corvus.Benchmark.Current.Schema.NameComponentArray"/>.</param>
-        /// <param name="defaultMatch">Match any other value.</param>
-        /// <returns>An instance of the value returned by the match function.</returns>
-        public TResult Match<TContext, TResult>(
-            in TContext context,
-            Matcher<Corvus.Benchmark.Current.Schema.NameComponent, TContext, TResult> matchNameComponent,
-            Matcher<Corvus.Benchmark.Current.Schema.NameComponentArray, TContext, TResult> matchNameComponentArray,
-            Matcher<Corvus.Benchmark.Current.Schema.OtherNames, TContext, TResult> defaultMatch)
-#if NET9_0_OR_GREATER
-        where TContext : allows ref struct
-#endif
-        {
-            if (Corvus.Benchmark.Current.Schema.NameComponent.JsonSchema.Evaluate(_parent, _idx))
-            {
-                return matchNameComponent(Corvus.Benchmark.Current.Schema.NameComponent.From(this), context);
-            }
-
-            if (Corvus.Benchmark.Current.Schema.NameComponentArray.JsonSchema.Evaluate(_parent, _idx))
-            {
-                return matchNameComponentArray(Corvus.Benchmark.Current.Schema.NameComponentArray.From(this), context);
-            }
-
-            return defaultMatch(this, context);
-        }
-
-        /// <summary>
-        /// Matches the value against the composed values, and returns the result of calling the provided match function for the first match found.
-        /// </summary>
-        /// <typeparam name="TResult">The result of calling the match function.</typeparam>
-        /// <param name="matchNameComponent">Match a <see cref="Corvus.Benchmark.Current.Schema.NameComponent"/>.</param>
-        /// <param name="matchNameComponentArray">Match a <see cref="Corvus.Benchmark.Current.Schema.NameComponentArray"/>.</param>
-        /// <param name="defaultMatch">Match any other value.</param>
-        /// <returns>An instance of the value returned by the match function.</returns>
-        public TResult Match<TResult>(
-            Matcher<Corvus.Benchmark.Current.Schema.NameComponent, TResult> matchNameComponent,
-            Matcher<Corvus.Benchmark.Current.Schema.NameComponentArray, TResult> matchNameComponentArray,
-            Matcher<Corvus.Benchmark.Current.Schema.OtherNames, TResult> defaultMatch)
-        {
-            if (Corvus.Benchmark.Current.Schema.NameComponent.JsonSchema.Evaluate(_parent, _idx))
-            {
-                return matchNameComponent(Corvus.Benchmark.Current.Schema.NameComponent.From(this));
-            }
-
-            if (Corvus.Benchmark.Current.Schema.NameComponentArray.JsonSchema.Evaluate(_parent, _idx))
-            {
-                return matchNameComponentArray(Corvus.Benchmark.Current.Schema.NameComponentArray.From(this));
-            }
-
-            return defaultMatch(this);
+            return this;
         }
     }
 }

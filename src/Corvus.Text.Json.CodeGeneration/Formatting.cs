@@ -95,6 +95,7 @@ public static class Formatting
         "InsertItem",
         "JsonPropertyNames",
         "JsonPropertyNamesEscaped",
+        "JsonPropertyNamesPrebaked",
         "JsonSchema",
         "Match",
         "Mutable",

@@ -17,18 +17,18 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace Corvus.Benchmark.Current;
+namespace Corvus.PersonBenchmark.Current;
 
 /// <summary>
 /// JSON Schema for a Person entity coming back from a 3rd party API (e.g. a storage format in a database)
 /// </summary>
-public readonly partial struct Schema
+public readonly partial struct PersonSchema
 {
     /// <summary>
     /// Generated from JSON Schema.
     /// </summary>
     [DebuggerDisplay("{DebuggerDisplay,nq}")]
-    public readonly partial struct NameComponentArray
+    public readonly partial struct OtherNames
     {
         public partial struct Mutable
 #if NET8_0_OR_GREATER
@@ -63,6 +63,45 @@ public readonly partial struct Schema
 
             [DebuggerBrowsable(DebuggerBrowsableState.Never)]
             private JsonTokenType TokenType => _parent?.GetJsonTokenType(_idx) ?? JsonTokenType.None;
+
+            /// <summary>
+            /// Conversion to <see cref="Corvus.PersonBenchmark.Current.PersonSchema.NameComponent"/>.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static explicit operator Corvus.PersonBenchmark.Current.PersonSchema.NameComponent.Mutable(Mutable value)
+            {
+                return Corvus.PersonBenchmark.Current.PersonSchema.NameComponent.Mutable.From(value);
+            }
+
+            /// <summary>
+            /// Conversion from <see cref="Corvus.PersonBenchmark.Current.PersonSchema.NameComponent"/>.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator Mutable(Corvus.PersonBenchmark.Current.PersonSchema.NameComponent.Mutable value)
+            {
+                return From(value);
+            }
+
+            /// <summary>
+            /// Conversion to <see cref="Corvus.PersonBenchmark.Current.PersonSchema.NameComponentArray"/>.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static explicit operator Corvus.PersonBenchmark.Current.PersonSchema.NameComponentArray.Mutable(Mutable value)
+            {
+                return Corvus.PersonBenchmark.Current.PersonSchema.NameComponentArray.Mutable.From(value);
+            }
+
+            /// <summary>
+            /// Conversion from <see cref="Corvus.PersonBenchmark.Current.PersonSchema.NameComponentArray"/>.
+            /// </summary>
+            /// <param name="value">The value from which to convert.</param>
+            public static implicit operator Mutable(Corvus.PersonBenchmark.Current.PersonSchema.NameComponentArray.Mutable value)
+            {
+                return From(value);
+            }
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static explicit operator string(Mutable value) => value._parent.GetString(value._idx, JsonTokenType.String) ?? throw new FormatException();
 
             /// <summary>
             /// Operator ==.
@@ -133,7 +172,7 @@ public readonly partial struct Schema
             /// <param name="value">The instance of this type.</param>
             /// <returns>A mutable instance.</returns>
             /// <exception cref="FormatException">Thrown if the instance is not backed by a mutable document.</exception>
-            public static explicit operator Mutable(NameComponentArray instance)
+            public static explicit operator Mutable(OtherNames instance)
             {
                 if (instance._parent is not IMutableJsonDocument doc)
                 {
@@ -148,9 +187,9 @@ public readonly partial struct Schema
             /// Converts to an immutable instance of the <see cref="Mutable"/> type.
             /// </summary>
             /// <param name="value">The <see cref="Mutable"/> instance.</param>
-            /// <returns>An immutable instance of a <see cref="NameComponentArray"/>, initialized from the <see cref="Mutable"/> value.</returns>
+            /// <returns>An immutable instance of a <see cref="OtherNames"/>, initialized from the <see cref="Mutable"/> value.</returns>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public static implicit operator NameComponentArray(Mutable instance)
+            public static implicit operator OtherNames(Mutable instance)
             {
                 return new(instance._parent, instance._idx);
             }
@@ -174,14 +213,26 @@ public readonly partial struct Schema
             /// <returns>The item at the given index.</returns>
             /// <exception cref="IndexOutOfRangeException">The index was outside the bounds of the array.</exception>
             /// <exception cref="InvalidOperationException">The value is not an array.</exception>
-            public Corvus.Benchmark.Current.Schema.NameComponent.Mutable this[int index]
+            public JsonElement.Mutable this[int index]
             {
                 get
                 {
                     CheckValidInstance();
-                    return _parent.GetArrayIndexElement<Corvus.Benchmark.Current.Schema.NameComponent.Mutable>(_idx, index);
+                    return _parent.GetArrayIndexElement<JsonElement.Mutable>(_idx, index);
                 }
             }
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public bool TryGetValue(out string? value) { CheckValidInstance(); return _parent.TryGetString(_idx, JsonTokenType.String, out value); }
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public UnescapedUtf8JsonString GetUtf8String() { CheckValidInstance(); return _parent.GetUtf8JsonString(_idx, JsonTokenType.String); }
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public UnescapedUtf16JsonString GetUtf16String() { CheckValidInstance(); return _parent.GetUtf16JsonString(_idx, JsonTokenType.String); }
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public string? GetString() { CheckValidInstance(); return _parent.GetString(_idx, JsonTokenType.String); }
 
             /// <summary>
             /// Gets the array length.
@@ -197,17 +248,17 @@ public readonly partial struct Schema
             /// Enumerates the array.
             /// </summary>
             /// <exception cref="InvalidOperationException">The value is not an array.</exception>
-            public ArrayEnumerator<Corvus.Benchmark.Current.Schema.NameComponent.Mutable> EnumerateArray()
+            public ArrayEnumerator<JsonElement.Mutable> EnumerateArray()
             {
                 CheckValidInstance();
-                return EnumeratorCreator.CreateArrayEnumerator<Corvus.Benchmark.Current.Schema.NameComponent.Mutable>(_parent, _idx);
+                return EnumeratorCreator.CreateArrayEnumerator<JsonElement.Mutable>(_parent, _idx);
             }
 
             /// <inheritdoc/>
             public override bool Equals(object? obj)
             {
                 return
-                    (obj is IJsonElement value && Equals(new NameComponentArray(value.ParentDocument, value.ParentDocumentIndex))) ||
+                    (obj is IJsonElement value && Equals(new OtherNames(value.ParentDocument, value.ParentDocumentIndex))) ||
                     (obj is null && this.IsNull());
             }
 
@@ -220,6 +271,57 @@ public readonly partial struct Schema
                 where T : struct, IJsonElement
             {
                 return JsonElementHelpers.DeepEquals(this, other);
+            }
+
+            /// <summary>
+            /// Compare with a UTF-8 string.
+            /// </summary>
+            /// <param ref="utf8Text">The UTF-8 text to compare with.</param>
+            /// <returns><see langword="true"/> if the values are equal.</returns>
+            public bool ValueEquals(ReadOnlySpan<byte> utf8Text)
+            {
+                CheckValidInstance();
+
+                if (TokenType != JsonTokenType.String)
+                {
+                    return false;
+                }
+
+                return _parent.TextEquals(_idx, utf8Text, isPropertyName: false, shouldUnescape: true);
+            }
+
+            /// <summary>
+            /// Compare with a string.
+            /// </summary>
+            /// <param ref="utf8Text">The text to compare with.</param>
+            /// <returns><see langword="true"/> if the values are equal.</returns>
+            public bool ValueEquals(ReadOnlySpan<char> text)
+            {
+                CheckValidInstance();
+
+                if (TokenType != JsonTokenType.String)
+                {
+                    return false;
+                }
+
+                return _parent.TextEquals(_idx, text, isPropertyName: false);
+            }
+
+            /// <summary>
+            /// Compare with a string.
+            /// </summary>
+            /// <param ref="utf8Text">The text to compare with.</param>
+            /// <returns><see langword="true"/> if the values are equal.</returns>
+            public bool ValueEquals(string text)
+            {
+                CheckValidInstance();
+
+                if (TokenType != JsonTokenType.String)
+                {
+                    return false;
+                }
+
+                return _parent.TextEquals(_idx, text, isPropertyName: false);
             }
 
             /// <inheritdoc/>
@@ -285,7 +387,7 @@ public readonly partial struct Schema
                 return JsonSchema.Evaluate(_parent, _idx, resultsCollector);
             }
 
-            private void CheckValidInstance()
+            private readonly void CheckValidInstance()
             {
                 if (_parent == null)
                 {
@@ -306,7 +408,7 @@ public readonly partial struct Schema
 #endif
 
             [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-            private string DebuggerDisplay => $"NameComponentArray.Mutable: ValueKind = {ValueKind} : \"{ToString()}\"";
+            private string DebuggerDisplay => $"OtherNames.Mutable: ValueKind = {ValueKind} : \"{ToString()}\"";
             /// <summary>
             ///   Sets the value of an array element at the specified index.
             /// </summary>
@@ -329,7 +431,7 @@ public readonly partial struct Schema
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void SetItem(int itemIndex, in Corvus.Benchmark.Current.Schema.NameComponent.Source value)
+            public void SetItem(int itemIndex, in JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -376,7 +478,7 @@ public readonly partial struct Schema
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void InsertItem(int itemIndex, in Corvus.Benchmark.Current.Schema.NameComponent.Source value)
+            public void InsertItem(int itemIndex, in JsonElement.Source value)
             {
                 CheckValidInstance();
 
@@ -402,7 +504,7 @@ public readonly partial struct Schema
             ///   The parent <see cref="JsonDocument"/> has been disposed.
             /// </exception>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void AddItem(in Corvus.Benchmark.Current.Schema.NameComponent.Source value)
+            public void AddItem(in JsonElement.Source value)
             {
                 InsertItem(GetArrayLength(), in value);
             }
@@ -572,10 +674,10 @@ public readonly partial struct Schema
             /// <exception cref="ObjectDisposedException">
             ///   The parent <see cref="JsonDocument"/> has been disposed.
             /// </exception>
-            public bool Remove(in Corvus.Benchmark.Current.Schema.NameComponent item)
+            public bool Remove(in JsonElement item)
             {
                 CheckValidInstance();
-                if (!JsonElementHelpers.RemoveFirstUnsafe<Mutable, Corvus.Benchmark.Current.Schema.NameComponent>(this, in item))
+                if (!JsonElementHelpers.RemoveFirstUnsafe<Mutable, JsonElement>(this, in item))
                 {
                     return false;
                 }
@@ -609,10 +711,10 @@ public readonly partial struct Schema
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void RemoveWhere(JsonPredicate<Corvus.Benchmark.Current.Schema.NameComponent> predicate)
+            public void RemoveWhere(JsonPredicate<JsonElement> predicate)
             {
                 CheckValidInstance();
-                JsonElementHelpers.RemoveWhereUnsafe<Mutable, Corvus.Benchmark.Current.Schema.NameComponent>(this, predicate);
+                JsonElementHelpers.RemoveWhereUnsafe<Mutable, JsonElement>(this, predicate);
                 _documentVersion = _parent.Version;
             }
 
@@ -629,7 +731,7 @@ public readonly partial struct Schema
             /// <exception cref="ObjectDisposedException">
             ///   The parent <see cref="JsonDocument"/> has been disposed.
             /// </exception>
-            public bool Replace(in Corvus.Benchmark.Current.Schema.NameComponent oldItem, in Corvus.Benchmark.Current.Schema.NameComponent.Source newItem)
+            public bool Replace(in JsonElement oldItem, in JsonElement.Source newItem)
             {
                 CheckValidInstance();
 
@@ -638,11 +740,11 @@ public readonly partial struct Schema
                     return Remove(in oldItem);
                 }
 
-                var enumerator = EnumeratorCreator.CreateArrayEnumerator<Corvus.Benchmark.Current.Schema.NameComponent>(_parent, _idx);
+                var enumerator = EnumeratorCreator.CreateArrayEnumerator<JsonElement>(_parent, _idx);
 
                 while (enumerator.MoveNext())
                 {
-                    Corvus.Benchmark.Current.Schema.NameComponent current = enumerator.Current;
+                    JsonElement current = enumerator.Current;
                     if (JsonElementHelpers.DeepEquals(in current, in oldItem))
                     {
                         ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 30);
@@ -671,6 +773,140 @@ public readonly partial struct Schema
 
             [DebuggerBrowsable(DebuggerBrowsableState.Never)]
             JsonValueKind IJsonElement.ValueKind => ValueKind;
+
+            /// <summary>
+            /// Gets a <see cref="OtherNames"/> which can be safely stored beyond the lifetime of the
+            /// original document.
+            /// </summary>
+            /// <returns>
+            /// A <see cref="OtherNames"/> which can be safely stored beyond the lifetime of the
+            /// original document.
+            /// </returns>
+            /// <remarks>
+            /// <para>
+            /// This serializes the element and re-parses it into a standalone heap-allocated
+            /// document. The result is independent of the workspace.
+            /// </para>
+            /// </remarks>
+            public readonly OtherNames Clone()
+            {
+                CheckValidInstance();
+                return _parent.CloneElement<OtherNames>(_idx);
+            }
+
+            /// <summary>
+            /// Creates a frozen (immutable) copy of this element, backed by a new
+            /// document builder registered in the same workspace.
+            /// </summary>
+            /// <returns>
+            /// An immutable <see cref="OtherNames"/> that lives for the lifetime of its
+            /// workspace and its associated documents.
+            /// </returns>
+            /// <remarks>
+            /// <para>
+            /// Unlike <see cref="Clone()"/>, which serializes the element and re-parses it
+            /// into a standalone heap-allocated document, <c>Freeze()</c> performs a cheap
+            /// blit of the metadata and value backing arrays. The resulting element is
+            /// immutable but is only valid for the lifetime of the workspace.
+            /// </para>
+            /// </remarks>
+            public readonly OtherNames Freeze()
+            {
+                CheckValidInstance();
+                return _parent.FreezeElement<OtherNames>(_idx);
+            }
+
+            /// <summary>
+            /// Matches the value against the composed values, and returns the result of calling the provided match function for the first match found.
+            /// </summary>
+            /// <typeparam name="TContext">The type of the immutable context to pass in to the match function.</typeparam>
+            /// <typeparam name="TResult">The result of calling the match function.</typeparam>
+            /// <param name="context">The context to pass to the match function.</param>
+            /// <param name="matchNameComponent">Match a <see cref="Corvus.PersonBenchmark.Current.PersonSchema.NameComponent"/>.</param>
+            /// <param name="matchNameComponentArray">Match a <see cref="Corvus.PersonBenchmark.Current.PersonSchema.NameComponentArray"/>.</param>
+            /// <param name="defaultMatch">Match any other value.</param>
+            /// <returns>An instance of the value returned by the match function.</returns>
+            public TResult Match<TContext, TResult>(
+                in TContext context,
+                Matcher<Corvus.PersonBenchmark.Current.PersonSchema.NameComponent, TContext, TResult> matchNameComponent,
+                Matcher<Corvus.PersonBenchmark.Current.PersonSchema.NameComponentArray, TContext, TResult> matchNameComponentArray,
+                Matcher<Corvus.PersonBenchmark.Current.PersonSchema.OtherNames.Mutable, TContext, TResult> defaultMatch)
+#if NET9_0_OR_GREATER
+            where TContext : allows ref struct
+#endif
+            {
+                if (Corvus.PersonBenchmark.Current.PersonSchema.NameComponent.JsonSchema.Evaluate(_parent, _idx))
+                {
+                    return matchNameComponent(Corvus.PersonBenchmark.Current.PersonSchema.NameComponent.Mutable.From(this), context);
+                }
+
+                if (Corvus.PersonBenchmark.Current.PersonSchema.NameComponentArray.JsonSchema.Evaluate(_parent, _idx))
+                {
+                    return matchNameComponentArray(Corvus.PersonBenchmark.Current.PersonSchema.NameComponentArray.Mutable.From(this), context);
+                }
+
+                return defaultMatch(this, context);
+            }
+
+            /// <summary>
+            /// Matches the value against the composed values, and returns the result of calling the provided match function for the first match found.
+            /// </summary>
+            /// <typeparam name="TResult">The result of calling the match function.</typeparam>
+            /// <param name="matchNameComponent">Match a <see cref="Corvus.PersonBenchmark.Current.PersonSchema.NameComponent"/>.</param>
+            /// <param name="matchNameComponentArray">Match a <see cref="Corvus.PersonBenchmark.Current.PersonSchema.NameComponentArray"/>.</param>
+            /// <param name="defaultMatch">Match any other value.</param>
+            /// <returns>An instance of the value returned by the match function.</returns>
+            public TResult Match<TResult>(
+                Matcher<Corvus.PersonBenchmark.Current.PersonSchema.NameComponent, TResult> matchNameComponent,
+                Matcher<Corvus.PersonBenchmark.Current.PersonSchema.NameComponentArray, TResult> matchNameComponentArray,
+                Matcher<Corvus.PersonBenchmark.Current.PersonSchema.OtherNames.Mutable, TResult> defaultMatch)
+            {
+                if (Corvus.PersonBenchmark.Current.PersonSchema.NameComponent.JsonSchema.Evaluate(_parent, _idx))
+                {
+                    return matchNameComponent(Corvus.PersonBenchmark.Current.PersonSchema.NameComponent.Mutable.From(this));
+                }
+
+                if (Corvus.PersonBenchmark.Current.PersonSchema.NameComponentArray.JsonSchema.Evaluate(_parent, _idx))
+                {
+                    return matchNameComponentArray(Corvus.PersonBenchmark.Current.PersonSchema.NameComponentArray.Mutable.From(this));
+                }
+
+                return defaultMatch(this);
+            }
+
+            /// <summary>
+            /// Gets the value as a <see cref="Corvus.PersonBenchmark.Current.PersonSchema.NameComponent" />.
+            /// </summary>
+            /// <param name="result">The result of the conversions.</param>
+            /// <returns><see langword="true" /> if the conversion was valid.</returns>
+            public bool TryGetAsNameComponent(out Corvus.PersonBenchmark.Current.PersonSchema.NameComponent result)
+            {
+                if (Corvus.PersonBenchmark.Current.PersonSchema.NameComponent.JsonSchema.Evaluate(_parent, _idx))
+                {
+                    result = Corvus.PersonBenchmark.Current.PersonSchema.NameComponent.Mutable.From(this);
+                    return true;
+                }
+
+                result = default;
+                return false;
+            }
+
+            /// <summary>
+            /// Gets the value as a <see cref="Corvus.PersonBenchmark.Current.PersonSchema.NameComponentArray" />.
+            /// </summary>
+            /// <param name="result">The result of the conversions.</param>
+            /// <returns><see langword="true" /> if the conversion was valid.</returns>
+            public bool TryGetAsNameComponentArray(out Corvus.PersonBenchmark.Current.PersonSchema.NameComponentArray result)
+            {
+                if (Corvus.PersonBenchmark.Current.PersonSchema.NameComponentArray.JsonSchema.Evaluate(_parent, _idx))
+                {
+                    result = Corvus.PersonBenchmark.Current.PersonSchema.NameComponentArray.Mutable.From(this);
+                    return true;
+                }
+
+                result = default;
+                return false;
+            }
         }
 
         public ref struct Source
@@ -679,11 +915,17 @@ public readonly partial struct Schema
             {
                 Unknown,
                 JsonElement,
+                RawUtf8StringRequiresUnescaping,
+                RawUtf8StringNotRequiresUnescaping,
+                Utf8String,
+                Utf16String,
                 Builder,
             }
 
             private readonly Kind _kind;
             private readonly JsonElement _jsonElement;
+            private readonly ReadOnlySpan<byte> _utf8Backing;
+            private readonly ReadOnlySpan<char> _utf16Backing;
             private readonly Builder.Build? _arrayBuilder;
 
             /// <summary>
@@ -697,9 +939,42 @@ public readonly partial struct Schema
                 _kind = jsonElement.ValueKind == JsonValueKind.Undefined ? Kind.Unknown : Kind.JsonElement;
             }
 
-            internal Source(Corvus.Benchmark.Current.Schema.NameComponentArray.Builder.Build value) {_arrayBuilder = value; _kind = Kind.Builder; }
+            private Source(ReadOnlySpan<byte> value)
+            {
+                _utf8Backing = value;
+                _kind = Kind.Utf8String;
+            }
 
-            public static implicit operator Source(NameComponentArray instance) => new(JsonElement.From(instance));
+            private Source(ReadOnlySpan<char> value)
+            {
+                _utf16Backing = value;
+                _kind = Kind.Utf16String;
+            }
+
+            private Source(ReadOnlySpan<byte> value, bool requiresUnescaping)
+            {
+                _utf8Backing = value;
+                _kind = requiresUnescaping ? Kind.RawUtf8StringRequiresUnescaping : Kind.RawUtf8StringNotRequiresUnescaping;
+            }
+
+            internal Source(Corvus.PersonBenchmark.Current.PersonSchema.OtherNames.Builder.Build value) {_arrayBuilder = value; _kind = Kind.Builder; }
+
+            public static implicit operator Source(OtherNames instance) => new(JsonElement.From(instance));
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static implicit operator Source(ReadOnlySpan<byte> value) => new (value);
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static implicit operator Source(ReadOnlySpan<char> value) => new (value);
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static implicit operator Source(string value) => new (value.AsSpan());
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static implicit operator Source(Corvus.PersonBenchmark.Current.PersonSchema.NameComponent instance) => new(JsonElement.From(instance));
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static Source RawString(ReadOnlySpan<byte> value, bool requiresUnescaping) => new(value, requiresUnescaping);
 
             internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
             {
@@ -710,8 +985,50 @@ public readonly partial struct Schema
                     case Kind.JsonElement:
                         valueBuilder.AddProperty(utf8Name, _jsonElement, escapeName, nameRequiresUnescaping);
                         break;
+                    case Kind.RawUtf8StringRequiresUnescaping:
+                        valueBuilder.AddPropertyRawString(utf8Name, _utf8Backing, escapeName, nameRequiresUnescaping, valueRequiresUnescaping: true);
+                        break;
+                    case Kind.RawUtf8StringNotRequiresUnescaping:
+                        valueBuilder.AddPropertyRawString(utf8Name, _utf8Backing, escapeName, nameRequiresUnescaping, valueRequiresUnescaping: false);
+                        break;
+                    case Kind.Utf8String:
+                        valueBuilder.AddProperty(utf8Name, _utf8Backing, escapeName, escapeValue: true, nameRequiresUnescaping, valueRequiresUnescaping: false);
+                        break;
+                    case Kind.Utf16String:
+                        valueBuilder.AddProperty(utf8Name, _utf16Backing, escapeName, nameRequiresUnescaping);
+                        break;
                     case Kind.Builder:
                         valueBuilder.AddProperty(utf8Name, _arrayBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.JsonElement:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                        break;
+                    case Kind.RawUtf8StringRequiresUnescaping:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _utf8Backing, escapeValue: false, valueRequiresUnescaping: true);
+                        break;
+                    case Kind.RawUtf8StringNotRequiresUnescaping:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _utf8Backing, escapeValue: false, valueRequiresUnescaping: false);
+                        break;
+                    case Kind.Utf8String:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _utf8Backing, escapeValue: true, valueRequiresUnescaping: false);
+                        break;
+                    case Kind.Utf16String:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _utf16Backing);
+                        break;
+                    case Kind.Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _arrayBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                         break;
                     default:
                         Debug.Fail("Unexpected Kind");
@@ -727,6 +1044,18 @@ public readonly partial struct Schema
                         break;
                     case Kind.JsonElement:
                         valueBuilder.AddProperty(name, _jsonElement);
+                        break;
+                    case Kind.RawUtf8StringRequiresUnescaping:
+                        valueBuilder.AddPropertyRawString(name, _utf8Backing, valueRequiresUnescaping: true);
+                        break;
+                    case Kind.RawUtf8StringNotRequiresUnescaping:
+                        valueBuilder.AddPropertyRawString(name, _utf8Backing, valueRequiresUnescaping: false);
+                        break;
+                    case Kind.Utf8String:
+                        valueBuilder.AddProperty(name, _utf8Backing, escapeValue: true, valueRequiresUnescaping: false);
+                        break;
+                    case Kind.Utf16String:
+                        valueBuilder.AddProperty(name, _utf16Backing);
                         break;
                     case Kind.Builder:
                         valueBuilder.AddProperty(name, _arrayBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
@@ -746,6 +1075,18 @@ public readonly partial struct Schema
                     case Kind.JsonElement:
                         valueBuilder.AddProperty(name, _jsonElement);
                         break;
+                    case Kind.RawUtf8StringRequiresUnescaping:
+                        valueBuilder.AddPropertyRawString(name, _utf8Backing, valueRequiresUnescaping: true);
+                        break;
+                    case Kind.RawUtf8StringNotRequiresUnescaping:
+                        valueBuilder.AddPropertyRawString(name, _utf8Backing, valueRequiresUnescaping: false);
+                        break;
+                    case Kind.Utf8String:
+                        valueBuilder.AddProperty(name, _utf8Backing, escapeValue: true, valueRequiresUnescaping: false);
+                        break;
+                    case Kind.Utf16String:
+                        valueBuilder.AddProperty(name, _utf16Backing);
+                        break;
                     case Kind.Builder:
                         valueBuilder.AddProperty(name, _arrayBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                         break;
@@ -763,6 +1104,18 @@ public readonly partial struct Schema
                         break;
                     case Kind.JsonElement:
                         valueBuilder.AddItem(_jsonElement);
+                        break;
+                    case Kind.RawUtf8StringRequiresUnescaping:
+                        valueBuilder.AddItem(_utf8Backing, escapeValue: false, requiresUnescaping: true);
+                        break;
+                    case Kind.RawUtf8StringNotRequiresUnescaping:
+                        valueBuilder.AddItem(_utf8Backing, escapeValue: false, requiresUnescaping: false);
+                        break;
+                    case Kind.Utf8String:
+                        valueBuilder.AddItem(_utf8Backing, escapeValue: true, requiresUnescaping: false);
+                        break;
+                    case Kind.Utf16String:
+                        valueBuilder.AddItem(_utf16Backing);
                         break;
                     case Kind.Builder:
                         valueBuilder.AddItem(_arrayBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
@@ -800,7 +1153,7 @@ public readonly partial struct Schema
 
             public static implicit operator Source<TContext>(Source source) => new (source);
 
-            internal Source(scoped in TContext context, Corvus.Benchmark.Current.Schema.NameComponentArray.Builder.Build<TContext> value) {_context = context; _arrayBuilder = value; _kind = Kind.Builder; }
+            internal Source(scoped in TContext context, Corvus.PersonBenchmark.Current.PersonSchema.OtherNames.Builder.Build<TContext> value) {_context = context; _arrayBuilder = value; _kind = Kind.Builder; }
 
             internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
             {
@@ -813,6 +1166,24 @@ public readonly partial struct Schema
                         break;
                     case Kind.Builder:
                         valueBuilder.AddProperty(utf8Name, BuildWithContext.Create(_context, _arrayBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o), escapeName, nameRequiresUnescaping);
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.Source:
+                        _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                        break;
+                    case Kind.Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _arrayBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                         break;
                     default:
                         Debug.Fail("Unexpected Kind");
@@ -896,7 +1267,7 @@ public readonly partial struct Schema
             /// <summary>
             /// Add an item to the array.
             /// </summary>
-            public void AddItem(in Corvus.Benchmark.Current.Schema.NameComponent.Source value)
+            public void AddItem(in Corvus.Text.Json.JsonElement.Source value)
             {
                 value.AddAsItem(ref _builder);
             }
@@ -978,11 +1349,12 @@ public readonly partial struct Schema
         /// </summary>
         /// <param name="workspace">The JSON workspace.</param>
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
         /// <returns>An empty mutable document builder.</returns>
         public static JsonDocumentBuilder<Mutable> CreateBuilder(
-            JsonWorkspace workspace, int initialCapacity = 30)
+            JsonWorkspace workspace, int initialCapacity = 30, int initialValueBufferSize = 8192)
         {
-            JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+            JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
             ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
             cvb.StartArray();
             cvb.EndArray();
@@ -997,7 +1369,7 @@ public readonly partial struct Schema
         /// <returns>An instance of a mutable document initialized with this instance.</returns>
         public JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace)
         {
-            return workspace.CreateBuilder<NameComponentArray, Mutable>(this);
+            return workspace.CreateBuilder<OtherNames, Mutable>(this);
         }
     }
 }

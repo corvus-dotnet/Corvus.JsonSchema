@@ -1070,6 +1070,73 @@ public readonly partial struct JsonElement
         }
 
         /// <summary>
+        /// Adds this source as a property to a complex value builder using a pre-baked property name blob.
+        /// </summary>
+        /// <param name="prebakedPropertyName">The pre-baked property name blob.</param>
+        /// <param name="valueBuilder">The complex value builder to add the property to.</param>
+        public void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+        {
+            switch (_kind)
+            {
+                case Kind.JsonElement:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                    break;
+
+                case Kind.Null:
+                    valueBuilder.AddPrebakedPropertyNullValue(prebakedPropertyName);
+                    break;
+
+                case Kind.True:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, true);
+                    break;
+
+                case Kind.False:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, false);
+                    break;
+
+                case Kind.NumericSimpleType:
+                    valueBuilder.AddPrebakedPropertyFormattedNumber(prebakedPropertyName, _simpleTypeBacking.Span());
+                    break;
+
+                case Kind.FormattedNumber:
+                    valueBuilder.AddPrebakedPropertyFormattedNumber(prebakedPropertyName, _utf8Backing);
+                    break;
+
+                case Kind.StringSimpleType:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, _simpleTypeBacking.Span(), escapeValue: false, valueRequiresUnescaping: false);
+                    break;
+
+                case Kind.RawUtf8StringRequiresUnescaping:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, _utf8Backing, escapeValue: false, valueRequiresUnescaping: true);
+                    break;
+
+                case Kind.RawUtf8StringNotRequiresUnescaping:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, _utf8Backing, escapeValue: false, valueRequiresUnescaping: false);
+                    break;
+
+                case Kind.Utf8String:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, _utf8Backing, escapeValue: true, valueRequiresUnescaping: false);
+                    break;
+
+                case Kind.Utf16String:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, _utf16Backing);
+                    break;
+
+                case Kind.JsonArrayBuilderInstance:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, _arrayBuilder!, static (in b, ref o) => ArrayBuilder.BuildValue(b, ref o));
+                    break;
+
+                case Kind.JsonObjectBuilderInstance:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => ObjectBuilder.BuildValue(b, ref o));
+                    break;
+
+                default:
+                    Debug.Fail("Unrecognized kind.");
+                    break;
+            }
+        }
+
+        /// <summary>
         /// Adds this source as a property to a complex value builder.
         /// </summary>
         /// <param name="name">The property name.</param>
@@ -1510,6 +1577,33 @@ public readonly partial struct JsonElement
 
                 case Kind.Source:
                     _source.AddAsProperty(utf8Name, ref valueBuilder, escapeName, nameRequiresUnescaping);
+                    break;
+
+                default:
+                    Debug.Fail("Unrecognized kind.");
+                    break;
+            }
+        }
+
+        /// <summary>
+        /// Adds this source as a property to a complex value builder using a pre-baked property name blob.
+        /// </summary>
+        /// <param name="prebakedPropertyName">The pre-baked property name blob.</param>
+        /// <param name="valueBuilder">The complex value builder to add the property to.</param>
+        public void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+        {
+            switch (_kind)
+            {
+                case Kind.JsonArrayBuilderInstance:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _arrayBuilder!), static (in b, ref o) => ArrayBuilder.BuildValue(b.Context, b.Build, ref o));
+                    break;
+
+                case Kind.JsonObjectBuilderInstance:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => ObjectBuilder.BuildValue(b.Context, b.Build, ref o));
+                    break;
+
+                case Kind.Source:
+                    _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
                     break;
 
                 default:

@@ -17,125 +17,38 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace Corvus.Benchmark.Current;
+namespace Corvus.PersonBenchmark.Current;
 
 /// <summary>
 /// JSON Schema for a Person entity coming back from a 3rd party API (e.g. a storage format in a database)
 /// </summary>
-public readonly partial struct Schema
+public readonly partial struct PersonSchema
 {
     /// <summary>
     /// Generated from JSON Schema.
     /// </summary>
-    /// <remarks>
-    /// <para>
-    /// A name of a person.
-    /// </para>
-    /// </remarks>
     [DebuggerDisplay("{DebuggerDisplay,nq}")]
-    public readonly partial struct PersonName
-        : IJsonElement<PersonName>
+    public readonly partial struct CompetedInYears
+        : IJsonElement<CompetedInYears>
     {
         public static partial class JsonSchema
         {
-            private static readonly JsonSchemaMessageProvider<int> RequiredPropertyFirstNamePresent = static (_, buffer, out written) => JsonSchemaEvaluation.RequiredPropertyPresent("firstName"u8, buffer, out written);
-            private static readonly JsonSchemaMessageProvider<int> RequiredPropertyFirstNameNotPresent = static (_, buffer, out written) => JsonSchemaEvaluation.RequiredPropertyNotPresent("firstName"u8, buffer, out written);
-
-            private const int RequiredOffsetForFirstName = 0;
-            private const uint RequiredBitForFirstName = 0b00000000000000000000000000000001;
-
-            private const uint RequiredBitMask0 =
-                RequiredBitForFirstName;
-            private static readonly JsonSchemaPathProvider FirstNameSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/firstName/$ref"u8, buffer, out written);
-            private static readonly JsonSchemaPathProvider LastNameSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/lastName/$ref"u8, buffer, out written);
-            private static readonly JsonSchemaPathProvider OtherNamesValueSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/otherNames/$ref"u8, buffer, out written);
-
-            private static void MatchFirstName(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
-            {
-                context.AddLocalEvaluatedProperty(propertyCount);
-                JsonSchemaContext childContext =
-                    Corvus.Benchmark.Current.Schema.NameComponent.JsonSchema.PushChildContextUnescaped(
-                        parentDocument,
-                        parentDocumentIndex,
-                        ref context,
-                        JsonPropertyNames.FirstNameUtf8,
-                        evaluationPath: FirstNameSchemaEvaluationPath);
-
-                Corvus.Benchmark.Current.Schema.NameComponent.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext);
-                context.CommitChildContext(childContext.IsMatch, ref childContext);
-
-                if (!context.HasCollector && !context.IsMatch)
-                {
-                    return;
-                }
-
-                requiredBitBuffer[RequiredOffsetForFirstName] |= RequiredBitForFirstName;
-            }
-
-            private static void MatchLastName(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
-            {
-                context.AddLocalEvaluatedProperty(propertyCount);
-                JsonSchemaContext childContext1 =
-                    Corvus.Benchmark.Current.Schema.NameComponent.JsonSchema.PushChildContextUnescaped(
-                        parentDocument,
-                        parentDocumentIndex,
-                        ref context,
-                        JsonPropertyNames.LastNameUtf8,
-                        evaluationPath: LastNameSchemaEvaluationPath);
-
-                Corvus.Benchmark.Current.Schema.NameComponent.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext1);
-                context.CommitChildContext(childContext1.IsMatch, ref childContext1);
-            }
-
-            private static void MatchOtherNamesValue(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
-            {
-                context.AddLocalEvaluatedProperty(propertyCount);
-                JsonSchemaContext childContext2 =
-                    Corvus.Benchmark.Current.Schema.OtherNames.JsonSchema.PushChildContextUnescaped(
-                        parentDocument,
-                        parentDocumentIndex,
-                        ref context,
-                        JsonPropertyNames.OtherNamesValueUtf8,
-                        evaluationPath: OtherNamesValueSchemaEvaluationPath);
-
-                Corvus.Benchmark.Current.Schema.OtherNames.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext2);
-                context.CommitChildContext(childContext2.IsMatch, ref childContext2);
-            }
-
-            private static PropertySchemaMatchers<Corvus.Benchmark.Current.PropertiesValidationHandler_NamedPropertyValidator> MatchersBuilder()
-            {
-                return new PropertySchemaMatchers<Corvus.Benchmark.Current.PropertiesValidationHandler_NamedPropertyValidator>([
-                    (static () => JsonPropertyNames.FirstNameUtf8, MatchFirstName),
-                    (static () => JsonPropertyNames.LastNameUtf8, MatchLastName),
-                    (static () => JsonPropertyNames.OtherNamesValueUtf8, MatchOtherNamesValue),
-                ]);
-            }
-
-            private static PropertySchemaMatchers<Corvus.Benchmark.Current.PropertiesValidationHandler_NamedPropertyValidator> Matchers { get; } = MatchersBuilder();
-
-            private static bool TryGetNamedMatcher(ReadOnlySpan<byte> span,
-#if NET
-            [NotNullWhen(true)]
-#endif
-            out Corvus.Benchmark.Current.PropertiesValidationHandler_NamedPropertyValidator? matcher)
-            {
-                return Matchers.TryGetNamedMatcher(span, out matcher);
-            }
+            private static readonly JsonSchemaPathProvider ItemsSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/items/$ref"u8, buffer, out written);
 
             /// <summary>
             /// Gets a provider for the schema location from which this type was generated.
             /// </summary>
-            public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("person-schema.json#/$defs/PersonName"u8, buffer, out written);
+            public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/$defs/CompetedInYears"u8, buffer, out written);
 
             /// <summary>
             /// Gets the schema location from which this type was generated.
             /// </summary>
-            public const string SchemaLocation = "person-schema.json#/$defs/PersonName";
+            public const string SchemaLocation = "/$defs/CompetedInYears";
 
             /// <summary>
             /// Gets the schema location from which this type was generated as a UTF-8 string.
             /// </summary>
-            public static ReadOnlySpan<byte> SchemaLocationUtf8 => "person-schema.json#/$defs/PersonName"u8;
+            public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/$defs/CompetedInYears"u8;
 
             /// <summary>
             /// Applies the JSON schema semantics defined by this type to the instance determined by the given document and index.
@@ -156,59 +69,47 @@ public readonly partial struct Schema
                     JsonTokenType.EndObject or
                     JsonTokenType.EndArray));
 
-                if (!JsonSchemaEvaluation.MatchTypeObject(tokenType,"type"u8, ref context))
+                if (!JsonSchemaEvaluation.MatchTypeArray(tokenType,"type"u8, ref context))
                 {
                     if (!context.HasCollector)
                     {
                         return;
                     }
-                    context.IgnoredKeyword(JsonSchemaEvaluation.IgnoredNotTypeObject, "properties"u8);
-                    context.IgnoredKeyword(JsonSchemaEvaluation.IgnoredNotTypeObject, "required"u8);
+                    context.IgnoredKeyword(JsonSchemaEvaluation.IgnoredNotTypeArray, "items"u8);
                 }
                 else
                 {
-                    Span<uint> requiredPropertyChildHandler_seenItems = stackalloc uint[1];
-                    int objectValidation_propertyCount = 0;
+                    int arrayValidation_itemCount = 0;
 
-                    var objectValidation_enumerator = new ObjectEnumerator(parentDocument, parentIndex);
-                    while (objectValidation_enumerator.MoveNext())
+                    var arrayValidation_enumerator = new ArrayEnumerator(parentDocument, parentIndex);
+                    while (arrayValidation_enumerator.MoveNext())
                     {
-                        int objectValidation_currentIndex = objectValidation_enumerator.CurrentIndex;
-                        using UnescapedUtf8JsonString objectValidation_unescapedPropertyName = parentDocument.GetPropertyNameUnescaped(objectValidation_currentIndex);
+                        int arrayValidation_currentIndex = arrayValidation_enumerator.CurrentIndex;
 
-                        if (TryGetNamedMatcher(objectValidation_unescapedPropertyName.Span, out Corvus.Benchmark.Current.PropertiesValidationHandler_NamedPropertyValidator? validator))
+                        JsonSchemaContext childContext = Corvus.PersonBenchmark.Current.JsonInt32.JsonSchema.PushChildContext(
+                            parentDocument,
+                            arrayValidation_currentIndex,
+                            ref context,
+                            itemIndex: arrayValidation_itemCount,
+                            evaluationPath: ItemsSchemaEvaluationPath);
+
+                        Corvus.PersonBenchmark.Current.JsonInt32.JsonSchema.Evaluate(parentDocument, arrayValidation_currentIndex, ref childContext);
+                        if (!childContext.IsMatch)
                         {
-                            validator!(parentDocument, objectValidation_currentIndex, objectValidation_propertyCount, ref context, parentIndex, requiredPropertyChildHandler_seenItems);
+                            context.CommitChildContext(false, ref childContext);
 
-                            if (!context.HasCollector && !context.IsMatch)
+                            if (!context.HasCollector)
                             {
                                 return;
                             }
                         }
-
-                        objectValidation_propertyCount++;
-                    }
-
-                    // Do a quick test to see if we have all of the required bits set in each element
-                    if ((~(requiredPropertyChildHandler_seenItems[0]) & RequiredBitMask0) == 0)
-                    {
-                        context.EvaluatedKeywordForProperty(true, 0, RequiredPropertyFirstNamePresent, "firstName"u8, "required"u8);
-                    }
-                    else if (!context.HasCollector)
-                    {
-                        context.EvaluatedBooleanSchema(false);
-                        return;
-                    }
-                    else
-                    {
-                        if ((requiredPropertyChildHandler_seenItems[RequiredOffsetForFirstName] & RequiredBitForFirstName) == 0)
-                        {
-                            context.EvaluatedKeywordForProperty(false, 0, RequiredPropertyFirstNameNotPresent, "firstName"u8, "required"u8);
-                        }
                         else
                         {
-                            context.EvaluatedKeywordForProperty(true, 0, RequiredPropertyFirstNamePresent, "firstName"u8, "required"u8);
+                            context.CommitChildContext(true, ref childContext);
+                            context.AddLocalEvaluatedItem(arrayValidation_itemCount);
                         }
+
+                        arrayValidation_itemCount++;
                     }
                 }
             }

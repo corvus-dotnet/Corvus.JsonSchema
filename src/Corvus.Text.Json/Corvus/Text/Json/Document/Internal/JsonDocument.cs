@@ -1413,6 +1413,22 @@ public abstract partial class JsonDocument
     }
 
     /// <summary>
+    /// Stores a pre-baked dynamic value in the value buffer and returns its offset.
+    /// The value must contain the complete encoded representation including the 4-byte header,
+    /// as produced by the code generator for known property names.
+    /// </summary>
+    /// <param name="prebakedValue">The complete pre-baked value including header and payload.</param>
+    /// <returns>The offset of the stored value in the value buffer.</returns>
+    public int StorePrebakedValue(ReadOnlySpan<byte> prebakedValue)
+    {
+        int offset = _valueOffset;
+        _valueOffset += prebakedValue.Length;
+        Enlarge(_valueOffset, ref _valueBacking);
+        prebakedValue.CopyTo(_valueBacking.AsSpan(offset));
+        return offset;
+    }
+
+    /// <summary>
     /// Stores a raw unescaped number value in the dynamic value buffer and returns its offset.
     /// </summary>
     /// <param name="unescapedNumberValue">The unescaped number value to store.</param>

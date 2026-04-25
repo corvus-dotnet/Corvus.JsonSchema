@@ -3544,6 +3544,194 @@ public ref struct ComplexValueBuilder
         _parsedData.Dispose();
     }
 
+    /// <summary>
+    /// Adds a property with a complex value to the current object using a pre-baked property name blob.
+    /// The blob must contain the complete encoded property name including the 4-byte header and quoted UTF-8 bytes.
+    /// </summary>
+    /// <param name="prebakedPropertyName">The pre-baked property name blob.</param>
+    /// <param name="createComplexValue">A delegate that builds the property value.</param>
+    public void AddPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ValueBuilderAction createComplexValue)
+    {
+        int currentMemberCount = _memberCount;
+        int currentRowCount = _rowCount;
+        _memberCount = 0;
+        _rowCount = 0;
+        int location = _parentDocument.StorePrebakedValue(prebakedPropertyName);
+        _parsedData.AppendDynamicSimpleValue(JsonTokenType.PropertyName, location, requiresUnescapingOrHasExponent: false);
+        createComplexValue(ref this);
+        _memberCount = currentMemberCount + 1;
+        _rowCount = currentRowCount + _rowCount + 1;
+    }
+
+    /// <summary>
+    /// Adds a property with a complex value to the current object using a pre-baked property name blob and context.
+    /// </summary>
+    /// <typeparam name="TContext">The type of the context object.</typeparam>
+    /// <param name="prebakedPropertyName">The pre-baked property name blob.</param>
+    /// <param name="context">The context object to pass to the delegate.</param>
+    /// <param name="createComplexValue">A delegate that builds the property value.</param>
+    public void AddPrebakedProperty<TContext>(ReadOnlySpan<byte> prebakedPropertyName, in TContext context, ValueBuilderAction<TContext> createComplexValue)
+#if NET9_0_OR_GREATER
+        where TContext : allows ref struct
+#endif
+    {
+        int currentMemberCount = _memberCount;
+        int currentRowCount = _rowCount;
+        _memberCount = 0;
+        _rowCount = 0;
+        int location = _parentDocument.StorePrebakedValue(prebakedPropertyName);
+        _parsedData.AppendDynamicSimpleValue(JsonTokenType.PropertyName, location, requiresUnescapingOrHasExponent: false);
+        createComplexValue(context, ref this);
+        _memberCount = currentMemberCount + 1;
+        _rowCount = currentRowCount + _rowCount + 1;
+    }
+
+    /// <summary>
+    /// Adds a property with a <see cref="IJsonElement{T}"/> value using a pre-baked property name blob.
+    /// </summary>
+    /// <typeparam name="T">The type of the JSON element value.</typeparam>
+    /// <param name="prebakedPropertyName">The pre-baked property name blob.</param>
+    /// <param name="value">The JSON element value.</param>
+    [CLSCompliant(false)]
+    public void AddPrebakedProperty<T>(ReadOnlySpan<byte> prebakedPropertyName, T value)
+        where T : struct, IJsonElement<T>
+    {
+        Debug.Assert(value.TokenType != JsonTokenType.None);
+
+        int currentLength = Length;
+        int location = _parentDocument.StorePrebakedValue(prebakedPropertyName);
+        _parsedData.AppendDynamicSimpleValue(JsonTokenType.PropertyName, location, requiresUnescapingOrHasExponent: false);
+        value.ParentDocument.AppendElementToMetadataDb(value.ParentDocumentIndex, _parentDocument.Workspace, ref _parsedData);
+        _memberCount++;
+        _rowCount += (Length - currentLength) / DbRow.Size;
+    }
+
+    /// <summary>
+    /// Adds a property with a formatted number value using a pre-baked property name blob.
+    /// </summary>
+    /// <param name="prebakedPropertyName">The pre-baked property name blob.</param>
+    /// <param name="value">The number value as a UTF-8 byte span.</param>
+    public void AddPrebakedPropertyFormattedNumber(ReadOnlySpan<byte> prebakedPropertyName, ReadOnlySpan<byte> value)
+    {
+        int nameLocation = _parentDocument.StorePrebakedValue(prebakedPropertyName);
+        int valueLocation = _parentDocument.StoreRawNumberValue(value);
+        _parsedData.AppendPropertyAndDynamicSimpleValue(nameLocation, false, JsonTokenType.Number, valueLocation, value.IndexOfAny((byte)'e', (byte)'E') >= 0);
+        _memberCount++;
+        _rowCount += 2;
+    }
+
+    /// <summary>
+    /// Adds a property with an <see cref="int"/> value using a pre-baked property name blob.
+    /// </summary>
+    /// <param name="prebakedPropertyName">The pre-baked property name blob.</param>
+    /// <param name="value">The <see cref="int"/> value.</param>
+    public void AddPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, int value)
+    {
+        int nameLocation = _parentDocument.StorePrebakedValue(prebakedPropertyName);
+        int valueLocation = _parentDocument.StoreValue(value);
+        _parsedData.AppendPropertyAndDynamicSimpleValue(nameLocation, false, JsonTokenType.Number, valueLocation, false);
+        _memberCount++;
+        _rowCount += 2;
+    }
+
+    /// <summary>
+    /// Adds a property with a <see cref="long"/> value using a pre-baked property name blob.
+    /// </summary>
+    /// <param name="prebakedPropertyName">The pre-baked property name blob.</param>
+    /// <param name="value">The <see cref="long"/> value.</param>
+    public void AddPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, long value)
+    {
+        int nameLocation = _parentDocument.StorePrebakedValue(prebakedPropertyName);
+        int valueLocation = _parentDocument.StoreValue(value);
+        _parsedData.AppendPropertyAndDynamicSimpleValue(nameLocation, false, JsonTokenType.Number, valueLocation, false);
+        _memberCount++;
+        _rowCount += 2;
+    }
+
+    /// <summary>
+    /// Adds a property with a <see cref="bool"/> value using a pre-baked property name blob.
+    /// </summary>
+    /// <param name="prebakedPropertyName">The pre-baked property name blob.</param>
+    /// <param name="value">The <see cref="bool"/> value.</param>
+    public void AddPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, bool value)
+    {
+        int nameLocation = _parentDocument.StorePrebakedValue(prebakedPropertyName);
+        int valueLocation = _parentDocument.StoreBooleanValue(value);
+        _parsedData.AppendPropertyAndDynamicSimpleValue(nameLocation, false, value ? JsonTokenType.True : JsonTokenType.False, valueLocation, false);
+        _memberCount++;
+        _rowCount += 2;
+    }
+
+    /// <summary>
+    /// Adds a null property using a pre-baked property name blob.
+    /// </summary>
+    /// <param name="prebakedPropertyName">The pre-baked property name blob.</param>
+    public void AddPrebakedPropertyNullValue(ReadOnlySpan<byte> prebakedPropertyName)
+    {
+        int nameLocation = _parentDocument.StorePrebakedValue(prebakedPropertyName);
+        int valueLocation = _parentDocument.StoreNullValue();
+        _parsedData.AppendPropertyAndDynamicSimpleValue(nameLocation, false, JsonTokenType.Null, valueLocation, false);
+        _memberCount++;
+        _rowCount += 2;
+    }
+
+    /// <summary>
+    /// Adds a property with a string value using a pre-baked property name blob.
+    /// </summary>
+    /// <param name="prebakedPropertyName">The pre-baked property name blob.</param>
+    /// <param name="utf8String">The property value as a UTF-8 byte span.</param>
+    /// <param name="escapeValue">Whether to escape the property value.</param>
+    /// <param name="valueRequiresUnescaping">Whether the property value requires unescaping.</param>
+    public void AddPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ReadOnlySpan<byte> utf8String, bool escapeValue, bool valueRequiresUnescaping)
+    {
+        int nameLocation = _parentDocument.StorePrebakedValue(prebakedPropertyName);
+        int valueLocation;
+        bool valueIsEscaped;
+        if (escapeValue)
+        {
+            valueLocation = _parentDocument.EscapeAndStoreRawStringValue(utf8String, out valueIsEscaped);
+        }
+        else
+        {
+            valueLocation = _parentDocument.StoreRawStringValue(utf8String);
+            valueIsEscaped = valueRequiresUnescaping;
+        }
+
+        _parsedData.AppendPropertyAndDynamicSimpleValue(nameLocation, false, JsonTokenType.String, valueLocation, valueIsEscaped);
+        _memberCount++;
+        _rowCount += 2;
+    }
+
+    /// <summary>
+    /// Adds a property with a UTF-16 string value using a pre-baked property name blob.
+    /// </summary>
+    /// <param name="prebakedPropertyName">The pre-baked property name blob.</param>
+    /// <param name="value">The property value as a character span.</param>
+    public void AddPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ReadOnlySpan<char> value)
+    {
+        int nameLocation = _parentDocument.StorePrebakedValue(prebakedPropertyName);
+        int valueLocation = _parentDocument.EscapeAndStoreRawStringValue(value, out bool valueIsEscaped);
+        _parsedData.AppendPropertyAndDynamicSimpleValue(nameLocation, false, JsonTokenType.String, valueLocation, valueIsEscaped);
+        _memberCount++;
+        _rowCount += 2;
+    }
+
+    /// <summary>
+    /// Stores a pre-baked property name and returns a handle for complex value building.
+    /// Use with <see cref="EndProperty(in ComplexValueHandle)"/> to complete the property.
+    /// </summary>
+    /// <param name="prebakedPropertyName">The pre-baked property name blob.</param>
+    /// <returns>The handle for the property.</returns>
+    public ComplexValueHandle StartPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName)
+    {
+        var result = new ComplexValueHandle(_memberCount, _rowCount);
+        _memberCount = 0;
+        _rowCount = 0;
+        int location = _parentDocument.StorePrebakedValue(prebakedPropertyName);
+        _parsedData.AppendDynamicSimpleValue(JsonTokenType.PropertyName, location, requiresUnescapingOrHasExponent: false);
+        return result;
+    }
+
     private int StorePropertyName(ReadOnlySpan<byte> propertyName, bool escapeName, bool nameRequiresUnescaping, out bool nameIsEscaped)
     {
         if (escapeName)

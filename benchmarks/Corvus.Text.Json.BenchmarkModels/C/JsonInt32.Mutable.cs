@@ -17,7 +17,7 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace Corvus.Benchmark.Current;
+namespace Corvus.PersonBenchmark.Current;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
@@ -294,7 +294,7 @@ public readonly partial struct JsonInt32
             return JsonSchema.Evaluate(_parent, _idx, resultsCollector);
         }
 
-        private void CheckValidInstance()
+        private readonly void CheckValidInstance()
         {
             if (_parent == null)
             {
@@ -328,6 +328,48 @@ public readonly partial struct JsonInt32
 
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         JsonValueKind IJsonElement.ValueKind => ValueKind;
+
+        /// <summary>
+        /// Gets a <see cref="JsonInt32"/> which can be safely stored beyond the lifetime of the
+        /// original document.
+        /// </summary>
+        /// <returns>
+        /// A <see cref="JsonInt32"/> which can be safely stored beyond the lifetime of the
+        /// original document.
+        /// </returns>
+        /// <remarks>
+        /// <para>
+        /// This serializes the element and re-parses it into a standalone heap-allocated
+        /// document. The result is independent of the workspace.
+        /// </para>
+        /// </remarks>
+        public readonly JsonInt32 Clone()
+        {
+            CheckValidInstance();
+            return _parent.CloneElement<JsonInt32>(_idx);
+        }
+
+        /// <summary>
+        /// Creates a frozen (immutable) copy of this element, backed by a new
+        /// document builder registered in the same workspace.
+        /// </summary>
+        /// <returns>
+        /// An immutable <see cref="JsonInt32"/> that lives for the lifetime of its
+        /// workspace and its associated documents.
+        /// </returns>
+        /// <remarks>
+        /// <para>
+        /// Unlike <see cref="Clone()"/>, which serializes the element and re-parses it
+        /// into a standalone heap-allocated document, <c>Freeze()</c> performs a cheap
+        /// blit of the metadata and value backing arrays. The resulting element is
+        /// immutable but is only valid for the lifetime of the workspace.
+        /// </para>
+        /// </remarks>
+        public readonly JsonInt32 Freeze()
+        {
+            CheckValidInstance();
+            return _parent.FreezeElement<JsonInt32>(_idx);
+        }
     }
 
     public ref struct Source
@@ -387,6 +429,27 @@ public readonly partial struct JsonInt32
                     break;
                 case Kind.FormattedNumber:
                     valueBuilder.AddPropertyFormattedNumber(utf8Name, _utf8Backing, escapeName, nameRequiresUnescaping);
+                    break;
+                default:
+                    Debug.Fail("Unexpected Kind");
+                    break;
+            }
+        }
+
+        internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+        {
+            switch(_kind)
+            {
+                case Kind.Unknown:
+                    break;
+                case Kind.JsonElement:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                    break;
+                case Kind.NumericSimpleType:
+                    valueBuilder.AddPrebakedPropertyFormattedNumber(prebakedPropertyName, _simpleTypeBacking.Span());
+                    break;
+                case Kind.FormattedNumber:
+                    valueBuilder.AddPrebakedPropertyFormattedNumber(prebakedPropertyName, _utf8Backing);
                     break;
                 default:
                     Debug.Fail("Unexpected Kind");

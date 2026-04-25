@@ -80,12 +80,7 @@ public class BenchmarkBuildAndWrite
                         otherNames.AddItem("James"u8);
                     }));
             }),
-            competedInYears: CompetedInYears.Build(static (ref competedInYears) =>
-            {
-                competedInYears.AddItem(2012);
-                competedInYears.AddItem(2016);
-                competedInYears.AddItem(2024);
-            })));
+            competedInYears: CompetedInYears.Build([2012, 2016, 2024])));
 
         Utf8JsonWriter writer = workspace.RentWriterAndBuffer(defaultBufferSize: 1024, out IByteBufferWriter bufferWriter);
         person.WriteTo(writer);
@@ -161,12 +156,7 @@ public class BenchmarkBuildOnly
                         otherNames.AddItem("James"u8);
                     }));
             }),
-            competedInYears: CompetedInYears.Build(static (ref competedInYears) =>
-            {
-                competedInYears.AddItem(2012);
-                competedInYears.AddItem(2016);
-                competedInYears.AddItem(2024);
-            })));
+            competedInYears: CompetedInYears.Build([2012, 2016, 2024])));
     }
 
     [Benchmark]
@@ -228,12 +218,7 @@ public class BenchmarkWriteOnly
                         otherNames.AddItem("James"u8);
                     }));
             }),
-            competedInYears: CompetedInYears.Build(static (ref competedInYears) =>
-            {
-                competedInYears.AddItem(2012);
-                competedInYears.AddItem(2016);
-                competedInYears.AddItem(2024);
-            })));
+            competedInYears: CompetedInYears.Build([2012, 2016, 2024])));
 
         _poco = new()
         {

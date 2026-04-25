@@ -456,6 +456,396 @@ internal static partial class CodeGeneratorExtensions
             .AppendLineIndent("}");
     }
 
+    private static CodeGenerator AppendAddAsPrebakedProperty(this CodeGenerator generator, TypeDeclaration typeDeclaration, List<ComposedBuilder> builders, bool forContext = false)
+    {
+        generator
+            .AppendSeparatorLine()
+            .AppendLineIndent("internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)")
+            .AppendLineIndent("{")
+            .PushIndent()
+                .AppendLineIndent("switch(_kind)")
+                .AppendLineIndent("{")
+                .PushIndent()
+                    .AppendLineIndent("case Kind.Unknown:")
+                    .PushIndent()
+                        .AppendLineIndent("break;")
+                    .PopIndent();
+
+        if (forContext)
+        {
+            generator
+                    .AppendLineIndent("case Kind.Source:")
+                    .PushIndent()
+                        .AppendLineIndent("_source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);")
+                        .AppendLineIndent("break;")
+                    .PopIndent();
+        }
+
+        HashSet<string> seenKinds = new(StringComparer.Ordinal);
+        CoreTypes core = typeDeclaration.ImpliedCoreTypesOrAny();
+
+        if (!forContext)
+        {
+            generator
+                    .AppendLineIndent("case Kind.JsonElement:")
+                    .PushIndent()
+                        .AppendLineIndent("valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);")
+                        .AppendLineIndent("break;")
+                    .PopIndent();
+
+            if ((core & CoreTypes.Null) != 0)
+            {
+                if (seenKinds.Add("Null"))
+                {
+                    generator
+                        .AppendLineIndent("case Kind.Null:")
+                        .PushIndent()
+                            .AppendLineIndent("valueBuilder.AddPrebakedPropertyNullValue(prebakedPropertyName);")
+                            .AppendLineIndent("break;")
+                        .PopIndent();
+                }
+            }
+
+            if ((core & CoreTypes.Boolean) != 0)
+            {
+                if (seenKinds.Add("True"))
+                {
+                    generator
+                        .AppendLineIndent("case Kind.True:")
+                        .PushIndent()
+                            .AppendLineIndent("valueBuilder.AddPrebakedProperty(prebakedPropertyName, true);")
+                            .AppendLineIndent("break;")
+                        .PopIndent();
+                }
+
+                if (seenKinds.Add("False"))
+                {
+                    generator
+                        .AppendLineIndent("case Kind.False:")
+                        .PushIndent()
+                            .AppendLineIndent("valueBuilder.AddPrebakedProperty(prebakedPropertyName, false);")
+                            .AppendLineIndent("break;")
+                        .PopIndent();
+                }
+            }
+
+            if ((core & CoreTypes.String) != 0)
+            {
+                if (seenKinds.Add("RawUtf8StringRequiresUnescaping"))
+                {
+                    generator
+                        .AppendLineIndent("case Kind.RawUtf8StringRequiresUnescaping:")
+                        .PushIndent()
+                            .AppendLineIndent("valueBuilder.AddPrebakedProperty(prebakedPropertyName, _utf8Backing, escapeValue: false, valueRequiresUnescaping: true);")
+                            .AppendLineIndent("break;")
+                        .PopIndent();
+                }
+
+                if (seenKinds.Add("RawUtf8StringNotRequiresUnescaping"))
+                {
+                    generator
+                        .AppendLineIndent("case Kind.RawUtf8StringNotRequiresUnescaping:")
+                        .PushIndent()
+                            .AppendLineIndent("valueBuilder.AddPrebakedProperty(prebakedPropertyName, _utf8Backing, escapeValue: false, valueRequiresUnescaping: false);")
+                            .AppendLineIndent("break;")
+                        .PopIndent();
+                }
+
+                if (seenKinds.Add("Utf8String"))
+                {
+                    generator
+                        .AppendLineIndent("case Kind.Utf8String:")
+                        .PushIndent()
+                            .AppendLineIndent("valueBuilder.AddPrebakedProperty(prebakedPropertyName, _utf8Backing, escapeValue: true, valueRequiresUnescaping: false);")
+                            .AppendLineIndent("break;")
+                        .PopIndent();
+                }
+
+                if (seenKinds.Add("Utf16String"))
+                {
+                    generator
+                        .AppendLineIndent("case Kind.Utf16String:")
+                        .PushIndent()
+                            .AppendLineIndent("valueBuilder.AddPrebakedProperty(prebakedPropertyName, _utf16Backing);")
+                            .AppendLineIndent("break;")
+                        .PopIndent();
+                }
+
+                if (typeDeclaration.Format() is string format &&
+                    FormatHandlerRegistry.Instance.StringFormatHandlers.RequiresSimpleTypesBacking(format, out bool requiresSimpleType) &&
+                    requiresSimpleType &&
+                    seenKinds.Add("StringSimpleType"))
+                {
+                    generator
+                        .AppendLineIndent("case Kind.StringSimpleType:")
+                        .PushIndent()
+                            .AppendLineIndent("valueBuilder.AddPrebakedProperty(prebakedPropertyName, _simpleTypeBacking.Span(), escapeValue: false, valueRequiresUnescaping: false);")
+                            .AppendLineIndent("break;")
+                        .PopIndent();
+                }
+            }
+
+            if ((core & (CoreTypes.Number | CoreTypes.Integer)) != 0)
+            {
+                if (seenKinds.Add("NumericSimpleType"))
+                {
+                    generator
+                        .AppendLineIndent("case Kind.NumericSimpleType:")
+                        .PushIndent()
+                            .AppendLineIndent("valueBuilder.AddPrebakedPropertyFormattedNumber(prebakedPropertyName, _simpleTypeBacking.Span());")
+                            .AppendLineIndent("break;")
+                        .PopIndent();
+                }
+
+                if (seenKinds.Add("FormattedNumber"))
+                {
+                    generator.AppendLineIndent("case Kind.FormattedNumber:")
+                        .PushIndent()
+                            .AppendLineIndent("valueBuilder.AddPrebakedPropertyFormattedNumber(prebakedPropertyName, _utf8Backing);")
+                            .AppendLineIndent("break;")
+                        .PopIndent();
+                }
+            }
+        }
+
+        bool isObject = (core & CoreTypes.Object) != 0;
+        bool isArray = (core & CoreTypes.Array) != 0;
+
+        bool hasFallbackObjectType =
+            typeDeclaration.LocalEvaluatedPropertyType() is not null ||
+            typeDeclaration.HasPropertyDeclarations;
+        bool hasFallbackArrayType =
+            typeDeclaration.ExplicitArrayItemsType() is not null;
+
+        if (isObject && (hasFallbackObjectType || !builders.Any(b => b.IsObject)))
+        {
+            string localBuilderName = isArray ? generator.ObjectBuilderClassName() : generator.BuilderClassName();
+            generator
+                .AppendLineIndent("case Kind.", localBuilderName, ":")
+                .PushIndent();
+
+            if (forContext)
+            {
+                generator
+                        .AppendLineIndent("valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => ", localBuilderName, ".BuildValue(b.Context, b.Build, ref o));");
+            }
+            else
+            {
+                generator
+                        .AppendLineIndent("valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => ", localBuilderName, ".BuildValue(b, ref o));");
+            }
+
+            generator
+                    .AppendLineIndent("break;")
+                .PopIndent();
+        }
+
+        if (isArray && (hasFallbackArrayType || !builders.Any(b => b.IsArray)))
+        {
+            string localBuilderName = isObject ? generator.ArrayBuilderClassName() : generator.BuilderClassName();
+
+            generator
+                .AppendLineIndent("case Kind.", localBuilderName, ":")
+                .PushIndent();
+
+            if (forContext)
+            {
+                generator
+                    .AppendLineIndent("valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _arrayBuilder!), static (in b, ref o) => ", localBuilderName, ".BuildValue(b.Context, b.Build, ref o));");
+            }
+            else
+            {
+                generator
+                    .AppendLineIndent("valueBuilder.AddPrebakedProperty(prebakedPropertyName, _arrayBuilder!, static (in b, ref o) => ", localBuilderName, ".BuildValue(b, ref o));");
+            }
+
+            generator
+                    .AppendLineIndent("break;")
+                .PopIndent();
+        }
+
+        HashSet<string> numericArrayKinds = new(StringComparer.Ordinal);
+
+        if (isArray && (hasFallbackArrayType || !builders.Any(b => b.IsArray)))
+        {
+            if (!forContext && typeDeclaration.IsNumericArray() && !typeDeclaration.IsTuple() && !typeDeclaration.IsFixedSizeNumericArray())
+            {
+                NumericTypeName numericTypeName = typeDeclaration.PreferredDotnetNumericTypeName() ?? throw new InvalidOperationException(SR.ExpectedNumericTypeName);
+                string numericArrayKindName = GetNumericArrayKind(generator, numericTypeName);
+                if (numericArrayKinds.Add(numericArrayKindName))
+                {
+                    if (numericTypeName.IsNetOnly)
+                    {
+                        generator
+                            .AppendLine("#if NET");
+                    }
+
+                    generator
+                        .AppendLineIndent("case Kind.", numericArrayKindName, ":")
+                        .PushIndent()
+                        .AppendLineIndent("{")
+                        .PushIndent()
+                            .AppendLineIndent("ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartPrebakedProperty(prebakedPropertyName);")
+                            .AppendLineIndent("valueBuilder.AddItemArrayValue(_", numericTypeName.Name, "Array!);")
+                            .AppendLineIndent("valueBuilder.EndProperty(handle);")
+                            .AppendLineIndent("break;")
+                        .PopIndent()
+                        .AppendLineIndent("}")
+                        .PopIndent();
+
+                    if (numericTypeName.IsNetOnly)
+                    {
+                        generator
+                            .AppendLine("#endif");
+                    }
+                }
+            }
+
+            if (!forContext && typeDeclaration.IsFixedSizeNumericArray())
+            {
+                NumericTypeName numericTypeName = typeDeclaration.PreferredDotnetNumericTypeName() ?? throw new InvalidOperationException(SR.ExpectedNumericTypeName);
+                string tensorBuilderClassName = isObject ? generator.ArrayBuilderClassName() : generator.BuilderClassName();
+
+                if (numericTypeName.IsNetOnly)
+                {
+                    generator
+                        .AppendLine("#if NET");
+                }
+
+                generator
+                    .AppendLineIndent("case Kind.Tensor:")
+                    .PushIndent()
+                    .AppendLineIndent("{")
+                    .PushIndent()
+                        .AppendLineIndent("ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartPrebakedProperty(prebakedPropertyName);")
+                        .AppendLineIndent(tensorBuilderClassName, ".BuildTensorValue(_", numericTypeName.Name, "Tensor, ref valueBuilder);")
+                        .AppendLineIndent("valueBuilder.EndProperty(handle);")
+                        .AppendLineIndent("break;")
+                    .PopIndent()
+                    .AppendLineIndent("}")
+                    .PopIndent();
+
+                if (numericTypeName.IsNetOnly)
+                {
+                    generator
+                        .AppendLine("#endif");
+                }
+            }
+
+            if (!forContext && typeDeclaration.IsTuple() && GetTupleType(typeDeclaration) is TupleTypeDeclaration tupleTypeForAddProp && !HasNotAnyTupleItem(tupleTypeForAddProp))
+            {
+                string tupleBuilderClassName = isObject ? generator.ArrayBuilderClassName() : generator.BuilderClassName();
+
+                generator
+                    .AppendLineIndent("case Kind.Tuple:")
+                    .PushIndent()
+                    .AppendLineIndent("{")
+                    .PushIndent()
+                        .AppendLineIndent("ComplexValueBuilder.ComplexValueHandle handle = valueBuilder.StartPrebakedProperty(prebakedPropertyName);");
+
+                generator
+                        .AppendIndent(tupleBuilderClassName, ".BuildTupleValue(");
+
+                for (int i = 1; i <= tupleTypeForAddProp.ItemsTypes.Length; i++)
+                {
+                    if (i > 1)
+                    {
+                        generator.Append(", ");
+                    }
+
+                    generator.Append("_tupleItem").Append(i);
+                }
+
+                generator
+                        .AppendLine(", ref valueBuilder);")
+                        .AppendLineIndent("valueBuilder.EndProperty(handle);")
+                        .AppendLineIndent("break;")
+                    .PopIndent()
+                    .AppendLineIndent("}")
+                    .PopIndent();
+            }
+        }
+
+        foreach (ComposedBuilder composedBuilder in builders)
+        {
+            if (generator.IsCancellationRequested)
+            {
+                return generator;
+            }
+
+            if (composedBuilder.TypeDeclaration.IsBuiltInJsonNotAnyType())
+            {
+                continue;
+            }
+
+            if (composedBuilder.ObjectInstanceName is not null && composedBuilder.ObjectKindName is not null && composedBuilder.ObjectBuilderName is not null)
+            {
+                if (!(composedBuilder.IsObject && typeDeclaration.HasPropertyDeclarations))
+                {
+                    if (seenKinds.Add(composedBuilder.ObjectKindName))
+                    {
+                        generator
+                            .AppendLineIndent("case Kind.", composedBuilder.ObjectKindName, ":")
+                            .PushIndent();
+
+                        if (forContext)
+                        {
+                            generator
+                                    .AppendLineIndent("valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _", composedBuilder.ObjectInstanceName, "!), static (in b, ref o) => ", composedBuilder.TypeDeclaration.FullyQualifiedDotnetTypeName(), ".", composedBuilder.ObjectBuilderName, ".BuildValue(b.Context, b.Build, ref o));");
+                        }
+                        else
+                        {
+                            generator
+                                    .AppendLineIndent("valueBuilder.AddPrebakedProperty(prebakedPropertyName, _", composedBuilder.ObjectInstanceName, "!, static (in b, ref o) => ", composedBuilder.TypeDeclaration.FullyQualifiedDotnetTypeName(), ".", composedBuilder.ObjectBuilderName, ".BuildValue(b, ref o));");
+                        }
+
+                        generator
+                                .AppendLineIndent("break;")
+                            .PopIndent();
+                    }
+                }
+            }
+
+            if (composedBuilder.ArrayInstanceName is not null && composedBuilder.ArrayKindName is not null && composedBuilder.ArrayBuilderName is not null)
+            {
+                if (seenKinds.Add(composedBuilder.ArrayKindName))
+                {
+                    generator
+                        .AppendLineIndent("case Kind.", composedBuilder.ArrayKindName, ":")
+                        .PushIndent();
+
+                    if (forContext)
+                    {
+                        generator
+                            .AppendLineIndent("valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _", composedBuilder.ArrayInstanceName, "!), static (in b, ref o) => ", composedBuilder.TypeDeclaration.FullyQualifiedDotnetTypeName(), ".", composedBuilder.ArrayBuilderName, ".BuildValue(b.Context, b.Build, ref o));");
+                    }
+                    else
+                    {
+                        generator
+                            .AppendLineIndent("valueBuilder.AddPrebakedProperty(prebakedPropertyName, _", composedBuilder.ArrayInstanceName, "!, static (in b, ref o) => ", composedBuilder.TypeDeclaration.FullyQualifiedDotnetTypeName(), ".", composedBuilder.ArrayBuilderName, ".BuildValue(b, ref o));");
+                    }
+
+                    generator
+                            .AppendLineIndent("break;")
+                        .PopIndent();
+                }
+            }
+        }
+
+        generator
+                    .AppendLineIndent("default:")
+                    .PushIndent()
+                        .AppendLineIndent("Debug.Fail(\"Unexpected Kind\");")
+                        .AppendLineIndent("break;")
+                    .PopIndent()
+                .PopIndent()
+                .AppendLineIndent("}")
+            .PopIndent()
+            .AppendLineIndent("}");
+
+        return generator;
+    }
+
     private static CodeGenerator AppendAddAsProperty(this CodeGenerator generator, TypeDeclaration typeDeclaration, List<ComposedBuilder> builders, string nameType, string nameName, bool includeEscaping, bool forContext = false)
     {
         generator
@@ -1119,6 +1509,7 @@ internal static partial class CodeGeneratorExtensions
                 .AppendSourceConversionOperators(typeDeclaration, builders)
                 .AppendSourceFactoryMethods(typeDeclaration, builders)
                 .AppendAddAsProperty(typeDeclaration, builders, "ReadOnlySpan<byte>", "utf8Name", includeEscaping: true)
+                .AppendAddAsPrebakedProperty(typeDeclaration, builders)
                 .AppendAddAsProperty(typeDeclaration, builders, "ReadOnlySpan<char>", "name", includeEscaping: false)
                 .AppendAddAsProperty(typeDeclaration, builders, "string", "name", includeEscaping: false)
                 .AppendAddAsItem(typeDeclaration, builders)
@@ -1145,6 +1536,7 @@ internal static partial class CodeGeneratorExtensions
                 .AppendSourceFields(typeDeclaration, builders, forContext: true)
                 .AppendSourceConstructors(typeDeclaration, builders, forContext: true)
                 .AppendAddAsProperty(typeDeclaration, builders, "ReadOnlySpan<byte>", "utf8Name", includeEscaping: true, forContext: true)
+                .AppendAddAsPrebakedProperty(typeDeclaration, builders, forContext: true)
                 .AppendAddAsProperty(typeDeclaration, builders, "ReadOnlySpan<char>", "name", includeEscaping: false, forContext: true)
                 .AppendAddAsProperty(typeDeclaration, builders, "string", "name", includeEscaping: false, forContext: true)
                 .AppendAddAsItem(typeDeclaration, builders, forContext: true)
@@ -2752,19 +3144,19 @@ internal static partial class CodeGeneratorExtensions
             return parameterIndex;
         }
 
-        string propertyNamesClass = generator.JsonPropertyNamesEscapedClassName();
+        string propertyNamesClass = generator.JsonPropertyNamesPrebakedClassName();
         string parameterName = parameters[parameterIndex++].GetName(generator);
 
         generator
             .AppendLineIndent(
                 parameterName,
-                ".AddAsProperty(",
+                ".AddAsPrebakedProperty(",
                 propertyNamesClass,
                 ".",
                 property.DotnetPropertyName(),
                 ", ref ",
                 builderName,
-                ", escapeName: false);");
+                ");");
 
         return parameterIndex;
     }
@@ -2776,13 +3168,13 @@ internal static partial class CodeGeneratorExtensions
             return parameterIndex;
         }
 
-        string propertyNamesClass = generator.JsonPropertyNamesEscapedClassName();
+        string propertyNamesClass = generator.JsonPropertyNamesPrebakedClassName();
         if (property.ReducedPropertyType.SingleConstantValue().ValueKind != JsonValueKind.Undefined)
         {
             generator
                 .AppendLineIndent(
                     builderName,
-                    ".AddProperty(",
+                    ".AddPrebakedProperty(",
                     propertyNamesClass,
                     ".",
                     property.DotnetPropertyName(),
@@ -2797,13 +3189,13 @@ internal static partial class CodeGeneratorExtensions
             generator
                 .AppendLineIndent(
                     parameterName,
-                    ".AddAsProperty(",
+                    ".AddAsPrebakedProperty(",
                     propertyNamesClass,
                     ".",
                     property.DotnetPropertyName(),
                     ", ref ",
                     builderName,
-                    ", escapeName: false);");
+                    ");");
         }
 
         return parameterIndex;
