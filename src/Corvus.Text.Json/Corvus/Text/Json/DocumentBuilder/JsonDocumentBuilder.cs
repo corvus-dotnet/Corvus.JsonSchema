@@ -2204,6 +2204,8 @@ public sealed partial class JsonDocumentBuilder<T> : JsonDocument, IMutableJsonD
         Utf8JsonWriter writer)
     {
         int endIndex = index + GetDbSizeUnsafe(index, true);
+        bool usePrebakedFastPath = writer.Options.Encoder is null && !writer.Options.Indented;
+        bool encoderIsDefault = writer.Options.Encoder is null;
 
         // Use unsigned comparison for optimized bounds checking
         for (int i = index; (uint)i < (uint)endIndex; i += DbRow.Size)
@@ -2260,16 +2262,30 @@ public sealed partial class JsonDocumentBuilder<T> : JsonDocument, IMutableJsonD
                         // DynamicValue — read header once to check type and extract value.
                         int offset = row.LocationOrIndex;
                         uint header = BitConverter.ToUInt32(_valueBacking!, offset);
-                        int length = (int)(header >> 4) - 2; // exclude quotes
-                        ReadOnlySpan<byte> name = _valueBacking.AsSpan(offset + 5, length);
+                        int payloadLength = (int)(header >> 4);
 
                         if ((DynamicValueType)(header & 0xF) == DynamicValueType.NormalizedQuotedUtf8String)
                         {
-                            writer.WriteRawPropertyName(name);
+                            if (usePrebakedFastPath)
+                            {
+                                // Fast path: default encoder matches prebaked encoding, minimized output.
+                                // Write the pre-escaped quoted name directly (includes surrounding quotes).
+                                writer.WritePrebakedPropertyName(_valueBacking.AsSpan(offset + 4, payloadLength));
+                            }
+                            else if (encoderIsDefault)
+                            {
+                                // Default encoder but indented output — skip escaping, let writer handle indentation.
+                                writer.WriteRawPropertyName(_valueBacking.AsSpan(offset + 5, payloadLength - 2));
+                            }
+                            else
+                            {
+                                // Non-default encoder — let the writer re-escape with its configured encoder.
+                                writer.WritePropertyName(_valueBacking.AsSpan(offset + 5, payloadLength - 2));
+                            }
                         }
                         else
                         {
-                            writer.WritePropertyName(name);
+                            writer.WritePropertyName(_valueBacking.AsSpan(offset + 5, payloadLength - 2));
                         }
                     }
                     else

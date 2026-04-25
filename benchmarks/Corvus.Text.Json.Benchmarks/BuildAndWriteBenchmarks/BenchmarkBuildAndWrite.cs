@@ -186,6 +186,7 @@ public class BenchmarkWriteOnly
     private System.Text.Json.Nodes.JsonObject _jsonObject = default!;
     private JsonWorkspace _workspace;
     private JsonDocumentBuilder<Person.Mutable> _person = default!;
+    private Benchmark.CorvusJsonSchema.Person _corvusJsonSchema;
     private PersonPoco _poco = default!;
 
     [GlobalSetup]
@@ -220,6 +221,14 @@ public class BenchmarkWriteOnly
             }),
             competedInYears: CompetedInYears.Build([2012, 2016, 2024])));
 
+        _corvusJsonSchema = Benchmark.CorvusJsonSchema.Person.Create(
+            age: 51,
+            name: Benchmark.CorvusJsonSchema.PersonName.Create(
+                firstName: "Michael",
+                lastName: "Adams",
+                otherNames: ["Francis", "James"]),
+            competedInYears: [2012, 2016, 2024]);
+
         _poco = new()
         {
             Age = 51,
@@ -246,6 +255,18 @@ public class BenchmarkWriteOnly
         var bufferWriter = new ArrayPoolBufferWriter<byte>();
         System.Text.Json.Utf8JsonWriter writer = new(bufferWriter);
         _jsonObject.WriteTo(writer);
+        writer.Flush();
+        writer.Dispose();
+        bufferWriter.Dispose();
+        return true;
+    }
+
+    [Benchmark]
+    public bool WriteCorvusJsonSchema()
+    {
+        var bufferWriter = new ArrayPoolBufferWriter<byte>();
+        System.Text.Json.Utf8JsonWriter writer = new(bufferWriter);
+        _corvusJsonSchema.WriteTo(writer);
         writer.Flush();
         writer.Dispose();
         bufferWriter.Dispose();
