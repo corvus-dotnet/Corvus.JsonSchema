@@ -29,8 +29,8 @@ public class BenchmarkBuildAndWrite
             new System.Text.Json.Nodes.JsonObject([
                 new ("firstName", "Michael"),
                 new ("lastName", "Adams"),
-                new ("otherNames", new System.Text.Json.Nodes.JsonArray("Francis", "James")),
-            new ("competedInYears", new System.Text.Json.Nodes.JsonArray(2012, 2016, 2024))])),
+                new ("otherNames", new System.Text.Json.Nodes.JsonArray("Francis", "James"))])),
+            new ("competedInYears", new System.Text.Json.Nodes.JsonArray(2012, 2016, 2024)),
         ];
 
         jsonObject.WriteTo(writer);
@@ -136,8 +136,8 @@ public class BenchmarkBuildOnly
             new System.Text.Json.Nodes.JsonObject([
                 new ("firstName", "Michael"),
                 new ("lastName", "Adams"),
-                new ("otherNames", new System.Text.Json.Nodes.JsonArray("Francis", "James")),
-            new ("competedInYears", new System.Text.Json.Nodes.JsonArray(2012, 2016, 2024))])),
+                new ("otherNames", new System.Text.Json.Nodes.JsonArray("Francis", "James"))])),
+            new ("competedInYears", new System.Text.Json.Nodes.JsonArray(2012, 2016, 2024)),
         ];
     }
 
@@ -208,8 +208,8 @@ public class BenchmarkWriteOnly
             new System.Text.Json.Nodes.JsonObject([
                 new ("firstName", "Michael"),
                 new ("lastName", "Adams"),
-                new ("otherNames", new System.Text.Json.Nodes.JsonArray("Francis", "James")),
-            new ("competedInYears", new System.Text.Json.Nodes.JsonArray(2012, 2016, 2024))])),
+                new ("otherNames", new System.Text.Json.Nodes.JsonArray("Francis", "James"))])),
+            new ("competedInYears", new System.Text.Json.Nodes.JsonArray(2012, 2016, 2024)),
         ];
 
         _workspace = JsonWorkspace.Create();

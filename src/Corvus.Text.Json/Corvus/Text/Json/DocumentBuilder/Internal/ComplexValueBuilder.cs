@@ -228,8 +228,20 @@ public ref struct ComplexValueBuilder
     /// <param name="valueRequiresUnescaping">Whether the property value requires unescaping.</param>
     public void AddProperty(ReadOnlySpan<byte> propertyName, ReadOnlySpan<byte> utf8String, bool escapeName, bool escapeValue, bool nameRequiresUnescaping, bool valueRequiresUnescaping)
     {
-        AddStringValue(JsonTokenType.PropertyName, propertyName, escapeName, nameRequiresUnescaping);
-        AddStringValue(JsonTokenType.String, utf8String, escapeValue, valueRequiresUnescaping);
+        int nameLocation = StorePropertyName(propertyName, escapeName, nameRequiresUnescaping, out bool nameIsEscaped);
+        int valueLocation;
+        bool valueIsEscaped;
+        if (escapeValue)
+        {
+            valueLocation = _parentDocument.EscapeAndStoreRawStringValue(utf8String, out valueIsEscaped);
+        }
+        else
+        {
+            valueLocation = _parentDocument.StoreRawStringValue(utf8String);
+            valueIsEscaped = valueRequiresUnescaping;
+        }
+
+        _parsedData.AppendPropertyAndDynamicSimpleValue(nameLocation, nameIsEscaped, JsonTokenType.String, valueLocation, valueIsEscaped);
         _memberCount++;
         _rowCount += 2;
     }
@@ -243,8 +255,9 @@ public ref struct ComplexValueBuilder
     /// <param name="nameRequiresUnescaping">Whether the property name requires unescaping.</param>
     public void AddProperty(ReadOnlySpan<byte> propertyName, ReadOnlySpan<char> value, bool escapeName, bool nameRequiresUnescaping)
     {
-        AddStringValue(JsonTokenType.PropertyName, propertyName, escapeName, nameRequiresUnescaping);
-        AddStringValue(JsonTokenType.String, value);
+        int nameLocation = StorePropertyName(propertyName, escapeName, nameRequiresUnescaping, out bool nameIsEscaped);
+        int valueLocation = _parentDocument.EscapeAndStoreRawStringValue(value, out bool valueIsEscaped);
+        _parsedData.AppendPropertyAndDynamicSimpleValue(nameLocation, nameIsEscaped, JsonTokenType.String, valueLocation, valueIsEscaped);
         _memberCount++;
         _rowCount += 2;
     }
@@ -256,8 +269,9 @@ public ref struct ComplexValueBuilder
     /// <param name="value">The property value as a character span.</param>
     public void AddProperty(ReadOnlySpan<char> propertyName, ReadOnlySpan<char> value)
     {
-        AddStringValue(JsonTokenType.PropertyName, propertyName);
-        AddStringValue(JsonTokenType.String, value);
+        int nameLocation = StorePropertyName(propertyName, out bool nameIsEscaped);
+        int valueLocation = _parentDocument.EscapeAndStoreRawStringValue(value, out bool valueIsEscaped);
+        _parsedData.AppendPropertyAndDynamicSimpleValue(nameLocation, nameIsEscaped, JsonTokenType.String, valueLocation, valueIsEscaped);
         _memberCount++;
         _rowCount += 2;
     }
@@ -271,8 +285,20 @@ public ref struct ComplexValueBuilder
     /// <param name="valueRequiresUnescaping">Whether the property value requires unescaping.</param>
     public void AddProperty(ReadOnlySpan<char> propertyName, ReadOnlySpan<byte> value, bool escapeValue, bool valueRequiresUnescaping)
     {
-        AddStringValue(JsonTokenType.PropertyName, propertyName);
-        AddStringValue(JsonTokenType.String, value, escapeValue, valueRequiresUnescaping);
+        int nameLocation = StorePropertyName(propertyName, out bool nameIsEscaped);
+        int valueLocation;
+        bool valueIsEscaped;
+        if (escapeValue)
+        {
+            valueLocation = _parentDocument.EscapeAndStoreRawStringValue(value, out valueIsEscaped);
+        }
+        else
+        {
+            valueLocation = _parentDocument.StoreRawStringValue(value);
+            valueIsEscaped = valueRequiresUnescaping;
+        }
+
+        _parsedData.AppendPropertyAndDynamicSimpleValue(nameLocation, nameIsEscaped, JsonTokenType.String, valueLocation, valueIsEscaped);
         _memberCount++;
         _rowCount += 2;
     }
@@ -294,8 +320,9 @@ public ref struct ComplexValueBuilder
     /// <param name="value">The number value as a UTF-8 byte span.</param>
     public void AddPropertyFormattedNumber(ReadOnlySpan<byte> propertyName, ReadOnlySpan<byte> value, bool escapeName, bool nameRequiresUnescaping)
     {
-        AddStringValue(JsonTokenType.PropertyName, propertyName, escapeName, nameRequiresUnescaping);
-        _parsedData.AppendDynamicSimpleValue(JsonTokenType.Number, _parentDocument.StoreRawNumberValue(value), requiresUnescapingOrHasExponent: value.IndexOfAny((byte)'e', (byte)'E') >= 0);
+        int nameLocation = StorePropertyName(propertyName, escapeName, nameRequiresUnescaping, out bool nameIsEscaped);
+        int valueLocation = _parentDocument.StoreRawNumberValue(value);
+        _parsedData.AppendPropertyAndDynamicSimpleValue(nameLocation, nameIsEscaped, JsonTokenType.Number, valueLocation, value.IndexOfAny((byte)'e', (byte)'E') >= 0);
         _memberCount++;
         _rowCount += 2;
     }
@@ -317,8 +344,9 @@ public ref struct ComplexValueBuilder
     /// <param name="value">The number value as a UTF-8 byte span.</param>
     public void AddPropertyFormattedNumber(ReadOnlySpan<char> propertyName, ReadOnlySpan<byte> value)
     {
-        AddStringValue(JsonTokenType.PropertyName, propertyName);
-        _parsedData.AppendDynamicSimpleValue(JsonTokenType.Number, _parentDocument.StoreRawNumberValue(value), requiresUnescapingOrHasExponent: value.IndexOfAny((byte)'e', (byte)'E') >= 0);
+        int nameLocation = StorePropertyName(propertyName, out bool nameIsEscaped);
+        int valueLocation = _parentDocument.StoreRawNumberValue(value);
+        _parsedData.AppendPropertyAndDynamicSimpleValue(nameLocation, nameIsEscaped, JsonTokenType.Number, valueLocation, value.IndexOfAny((byte)'e', (byte)'E') >= 0);
         _memberCount++;
         _rowCount += 2;
     }
@@ -333,8 +361,9 @@ public ref struct ComplexValueBuilder
     /// <param name="valueRequiresUnescaping">Whether the value requires unescaping.</param>
     public void AddPropertyRawString(ReadOnlySpan<byte> propertyName, ReadOnlySpan<byte> value, bool escapeName, bool nameRequiresUnescaping, bool valueRequiresUnescaping)
     {
-        AddStringValue(JsonTokenType.PropertyName, propertyName, escapeName, nameRequiresUnescaping);
-        AddStringValue(JsonTokenType.String, value, escape: false, ifNotEscapeRequiresUenscaping: valueRequiresUnescaping);
+        int nameLocation = StorePropertyName(propertyName, escapeName, nameRequiresUnescaping, out bool nameIsEscaped);
+        int valueLocation = _parentDocument.StoreRawStringValue(value);
+        _parsedData.AppendPropertyAndDynamicSimpleValue(nameLocation, nameIsEscaped, JsonTokenType.String, valueLocation, valueRequiresUnescaping);
         _memberCount++;
         _rowCount += 2;
     }
@@ -356,8 +385,9 @@ public ref struct ComplexValueBuilder
     /// <param name="value">The value as a UTF-8 byte span.</param>
     public void AddPropertyRawString(ReadOnlySpan<char> propertyName, ReadOnlySpan<byte> value, bool valueRequiresUnescaping)
     {
-        AddStringValue(JsonTokenType.PropertyName, propertyName);
-        AddStringValue(JsonTokenType.String, value, escape: false, ifNotEscapeRequiresUenscaping: valueRequiresUnescaping);
+        int nameLocation = StorePropertyName(propertyName, out bool nameIsEscaped);
+        int valueLocation = _parentDocument.StoreRawStringValue(value);
+        _parsedData.AppendPropertyAndDynamicSimpleValue(nameLocation, nameIsEscaped, JsonTokenType.String, valueLocation, valueRequiresUnescaping);
         _memberCount++;
         _rowCount += 2;
     }
@@ -380,8 +410,9 @@ public ref struct ComplexValueBuilder
     /// <param name="nameRequiresUnescaping">Whether the property name requires unescaping.</param>
     public void AddPropertyNull(ReadOnlySpan<byte> propertyName, bool escapeName, bool nameRequiresUnescaping)
     {
-        AddStringValue(JsonTokenType.PropertyName, propertyName, escapeName, nameRequiresUnescaping);
-        _parsedData.AppendDynamicSimpleValue(JsonTokenType.Null, _parentDocument.StoreNullValue(), requiresUnescapingOrHasExponent: false);
+        int nameLocation = StorePropertyName(propertyName, escapeName, nameRequiresUnescaping, out bool nameIsEscaped);
+        int valueLocation = _parentDocument.StoreNullValue();
+        _parsedData.AppendPropertyAndDynamicSimpleValue(nameLocation, nameIsEscaped, JsonTokenType.Null, valueLocation, false);
         _memberCount++;
         _rowCount += 2;
     }
@@ -392,8 +423,9 @@ public ref struct ComplexValueBuilder
     /// <param name="propertyName">The property name as a character span.</param>
     public void AddPropertyNull(ReadOnlySpan<char> propertyName)
     {
-        AddStringValue(JsonTokenType.PropertyName, propertyName);
-        _parsedData.AppendDynamicSimpleValue(JsonTokenType.Null, _parentDocument.StoreNullValue(), requiresUnescapingOrHasExponent: false);
+        int nameLocation = StorePropertyName(propertyName, out bool nameIsEscaped);
+        int valueLocation = _parentDocument.StoreNullValue();
+        _parsedData.AppendPropertyAndDynamicSimpleValue(nameLocation, nameIsEscaped, JsonTokenType.Null, valueLocation, false);
         _memberCount++;
         _rowCount += 2;
     }
@@ -418,8 +450,9 @@ public ref struct ComplexValueBuilder
     /// <param name="nameRequiresUnescaping">Whether the property name requires unescaping.</param>
     public void AddProperty(ReadOnlySpan<byte> propertyName, bool value, bool escapeName, bool nameRequiresUnescaping)
     {
-        AddStringValue(JsonTokenType.PropertyName, propertyName, escapeName, nameRequiresUnescaping);
-        _parsedData.AppendDynamicSimpleValue(value ? JsonTokenType.True : JsonTokenType.False, _parentDocument.StoreBooleanValue(value), requiresUnescapingOrHasExponent: false);
+        int nameLocation = StorePropertyName(propertyName, escapeName, nameRequiresUnescaping, out bool nameIsEscaped);
+        int valueLocation = _parentDocument.StoreBooleanValue(value);
+        _parsedData.AppendPropertyAndDynamicSimpleValue(nameLocation, nameIsEscaped, value ? JsonTokenType.True : JsonTokenType.False, valueLocation, false);
         _memberCount++;
         _rowCount += 2;
     }
@@ -431,8 +464,9 @@ public ref struct ComplexValueBuilder
     /// <param name="value">The boolean value.</param>
     public void AddProperty(ReadOnlySpan<char> propertyName, bool value)
     {
-        AddStringValue(JsonTokenType.PropertyName, propertyName);
-        _parsedData.AppendDynamicSimpleValue(value ? JsonTokenType.True : JsonTokenType.False, _parentDocument.StoreBooleanValue(value), requiresUnescapingOrHasExponent: false);
+        int nameLocation = StorePropertyName(propertyName, out bool nameIsEscaped);
+        int valueLocation = _parentDocument.StoreBooleanValue(value);
+        _parsedData.AppendPropertyAndDynamicSimpleValue(nameLocation, nameIsEscaped, value ? JsonTokenType.True : JsonTokenType.False, valueLocation, false);
         _memberCount++;
         _rowCount += 2;
     }
@@ -511,8 +545,9 @@ public ref struct ComplexValueBuilder
     /// <param name="nameRequiresUnescaping">Whether the property name requires unescaping.</param>
     public void AddProperty(ReadOnlySpan<byte> propertyName, Guid value, bool escapeName, bool nameRequiresUnescaping)
     {
-        AddStringValue(JsonTokenType.PropertyName, propertyName, escapeName, nameRequiresUnescaping);
-        _parsedData.AppendDynamicSimpleValue(JsonTokenType.String, _parentDocument.StoreValue(value), requiresUnescapingOrHasExponent: false);
+        int nameLocation = StorePropertyName(propertyName, escapeName, nameRequiresUnescaping, out bool nameIsEscaped);
+        int valueLocation = _parentDocument.StoreValue(value);
+        _parsedData.AppendPropertyAndDynamicSimpleValue(nameLocation, nameIsEscaped, JsonTokenType.String, valueLocation, false);
         _memberCount++;
         _rowCount += 2;
     }
@@ -524,8 +559,9 @@ public ref struct ComplexValueBuilder
     /// <param name="value">The <see cref="Guid"/> value.</param>
     public void AddProperty(ReadOnlySpan<char> propertyName, Guid value)
     {
-        AddStringValue(JsonTokenType.PropertyName, propertyName);
-        _parsedData.AppendDynamicSimpleValue(JsonTokenType.String, _parentDocument.StoreValue(value), requiresUnescapingOrHasExponent: false);
+        int nameLocation = StorePropertyName(propertyName, out bool nameIsEscaped);
+        int valueLocation = _parentDocument.StoreValue(value);
+        _parsedData.AppendPropertyAndDynamicSimpleValue(nameLocation, nameIsEscaped, JsonTokenType.String, valueLocation, false);
         _memberCount++;
         _rowCount += 2;
     }
@@ -550,8 +586,9 @@ public ref struct ComplexValueBuilder
     /// <param name="nameRequiresUnescaping">Whether the property name requires unescaping.</param>
     public void AddProperty(ReadOnlySpan<byte> propertyName, in DateTime value, bool escapeName, bool nameRequiresUnescaping)
     {
-        AddStringValue(JsonTokenType.PropertyName, propertyName, escapeName, nameRequiresUnescaping);
-        _parsedData.AppendDynamicSimpleValue(JsonTokenType.String, _parentDocument.StoreValue(value), requiresUnescapingOrHasExponent: false);
+        int nameLocation = StorePropertyName(propertyName, escapeName, nameRequiresUnescaping, out bool nameIsEscaped);
+        int valueLocation = _parentDocument.StoreValue(value);
+        _parsedData.AppendPropertyAndDynamicSimpleValue(nameLocation, nameIsEscaped, JsonTokenType.String, valueLocation, false);
         _memberCount++;
         _rowCount += 2;
     }
@@ -563,8 +600,9 @@ public ref struct ComplexValueBuilder
     /// <param name="value">The <see cref="DateTime"/> value.</param>
     public void AddProperty(ReadOnlySpan<char> propertyName, in DateTime value)
     {
-        AddStringValue(JsonTokenType.PropertyName, propertyName);
-        _parsedData.AppendDynamicSimpleValue(JsonTokenType.String, _parentDocument.StoreValue(value), requiresUnescapingOrHasExponent: false);
+        int nameLocation = StorePropertyName(propertyName, out bool nameIsEscaped);
+        int valueLocation = _parentDocument.StoreValue(value);
+        _parsedData.AppendPropertyAndDynamicSimpleValue(nameLocation, nameIsEscaped, JsonTokenType.String, valueLocation, false);
         _memberCount++;
         _rowCount += 2;
     }
@@ -589,8 +627,9 @@ public ref struct ComplexValueBuilder
     /// <param name="nameRequiresUnescaping">Whether the property name requires unescaping.</param>
     public void AddProperty(ReadOnlySpan<byte> propertyName, in DateTimeOffset value, bool escapeName, bool nameRequiresUnescaping)
     {
-        AddStringValue(JsonTokenType.PropertyName, propertyName, escapeName, nameRequiresUnescaping);
-        _parsedData.AppendDynamicSimpleValue(JsonTokenType.String, _parentDocument.StoreValue(value), requiresUnescapingOrHasExponent: false);
+        int nameLocation = StorePropertyName(propertyName, escapeName, nameRequiresUnescaping, out bool nameIsEscaped);
+        int valueLocation = _parentDocument.StoreValue(value);
+        _parsedData.AppendPropertyAndDynamicSimpleValue(nameLocation, nameIsEscaped, JsonTokenType.String, valueLocation, false);
         _memberCount++;
         _rowCount += 2;
     }
@@ -602,8 +641,9 @@ public ref struct ComplexValueBuilder
     /// <param name="value">The <see cref="DateTimeOffset"/> value.</param>
     public void AddProperty(ReadOnlySpan<char> propertyName, in DateTimeOffset value)
     {
-        AddStringValue(JsonTokenType.PropertyName, propertyName);
-        _parsedData.AppendDynamicSimpleValue(JsonTokenType.String, _parentDocument.StoreValue(value), requiresUnescapingOrHasExponent: false);
+        int nameLocation = StorePropertyName(propertyName, out bool nameIsEscaped);
+        int valueLocation = _parentDocument.StoreValue(value);
+        _parsedData.AppendPropertyAndDynamicSimpleValue(nameLocation, nameIsEscaped, JsonTokenType.String, valueLocation, false);
         _memberCount++;
         _rowCount += 2;
     }
@@ -628,8 +668,9 @@ public ref struct ComplexValueBuilder
     /// <param name="nameRequiresUnescaping">Whether the property name requires unescaping.</param>
     public void AddProperty(ReadOnlySpan<byte> propertyName, in OffsetDateTime value, bool escapeName, bool nameRequiresUnescaping)
     {
-        AddStringValue(JsonTokenType.PropertyName, propertyName, escapeName, nameRequiresUnescaping);
-        _parsedData.AppendDynamicSimpleValue(JsonTokenType.String, _parentDocument.StoreValue(value), requiresUnescapingOrHasExponent: false);
+        int nameLocation = StorePropertyName(propertyName, escapeName, nameRequiresUnescaping, out bool nameIsEscaped);
+        int valueLocation = _parentDocument.StoreValue(value);
+        _parsedData.AppendPropertyAndDynamicSimpleValue(nameLocation, nameIsEscaped, JsonTokenType.String, valueLocation, false);
         _memberCount++;
         _rowCount += 2;
     }
@@ -641,8 +682,9 @@ public ref struct ComplexValueBuilder
     /// <param name="value">The <see cref="NodaTime.OffsetDateTime"/> value.</param>
     public void AddProperty(ReadOnlySpan<char> propertyName, in OffsetDateTime value)
     {
-        AddStringValue(JsonTokenType.PropertyName, propertyName);
-        _parsedData.AppendDynamicSimpleValue(JsonTokenType.String, _parentDocument.StoreValue(value), requiresUnescapingOrHasExponent: false);
+        int nameLocation = StorePropertyName(propertyName, out bool nameIsEscaped);
+        int valueLocation = _parentDocument.StoreValue(value);
+        _parsedData.AppendPropertyAndDynamicSimpleValue(nameLocation, nameIsEscaped, JsonTokenType.String, valueLocation, false);
         _memberCount++;
         _rowCount += 2;
     }
@@ -667,8 +709,9 @@ public ref struct ComplexValueBuilder
     /// <param name="nameRequiresUnescaping">Whether the property name requires unescaping.</param>
     public void AddProperty(ReadOnlySpan<byte> propertyName, in OffsetTime value, bool escapeName, bool nameRequiresUnescaping)
     {
-        AddStringValue(JsonTokenType.PropertyName, propertyName, escapeName, nameRequiresUnescaping);
-        _parsedData.AppendDynamicSimpleValue(JsonTokenType.String, _parentDocument.StoreValue(value), requiresUnescapingOrHasExponent: false);
+        int nameLocation = StorePropertyName(propertyName, escapeName, nameRequiresUnescaping, out bool nameIsEscaped);
+        int valueLocation = _parentDocument.StoreValue(value);
+        _parsedData.AppendPropertyAndDynamicSimpleValue(nameLocation, nameIsEscaped, JsonTokenType.String, valueLocation, false);
         _memberCount++;
         _rowCount += 2;
     }
@@ -680,8 +723,9 @@ public ref struct ComplexValueBuilder
     /// <param name="value">The <see cref="NodaTime.OffsetTime"/> value.</param>
     public void AddProperty(ReadOnlySpan<char> propertyName, in OffsetTime value)
     {
-        AddStringValue(JsonTokenType.PropertyName, propertyName);
-        _parsedData.AppendDynamicSimpleValue(JsonTokenType.String, _parentDocument.StoreValue(value), requiresUnescapingOrHasExponent: false);
+        int nameLocation = StorePropertyName(propertyName, out bool nameIsEscaped);
+        int valueLocation = _parentDocument.StoreValue(value);
+        _parsedData.AppendPropertyAndDynamicSimpleValue(nameLocation, nameIsEscaped, JsonTokenType.String, valueLocation, false);
         _memberCount++;
         _rowCount += 2;
     }
@@ -706,8 +750,9 @@ public ref struct ComplexValueBuilder
     /// <param name="nameRequiresUnescaping">Whether the property name requires unescaping.</param>
     public void AddProperty(ReadOnlySpan<byte> propertyName, in OffsetDate value, bool escapeName, bool nameRequiresUnescaping)
     {
-        AddStringValue(JsonTokenType.PropertyName, propertyName, escapeName, nameRequiresUnescaping);
-        _parsedData.AppendDynamicSimpleValue(JsonTokenType.String, _parentDocument.StoreValue(value), requiresUnescapingOrHasExponent: false);
+        int nameLocation = StorePropertyName(propertyName, escapeName, nameRequiresUnescaping, out bool nameIsEscaped);
+        int valueLocation = _parentDocument.StoreValue(value);
+        _parsedData.AppendPropertyAndDynamicSimpleValue(nameLocation, nameIsEscaped, JsonTokenType.String, valueLocation, false);
         _memberCount++;
         _rowCount += 2;
     }
@@ -719,8 +764,9 @@ public ref struct ComplexValueBuilder
     /// <param name="value">The <see cref="NodaTime.OffsetDate"/> value.</param>
     public void AddProperty(ReadOnlySpan<char> propertyName, in OffsetDate value)
     {
-        AddStringValue(JsonTokenType.PropertyName, propertyName);
-        _parsedData.AppendDynamicSimpleValue(JsonTokenType.String, _parentDocument.StoreValue(value), requiresUnescapingOrHasExponent: false);
+        int nameLocation = StorePropertyName(propertyName, out bool nameIsEscaped);
+        int valueLocation = _parentDocument.StoreValue(value);
+        _parsedData.AppendPropertyAndDynamicSimpleValue(nameLocation, nameIsEscaped, JsonTokenType.String, valueLocation, false);
         _memberCount++;
         _rowCount += 2;
     }
@@ -745,8 +791,9 @@ public ref struct ComplexValueBuilder
     /// <param name="nameRequiresUnescaping">Whether the property name requires unescaping.</param>
     public void AddProperty(ReadOnlySpan<byte> propertyName, in LocalDate value, bool escapeName, bool nameRequiresUnescaping)
     {
-        AddStringValue(JsonTokenType.PropertyName, propertyName, escapeName, nameRequiresUnescaping);
-        _parsedData.AppendDynamicSimpleValue(JsonTokenType.String, _parentDocument.StoreValue(value), requiresUnescapingOrHasExponent: false);
+        int nameLocation = StorePropertyName(propertyName, escapeName, nameRequiresUnescaping, out bool nameIsEscaped);
+        int valueLocation = _parentDocument.StoreValue(value);
+        _parsedData.AppendPropertyAndDynamicSimpleValue(nameLocation, nameIsEscaped, JsonTokenType.String, valueLocation, false);
         _memberCount++;
         _rowCount += 2;
     }
@@ -758,8 +805,9 @@ public ref struct ComplexValueBuilder
     /// <param name="value">The <see cref="NodaTime.LocalDate"/> value.</param>
     public void AddProperty(ReadOnlySpan<char> propertyName, in LocalDate value)
     {
-        AddStringValue(JsonTokenType.PropertyName, propertyName);
-        _parsedData.AppendDynamicSimpleValue(JsonTokenType.String, _parentDocument.StoreValue(value), requiresUnescapingOrHasExponent: false);
+        int nameLocation = StorePropertyName(propertyName, out bool nameIsEscaped);
+        int valueLocation = _parentDocument.StoreValue(value);
+        _parsedData.AppendPropertyAndDynamicSimpleValue(nameLocation, nameIsEscaped, JsonTokenType.String, valueLocation, false);
         _memberCount++;
         _rowCount += 2;
     }
@@ -784,8 +832,9 @@ public ref struct ComplexValueBuilder
     /// <param name="nameRequiresUnescaping">Whether the property name requires unescaping.</param>
     public void AddProperty(ReadOnlySpan<byte> propertyName, in Period value, bool escapeName, bool nameRequiresUnescaping)
     {
-        AddStringValue(JsonTokenType.PropertyName, propertyName, escapeName, nameRequiresUnescaping);
-        _parsedData.AppendDynamicSimpleValue(JsonTokenType.String, _parentDocument.StoreValue(value), requiresUnescapingOrHasExponent: false);
+        int nameLocation = StorePropertyName(propertyName, escapeName, nameRequiresUnescaping, out bool nameIsEscaped);
+        int valueLocation = _parentDocument.StoreValue(value);
+        _parsedData.AppendPropertyAndDynamicSimpleValue(nameLocation, nameIsEscaped, JsonTokenType.String, valueLocation, false);
         _memberCount++;
         _rowCount += 2;
     }
@@ -797,8 +846,9 @@ public ref struct ComplexValueBuilder
     /// <param name="value">The <see cref="NodaTime.Period"/> value.</param>
     public void AddProperty(ReadOnlySpan<char> propertyName, in Period value)
     {
-        AddStringValue(JsonTokenType.PropertyName, propertyName);
-        _parsedData.AppendDynamicSimpleValue(JsonTokenType.String, _parentDocument.StoreValue(value), requiresUnescapingOrHasExponent: false);
+        int nameLocation = StorePropertyName(propertyName, out bool nameIsEscaped);
+        int valueLocation = _parentDocument.StoreValue(value);
+        _parsedData.AppendPropertyAndDynamicSimpleValue(nameLocation, nameIsEscaped, JsonTokenType.String, valueLocation, false);
         _memberCount++;
         _rowCount += 2;
     }
@@ -825,8 +875,9 @@ public ref struct ComplexValueBuilder
     [CLSCompliant(false)]
     public void AddProperty(ReadOnlySpan<byte> propertyName, sbyte value, bool escapeName, bool nameRequiresUnescaping)
     {
-        AddStringValue(JsonTokenType.PropertyName, propertyName, escapeName, nameRequiresUnescaping);
-        _parsedData.AppendDynamicSimpleValue(JsonTokenType.Number, _parentDocument.StoreValue(value), requiresUnescapingOrHasExponent: false);
+        int nameLocation = StorePropertyName(propertyName, escapeName, nameRequiresUnescaping, out bool nameIsEscaped);
+        int valueLocation = _parentDocument.StoreValue(value);
+        _parsedData.AppendPropertyAndDynamicSimpleValue(nameLocation, nameIsEscaped, JsonTokenType.Number, valueLocation, false);
         _memberCount++;
         _rowCount += 2;
     }
@@ -839,8 +890,9 @@ public ref struct ComplexValueBuilder
     [CLSCompliant(false)]
     public void AddProperty(ReadOnlySpan<char> propertyName, sbyte value)
     {
-        AddStringValue(JsonTokenType.PropertyName, propertyName);
-        _parsedData.AppendDynamicSimpleValue(JsonTokenType.Number, _parentDocument.StoreValue(value), requiresUnescapingOrHasExponent: false);
+        int nameLocation = StorePropertyName(propertyName, out bool nameIsEscaped);
+        int valueLocation = _parentDocument.StoreValue(value);
+        _parsedData.AppendPropertyAndDynamicSimpleValue(nameLocation, nameIsEscaped, JsonTokenType.Number, valueLocation, false);
         _memberCount++;
         _rowCount += 2;
     }
@@ -865,8 +917,9 @@ public ref struct ComplexValueBuilder
     /// <param name="nameRequiresUnescaping">Whether the property name requires unescaping.</param>
     public void AddProperty(ReadOnlySpan<byte> propertyName, byte value, bool escapeName, bool nameRequiresUnescaping)
     {
-        AddStringValue(JsonTokenType.PropertyName, propertyName, escapeName, nameRequiresUnescaping);
-        _parsedData.AppendDynamicSimpleValue(JsonTokenType.Number, _parentDocument.StoreValue(value), requiresUnescapingOrHasExponent: false);
+        int nameLocation = StorePropertyName(propertyName, escapeName, nameRequiresUnescaping, out bool nameIsEscaped);
+        int valueLocation = _parentDocument.StoreValue(value);
+        _parsedData.AppendPropertyAndDynamicSimpleValue(nameLocation, nameIsEscaped, JsonTokenType.Number, valueLocation, false);
         _memberCount++;
         _rowCount += 2;
     }
@@ -878,8 +931,9 @@ public ref struct ComplexValueBuilder
     /// <param name="value">The <see cref="byte"/> value.</param>
     public void AddProperty(ReadOnlySpan<char> propertyName, byte value)
     {
-        AddStringValue(JsonTokenType.PropertyName, propertyName);
-        _parsedData.AppendDynamicSimpleValue(JsonTokenType.Number, _parentDocument.StoreValue(value), requiresUnescapingOrHasExponent: false);
+        int nameLocation = StorePropertyName(propertyName, out bool nameIsEscaped);
+        int valueLocation = _parentDocument.StoreValue(value);
+        _parsedData.AppendPropertyAndDynamicSimpleValue(nameLocation, nameIsEscaped, JsonTokenType.Number, valueLocation, false);
         _memberCount++;
         _rowCount += 2;
     }
@@ -904,8 +958,9 @@ public ref struct ComplexValueBuilder
     /// <param name="nameRequiresUnescaping">Whether the property name requires unescaping.</param>
     public void AddProperty(ReadOnlySpan<byte> propertyName, int value, bool escapeName, bool nameRequiresUnescaping)
     {
-        AddStringValue(JsonTokenType.PropertyName, propertyName, escapeName, nameRequiresUnescaping);
-        _parsedData.AppendDynamicSimpleValue(JsonTokenType.Number, _parentDocument.StoreValue(value), requiresUnescapingOrHasExponent: false);
+        int nameLocation = StorePropertyName(propertyName, escapeName, nameRequiresUnescaping, out bool nameIsEscaped);
+        int valueLocation = _parentDocument.StoreValue(value);
+        _parsedData.AppendPropertyAndDynamicSimpleValue(nameLocation, nameIsEscaped, JsonTokenType.Number, valueLocation, false);
         _memberCount++;
         _rowCount += 2;
     }
@@ -917,8 +972,9 @@ public ref struct ComplexValueBuilder
     /// <param name="value">The <see cref="int"/> value.</param>
     public void AddProperty(ReadOnlySpan<char> propertyName, int value)
     {
-        AddStringValue(JsonTokenType.PropertyName, propertyName);
-        _parsedData.AppendDynamicSimpleValue(JsonTokenType.Number, _parentDocument.StoreValue(value), requiresUnescapingOrHasExponent: false);
+        int nameLocation = StorePropertyName(propertyName, out bool nameIsEscaped);
+        int valueLocation = _parentDocument.StoreValue(value);
+        _parsedData.AppendPropertyAndDynamicSimpleValue(nameLocation, nameIsEscaped, JsonTokenType.Number, valueLocation, false);
         _memberCount++;
         _rowCount += 2;
     }
@@ -945,8 +1001,9 @@ public ref struct ComplexValueBuilder
     [CLSCompliant(false)]
     public void AddProperty(ReadOnlySpan<byte> propertyName, uint value, bool escapeName, bool nameRequiresUnescaping)
     {
-        AddStringValue(JsonTokenType.PropertyName, propertyName, escapeName, nameRequiresUnescaping);
-        _parsedData.AppendDynamicSimpleValue(JsonTokenType.Number, _parentDocument.StoreValue(value), requiresUnescapingOrHasExponent: false);
+        int nameLocation = StorePropertyName(propertyName, escapeName, nameRequiresUnescaping, out bool nameIsEscaped);
+        int valueLocation = _parentDocument.StoreValue(value);
+        _parsedData.AppendPropertyAndDynamicSimpleValue(nameLocation, nameIsEscaped, JsonTokenType.Number, valueLocation, false);
         _memberCount++;
         _rowCount += 2;
     }
@@ -959,8 +1016,9 @@ public ref struct ComplexValueBuilder
     [CLSCompliant(false)]
     public void AddProperty(ReadOnlySpan<char> propertyName, uint value)
     {
-        AddStringValue(JsonTokenType.PropertyName, propertyName);
-        _parsedData.AppendDynamicSimpleValue(JsonTokenType.Number, _parentDocument.StoreValue(value), requiresUnescapingOrHasExponent: false);
+        int nameLocation = StorePropertyName(propertyName, out bool nameIsEscaped);
+        int valueLocation = _parentDocument.StoreValue(value);
+        _parsedData.AppendPropertyAndDynamicSimpleValue(nameLocation, nameIsEscaped, JsonTokenType.Number, valueLocation, false);
         _memberCount++;
         _rowCount += 2;
     }
@@ -985,8 +1043,9 @@ public ref struct ComplexValueBuilder
     /// <param name="nameRequiresUnescaping">Whether the property name requires unescaping.</param>
     public void AddProperty(ReadOnlySpan<byte> propertyName, long value, bool escapeName, bool nameRequiresUnescaping)
     {
-        AddStringValue(JsonTokenType.PropertyName, propertyName, escapeName, nameRequiresUnescaping);
-        _parsedData.AppendDynamicSimpleValue(JsonTokenType.Number, _parentDocument.StoreValue(value), requiresUnescapingOrHasExponent: false);
+        int nameLocation = StorePropertyName(propertyName, escapeName, nameRequiresUnescaping, out bool nameIsEscaped);
+        int valueLocation = _parentDocument.StoreValue(value);
+        _parsedData.AppendPropertyAndDynamicSimpleValue(nameLocation, nameIsEscaped, JsonTokenType.Number, valueLocation, false);
         _memberCount++;
         _rowCount += 2;
     }
@@ -998,8 +1057,9 @@ public ref struct ComplexValueBuilder
     /// <param name="value">The <see cref="long"/> value.</param>
     public void AddProperty(ReadOnlySpan<char> propertyName, long value)
     {
-        AddStringValue(JsonTokenType.PropertyName, propertyName);
-        _parsedData.AppendDynamicSimpleValue(JsonTokenType.Number, _parentDocument.StoreValue(value), requiresUnescapingOrHasExponent: false);
+        int nameLocation = StorePropertyName(propertyName, out bool nameIsEscaped);
+        int valueLocation = _parentDocument.StoreValue(value);
+        _parsedData.AppendPropertyAndDynamicSimpleValue(nameLocation, nameIsEscaped, JsonTokenType.Number, valueLocation, false);
         _memberCount++;
         _rowCount += 2;
     }
@@ -1026,8 +1086,9 @@ public ref struct ComplexValueBuilder
     [CLSCompliant(false)]
     public void AddProperty(ReadOnlySpan<byte> propertyName, ulong value, bool escapeName, bool nameRequiresUnescaping)
     {
-        AddStringValue(JsonTokenType.PropertyName, propertyName, escapeName, nameRequiresUnescaping);
-        _parsedData.AppendDynamicSimpleValue(JsonTokenType.Number, _parentDocument.StoreValue(value), requiresUnescapingOrHasExponent: false);
+        int nameLocation = StorePropertyName(propertyName, escapeName, nameRequiresUnescaping, out bool nameIsEscaped);
+        int valueLocation = _parentDocument.StoreValue(value);
+        _parsedData.AppendPropertyAndDynamicSimpleValue(nameLocation, nameIsEscaped, JsonTokenType.Number, valueLocation, false);
         _memberCount++;
         _rowCount += 2;
     }
@@ -1040,8 +1101,9 @@ public ref struct ComplexValueBuilder
     [CLSCompliant(false)]
     public void AddProperty(ReadOnlySpan<char> propertyName, ulong value)
     {
-        AddStringValue(JsonTokenType.PropertyName, propertyName);
-        _parsedData.AppendDynamicSimpleValue(JsonTokenType.Number, _parentDocument.StoreValue(value), requiresUnescapingOrHasExponent: false);
+        int nameLocation = StorePropertyName(propertyName, out bool nameIsEscaped);
+        int valueLocation = _parentDocument.StoreValue(value);
+        _parsedData.AppendPropertyAndDynamicSimpleValue(nameLocation, nameIsEscaped, JsonTokenType.Number, valueLocation, false);
         _memberCount++;
         _rowCount += 2;
     }
@@ -1066,8 +1128,9 @@ public ref struct ComplexValueBuilder
     /// <param name="nameRequiresUnescaping">Whether the property name requires unescaping.</param>
     public void AddProperty(ReadOnlySpan<byte> propertyName, short value, bool escapeName, bool nameRequiresUnescaping)
     {
-        AddStringValue(JsonTokenType.PropertyName, propertyName, escapeName, nameRequiresUnescaping);
-        _parsedData.AppendDynamicSimpleValue(JsonTokenType.Number, _parentDocument.StoreValue(value), requiresUnescapingOrHasExponent: false);
+        int nameLocation = StorePropertyName(propertyName, escapeName, nameRequiresUnescaping, out bool nameIsEscaped);
+        int valueLocation = _parentDocument.StoreValue(value);
+        _parsedData.AppendPropertyAndDynamicSimpleValue(nameLocation, nameIsEscaped, JsonTokenType.Number, valueLocation, false);
         _memberCount++;
         _rowCount += 2;
     }
@@ -1079,8 +1142,9 @@ public ref struct ComplexValueBuilder
     /// <param name="value">The <see cref="short"/> value.</param>
     public void AddProperty(ReadOnlySpan<char> propertyName, short value)
     {
-        AddStringValue(JsonTokenType.PropertyName, propertyName);
-        _parsedData.AppendDynamicSimpleValue(JsonTokenType.Number, _parentDocument.StoreValue(value), requiresUnescapingOrHasExponent: false);
+        int nameLocation = StorePropertyName(propertyName, out bool nameIsEscaped);
+        int valueLocation = _parentDocument.StoreValue(value);
+        _parsedData.AppendPropertyAndDynamicSimpleValue(nameLocation, nameIsEscaped, JsonTokenType.Number, valueLocation, false);
         _memberCount++;
         _rowCount += 2;
     }
@@ -1107,8 +1171,9 @@ public ref struct ComplexValueBuilder
     [CLSCompliant(false)]
     public void AddProperty(ReadOnlySpan<byte> propertyName, ushort value, bool escapeName, bool nameRequiresUnescaping)
     {
-        AddStringValue(JsonTokenType.PropertyName, propertyName, escapeName, nameRequiresUnescaping);
-        _parsedData.AppendDynamicSimpleValue(JsonTokenType.Number, _parentDocument.StoreValue(value), requiresUnescapingOrHasExponent: false);
+        int nameLocation = StorePropertyName(propertyName, escapeName, nameRequiresUnescaping, out bool nameIsEscaped);
+        int valueLocation = _parentDocument.StoreValue(value);
+        _parsedData.AppendPropertyAndDynamicSimpleValue(nameLocation, nameIsEscaped, JsonTokenType.Number, valueLocation, false);
         _memberCount++;
         _rowCount += 2;
     }
@@ -1121,8 +1186,9 @@ public ref struct ComplexValueBuilder
     [CLSCompliant(false)]
     public void AddProperty(ReadOnlySpan<char> propertyName, ushort value)
     {
-        AddStringValue(JsonTokenType.PropertyName, propertyName);
-        _parsedData.AppendDynamicSimpleValue(JsonTokenType.Number, _parentDocument.StoreValue(value), requiresUnescapingOrHasExponent: false);
+        int nameLocation = StorePropertyName(propertyName, out bool nameIsEscaped);
+        int valueLocation = _parentDocument.StoreValue(value);
+        _parsedData.AppendPropertyAndDynamicSimpleValue(nameLocation, nameIsEscaped, JsonTokenType.Number, valueLocation, false);
         _memberCount++;
         _rowCount += 2;
     }
@@ -1147,8 +1213,9 @@ public ref struct ComplexValueBuilder
     /// <param name="nameRequiresUnescaping">Whether the property name requires unescaping.</param>
     public void AddProperty(ReadOnlySpan<byte> propertyName, float value, bool escapeName, bool nameRequiresUnescaping)
     {
-        AddStringValue(JsonTokenType.PropertyName, propertyName, escapeName, nameRequiresUnescaping);
-        _parsedData.AppendDynamicSimpleValue(JsonTokenType.Number, _parentDocument.StoreValue(value), requiresUnescapingOrHasExponent: false);
+        int nameLocation = StorePropertyName(propertyName, escapeName, nameRequiresUnescaping, out bool nameIsEscaped);
+        int valueLocation = _parentDocument.StoreValue(value);
+        _parsedData.AppendPropertyAndDynamicSimpleValue(nameLocation, nameIsEscaped, JsonTokenType.Number, valueLocation, false);
         _memberCount++;
         _rowCount += 2;
     }
@@ -1160,8 +1227,9 @@ public ref struct ComplexValueBuilder
     /// <param name="value">The <see cref="float"/> value.</param>
     public void AddProperty(ReadOnlySpan<char> propertyName, float value)
     {
-        AddStringValue(JsonTokenType.PropertyName, propertyName);
-        _parsedData.AppendDynamicSimpleValue(JsonTokenType.Number, _parentDocument.StoreValue(value), requiresUnescapingOrHasExponent: false);
+        int nameLocation = StorePropertyName(propertyName, out bool nameIsEscaped);
+        int valueLocation = _parentDocument.StoreValue(value);
+        _parsedData.AppendPropertyAndDynamicSimpleValue(nameLocation, nameIsEscaped, JsonTokenType.Number, valueLocation, false);
         _memberCount++;
         _rowCount += 2;
     }
@@ -1186,8 +1254,9 @@ public ref struct ComplexValueBuilder
     /// <param name="nameRequiresUnescaping">Whether the property name requires unescaping.</param>
     public void AddProperty(ReadOnlySpan<byte> propertyName, double value, bool escapeName, bool nameRequiresUnescaping)
     {
-        AddStringValue(JsonTokenType.PropertyName, propertyName, escapeName, nameRequiresUnescaping);
-        _parsedData.AppendDynamicSimpleValue(JsonTokenType.Number, _parentDocument.StoreValue(value), requiresUnescapingOrHasExponent: false);
+        int nameLocation = StorePropertyName(propertyName, escapeName, nameRequiresUnescaping, out bool nameIsEscaped);
+        int valueLocation = _parentDocument.StoreValue(value);
+        _parsedData.AppendPropertyAndDynamicSimpleValue(nameLocation, nameIsEscaped, JsonTokenType.Number, valueLocation, false);
         _memberCount++;
         _rowCount += 2;
     }
@@ -1199,8 +1268,9 @@ public ref struct ComplexValueBuilder
     /// <param name="value">The <see cref="double"/> value.</param>
     public void AddProperty(ReadOnlySpan<char> propertyName, double value)
     {
-        AddStringValue(JsonTokenType.PropertyName, propertyName);
-        _parsedData.AppendDynamicSimpleValue(JsonTokenType.Number, _parentDocument.StoreValue(value), requiresUnescapingOrHasExponent: false);
+        int nameLocation = StorePropertyName(propertyName, out bool nameIsEscaped);
+        int valueLocation = _parentDocument.StoreValue(value);
+        _parsedData.AppendPropertyAndDynamicSimpleValue(nameLocation, nameIsEscaped, JsonTokenType.Number, valueLocation, false);
         _memberCount++;
         _rowCount += 2;
     }
@@ -1225,8 +1295,9 @@ public ref struct ComplexValueBuilder
     /// <param name="nameRequiresUnescaping">Whether the property name requires unescaping.</param>
     public void AddProperty(ReadOnlySpan<byte> propertyName, decimal value, bool escapeName, bool nameRequiresUnescaping)
     {
-        AddStringValue(JsonTokenType.PropertyName, propertyName, escapeName, nameRequiresUnescaping);
-        _parsedData.AppendDynamicSimpleValue(JsonTokenType.Number, _parentDocument.StoreValue(value), requiresUnescapingOrHasExponent: false);
+        int nameLocation = StorePropertyName(propertyName, escapeName, nameRequiresUnescaping, out bool nameIsEscaped);
+        int valueLocation = _parentDocument.StoreValue(value);
+        _parsedData.AppendPropertyAndDynamicSimpleValue(nameLocation, nameIsEscaped, JsonTokenType.Number, valueLocation, false);
         _memberCount++;
         _rowCount += 2;
     }
@@ -1238,8 +1309,9 @@ public ref struct ComplexValueBuilder
     /// <param name="value">The <see cref="decimal"/> value.</param>
     public void AddProperty(ReadOnlySpan<char> propertyName, decimal value)
     {
-        AddStringValue(JsonTokenType.PropertyName, propertyName);
-        _parsedData.AppendDynamicSimpleValue(JsonTokenType.Number, _parentDocument.StoreValue(value), requiresUnescapingOrHasExponent: false);
+        int nameLocation = StorePropertyName(propertyName, out bool nameIsEscaped);
+        int valueLocation = _parentDocument.StoreValue(value);
+        _parsedData.AppendPropertyAndDynamicSimpleValue(nameLocation, nameIsEscaped, JsonTokenType.Number, valueLocation, false);
         _memberCount++;
         _rowCount += 2;
     }
@@ -1264,8 +1336,9 @@ public ref struct ComplexValueBuilder
     /// <param name="nameRequiresUnescaping">Whether the property name requires unescaping.</param>
     public void AddProperty(ReadOnlySpan<byte> propertyName, in BigInteger value, bool escapeName, bool nameRequiresUnescaping)
     {
-        AddStringValue(JsonTokenType.PropertyName, propertyName, escapeName, nameRequiresUnescaping);
-        _parsedData.AppendDynamicSimpleValue(JsonTokenType.Number, _parentDocument.StoreValue(value), requiresUnescapingOrHasExponent: false);
+        int nameLocation = StorePropertyName(propertyName, escapeName, nameRequiresUnescaping, out bool nameIsEscaped);
+        int valueLocation = _parentDocument.StoreValue(value);
+        _parsedData.AppendPropertyAndDynamicSimpleValue(nameLocation, nameIsEscaped, JsonTokenType.Number, valueLocation, false);
         _memberCount++;
         _rowCount += 2;
     }
@@ -1277,8 +1350,9 @@ public ref struct ComplexValueBuilder
     /// <param name="value">The <see cref="BigInteger"/> value.</param>
     public void AddProperty(ReadOnlySpan<char> propertyName, in BigInteger value)
     {
-        AddStringValue(JsonTokenType.PropertyName, propertyName);
-        _parsedData.AppendDynamicSimpleValue(JsonTokenType.Number, _parentDocument.StoreValue(value), requiresUnescapingOrHasExponent: false);
+        int nameLocation = StorePropertyName(propertyName, out bool nameIsEscaped);
+        int valueLocation = _parentDocument.StoreValue(value);
+        _parsedData.AppendPropertyAndDynamicSimpleValue(nameLocation, nameIsEscaped, JsonTokenType.Number, valueLocation, false);
         _memberCount++;
         _rowCount += 2;
     }
@@ -1305,8 +1379,9 @@ public ref struct ComplexValueBuilder
     [CLSCompliant(false)]
     public void AddProperty(ReadOnlySpan<byte> propertyName, in BigNumber value, bool escapeName, bool nameRequiresUnescaping)
     {
-        AddStringValue(JsonTokenType.PropertyName, propertyName, escapeName, nameRequiresUnescaping);
-        _parsedData.AppendDynamicSimpleValue(JsonTokenType.Number, _parentDocument.StoreValue(value), requiresUnescapingOrHasExponent: value.Exponent != 0);
+        int nameLocation = StorePropertyName(propertyName, escapeName, nameRequiresUnescaping, out bool nameIsEscaped);
+        int valueLocation = _parentDocument.StoreValue(value);
+        _parsedData.AppendPropertyAndDynamicSimpleValue(nameLocation, nameIsEscaped, JsonTokenType.Number, valueLocation, value.Exponent != 0);
         _memberCount++;
         _rowCount += 2;
     }
@@ -1324,8 +1399,9 @@ public ref struct ComplexValueBuilder
     [CLSCompliant(false)]
     public void AddProperty(ReadOnlySpan<char> propertyName, in BigNumber value)
     {
-        AddStringValue(JsonTokenType.PropertyName, propertyName);
-        _parsedData.AppendDynamicSimpleValue(JsonTokenType.Number, _parentDocument.StoreValue(value), requiresUnescapingOrHasExponent: value.Exponent != 0);
+        int nameLocation = StorePropertyName(propertyName, out bool nameIsEscaped);
+        int valueLocation = _parentDocument.StoreValue(value);
+        _parsedData.AppendPropertyAndDynamicSimpleValue(nameLocation, nameIsEscaped, JsonTokenType.Number, valueLocation, value.Exponent != 0);
         _memberCount++;
         _rowCount += 2;
     }
@@ -1352,8 +1428,9 @@ public ref struct ComplexValueBuilder
     /// <param name="nameRequiresUnescaping">Whether the property name requires unescaping.</param>
     public void AddProperty(ReadOnlySpan<byte> propertyName, Int128 value, bool escapeName, bool nameRequiresUnescaping)
     {
-        AddStringValue(JsonTokenType.PropertyName, propertyName, escapeName, nameRequiresUnescaping);
-        _parsedData.AppendDynamicSimpleValue(JsonTokenType.Number, _parentDocument.StoreValue(value), requiresUnescapingOrHasExponent: false);
+        int nameLocation = StorePropertyName(propertyName, escapeName, nameRequiresUnescaping, out bool nameIsEscaped);
+        int valueLocation = _parentDocument.StoreValue(value);
+        _parsedData.AppendPropertyAndDynamicSimpleValue(nameLocation, nameIsEscaped, JsonTokenType.Number, valueLocation, false);
         _memberCount++;
         _rowCount += 2;
     }
@@ -1365,8 +1442,9 @@ public ref struct ComplexValueBuilder
     /// <param name="value">The <see cref="Int128"/> value.</param>
     public void AddProperty(ReadOnlySpan<char> propertyName, Int128 value)
     {
-        AddStringValue(JsonTokenType.PropertyName, propertyName);
-        _parsedData.AppendDynamicSimpleValue(JsonTokenType.Number, _parentDocument.StoreValue(value), requiresUnescapingOrHasExponent: false);
+        int nameLocation = StorePropertyName(propertyName, out bool nameIsEscaped);
+        int valueLocation = _parentDocument.StoreValue(value);
+        _parsedData.AppendPropertyAndDynamicSimpleValue(nameLocation, nameIsEscaped, JsonTokenType.Number, valueLocation, false);
         _memberCount++;
         _rowCount += 2;
     }
@@ -1393,8 +1471,9 @@ public ref struct ComplexValueBuilder
     [CLSCompliant(false)]
     public void AddProperty(ReadOnlySpan<byte> propertyName, UInt128 value, bool escapeName, bool nameRequiresUnescaping)
     {
-        AddStringValue(JsonTokenType.PropertyName, propertyName, escapeName, nameRequiresUnescaping);
-        _parsedData.AppendDynamicSimpleValue(JsonTokenType.Number, _parentDocument.StoreValue(value), requiresUnescapingOrHasExponent: false);
+        int nameLocation = StorePropertyName(propertyName, escapeName, nameRequiresUnescaping, out bool nameIsEscaped);
+        int valueLocation = _parentDocument.StoreValue(value);
+        _parsedData.AppendPropertyAndDynamicSimpleValue(nameLocation, nameIsEscaped, JsonTokenType.Number, valueLocation, false);
         _memberCount++;
         _rowCount += 2;
     }
@@ -1407,8 +1486,9 @@ public ref struct ComplexValueBuilder
     [CLSCompliant(false)]
     public void AddProperty(ReadOnlySpan<char> propertyName, UInt128 value)
     {
-        AddStringValue(JsonTokenType.PropertyName, propertyName);
-        _parsedData.AppendDynamicSimpleValue(JsonTokenType.Number, _parentDocument.StoreValue(value), requiresUnescapingOrHasExponent: false);
+        int nameLocation = StorePropertyName(propertyName, out bool nameIsEscaped);
+        int valueLocation = _parentDocument.StoreValue(value);
+        _parsedData.AppendPropertyAndDynamicSimpleValue(nameLocation, nameIsEscaped, JsonTokenType.Number, valueLocation, false);
         _memberCount++;
         _rowCount += 2;
     }
@@ -1433,8 +1513,9 @@ public ref struct ComplexValueBuilder
     /// <param name="nameRequiresUnescaping">Whether the property name requires unescaping.</param>
     public void AddProperty(ReadOnlySpan<byte> propertyName, Half value, bool escapeName, bool nameRequiresUnescaping)
     {
-        AddStringValue(JsonTokenType.PropertyName, propertyName, escapeName, nameRequiresUnescaping);
-        _parsedData.AppendDynamicSimpleValue(JsonTokenType.Number, _parentDocument.StoreValue(value), requiresUnescapingOrHasExponent: false);
+        int nameLocation = StorePropertyName(propertyName, escapeName, nameRequiresUnescaping, out bool nameIsEscaped);
+        int valueLocation = _parentDocument.StoreValue(value);
+        _parsedData.AppendPropertyAndDynamicSimpleValue(nameLocation, nameIsEscaped, JsonTokenType.Number, valueLocation, false);
         _memberCount++;
         _rowCount += 2;
     }
@@ -1446,8 +1527,9 @@ public ref struct ComplexValueBuilder
     /// <param name="value">The <see cref="Half"/> value.</param>
     public void AddProperty(ReadOnlySpan<char> propertyName, Half value)
     {
-        AddStringValue(JsonTokenType.PropertyName, propertyName);
-        _parsedData.AppendDynamicSimpleValue(JsonTokenType.Number, _parentDocument.StoreValue(value), requiresUnescapingOrHasExponent: false);
+        int nameLocation = StorePropertyName(propertyName, out bool nameIsEscaped);
+        int valueLocation = _parentDocument.StoreValue(value);
+        _parsedData.AppendPropertyAndDynamicSimpleValue(nameLocation, nameIsEscaped, JsonTokenType.Number, valueLocation, false);
         _memberCount++;
         _rowCount += 2;
     }
@@ -3460,6 +3542,22 @@ public ref struct ComplexValueBuilder
         targetData.ReplaceRowsInComplexObject(_parentDocument, complexObjectStartIndex, startIndex, endIndex, memberCountToReplace, _rowCount, _memberCount);
         _parsedData.Overwrite(ref targetData, startIndex);
         _parsedData.Dispose();
+    }
+
+    private int StorePropertyName(ReadOnlySpan<byte> propertyName, bool escapeName, bool nameRequiresUnescaping, out bool nameIsEscaped)
+    {
+        if (escapeName)
+        {
+            return _parentDocument.EscapeAndStoreRawStringValue(propertyName, out nameIsEscaped);
+        }
+
+        nameIsEscaped = nameRequiresUnescaping;
+        return _parentDocument.StoreRawStringValue(propertyName);
+    }
+
+    private int StorePropertyName(ReadOnlySpan<char> propertyName, out bool nameIsEscaped)
+    {
+        return _parentDocument.EscapeAndStoreRawStringValue(propertyName, out nameIsEscaped);
     }
 
     private void AddStringValue(JsonTokenType tokenType, ReadOnlySpan<byte> stringValue, bool escape, bool ifNotEscapeRequiresUenscaping)

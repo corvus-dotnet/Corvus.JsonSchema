@@ -2891,6 +2891,22 @@ internal static partial class CodeGeneratorExtensions
                                 .AppendSeparatorLine()
                                 .AppendLineIndent("private ", generator.SourceClassName(), "(double value) { SimpleTypesBacking.Initialize(ref _simpleTypeBacking, value, static (isAlsoArray, buffer, out written) => Utf8Formatter.TryFormat(isAlsoArray, buffer, out written)); _kind = Kind.NumericSimpleType; }");
                         }
+
+                        // Also emit int and long constructors so integer values use the cheaper
+                        // integer formatting path instead of widening to double.
+                        if (seenConstructorParameters.Add("int"))
+                        {
+                            generator
+                                .AppendSeparatorLine()
+                                .AppendLineIndent("private ", generator.SourceClassName(), "(int value) { SimpleTypesBacking.Initialize(ref _simpleTypeBacking, value, static (isAlsoArray, buffer, out written) => Utf8Formatter.TryFormat(isAlsoArray, buffer, out written)); _kind = Kind.NumericSimpleType; }");
+                        }
+
+                        if (seenConstructorParameters.Add("long"))
+                        {
+                            generator
+                                .AppendSeparatorLine()
+                                .AppendLineIndent("private ", generator.SourceClassName(), "(long value) { SimpleTypesBacking.Initialize(ref _simpleTypeBacking, value, static (isAlsoArray, buffer, out written) => Utf8Formatter.TryFormat(isAlsoArray, buffer, out written)); _kind = Kind.NumericSimpleType; }");
+                        }
                     }
                     else
                     {
@@ -2899,6 +2915,15 @@ internal static partial class CodeGeneratorExtensions
                             generator
                                 .AppendSeparatorLine()
                                 .AppendLineIndent("private ", generator.SourceClassName(), "(long value) { SimpleTypesBacking.Initialize(ref _simpleTypeBacking, value, static (isAlsoArray, buffer, out written) => Utf8Formatter.TryFormat(isAlsoArray, buffer, out written)); _kind = Kind.NumericSimpleType; }");
+                        }
+
+                        // Also emit int constructor for integer types so int values
+                        // don't widen to long unnecessarily.
+                        if (seenConstructorParameters.Add("int"))
+                        {
+                            generator
+                                .AppendSeparatorLine()
+                                .AppendLineIndent("private ", generator.SourceClassName(), "(int value) { SimpleTypesBacking.Initialize(ref _simpleTypeBacking, value, static (isAlsoArray, buffer, out written) => Utf8Formatter.TryFormat(isAlsoArray, buffer, out written)); _kind = Kind.NumericSimpleType; }");
                         }
                     }
                 }
@@ -3168,6 +3193,24 @@ internal static partial class CodeGeneratorExtensions
                             .AppendLineIndent("[MethodImpl(MethodImplOptions.AggressiveInlining)]")
                             .AppendLineIndent("public static implicit operator ", generator.SourceClassName(), "(double value) => new (value);");
                     }
+
+                    // Also emit int and long operators so integer values use the cheaper
+                    // integer formatting path instead of widening to double.
+                    if (seenConversionOperators.Add("int"))
+                    {
+                        generator
+                            .AppendSeparatorLine()
+                            .AppendLineIndent("[MethodImpl(MethodImplOptions.AggressiveInlining)]")
+                            .AppendLineIndent("public static implicit operator ", generator.SourceClassName(), "(int value) => new (value);");
+                    }
+
+                    if (seenConversionOperators.Add("long"))
+                    {
+                        generator
+                            .AppendSeparatorLine()
+                            .AppendLineIndent("[MethodImpl(MethodImplOptions.AggressiveInlining)]")
+                            .AppendLineIndent("public static implicit operator ", generator.SourceClassName(), "(long value) => new (value);");
+                    }
                 }
                 else
                 {
@@ -3177,6 +3220,16 @@ internal static partial class CodeGeneratorExtensions
                             .AppendSeparatorLine()
                             .AppendLineIndent("[MethodImpl(MethodImplOptions.AggressiveInlining)]")
                             .AppendLineIndent("public static implicit operator ", generator.SourceClassName(), "(long value) => new (value);");
+                    }
+
+                    // Also emit int operator for integer types so int values
+                    // don't widen to long unnecessarily.
+                    if (seenConversionOperators.Add("int"))
+                    {
+                        generator
+                            .AppendSeparatorLine()
+                            .AppendLineIndent("[MethodImpl(MethodImplOptions.AggressiveInlining)]")
+                            .AppendLineIndent("public static implicit operator ", generator.SourceClassName(), "(int value) => new (value);");
                     }
                 }
             }

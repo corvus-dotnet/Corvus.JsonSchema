@@ -1097,7 +1097,7 @@ public sealed partial class JsonDocumentBuilder<T> : JsonDocument, IMutableJsonD
         if (row.FromExternalDocument)
         {
             IJsonDocument document = _workspace.GetDocument(row.WorkspaceDocumentId);
-            return document.GetRawSimpleValue(row.LocationOrIndex);
+            return document.GetRawSimpleValue(row.LocationOrIndex, includeQuotes: false);
         }
 
         int offset = row.LocationOrIndex;
@@ -1119,7 +1119,7 @@ public sealed partial class JsonDocumentBuilder<T> : JsonDocument, IMutableJsonD
         if (row.FromExternalDocument)
         {
             IJsonDocument document = _workspace.GetDocument(row.WorkspaceDocumentId);
-            return document.GetRawSimpleValue(row.LocationOrIndex);
+            return document.GetRawSimpleValue(row.LocationOrIndex, includeQuotes: false);
         }
 
         int offset = row.LocationOrIndex;
@@ -2174,13 +2174,13 @@ public sealed partial class JsonDocumentBuilder<T> : JsonDocument, IMutableJsonD
                 }
                 else
                 {
-                    writer.WriteStringValue(GetRawSimpleValueUnsafe(index, false).Span);
+                    writer.WriteStringValue(GetRawSimpleValueFromRowUnsafe(row).Span);
                 }
 
                 return;
 
             case JsonTokenType.Number:
-                writer.WriteNumberValue(GetRawSimpleValueUnsafe(index, includeQuotes: false).Span);
+                writer.WriteNumberValue(GetRawSimpleValueFromRowUnsafe(row).Span);
                 return;
 
             case JsonTokenType.True:
@@ -2221,12 +2221,12 @@ public sealed partial class JsonDocumentBuilder<T> : JsonDocument, IMutableJsonD
                     }
                     else
                     {
-                        writer.WriteStringValue(GetRawSimpleValueUnsafe(i, false).Span);
+                        writer.WriteStringValue(GetRawSimpleValueFromRowUnsafe(row).Span);
                     }
 
                     continue;
                 case JsonTokenType.Number:
-                    writer.WriteNumberValue(GetRawSimpleValueUnsafe(i, includeQuotes: false).Span);
+                    writer.WriteNumberValue(GetRawSimpleValueFromRowUnsafe(row).Span);
                     continue;
                 case JsonTokenType.True:
                     writer.WriteBooleanValue(value: true);
@@ -2274,7 +2274,7 @@ public sealed partial class JsonDocumentBuilder<T> : JsonDocument, IMutableJsonD
                     }
                     else
                     {
-                        writer.WritePropertyName(GetRawSimpleValueUnsafe(i, false).Span);
+                        writer.WritePropertyName(GetRawSimpleValueFromRowUnsafe(row).Span);
                     }
 
                     continue;
