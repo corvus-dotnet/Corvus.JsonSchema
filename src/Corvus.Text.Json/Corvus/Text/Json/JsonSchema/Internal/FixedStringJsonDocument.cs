@@ -34,6 +34,12 @@ public sealed class FixedStringJsonDocument<T> : IJsonDocument
 
     private bool _requiresUnescaping;
 
+    JsonWorkspace? IJsonDocument.CachedWorkspace { get; set; }
+
+    int IJsonDocument.CachedWorkspaceDocumentIndex { get; set; }
+
+    int IJsonDocument.CachedWorkspaceGeneration { get; set; }
+
     internal FixedStringJsonDocument(ReadOnlyMemory<byte> rawJsonStringValue, bool requiresUnescaping)
     {
         _rawJsonStringValue = rawJsonStringValue;

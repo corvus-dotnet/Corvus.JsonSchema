@@ -21,6 +21,25 @@ namespace Corvus.Text.Json.Internal;
 public interface IJsonDocument : IDisposable
 {
     /// <summary>
+    /// Gets or sets the cached workspace that this document was last registered in.
+    /// </summary>
+    /// <remarks>Used by <see cref="JsonWorkspace.GetDocumentIndex"/> to avoid linear scan.</remarks>
+    JsonWorkspace? CachedWorkspace { get; set; }
+
+    /// <summary>
+    /// Gets or sets the cached document index within <see cref="CachedWorkspace"/>.
+    /// </summary>
+    /// <remarks>Only valid when <see cref="CachedWorkspace"/> matches the current workspace
+    /// and <see cref="CachedWorkspaceGeneration"/> matches the workspace's current generation.</remarks>
+    int CachedWorkspaceDocumentIndex { get; set; }
+
+    /// <summary>
+    /// Gets or sets the workspace generation at the time of caching.
+    /// </summary>
+    /// <remarks>Guards against stale indices after workspace reset/reuse.</remarks>
+    int CachedWorkspaceGeneration { get; set; }
+
+    /// <summary>
     /// Ensures the property map is available for the specified index.
     /// </summary>
     /// <param name="index">The index of the element.</param>

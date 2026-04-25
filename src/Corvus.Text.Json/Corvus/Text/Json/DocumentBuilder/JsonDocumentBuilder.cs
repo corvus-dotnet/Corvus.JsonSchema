@@ -30,6 +30,15 @@ public sealed partial class JsonDocumentBuilder<T> : JsonDocument, IMutableJsonD
 
     private int _parentWorkspaceIndex = -1;
 
+    /// <inheritdoc />
+    JsonWorkspace? IJsonDocument.CachedWorkspace { get; set; }
+
+    /// <inheritdoc />
+    int IJsonDocument.CachedWorkspaceDocumentIndex { get; set; }
+
+    /// <inheritdoc />
+    int IJsonDocument.CachedWorkspaceGeneration { get; set; }
+
     // When > 0, _valueBacking[0.._rawJsonLength) contains the raw UTF-8 JSON input bytes.
     // MetadataDb rows created by ParseTokens store offsets into this region (ParsedJsonDocument-style).
     // Mutated values go into _valueBacking at _valueOffset (>= _rawJsonLength) using DynamicValue headers.

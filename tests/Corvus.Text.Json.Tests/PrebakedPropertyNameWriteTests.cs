@@ -3,8 +3,8 @@
 // </copyright>
 
 using System.Buffers;
-using System.Text;
 using System.Text.Encodings.Web;
+using Corvus.Text.Json.Internal;
 using Corvus.Text.Json.Tests.GeneratedModels.Draft202012;
 using Xunit;
 
@@ -46,7 +46,7 @@ public class PrebakedPropertyNameWriteTests
             builder.WriteTo(writer);
         }
 
-        string json = Encoding.UTF8.GetString(buffer.WrittenSpan);
+        string json = JsonReaderHelper.TranscodeHelper(buffer.WrittenSpan);
         Assert.Contains("\"name\":\"Alice\"", json);
         Assert.Contains("\"age\":30", json);
         Assert.Contains("\"email\":\"alice@example.com\"", json);
@@ -71,7 +71,7 @@ public class PrebakedPropertyNameWriteTests
             builder.WriteTo(writer);
         }
 
-        string json = Encoding.UTF8.GetString(buffer.WrittenSpan);
+        string json = JsonReaderHelper.TranscodeHelper(buffer.WrittenSpan);
         Assert.Contains("\"name\": \"Alice\"", json);
         Assert.Contains("\"age\": 30", json);
         Assert.Contains("\"email\": \"alice@example.com\"", json);
@@ -101,7 +101,7 @@ public class PrebakedPropertyNameWriteTests
             builder.WriteTo(writer);
         }
 
-        string json = Encoding.UTF8.GetString(buffer.WrittenSpan);
+        string json = JsonReaderHelper.TranscodeHelper(buffer.WrittenSpan);
         Assert.Contains("\"name\":\"Alice\"", json);
         Assert.Contains("\"age\":30", json);
         Assert.Contains("\"email\":\"alice@example.com\"", json);
@@ -131,7 +131,7 @@ public class PrebakedPropertyNameWriteTests
             builder.WriteTo(writer);
         }
 
-        string json = Encoding.UTF8.GetString(buffer.WrittenSpan);
+        string json = JsonReaderHelper.TranscodeHelper(buffer.WrittenSpan);
         Assert.Contains("\"name\": \"Alice\"", json);
         Assert.Contains("\"age\": 30", json);
         Assert.Contains("\"email\": \"alice@example.com\"", json);
@@ -192,7 +192,7 @@ public class PrebakedPropertyNameWriteTests
             builder.WriteTo(writer);
         }
 
-        string json = Encoding.UTF8.GetString(buffer.WrittenSpan);
+        string json = JsonReaderHelper.TranscodeHelper(buffer.WrittenSpan);
 
         // Parse the output back and verify all properties are present
         using var parsed = ParsedJsonDocument<ObjectWithMixedProperties>.Parse(json);
