@@ -39,9 +39,7 @@ public static class JsonMergePatchExtensions
 
         if (target.ValueKind != JsonValueKind.Object)
         {
-            JsonElement emptyObj = JsonElement.ParseValue("{}");
-            JsonElement.Source emptySource = emptyObj;
-            ReplaceRoot(ref target, in emptySource);
+            ReplaceRootWithEmptyObject(ref target);
         }
 
         foreach (JsonProperty<JsonElement> patchProperty in patch.EnumerateObject())
@@ -58,9 +56,11 @@ public static class JsonMergePatchExtensions
                 using UnescapedUtf8JsonString nameUtf8 = patchProperty.Utf8NameSpan;
                 ReadOnlySpan<byte> nameSpan = nameUtf8.Span;
 
-                if (!target.TryGetProperty(nameSpan, out JsonElement.Mutable child))
+                if (!target.TryGetProperty(nameSpan, out JsonElement.Mutable child)
+                    || child.ValueKind != JsonValueKind.Object)
                 {
-                    target.SetProperty(nameSpan, JsonElement.ParseValue("{}"));
+                    // Property doesn't exist or isn't an object — set it to empty object
+                    target.SetProperty(nameSpan, static (ref JsonElement.ObjectBuilder _) => { }, estimatedMemberCount: 0);
                     target.TryGetProperty(nameSpan, out child);
                 }
 
@@ -79,6 +79,15 @@ public static class JsonMergePatchExtensions
         IMutableJsonDocument mutableDoc = GetMutableDoc(in target);
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(mutableDoc, 30);
         value.AddAsItem(ref cvb);
+        mutableDoc.ReplaceRootAndDispose(ref cvb);
+        target = ((JsonDocumentBuilder<JsonElement.Mutable>)mutableDoc).RootElement;
+    }
+
+    private static void ReplaceRootWithEmptyObject(ref JsonElement.Mutable target)
+    {
+        IMutableJsonDocument mutableDoc = GetMutableDoc(in target);
+        ComplexValueBuilder cvb = ComplexValueBuilder.Create(mutableDoc, 0);
+        JsonElement.ObjectBuilder.BuildValue(static (ref JsonElement.ObjectBuilder _) => { }, ref cvb);
         mutableDoc.ReplaceRootAndDispose(ref cvb);
         target = ((JsonDocumentBuilder<JsonElement.Mutable>)mutableDoc).RootElement;
     }

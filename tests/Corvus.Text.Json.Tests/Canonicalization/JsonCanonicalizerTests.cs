@@ -364,8 +364,9 @@ public class JsonCanonicalizerTests
 
     private static void AssertNumberFormat(double value, string expected)
     {
-        // Wrap the number in a minimal JSON document and canonicalize
-        string json = value.ToString("R", System.Globalization.CultureInfo.InvariantCulture);
+        // Use G17 (not "R") to construct JSON — ToString("R") on .NET Framework
+        // is known to produce too few digits for certain edge cases (MaxValue, etc.).
+        string json = value.ToString("G17", System.Globalization.CultureInfo.InvariantCulture);
         using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(json);
         byte[] result = JsonCanonicalizer.Canonicalize(doc.RootElement);
         string actual = Encoding.UTF8.GetString(result);

@@ -2,6 +2,8 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Buffers;
+using System.Buffers.Text;
 using System.Globalization;
 
 namespace Corvus.Text.Json.Canonicalization;
@@ -53,89 +55,137 @@ internal static class Es6NumberFormatter
         bool negative = value < 0;
         double abs = negative ? -value : value;
 
-        // Get the shortest round-trip representation from .NET's Grisu3 implementation
-        string r = GetShortestRepresentation(abs);
+        // Get the shortest round-trip representation into a byte buffer
+        Span<byte> rtBuffer = stackalloc byte[32];
+        int rtLength = GetShortestRepresentationBytes(abs, rtBuffer);
+        ReadOnlySpan<byte> representation = rtBuffer.Slice(0, rtLength);
 
-        // Parse the round-trip string into significant digits and exponent
-        ParseRoundTripString(r, out ReadOnlySpan<char> digits, out int n);
+        // Parse the round-trip bytes into significant digits and exponent
+        Span<byte> digitBuffer = stackalloc byte[24];
+        ParseRoundTripBytes(representation, digitBuffer, out int digitCount, out int n);
+        ReadOnlySpan<byte> digits = digitBuffer.Slice(0, digitCount);
 
         // Format according to ECMA-262 §7.1.12.1
         return FormatEs6(negative, digits, n, destination, ref bytesWritten);
     }
 
-    private static string GetShortestRepresentation(double abs)
+    private static int GetShortestRepresentationBytes(double abs, Span<byte> buffer)
     {
 #if NET
-        // On .NET Core 3.0+, ToString("R") uses Grisu3 — produces shortest round-trip representation.
-        return abs.ToString("R", CultureInfo.InvariantCulture);
-#else
-        // On .NET Framework, ToString("R") can produce too few digits.
-        // Use G17 (always enough digits) and verify round-trip, then try to shorten.
-        string g17 = abs.ToString("G17", CultureInfo.InvariantCulture);
-
-        // Try "R" first — if it round-trips, it's shorter.
-        string r = abs.ToString("R", CultureInfo.InvariantCulture);
-        if (double.Parse(r, NumberStyles.Float, CultureInfo.InvariantCulture) == abs)
+        // On .NET Core 3.0+, Utf8Formatter with default 'G' format uses Grisu3 — shortest round-trip.
+        if (!Utf8Formatter.TryFormat(abs, buffer, out int written))
         {
-            return r;
+            throw new InvalidOperationException("Buffer too small for double formatting.");
         }
 
-        return g17;
+        return written;
+#else
+        // On .NET Framework, ToString("R") can produce too many digits and
+        // doesn't always give the shortest round-trip representation.
+        // Find the shortest representation by trying precisions from 1 upward.
+        // ES6 requires the minimum number of digits such that the value round-trips.
+        string chosen = abs.ToString("G17", CultureInfo.InvariantCulture);
+        for (int precision = 1; precision <= 16; precision++)
+        {
+            string candidate = abs.ToString("G" + precision.ToString(CultureInfo.InvariantCulture), CultureInfo.InvariantCulture);
+
+            // Use TryParse — Parse throws OverflowException on .NET Framework for values > MaxValue
+            if (double.TryParse(candidate, NumberStyles.Float, CultureInfo.InvariantCulture, out double parsed)
+                && parsed == abs)
+            {
+                chosen = candidate;
+                break;
+            }
+        }
+
+        // Copy ASCII chars to byte buffer (number characters are always ASCII)
+        for (int i = 0; i < chosen.Length; i++)
+        {
+            buffer[i] = (byte)chosen[i];
+        }
+
+        return chosen.Length;
 #endif
     }
 
     /// <summary>
-    /// Parses a .NET round-trip string (e.g., "1.23E+5", "0.002", "56") into significant digits
-    /// and the ES6 'n' value (decimal position).
+    /// Parses a round-trip byte representation (e.g., "1.23E+5", "0.002", "56") into
+    /// significant digits and the ES6 'n' value (decimal position).
     /// </summary>
-    private static void ParseRoundTripString(string r, out ReadOnlySpan<char> digits, out int n)
+    private static void ParseRoundTripBytes(
+        ReadOnlySpan<byte> representation,
+        Span<byte> digitBuffer,
+        out int digitCount,
+        out int n)
     {
         // Find optional exponent
-        int eIdx = r.IndexOf('E');
-        ReadOnlySpan<char> mantissaSpan;
+        int eIdx = representation.IndexOf((byte)'E');
+        ReadOnlySpan<byte> mantissa;
         int explicitExp = 0;
 
         if (eIdx >= 0)
         {
-            mantissaSpan = r.AsSpan(0, eIdx);
-#if NETSTANDARD2_0
-            explicitExp = int.Parse(r.Substring(eIdx + 1), CultureInfo.InvariantCulture);
-#else
-            explicitExp = int.Parse(r.AsSpan(eIdx + 1), NumberStyles.Integer, CultureInfo.InvariantCulture);
-#endif
+            mantissa = representation.Slice(0, eIdx);
+            explicitExp = ParseIntFromBytes(representation.Slice(eIdx + 1));
         }
         else
         {
-            mantissaSpan = r.AsSpan();
+            mantissa = representation;
         }
 
         // Find decimal point position in mantissa
-        int dotIdx = mantissaSpan.IndexOf('.');
-        int intPartLen = dotIdx >= 0 ? dotIdx : mantissaSpan.Length;
+        int dotIdx = mantissa.IndexOf((byte)'.');
+        int intPartLen = dotIdx >= 0 ? dotIdx : mantissa.Length;
 
-        // Extract all digit characters (skip '.')
-        Span<char> allDigits = stackalloc char[mantissaSpan.Length];
-        int digitCount = 0;
-        for (int i = 0; i < mantissaSpan.Length; i++)
+        // Extract all digit bytes (skip '.')
+        Span<byte> allDigits = stackalloc byte[mantissa.Length];
+        int allDigitCount = 0;
+        for (int i = 0; i < mantissa.Length; i++)
         {
-            if (mantissaSpan[i] != '.')
+            if (mantissa[i] != (byte)'.')
             {
-                allDigits[digitCount++] = mantissaSpan[i];
+                allDigits[allDigitCount++] = mantissa[i];
             }
         }
 
         // Find first non-zero digit (skip leading zeros from values like "0.002")
         int firstNonZero = 0;
-        while (firstNonZero < digitCount && allDigits[firstNonZero] == '0')
+        while (firstNonZero < allDigitCount && allDigits[firstNonZero] == (byte)'0')
         {
             firstNonZero++;
         }
 
-        digits = new string(allDigits.Slice(firstNonZero, digitCount - firstNonZero).ToArray()).AsSpan();
+        // Copy significant digits to output buffer
+        digitCount = allDigitCount - firstNonZero;
+        allDigits.Slice(firstNonZero, digitCount).CopyTo(digitBuffer);
 
         // n = decimal position in ES6 terms (ECMA-262 §7.1.12.1)
         // n satisfies: significand × 10^(n - k) = value, where k = number of significant digits
         n = intPartLen + explicitExp - firstNonZero;
+    }
+
+    private static int ParseIntFromBytes(ReadOnlySpan<byte> bytes)
+    {
+        bool negative = false;
+        int start = 0;
+
+        if (bytes.Length > 0 && bytes[0] == (byte)'+')
+        {
+            start = 1;
+        }
+        else if (bytes.Length > 0 && bytes[0] == (byte)'-')
+        {
+            negative = true;
+            start = 1;
+        }
+
+        int result = 0;
+        for (int i = start; i < bytes.Length; i++)
+        {
+            result = (result * 10) + (bytes[i] - '0');
+        }
+
+        return negative ? -result : result;
     }
 
     /// <summary>
@@ -143,7 +193,7 @@ internal static class Es6NumberFormatter
     /// </summary>
     private static bool FormatEs6(
         bool negative,
-        ReadOnlySpan<char> digits,
+        ReadOnlySpan<byte> digits,
         int n,
         Span<byte> destination,
         ref int bytesWritten)
@@ -151,7 +201,7 @@ internal static class Es6NumberFormatter
         int k = digits.Length;
 
         // Calculate required size first
-        int required = EstimateSize(negative, digits, n, k);
+        int required = EstimateSize(negative, k, n);
         if (required > destination.Length)
         {
             return false;
@@ -170,7 +220,7 @@ internal static class Es6NumberFormatter
             // e.g., digits="1", n=21 → "100000000000000000000"
             for (int i = 0; i < k; i++)
             {
-                destination[pos++] = (byte)digits[i];
+                destination[pos++] = digits[i];
             }
 
             for (int i = 0; i < n - k; i++)
@@ -184,14 +234,14 @@ internal static class Es6NumberFormatter
             // e.g., digits="45", n=1 → "4.5"
             for (int i = 0; i < n; i++)
             {
-                destination[pos++] = (byte)digits[i];
+                destination[pos++] = digits[i];
             }
 
             destination[pos++] = (byte)'.';
 
             for (int i = n; i < k; i++)
             {
-                destination[pos++] = (byte)digits[i];
+                destination[pos++] = digits[i];
             }
         }
         else if (-6 < n && n <= 0)
@@ -208,7 +258,7 @@ internal static class Es6NumberFormatter
 
             for (int i = 0; i < k; i++)
             {
-                destination[pos++] = (byte)digits[i];
+                destination[pos++] = digits[i];
             }
         }
         else
@@ -216,14 +266,14 @@ internal static class Es6NumberFormatter
             // Cases 4 & 5: exponential notation
             int exp = n - 1;
 
-            destination[pos++] = (byte)digits[0];
+            destination[pos++] = digits[0];
 
             if (k > 1)
             {
                 destination[pos++] = (byte)'.';
                 for (int i = 1; i < k; i++)
                 {
-                    destination[pos++] = (byte)digits[i];
+                    destination[pos++] = digits[i];
                 }
             }
 
@@ -234,7 +284,7 @@ internal static class Es6NumberFormatter
                 destination[pos++] = (byte)'+';
             }
 
-            // Write exponent (may be negative; int.ToString handles the minus sign)
+            // Write exponent
             pos += WriteInt(exp, destination.Slice(pos));
         }
 
@@ -242,7 +292,7 @@ internal static class Es6NumberFormatter
         return true;
     }
 
-    private static int EstimateSize(bool negative, ReadOnlySpan<char> digits, int n, int k)
+    private static int EstimateSize(bool negative, int k, int n)
     {
         int size = negative ? 1 : 0;
 

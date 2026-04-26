@@ -170,35 +170,38 @@ public static class JsonCanonicalizer
                 return;
             }
 
-            // Rent arrays for properties and their sort keys
+            // Rent arrays for properties, UTF-16 sort keys, and sort indices
             JsonProperty<JsonElement>[] properties = ArrayPool<JsonProperty<JsonElement>>.Shared.Rent(count);
-            string[] names = ArrayPool<string>.Shared.Rent(count);
+            ReadOnlyMemory<char>[] utf16Names = ArrayPool<ReadOnlyMemory<char>>.Shared.Rent(count);
+            char[]?[] rentedNameChars = ArrayPool<char[]?>.Shared.Rent(count);
             int[] indices = ArrayPool<int>.Shared.Rent(count);
 
             try
             {
+                // Collect properties and take ownership of UTF-16 name buffers for sorting
                 int i = 0;
                 foreach (JsonProperty<JsonElement> prop in element.EnumerateObject())
                 {
                     properties[i] = prop;
-                    names[i] = prop.Name;
+                    UnescapedUtf16JsonString utf16Name = prop.Utf16NameSpan;
+                    utf16Names[i] = utf16Name.TakeOwnership(out rentedNameChars[i]);
                     indices[i] = i;
                     i++;
                 }
 
-                // Sort indices by property name using UTF-16 ordinal comparison
-                Array.Sort(indices, 0, count, Utf16OrdinalIndexComparer.Create(names));
+                // Sort indices by property name using UTF-16 code unit ordinal comparison
+                Array.Sort(indices, 0, count, Utf16MemoryIndexComparer.Create(utf16Names));
 
                 // Check for duplicate property names (I-JSON requirement)
                 for (int j = 1; j < count; j++)
                 {
-                    if (string.Equals(names[indices[j]], names[indices[j - 1]], StringComparison.Ordinal))
+                    if (utf16Names[indices[j]].Span.SequenceEqual(utf16Names[indices[j - 1]].Span))
                     {
                         throw new InvalidOperationException("Duplicate property name detected. JCS requires I-JSON compliant input (RFC 7493).");
                     }
                 }
 
-                // Emit properties in sorted order
+                // Emit properties in sorted order — write names from UTF-8 source
                 for (int j = 0; j < count; j++)
                 {
                     if (j > 0)
@@ -207,15 +210,29 @@ public static class JsonCanonicalizer
                     }
 
                     int idx = indices[j];
-                    this.WriteCanonicalString(names[idx]);
+
+                    // Write property name as canonical UTF-8
+                    using UnescapedUtf8JsonString utf8Name = properties[idx].Utf8NameSpan;
+                    this.WriteCanonicalUtf8String(utf8Name.Span);
                     this.WriteByte((byte)':');
                     this.WriteElement(properties[idx].Value, depth + 1);
                 }
             }
             finally
             {
+                // Return rented char arrays from TakeOwnership
+                for (int j = 0; j < count; j++)
+                {
+                    if (rentedNameChars[j] != null)
+                    {
+                        rentedNameChars[j]!.AsSpan(0, utf16Names[j].Length).Clear();
+                        ArrayPool<char>.Shared.Return(rentedNameChars[j]!);
+                    }
+                }
+
                 ArrayPool<JsonProperty<JsonElement>>.Shared.Return(properties, clearArray: true);
-                ArrayPool<string>.Shared.Return(names, clearArray: true);
+                ArrayPool<ReadOnlyMemory<char>>.Shared.Return(utf16Names, clearArray: true);
+                ArrayPool<char[]?>.Shared.Return(rentedNameChars, clearArray: true);
                 ArrayPool<int>.Shared.Return(indices);
             }
 
@@ -243,9 +260,9 @@ public static class JsonCanonicalizer
 
         private void WriteStringValue(in JsonElement element)
         {
-            // Get the unescaped string value and re-escape per JCS rules
-            string? value = element.GetString();
-            this.WriteCanonicalString(value ?? string.Empty);
+            // Get the unescaped UTF-8 bytes and re-escape per JCS rules
+            using UnescapedUtf8JsonString utf8Value = element.GetUtf8String();
+            this.WriteCanonicalUtf8String(utf8Value.Span);
         }
 
         private void WriteNumber(in JsonElement element)
@@ -278,7 +295,7 @@ public static class JsonCanonicalizer
         }
 
         /// <summary>
-        /// Writes a string with JCS canonical escaping.
+        /// Writes a UTF-8 byte span with JCS canonical escaping.
         /// </summary>
         /// <remarks>
         /// RFC 8785 §3.2.2.2 escaping rules:
@@ -287,66 +304,60 @@ public static class JsonCanonicalizer
         /// - <c>\uXXXX</c> (lowercase hex) for remaining control characters (U+0000–U+001F).
         /// - All other characters are written literally as UTF-8.
         /// </remarks>
-        private void WriteCanonicalString(string value)
+        private void WriteCanonicalUtf8String(ReadOnlySpan<byte> utf8Value)
         {
             this.WriteByte((byte)'"');
 
-            for (int i = 0; i < value.Length; i++)
+            for (int i = 0; i < utf8Value.Length; i++)
             {
-                char c = value[i];
+                byte b = utf8Value[i];
 
-                switch (c)
+                switch (b)
                 {
-                    case '"':
+                    case (byte)'"':
                         this.WriteByte((byte)'\\');
                         this.WriteByte((byte)'"');
                         break;
-                    case '\\':
+                    case (byte)'\\':
                         this.WriteByte((byte)'\\');
                         this.WriteByte((byte)'\\');
                         break;
-                    case '\b':
+                    case 0x08: // \b
                         this.WriteByte((byte)'\\');
                         this.WriteByte((byte)'b');
                         break;
-                    case '\t':
+                    case 0x09: // \t
                         this.WriteByte((byte)'\\');
                         this.WriteByte((byte)'t');
                         break;
-                    case '\n':
+                    case 0x0A: // \n
                         this.WriteByte((byte)'\\');
                         this.WriteByte((byte)'n');
                         break;
-                    case '\f':
+                    case 0x0C: // \f
                         this.WriteByte((byte)'\\');
                         this.WriteByte((byte)'f');
                         break;
-                    case '\r':
+                    case 0x0D: // \r
                         this.WriteByte((byte)'\\');
                         this.WriteByte((byte)'r');
                         break;
                     default:
-                        if (c < ' ')
+                        if (b < 0x20)
                         {
                             // Control chars U+0000-U+001F (excluding named ones above): \uXXXX
                             this.WriteByte((byte)'\\');
                             this.WriteByte((byte)'u');
-                            this.WriteByte((byte)HexDigitLower((c >> 12) & 0xF));
-                            this.WriteByte((byte)HexDigitLower((c >> 8) & 0xF));
-                            this.WriteByte((byte)HexDigitLower((c >> 4) & 0xF));
-                            this.WriteByte((byte)HexDigitLower(c & 0xF));
-                        }
-                        else if (char.IsHighSurrogate(c) && i + 1 < value.Length && char.IsLowSurrogate(value[i + 1]))
-                        {
-                            // Supplementary character: write as UTF-8 (4 bytes)
-                            int codePoint = char.ConvertToUtf32(c, value[i + 1]);
-                            this.WriteUtf8CodePoint(codePoint);
-                            i++; // skip low surrogate
+                            this.WriteByte((byte)'0');
+                            this.WriteByte((byte)'0');
+                            this.WriteByte((byte)HexDigitLower((b >> 4) & 0xF));
+                            this.WriteByte((byte)HexDigitLower(b & 0xF));
                         }
                         else
                         {
-                            // BMP character: write as UTF-8
-                            this.WriteUtf8Char(c);
+                            // All other bytes (ASCII printable, UTF-8 continuation/lead bytes)
+                            // pass through as-is — they are valid UTF-8 and need no escaping.
+                            this.WriteByte(b);
                         }
 
                         break;
@@ -394,51 +405,6 @@ public static class JsonCanonicalizer
             this.position += bytes.Length;
         }
 
-        private void WriteUtf8Char(char c)
-        {
-            if (c < 0x80)
-            {
-                this.WriteByte((byte)c);
-            }
-            else if (c < 0x800)
-            {
-                this.WriteByte((byte)(0xC0 | (c >> 6)));
-                this.WriteByte((byte)(0x80 | (c & 0x3F)));
-            }
-            else
-            {
-                this.WriteByte((byte)(0xE0 | (c >> 12)));
-                this.WriteByte((byte)(0x80 | ((c >> 6) & 0x3F)));
-                this.WriteByte((byte)(0x80 | (c & 0x3F)));
-            }
-        }
-
-        private void WriteUtf8CodePoint(int codePoint)
-        {
-            if (codePoint < 0x80)
-            {
-                this.WriteByte((byte)codePoint);
-            }
-            else if (codePoint < 0x800)
-            {
-                this.WriteByte((byte)(0xC0 | (codePoint >> 6)));
-                this.WriteByte((byte)(0x80 | (codePoint & 0x3F)));
-            }
-            else if (codePoint < 0x10000)
-            {
-                this.WriteByte((byte)(0xE0 | (codePoint >> 12)));
-                this.WriteByte((byte)(0x80 | ((codePoint >> 6) & 0x3F)));
-                this.WriteByte((byte)(0x80 | (codePoint & 0x3F)));
-            }
-            else
-            {
-                this.WriteByte((byte)(0xF0 | (codePoint >> 18)));
-                this.WriteByte((byte)(0x80 | ((codePoint >> 12) & 0x3F)));
-                this.WriteByte((byte)(0x80 | ((codePoint >> 6) & 0x3F)));
-                this.WriteByte((byte)(0x80 | (codePoint & 0x3F)));
-            }
-        }
-
         private static char HexDigitLower(int nibble)
         {
             return (char)(nibble < 10 ? '0' + nibble : 'a' + nibble - 10);
@@ -446,19 +412,19 @@ public static class JsonCanonicalizer
     }
 
     /// <summary>
-    /// Compares indices by their corresponding string names using ordinal (UTF-16 code unit) comparison.
+    /// Compares indices by their corresponding UTF-16 char memory using ordinal comparison.
     /// </summary>
-    private sealed class Utf16OrdinalIndexComparer : IComparer<int>
+    private sealed class Utf16MemoryIndexComparer : IComparer<int>
     {
-        private readonly string[] names;
+        private readonly ReadOnlyMemory<char>[] names;
 
-        private Utf16OrdinalIndexComparer(string[] names)
+        private Utf16MemoryIndexComparer(ReadOnlyMemory<char>[] names)
         {
             this.names = names;
         }
 
-        public static Utf16OrdinalIndexComparer Create(string[] names) => new(names);
+        public static Utf16MemoryIndexComparer Create(ReadOnlyMemory<char>[] names) => new(names);
 
-        public int Compare(int x, int y) => string.CompareOrdinal(this.names[x], this.names[y]);
+        public int Compare(int x, int y) => this.names[x].Span.SequenceCompareTo(this.names[y].Span);
     }
 }
