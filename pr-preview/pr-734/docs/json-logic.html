@@ -882,7 +882,7 @@ JsonLogicEvaluator evaluator = new(customOps);
 </tr>
 </tbody>
 </table>
-<p>When implementing operators that do arithmetic, prefer the double fast path and fall back to <code>BigNumber</code> for arbitrary-precision values:</p>
+<p>When implementing operators that do arithmetic, prefer the double fast path and fall back to <code>BigNumber</code> for arbitrary-precision values. The following example shows how the built-in <code>+</code> operator is implemented internally — custom operators can follow the same pattern:</p>
 <pre><code class="language-csharp">using Corvus.Numerics;
 
 public sealed class AddCompiler : IOperatorCompiler
@@ -1231,153 +1231,153 @@ Console.WriteLine(result.GetRawText()); // safe
 <tbody>
 <tr>
 <td>Simple var</td>
-<td style="text-align: right;">64</td>
-<td style="text-align: right;">18</td>
-<td style="text-align: right;">16</td>
-<td style="text-align: right;">0.29</td>
+<td style="text-align: right;">136</td>
+<td style="text-align: right;">38</td>
+<td style="text-align: right;">34</td>
+<td style="text-align: right;">0.28</td>
 <td style="text-align: right;">0.25</td>
 </tr>
 <tr>
 <td>Comparison</td>
-<td style="text-align: right;">223</td>
-<td style="text-align: right;">65</td>
-<td style="text-align: right;">34</td>
-<td style="text-align: right;">0.29</td>
-<td style="text-align: right;">0.15</td>
+<td style="text-align: right;">373</td>
+<td style="text-align: right;">78</td>
+<td style="text-align: right;">35</td>
+<td style="text-align: right;">0.21</td>
+<td style="text-align: right;">0.09</td>
 </tr>
 <tr>
 <td>Arithmetic</td>
-<td style="text-align: right;">332</td>
-<td style="text-align: right;">113</td>
-<td style="text-align: right;">98</td>
-<td style="text-align: right;">0.34</td>
+<td style="text-align: right;">663</td>
+<td style="text-align: right;">202</td>
+<td style="text-align: right;">181</td>
 <td style="text-align: right;">0.30</td>
+<td style="text-align: right;">0.27</td>
 </tr>
 <tr>
 <td>String cat</td>
-<td style="text-align: right;">244</td>
-<td style="text-align: right;">129</td>
-<td style="text-align: right;">115</td>
-<td style="text-align: right;">0.53</td>
-<td style="text-align: right;">0.47</td>
+<td style="text-align: right;">356</td>
+<td style="text-align: right;">148</td>
+<td style="text-align: right;">136</td>
+<td style="text-align: right;">0.42</td>
+<td style="text-align: right;">0.38</td>
 </tr>
 <tr>
 <td>Substr</td>
-<td style="text-align: right;">305</td>
-<td style="text-align: right;">94</td>
-<td style="text-align: right;">93</td>
-<td style="text-align: right;">0.31</td>
-<td style="text-align: right;">0.30</td>
+<td style="text-align: right;">398</td>
+<td style="text-align: right;">113</td>
+<td style="text-align: right;">108</td>
+<td style="text-align: right;">0.28</td>
+<td style="text-align: right;">0.27</td>
 </tr>
 <tr>
 <td>Min/max</td>
-<td style="text-align: right;">48</td>
-<td style="text-align: right;">668</td>
-<td style="text-align: right;">405</td>
-<td style="text-align: right;"><strong>14.0</strong></td>
-<td style="text-align: right;"><strong>8.5</strong></td>
+<td style="text-align: right;">34</td>
+<td style="text-align: right;">327</td>
+<td style="text-align: right;">386</td>
+<td style="text-align: right;"><strong>9.75</strong></td>
+<td style="text-align: right;"><strong>11.5</strong></td>
 </tr>
 <tr>
 <td>In (array)</td>
-<td style="text-align: right;">457</td>
-<td style="text-align: right;">115</td>
-<td style="text-align: right;">106</td>
-<td style="text-align: right;">0.25</td>
+<td style="text-align: right;">513</td>
+<td style="text-align: right;">117</td>
+<td style="text-align: right;">107</td>
 <td style="text-align: right;">0.23</td>
+<td style="text-align: right;">0.21</td>
 </tr>
 <tr>
 <td>Logic short-circuit</td>
-<td style="text-align: right;">620</td>
-<td style="text-align: right;">306</td>
-<td style="text-align: right;">226</td>
-<td style="text-align: right;">0.49</td>
-<td style="text-align: right;">0.36</td>
+<td style="text-align: right;">648</td>
+<td style="text-align: right;">165</td>
+<td style="text-align: right;">110</td>
+<td style="text-align: right;">0.25</td>
+<td style="text-align: right;">0.17</td>
 </tr>
 <tr>
 <td>Quantifier (all)</td>
-<td style="text-align: right;">1,179</td>
-<td style="text-align: right;">227</td>
-<td style="text-align: right;">190</td>
-<td style="text-align: right;">0.19</td>
+<td style="text-align: right;">2,488</td>
+<td style="text-align: right;">453</td>
+<td style="text-align: right;">388</td>
+<td style="text-align: right;">0.18</td>
 <td style="text-align: right;">0.16</td>
 </tr>
 <tr>
 <td>Complex rule</td>
-<td style="text-align: right;">828</td>
+<td style="text-align: right;">903</td>
 <td style="text-align: right;">219</td>
-<td style="text-align: right;">160</td>
-<td style="text-align: right;">0.26</td>
-<td style="text-align: right;">0.19</td>
+<td style="text-align: right;">165</td>
+<td style="text-align: right;">0.24</td>
+<td style="text-align: right;">0.18</td>
 </tr>
 <tr>
 <td>Deep nested</td>
-<td style="text-align: right;">4,936</td>
-<td style="text-align: right;">110</td>
-<td style="text-align: right;">103</td>
+<td style="text-align: right;">5,242</td>
+<td style="text-align: right;">106</td>
+<td style="text-align: right;">94</td>
 <td style="text-align: right;">0.02</td>
 <td style="text-align: right;">0.02</td>
 </tr>
 <tr>
 <td>Missing data</td>
-<td style="text-align: right;">1,361</td>
-<td style="text-align: right;">218</td>
-<td style="text-align: right;">184</td>
-<td style="text-align: right;">0.16</td>
-<td style="text-align: right;">0.14</td>
+<td style="text-align: right;">1,782</td>
+<td style="text-align: right;">474</td>
+<td style="text-align: right;">358</td>
+<td style="text-align: right;">0.27</td>
+<td style="text-align: right;">0.20</td>
 </tr>
 <tr>
 <td>Merge (constant)</td>
-<td style="text-align: right;">1,725</td>
-<td style="text-align: right;">390</td>
-<td style="text-align: right;">12</td>
-<td style="text-align: right;">0.23</td>
-<td style="text-align: right;"><strong>0.007</strong></td>
+<td style="text-align: right;">1,185</td>
+<td style="text-align: right;">170</td>
+<td style="text-align: right;">7</td>
+<td style="text-align: right;">0.14</td>
+<td style="text-align: right;"><strong>0.006</strong></td>
 </tr>
 <tr>
 <td>Merge (mixed)</td>
-<td style="text-align: right;">1,604</td>
-<td style="text-align: right;">462</td>
-<td style="text-align: right;">509</td>
-<td style="text-align: right;">0.29</td>
-<td style="text-align: right;">0.32</td>
-</tr>
-<tr>
-<td>Reduce (strings)</td>
-<td style="text-align: right;">2,640</td>
-<td style="text-align: right;">2,058</td>
-<td style="text-align: right;">2,811</td>
-<td style="text-align: right;">0.78</td>
-<td style="text-align: right;">1.06</td>
-</tr>
-<tr>
-<td>Array filter</td>
-<td style="text-align: right;">1,839</td>
-<td style="text-align: right;">758</td>
-<td style="text-align: right;">386</td>
-<td style="text-align: right;">0.41</td>
+<td style="text-align: right;">1,231</td>
+<td style="text-align: right;">242</td>
+<td style="text-align: right;">254</td>
+<td style="text-align: right;">0.20</td>
 <td style="text-align: right;">0.21</td>
 </tr>
 <tr>
+<td>Reduce (strings)</td>
+<td style="text-align: right;">5,699</td>
+<td style="text-align: right;">4,015</td>
+<td style="text-align: right;">5,239</td>
+<td style="text-align: right;">0.71</td>
+<td style="text-align: right;">0.92</td>
+</tr>
+<tr>
+<td>Array filter</td>
+<td style="text-align: right;">3,741</td>
+<td style="text-align: right;">804</td>
+<td style="text-align: right;">672</td>
+<td style="text-align: right;">0.22</td>
+<td style="text-align: right;">0.18</td>
+</tr>
+<tr>
 <td>Object filter</td>
-<td style="text-align: right;">2,359</td>
-<td style="text-align: right;">644</td>
-<td style="text-align: right;">543</td>
-<td style="text-align: right;">0.27</td>
-<td style="text-align: right;">0.23</td>
+<td style="text-align: right;">4,890</td>
+<td style="text-align: right;">1,201</td>
+<td style="text-align: right;">969</td>
+<td style="text-align: right;">0.25</td>
+<td style="text-align: right;">0.20</td>
 </tr>
 <tr>
 <td>Map (strings)</td>
-<td style="text-align: right;">1,726</td>
-<td style="text-align: right;">735</td>
-<td style="text-align: right;">710</td>
-<td style="text-align: right;">0.43</td>
-<td style="text-align: right;">0.41</td>
+<td style="text-align: right;">1,108</td>
+<td style="text-align: right;">366</td>
+<td style="text-align: right;">352</td>
+<td style="text-align: right;">0.33</td>
+<td style="text-align: right;">0.32</td>
 </tr>
 <tr>
 <td>Array map/reduce</td>
-<td style="text-align: right;">5,227</td>
-<td style="text-align: right;">563</td>
-<td style="text-align: right;">278</td>
+<td style="text-align: right;">10,017</td>
+<td style="text-align: right;">1,146</td>
+<td style="text-align: right;">536</td>
 <td style="text-align: right;">0.11</td>
 <td style="text-align: right;">0.05</td>
 </tr>
@@ -1469,38 +1469,38 @@ Console.WriteLine(result.GetRawText()); // safe
 <tr>
 <td>Merge (constant)</td>
 <td style="text-align: right;">4,376</td>
-<td style="text-align: right;">120</td>
+<td style="text-align: right;">136</td>
 <td style="text-align: right;">0</td>
 </tr>
 <tr>
 <td>Merge (mixed)</td>
 <td style="text-align: right;">3,800</td>
-<td style="text-align: right;">120</td>
-<td style="text-align: right;">120</td>
+<td style="text-align: right;">136</td>
+<td style="text-align: right;">136</td>
 </tr>
 <tr>
 <td>Reduce (strings)</td>
 <td style="text-align: right;">9,368</td>
-<td style="text-align: right;">120</td>
-<td style="text-align: right;">120</td>
+<td style="text-align: right;">136</td>
+<td style="text-align: right;">136</td>
 </tr>
 <tr>
 <td>Array filter</td>
 <td style="text-align: right;">4,032</td>
-<td style="text-align: right;">120</td>
-<td style="text-align: right;">120</td>
+<td style="text-align: right;">136</td>
+<td style="text-align: right;">136</td>
 </tr>
 <tr>
 <td>Object filter</td>
 <td style="text-align: right;">6,280</td>
-<td style="text-align: right;">120</td>
-<td style="text-align: right;">120</td>
+<td style="text-align: right;">136</td>
+<td style="text-align: right;">136</td>
 </tr>
 <tr>
 <td>Map (strings)</td>
 <td style="text-align: right;">2,912</td>
-<td style="text-align: right;">120</td>
-<td style="text-align: right;">120</td>
+<td style="text-align: right;">136</td>
+<td style="text-align: right;">136</td>
 </tr>
 <tr>
 <td>Array map/reduce</td>
@@ -1512,11 +1512,11 @@ Console.WriteLine(result.GetRawText()); // safe
 </table>
 <h4 id="summary">Summary</h4>
 <ul>
-<li><strong>RT is faster than JE in 18/19 scenarios</strong> (0.02×–0.78× JE), with a geometric mean of <strong>0.22× JE</strong> across those 18.</li>
-<li><strong>CG is faster than JE in 17/19 scenarios</strong> (0.007×–0.47× JE), with a geometric mean of <strong>0.16× JE</strong> across those 17.</li>
+<li><strong>RT is faster than JE in 18/19 scenarios</strong> (0.02×–0.71× JE), with a geometric mean of <strong>0.21× JE</strong> across those 18.</li>
+<li><strong>CG is faster than JE in 18/19 scenarios</strong> (0.006×–0.92× JE), with a geometric mean of <strong>0.16× JE</strong> across those 18.</li>
 <li><strong>Min/max</strong> is the notable outlier where JE is faster: JE's <code>JsonNode</code> stores pre-parsed <code>double</code> values, while Corvus's <code>JsonElement</code> re-parses UTF-8 bytes to <code>double</code> on each call. Both RT and CG still allocate 0 B vs JE's 136 B.</li>
-<li><strong>Reduce (strings)</strong> is at parity for CG (1.06× JE); RT is faster at 0.78×.</li>
-<li><strong>Memory</strong>: RT allocates 0 B in 13/19 scenarios, CG in 14/19. The remaining scenarios allocate exactly 120 B (a single <code>ElementBuffer</code> array). JE allocates 136–12,856 B in every scenario.</li>
+<li><strong>Reduce (strings)</strong> is the closest scenario at 0.71× (RT) and 0.92× (CG).</li>
+<li><strong>Memory</strong>: RT allocates 0 B in 13/19 scenarios, CG in 14/19. The remaining scenarios allocate exactly 136 B (a single <code>JsonDocumentBuilder</code>). JE allocates 136–12,856 B in every scenario.</li>
 <li><strong>Merge (constant)</strong> showcases compile-time constant folding: CG evaluates at 12 ns (0.007× JE) by pre-computing the entire merged array as a static field.</li>
 </ul>
         </div>

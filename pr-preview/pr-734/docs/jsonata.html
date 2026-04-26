@@ -270,7 +270,7 @@
 </tr>
 </tbody>
 </table>
-<p>The source generator and CLI tool produce optimized static C# that eliminates delegate dispatch. Benchmarks show the interpreted evaluator is <strong>up to 8× faster</strong> than <a href="https://github.com/mikhail-barg/jsonata.net.native">Jsonata.Net.Native</a> (the .NET reference implementation) with <strong>90–100% less memory allocation</strong>, and code-generated evaluators can be <strong>up to 12× faster</strong>.</p>
+<p>The source generator and CLI tool produce optimized static C# that eliminates delegate dispatch. Benchmarks show the interpreted evaluator is <strong>up to 9× faster</strong> than <a href="https://github.com/mikhail-barg/jsonata.net.native">Jsonata.Net.Native</a> (the .NET reference implementation) with <strong>90–100% less memory allocation</strong>, and code-generated evaluators can be <strong>up to 13× faster</strong>.</p>
 <blockquote>
 <p><strong>Choosing between JSONata and JsonLogic:</strong> JSONata is ideal for <strong>querying, reshaping, and transforming</strong> JSON data — path navigation, filtering, object construction, and string manipulation. If you need <strong>declarative business rules</strong> — branching logic, predicates, and simple calculations expressed as JSON — see <a href="/Corvus.JsonSchema/pr-preview/pr-734/docs/json-logic.html">JsonLogic</a> instead.</p>
 </blockquote>
@@ -1361,10 +1361,10 @@ Console.WriteLine(result.GetRawText()); // safe
 </tbody>
 </table>
 <h3 id="benchmark-summary">Benchmark summary</h3>
-<p>Across 95 scenarios, the Corvus implementation consistently outperforms <a href="https://github.com/mikhail-barg/jsonata.net.native">Jsonata.Net.Native</a> (the reference .NET implementation):</p>
+<p>Across 95 scenarios, the Corvus implementation outperforms <a href="https://github.com/mikhail-barg/jsonata.net.native">Jsonata.Net.Native</a> (the reference .NET implementation) in all but one scenario (<code>$millis</code>, where evaluator framework overhead exceeds the trivial function cost):</p>
 <ul>
-<li><strong>Interpreted runtime:</strong> 1.2–8× faster with 90–100% less memory allocation</li>
-<li><strong>Code-generated:</strong> 1.5–12× faster with near-zero allocation (0–200 B vs 1–12 KB)</li>
+<li><strong>Interpreted runtime:</strong> 1.1–9× faster with 90–100% less memory allocation</li>
+<li><strong>Code-generated:</strong> 1.1–13× faster with near-zero allocation (0–216 B vs 1–12 KB)</li>
 <li><strong>Zero allocation</strong> in 70+ of 95 scenarios for the interpreted evaluator</li>
 <li><strong>Constant folding</strong> by the source generator reduces pure arithmetic and constant <code>$zip</code> to sub-nanosecond evaluation</li>
 </ul>
@@ -1389,22 +1389,22 @@ Console.WriteLine(result.GetRawText()); // safe
 <tbody>
 <tr>
 <td>Runtime (interpreted)</td>
-<td style="text-align: right;">1,658 ns</td>
-<td style="text-align: right;">960 B</td>
+<td style="text-align: right;">2,113 ns</td>
+<td style="text-align: right;">976 B</td>
 </tr>
 <tr>
 <td>Runtime (code-gen)</td>
-<td style="text-align: right;">1,585 ns</td>
-<td style="text-align: right;">240 B</td>
+<td style="text-align: right;">1,947 ns</td>
+<td style="text-align: right;">272 B</td>
 </tr>
 <tr>
 <td>Jsonata.Net.Native</td>
-<td style="text-align: right;">3,032 ns</td>
+<td style="text-align: right;">4,463 ns</td>
 <td style="text-align: right;">9,920 B</td>
 </tr>
 </tbody>
 </table>
-<p>The runtime evaluator is <strong>1.8× faster</strong> with <strong>90% less allocation</strong> than the reference implementation. Code-gen is <strong>1.9× faster</strong> with 97% less allocation (240 B vs 9,920 B).</p>
+<p>The runtime evaluator is <strong>2.1× faster</strong> with <strong>90% less allocation</strong> than the reference implementation. Code-gen is <strong>2.3× faster</strong> with 97% less allocation (272 B vs 9,920 B).</p>
 <p><strong>Cold start</strong> (fresh compile + evaluate):</p>
 <table>
 <thead>
@@ -1417,17 +1417,17 @@ Console.WriteLine(result.GetRawText()); // safe
 <tbody>
 <tr>
 <td>Runtime (interpreted)</td>
-<td style="text-align: right;">4,593 ns</td>
-<td style="text-align: right;">8,072 B</td>
+<td style="text-align: right;">5,747 ns</td>
+<td style="text-align: right;">8,104 B</td>
 </tr>
 <tr>
 <td>Jsonata.Net.Native</td>
-<td style="text-align: right;">6,235 ns</td>
+<td style="text-align: right;">9,174 ns</td>
 <td style="text-align: right;">19,296 B</td>
 </tr>
 </tbody>
 </table>
-<p>Cold start runtime is 1.4× faster than native, and Corvus allocates 58% less memory.</p>
+<p>Cold start runtime is 1.6× faster than native, and Corvus allocates 58% less memory.</p>
 <h4 id="detailed-results">Detailed results</h4>
 <h5 id="property-navigation">Property navigation</h5>
 <table>
@@ -1447,29 +1447,29 @@ Console.WriteLine(result.GetRawText()); // safe
 <tr>
 <td>Deep path</td>
 <td><code>Account.Order.Product.Price</code></td>
-<td style="text-align: right;">650 ns</td>
-<td style="text-align: right;">458 ns</td>
-<td style="text-align: right;">544 ns</td>
-<td style="text-align: right;">120 B</td>
-<td style="text-align: right;">120 B</td>
+<td style="text-align: right;">772 ns</td>
+<td style="text-align: right;">559 ns</td>
+<td style="text-align: right;">840 ns</td>
+<td style="text-align: right;">136 B</td>
+<td style="text-align: right;">136 B</td>
 <td style="text-align: right;">1,816 B</td>
 </tr>
 <tr>
 <td>Flatten path</td>
 <td><code>Account.Order.Product[]</code></td>
-<td style="text-align: right;">630 ns</td>
-<td style="text-align: right;">432 ns</td>
-<td style="text-align: right;">399 ns</td>
-<td style="text-align: right;">120 B</td>
-<td style="text-align: right;">120 B</td>
+<td style="text-align: right;">439 ns</td>
+<td style="text-align: right;">515 ns</td>
+<td style="text-align: right;">560 ns</td>
+<td style="text-align: right;">136 B</td>
+<td style="text-align: right;">136 B</td>
 <td style="text-align: right;">1,520 B</td>
 </tr>
 <tr>
 <td>Quoted property</td>
 <td><code>Account.`Account Name`</code></td>
-<td style="text-align: right;">60 ns</td>
-<td style="text-align: right;">47 ns</td>
-<td style="text-align: right;">214 ns</td>
+<td style="text-align: right;">89 ns</td>
+<td style="text-align: right;">69 ns</td>
+<td style="text-align: right;">327 ns</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">1,024 B</td>
@@ -1477,9 +1477,9 @@ Console.WriteLine(result.GetRawText()); // safe
 <tr>
 <td>Array index</td>
 <td><code>Account.Order[0].OrderID</code></td>
-<td style="text-align: right;">87 ns</td>
-<td style="text-align: right;">79 ns</td>
-<td style="text-align: right;">317 ns</td>
+<td style="text-align: right;">130 ns</td>
+<td style="text-align: right;">125 ns</td>
+<td style="text-align: right;">517 ns</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">1,408 B</td>
@@ -1487,9 +1487,9 @@ Console.WriteLine(result.GetRawText()); // safe
 <tr>
 <td>5-level path</td>
 <td><code>a.b.c.d.e.value</code></td>
-<td style="text-align: right;">128 ns</td>
-<td style="text-align: right;">152 ns</td>
-<td style="text-align: right;">480 ns</td>
+<td style="text-align: right;">158 ns</td>
+<td style="text-align: right;">189 ns</td>
+<td style="text-align: right;">668 ns</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">1,936 B</td>
@@ -1497,16 +1497,16 @@ Console.WriteLine(result.GetRawText()); // safe
 <tr>
 <td>10-level path</td>
 <td><code>a.b.c.d.e.f.g.h.i.j.value</code></td>
-<td style="text-align: right;">220 ns</td>
-<td style="text-align: right;">249 ns</td>
-<td style="text-align: right;">701 ns</td>
+<td style="text-align: right;">298 ns</td>
+<td style="text-align: right;">312 ns</td>
+<td style="text-align: right;">1,095 ns</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">3,328 B</td>
 </tr>
 </tbody>
 </table>
-<p>The runtime evaluator is <strong>3.5–4.5× faster</strong> for simple property access and <strong>2–3.8× faster</strong> for deep navigation, with zero allocation. Flatten path (<code>Product[]</code>) through nested arrays is slower due to document model overhead, but uses <strong>92% less memory</strong>. Code-gen is <strong>3–5× faster</strong> for most navigation patterns.</p>
+<p>The runtime evaluator is <strong>3.7–4.0× faster</strong> for simple property access (quoted names, array indices) and <strong>3.7–4.2× faster</strong> for deep multi-level navigation, with zero allocation for paths of 4+ levels. Nested-array traversal (deep path, flatten) is <strong>1.1–1.3× faster</strong> with <strong>91% less memory</strong>. Code-gen is <strong>3.5–4.7× faster</strong> for simple and deep navigation patterns.</p>
 <h5 id="arithmetic">Arithmetic</h5>
 <table>
 <thead>
@@ -1525,9 +1525,9 @@ Console.WriteLine(result.GetRawText()); // safe
 <tr>
 <td>Sum-product</td>
 <td><code>$sum(Account.Order.Product.(Price * Quantity))</code></td>
-<td style="text-align: right;">1,168 ns</td>
-<td style="text-align: right;">598 ns</td>
-<td style="text-align: right;">1,275 ns</td>
+<td style="text-align: right;">1,234 ns</td>
+<td style="text-align: right;">417 ns</td>
+<td style="text-align: right;">1,603 ns</td>
 <td style="text-align: right;">32 B</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">6,480 B</td>
@@ -1535,26 +1535,26 @@ Console.WriteLine(result.GetRawText()); // safe
 <tr>
 <td>Map arithmetic</td>
 <td><code>Account.Order.Product.(Price * Quantity)</code></td>
-<td style="text-align: right;">1,058 ns</td>
-<td style="text-align: right;">800 ns</td>
-<td style="text-align: right;">1,016 ns</td>
-<td style="text-align: right;">152 B</td>
-<td style="text-align: right;">120 B</td>
+<td style="text-align: right;">1,101 ns</td>
+<td style="text-align: right;">810 ns</td>
+<td style="text-align: right;">1,324 ns</td>
+<td style="text-align: right;">168 B</td>
+<td style="text-align: right;">136 B</td>
 <td style="text-align: right;">5,536 B</td>
 </tr>
 <tr>
 <td>Pure arithmetic</td>
 <td><code>1 + 2 * 3 - 4 / 2 + 10 % 3</code></td>
-<td style="text-align: right;">186 ns</td>
-<td style="text-align: right;">0.5 ns</td>
-<td style="text-align: right;">218 ns</td>
+<td style="text-align: right;">185 ns</td>
+<td style="text-align: right;">0.6 ns</td>
+<td style="text-align: right;">300 ns</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">1,352 B</td>
 </tr>
 </tbody>
 </table>
-<p>Code-gen achieves <strong>2× speedup</strong> over the reference implementation for arithmetic with <strong>zero allocation</strong>. Pure arithmetic is <strong>constant-folded at compile time</strong> by the source generator (0.5 ns), achieving effectively infinite speedup. Map arithmetic shows runtime at parity with native while using <strong>97% less memory</strong>.</p>
+<p>Code-gen achieves <strong>1.6–3.8× speedup</strong> over the reference implementation for arithmetic with <strong>zero or minimal allocation</strong>. Pure arithmetic is <strong>constant-folded at compile time</strong> by the source generator (0.6 ns), achieving effectively infinite speedup. The runtime evaluator is <strong>1.2–1.3× faster</strong> than native for both sum-product and map arithmetic, using <strong>97% less memory</strong>.</p>
 <h5 id="math-functions">Math functions</h5>
 <table>
 <thead>
@@ -1573,9 +1573,9 @@ Console.WriteLine(result.GetRawText()); // safe
 <tr>
 <td>$abs</td>
 <td><code>$abs(Account.Order[0].Product[0].Price - 50)</code></td>
-<td style="text-align: right;">601 ns</td>
-<td style="text-align: right;">529 ns</td>
-<td style="text-align: right;">835 ns</td>
+<td style="text-align: right;">834 ns</td>
+<td style="text-align: right;">736 ns</td>
+<td style="text-align: right;">1,200 ns</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">3,040 B</td>
@@ -1583,9 +1583,9 @@ Console.WriteLine(result.GetRawText()); // safe
 <tr>
 <td>$ceil</td>
 <td><code>$ceil(Account.Order[0].Product[0].Price)</code></td>
-<td style="text-align: right;">274 ns</td>
-<td style="text-align: right;">238 ns</td>
-<td style="text-align: right;">777 ns</td>
+<td style="text-align: right;">364 ns</td>
+<td style="text-align: right;">315 ns</td>
+<td style="text-align: right;">1,132 ns</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">2,888 B</td>
@@ -1593,9 +1593,9 @@ Console.WriteLine(result.GetRawText()); // safe
 <tr>
 <td>$floor</td>
 <td><code>$floor(Account.Order[0].Product[0].Price)</code></td>
-<td style="text-align: right;">270 ns</td>
-<td style="text-align: right;">229 ns</td>
-<td style="text-align: right;">745 ns</td>
+<td style="text-align: right;">368 ns</td>
+<td style="text-align: right;">317 ns</td>
+<td style="text-align: right;">1,039 ns</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">2,888 B</td>
@@ -1603,9 +1603,9 @@ Console.WriteLine(result.GetRawText()); // safe
 <tr>
 <td>$power</td>
 <td><code>$power(Account.Order[0].Product[0].Price, 2)</code></td>
-<td style="text-align: right;">483 ns</td>
-<td style="text-align: right;">343 ns</td>
-<td style="text-align: right;">934 ns</td>
+<td style="text-align: right;">641 ns</td>
+<td style="text-align: right;">477 ns</td>
+<td style="text-align: right;">1,361 ns</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">3,200 B</td>
@@ -1613,9 +1613,9 @@ Console.WriteLine(result.GetRawText()); // safe
 <tr>
 <td>$round</td>
 <td><code>$round(Account.Order[0].Product[0].Price, 1)</code></td>
-<td style="text-align: right;">461 ns</td>
-<td style="text-align: right;">298 ns</td>
-<td style="text-align: right;">936 ns</td>
+<td style="text-align: right;">610 ns</td>
+<td style="text-align: right;">428 ns</td>
+<td style="text-align: right;">1,318 ns</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">3,224 B</td>
@@ -1623,16 +1623,16 @@ Console.WriteLine(result.GetRawText()); // safe
 <tr>
 <td>$sqrt</td>
 <td><code>$sqrt(Account.Order[0].Product[0].Price)</code></td>
-<td style="text-align: right;">335 ns</td>
-<td style="text-align: right;">291 ns</td>
-<td style="text-align: right;">773 ns</td>
+<td style="text-align: right;">455 ns</td>
+<td style="text-align: right;">401 ns</td>
+<td style="text-align: right;">1,134 ns</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">2,888 B</td>
 </tr>
 </tbody>
 </table>
-<p>Math functions achieve <strong>1.4–2.8× speedup</strong> with <strong>zero allocation</strong> across the board. Code-gen is <strong>1.6–3.3× faster</strong> than native for all six functions. <code>$round</code> code-gen is <strong>3.1× faster</strong> than native; <code>$sqrt</code> code-gen is <strong>2.7× faster</strong>.</p>
+<p>Math functions achieve <strong>1.4–3.1× speedup</strong> with <strong>zero allocation</strong> across the board. Code-gen is <strong>1.6–3.6× faster</strong> than native for all six functions. <code>$round</code> code-gen is <strong>3.1× faster</strong> than native; <code>$sqrt</code> code-gen is <strong>2.8× faster</strong>.</p>
 <h5 id="string-concatenation">String concatenation</h5>
 <table>
 <thead>
@@ -1651,9 +1651,9 @@ Console.WriteLine(result.GetRawText()); // safe
 <tr>
 <td>Simple concat</td>
 <td><code>FirstName &amp; ' ' &amp; Surname</code></td>
-<td style="text-align: right;">366 ns</td>
-<td style="text-align: right;">177 ns</td>
-<td style="text-align: right;">332 ns</td>
+<td style="text-align: right;">462 ns</td>
+<td style="text-align: right;">243 ns</td>
+<td style="text-align: right;">492 ns</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">1,408 B</td>
@@ -1661,9 +1661,9 @@ Console.WriteLine(result.GetRawText()); // safe
 <tr>
 <td>Concat + number</td>
 <td><code>FirstName &amp; ' ' &amp; Surname &amp; ', age ' &amp; $string(Age)</code></td>
-<td style="text-align: right;">727 ns</td>
-<td style="text-align: right;">236 ns</td>
-<td style="text-align: right;">865 ns</td>
+<td style="text-align: right;">478 ns</td>
+<td style="text-align: right;">162 ns</td>
+<td style="text-align: right;">702 ns</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">3,136 B</td>
@@ -1671,16 +1671,16 @@ Console.WriteLine(result.GetRawText()); // safe
 <tr>
 <td>Join array</td>
 <td><code>$join([Address.Street, Address.City, Address.Postcode], ', ')</code></td>
-<td style="text-align: right;">752 ns</td>
-<td style="text-align: right;">241 ns</td>
-<td style="text-align: right;">1,173 ns</td>
-<td style="text-align: right;">120 B</td>
+<td style="text-align: right;">893 ns</td>
+<td style="text-align: right;">307 ns</td>
+<td style="text-align: right;">1,720 ns</td>
+<td style="text-align: right;">136 B</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">4,040 B</td>
 </tr>
 </tbody>
 </table>
-<p>Code-gen is <strong>2–5× faster</strong> than the reference implementation for string operations with zero allocation. The interpreted evaluator matches or beats native for multi-part concatenation.</p>
+<p>Code-gen is <strong>2–6× faster</strong> than the reference implementation for string operations with zero allocation. The interpreted evaluator matches or beats native for multi-part concatenation.</p>
 <h5 id="string-functions-1">String functions</h5>
 <table>
 <thead>
@@ -1699,9 +1699,9 @@ Console.WriteLine(result.GetRawText()); // safe
 <tr>
 <td>$contains</td>
 <td><code>$contains(Product.&quot;Product Name&quot;, &quot;Hat&quot;)</code></td>
-<td style="text-align: right;">252 ns</td>
-<td style="text-align: right;">153 ns</td>
-<td style="text-align: right;">895 ns</td>
+<td style="text-align: right;">353 ns</td>
+<td style="text-align: right;">210 ns</td>
+<td style="text-align: right;">1,338 ns</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">3,136 B</td>
@@ -1709,9 +1709,9 @@ Console.WriteLine(result.GetRawText()); // safe
 <tr>
 <td>$length</td>
 <td><code>$length(Product.&quot;Product Name&quot;)</code></td>
+<td style="text-align: right;">402 ns</td>
 <td style="text-align: right;">302 ns</td>
-<td style="text-align: right;">224 ns</td>
-<td style="text-align: right;">754 ns</td>
+<td style="text-align: right;">1,131 ns</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">2,864 B</td>
@@ -1719,9 +1719,9 @@ Console.WriteLine(result.GetRawText()); // safe
 <tr>
 <td>$lowercase</td>
 <td><code>$lowercase(Product.&quot;Product Name&quot;)</code></td>
-<td style="text-align: right;">267 ns</td>
-<td style="text-align: right;">218 ns</td>
-<td style="text-align: right;">781 ns</td>
+<td style="text-align: right;">337 ns</td>
+<td style="text-align: right;">319 ns</td>
+<td style="text-align: right;">1,158 ns</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">2,864 B</td>
@@ -1729,9 +1729,9 @@ Console.WriteLine(result.GetRawText()); // safe
 <tr>
 <td>$uppercase</td>
 <td><code>$uppercase(Product.&quot;Product Name&quot;)</code></td>
-<td style="text-align: right;">260 ns</td>
-<td style="text-align: right;">209 ns</td>
-<td style="text-align: right;">791 ns</td>
+<td style="text-align: right;">352 ns</td>
+<td style="text-align: right;">309 ns</td>
+<td style="text-align: right;">1,196 ns</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">2,864 B</td>
@@ -1739,9 +1739,9 @@ Console.WriteLine(result.GetRawText()); // safe
 <tr>
 <td>$trim</td>
 <td><code>$trim(Product.&quot;Product Name&quot;)</code></td>
-<td style="text-align: right;">350 ns</td>
-<td style="text-align: right;">238 ns</td>
-<td style="text-align: right;">950 ns</td>
+<td style="text-align: right;">455 ns</td>
+<td style="text-align: right;">323 ns</td>
+<td style="text-align: right;">1,300 ns</td>
 <td style="text-align: right;">96 B</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">2,864 B</td>
@@ -1749,9 +1749,9 @@ Console.WriteLine(result.GetRawText()); // safe
 <tr>
 <td>$substring</td>
 <td><code>$substring(Product.&quot;Product Name&quot;, 0, 6)</code></td>
-<td style="text-align: right;">571 ns</td>
-<td style="text-align: right;">272 ns</td>
-<td style="text-align: right;">959 ns</td>
+<td style="text-align: right;">746 ns</td>
+<td style="text-align: right;">372 ns</td>
+<td style="text-align: right;">1,480 ns</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">3,416 B</td>
@@ -1759,9 +1759,9 @@ Console.WriteLine(result.GetRawText()); // safe
 <tr>
 <td>$substringBefore</td>
 <td><code>$substringBefore(Product.&quot;Product Name&quot;, &quot; &quot;)</code></td>
-<td style="text-align: right;">316 ns</td>
-<td style="text-align: right;">204 ns</td>
-<td style="text-align: right;">865 ns</td>
+<td style="text-align: right;">418 ns</td>
+<td style="text-align: right;">281 ns</td>
+<td style="text-align: right;">1,353 ns</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">3,120 B</td>
@@ -1769,9 +1769,9 @@ Console.WriteLine(result.GetRawText()); // safe
 <tr>
 <td>$substringAfter</td>
 <td><code>$substringAfter(Product.&quot;Product Name&quot;, &quot; &quot;)</code></td>
-<td style="text-align: right;">303 ns</td>
-<td style="text-align: right;">195 ns</td>
-<td style="text-align: right;">899 ns</td>
+<td style="text-align: right;">417 ns</td>
+<td style="text-align: right;">280 ns</td>
+<td style="text-align: right;">1,418 ns</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">3,112 B</td>
@@ -1779,16 +1779,16 @@ Console.WriteLine(result.GetRawText()); // safe
 <tr>
 <td>$pad</td>
 <td><code>$pad(Account.Order[0].Product[0].&quot;Product Name&quot;, 20)</code></td>
-<td style="text-align: right;">472 ns</td>
-<td style="text-align: right;">300 ns</td>
-<td style="text-align: right;">993 ns</td>
+<td style="text-align: right;">586 ns</td>
+<td style="text-align: right;">430 ns</td>
+<td style="text-align: right;">1,484 ns</td>
 <td style="text-align: right;">360 B</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">3,808 B</td>
 </tr>
 </tbody>
 </table>
-<p>String functions show <strong>3–6× speedup</strong> across the board with <strong>zero or minimal allocation</strong> for both runtime and code-gen. Code-gen <code>$pad</code> achieves zero allocation by using <code>stackalloc</code> for code-point indexing. The reference implementation allocates 2–4 KB per call due to <code>JToken</code> intermediaries.</p>
+<p>String functions show <strong>2–6× speedup</strong> with <strong>zero or minimal allocation</strong> for both runtime and code-gen. Code-gen achieves <strong>3.5–6.4× faster</strong> across all nine functions; the runtime evaluator ranges from <strong>2–3.8× faster</strong>. Code-gen <code>$pad</code> achieves zero allocation by using <code>stackalloc</code> for code-point indexing. The reference implementation allocates 2–4 KB per call due to <code>JToken</code> intermediaries.</p>
 <h5 id="pattern-matching">Pattern matching</h5>
 <table>
 <thead>
@@ -1807,19 +1807,19 @@ Console.WriteLine(result.GetRawText()); // safe
 <tr>
 <td>$match</td>
 <td><code>$match(text, /\d{3}-\d{3}-\d{4}/)</code></td>
-<td style="text-align: right;">1,091 ns</td>
-<td style="text-align: right;">828 ns</td>
-<td style="text-align: right;">2,310 ns</td>
-<td style="text-align: right;">152 B</td>
-<td style="text-align: right;">152 B</td>
+<td style="text-align: right;">1,344 ns</td>
+<td style="text-align: right;">1,041 ns</td>
+<td style="text-align: right;">3,355 ns</td>
+<td style="text-align: right;">168 B</td>
+<td style="text-align: right;">168 B</td>
 <td style="text-align: right;">8,072 B</td>
 </tr>
 <tr>
 <td>$replace (regex)</td>
 <td><code>$replace(text, /\d{3}-\d{3}-\d{4}/, &quot;***&quot;)</code></td>
-<td style="text-align: right;">719 ns</td>
-<td style="text-align: right;">457 ns</td>
-<td style="text-align: right;">2,760 ns</td>
+<td style="text-align: right;">891 ns</td>
+<td style="text-align: right;">632 ns</td>
+<td style="text-align: right;">3,758 ns</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">9,312 B</td>
@@ -1827,9 +1827,9 @@ Console.WriteLine(result.GetRawText()); // safe
 <tr>
 <td>$replace (string)</td>
 <td><code>$replace(text, &quot;555&quot;, &quot;XXX&quot;)</code></td>
-<td style="text-align: right;">319 ns</td>
-<td style="text-align: right;">262 ns</td>
-<td style="text-align: right;">1,108 ns</td>
+<td style="text-align: right;">221 ns</td>
+<td style="text-align: right;">178 ns</td>
+<td style="text-align: right;">837 ns</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">3,264 B</td>
@@ -1837,26 +1837,26 @@ Console.WriteLine(result.GetRawText()); // safe
 <tr>
 <td>$split (regex)</td>
 <td><code>$split(text, /\d{3}-\d{3}-\d{4}/)</code></td>
-<td style="text-align: right;">1,786 ns</td>
-<td style="text-align: right;">1,339 ns</td>
-<td style="text-align: right;">2,166 ns</td>
-<td style="text-align: right;">120 B</td>
-<td style="text-align: right;">120 B</td>
+<td style="text-align: right;">1,166 ns</td>
+<td style="text-align: right;">847 ns</td>
+<td style="text-align: right;">1,618 ns</td>
+<td style="text-align: right;">136 B</td>
+<td style="text-align: right;">136 B</td>
 <td style="text-align: right;">7,536 B</td>
 </tr>
 <tr>
 <td>$split (string)</td>
 <td><code>$split(text, &quot;. &quot;)</code></td>
-<td style="text-align: right;">502 ns</td>
-<td style="text-align: right;">401 ns</td>
-<td style="text-align: right;">878 ns</td>
-<td style="text-align: right;">120 B</td>
-<td style="text-align: right;">120 B</td>
+<td style="text-align: right;">354 ns</td>
+<td style="text-align: right;">274 ns</td>
+<td style="text-align: right;">680 ns</td>
+<td style="text-align: right;">136 B</td>
+<td style="text-align: right;">136 B</td>
 <td style="text-align: right;">2,552 B</td>
 </tr>
 </tbody>
 </table>
-<p>Pattern matching shows <strong>92–100% less allocation</strong>. Regex replacement is <strong>3.8–6.0× faster</strong> than native with zero allocation thanks to UTF-8 span processing. String replacement is <strong>3.5–4.2× faster</strong>. <code>$match</code> is <strong>2–2.8× faster</strong> with 98% less allocation.</p>
+<p>Pattern matching shows <strong>95–100% less allocation</strong>. Regex replacement is <strong>4.2–5.9× faster</strong> than native with zero allocation thanks to UTF-8 span processing. String replacement is <strong>3.8–4.7× faster</strong>. <code>$match</code> is <strong>2.5–3.2× faster</strong> with 98% less allocation.</p>
 <h5 id="higher-order-functions-1">Higher-order functions</h5>
 <table>
 <thead>
@@ -1875,46 +1875,46 @@ Console.WriteLine(result.GetRawText()); // safe
 <tr>
 <td>$map</td>
 <td><code>$map(Account.Order.Product, function($v) { ... })</code></td>
-<td style="text-align: right;">1,188 ns</td>
-<td style="text-align: right;">1,061 ns</td>
-<td style="text-align: right;">1,765 ns</td>
-<td style="text-align: right;">200 B</td>
-<td style="text-align: right;">120 B</td>
+<td style="text-align: right;">1,487 ns</td>
+<td style="text-align: right;">1,290 ns</td>
+<td style="text-align: right;">2,713 ns</td>
+<td style="text-align: right;">216 B</td>
+<td style="text-align: right;">136 B</td>
 <td style="text-align: right;">6,768 B</td>
 </tr>
 <tr>
 <td>$filter</td>
 <td><code>$filter(Account.Order.Product, function($v) { ... })</code></td>
-<td style="text-align: right;">1,486 ns</td>
-<td style="text-align: right;">1,123 ns</td>
-<td style="text-align: right;">2,113 ns</td>
-<td style="text-align: right;">200 B</td>
-<td style="text-align: right;">120 B</td>
+<td style="text-align: right;">1,993 ns</td>
+<td style="text-align: right;">1,445 ns</td>
+<td style="text-align: right;">3,175 ns</td>
+<td style="text-align: right;">216 B</td>
+<td style="text-align: right;">136 B</td>
 <td style="text-align: right;">7,632 B</td>
 </tr>
 <tr>
 <td>$reduce</td>
 <td><code>$reduce(Account.Order.Product, function($prev, $curr) { ... }, 0)</code></td>
-<td style="text-align: right;">2,412 ns</td>
-<td style="text-align: right;">1,236 ns</td>
-<td style="text-align: right;">3,312 ns</td>
+<td style="text-align: right;">3,017 ns</td>
+<td style="text-align: right;">1,506 ns</td>
+<td style="text-align: right;">4,531 ns</td>
 <td style="text-align: right;">360 B</td>
-<td style="text-align: right;">120 B</td>
+<td style="text-align: right;">136 B</td>
 <td style="text-align: right;">10,120 B</td>
 </tr>
 <tr>
 <td>$sort</td>
 <td><code>$sort(Account.Order.Product, function($a, $b) { ... })</code></td>
-<td style="text-align: right;">2,681 ns</td>
-<td style="text-align: right;">1,156 ns</td>
-<td style="text-align: right;">3,081 ns</td>
-<td style="text-align: right;">200 B</td>
-<td style="text-align: right;">120 B</td>
+<td style="text-align: right;">3,210 ns</td>
+<td style="text-align: right;">1,482 ns</td>
+<td style="text-align: right;">4,275 ns</td>
+<td style="text-align: right;">216 B</td>
+<td style="text-align: right;">136 B</td>
 <td style="text-align: right;">9,992 B</td>
 </tr>
 </tbody>
 </table>
-<p>Higher-order functions show <strong>96–99% less allocation</strong> than the reference implementation. Code-gen is <strong>1.7–2.7× faster</strong> with 120 B allocation vs 6–10 KB for native.</p>
+<p>Higher-order functions show <strong>98–99% less allocation</strong> than the reference implementation. Code-gen is <strong>2.1–3.0× faster</strong> with 136 B allocation vs 6–10 KB for native.</p>
 <p><strong>Large array (5,000 items):</strong></p>
 <table>
 <thead>
@@ -1933,36 +1933,36 @@ Console.WriteLine(result.GetRawText()); // safe
 <tr>
 <td>$map</td>
 <td><code>$map(items, function($v) { $v.value * 2 })</code></td>
-<td style="text-align: right;">2,264 µs</td>
-<td style="text-align: right;">971 µs</td>
-<td style="text-align: right;">6,402 µs</td>
-<td style="text-align: right;">200 B</td>
-<td style="text-align: right;">120 B</td>
+<td style="text-align: right;">3,297 µs</td>
+<td style="text-align: right;">1,403 µs</td>
+<td style="text-align: right;">9,512 µs</td>
+<td style="text-align: right;">216 B</td>
+<td style="text-align: right;">136 B</td>
 <td style="text-align: right;">~12 MB</td>
 </tr>
 <tr>
 <td>$filter</td>
 <td><code>$filter(items, function($v) { $v.value &gt; 2500 })</code></td>
-<td style="text-align: right;">1,957 µs</td>
-<td style="text-align: right;">641 µs</td>
-<td style="text-align: right;">3,153 µs</td>
-<td style="text-align: right;">200 B</td>
-<td style="text-align: right;">120 B</td>
+<td style="text-align: right;">2,641 µs</td>
+<td style="text-align: right;">869 µs</td>
+<td style="text-align: right;">4,659 µs</td>
+<td style="text-align: right;">216 B</td>
+<td style="text-align: right;">136 B</td>
 <td style="text-align: right;">~12 MB</td>
 </tr>
 <tr>
 <td>$reduce</td>
 <td><code>$reduce(items, function($prev, $curr) { ... }, 0)</code></td>
-<td style="text-align: right;">2,091 µs</td>
-<td style="text-align: right;">441 µs</td>
-<td style="text-align: right;">3,179 µs</td>
+<td style="text-align: right;">3,092 µs</td>
+<td style="text-align: right;">621 µs</td>
+<td style="text-align: right;">5,031 µs</td>
 <td style="text-align: right;">80 B</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">~11 MB</td>
 </tr>
 </tbody>
 </table>
-<p>At scale (5,000 items), code-gen is <strong>5–7× faster</strong> than native with <strong>near-zero allocation</strong> (0–200 B vs ~12 MB). The interpreted evaluator is <strong>1.5–2.8× faster</strong> with 200 B or less per call.</p>
+<p>At scale (5,000 items), code-gen is <strong>5–8× faster</strong> than native with <strong>near-zero allocation</strong> (0–136 B vs ~12 MB). The interpreted evaluator is <strong>1.6–2.9× faster</strong> with 216 B or less per call.</p>
 <h5 id="iteration-functions">Iteration functions</h5>
 <table>
 <thead>
@@ -1981,26 +1981,26 @@ Console.WriteLine(result.GetRawText()); // safe
 <tr>
 <td>$each</td>
 <td><code>$each(obj, function($v, $k) { $k &amp; &quot;: &quot; &amp; $string($v) })</code></td>
-<td style="text-align: right;">2,379 ns</td>
-<td style="text-align: right;">871 ns</td>
-<td style="text-align: right;">3,215 ns</td>
-<td style="text-align: right;">200 B</td>
-<td style="text-align: right;">120 B</td>
+<td style="text-align: right;">2,629 ns</td>
+<td style="text-align: right;">1,042 ns</td>
+<td style="text-align: right;">4,233 ns</td>
+<td style="text-align: right;">216 B</td>
+<td style="text-align: right;">136 B</td>
 <td style="text-align: right;">8,096 B</td>
 </tr>
 <tr>
 <td>$sift</td>
 <td><code>$sift(obj, function($v) { $type($v) = &quot;number&quot; })</code></td>
-<td style="text-align: right;">1,192 ns</td>
-<td style="text-align: right;">421 ns</td>
-<td style="text-align: right;">2,236 ns</td>
-<td style="text-align: right;">200 B</td>
-<td style="text-align: right;">120 B</td>
+<td style="text-align: right;">1,527 ns</td>
+<td style="text-align: right;">534 ns</td>
+<td style="text-align: right;">3,307 ns</td>
+<td style="text-align: right;">216 B</td>
+<td style="text-align: right;">136 B</td>
 <td style="text-align: right;">7,088 B</td>
 </tr>
 </tbody>
 </table>
-<p>Code-gen <code>$each</code> is <strong>3.7× faster</strong> than native and <code>$sift</code> is <strong>5.3× faster</strong>. Both functions show <strong>97–98% less allocation</strong>.</p>
+<p>Code-gen <code>$each</code> is <strong>4.1× faster</strong> than native and <code>$sift</code> is <strong>6.2× faster</strong>. Both functions show <strong>98% less allocation</strong>.</p>
 <h5 id="predicate-filtering">Predicate filtering</h5>
 <table>
 <thead>
@@ -2019,19 +2019,19 @@ Console.WriteLine(result.GetRawText()); // safe
 <tr>
 <td>Single predicate</td>
 <td><code>Contact.Phone[type = 'mobile'].number</code></td>
-<td style="text-align: right;">840 ns</td>
-<td style="text-align: right;">701 ns</td>
-<td style="text-align: right;">1,695 ns</td>
-<td style="text-align: right;">120 B</td>
-<td style="text-align: right;">120 B</td>
+<td style="text-align: right;">1,016 ns</td>
+<td style="text-align: right;">887 ns</td>
+<td style="text-align: right;">2,654 ns</td>
+<td style="text-align: right;">136 B</td>
+<td style="text-align: right;">136 B</td>
 <td style="text-align: right;">5,760 B</td>
 </tr>
 <tr>
 <td>Chained predicate</td>
 <td><code>Contact[ssn = '496913021'].Phone[0].number</code></td>
-<td style="text-align: right;">216 ns</td>
-<td style="text-align: right;">180 ns</td>
-<td style="text-align: right;">743 ns</td>
+<td style="text-align: right;">303 ns</td>
+<td style="text-align: right;">247 ns</td>
+<td style="text-align: right;">1,186 ns</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">3,072 B</td>
@@ -2039,16 +2039,16 @@ Console.WriteLine(result.GetRawText()); // safe
 <tr>
 <td>Compound predicate</td>
 <td><code>Contact.Phone[type = 'office' or type = 'mobile'].number</code></td>
-<td style="text-align: right;">1,097 ns</td>
-<td style="text-align: right;">816 ns</td>
-<td style="text-align: right;">2,897 ns</td>
-<td style="text-align: right;">120 B</td>
-<td style="text-align: right;">120 B</td>
+<td style="text-align: right;">1,231 ns</td>
+<td style="text-align: right;">1,004 ns</td>
+<td style="text-align: right;">4,370 ns</td>
+<td style="text-align: right;">136 B</td>
+<td style="text-align: right;">136 B</td>
 <td style="text-align: right;">10,376 B</td>
 </tr>
 </tbody>
 </table>
-<p>Predicate filtering shows <strong>2–4× speedup</strong> over the reference implementation with <strong>97–100% less allocation</strong>.</p>
+<p>Predicate filtering shows <strong>2.6–4.8× speedup</strong> over the reference implementation with <strong>98–100% less allocation</strong>.</p>
 <h5 id="object-construction">Object construction</h5>
 <table>
 <thead>
@@ -2067,36 +2067,36 @@ Console.WriteLine(result.GetRawText()); // safe
 <tr>
 <td>Simple object</td>
 <td><code>{&quot;name&quot;: Account.`Account Name`, &quot;total&quot;: $sum(...)}</code></td>
-<td style="text-align: right;">1,899 ns</td>
-<td style="text-align: right;">831 ns</td>
-<td style="text-align: right;">2,406 ns</td>
-<td style="text-align: right;">152 B</td>
-<td style="text-align: right;">120 B</td>
+<td style="text-align: right;">2,736 ns</td>
+<td style="text-align: right;">1,073 ns</td>
+<td style="text-align: right;">3,691 ns</td>
+<td style="text-align: right;">168 B</td>
+<td style="text-align: right;">136 B</td>
 <td style="text-align: right;">7,840 B</td>
 </tr>
 <tr>
 <td>Group-by object</td>
 <td><code>Account.Order.Product.{`Product Name`: Price}</code></td>
-<td style="text-align: right;">2,543 ns</td>
-<td style="text-align: right;">855 ns</td>
-<td style="text-align: right;">1,658 ns</td>
-<td style="text-align: right;">600 B</td>
-<td style="text-align: right;">120 B</td>
+<td style="text-align: right;">3,138 ns</td>
+<td style="text-align: right;">1,106 ns</td>
+<td style="text-align: right;">2,655 ns</td>
+<td style="text-align: right;">680 B</td>
+<td style="text-align: right;">136 B</td>
 <td style="text-align: right;">7,104 B</td>
 </tr>
 <tr>
 <td>Array of objects</td>
 <td><code>[Account.Order.Product.{&quot;name&quot;: ..., &quot;total&quot;: ...}]</code></td>
-<td style="text-align: right;">1,751 ns</td>
-<td style="text-align: right;">1,476 ns</td>
-<td style="text-align: right;">2,586 ns</td>
-<td style="text-align: right;">120 B</td>
-<td style="text-align: right;">120 B</td>
+<td style="text-align: right;">2,307 ns</td>
+<td style="text-align: right;">2,142 ns</td>
+<td style="text-align: right;">3,838 ns</td>
+<td style="text-align: right;">136 B</td>
+<td style="text-align: right;">136 B</td>
 <td style="text-align: right;">9,664 B</td>
 </tr>
 </tbody>
 </table>
-<p>Code-gen achieves <strong>1.8–2.9× speedup</strong> for object construction with <strong>98–99% less allocation</strong>. Group-by is the only scenario where the runtime evaluator is slower than native (1.5×), due to the overhead of building grouped object keys.</p>
+<p>Code-gen achieves <strong>1.8–3.4× speedup</strong> for object construction with <strong>98–99% less allocation</strong>. Group-by is the only scenario where the runtime evaluator is slower than native (1.2×), due to the overhead of building grouped object keys.</p>
 <h5 id="array-functions-1">Array functions</h5>
 <table>
 <thead>
@@ -2115,9 +2115,9 @@ Console.WriteLine(result.GetRawText()); // safe
 <tr>
 <td>$count</td>
 <td><code>$count(Account.Order[0].Product)</code></td>
-<td style="text-align: right;">203 ns</td>
-<td style="text-align: right;">157 ns</td>
-<td style="text-align: right;">592 ns</td>
+<td style="text-align: right;">142 ns</td>
+<td style="text-align: right;">115 ns</td>
+<td style="text-align: right;">460 ns</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">2,112 B</td>
@@ -2125,56 +2125,56 @@ Console.WriteLine(result.GetRawText()); // safe
 <tr>
 <td>$append</td>
 <td><code>$append(Order[0].Product, Order[1].Product)</code></td>
-<td style="text-align: right;">643 ns</td>
-<td style="text-align: right;">621 ns</td>
-<td style="text-align: right;">963 ns</td>
-<td style="text-align: right;">120 B</td>
-<td style="text-align: right;">120 B</td>
+<td style="text-align: right;">422 ns</td>
+<td style="text-align: right;">416 ns</td>
+<td style="text-align: right;">793 ns</td>
+<td style="text-align: right;">136 B</td>
+<td style="text-align: right;">136 B</td>
 <td style="text-align: right;">3,280 B</td>
 </tr>
 <tr>
 <td>$reverse</td>
 <td><code>$reverse(Account.Order[0].Product)</code></td>
-<td style="text-align: right;">360 ns</td>
-<td style="text-align: right;">351 ns</td>
-<td style="text-align: right;">599 ns</td>
-<td style="text-align: right;">120 B</td>
-<td style="text-align: right;">120 B</td>
+<td style="text-align: right;">421 ns</td>
+<td style="text-align: right;">375 ns</td>
+<td style="text-align: right;">870 ns</td>
+<td style="text-align: right;">136 B</td>
+<td style="text-align: right;">136 B</td>
 <td style="text-align: right;">2,136 B</td>
 </tr>
 <tr>
 <td>$distinct</td>
 <td><code>$distinct(Account.Order.Product.&quot;Product Name&quot;)</code></td>
-<td style="text-align: right;">935 ns</td>
-<td style="text-align: right;">794 ns</td>
-<td style="text-align: right;">891 ns</td>
-<td style="text-align: right;">120 B</td>
-<td style="text-align: right;">120 B</td>
+<td style="text-align: right;">659 ns</td>
+<td style="text-align: right;">558 ns</td>
+<td style="text-align: right;">768 ns</td>
+<td style="text-align: right;">136 B</td>
+<td style="text-align: right;">136 B</td>
 <td style="text-align: right;">2,848 B</td>
 </tr>
 <tr>
 <td>$flatten</td>
 <td><code>Account.Order.Product[]</code></td>
-<td style="text-align: right;">630 ns</td>
-<td style="text-align: right;">432 ns</td>
-<td style="text-align: right;">399 ns</td>
-<td style="text-align: right;">120 B</td>
-<td style="text-align: right;">120 B</td>
+<td style="text-align: right;">439 ns</td>
+<td style="text-align: right;">515 ns</td>
+<td style="text-align: right;">560 ns</td>
+<td style="text-align: right;">136 B</td>
+<td style="text-align: right;">136 B</td>
 <td style="text-align: right;">1,520 B</td>
 </tr>
 <tr>
 <td>$single</td>
 <td><code>$single(Account.Order[0].Product, function($v) { $v.Price &gt; 30 })</code></td>
-<td style="text-align: right;">557 ns</td>
-<td style="text-align: right;">286 ns</td>
-<td style="text-align: right;">1,436 ns</td>
+<td style="text-align: right;">739 ns</td>
+<td style="text-align: right;">441 ns</td>
+<td style="text-align: right;">2,147 ns</td>
 <td style="text-align: right;">80 B</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">4,960 B</td>
 </tr>
 </tbody>
 </table>
-<p>Array functions are <strong>1.5–3× faster</strong> with zero or minimal allocation. <code>$count</code> is <strong>2.9× faster</strong> with zero allocation. <code>$single</code> achieves <strong>zero allocation</strong> in code-gen by inlining the predicate as a direct comparison. <code>$distinct</code> uses a zero-copy <code>UniqueItemsHashSet</code> for deduplication via document-internal element references.</p>
+<p>Array functions are <strong>1.1–5× faster</strong> with zero or minimal allocation. <code>$count</code> is <strong>3.2× faster</strong> with zero allocation. <code>$single</code> achieves <strong>zero allocation</strong> in code-gen by inlining the predicate as a direct comparison. <code>$distinct</code> uses a zero-copy <code>UniqueItemsHashSet</code> for deduplication via document-internal element references.</p>
 <h5 id="object-functions-1">Object functions</h5>
 <table>
 <thead>
@@ -2193,39 +2193,39 @@ Console.WriteLine(result.GetRawText()); // safe
 <tr>
 <td>$keys</td>
 <td><code>$keys(Account.Order[0].Product[0])</code></td>
-<td style="text-align: right;">440 ns</td>
-<td style="text-align: right;">285 ns</td>
-<td style="text-align: right;">701 ns</td>
-<td style="text-align: right;">120 B</td>
-<td style="text-align: right;">120 B</td>
+<td style="text-align: right;">540 ns</td>
+<td style="text-align: right;">384 ns</td>
+<td style="text-align: right;">978 ns</td>
+<td style="text-align: right;">136 B</td>
+<td style="text-align: right;">136 B</td>
 <td style="text-align: right;">2,696 B</td>
 </tr>
 <tr>
 <td>$merge</td>
 <td><code>$merge(Account.Order.Product)</code></td>
-<td style="text-align: right;">642 ns</td>
-<td style="text-align: right;">588 ns</td>
-<td style="text-align: right;">1,092 ns</td>
-<td style="text-align: right;">120 B</td>
-<td style="text-align: right;">120 B</td>
+<td style="text-align: right;">827 ns</td>
+<td style="text-align: right;">680 ns</td>
+<td style="text-align: right;">1,510 ns</td>
+<td style="text-align: right;">136 B</td>
+<td style="text-align: right;">136 B</td>
 <td style="text-align: right;">2,784 B</td>
 </tr>
 <tr>
 <td>$each (as $values)</td>
 <td><code>$each(obj, function($v){$v})</code></td>
-<td style="text-align: right;">890 ns</td>
-<td style="text-align: right;">294 ns</td>
-<td style="text-align: right;">1,209 ns</td>
-<td style="text-align: right;">200 B</td>
-<td style="text-align: right;">120 B</td>
+<td style="text-align: right;">1,182 ns</td>
+<td style="text-align: right;">391 ns</td>
+<td style="text-align: right;">1,796 ns</td>
+<td style="text-align: right;">216 B</td>
+<td style="text-align: right;">136 B</td>
 <td style="text-align: right;">4,232 B</td>
 </tr>
 <tr>
 <td>$lookup</td>
 <td><code>$lookup(Account.Order[0].Product[0], &quot;Price&quot;)</code></td>
-<td style="text-align: right;">197 ns</td>
-<td style="text-align: right;">142 ns</td>
-<td style="text-align: right;">786 ns</td>
+<td style="text-align: right;">278 ns</td>
+<td style="text-align: right;">229 ns</td>
+<td style="text-align: right;">1,238 ns</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">120 B</td>
 <td style="text-align: right;">2,752 B</td>
@@ -2233,26 +2233,26 @@ Console.WriteLine(result.GetRawText()); // safe
 <tr>
 <td>$spread</td>
 <td><code>$spread(Account.Order[0].Product[0])</code></td>
-<td style="text-align: right;">639 ns</td>
-<td style="text-align: right;">573 ns</td>
-<td style="text-align: right;">834 ns</td>
-<td style="text-align: right;">120 B</td>
-<td style="text-align: right;">120 B</td>
+<td style="text-align: right;">786 ns</td>
+<td style="text-align: right;">735 ns</td>
+<td style="text-align: right;">1,234 ns</td>
+<td style="text-align: right;">136 B</td>
+<td style="text-align: right;">136 B</td>
 <td style="text-align: right;">3,400 B</td>
 </tr>
 <tr>
 <td>$values</td>
 <td><code>$values(obj)</code></td>
-<td style="text-align: right;">287 ns</td>
-<td style="text-align: right;">310 ns</td>
+<td style="text-align: right;">336 ns</td>
+<td style="text-align: right;">350 ns</td>
 <td style="text-align: right;">—</td>
-<td style="text-align: right;">120 B</td>
-<td style="text-align: right;">120 B</td>
+<td style="text-align: right;">136 B</td>
+<td style="text-align: right;">136 B</td>
 <td style="text-align: right;">—</td>
 </tr>
 </tbody>
 </table>
-<p>Object functions are <strong>1.3–4.0× faster</strong> for runtime, <strong>1.5–5.5× faster</strong> for code-gen. <code>$lookup</code> achieves <strong>5.5× speedup</strong> over native by resolving directly from the document backing store. <code>$keys</code> uses a <code>Utf8KeyHashSet</code> for zero-copy deduplication over raw UTF-8 property names. Corvus also provides <code>$values()</code> as an extension function (not available in standard JSONata).</p>
+<p>Object functions are <strong>1.5–4.5× faster</strong> for runtime, <strong>1.7–5.4× faster</strong> for code-gen. <code>$lookup</code> achieves <strong>5.4× speedup</strong> over native by resolving directly from the document backing store. <code>$keys</code> uses a <code>Utf8KeyHashSet</code> for zero-copy deduplication over raw UTF-8 property names. Corvus also provides <code>$values()</code> as an extension function (not available in standard JSONata).</p>
 <h5 id="language-operators">Language operators</h5>
 <table>
 <thead>
@@ -2271,9 +2271,9 @@ Console.WriteLine(result.GetRawText()); // safe
 <tr>
 <td>Conditional</td>
 <td><code>Account.Order[0].Product[0].Price &gt; 30 ? &quot;expensive&quot; : &quot;cheap&quot;</code></td>
-<td style="text-align: right;">175 ns</td>
-<td style="text-align: right;">112 ns</td>
-<td style="text-align: right;">578 ns</td>
+<td style="text-align: right;">252 ns</td>
+<td style="text-align: right;">217 ns</td>
+<td style="text-align: right;">850 ns</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">2,280 B</td>
@@ -2281,26 +2281,26 @@ Console.WriteLine(result.GetRawText()); // safe
 <tr>
 <td>Descendant</td>
 <td><code>**.&quot;Product Name&quot;</code></td>
-<td style="text-align: right;">984 ns</td>
-<td style="text-align: right;">661 ns</td>
-<td style="text-align: right;">1,202 ns</td>
-<td style="text-align: right;">120 B</td>
-<td style="text-align: right;">120 B</td>
+<td style="text-align: right;">1,070 ns</td>
+<td style="text-align: right;">703 ns</td>
+<td style="text-align: right;">1,538 ns</td>
+<td style="text-align: right;">136 B</td>
+<td style="text-align: right;">136 B</td>
 <td style="text-align: right;">2,432 B</td>
 </tr>
 <tr>
 <td>Transform pipe</td>
 <td><code>Account.Order.Product.Price ~&gt; $sum</code></td>
-<td style="text-align: right;">604 ns</td>
-<td style="text-align: right;">512 ns</td>
-<td style="text-align: right;">1,078 ns</td>
+<td style="text-align: right;">716 ns</td>
+<td style="text-align: right;">636 ns</td>
+<td style="text-align: right;">1,401 ns</td>
 <td style="text-align: right;">0 B</td>
-<td style="text-align: right;">120 B</td>
+<td style="text-align: right;">0 B</td>
 <td style="text-align: right;">2,792 B</td>
 </tr>
 </tbody>
 </table>
-<p>Conditional expressions are <strong>3.3–5.2× faster</strong> than native with <strong>zero allocation</strong>. The descendant operator (<code>**</code>) uses a fused single-pass traversal that collects only matching properties during recursive descent, achieving <strong>1.2–1.8× speedup</strong> with 120 B allocation (vs 2,432 B).</p>
+<p>Conditional expressions are <strong>3.4–3.9× faster</strong> than native with <strong>zero allocation</strong>. The descendant operator (<code>**</code>) uses a fused single-pass traversal that collects only matching properties during recursive descent, achieving <strong>1.4–2.2× speedup</strong> with 136 B allocation (vs 2,432 B).</p>
 <h5 id="variable-bindings-1">Variable bindings</h5>
 <table>
 <thead>
@@ -2319,9 +2319,9 @@ Console.WriteLine(result.GetRawText()); // safe
 <tr>
 <td>Let binding</td>
 <td><code>($total := $sum(...); $total &gt; 100 ? &quot;high&quot; : &quot;low&quot;)</code></td>
-<td style="text-align: right;">1,700 ns</td>
-<td style="text-align: right;">622 ns</td>
-<td style="text-align: right;">2,190 ns</td>
+<td style="text-align: right;">2,253 ns</td>
+<td style="text-align: right;">851 ns</td>
+<td style="text-align: right;">3,182 ns</td>
 <td style="text-align: right;">152 B</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">6,992 B</td>
@@ -2329,16 +2329,16 @@ Console.WriteLine(result.GetRawText()); // safe
 <tr>
 <td>Binding in HOF</td>
 <td><code>$map(Products, function($v) { ($p := $v.Price * $v.Quantity; ...) })</code></td>
-<td style="text-align: right;">2,443 ns</td>
-<td style="text-align: right;">1,444 ns</td>
-<td style="text-align: right;">3,496 ns</td>
-<td style="text-align: right;">632 B</td>
-<td style="text-align: right;">120 B</td>
+<td style="text-align: right;">3,436 ns</td>
+<td style="text-align: right;">1,974 ns</td>
+<td style="text-align: right;">5,263 ns</td>
+<td style="text-align: right;">648 B</td>
+<td style="text-align: right;">136 B</td>
 <td style="text-align: right;">11,792 B</td>
 </tr>
 </tbody>
 </table>
-<p>Code-gen eliminates all allocation for simple let-bindings by keeping intermediate values in local variables (0 B vs 6,992 B for native). For bindings inside higher-order functions, code-gen emits a direct <code>double &gt; constant</code> comparison shortcut that avoids element round-trips, achieving <strong>2.4× speedup</strong> with 120 B allocation (vs 11,792 B).</p>
+<p>Code-gen eliminates all allocation for simple let-bindings by keeping intermediate values in local variables (0 B vs 6,992 B for native). For bindings inside higher-order functions, code-gen emits a direct <code>double &gt; constant</code> comparison shortcut that avoids element round-trips, achieving <strong>2.7× speedup</strong> with 136 B allocation (vs 11,792 B).</p>
 <h5 id="datetime-functions-1">Date/time functions</h5>
 <table>
 <thead>
@@ -2357,9 +2357,9 @@ Console.WriteLine(result.GetRawText()); // safe
 <tr>
 <td>$millis</td>
 <td><code>$millis()</code></td>
+<td style="text-align: right;">260 ns</td>
 <td style="text-align: right;">201 ns</td>
-<td style="text-align: right;">156 ns</td>
-<td style="text-align: right;">130 ns</td>
+<td style="text-align: right;">181 ns</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">560 B</td>
@@ -2367,9 +2367,9 @@ Console.WriteLine(result.GetRawText()); // safe
 <tr>
 <td>$now</td>
 <td><code>$now()</code></td>
-<td style="text-align: right;">239 ns</td>
-<td style="text-align: right;">208 ns</td>
-<td style="text-align: right;">293 ns</td>
+<td style="text-align: right;">306 ns</td>
+<td style="text-align: right;">260 ns</td>
+<td style="text-align: right;">405 ns</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">600 B</td>
@@ -2377,9 +2377,9 @@ Console.WriteLine(result.GetRawText()); // safe
 <tr>
 <td>$toMillis</td>
 <td><code>$toMillis(&quot;2021-04-07T22:00:00.000Z&quot;)</code></td>
-<td style="text-align: right;">216 ns</td>
-<td style="text-align: right;">168 ns</td>
-<td style="text-align: right;">520 ns</td>
+<td style="text-align: right;">280 ns</td>
+<td style="text-align: right;">214 ns</td>
+<td style="text-align: right;">763 ns</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">1,376 B</td>
@@ -2387,16 +2387,16 @@ Console.WriteLine(result.GetRawText()); // safe
 <tr>
 <td>$fromMillis</td>
 <td><code>$fromMillis(1617836400000)</code></td>
-<td style="text-align: right;">401 ns</td>
-<td style="text-align: right;">249 ns</td>
-<td style="text-align: right;">591 ns</td>
+<td style="text-align: right;">535 ns</td>
+<td style="text-align: right;">322 ns</td>
+<td style="text-align: right;">826 ns</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">1,568 B</td>
 </tr>
 </tbody>
 </table>
-<p><code>$toMillis</code> uses a zero-alloc fast path via <code>TryGetDateTimeOffset</code> that parses directly from the UTF-8 backing — <strong>2.4× faster</strong> for runtime, <strong>3.1× faster</strong> for code-gen with zero allocation (vs 1,376 B for native). <code>$millis</code> is the only scenario where native is slightly faster (due to evaluator framework overhead for a trivial function), but Corvus achieves zero allocation. <code>$now</code> and <code>$fromMillis</code> now achieve <strong>zero allocation</strong> for both runtime and code-gen.</p>
+<p><code>$toMillis</code> uses a zero-alloc fast path via <code>TryGetDateTimeOffset</code> that parses directly from the UTF-8 backing — <strong>2.7× faster</strong> for runtime, <strong>3.6× faster</strong> for code-gen with zero allocation (vs 1,376 B for native). <code>$millis</code> is the only scenario where native is slightly faster (due to evaluator framework overhead for a trivial function), but Corvus achieves zero allocation. <code>$now</code> and <code>$fromMillis</code> now achieve <strong>zero allocation</strong> for both runtime and code-gen.</p>
 <h5 id="aggregation-functions">Aggregation functions</h5>
 <table>
 <thead>
@@ -2415,9 +2415,9 @@ Console.WriteLine(result.GetRawText()); // safe
 <tr>
 <td>$average</td>
 <td><code>$average(Account.Order.Product.Price)</code></td>
-<td style="text-align: right;">380 ns</td>
-<td style="text-align: right;">297 ns</td>
-<td style="text-align: right;">625 ns</td>
+<td style="text-align: right;">1,044 ns</td>
+<td style="text-align: right;">588 ns</td>
+<td style="text-align: right;">1,371 ns</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">2,760 B</td>
@@ -2425,9 +2425,9 @@ Console.WriteLine(result.GetRawText()); // safe
 <tr>
 <td>$max</td>
 <td><code>$max(Account.Order.Product.Price)</code></td>
-<td style="text-align: right;">374 ns</td>
-<td style="text-align: right;">300 ns</td>
-<td style="text-align: right;">580 ns</td>
+<td style="text-align: right;">751 ns</td>
+<td style="text-align: right;">588 ns</td>
+<td style="text-align: right;">1,376 ns</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">2,760 B</td>
@@ -2435,16 +2435,16 @@ Console.WriteLine(result.GetRawText()); // safe
 <tr>
 <td>$min</td>
 <td><code>$min(Account.Order.Product.Price)</code></td>
-<td style="text-align: right;">372 ns</td>
-<td style="text-align: right;">290 ns</td>
-<td style="text-align: right;">602 ns</td>
+<td style="text-align: right;">521 ns</td>
+<td style="text-align: right;">308 ns</td>
+<td style="text-align: right;">734 ns</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">2,760 B</td>
 </tr>
 </tbody>
 </table>
-<p>Aggregation functions are <strong>1.6–2.1× faster</strong> with <strong>zero allocation</strong> in both runtime and code-gen. Code-gen fuses chain navigation with aggregation to eliminate intermediate array construction.</p>
+<p>Aggregation functions are <strong>1.3–2.4× faster</strong> with <strong>zero allocation</strong> in both runtime and code-gen. Code-gen fuses chain navigation with aggregation to eliminate intermediate array construction.</p>
 <h5 id="formatting-functions">Formatting functions</h5>
 <table>
 <thead>
@@ -2463,9 +2463,9 @@ Console.WriteLine(result.GetRawText()); // safe
 <tr>
 <td>$formatBase</td>
 <td><code>$formatBase(255, 16)</code></td>
-<td style="text-align: right;">427 ns</td>
-<td style="text-align: right;">158 ns</td>
-<td style="text-align: right;">447 ns</td>
+<td style="text-align: right;">544 ns</td>
+<td style="text-align: right;">202 ns</td>
+<td style="text-align: right;">677 ns</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">1,592 B</td>
@@ -2473,9 +2473,9 @@ Console.WriteLine(result.GetRawText()); // safe
 <tr>
 <td>$formatNumber</td>
 <td><code>$formatNumber(1234.5678, &quot;#,##0.00&quot;)</code></td>
-<td style="text-align: right;">524 ns</td>
-<td style="text-align: right;">461 ns</td>
-<td style="text-align: right;">886 ns</td>
+<td style="text-align: right;">682 ns</td>
+<td style="text-align: right;">612 ns</td>
+<td style="text-align: right;">1,208 ns</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">1,728 B</td>
@@ -2483,8 +2483,8 @@ Console.WriteLine(result.GetRawText()); // safe
 <tr>
 <td>$formatInteger</td>
 <td><code>$formatInteger(1234, &quot;w&quot;)</code></td>
-<td style="text-align: right;">299 ns</td>
-<td style="text-align: right;">140 ns</td>
+<td style="text-align: right;">387 ns</td>
+<td style="text-align: right;">191 ns</td>
 <td style="text-align: right;">—</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">0 B</td>
@@ -2493,8 +2493,8 @@ Console.WriteLine(result.GetRawText()); // safe
 <tr>
 <td>$parseInteger</td>
 <td><code>$parseInteger(&quot;one hundred and twenty three&quot;, &quot;w&quot;)</code></td>
-<td style="text-align: right;">312 ns</td>
-<td style="text-align: right;">247 ns</td>
+<td style="text-align: right;">427 ns</td>
+<td style="text-align: right;">334 ns</td>
 <td style="text-align: right;">—</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">0 B</td>
@@ -2502,7 +2502,7 @@ Console.WriteLine(result.GetRawText()); // safe
 </tr>
 </tbody>
 </table>
-<p><code>$formatNumber</code> uses a zero-alloc implementation — <strong>1.9× faster</strong> than native with zero allocation. <code>$formatBase</code> code-gen is <strong>2.8× faster</strong> and now achieves <strong>zero allocation</strong>. <code>$formatInteger</code> and <code>$parseInteger</code> are Corvus extensions not available in Jsonata.Net.Native.</p>
+<p><code>$formatNumber</code> uses a zero-alloc implementation — <strong>1.8× faster</strong> than native with zero allocation. <code>$formatBase</code> code-gen is <strong>3.4× faster</strong> and now achieves <strong>zero allocation</strong>. <code>$formatInteger</code> and <code>$parseInteger</code> are Corvus extensions not available in Jsonata.Net.Native.</p>
 <h5 id="encoding-functions">Encoding functions</h5>
 <table>
 <thead>
@@ -2521,9 +2521,9 @@ Console.WriteLine(result.GetRawText()); // safe
 <tr>
 <td>$base64encode</td>
 <td><code>$base64encode(text)</code></td>
-<td style="text-align: right;">140 ns</td>
-<td style="text-align: right;">92 ns</td>
-<td style="text-align: right;">366 ns</td>
+<td style="text-align: right;">171 ns</td>
+<td style="text-align: right;">116 ns</td>
+<td style="text-align: right;">568 ns</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">1,336 B</td>
@@ -2531,9 +2531,9 @@ Console.WriteLine(result.GetRawText()); // safe
 <tr>
 <td>$base64decode</td>
 <td><code>$base64decode(encoded)</code></td>
-<td style="text-align: right;">132 ns</td>
-<td style="text-align: right;">89 ns</td>
-<td style="text-align: right;">434 ns</td>
+<td style="text-align: right;">157 ns</td>
+<td style="text-align: right;">104 ns</td>
+<td style="text-align: right;">572 ns</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">1,320 B</td>
@@ -2541,9 +2541,9 @@ Console.WriteLine(result.GetRawText()); // safe
 <tr>
 <td>$encodeUrl</td>
 <td><code>$encodeUrl(url)</code></td>
-<td style="text-align: right;">174 ns</td>
-<td style="text-align: right;">135 ns</td>
-<td style="text-align: right;">377 ns</td>
+<td style="text-align: right;">264 ns</td>
+<td style="text-align: right;">207 ns</td>
+<td style="text-align: right;">521 ns</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">1,312 B</td>
@@ -2551,9 +2551,9 @@ Console.WriteLine(result.GetRawText()); // safe
 <tr>
 <td>$encodeUrlComponent</td>
 <td><code>$encodeUrlComponent(component)</code></td>
-<td style="text-align: right;">145 ns</td>
-<td style="text-align: right;">108 ns</td>
-<td style="text-align: right;">412 ns</td>
+<td style="text-align: right;">218 ns</td>
+<td style="text-align: right;">147 ns</td>
+<td style="text-align: right;">726 ns</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">1,288 B</td>
@@ -2561,9 +2561,9 @@ Console.WriteLine(result.GetRawText()); // safe
 <tr>
 <td>$decodeUrl</td>
 <td><code>$decodeUrl(encoded)</code></td>
-<td style="text-align: right;">212 ns</td>
-<td style="text-align: right;">157 ns</td>
-<td style="text-align: right;">389 ns</td>
+<td style="text-align: right;">258 ns</td>
+<td style="text-align: right;">211 ns</td>
+<td style="text-align: right;">535 ns</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">1,312 B</td>
@@ -2571,9 +2571,9 @@ Console.WriteLine(result.GetRawText()); // safe
 <tr>
 <td>$decodeUrlComponent</td>
 <td><code>$decodeUrlComponent(encoded)</code></td>
-<td style="text-align: right;">165 ns</td>
-<td style="text-align: right;">133 ns</td>
-<td style="text-align: right;">395 ns</td>
+<td style="text-align: right;">212 ns</td>
+<td style="text-align: right;">157 ns</td>
+<td style="text-align: right;">587 ns</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">1,272 B</td>
@@ -2599,9 +2599,9 @@ Console.WriteLine(result.GetRawText()); // safe
 <tr>
 <td>$boolean</td>
 <td><code>$boolean(Account.Order[0].Product[0].Price)</code></td>
-<td style="text-align: right;">156 ns</td>
-<td style="text-align: right;">116 ns</td>
-<td style="text-align: right;">766 ns</td>
+<td style="text-align: right;">219 ns</td>
+<td style="text-align: right;">235 ns</td>
+<td style="text-align: right;">1,194 ns</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">2,840 B</td>
@@ -2609,9 +2609,9 @@ Console.WriteLine(result.GetRawText()); // safe
 <tr>
 <td>$exists</td>
 <td><code>$exists(Account.Order.Product)</code></td>
-<td style="text-align: right;">82 ns</td>
-<td style="text-align: right;">58 ns</td>
-<td style="text-align: right;">680 ns</td>
+<td style="text-align: right;">113 ns</td>
+<td style="text-align: right;">76 ns</td>
+<td style="text-align: right;">969 ns</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">2,352 B</td>
@@ -2619,9 +2619,9 @@ Console.WriteLine(result.GetRawText()); // safe
 <tr>
 <td>$not</td>
 <td><code>$not(Account.&quot;Account Name&quot; = &quot;Firefly&quot;)</code></td>
-<td style="text-align: right;">123 ns</td>
-<td style="text-align: right;">92 ns</td>
-<td style="text-align: right;">557 ns</td>
+<td style="text-align: right;">162 ns</td>
+<td style="text-align: right;">130 ns</td>
+<td style="text-align: right;">825 ns</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">1,960 B</td>
@@ -2629,9 +2629,9 @@ Console.WriteLine(result.GetRawText()); // safe
 <tr>
 <td>$number</td>
 <td><code>$number(&quot;34.45&quot;)</code></td>
-<td style="text-align: right;">246 ns</td>
-<td style="text-align: right;">154 ns</td>
-<td style="text-align: right;">486 ns</td>
+<td style="text-align: right;">298 ns</td>
+<td style="text-align: right;">198 ns</td>
+<td style="text-align: right;">733 ns</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">1,232 B</td>
@@ -2639,9 +2639,9 @@ Console.WriteLine(result.GetRawText()); // safe
 <tr>
 <td>$string</td>
 <td><code>$string(Account.Order[0].Product[0].Price)</code></td>
-<td style="text-align: right;">375 ns</td>
-<td style="text-align: right;">340 ns</td>
-<td style="text-align: right;">907 ns</td>
+<td style="text-align: right;">547 ns</td>
+<td style="text-align: right;">481 ns</td>
+<td style="text-align: right;">1,339 ns</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">3,112 B</td>
@@ -2649,16 +2649,16 @@ Console.WriteLine(result.GetRawText()); // safe
 <tr>
 <td>$type</td>
 <td><code>$type(Account.Order[0].Product[0].Price)</code></td>
-<td style="text-align: right;">136 ns</td>
-<td style="text-align: right;">101 ns</td>
-<td style="text-align: right;">751 ns</td>
+<td style="text-align: right;">183 ns</td>
+<td style="text-align: right;">183 ns</td>
+<td style="text-align: right;">1,196 ns</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">2,816 B</td>
 </tr>
 </tbody>
 </table>
-<p><code>$not</code> is <strong>4.5–6× faster</strong> with zero allocation. <code>$boolean</code> code-gen is <strong>6.6× faster</strong> with zero allocation (vs 2,840 B for native). <code>$type</code> is <strong>5.5–7.4× faster</strong> with zero allocation. <code>$string</code> is <strong>2.4–2.7× faster</strong> with zero allocation.</p>
+<p><code>$not</code> is <strong>5.1–6.3× faster</strong> with zero allocation. <code>$boolean</code> code-gen is <strong>5.1× faster</strong> with zero allocation (vs 2,840 B for native). <code>$type</code> is <strong>6.5× faster</strong> with zero allocation. <code>$string</code> is <strong>2.4–2.8× faster</strong> with zero allocation.</p>
 <h5 id="zip-and-shuffle">Zip and shuffle</h5>
 <table>
 <thead>
@@ -2677,9 +2677,9 @@ Console.WriteLine(result.GetRawText()); // safe
 <tr>
 <td>$zip (constant)</td>
 <td><code>$zip([1,2,3],[4,5,6])</code></td>
-<td style="text-align: right;">27 ns</td>
-<td style="text-align: right;">0.9 ns</td>
-<td style="text-align: right;">985 ns</td>
+<td style="text-align: right;">39 ns</td>
+<td style="text-align: right;">1.3 ns</td>
+<td style="text-align: right;">1,431 ns</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">0 B</td>
 <td style="text-align: right;">3,696 B</td>
@@ -2687,38 +2687,38 @@ Console.WriteLine(result.GetRawText()); // safe
 <tr>
 <td>$zip (data)</td>
 <td><code>$zip(Account.Order.Product.Price, Account.Order.Product.Quantity)</code></td>
-<td style="text-align: right;">959 ns</td>
-<td style="text-align: right;">902 ns</td>
-<td style="text-align: right;">1,486 ns</td>
-<td style="text-align: right;">120 B</td>
-<td style="text-align: right;">120 B</td>
+<td style="text-align: right;">1,209 ns</td>
+<td style="text-align: right;">1,184 ns</td>
+<td style="text-align: right;">2,295 ns</td>
+<td style="text-align: right;">136 B</td>
+<td style="text-align: right;">136 B</td>
 <td style="text-align: right;">4,784 B</td>
 </tr>
 <tr>
 <td>$zip (mixed)</td>
 <td><code>$zip(keys, Order[0].Product.Price)</code></td>
-<td style="text-align: right;">730 ns</td>
-<td style="text-align: right;">662 ns</td>
-<td style="text-align: right;">1,280 ns</td>
-<td style="text-align: right;">120 B</td>
-<td style="text-align: right;">120 B</td>
+<td style="text-align: right;">866 ns</td>
+<td style="text-align: right;">772 ns</td>
+<td style="text-align: right;">1,830 ns</td>
+<td style="text-align: right;">136 B</td>
+<td style="text-align: right;">136 B</td>
 <td style="text-align: right;">4,240 B</td>
 </tr>
 <tr>
 <td>$shuffle</td>
 <td><code>$shuffle(Account.Order[0].Product)</code></td>
-<td style="text-align: right;">626 ns</td>
-<td style="text-align: right;">582 ns</td>
-<td style="text-align: right;">1,097 ns</td>
-<td style="text-align: right;">120 B</td>
-<td style="text-align: right;">120 B</td>
+<td style="text-align: right;">774 ns</td>
+<td style="text-align: right;">723 ns</td>
+<td style="text-align: right;">1,612 ns</td>
+<td style="text-align: right;">136 B</td>
+<td style="text-align: right;">136 B</td>
 <td style="text-align: right;">2,824 B</td>
 </tr>
 </tbody>
 </table>
-<p><code>$zip</code> with constant arrays is <strong>constant-folded</strong> by the source generator (0.9 ns). Data-driven zip is <strong>1.5–1.6× faster</strong> with <strong>97% less allocation</strong>. <code>$shuffle</code> is <strong>1.8× faster</strong> using a Fisher–Yates in-place shuffle over the mutable document model.</p>
+<p><code>$zip</code> with constant arrays is <strong>constant-folded</strong> by the source generator (1.3 ns). Data-driven zip is <strong>1.9× faster</strong> with <strong>97% less allocation</strong>. <code>$shuffle</code> is <strong>2.1× faster</strong> using a Fisher–Yates in-place shuffle over the mutable document model.</p>
 <blockquote>
-<p><em>Benchmarks run with BenchmarkDotNet v0.15.8 on .NET 10.0.6, 13th Gen Intel Core i7-13800H, Windows 11. All Runtime benchmarks use the UTF-8 byte[] evaluation API with expression caching. Jsonata.Net.Native v3.0.0 uses pre-compiled <code>JsonataQuery</code> with pre-parsed <code>JToken</code> data. OutlierMode=RemoveAll, WarmupCount=5, IterationCount=15, RunStrategy=Throughput.</em></p>
+<p><em>Benchmarks run with BenchmarkDotNet v0.15.8 on .NET 10.0.7, 13th Gen Intel Core i7-13800H, Windows 11. All Runtime benchmarks use the UTF-8 byte[] evaluation API with expression caching. Jsonata.Net.Native v3.0.0 uses pre-compiled <code>JsonataQuery</code> with pre-parsed <code>JToken</code> data. OutlierMode=RemoveAll, WarmupCount=5, IterationCount=15, RunStrategy=Throughput.</em></p>
 </blockquote>
         </div>
     </main>
