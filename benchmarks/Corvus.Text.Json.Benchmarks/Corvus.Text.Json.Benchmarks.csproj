@@ -14,6 +14,7 @@
     <PackageReference Include="BenchmarkDotNet" />
     <PackageReference Include="BenchmarkDotNet.Diagnostics.Windows" />
     <PackageReference Include="JsonPatch.Net" />
+    <PackageReference Include="JsonCons.Utilities" Condition="'$(TargetFramework)' != 'net481'" />
     <ProjectReference Include="..\..\src-v4\Corvus.Json.ExtendedTypes\Corvus.Json.ExtendedTypes.csproj" />
     <ProjectReference Include="..\..\src-v4\Corvus.Json.Patch\Corvus.Json.Patch.csproj" />
     <ProjectReference Include="..\..\src-v4\Corvus.Json.Validator\Corvus.Json.Validator.csproj" />

@@ -33,13 +33,13 @@ JsonElement.Mutable root = builder.RootElement;
 Console.WriteLine("=== PatchBuilder: fluent patch construction ===");
 Console.WriteLine();
 
-JsonPatchDocument patch = root.BeginPatch()
+JsonPatchDocument patch = root.BeginPatch(workspace)
     .Replace("/name"u8, "Bob")
     .Add("/tags/-"u8, "admin")
     .Remove("/email"u8)
     .GetPatchAndDispose();
 
-bool success = root.TryApplyPatch(in patch);
+bool success = root.TryApplyPatch(patch);
 Console.WriteLine($"Patch applied: {success}");
 Console.WriteLine(builder.RootElement);
 Console.WriteLine();
@@ -107,23 +107,23 @@ Console.WriteLine();
 Console.WriteLine("=== Conditional patch with Test guard ===");
 Console.WriteLine();
 
-JsonPatchDocument guardedPatch = root.BeginPatch()
+JsonPatchDocument guardedPatch = root.BeginPatch(workspace)
     .Test("/name"u8, "Bob")
     .Replace("/name"u8, "Charlie")
     .GetPatchAndDispose();
 
-success = root.TryApplyPatch(in guardedPatch);
+success = root.TryApplyPatch(guardedPatch);
 Console.WriteLine($"Guarded patch (name == Bob): {success}");
 Console.WriteLine(builder.RootElement);
 Console.WriteLine();
 
 // Now try a guarded patch that should fail
-JsonPatchDocument failingPatch = root.BeginPatch()
+JsonPatchDocument failingPatch = root.BeginPatch(workspace)
     .Test("/name"u8, "Bob")
     .Replace("/name"u8, "Dave")
     .GetPatchAndDispose();
 
-success = root.TryApplyPatch(in failingPatch);
+success = root.TryApplyPatch(failingPatch);
 Console.WriteLine($"Guarded patch (name == Bob, but it's Charlie): {success}");
 Console.WriteLine(builder.RootElement);
 Console.WriteLine();
@@ -142,6 +142,6 @@ JsonPatchDocument parsedPatch = JsonPatchDocument.ParseValue(
     ]
     """u8);
 
-success = root.TryValidateAndApplyPatch(in parsedPatch);
+success = root.TryValidateAndApplyPatch(parsedPatch);
 Console.WriteLine($"Parsed patch applied: {success}");
 Console.WriteLine(builder.RootElement);

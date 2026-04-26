@@ -2,6 +2,8 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using Corvus.Text.Json.Internal;
+
 namespace Corvus.Text.Json.Patch;
 
 /// <summary>
@@ -11,11 +13,16 @@ namespace Corvus.Text.Json.Patch;
 /// <para>
 /// Create a <see cref="PatchBuilder"/> by calling <see cref="JsonPatchExtensions.BeginPatch"/>,
 /// chain operations, then call <see cref="GetPatchAndDispose"/> to
-/// finalize and dispose the builder.
+/// finalize the builder.
+/// </para>
+/// <para>
+/// The returned <see cref="JsonPatchDocument"/> is backed by the
+/// <see cref="JsonWorkspace"/> passed to the constructor. The caller
+/// must keep the workspace alive for the lifetime of the patch.
 /// </para>
 /// <para>
 /// <code>
-/// JsonPatchDocument patch = target.BeginPatch()
+/// JsonPatchDocument patch = target.BeginPatch(workspace)
 ///     .Add("/foo/bar"u8, JsonElement.ParseValue("42"))
 ///     .Remove("/baz"u8)
 ///     .GetPatchAndDispose();
@@ -24,34 +31,35 @@ namespace Corvus.Text.Json.Patch;
 /// </code>
 /// </para>
 /// </remarks>
-public struct PatchBuilder : IDisposable
+public ref struct PatchBuilder
+#if NET
+    : IDisposable
+#endif
 {
-    private JsonWorkspace _workspace;
-    private Utf8JsonWriter _writer;
-    private IByteBufferWriter _bufferWriter;
+    private JsonDocumentBuilder<JsonPatchDocument.Mutable> _builder;
+    private ComplexValueBuilder _cvb;
     private bool _disposed;
 
-    internal PatchBuilder(bool initialize)
+    internal PatchBuilder(JsonWorkspace workspace)
     {
-        _workspace = JsonWorkspace.CreateUnrented();
-        _writer = _workspace.RentWriterAndBuffer(256, out _bufferWriter);
-        _writer.WriteStartArray();
+        _builder = workspace.CreateBuilder<JsonPatchDocument.Mutable>(-1, 8192);
+        _cvb = ComplexValueBuilder.Create(_builder, 64);
+        _cvb.StartArray();
     }
 
     /// <summary>
     /// Finalizes the patch document and disposes the builder's resources.
     /// </summary>
-    /// <returns>The built <see cref="JsonPatchDocument"/>.</returns>
+    /// <returns>The built <see cref="JsonPatchDocument"/>, backed by the workspace.</returns>
     /// <remarks>
     /// After calling this method, no further operations can be added and the builder is disposed.
     /// </remarks>
     public JsonPatchDocument GetPatchAndDispose()
     {
-        _writer.WriteEndArray();
-        _writer.Flush();
-        JsonPatchDocument patch = JsonPatchDocument.ParseValue(_bufferWriter.WrittenSpan);
-        Dispose();
-        return patch;
+        _cvb.EndArray();
+        ((IMutableJsonDocument)_builder).SetAndDispose(ref _cvb);
+        _disposed = true;
+        return _builder.RootElement;
     }
 
     /// <summary>
@@ -60,14 +68,15 @@ public struct PatchBuilder : IDisposable
     /// <param name="path">The target JSON Pointer path as UTF-8 bytes.</param>
     /// <param name="value">The value to add.</param>
     /// <returns>This <see cref="PatchBuilder"/> for fluent chaining.</returns>
-    public PatchBuilder Add(ReadOnlySpan<byte> path, in JsonElement.Source value)
+    public PatchBuilder Add(ReadOnlySpan<byte> path, scoped in JsonElement.Source value)
     {
-        _writer.WriteStartObject();
-        _writer.WriteString("op"u8, "add"u8);
-        _writer.WriteString("path"u8, path);
-        _writer.WritePropertyName("value"u8);
-        value.WriteTo(_writer);
-        _writer.WriteEndObject();
+        ComplexValueBuilder.ComplexValueHandle item = _cvb.StartItem();
+        _cvb.StartObject();
+        _cvb.AddProperty("op"u8, "add"u8, escapeName: false, escapeValue: false, nameRequiresUnescaping: false, valueRequiresUnescaping: false);
+        _cvb.AddProperty("path"u8, path, escapeName: false, escapeValue: true, nameRequiresUnescaping: false, valueRequiresUnescaping: false);
+        value.AddAsProperty("value"u8, ref _cvb, escapeName: false);
+        _cvb.EndObject();
+        _cvb.EndItem(item);
         return this;
     }
 
@@ -77,14 +86,15 @@ public struct PatchBuilder : IDisposable
     /// <param name="path">The target JSON Pointer path.</param>
     /// <param name="value">The value to add.</param>
     /// <returns>This <see cref="PatchBuilder"/> for fluent chaining.</returns>
-    public PatchBuilder Add(ReadOnlySpan<char> path, in JsonElement.Source value)
+    public PatchBuilder Add(ReadOnlySpan<char> path, scoped in JsonElement.Source value)
     {
-        _writer.WriteStartObject();
-        _writer.WriteString("op"u8, "add"u8);
-        _writer.WriteString("path"u8, path);
-        _writer.WritePropertyName("value"u8);
-        value.WriteTo(_writer);
-        _writer.WriteEndObject();
+        ComplexValueBuilder.ComplexValueHandle item = _cvb.StartItem();
+        _cvb.StartObject();
+        _cvb.AddProperty("op"u8, "add"u8, escapeName: false, escapeValue: false, nameRequiresUnescaping: false, valueRequiresUnescaping: false);
+        _cvb.AddProperty("path"u8, path, escapeName: false, nameRequiresUnescaping: false);
+        value.AddAsProperty("value"u8, ref _cvb, escapeName: false);
+        _cvb.EndObject();
+        _cvb.EndItem(item);
         return this;
     }
 
@@ -94,14 +104,15 @@ public struct PatchBuilder : IDisposable
     /// <param name="path">The target JSON Pointer path.</param>
     /// <param name="value">The value to add.</param>
     /// <returns>This <see cref="PatchBuilder"/> for fluent chaining.</returns>
-    public PatchBuilder Add(string path, in JsonElement.Source value)
+    public PatchBuilder Add(string path, scoped in JsonElement.Source value)
     {
-        _writer.WriteStartObject();
-        _writer.WriteString("op"u8, "add"u8);
-        _writer.WriteString("path"u8, path);
-        _writer.WritePropertyName("value"u8);
-        value.WriteTo(_writer);
-        _writer.WriteEndObject();
+        ComplexValueBuilder.ComplexValueHandle item = _cvb.StartItem();
+        _cvb.StartObject();
+        _cvb.AddProperty("op"u8, "add"u8, escapeName: false, escapeValue: false, nameRequiresUnescaping: false, valueRequiresUnescaping: false);
+        _cvb.AddProperty("path"u8, path.AsSpan(), escapeName: false, nameRequiresUnescaping: false);
+        value.AddAsProperty("value"u8, ref _cvb, escapeName: false);
+        _cvb.EndObject();
+        _cvb.EndItem(item);
         return this;
     }
 
@@ -112,10 +123,12 @@ public struct PatchBuilder : IDisposable
     /// <returns>This <see cref="PatchBuilder"/> for fluent chaining.</returns>
     public PatchBuilder Remove(ReadOnlySpan<byte> path)
     {
-        _writer.WriteStartObject();
-        _writer.WriteString("op"u8, "remove"u8);
-        _writer.WriteString("path"u8, path);
-        _writer.WriteEndObject();
+        ComplexValueBuilder.ComplexValueHandle item = _cvb.StartItem();
+        _cvb.StartObject();
+        _cvb.AddProperty("op"u8, "remove"u8, escapeName: false, escapeValue: false, nameRequiresUnescaping: false, valueRequiresUnescaping: false);
+        _cvb.AddProperty("path"u8, path, escapeName: false, escapeValue: true, nameRequiresUnescaping: false, valueRequiresUnescaping: false);
+        _cvb.EndObject();
+        _cvb.EndItem(item);
         return this;
     }
 
@@ -126,10 +139,12 @@ public struct PatchBuilder : IDisposable
     /// <returns>This <see cref="PatchBuilder"/> for fluent chaining.</returns>
     public PatchBuilder Remove(ReadOnlySpan<char> path)
     {
-        _writer.WriteStartObject();
-        _writer.WriteString("op"u8, "remove"u8);
-        _writer.WriteString("path"u8, path);
-        _writer.WriteEndObject();
+        ComplexValueBuilder.ComplexValueHandle item = _cvb.StartItem();
+        _cvb.StartObject();
+        _cvb.AddProperty("op"u8, "remove"u8, escapeName: false, escapeValue: false, nameRequiresUnescaping: false, valueRequiresUnescaping: false);
+        _cvb.AddProperty("path"u8, path, escapeName: false, nameRequiresUnescaping: false);
+        _cvb.EndObject();
+        _cvb.EndItem(item);
         return this;
     }
 
@@ -140,10 +155,12 @@ public struct PatchBuilder : IDisposable
     /// <returns>This <see cref="PatchBuilder"/> for fluent chaining.</returns>
     public PatchBuilder Remove(string path)
     {
-        _writer.WriteStartObject();
-        _writer.WriteString("op"u8, "remove"u8);
-        _writer.WriteString("path"u8, path);
-        _writer.WriteEndObject();
+        ComplexValueBuilder.ComplexValueHandle item = _cvb.StartItem();
+        _cvb.StartObject();
+        _cvb.AddProperty("op"u8, "remove"u8, escapeName: false, escapeValue: false, nameRequiresUnescaping: false, valueRequiresUnescaping: false);
+        _cvb.AddProperty("path"u8, path.AsSpan(), escapeName: false, nameRequiresUnescaping: false);
+        _cvb.EndObject();
+        _cvb.EndItem(item);
         return this;
     }
 
@@ -153,14 +170,15 @@ public struct PatchBuilder : IDisposable
     /// <param name="path">The target JSON Pointer path as UTF-8 bytes.</param>
     /// <param name="value">The replacement value.</param>
     /// <returns>This <see cref="PatchBuilder"/> for fluent chaining.</returns>
-    public PatchBuilder Replace(ReadOnlySpan<byte> path, in JsonElement.Source value)
+    public PatchBuilder Replace(ReadOnlySpan<byte> path, scoped in JsonElement.Source value)
     {
-        _writer.WriteStartObject();
-        _writer.WriteString("op"u8, "replace"u8);
-        _writer.WriteString("path"u8, path);
-        _writer.WritePropertyName("value"u8);
-        value.WriteTo(_writer);
-        _writer.WriteEndObject();
+        ComplexValueBuilder.ComplexValueHandle item = _cvb.StartItem();
+        _cvb.StartObject();
+        _cvb.AddProperty("op"u8, "replace"u8, escapeName: false, escapeValue: false, nameRequiresUnescaping: false, valueRequiresUnescaping: false);
+        _cvb.AddProperty("path"u8, path, escapeName: false, escapeValue: true, nameRequiresUnescaping: false, valueRequiresUnescaping: false);
+        value.AddAsProperty("value"u8, ref _cvb, escapeName: false);
+        _cvb.EndObject();
+        _cvb.EndItem(item);
         return this;
     }
 
@@ -170,14 +188,15 @@ public struct PatchBuilder : IDisposable
     /// <param name="path">The target JSON Pointer path.</param>
     /// <param name="value">The replacement value.</param>
     /// <returns>This <see cref="PatchBuilder"/> for fluent chaining.</returns>
-    public PatchBuilder Replace(ReadOnlySpan<char> path, in JsonElement.Source value)
+    public PatchBuilder Replace(ReadOnlySpan<char> path, scoped in JsonElement.Source value)
     {
-        _writer.WriteStartObject();
-        _writer.WriteString("op"u8, "replace"u8);
-        _writer.WriteString("path"u8, path);
-        _writer.WritePropertyName("value"u8);
-        value.WriteTo(_writer);
-        _writer.WriteEndObject();
+        ComplexValueBuilder.ComplexValueHandle item = _cvb.StartItem();
+        _cvb.StartObject();
+        _cvb.AddProperty("op"u8, "replace"u8, escapeName: false, escapeValue: false, nameRequiresUnescaping: false, valueRequiresUnescaping: false);
+        _cvb.AddProperty("path"u8, path, escapeName: false, nameRequiresUnescaping: false);
+        value.AddAsProperty("value"u8, ref _cvb, escapeName: false);
+        _cvb.EndObject();
+        _cvb.EndItem(item);
         return this;
     }
 
@@ -187,14 +206,15 @@ public struct PatchBuilder : IDisposable
     /// <param name="path">The target JSON Pointer path.</param>
     /// <param name="value">The replacement value.</param>
     /// <returns>This <see cref="PatchBuilder"/> for fluent chaining.</returns>
-    public PatchBuilder Replace(string path, in JsonElement.Source value)
+    public PatchBuilder Replace(string path, scoped in JsonElement.Source value)
     {
-        _writer.WriteStartObject();
-        _writer.WriteString("op"u8, "replace"u8);
-        _writer.WriteString("path"u8, path);
-        _writer.WritePropertyName("value"u8);
-        value.WriteTo(_writer);
-        _writer.WriteEndObject();
+        ComplexValueBuilder.ComplexValueHandle item = _cvb.StartItem();
+        _cvb.StartObject();
+        _cvb.AddProperty("op"u8, "replace"u8, escapeName: false, escapeValue: false, nameRequiresUnescaping: false, valueRequiresUnescaping: false);
+        _cvb.AddProperty("path"u8, path.AsSpan(), escapeName: false, nameRequiresUnescaping: false);
+        value.AddAsProperty("value"u8, ref _cvb, escapeName: false);
+        _cvb.EndObject();
+        _cvb.EndItem(item);
         return this;
     }
 
@@ -206,11 +226,13 @@ public struct PatchBuilder : IDisposable
     /// <returns>This <see cref="PatchBuilder"/> for fluent chaining.</returns>
     public PatchBuilder Move(ReadOnlySpan<byte> from, ReadOnlySpan<byte> path)
     {
-        _writer.WriteStartObject();
-        _writer.WriteString("op"u8, "move"u8);
-        _writer.WriteString("from"u8, from);
-        _writer.WriteString("path"u8, path);
-        _writer.WriteEndObject();
+        ComplexValueBuilder.ComplexValueHandle item = _cvb.StartItem();
+        _cvb.StartObject();
+        _cvb.AddProperty("op"u8, "move"u8, escapeName: false, escapeValue: false, nameRequiresUnescaping: false, valueRequiresUnescaping: false);
+        _cvb.AddProperty("from"u8, from, escapeName: false, escapeValue: true, nameRequiresUnescaping: false, valueRequiresUnescaping: false);
+        _cvb.AddProperty("path"u8, path, escapeName: false, escapeValue: true, nameRequiresUnescaping: false, valueRequiresUnescaping: false);
+        _cvb.EndObject();
+        _cvb.EndItem(item);
         return this;
     }
 
@@ -222,11 +244,13 @@ public struct PatchBuilder : IDisposable
     /// <returns>This <see cref="PatchBuilder"/> for fluent chaining.</returns>
     public PatchBuilder Move(ReadOnlySpan<char> from, ReadOnlySpan<char> path)
     {
-        _writer.WriteStartObject();
-        _writer.WriteString("op"u8, "move"u8);
-        _writer.WriteString("from"u8, from);
-        _writer.WriteString("path"u8, path);
-        _writer.WriteEndObject();
+        ComplexValueBuilder.ComplexValueHandle item = _cvb.StartItem();
+        _cvb.StartObject();
+        _cvb.AddProperty("op"u8, "move"u8, escapeName: false, escapeValue: false, nameRequiresUnescaping: false, valueRequiresUnescaping: false);
+        _cvb.AddProperty("from"u8, from, escapeName: false, nameRequiresUnescaping: false);
+        _cvb.AddProperty("path"u8, path, escapeName: false, nameRequiresUnescaping: false);
+        _cvb.EndObject();
+        _cvb.EndItem(item);
         return this;
     }
 
@@ -238,11 +262,13 @@ public struct PatchBuilder : IDisposable
     /// <returns>This <see cref="PatchBuilder"/> for fluent chaining.</returns>
     public PatchBuilder Move(string from, string path)
     {
-        _writer.WriteStartObject();
-        _writer.WriteString("op"u8, "move"u8);
-        _writer.WriteString("from"u8, from);
-        _writer.WriteString("path"u8, path);
-        _writer.WriteEndObject();
+        ComplexValueBuilder.ComplexValueHandle item = _cvb.StartItem();
+        _cvb.StartObject();
+        _cvb.AddProperty("op"u8, "move"u8, escapeName: false, escapeValue: false, nameRequiresUnescaping: false, valueRequiresUnescaping: false);
+        _cvb.AddProperty("from"u8, from.AsSpan(), escapeName: false, nameRequiresUnescaping: false);
+        _cvb.AddProperty("path"u8, path.AsSpan(), escapeName: false, nameRequiresUnescaping: false);
+        _cvb.EndObject();
+        _cvb.EndItem(item);
         return this;
     }
 
@@ -254,11 +280,13 @@ public struct PatchBuilder : IDisposable
     /// <returns>This <see cref="PatchBuilder"/> for fluent chaining.</returns>
     public PatchBuilder Copy(ReadOnlySpan<byte> from, ReadOnlySpan<byte> path)
     {
-        _writer.WriteStartObject();
-        _writer.WriteString("op"u8, "copy"u8);
-        _writer.WriteString("from"u8, from);
-        _writer.WriteString("path"u8, path);
-        _writer.WriteEndObject();
+        ComplexValueBuilder.ComplexValueHandle item = _cvb.StartItem();
+        _cvb.StartObject();
+        _cvb.AddProperty("op"u8, "copy"u8, escapeName: false, escapeValue: false, nameRequiresUnescaping: false, valueRequiresUnescaping: false);
+        _cvb.AddProperty("from"u8, from, escapeName: false, escapeValue: true, nameRequiresUnescaping: false, valueRequiresUnescaping: false);
+        _cvb.AddProperty("path"u8, path, escapeName: false, escapeValue: true, nameRequiresUnescaping: false, valueRequiresUnescaping: false);
+        _cvb.EndObject();
+        _cvb.EndItem(item);
         return this;
     }
 
@@ -270,11 +298,13 @@ public struct PatchBuilder : IDisposable
     /// <returns>This <see cref="PatchBuilder"/> for fluent chaining.</returns>
     public PatchBuilder Copy(ReadOnlySpan<char> from, ReadOnlySpan<char> path)
     {
-        _writer.WriteStartObject();
-        _writer.WriteString("op"u8, "copy"u8);
-        _writer.WriteString("from"u8, from);
-        _writer.WriteString("path"u8, path);
-        _writer.WriteEndObject();
+        ComplexValueBuilder.ComplexValueHandle item = _cvb.StartItem();
+        _cvb.StartObject();
+        _cvb.AddProperty("op"u8, "copy"u8, escapeName: false, escapeValue: false, nameRequiresUnescaping: false, valueRequiresUnescaping: false);
+        _cvb.AddProperty("from"u8, from, escapeName: false, nameRequiresUnescaping: false);
+        _cvb.AddProperty("path"u8, path, escapeName: false, nameRequiresUnescaping: false);
+        _cvb.EndObject();
+        _cvb.EndItem(item);
         return this;
     }
 
@@ -286,11 +316,13 @@ public struct PatchBuilder : IDisposable
     /// <returns>This <see cref="PatchBuilder"/> for fluent chaining.</returns>
     public PatchBuilder Copy(string from, string path)
     {
-        _writer.WriteStartObject();
-        _writer.WriteString("op"u8, "copy"u8);
-        _writer.WriteString("from"u8, from);
-        _writer.WriteString("path"u8, path);
-        _writer.WriteEndObject();
+        ComplexValueBuilder.ComplexValueHandle item = _cvb.StartItem();
+        _cvb.StartObject();
+        _cvb.AddProperty("op"u8, "copy"u8, escapeName: false, escapeValue: false, nameRequiresUnescaping: false, valueRequiresUnescaping: false);
+        _cvb.AddProperty("from"u8, from.AsSpan(), escapeName: false, nameRequiresUnescaping: false);
+        _cvb.AddProperty("path"u8, path.AsSpan(), escapeName: false, nameRequiresUnescaping: false);
+        _cvb.EndObject();
+        _cvb.EndItem(item);
         return this;
     }
 
@@ -300,14 +332,15 @@ public struct PatchBuilder : IDisposable
     /// <param name="path">The target JSON Pointer path as UTF-8 bytes.</param>
     /// <param name="value">The expected value.</param>
     /// <returns>This <see cref="PatchBuilder"/> for fluent chaining.</returns>
-    public PatchBuilder Test(ReadOnlySpan<byte> path, in JsonElement.Source value)
+    public PatchBuilder Test(ReadOnlySpan<byte> path, scoped in JsonElement.Source value)
     {
-        _writer.WriteStartObject();
-        _writer.WriteString("op"u8, "test"u8);
-        _writer.WriteString("path"u8, path);
-        _writer.WritePropertyName("value"u8);
-        value.WriteTo(_writer);
-        _writer.WriteEndObject();
+        ComplexValueBuilder.ComplexValueHandle item = _cvb.StartItem();
+        _cvb.StartObject();
+        _cvb.AddProperty("op"u8, "test"u8, escapeName: false, escapeValue: false, nameRequiresUnescaping: false, valueRequiresUnescaping: false);
+        _cvb.AddProperty("path"u8, path, escapeName: false, escapeValue: true, nameRequiresUnescaping: false, valueRequiresUnescaping: false);
+        value.AddAsProperty("value"u8, ref _cvb, escapeName: false);
+        _cvb.EndObject();
+        _cvb.EndItem(item);
         return this;
     }
 
@@ -317,14 +350,15 @@ public struct PatchBuilder : IDisposable
     /// <param name="path">The target JSON Pointer path.</param>
     /// <param name="value">The expected value.</param>
     /// <returns>This <see cref="PatchBuilder"/> for fluent chaining.</returns>
-    public PatchBuilder Test(ReadOnlySpan<char> path, in JsonElement.Source value)
+    public PatchBuilder Test(ReadOnlySpan<char> path, scoped in JsonElement.Source value)
     {
-        _writer.WriteStartObject();
-        _writer.WriteString("op"u8, "test"u8);
-        _writer.WriteString("path"u8, path);
-        _writer.WritePropertyName("value"u8);
-        value.WriteTo(_writer);
-        _writer.WriteEndObject();
+        ComplexValueBuilder.ComplexValueHandle item = _cvb.StartItem();
+        _cvb.StartObject();
+        _cvb.AddProperty("op"u8, "test"u8, escapeName: false, escapeValue: false, nameRequiresUnescaping: false, valueRequiresUnescaping: false);
+        _cvb.AddProperty("path"u8, path, escapeName: false, nameRequiresUnescaping: false);
+        value.AddAsProperty("value"u8, ref _cvb, escapeName: false);
+        _cvb.EndObject();
+        _cvb.EndItem(item);
         return this;
     }
 
@@ -334,25 +368,59 @@ public struct PatchBuilder : IDisposable
     /// <param name="path">The target JSON Pointer path.</param>
     /// <param name="value">The expected value.</param>
     /// <returns>This <see cref="PatchBuilder"/> for fluent chaining.</returns>
-    public PatchBuilder Test(string path, in JsonElement.Source value)
+    public PatchBuilder Test(string path, scoped in JsonElement.Source value)
     {
-        _writer.WriteStartObject();
-        _writer.WriteString("op"u8, "test"u8);
-        _writer.WriteString("path"u8, path);
-        _writer.WritePropertyName("value"u8);
-        value.WriteTo(_writer);
-        _writer.WriteEndObject();
+        ComplexValueBuilder.ComplexValueHandle item = _cvb.StartItem();
+        _cvb.StartObject();
+        _cvb.AddProperty("op"u8, "test"u8, escapeName: false, escapeValue: false, nameRequiresUnescaping: false, valueRequiresUnescaping: false);
+        _cvb.AddProperty("path"u8, path.AsSpan(), escapeName: false, nameRequiresUnescaping: false);
+        value.AddAsProperty("value"u8, ref _cvb, escapeName: false);
+        _cvb.EndObject();
+        _cvb.EndItem(item);
         return this;
     }
 
-    /// <inheritdoc/>
+    /// <summary>
+    /// Disposes the builder, transferring any outstanding metadata to
+    /// the backing document so pooled memory is returned.
+    /// </summary>
     public void Dispose()
     {
-        if (!_disposed)
+        if (!_disposed && _builder is not null)
         {
-            _workspace.ReturnWriterAndBuffer(_writer, _bufferWriter);
-            _workspace.Dispose();
+            _cvb.EndArray();
+            ((IMutableJsonDocument)_builder).SetAndDispose(ref _cvb);
             _disposed = true;
         }
+    }
+
+    /// <summary>
+    /// Adds an "add" operation to the patch using a <see cref="JsonElement"/> value directly.
+    /// </summary>
+    internal PatchBuilder AddElement(ReadOnlySpan<byte> path, in JsonElement value)
+    {
+        ComplexValueBuilder.ComplexValueHandle item = _cvb.StartItem();
+        _cvb.StartObject();
+        _cvb.AddProperty("op"u8, "add"u8, escapeName: false, escapeValue: false, nameRequiresUnescaping: false, valueRequiresUnescaping: false);
+        _cvb.AddProperty("path"u8, path, escapeName: false, escapeValue: true, nameRequiresUnescaping: false, valueRequiresUnescaping: false);
+        _cvb.AddProperty<JsonElement>("value"u8, value, escapeName: false, nameRequiresUnescaping: false);
+        _cvb.EndObject();
+        _cvb.EndItem(item);
+        return this;
+    }
+
+    /// <summary>
+    /// Adds a "replace" operation to the patch using a <see cref="JsonElement"/> value directly.
+    /// </summary>
+    internal PatchBuilder ReplaceElement(ReadOnlySpan<byte> path, in JsonElement value)
+    {
+        ComplexValueBuilder.ComplexValueHandle item = _cvb.StartItem();
+        _cvb.StartObject();
+        _cvb.AddProperty("op"u8, "replace"u8, escapeName: false, escapeValue: false, nameRequiresUnescaping: false, valueRequiresUnescaping: false);
+        _cvb.AddProperty("path"u8, path, escapeName: false, escapeValue: true, nameRequiresUnescaping: false, valueRequiresUnescaping: false);
+        _cvb.AddProperty<JsonElement>("value"u8, value, escapeName: false, nameRequiresUnescaping: false);
+        _cvb.EndObject();
+        _cvb.EndItem(item);
+        return this;
     }
 }

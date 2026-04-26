@@ -54,16 +54,16 @@ Person.Mutable root = builder.RootElement;
 
 ### Building and applying a patch with PatchBuilder
 
-The `PatchBuilder` provides a fluent API for constructing patch documents. Call `BeginPatch()` to start, chain operations, and call `GetPatchAndDispose()` to finalize:
+The `PatchBuilder` provides a fluent API for constructing patch documents. Call `BeginPatch(workspace)` to start, chain operations, and call `GetPatchAndDispose()` to finalize:
 
 ```csharp
-JsonPatchDocument patch = root.BeginPatch()
+JsonPatchDocument patch = root.BeginPatch(workspace)
     .Replace("/name"u8, "Bob")
     .Add("/tags/-"u8, "admin")
     .Remove("/email"u8)
     .GetPatchAndDispose();
 
-bool success = root.TryApplyPatch(in patch);
+bool success = root.TryApplyPatch(patch);
 // Result: {"name":"Bob","age":30,"tags":["user","admin"]}
 ```
 
@@ -97,12 +97,12 @@ bool fails   = root.TryTest("/name"u8, JsonElement.ParseValue("""
 When `test` is used in a patch document, a failing test aborts the entire patch. This enables optimistic concurrency patterns:
 
 ```csharp
-JsonPatchDocument guardedPatch = root.BeginPatch()
+JsonPatchDocument guardedPatch = root.BeginPatch(workspace)
     .Test("/name"u8, "Bob")           // guard: only apply if name is Bob
     .Replace("/name"u8, "Charlie")    // update name
     .GetPatchAndDispose();
 
-bool success = root.TryApplyPatch(in guardedPatch);
+bool success = root.TryApplyPatch(guardedPatch);
 // success is true only if /name was "Bob"
 ```
 
@@ -119,7 +119,7 @@ JsonPatchDocument parsedPatch = JsonPatchDocument.ParseValue(
     ]
     """u8);
 
-root.TryApplyPatch(in parsedPatch);
+root.TryApplyPatch(parsedPatch);
 ```
 
 ## FAQ

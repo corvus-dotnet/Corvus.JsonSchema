@@ -12,7 +12,7 @@ using var builder = parsedDoc.RootElement.CreateBuilder(workspace);
 
 JsonElement.Mutable root = builder.RootElement;
 
-JsonPatchDocument patch = root.BeginPatch()
+JsonPatchDocument patch = root.BeginPatch(workspace)
     .Replace("/name"u8, "Bob")
     .Add("/email"u8, "bob@example.com")
     .Add("/tags/-"u8, "admin")
@@ -20,7 +20,7 @@ JsonPatchDocument patch = root.BeginPatch()
     .GetPatchAndDispose();
 
 // Use TryApplyPatch directly — the patch was built locally so it's known to be valid.
-bool success = root.TryApplyPatch(in patch);
+bool success = root.TryApplyPatch(patch);
 // root is now: {"name":"Bob","tags":["user","admin"],"email":"bob@example.com"}
 ```
 
@@ -41,12 +41,12 @@ root.TryCopy("/name"u8, "/display_name"u8);
 The `test` operation checks a value without mutating the document. When used in a patch document, a failing test aborts the entire patch:
 
 ```csharp
-JsonPatchDocument guardedPatch = root.BeginPatch()
+JsonPatchDocument guardedPatch = root.BeginPatch(workspace)
     .Test("/version"u8, 1)
     .Replace("/version"u8, 2)
     .GetPatchAndDispose();
 
-bool applied = root.TryApplyPatch(in guardedPatch);
+bool applied = root.TryApplyPatch(guardedPatch);
 // applied is false if /version was not 1
 ```
 

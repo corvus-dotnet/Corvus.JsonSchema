@@ -38,11 +38,14 @@ public static class JsonDiffExtensions
     /// </summary>
     /// <param name="source">The original JSON element.</param>
     /// <param name="target">The desired JSON element.</param>
-    /// <returns>A <see cref="JsonPatchDocument"/> containing the operations
-    /// needed to transform <paramref name="source"/> into <paramref name="target"/>.</returns>
-    public static JsonPatchDocument CreatePatch(in JsonElement source, in JsonElement target)
+    /// <param name="workspace">The workspace to use for buffer management. The caller retains ownership.</param>
+    /// <returns>A <see cref="JsonPatchDocument"/> containing the patch operations
+    /// needed to transform <paramref name="source"/> into <paramref name="target"/>.
+    /// The result is backed by the <paramref name="workspace"/>; the caller must
+    /// keep the workspace alive for the lifetime of the returned document.</returns>
+    public static JsonPatchDocument CreatePatch(in JsonElement source, in JsonElement target, JsonWorkspace workspace)
     {
-        PatchBuilder patchBuilder = new(true);
+        PatchBuilder patchBuilder = new(workspace);
         byte[] pathBuffer = ArrayPool<byte>.Shared.Rent(InitialPathBufferSize);
 
         try
@@ -66,7 +69,7 @@ public static class JsonDiffExtensions
         in JsonElement target,
         ref byte[] pathBuffer,
         int pathLength,
-        ref PatchBuilder patchBuilder)
+        scoped ref PatchBuilder patchBuilder)
     {
         if (source == target)
         {
@@ -75,7 +78,7 @@ public static class JsonDiffExtensions
 
         if (source.ValueKind != target.ValueKind)
         {
-            patchBuilder.Replace(pathBuffer.AsSpan(0, pathLength), target);
+            patchBuilder.ReplaceElement(pathBuffer.AsSpan(0, pathLength), target);
             return;
         }
 
@@ -91,7 +94,7 @@ public static class JsonDiffExtensions
 
             default:
                 // Same kind but different value (number, string, etc.)
-                patchBuilder.Replace(pathBuffer.AsSpan(0, pathLength), target);
+                patchBuilder.ReplaceElement(pathBuffer.AsSpan(0, pathLength), target);
                 break;
         }
     }
@@ -101,7 +104,7 @@ public static class JsonDiffExtensions
         in JsonElement target,
         ref byte[] pathBuffer,
         int pathLength,
-        ref PatchBuilder patchBuilder)
+        scoped ref PatchBuilder patchBuilder)
     {
         // Process properties present in source
         foreach (JsonProperty<JsonElement> sourceProp in source.EnumerateObject())
@@ -131,7 +134,7 @@ public static class JsonDiffExtensions
             if (!source.TryGetProperty(nameSpan, out _))
             {
                 int childPathLength = AppendSegment(ref pathBuffer, pathLength, nameSpan);
-                patchBuilder.Add(pathBuffer.AsSpan(0, childPathLength), targetProp.Value);
+                patchBuilder.AddElement(pathBuffer.AsSpan(0, childPathLength), targetProp.Value);
             }
         }
     }
@@ -141,7 +144,7 @@ public static class JsonDiffExtensions
         in JsonElement target,
         ref byte[] pathBuffer,
         int pathLength,
-        ref PatchBuilder patchBuilder)
+        scoped ref PatchBuilder patchBuilder)
     {
         int sourceLength = source.GetArrayLength();
         int targetLength = target.GetArrayLength();
@@ -149,7 +152,7 @@ public static class JsonDiffExtensions
         if (sourceLength != targetLength)
         {
             // Different lengths — replace whole array
-            patchBuilder.Replace(pathBuffer.AsSpan(0, pathLength), target);
+            patchBuilder.ReplaceElement(pathBuffer.AsSpan(0, pathLength), target);
             return;
         }
 

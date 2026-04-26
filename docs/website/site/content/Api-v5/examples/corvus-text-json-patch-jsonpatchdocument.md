@@ -29,7 +29,7 @@ using var builder = parsedDoc.RootElement.CreateBuilder(workspace);
 
 JsonElement.Mutable root = builder.RootElement;
 
-bool applied = root.TryValidateAndApplyPatch(in patch);
+bool applied = root.TryValidateAndApplyPatch(patch);
 ```
 
 ### Building a patch with PatchBuilder
@@ -37,11 +37,11 @@ bool applied = root.TryValidateAndApplyPatch(in patch);
 For locally-constructed patches that don't need validation, use `PatchBuilder`:
 
 ```csharp
-JsonPatchDocument patch = root.BeginPatch()
+JsonPatchDocument patch = root.BeginPatch(workspace)
     .Replace("/name"u8, "Charlie")
     .Add("/tags/-"u8, "admin")
     .Remove("/temp"u8)
     .GetPatchAndDispose();
 
-root.TryApplyPatch(in patch);
+root.TryApplyPatch(patch);
 ```

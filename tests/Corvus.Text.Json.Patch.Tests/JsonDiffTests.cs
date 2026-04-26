@@ -52,7 +52,8 @@ public class JsonDiffTests
     [Fact]
     public void DifferentRootTypesProduceReplace()
     {
-        JsonPatchDocument patch = CreatePatch("""42""", "\"hello\"");
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+        JsonPatchDocument patch = CreatePatch("""42""", "\"hello\"", workspace);
         AssertPatchOperationCount(patch, 1);
         AssertDiffRoundTrips("""42""", "\"hello\"");
     }
@@ -78,9 +79,11 @@ public class JsonDiffTests
     [Fact]
     public void AddedPropertyProducesAdd()
     {
+        using JsonWorkspace workspace = JsonWorkspace.Create();
         JsonPatchDocument patch = CreatePatch(
             """{"a":1}""",
-            """{"a":1,"b":2}""");
+            """{"a":1,"b":2}""",
+            workspace);
 
         AssertPatchOperationCount(patch, 1);
         AssertDiffRoundTrips("""{"a":1}""", """{"a":1,"b":2}""");
@@ -89,9 +92,11 @@ public class JsonDiffTests
     [Fact]
     public void RemovedPropertyProducesRemove()
     {
+        using JsonWorkspace workspace = JsonWorkspace.Create();
         JsonPatchDocument patch = CreatePatch(
             """{"a":1,"b":2}""",
-            """{"a":1}""");
+            """{"a":1}""",
+            workspace);
 
         AssertPatchOperationCount(patch, 1);
         AssertDiffRoundTrips("""{"a":1,"b":2}""", """{"a":1}""");
@@ -288,11 +293,11 @@ public class JsonDiffTests
     // Helpers
     // ──────────────────────────────────────────────
 
-    private static JsonPatchDocument CreatePatch(string sourceJson, string targetJson)
+    private static JsonPatchDocument CreatePatch(string sourceJson, string targetJson, JsonWorkspace workspace)
     {
         using ParsedJsonDocument<JsonElement> sourceDoc = ParsedJsonDocument<JsonElement>.Parse(sourceJson);
         using ParsedJsonDocument<JsonElement> targetDoc = ParsedJsonDocument<JsonElement>.Parse(targetJson);
-        return JsonDiffExtensions.CreatePatch(sourceDoc.RootElement, targetDoc.RootElement);
+        return JsonDiffExtensions.CreatePatch(sourceDoc.RootElement, targetDoc.RootElement, workspace);
     }
 
     private static void AssertPatchOperationCount(in JsonPatchDocument patch, int expected)
@@ -316,15 +321,16 @@ public class JsonDiffTests
         using ParsedJsonDocument<JsonElement> sourceDoc = ParsedJsonDocument<JsonElement>.Parse(sourceJson);
         using ParsedJsonDocument<JsonElement> targetDoc = ParsedJsonDocument<JsonElement>.Parse(targetJson);
 
-        JsonPatchDocument patch = JsonDiffExtensions.CreatePatch(sourceDoc.RootElement, targetDoc.RootElement);
-
         // Apply the patch to a mutable copy of the source
         using JsonWorkspace workspace = JsonWorkspace.Create();
+
+        JsonPatchDocument patch = JsonDiffExtensions.CreatePatch(sourceDoc.RootElement, targetDoc.RootElement, workspace);
+
         using JsonDocumentBuilder<JsonElement.Mutable> builder =
             sourceDoc.RootElement.CreateBuilder(workspace);
 
         JsonElement.Mutable mutable = builder.RootElement;
-        bool applied = mutable.TryApplyPatch(in patch);
+        bool applied = mutable.TryApplyPatch(patch);
         Assert.True(applied, "Patch application should succeed");
 
         // Verify the patched result matches the target

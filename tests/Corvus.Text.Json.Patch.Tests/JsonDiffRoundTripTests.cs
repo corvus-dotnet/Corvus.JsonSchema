@@ -41,15 +41,16 @@ public class JsonDiffRoundTripTests
         using ParsedJsonDocument<JsonElement> targetDoc =
             ParsedJsonDocument<JsonElement>.Parse(testCase.Target);
 
-        JsonPatchDocument patch = JsonDiffExtensions.CreatePatch(
-            sourceDoc.RootElement, targetDoc.RootElement);
-
         using JsonWorkspace workspace = JsonWorkspace.Create();
+
+        JsonPatchDocument patch = JsonDiffExtensions.CreatePatch(
+            sourceDoc.RootElement, targetDoc.RootElement, workspace);
+
         using JsonDocumentBuilder<JsonElement.Mutable> builder =
             sourceDoc.RootElement.CreateBuilder(workspace);
 
         JsonElement.Mutable mutable = builder.RootElement;
-        bool applied = mutable.TryApplyPatch(in patch);
+        bool applied = mutable.TryApplyPatch(patch);
         Assert.True(applied, $"Patch application should succeed for: {testCase.Comment}");
 
         JsonElement patchedElement = mutable.Clone();

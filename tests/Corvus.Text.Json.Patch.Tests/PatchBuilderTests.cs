@@ -20,11 +20,11 @@ public class PatchBuilderTests
 
         JsonElement.Mutable root = builder.RootElement;
 
-        using PatchBuilder patchBuilder = root.BeginPatch()
+        using PatchBuilder patchBuilder = root.BeginPatch(workspace)
             .Add("/baz"u8, "qux"u8);
 
         JsonPatchDocument patch = patchBuilder.GetPatchAndDispose();
-        Assert.True(root.TryApplyPatch(in patch));
+        Assert.True(root.TryApplyPatch(patch));
         Assert.Equal("qux", root.GetProperty("baz").GetString());
         Assert.Equal("bar", root.GetProperty("foo").GetString());
     }
@@ -40,11 +40,11 @@ public class PatchBuilderTests
 
         JsonElement.Mutable root = builder.RootElement;
 
-        using PatchBuilder patchBuilder = root.BeginPatch()
+        using PatchBuilder patchBuilder = root.BeginPatch(workspace)
             .Remove("/baz"u8);
 
         JsonPatchDocument patch = patchBuilder.GetPatchAndDispose();
-        Assert.True(root.TryApplyPatch(in patch));
+        Assert.True(root.TryApplyPatch(patch));
         Assert.False(root.TryGetProperty("baz"u8, out _));
         Assert.Equal("bar", root.GetProperty("foo").GetString());
     }
@@ -60,11 +60,11 @@ public class PatchBuilderTests
 
         JsonElement.Mutable root = builder.RootElement;
 
-        using PatchBuilder patchBuilder = root.BeginPatch()
+        using PatchBuilder patchBuilder = root.BeginPatch(workspace)
             .Replace("/foo"u8, 42);
 
         JsonPatchDocument patch = patchBuilder.GetPatchAndDispose();
-        Assert.True(root.TryApplyPatch(in patch));
+        Assert.True(root.TryApplyPatch(patch));
         Assert.Equal(42, root.GetProperty("foo").GetInt32());
     }
 
@@ -79,11 +79,11 @@ public class PatchBuilderTests
 
         JsonElement.Mutable root = builder.RootElement;
 
-        using PatchBuilder patchBuilder = root.BeginPatch()
+        using PatchBuilder patchBuilder = root.BeginPatch(workspace)
             .Move("/foo/bar"u8, "/qux/thud"u8);
 
         JsonPatchDocument patch = patchBuilder.GetPatchAndDispose();
-        Assert.True(root.TryApplyPatch(in patch));
+        Assert.True(root.TryApplyPatch(patch));
         Assert.Equal("baz", root.GetProperty("qux").GetProperty("thud").GetString());
         Assert.False(root.GetProperty("foo").TryGetProperty("bar"u8, out _));
     }
@@ -99,11 +99,11 @@ public class PatchBuilderTests
 
         JsonElement.Mutable root = builder.RootElement;
 
-        using PatchBuilder patchBuilder = root.BeginPatch()
+        using PatchBuilder patchBuilder = root.BeginPatch(workspace)
             .Copy("/foo"u8, "/baz"u8);
 
         JsonPatchDocument patch = patchBuilder.GetPatchAndDispose();
-        Assert.True(root.TryApplyPatch(in patch));
+        Assert.True(root.TryApplyPatch(patch));
         Assert.Equal("bar", root.GetProperty("foo").GetString());
         Assert.Equal("bar", root.GetProperty("baz").GetString());
     }
@@ -119,11 +119,11 @@ public class PatchBuilderTests
 
         JsonElement.Mutable root = builder.RootElement;
 
-        using PatchBuilder patchBuilder = root.BeginPatch()
+        using PatchBuilder patchBuilder = root.BeginPatch(workspace)
             .Test("/foo"u8, "bar"u8);
 
         JsonPatchDocument patch = patchBuilder.GetPatchAndDispose();
-        Assert.True(root.TryApplyPatch(in patch));
+        Assert.True(root.TryApplyPatch(patch));
     }
 
     [Fact]
@@ -137,11 +137,11 @@ public class PatchBuilderTests
 
         JsonElement.Mutable root = builder.RootElement;
 
-        using PatchBuilder patchBuilder = root.BeginPatch()
+        using PatchBuilder patchBuilder = root.BeginPatch(workspace)
             .Test("/foo"u8, "baz"u8);
 
         JsonPatchDocument patch = patchBuilder.GetPatchAndDispose();
-        Assert.False(root.TryApplyPatch(in patch));
+        Assert.False(root.TryApplyPatch(patch));
     }
 
     [Fact]
@@ -155,13 +155,13 @@ public class PatchBuilderTests
 
         JsonElement.Mutable root = builder.RootElement;
 
-        using PatchBuilder patchBuilder = root.BeginPatch()
+        using PatchBuilder patchBuilder = root.BeginPatch(workspace)
             .Remove("/baz"u8)
             .Add("/hello"u8, "world"u8)
             .Replace("/foo"u8, 42);
 
         JsonPatchDocument patch = patchBuilder.GetPatchAndDispose();
-        Assert.True(root.TryApplyPatch(in patch));
+        Assert.True(root.TryApplyPatch(patch));
         Assert.False(root.TryGetProperty("baz"u8, out _));
         Assert.Equal("world", root.GetProperty("hello").GetString());
         Assert.Equal(42, root.GetProperty("foo").GetInt32());

@@ -92,14 +92,14 @@ using var doc = ParsedJsonDocument<JsonElement>.Parse(json);
 using var builder = doc.RootElement.CreateBuilder(workspace);
 
 // Build a patch
-JsonPatchDocument patch = builder.RootElement.BeginPatch()
+JsonPatchDocument patch = builder.RootElement.BeginPatch(workspace)
     .Add("/name"u8, JsonElement.ParseValue("\"Alice\""u8))
     .Remove("/obsolete"u8)
     .Replace("/version"u8, JsonElement.ParseValue("2"u8))
     .GetPatchAndDispose();
 
 // Apply the patch (returns bool — true if all operations succeed)
-bool success = builder.RootElement.TryApplyPatch(in patch);
+bool success = builder.RootElement.TryApplyPatch(patch);
 ```
 
 All six RFC 6902 operations: `Add`, `Remove`, `Replace`, `Move`, `Copy`, `Test`.
@@ -112,7 +112,7 @@ All six RFC 6902 operations: `Add`, `Remove`, `Replace`, `Move`, `Copy`, `Test`.
 
 - **Forgetting to dispose workspace/builder**: Both rent from pools. Missing `using` leaks memory.
 - **Using stale element references**: After mutating a builder, any previously-obtained element references are invalidated.
-- **Not using `using` with `BeginPatch()`**: The patch builder must be disposed via `GetPatchAndDispose()`.
+- **Not using `using` with `BeginPatch()`**: The patch builder must be disposed via `GetPatchAndDispose()`. The returned `JsonPatchDocument` is backed by the workspace — keep the workspace alive for the lifetime of the patch.
 
 ## Cross-References
 - For read-only parsing, see `corvus-parsed-documents-and-memory`

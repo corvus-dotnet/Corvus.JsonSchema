@@ -146,13 +146,15 @@ public static class JsonPatchExtensions
     }
 
     /// <summary>
-    /// Begins building a JSON Patch document that can be applied to the target.
+    /// Begins building a JSON Patch document that can be applied to the target,
+    /// using the specified workspace for internal buffer management.
     /// </summary>
     /// <param name="target">The mutable root element.</param>
+    /// <param name="workspace">The workspace to use for buffer management. The caller retains ownership.</param>
     /// <returns>A new <see cref="PatchBuilder"/> for fluent patch construction.</returns>
-    public static PatchBuilder BeginPatch(this in JsonElement.Mutable target)
+    public static PatchBuilder BeginPatch(this in JsonElement.Mutable target, JsonWorkspace workspace)
     {
-        return new PatchBuilder(true);
+        return new PatchBuilder(workspace);
     }
 
     /// <summary>
