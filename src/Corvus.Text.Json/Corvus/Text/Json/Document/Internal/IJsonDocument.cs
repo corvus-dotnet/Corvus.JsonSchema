@@ -23,7 +23,7 @@ public interface IJsonDocument : IDisposable
     /// <summary>
     /// Gets or sets the cached workspace that this document was last registered in.
     /// </summary>
-    /// <remarks>Used by <see cref="JsonWorkspace.GetDocumentIndex"/> to avoid linear scan.</remarks>
+    /// <remarks>Used by <see cref="JsonWorkspace"/> to avoid linear scan when resolving document indices.</remarks>
     JsonWorkspace? CachedWorkspace { get; set; }
 
     /// <summary>
