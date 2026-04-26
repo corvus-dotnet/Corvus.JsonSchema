@@ -37,6 +37,12 @@ public sealed class FixedJsonValueDocument<T> : IJsonDocument, IWorkspaceManaged
     private ReadOnlyMemory<byte> _rawValue;
     private JsonTokenType _tokenType;
 
+    JsonWorkspace? IJsonDocument.CachedWorkspace { get; set; }
+
+    int IJsonDocument.CachedWorkspaceDocumentIndex { get; set; }
+
+    int IJsonDocument.CachedWorkspaceGeneration { get; set; }
+
     private FixedJsonValueDocument(ReadOnlyMemory<byte> rawValue, JsonTokenType tokenType)
     {
         _rawValue = rawValue;

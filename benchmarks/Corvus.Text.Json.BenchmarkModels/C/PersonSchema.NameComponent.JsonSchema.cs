@@ -17,36 +17,36 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace Corvus.Benchmark.Current;
+namespace Corvus.PersonBenchmark.Current;
 
 /// <summary>
 /// JSON Schema for a Person entity coming back from a 3rd party API (e.g. a storage format in a database)
 /// </summary>
-public readonly partial struct Schema
+public readonly partial struct PersonSchema
 {
     /// <summary>
     /// Generated from JSON Schema.
     /// </summary>
     [DebuggerDisplay("{DebuggerDisplay,nq}")]
-    public readonly partial struct Age
-        : IJsonElement<Age>
+    public readonly partial struct NameComponent
+        : IJsonElement<NameComponent>
     {
         public static partial class JsonSchema
         {
             /// <summary>
             /// Gets a provider for the schema location from which this type was generated.
             /// </summary>
-            public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("person-schema.json#/$defs/Age"u8, buffer, out written);
+            public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/$defs/NameComponent"u8, buffer, out written);
 
             /// <summary>
             /// Gets the schema location from which this type was generated.
             /// </summary>
-            public const string SchemaLocation = "person-schema.json#/$defs/Age";
+            public const string SchemaLocation = "/$defs/NameComponent";
 
             /// <summary>
             /// Gets the schema location from which this type was generated as a UTF-8 string.
             /// </summary>
-            public static ReadOnlySpan<byte> SchemaLocationUtf8 => "person-schema.json#/$defs/Age"u8;
+            public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/$defs/NameComponent"u8;
 
             /// <summary>
             /// Applies the JSON schema semantics defined by this type to the instance determined by the given document and index.
@@ -67,28 +67,28 @@ public readonly partial struct Schema
                     JsonTokenType.EndObject or
                     JsonTokenType.EndArray));
 
-                if (!JsonSchemaEvaluation.MatchTypeNumber(tokenType,"type"u8, ref context))
+                if (!JsonSchemaEvaluation.MatchTypeString(tokenType,"type"u8, ref context))
                 {
                     if (!context.HasCollector)
                     {
                         return;
                     }
-                    context.IgnoredKeyword(JsonSchemaEvaluation.IgnoredNotTypeNumber, "maximum"u8);
-                    context.IgnoredKeyword(JsonSchemaEvaluation.IgnoredNotTypeNumber, "minimum"u8);
+                    context.IgnoredKeyword(JsonSchemaEvaluation.IgnoredNotTypeString, "maxLength"u8);
+                    context.IgnoredKeyword(JsonSchemaEvaluation.IgnoredNotTypeString, "minLength"u8);
                 }
                 else
                 {
-                    ReadOnlyMemory<byte> rawSimpleValue = parentDocument.GetRawSimpleValue(parentIndex);
+                    using UnescapedUtf8JsonString unescapedUtf8JsonString = parentDocument.GetUtf8JsonString(parentIndex, JsonTokenType.String);
 
-                    JsonElementHelpers.TryParseNumber(rawSimpleValue.Span, out bool isNegative,out ReadOnlySpan<byte> integral, out ReadOnlySpan<byte> fractional, out int exponent);
-                    JsonSchemaEvaluation.MatchLessThanOrEquals(isNegative, integral, fractional, exponent, false, "13"u8, ""u8, 1, "130", "maximum"u8, ref context);
+                    int stringLength = JsonElementHelpers.CountRunes(unescapedUtf8JsonString.Span);
+                    JsonSchemaEvaluation.MatchLengthLessThanOrEquals(256,stringLength, "maxLength"u8, ref context);
 
                     if (!context.HasCollector && !context.IsMatch)
                     {
                         return;
                     }
 
-                    JsonSchemaEvaluation.MatchGreaterThanOrEquals(isNegative, integral, fractional, exponent, false, ""u8, ""u8, 0, "0", "minimum"u8, ref context);
+                    JsonSchemaEvaluation.MatchLengthGreaterThanOrEquals(1,stringLength, "minLength"u8, ref context);
                 }
             }
 

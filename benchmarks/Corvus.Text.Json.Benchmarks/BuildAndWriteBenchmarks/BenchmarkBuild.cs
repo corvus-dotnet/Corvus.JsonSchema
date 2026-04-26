@@ -46,7 +46,7 @@ public class BenchmarkBuild
                             otherNames.AddItem("James"u8);
                         }));
                 }),
-                competedInYears: Benchmark.CorvusTextJson.CompetedInYears.Build([2012, 2106, 2024])));
+                competedInYears: Benchmark.CorvusTextJson.CompetedInYears.Build([2012, 2016, 2024])));
 
         return person.RootElement;
     }

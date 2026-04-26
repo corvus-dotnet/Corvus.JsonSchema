@@ -20,6 +20,9 @@ namespace Resources
         /// <summary>The JsonPropertyNamesEscaped class name has not been created.</summary>
         public static string @JsonPropertyNamesEscapedClassNameNotCreated => GetResourceString("JsonPropertyNamesEscapedClassNameNotCreated", @"The JsonPropertyNamesEscaped class name has not been created.");
 
+        /// <summary>The JsonPropertyNamesPrebaked class name has not been created.</summary>
+        public static string @JsonPropertyNamesPrebakedClassNameNotCreated => GetResourceString("JsonPropertyNamesPrebakedClassNameNotCreated", @"The JsonPropertyNamesPrebaked class name has not been created.");
+
         /// <summary>The JsonPropertyNamesEscaped class scope has not been created.</summary>
         public static string @JsonPropertyNamesEscapedClassScopeNotCreated => GetResourceString("JsonPropertyNamesEscapedClassScopeNotCreated", @"The JsonPropertyNamesEscaped class scope has not been created.");
 

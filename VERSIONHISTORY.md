@@ -8,7 +8,7 @@ What we now call the V4 Engine continues to be maintained in this library - and 
 
 ### New features
 
-- **Pooled-memory parsing** — `ParsedJsonDocument<T>` backed by `ArrayPool<byte>`. Just 120 bytes per document vs 1,528 bytes for `JsonNode`.
+- **Pooled-memory parsing** — `ParsedJsonDocument<T>` backed by `ArrayPool<byte>`. Just 136 bytes per document.
 - **Mutable documents** — `JsonDocumentBuilder<T>` and `JsonWorkspace` provide a builder pattern for creating and modifying JSON 'in place', with versioned elements that detect stale references.
 - **Extended numeric types** — `BigNumber` for arbitrary-precision decimals, `BigInteger` for large integers, plus `Int128`, `UInt128`, and `Half`.
 

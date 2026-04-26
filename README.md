@@ -2,19 +2,19 @@
 
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
-High-performance, source-generated, strongly-typed C# models from JSON Schema — with pooled-memory parsing, full draft 4 through 2020-12 validation, and 120B per-document allocation.
+High-performance, source-generated, strongly-typed C# models from JSON Schema — with pooled-memory parsing, full draft 4 through 2020-12 validation, and 136B per-document allocation.
 
 ## Features
 
 - **Source Generation** — Generate strongly-typed C# from JSON Schema at build time with the Roslyn incremental source generator, or ahead of time with the `corvusjson` CLI tool.
 - **Schema Validation** — Full JSON Schema draft 4, 6, 7, 2019-09, and 2020-12 validation. Over 10× faster than other .NET JSON Schema validators.
-- **Pooled Memory** — `ParsedJsonDocument<T>` uses `ArrayPool<byte>` for minimal GC impact. Just 120B per-document vs 1,528B for `JsonNode` — 92% less memory.
+- **Pooled Memory** — `ParsedJsonDocument<T>` uses `ArrayPool<byte>` for minimal GC impact. Just 136 bytes per-document allocation.
 - **Mutable Documents** — `JsonDocumentBuilder<T>` and `JsonWorkspace` provide a builder pattern for creating and modifying JSON with pooled workspace memory.
 - **Extended Types** — `BigNumber` for arbitrary-precision decimals, `BigInteger` for large integers, plus NodaTime integration for `date`, `date-time`, `time`, and `duration` formats.
 - **Pattern Matching** — Type-safe `Match()` for `oneOf`/`anyOf` discriminated unions with exhaustive dispatch.
 - **[JSONata](#jsonata)** — Full [JSONata](https://jsonata.org/) query and transformation language with 100% test-suite conformance. Interpreted and code-generated evaluation modes.
 - **[JMESPath](#jmespath)** — Full [JMESPath](https://jmespath.org/) query language with 100% conformance against the official test suite. Interpreted and code-generated evaluation modes.
-- **JsonLogic** — Complete [JsonLogic](https://jsonlogic.com/) rule engine for evaluating business rules against JSON data with interpreted and code-generated modes.
+- **[JsonLogic](#jsonlogic)** — Complete [JsonLogic](https://jsonlogic.com/) rule engine for evaluating business rules against JSON data with interpreted and code-generated modes.
 - **JSON Patch** — RFC 6902 JSON Patch with pooled-memory operations on `JsonElement`.
 - **[YAML](#yaml)** — High-performance YAML 1.2 to JSON converter with 100% yaml-test-suite conformance. Zero-allocation `ref struct` tokenizer.
 
@@ -102,8 +102,8 @@ For the source generator, add as an analyzer reference:
 - .NET Standard 2.0, 2.1
 
 ### V4 engine (Corvus.Json)
-- .NET 10.0, 8.0
-- .NET Standard 2.0
+- .NET 10.0, 9.0, 8.0
+- .NET Standard 2.0, 2.1
 
 > **Note:** .NET 8.0 is not supported on the V5 engine. The V4 engine will drop .NET 8.0 support in November 2026 when it reaches end-of-life.
 
@@ -129,6 +129,7 @@ Then open http://localhost:5000.
 - [Dynamic Schema Validation](docs/Validator.md)
 - [JSONata Query & Transformation](docs/Jsonata.md)
 - [JMESPath Query Language](docs/JMESPath.md)
+- [JsonLogic Rule Engine](docs/JsonLogic.md)
 - [YAML to JSON Converter](docs/Yaml.md)
 - [Migrating from V4](docs/MigratingFromV4ToV5.md)
 
@@ -161,8 +162,8 @@ dotnet test Corvus.Text.Json.slnx --filter "category!=failing&category!=outerloo
 `Corvus.Text.Json.Jsonata` implements [JSONata](https://jsonata.org/) — an expressive, Turing-complete functional query and transformation language for JSON. It supports path navigation, predicate filtering, higher-order functions (`$map`, `$filter`, `$reduce`, `$sort`), object construction, string manipulation, arithmetic, regular expressions, and user-defined functions.
 
 - **100% conformance** — passes all 1,665 tests in the official [JSONata test suite](https://github.com/jsonata-js/jsonata)
-- **Up to 8× faster** than [Jsonata.Net.Native](https://github.com/mikhail-barg/jsonata.net.native) with 90–100% less memory allocation
-- **Code-generated evaluation** — source generator and CLI tool produce optimized static C# (up to 12× faster)
+- **Up to 8× faster** than [Jsonata.Net.Native](https://github.com/mikhail-barg/jsonata.net.native) with 90–100% less memory allocation in the runtime evaluator
+- **Code-generated evaluation** — an optional source generator and CLI tool produce optimized static C# for expressions known at build time (up to 12× faster)
 - **Zero-allocation hot path** — pooled workspace memory with `ArrayPool`-backed evaluation
 
 ```csharp
@@ -181,8 +182,8 @@ See [JSONata documentation](docs/Jsonata.md) for the full API, code generation, 
 `Corvus.Text.Json.JMESPath` implements [JMESPath](https://jmespath.org/) — a query language for JSON that supports path navigation, sub-expressions, index access, slicing, list and object projections, flatten, filter expressions, multiselect lists and hashes, pipe expressions, comparisons, and built-in functions.
 
 - **100% conformance** — passes all 892 conformance test cases in the official [JMESPath Compliance Test Suite](https://github.com/jmespath/jmespath.test)
-- **Up to 150× faster** than [JmesPath.Net](https://github.com/jdevillard/JmesPath.Net) on common benchmarks with zero allocation
-- **Code-generated evaluation** — source generator and CLI tool produce optimized static C#
+- **Up to 150× faster** than [JmesPath.Net](https://github.com/jdevillard/JmesPath.Net) on common benchmarks with zero allocation in the runtime evaluator
+- **Code-generated evaluation** — an optional source generator and CLI tool produce optimized static C# for expressions known at build time
 - **Zero-allocation hot path** — pooled workspace memory with `ArrayPool`-backed evaluation
 
 ```csharp
@@ -205,6 +206,30 @@ Console.WriteLine(result); // {"WashingtonCities":"Bellevue, Olympia, Seattle"}
 ```
 
 See [JMESPath documentation](docs/JMESPath.md) for the full API, code generation, and performance benchmarks.
+
+## JsonLogic
+
+`Corvus.Text.Json.JsonLogic` implements [JsonLogic](https://jsonlogic.com/) — a standard for expressing business rules as JSON. Rules are portable, storable in databases, and safely evaluated without allowing arbitrary code execution. It supports all standard operators, plus extended numeric types (`BigNumber`) via custom operators.
+
+- **100% conformance** — passes the full [official JsonLogic test suite](https://jsonlogic.com/tests.json)
+- **70–98% faster** than [JsonEverything](https://json-everything.net/) across 19 benchmark scenarios with zero or near-zero allocations in the runtime evaluator
+- **Code-generated evaluation** — an optional source generator and CLI tool produce optimized static C# for rules known at build time
+- **Zero-allocation hot path** — pooled workspace memory with `ArrayPool`-backed evaluation
+
+```csharp
+using Corvus.Text.Json.JsonLogic;
+
+JsonElement ruleElement = JsonElement.ParseValue(
+    """{"if": [{">":[{"var":"temp"}, 100]}, "too hot", "ok"]}"""u8);
+JsonElement data = JsonElement.ParseValue("""{"temp": 110}"""u8);
+
+JsonLogicRule rule = new(ruleElement);
+using JsonWorkspace workspace = JsonWorkspace.Create();
+JsonElement result = JsonLogicEvaluator.Default.Evaluate(rule, data, workspace);
+Console.WriteLine(result); // "too hot"
+```
+
+See [JsonLogic documentation](docs/JsonLogic.md) for the full API, code generation, and performance benchmarks.
 
 ## YAML
 

@@ -27,6 +27,8 @@ internal static partial class CodeGenerationExtensions
     private const string JsonPropertyNamesClassNameKey = "CSharp_JsonSchema_JsonPropertyNamesClassNameKey";
     private const string JsonPropertyNamesEscapedClassBaseName = "JsonPropertyNamesEscaped";
     private const string JsonPropertyNamesEscapedClassNameKey = "CSharp_JsonSchema_JsonPropertyNamesEscapedClassNameKey";
+    private const string JsonPropertyNamesPrebakedClassBaseName = "JsonPropertyNamesPrebaked";
+    private const string JsonPropertyNamesPrebakedClassNameKey = "CSharp_JsonSchema_JsonPropertyNamesPrebakedClassNameKey";
     private const string JsonSchemaClassBaseName = "JsonSchema";
     private const string JsonSchemaClassNameKey = "CSharp_JsonSchema_JsonSchemaClassNameKey";
     private const string ObjectBuilderClassBaseName = "ObjectBuilder";
@@ -737,6 +739,22 @@ internal static partial class CodeGenerationExtensions
     }
 
     /// <summary>
+    /// Gets the JsonPropertyNamesPrebaked class name.
+    /// </summary>
+    /// <param name="generator">The code generator.</param>
+    /// <returns>The class name.</returns>
+    public static string JsonPropertyNamesPrebakedClassName(this CodeGenerator generator)
+    {
+        if (generator.TryPeekMetadata(JsonPropertyNamesPrebakedClassNameKey, out (string, string)? value) &&
+            value is (string className, string _))
+        {
+            return className;
+        }
+
+        throw new InvalidOperationException(SR.JsonPropertyNamesPrebakedClassNameNotCreated);
+    }
+
+    /// <summary>
     /// Gets the JsonPropertyNames class scope.
     /// </summary>
     /// <param name="generator">The code generator.</param>
@@ -853,6 +871,17 @@ internal static partial class CodeGenerationExtensions
     {
         return generator
             .PopMetadata(JsonPropertyNamesEscapedClassNameKey);
+    }
+
+    /// <summary>
+    /// Remove the scoped prebaked json property names class name.
+    /// </summary>
+    /// <param name="generator">The code generator.</param>
+    /// <returns>A reference to the generator having completed the operation.</returns>
+    public static CodeGenerator PopJsonPropertyNamesPrebakedClassNameAndScope(this CodeGenerator generator)
+    {
+        return generator
+            .PopMetadata(JsonPropertyNamesPrebakedClassNameKey);
     }
 
     /// <summary>
@@ -985,6 +1014,31 @@ internal static partial class CodeGenerationExtensions
         string jsonPropertyNamesClass = generator.GetTypeNameInScope(JsonPropertyNamesEscapedClassBaseName);
         return generator
             .PushMetadata(JsonPropertyNamesEscapedClassNameKey, (jsonPropertyNamesClass, generator.GetChildScope(jsonPropertyNamesClass, null)));
+    }
+
+    /// <summary>
+    /// Make the prebaked json property names class name available.
+    /// </summary>
+    /// <param name="generator">The code generator.</param>
+    /// <returns>A reference to the generator having completed the operation.</returns>
+    /// <remarks>
+    /// This is safe to call multiple times.
+    /// </remarks>
+    public static CodeGenerator PushJsonPropertyNamesPrebakedClassNameAndScope(this CodeGenerator generator)
+    {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
+        if (generator.TryPeekMetadata(JsonPropertyNamesPrebakedClassNameKey, out (string, string) _))
+        {
+            return generator;
+        }
+
+        string jsonPropertyNamesClass = generator.GetTypeNameInScope(JsonPropertyNamesPrebakedClassBaseName);
+        return generator
+            .PushMetadata(JsonPropertyNamesPrebakedClassNameKey, (jsonPropertyNamesClass, generator.GetChildScope(jsonPropertyNamesClass, null)));
     }
 
     /// <summary>

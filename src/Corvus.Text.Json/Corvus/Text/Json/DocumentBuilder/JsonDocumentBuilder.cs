@@ -30,6 +30,15 @@ public sealed partial class JsonDocumentBuilder<T> : JsonDocument, IMutableJsonD
 
     private int _parentWorkspaceIndex = -1;
 
+    /// <inheritdoc />
+    JsonWorkspace? IJsonDocument.CachedWorkspace { get; set; }
+
+    /// <inheritdoc />
+    int IJsonDocument.CachedWorkspaceDocumentIndex { get; set; }
+
+    /// <inheritdoc />
+    int IJsonDocument.CachedWorkspaceGeneration { get; set; }
+
     // When > 0, _valueBacking[0.._rawJsonLength) contains the raw UTF-8 JSON input bytes.
     // MetadataDb rows created by ParseTokens store offsets into this region (ParsedJsonDocument-style).
     // Mutated values go into _valueBacking at _valueOffset (>= _rawJsonLength) using DynamicValue headers.
@@ -1097,7 +1106,7 @@ public sealed partial class JsonDocumentBuilder<T> : JsonDocument, IMutableJsonD
         if (row.FromExternalDocument)
         {
             IJsonDocument document = _workspace.GetDocument(row.WorkspaceDocumentId);
-            return document.GetRawSimpleValue(row.LocationOrIndex);
+            return document.GetRawSimpleValue(row.LocationOrIndex, includeQuotes: false);
         }
 
         int offset = row.LocationOrIndex;
@@ -1119,7 +1128,7 @@ public sealed partial class JsonDocumentBuilder<T> : JsonDocument, IMutableJsonD
         if (row.FromExternalDocument)
         {
             IJsonDocument document = _workspace.GetDocument(row.WorkspaceDocumentId);
-            return document.GetRawSimpleValue(row.LocationOrIndex);
+            return document.GetRawSimpleValue(row.LocationOrIndex, includeQuotes: false);
         }
 
         int offset = row.LocationOrIndex;
@@ -2174,13 +2183,13 @@ public sealed partial class JsonDocumentBuilder<T> : JsonDocument, IMutableJsonD
                 }
                 else
                 {
-                    writer.WriteStringValue(GetRawSimpleValueUnsafe(index, false).Span);
+                    writer.WriteStringValue(GetRawSimpleValueFromRowUnsafe(row).Span);
                 }
 
                 return;
 
             case JsonTokenType.Number:
-                writer.WriteNumberValue(GetRawSimpleValueUnsafe(index, includeQuotes: false).Span);
+                writer.WriteNumberValue(GetRawSimpleValueFromRowUnsafe(row).Span);
                 return;
 
             case JsonTokenType.True:
@@ -2204,6 +2213,8 @@ public sealed partial class JsonDocumentBuilder<T> : JsonDocument, IMutableJsonD
         Utf8JsonWriter writer)
     {
         int endIndex = index + GetDbSizeUnsafe(index, true);
+        bool usePrebakedFastPath = writer.Options.Encoder is null && !writer.Options.Indented;
+        bool encoderIsDefault = writer.Options.Encoder is null;
 
         // Use unsigned comparison for optimized bounds checking
         for (int i = index; (uint)i < (uint)endIndex; i += DbRow.Size)
@@ -2221,12 +2232,12 @@ public sealed partial class JsonDocumentBuilder<T> : JsonDocument, IMutableJsonD
                     }
                     else
                     {
-                        writer.WriteStringValue(GetRawSimpleValueUnsafe(i, false).Span);
+                        writer.WriteStringValue(GetRawSimpleValueFromRowUnsafe(row).Span);
                     }
 
                     continue;
                 case JsonTokenType.Number:
-                    writer.WriteNumberValue(GetRawSimpleValueUnsafe(i, includeQuotes: false).Span);
+                    writer.WriteNumberValue(GetRawSimpleValueFromRowUnsafe(row).Span);
                     continue;
                 case JsonTokenType.True:
                     writer.WriteBooleanValue(value: true);
@@ -2260,21 +2271,35 @@ public sealed partial class JsonDocumentBuilder<T> : JsonDocument, IMutableJsonD
                         // DynamicValue — read header once to check type and extract value.
                         int offset = row.LocationOrIndex;
                         uint header = BitConverter.ToUInt32(_valueBacking!, offset);
-                        int length = (int)(header >> 4) - 2; // exclude quotes
-                        ReadOnlySpan<byte> name = _valueBacking.AsSpan(offset + 5, length);
+                        int payloadLength = (int)(header >> 4);
 
                         if ((DynamicValueType)(header & 0xF) == DynamicValueType.NormalizedQuotedUtf8String)
                         {
-                            writer.WriteRawPropertyName(name);
+                            if (usePrebakedFastPath)
+                            {
+                                // Fast path: default encoder matches prebaked encoding, minimized output.
+                                // Write the pre-escaped quoted name directly (includes surrounding quotes).
+                                writer.WritePrebakedPropertyName(_valueBacking.AsSpan(offset + 4, payloadLength));
+                            }
+                            else if (encoderIsDefault)
+                            {
+                                // Default encoder but indented output — skip escaping, let writer handle indentation.
+                                writer.WriteRawPropertyName(_valueBacking.AsSpan(offset + 5, payloadLength - 2));
+                            }
+                            else
+                            {
+                                // Non-default encoder — let the writer re-escape with its configured encoder.
+                                writer.WritePropertyName(_valueBacking.AsSpan(offset + 5, payloadLength - 2));
+                            }
                         }
                         else
                         {
-                            writer.WritePropertyName(name);
+                            writer.WritePropertyName(_valueBacking.AsSpan(offset + 5, payloadLength - 2));
                         }
                     }
                     else
                     {
-                        writer.WritePropertyName(GetRawSimpleValueUnsafe(i, false).Span);
+                        writer.WritePropertyName(GetRawSimpleValueFromRowUnsafe(row).Span);
                     }
 
                     continue;

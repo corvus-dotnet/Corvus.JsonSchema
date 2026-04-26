@@ -42,6 +42,15 @@ public sealed partial class ParsedJsonDocument<T> : JsonDocument, IJsonDocument,
     private PooledByteBufferWriter? _extraPooledByteBufferWriter;
 
     /// <inheritdoc />
+    JsonWorkspace? IJsonDocument.CachedWorkspace { get; set; }
+
+    /// <inheritdoc />
+    int IJsonDocument.CachedWorkspaceDocumentIndex { get; set; }
+
+    /// <inheritdoc />
+    int IJsonDocument.CachedWorkspaceGeneration { get; set; }
+
+    /// <inheritdoc />
     [DebuggerBrowsable(DebuggerBrowsableState.Never)]
     bool IJsonDocument.IsDisposable => _isDisposable;
 

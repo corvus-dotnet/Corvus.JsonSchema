@@ -14,7 +14,7 @@ Full JSON Schema draft 4, 6, 7, 2019-09, and 2020-12 validation with `EvaluateSc
 
 ## ⚡ Pooled Memory
 
-`ParsedJsonDocument<T>` uses `ArrayPool<byte>` to parse JSON with minimal GC impact. Just 120B per-document allocation vs 1,528 bytes for equivalent `JsonNode` operations — 92% less memory. Generated types are thin struct wrappers — creating a typed value from a parsed document is essentially free.
+`ParsedJsonDocument<T>` uses `ArrayPool<byte>` to parse JSON with minimal GC impact. Just 136 bytes per-document allocation. Generated types are thin struct wrappers — creating a typed value from a parsed document is essentially free.
 
 ## 🔄 Mutable Documents
 

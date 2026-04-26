@@ -72,6 +72,9 @@
   <data name="JsonPropertyNamesEscapedClassScopeNotCreated" xml:space="preserve">
     <value>The JsonPropertyNamesEscaped class scope has not been created.</value>
   </data>
+  <data name="JsonPropertyNamesPrebakedClassNameNotCreated" xml:space="preserve">
+    <value>The JsonPropertyNamesPrebaked class name has not been created.</value>
+  </data>
   <data name="JsonPropertyNamesClassNameNotCreated" xml:space="preserve">
     <value>The JsonPropertyNames class name has not been created.</value>
   </data>

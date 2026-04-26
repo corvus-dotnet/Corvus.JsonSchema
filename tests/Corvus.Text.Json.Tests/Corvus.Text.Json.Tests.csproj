@@ -99,6 +99,7 @@
     <Compile Include="JsonElement.MutableCopyMoveTests.cs" />
     <Compile Include="JsonElement.MutableFreezeTests.cs" />
     <Compile Include="JsonElement.MutableRemoveWhereTests.cs" />
+    <Compile Include="ExternalSimpleValueWriteTests.cs" />
     <Compile Include="MultiComplexSetPropertyReproTest.cs" />
     <Compile Include="JsonElementHelpersDateTimeTests.cs" />
     <Compile Include="JsonElementHelpersParseNumberTests.cs" />
@@ -159,6 +160,7 @@
     <Compile Include="JsonSchemaMatchingStringTests.cs" />
     <Compile Include="JsonSchemaResultsCollectorTests.cs" />
     <Compile Include="PeriodTests.cs" />
+    <Compile Include="PrebakedPropertyNameWriteTests.cs" />
     <!-- Include common SR helper when resources are included. -->
     <Compile Include="System\SR$(DefaultLanguageSourceExtension)" Visible="true" Link="Resources/Common/SR$(DefaultLanguageSourceExtension)" />
   </ItemGroup>

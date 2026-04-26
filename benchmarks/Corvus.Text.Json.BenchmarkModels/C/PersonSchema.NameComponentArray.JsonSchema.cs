@@ -17,12 +17,12 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace Corvus.Benchmark.Current;
+namespace Corvus.PersonBenchmark.Current;
 
 /// <summary>
 /// JSON Schema for a Person entity coming back from a 3rd party API (e.g. a storage format in a database)
 /// </summary>
-public readonly partial struct Schema
+public readonly partial struct PersonSchema
 {
     /// <summary>
     /// Generated from JSON Schema.
@@ -38,17 +38,17 @@ public readonly partial struct Schema
             /// <summary>
             /// Gets a provider for the schema location from which this type was generated.
             /// </summary>
-            public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("person-schema.json#/$defs/NameComponentArray"u8, buffer, out written);
+            public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/$defs/NameComponentArray"u8, buffer, out written);
 
             /// <summary>
             /// Gets the schema location from which this type was generated.
             /// </summary>
-            public const string SchemaLocation = "person-schema.json#/$defs/NameComponentArray";
+            public const string SchemaLocation = "/$defs/NameComponentArray";
 
             /// <summary>
             /// Gets the schema location from which this type was generated as a UTF-8 string.
             /// </summary>
-            public static ReadOnlySpan<byte> SchemaLocationUtf8 => "person-schema.json#/$defs/NameComponentArray"u8;
+            public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/$defs/NameComponentArray"u8;
 
             /// <summary>
             /// Applies the JSON schema semantics defined by this type to the instance determined by the given document and index.
@@ -86,14 +86,14 @@ public readonly partial struct Schema
                     {
                         int arrayValidation_currentIndex = arrayValidation_enumerator.CurrentIndex;
 
-                        JsonSchemaContext childContext = Corvus.Benchmark.Current.Schema.NameComponent.JsonSchema.PushChildContext(
+                        JsonSchemaContext childContext = Corvus.PersonBenchmark.Current.PersonSchema.NameComponent.JsonSchema.PushChildContext(
                             parentDocument,
                             arrayValidation_currentIndex,
                             ref context,
                             itemIndex: arrayValidation_itemCount,
                             evaluationPath: ItemsSchemaEvaluationPath);
 
-                        Corvus.Benchmark.Current.Schema.NameComponent.JsonSchema.Evaluate(parentDocument, arrayValidation_currentIndex, ref childContext);
+                        Corvus.PersonBenchmark.Current.PersonSchema.NameComponent.JsonSchema.Evaluate(parentDocument, arrayValidation_currentIndex, ref childContext);
                         if (!childContext.IsMatch)
                         {
                             context.CommitChildContext(false, ref childContext);

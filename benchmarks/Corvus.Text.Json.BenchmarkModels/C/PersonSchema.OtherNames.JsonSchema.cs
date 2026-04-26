@@ -17,36 +17,38 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace Corvus.Benchmark.Current;
+namespace Corvus.PersonBenchmark.Current;
 
 /// <summary>
 /// JSON Schema for a Person entity coming back from a 3rd party API (e.g. a storage format in a database)
 /// </summary>
-public readonly partial struct Schema
+public readonly partial struct PersonSchema
 {
     /// <summary>
     /// Generated from JSON Schema.
     /// </summary>
     [DebuggerDisplay("{DebuggerDisplay,nq}")]
-    public readonly partial struct NameComponent
-        : IJsonElement<NameComponent>
+    public readonly partial struct OtherNames
+        : IJsonElement<OtherNames>
     {
         public static partial class JsonSchema
         {
             /// <summary>
             /// Gets a provider for the schema location from which this type was generated.
             /// </summary>
-            public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("person-schema.json#/$defs/NameComponent"u8, buffer, out written);
+            public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/$defs/OtherNames"u8, buffer, out written);
 
             /// <summary>
             /// Gets the schema location from which this type was generated.
             /// </summary>
-            public const string SchemaLocation = "person-schema.json#/$defs/NameComponent";
+            public const string SchemaLocation = "/$defs/OtherNames";
 
             /// <summary>
             /// Gets the schema location from which this type was generated as a UTF-8 string.
             /// </summary>
-            public static ReadOnlySpan<byte> SchemaLocationUtf8 => "person-schema.json#/$defs/NameComponent"u8;
+            public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/$defs/OtherNames"u8;
+            private static readonly JsonSchemaPathProvider OneOf0SchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/oneOf/0/$ref"u8, buffer, out written);
+            private static readonly JsonSchemaPathProvider OneOf1SchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/oneOf/1/$ref"u8, buffer, out written);
 
             /// <summary>
             /// Applies the JSON schema semantics defined by this type to the instance determined by the given document and index.
@@ -59,37 +61,54 @@ public readonly partial struct Schema
                 int parentIndex,
                 ref JsonSchemaContext context)
             {
-                JsonTokenType tokenType = parentDocument.GetJsonTokenType(parentIndex);
-
                 // You're not allowed to ask about non-value-like entities
                 Debug.Assert(parentDocument.GetJsonTokenType(parentIndex) is not
                     (JsonTokenType.None or
                     JsonTokenType.EndObject or
                     JsonTokenType.EndArray));
 
-                if (!JsonSchemaEvaluation.MatchTypeString(tokenType,"type"u8, ref context))
-                {
-                    if (!context.HasCollector)
-                    {
-                        return;
-                    }
-                    context.IgnoredKeyword(JsonSchemaEvaluation.IgnoredNotTypeString, "maxLength"u8);
-                    context.IgnoredKeyword(JsonSchemaEvaluation.IgnoredNotTypeString, "minLength"u8);
-                }
-                else
-                {
-                    using UnescapedUtf8JsonString unescapedUtf8JsonString = parentDocument.GetUtf8JsonString(parentIndex, JsonTokenType.String);
+                int oneOfMatchedCount = 0;
 
-                    int stringLength = JsonElementHelpers.CountRunes(unescapedUtf8JsonString.Span);
-                    JsonSchemaEvaluation.MatchLengthLessThanOrEquals(256,stringLength, "maxLength"u8, ref context);
+                JsonSchemaContext oneOfContext0 =
+                    Corvus.PersonBenchmark.Current.PersonSchema.NameComponent.JsonSchema.PushChildContext(parentDocument, parentIndex, ref context, schemaEvaluationPath: OneOf0SchemaEvaluationPath);
+                Corvus.PersonBenchmark.Current.PersonSchema.NameComponent.JsonSchema.Evaluate(parentDocument, parentIndex, ref oneOfContext0);
 
-                    if (!context.HasCollector && !context.IsMatch)
+                if (oneOfContext0.IsMatch)
+                {
+                    oneOfMatchedCount++;
+                    if (oneOfMatchedCount > 1 && !context.HasCollector)
                     {
+                        context.EvaluatedKeyword(false, JsonSchemaEvaluation.MatchedMoreThanOneSchema, "oneOf"u8);
                         return;
                     }
 
-                    JsonSchemaEvaluation.MatchLengthGreaterThanOrEquals(1,stringLength, "minLength"u8, ref context);
+                    context.ApplyEvaluated(ref oneOfContext0);
                 }
+
+                if (!context.HasCollector && !context.IsMatch)
+                {
+                    return;
+                }
+
+                JsonSchemaContext oneOfContext1 =
+                    Corvus.PersonBenchmark.Current.PersonSchema.NameComponentArray.JsonSchema.PushChildContext(parentDocument, parentIndex, ref context, schemaEvaluationPath: OneOf1SchemaEvaluationPath);
+                Corvus.PersonBenchmark.Current.PersonSchema.NameComponentArray.JsonSchema.Evaluate(parentDocument, parentIndex, ref oneOfContext1);
+
+                if (oneOfContext1.IsMatch)
+                {
+                    oneOfMatchedCount++;
+                    if (oneOfMatchedCount > 1 && !context.HasCollector)
+                    {
+                        context.EvaluatedKeyword(false, JsonSchemaEvaluation.MatchedMoreThanOneSchema, "oneOf"u8);
+                        return;
+                    }
+
+                    context.ApplyEvaluated(ref oneOfContext1);
+                }
+
+                context.CommitChildContext(oneOfMatchedCount == 1, ref oneOfContext1);
+                context.CommitChildContext(oneOfMatchedCount == 1, ref oneOfContext0);
+                context.EvaluatedKeyword(oneOfMatchedCount == 1, oneOfMatchedCount == 0 ? JsonSchemaEvaluation.MatchedNoSchema : oneOfMatchedCount == 1 ? JsonSchemaEvaluation.MatchedExactlyOneSchema : JsonSchemaEvaluation.MatchedMoreThanOneSchema, "oneOf"u8);
             }
 
             internal static bool Evaluate(

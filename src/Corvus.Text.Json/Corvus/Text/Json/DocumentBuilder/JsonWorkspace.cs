@@ -7,7 +7,6 @@
 // https://github.com/dotnet/runtime/blob/388a7c4814cb0d6e344621d017507b357902043a/LICENSE.TXT
 // </licensing>
 using System.Buffers;
-using System.Collections.Generic;
 using Corvus.Text.Json.Internal;
 
 namespace Corvus.Text.Json;
@@ -21,15 +20,14 @@ public class JsonWorkspace : IDisposable
 
     private IJsonDocument[] _documents;
 
-    private readonly Dictionary<IJsonDocument, int> _documentIndices;
-
     private int _length;
+
+    private int _generation;
 
     private bool _rented;
 
     internal JsonWorkspace(bool rented, int initialDocumentCapacity = 5, JsonWriterOptions? options = null)
     {
-        _documentIndices = new Dictionary<IJsonDocument, int>(initialDocumentCapacity);
         _documents = ArrayPool<IJsonDocument>.Shared.Rent(initialDocumentCapacity);
         _length = 0;
         Options = options ?? s_internalWriterOptions;
@@ -144,7 +142,6 @@ public class JsonWorkspace : IDisposable
             if (_length > 0)
             {
                 ArrayPool<IJsonDocument>.Shared.Return(_documents);
-                _documentIndices.Clear();
                 _length = -1;
             }
         }
@@ -172,8 +169,8 @@ public class JsonWorkspace : IDisposable
             Array.Clear(_documents, 0, _length);
         }
 
-        _documentIndices.Clear();
         _length = 0;
+        _generation++;
     }
 
     /// <summary>
@@ -246,9 +243,19 @@ public class JsonWorkspace : IDisposable
     /// <returns>The index of the document in the workspace.</returns>
     internal int GetDocumentIndex(IJsonDocument document)
     {
-        if (_documentIndices.TryGetValue(document, out int index))
+        // Fast path: document remembers its index from its first registration.
+        if (ReferenceEquals(document.CachedWorkspace, this) && document.CachedWorkspaceGeneration == _generation)
         {
-            return index;
+            return document.CachedWorkspaceDocumentIndex;
+        }
+
+        // Linear scan fallback — fast for typical workspace sizes (< 16 documents).
+        for (int i = 0; i < _length; i++)
+        {
+            if (ReferenceEquals(_documents[i], document))
+            {
+                return i;
+            }
         }
 
         if (_documents.Length == _length)
@@ -262,7 +269,15 @@ public class JsonWorkspace : IDisposable
 
         int result = _length;
         _documents[_length++] = document;
-        _documentIndices.Add(document, result);
+
+        // Cache the first workspace, or update when the same workspace advances generation.
+        if (document.CachedWorkspace is null || ReferenceEquals(document.CachedWorkspace, this))
+        {
+            document.CachedWorkspace = this;
+            document.CachedWorkspaceDocumentIndex = result;
+            document.CachedWorkspaceGeneration = _generation;
+        }
+
         return result;
     }
 
@@ -287,8 +302,8 @@ public class JsonWorkspace : IDisposable
             }
         }
 
-        _documentIndices.Clear();
         _length = 0;
+        _generation++;
     }
 
     /// <summary>
@@ -302,7 +317,7 @@ public class JsonWorkspace : IDisposable
 
             Array.Clear(_documents, 0, _length);
             _length = -1;
-            _documentIndices.Clear();
+            _generation++;
             return;
         }
 

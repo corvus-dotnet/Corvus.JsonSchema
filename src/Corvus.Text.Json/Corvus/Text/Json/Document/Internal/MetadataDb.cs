@@ -357,6 +357,34 @@ public struct MetadataDb : IDisposable
     }
 
     /// <summary>
+    /// Appends a property name row and its associated value row in a single call,
+    /// performing only one bounds check for both rows.
+    /// </summary>
+    /// <param name="propertyNameLocation">The location of the property name in the value buffer.</param>
+    /// <param name="nameRequiresUnescaping">Whether the property name requires unescaping.</param>
+    /// <param name="valueTokenType">The JSON token type of the value (e.g., String, Number).</param>
+    /// <param name="valueLocation">The location of the value in the value buffer.</param>
+    /// <param name="valueRequiresUnescapingOrHasExponent">Whether the value requires unescaping or has an exponent.</param>
+    internal void AppendPropertyAndDynamicSimpleValue(
+        int propertyNameLocation,
+        bool nameRequiresUnescaping,
+        JsonTokenType valueTokenType,
+        int valueLocation,
+        bool valueRequiresUnescapingOrHasExponent)
+    {
+        Debug.Assert(valueTokenType >= JsonTokenType.PropertyName);
+
+        if (Length >= (_data.Length - (2 * DbRow.Size)))
+        {
+            Enlarge();
+        }
+
+        Unsafe.WriteUnaligned(ref _data[Length], new DbRow(JsonTokenType.PropertyName, propertyNameLocation, nameRequiresUnescaping ? -1 : 1));
+        Unsafe.WriteUnaligned(ref _data[Length + DbRow.Size], new DbRow(valueTokenType, valueLocation, valueRequiresUnescapingOrHasExponent ? -1 : 1));
+        Length += 2 * DbRow.Size;
+    }
+
+    /// <summary>
     /// Replaces a range of rows in a complex object with new rows, updating parent object counts.
     /// </summary>
     /// <param name="parentDocument">The parent mutable JSON document.</param>

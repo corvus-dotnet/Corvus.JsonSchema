@@ -17,25 +17,25 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace Corvus.Benchmark.Current;
+namespace Corvus.PersonBenchmark.Current;
 
 /// <summary>
 /// JSON Schema for a Person entity coming back from a 3rd party API (e.g. a storage format in a database)
 /// </summary>
-public readonly partial struct Schema
+public readonly partial struct PersonSchema
 {
     /// <summary>
     /// Generated from JSON Schema.
     /// </summary>
     [DebuggerDisplay("{DebuggerDisplay,nq}")]
-    public readonly partial struct NameComponentArray
+    public readonly partial struct Age
 #if NET8_0_OR_GREATER
-        : IJsonElement<NameComponentArray>,
+        : IJsonElement<Age>,
           IFormattable,
           ISpanFormattable,
           IUtf8SpanFormattable
 #else
-        : IJsonElement<NameComponentArray>,
+        : IJsonElement<Age>,
           IFormattable
 #endif
     {
@@ -45,10 +45,10 @@ public readonly partial struct Schema
 
         #pragma warning restore CS8618 // JsonDocument nullability
         /// <summary>
-        /// Initializes a new instance of the <see cref="NameComponentArray"/> struct.
+        /// Initializes a new instance of the <see cref="Age"/> struct.
         /// </summary>
         /// <param name="value">The value from which to construct the instance.</param>
-        internal NameComponentArray(IJsonDocument parent, int idx)
+        internal Age(IJsonDocument parent, int idx)
         {
             Debug.Assert(idx >= 0);
             _parent = parent;
@@ -58,54 +58,82 @@ public readonly partial struct Schema
         /// <summary>
         /// Gets the default instance.
         /// </summary>
-        public static NameComponentArray DefaultInstance { get; }
+        public static Age DefaultInstance { get; }
 
-        /// <summary>
-        /// Gets the rank of the array.
-        /// </summary>
-        public static int Rank => 1;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool TryGetValue(out long value) { CheckValidInstance(); return _parent.TryGetValue(_idx, out value); }
 
-        /// <summary>
-        /// Gets the item at the given index.
-        /// </summary>
-        /// <param name="index">The index at which to retrieve the item.</param>
-        /// <returns>The item at the given index.</returns>
-        /// <exception cref="IndexOutOfRangeException">The index was outside the bounds of the array.</exception>
-        /// <exception cref="InvalidOperationException">The value is not an array.</exception>
-        public Corvus.Benchmark.Current.Schema.NameComponent this[int index]
-        {
-            get
-            {
-                CheckValidInstance();
-                return _parent.GetArrayIndexElement<Corvus.Benchmark.Current.Schema.NameComponent>(_idx, index);
-            }
-        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool TryGetValue(out int value) { CheckValidInstance(); return _parent.TryGetValue(_idx, out value); }
 
-        /// <summary>
-        /// Gets the array length.
-        /// </summary>
-        /// <exception cref="InvalidOperationException">The value is not an array.</exception>
-        public int GetArrayLength()
-        {
-            CheckValidInstance();
-            return _parent.GetArrayLength(_idx);
-        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool TryGetValue(out short value) { CheckValidInstance(); return _parent.TryGetValue(_idx, out value); }
 
-        /// <summary>
-        /// Enumerates the array.
-        /// </summary>
-        /// <exception cref="InvalidOperationException">The value is not an array.</exception>
-        public ArrayEnumerator<Corvus.Benchmark.Current.Schema.NameComponent> EnumerateArray()
-        {
-            CheckValidInstance();
-            return EnumeratorCreator.CreateArrayEnumerator<Corvus.Benchmark.Current.Schema.NameComponent>(_parent, _idx);
-        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool TryGetValue(out sbyte value) { CheckValidInstance(); return _parent.TryGetValue(_idx, out value); }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool TryGetValue(out ulong value) { CheckValidInstance(); return _parent.TryGetValue(_idx, out value); }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool TryGetValue(out uint value) { CheckValidInstance(); return _parent.TryGetValue(_idx, out value); }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool TryGetValue(out ushort value) { CheckValidInstance(); return _parent.TryGetValue(_idx, out value); }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool TryGetValue(out byte value) { CheckValidInstance(); return _parent.TryGetValue(_idx, out value); }
+
+#if NET
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool TryGetValue(out Int128 value) { CheckValidInstance(); return _parent.TryGetValue(_idx, out value); }
+#endif
+
+#if NET
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool TryGetValue(out UInt128 value) { CheckValidInstance(); return _parent.TryGetValue(_idx, out value); }
+#endif
+
+#if NET
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool TryGetValue(out Half value) { CheckValidInstance(); return _parent.TryGetValue(_idx, out value); }
+#endif
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool TryGetValue(out double value) { CheckValidInstance(); return _parent.TryGetValue(_idx, out value); }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool TryGetValue(out float value) { CheckValidInstance(); return _parent.TryGetValue(_idx, out value); }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool TryGetValue(out Corvus.Numerics.BigNumber value) { CheckValidInstance(); return _parent.TryGetValue(_idx, out value); }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool TryGetValue(out System.Numerics.BigInteger value) { CheckValidInstance(); return _parent.TryGetValue(_idx, out value); }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool TryGetValue(out decimal value) { CheckValidInstance(); return _parent.TryGetValue(_idx, out value); }
 
         /// <inheritdoc/>
         public JsonValueKind ValueKind => TokenType.ToValueKind();
 
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         private JsonTokenType TokenType => _parent?.GetJsonTokenType(_idx) ?? JsonTokenType.None;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static implicit operator long(Age value) => value._parent.TryGetValue(value._idx, out long result) ? result : throw new FormatException();
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static implicit operator double(Age value) => value._parent.TryGetValue(value._idx, out double result) ? result : throw new FormatException();
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static explicit operator Corvus.Numerics.BigNumber(Age value) => value._parent.TryGetValue(value._idx, out Corvus.Numerics.BigNumber result) ? result : throw new FormatException();
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static explicit operator System.Numerics.BigInteger(Age value) => value._parent.TryGetValue(value._idx, out System.Numerics.BigInteger result) ? result : throw new FormatException();
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static explicit operator decimal(Age value) => value._parent.TryGetValue(value._idx, out decimal result) ? result : throw new FormatException();
 
         /// <summary>
         /// Operator ==.
@@ -115,7 +143,7 @@ public readonly partial struct Schema
         /// <returns>
         /// <c>True</c> if the values are equal.
         /// </returns>
-        public static bool operator ==(in NameComponentArray left, in NameComponentArray right)
+        public static bool operator ==(in Age left, in Age right)
         {
             return left.Equals(right);
         }
@@ -128,7 +156,7 @@ public readonly partial struct Schema
         /// <returns>
         /// <c>True</c> if the values are not equal.
         /// </returns>
-        public static bool operator !=(in NameComponentArray left, in NameComponentArray right)
+        public static bool operator !=(in Age left, in Age right)
         {
             return !left.Equals(right);
         }
@@ -141,7 +169,7 @@ public readonly partial struct Schema
         /// <returns>
         /// <c>True</c> if the values are equal.
         /// </returns>
-        public static bool operator ==(in NameComponentArray left, in JsonElement right)
+        public static bool operator ==(in Age left, in JsonElement right)
         {
             return left.Equals(right);
         }
@@ -154,7 +182,7 @@ public readonly partial struct Schema
         /// <returns>
         /// <c>True</c> if the values are not equal.
         /// </returns>
-        public static bool operator !=(in NameComponentArray left, in JsonElement right)
+        public static bool operator !=(in Age left, in JsonElement right)
         {
             return !left.Equals(right);
         }
@@ -165,7 +193,7 @@ public readonly partial struct Schema
         /// <param name="value">The instance of this type.</param>
         /// <returns>An instance of JsonElement, initialized from the <see cref="IJsonElement{T}"/>.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static implicit operator JsonElement(NameComponentArray instance)
+        public static implicit operator JsonElement(Age instance)
         {
             return JsonElement.From(instance);
         }
@@ -176,9 +204,9 @@ public readonly partial struct Schema
         /// <param name="value">The instance of this type as a JsonElement.</param>
         /// <returns>An instance of the type, initialized from the <see cref="JsonElement"/>.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static implicit operator NameComponentArray(JsonElement instance)
+        public static implicit operator Age(JsonElement instance)
         {
-            return NameComponentArray.From(instance);
+            return Age.From(instance);
         }
 
         /// <summary>
@@ -187,7 +215,7 @@ public readonly partial struct Schema
         /// <param name="value">The <see cref="IJsonElement{T}"/> value from which to instantiate the instance.</param>
         /// <returns>An instance of this type, initialized from the JSON element.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static NameComponentArray From<T>(in T instance)
+        public static Age From<T>(in T instance)
             where T : struct, IJsonElement<T>
         {
             return new(instance.ParentDocument, instance.ParentDocumentIndex);
@@ -211,9 +239,9 @@ public readonly partial struct Schema
         ///   A value could not be read from the span.
         /// </exception>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static NameComponentArray ParseValue(ReadOnlySpan<byte> utf8Json, JsonDocumentOptions options = default)
+        public static Age ParseValue(ReadOnlySpan<byte> utf8Json, JsonDocumentOptions options = default)
         {
-            return JsonElementHelpers.ParseValue<NameComponentArray>(utf8Json, options);
+            return JsonElementHelpers.ParseValue<Age>(utf8Json, options);
         }
 
         /// <summary>
@@ -234,9 +262,9 @@ public readonly partial struct Schema
         ///   A value could not be read from the span.
         /// </exception>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static NameComponentArray ParseValue(ReadOnlySpan<char> json, JsonDocumentOptions options = default)
+        public static Age ParseValue(ReadOnlySpan<char> json, JsonDocumentOptions options = default)
         {
-            return JsonElementHelpers.ParseValue<NameComponentArray>(json, options);
+            return JsonElementHelpers.ParseValue<Age>(json, options);
         }
 
         /// <summary>
@@ -257,9 +285,9 @@ public readonly partial struct Schema
         ///   A value could not be read from the text.
         /// </exception>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static NameComponentArray ParseValue(string json, JsonDocumentOptions options = default)
+        public static Age ParseValue(string json, JsonDocumentOptions options = default)
         {
-            return JsonElementHelpers.ParseValue<NameComponentArray>(json, options);
+            return JsonElementHelpers.ParseValue<Age>(json, options);
         }
 
         /// <summary>
@@ -297,9 +325,9 @@ public readonly partial struct Schema
         /// <exception cref="JsonException">
         ///   A value could not be read from the reader.
         /// </exception>
-        public static NameComponentArray ParseValue(ref Utf8JsonReader reader)
+        public static Age ParseValue(ref Utf8JsonReader reader)
         {
-            return JsonElementHelpers.ParseValue<NameComponentArray>(ref reader);
+            return JsonElementHelpers.ParseValue<Age>(ref reader);
         }
 
         /// <summary>
@@ -340,16 +368,16 @@ public readonly partial struct Schema
         /// <exception cref="JsonException">
         ///   A value could not be read from the reader.
         /// </exception>
-        public static bool TryParseValue(ref Utf8JsonReader reader, out NameComponentArray? result)
+        public static bool TryParseValue(ref Utf8JsonReader reader, out Age? result)
         {
-            return JsonElementHelpers.TryParseValue<NameComponentArray>(ref reader, out result);
+            return JsonElementHelpers.TryParseValue<Age>(ref reader, out result);
         }
 
         /// <inheritdoc/>
         public override bool Equals(object? obj)
         {
             return
-                (obj is IJsonElement value && Equals(new NameComponentArray(value.ParentDocument, value.ParentDocumentIndex))) ||
+                (obj is IJsonElement value && Equals(new Age(value.ParentDocument, value.ParentDocumentIndex))) ||
                 (obj is null && this.IsNull());
         }
 
@@ -362,6 +390,36 @@ public readonly partial struct Schema
             where T : struct, IJsonElement
         {
             return JsonElementHelpers.DeepEquals(this, other);
+        }
+
+        /// <summary>
+        /// Compare with a normalized JSON number.
+        /// </summary>
+        /// <param ref="number">The normalized JSON number to compare with.</param>
+        /// <returns><see langword="true"/> if the values are equal.</returns>
+        public bool ValueEquals(in NormalizedJsonNumber number)
+        {
+            if (TokenType != JsonTokenType.Number)
+            {
+                return false;
+            }
+
+            JsonElementHelpers.ParseNumber(
+                _parent.GetRawSimpleValueUnsafe(_idx).Span,
+                out bool leftIsNegative,
+                out ReadOnlySpan<byte> leftIntegral,
+                out ReadOnlySpan<byte> leftFractional,
+                out int leftExponent);
+
+            return JsonElementHelpers.AreEqualNormalizedJsonNumbers(
+                leftIsNegative,
+                leftIntegral,
+                leftFractional,
+                leftExponent,
+                number.IsNegative,
+                number.Integral,
+                number.Fractional,
+                number.Exponent);
         }
 
         /// <inheritdoc/>
@@ -439,11 +497,11 @@ public readonly partial struct Schema
         void IJsonElement.CheckValidInstance() => CheckValidInstance();
 
 #if NET
-        static NameComponentArray IJsonElement<NameComponentArray>.CreateInstance(IJsonDocument parentDocument, int parentDocumentIndex) => new(parentDocument, parentDocumentIndex);
+        static Age IJsonElement<Age>.CreateInstance(IJsonDocument parentDocument, int parentDocumentIndex) => new(parentDocument, parentDocumentIndex);
 #endif
 
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-        private string DebuggerDisplay => $"NameComponentArray: ValueKind = {ValueKind} : \"{ToString()}\"";
+        private string DebuggerDisplay => $"Age: ValueKind = {ValueKind} : \"{ToString()}\"";
 
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         IJsonDocument IJsonElement.ParentDocument => _parent;
@@ -456,5 +514,55 @@ public readonly partial struct Schema
 
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         JsonValueKind IJsonElement.ValueKind => ValueKind;
+
+        /// <summary>
+        /// Gets a <see cref="Age"/> which can be safely stored beyond the lifetime of the
+        /// original document.
+        /// </summary>
+        /// <returns>
+        /// A <see cref="Age"/> which can be safely stored beyond the lifetime of the
+        /// original document.
+        /// </returns>
+        /// <remarks>
+        /// <para>
+        /// If this instance is already a clone (its backing document is not disposable),
+        /// this method returns the same instance without additional allocation.
+        /// </para>
+        /// </remarks>
+        public Age Clone()
+        {
+            CheckValidInstance();
+            return _parent.CloneElement<Age>(_idx);
+        }
+
+        /// <summary>
+        /// Creates a frozen (immutable) copy of this element if it is backed by a mutable document,
+        /// or returns this instance if it is already immutable.
+        /// </summary>
+        /// <returns>
+        /// An immutable <see cref="Age"/> that lives for the lifetime of its
+        /// workspace and its associated documents.
+        /// </returns>
+        /// <remarks>
+        /// <para>
+        /// Unlike <see cref="Clone()"/>, which serializes the element and re-parses it
+        /// into a standalone heap-allocated document, <c>Freeze()</c> performs a cheap
+        /// blit of the metadata and value backing arrays. The resulting element is
+        /// immutable but is only valid for the lifetime of the workspace.
+        /// </para>
+        /// <para>
+        /// If this instance is already backed by an immutable document, it is returned as-is.
+        /// </para>
+        /// </remarks>
+        public Age Freeze()
+        {
+            CheckValidInstance();
+            if (_parent is global::Corvus.Text.Json.Internal.IMutableJsonDocument mutable)
+            {
+                return mutable.FreezeElement<Age>(_idx);
+            }
+
+            return this;
+        }
     }
 }

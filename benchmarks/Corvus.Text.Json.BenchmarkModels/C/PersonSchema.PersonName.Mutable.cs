@@ -17,12 +17,12 @@ using global::System.Runtime.CompilerServices;
 using global::Corvus.Text.Json;
 using global::Corvus.Text.Json.Internal;
 
-namespace Corvus.Benchmark.Current;
+namespace Corvus.PersonBenchmark.Current;
 
 /// <summary>
 /// JSON Schema for a Person entity coming back from a 3rd party API (e.g. a storage format in a database)
 /// </summary>
-public readonly partial struct Schema
+public readonly partial struct PersonSchema
 {
     /// <summary>
     /// Generated from JSON Schema.
@@ -282,11 +282,11 @@ public readonly partial struct Schema
             /// The person&#39;s first name.
             /// </para>
             /// </remarks>
-            public Corvus.Benchmark.Current.Schema.NameComponent.Mutable FirstName
+            public Corvus.PersonBenchmark.Current.PersonSchema.NameComponent.Mutable FirstName
             {
                 get
                 {
-                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.FirstNameUtf8, out Corvus.Benchmark.Current.Schema.NameComponent.Mutable value))
+                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.FirstNameUtf8, out Corvus.PersonBenchmark.Current.PersonSchema.NameComponent.Mutable value))
                     {
                         return value;
                     }
@@ -303,11 +303,11 @@ public readonly partial struct Schema
             /// The person&#39;s last name.
             /// </para>
             /// </remarks>
-            public Corvus.Benchmark.Current.Schema.NameComponent.Mutable LastName
+            public Corvus.PersonBenchmark.Current.PersonSchema.NameComponent.Mutable LastName
             {
                 get
                 {
-                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.LastNameUtf8, out Corvus.Benchmark.Current.Schema.NameComponent.Mutable value))
+                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.LastNameUtf8, out Corvus.PersonBenchmark.Current.PersonSchema.NameComponent.Mutable value))
                     {
                         return value;
                     }
@@ -324,11 +324,11 @@ public readonly partial struct Schema
             /// Other (middle) names for the person
             /// </para>
             /// </remarks>
-            public Corvus.Benchmark.Current.Schema.OtherNames.Mutable OtherNamesValue
+            public Corvus.PersonBenchmark.Current.PersonSchema.OtherNames.Mutable OtherNamesValue
             {
                 get
                 {
-                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.OtherNamesValueUtf8, out Corvus.Benchmark.Current.Schema.OtherNames.Mutable value))
+                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.OtherNamesValueUtf8, out Corvus.PersonBenchmark.Current.PersonSchema.OtherNames.Mutable value))
                     {
                         return value;
                     }
@@ -380,7 +380,7 @@ public readonly partial struct Schema
             /// Set the <c>firstName</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetFirstName(in Corvus.Benchmark.Current.Schema.NameComponent.Source value)
+            public void SetFirstName(in Corvus.PersonBenchmark.Current.PersonSchema.NameComponent.Source value)
             {
                 CheckValidInstance();
 
@@ -399,7 +399,7 @@ public readonly partial struct Schema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.FirstName, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.FirstName, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -411,7 +411,7 @@ public readonly partial struct Schema
             /// Set the <c>lastName</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetLastName(in Corvus.Benchmark.Current.Schema.NameComponent.Source value)
+            public void SetLastName(in Corvus.PersonBenchmark.Current.PersonSchema.NameComponent.Source value)
             {
                 CheckValidInstance();
 
@@ -432,7 +432,7 @@ public readonly partial struct Schema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.LastName, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.LastName, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -456,7 +456,7 @@ public readonly partial struct Schema
             /// Set the <c>otherNames</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetOtherNamesValue(in Corvus.Benchmark.Current.Schema.OtherNames.Source value)
+            public void SetOtherNamesValue(in Corvus.PersonBenchmark.Current.PersonSchema.OtherNames.Source value)
             {
                 CheckValidInstance();
 
@@ -477,7 +477,7 @@ public readonly partial struct Schema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.OtherNamesValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.OtherNamesValue, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -489,7 +489,7 @@ public readonly partial struct Schema
             /// Set the <c>otherNames</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetOtherNamesValue<TContext>(in Corvus.Benchmark.Current.Schema.OtherNames.Source<TContext> value)
+            public void SetOtherNamesValue<TContext>(in Corvus.PersonBenchmark.Current.PersonSchema.OtherNames.Source<TContext> value)
 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
 #endif
@@ -513,7 +513,7 @@ public readonly partial struct Schema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.OtherNamesValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.OtherNamesValue, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -596,7 +596,7 @@ public readonly partial struct Schema
                 return JsonSchema.Evaluate(_parent, _idx, resultsCollector);
             }
 
-            private void CheckValidInstance()
+            private readonly void CheckValidInstance()
             {
                 if (_parent == null)
                 {
@@ -806,6 +806,48 @@ public readonly partial struct Schema
 
             [DebuggerBrowsable(DebuggerBrowsableState.Never)]
             JsonValueKind IJsonElement.ValueKind => ValueKind;
+
+            /// <summary>
+            /// Gets a <see cref="PersonName"/> which can be safely stored beyond the lifetime of the
+            /// original document.
+            /// </summary>
+            /// <returns>
+            /// A <see cref="PersonName"/> which can be safely stored beyond the lifetime of the
+            /// original document.
+            /// </returns>
+            /// <remarks>
+            /// <para>
+            /// This serializes the element and re-parses it into a standalone heap-allocated
+            /// document. The result is independent of the workspace.
+            /// </para>
+            /// </remarks>
+            public readonly PersonName Clone()
+            {
+                CheckValidInstance();
+                return _parent.CloneElement<PersonName>(_idx);
+            }
+
+            /// <summary>
+            /// Creates a frozen (immutable) copy of this element, backed by a new
+            /// document builder registered in the same workspace.
+            /// </summary>
+            /// <returns>
+            /// An immutable <see cref="PersonName"/> that lives for the lifetime of its
+            /// workspace and its associated documents.
+            /// </returns>
+            /// <remarks>
+            /// <para>
+            /// Unlike <see cref="Clone()"/>, which serializes the element and re-parses it
+            /// into a standalone heap-allocated document, <c>Freeze()</c> performs a cheap
+            /// blit of the metadata and value backing arrays. The resulting element is
+            /// immutable but is only valid for the lifetime of the workspace.
+            /// </para>
+            /// </remarks>
+            public readonly PersonName Freeze()
+            {
+                CheckValidInstance();
+                return _parent.FreezeElement<PersonName>(_idx);
+            }
         }
 
         public ref struct Source
@@ -832,7 +874,7 @@ public readonly partial struct Schema
                 _kind = jsonElement.ValueKind == JsonValueKind.Undefined ? Kind.Unknown : Kind.JsonElement;
             }
 
-            internal Source(Corvus.Benchmark.Current.Schema.PersonName.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
+            internal Source(Corvus.PersonBenchmark.Current.PersonSchema.PersonName.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
             public static implicit operator Source(PersonName instance) => new(JsonElement.From(instance));
 
@@ -847,6 +889,24 @@ public readonly partial struct Schema
                         break;
                     case Kind.Builder:
                         valueBuilder.AddProperty(utf8Name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.JsonElement:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                        break;
+                    case Kind.Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                         break;
                     default:
                         Debug.Fail("Unexpected Kind");
@@ -935,7 +995,7 @@ public readonly partial struct Schema
 
             public static implicit operator Source<TContext>(Source source) => new (source);
 
-            internal Source(scoped in TContext context, Corvus.Benchmark.Current.Schema.PersonName.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
+            internal Source(scoped in TContext context, Corvus.PersonBenchmark.Current.PersonSchema.PersonName.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
             internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
             {
@@ -948,6 +1008,24 @@ public readonly partial struct Schema
                         break;
                     case Kind.Builder:
                         valueBuilder.AddProperty(utf8Name, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o), escapeName, nameRequiresUnescaping);
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.Source:
+                        _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                        break;
+                    case Kind.Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                         break;
                     default:
                         Debug.Fail("Unexpected Kind");
@@ -1033,22 +1111,22 @@ public readonly partial struct Schema
             /// </summary>
             internal static void Create(
                 ref ComplexValueBuilder builder,
-                in Corvus.Benchmark.Current.Schema.NameComponent.Source firstName,
-                in Corvus.Benchmark.Current.Schema.NameComponent.Source lastName = default,
-                in Corvus.Benchmark.Current.Schema.OtherNames.Source otherNames = default)
+                in Corvus.PersonBenchmark.Current.PersonSchema.NameComponent.Source firstName,
+                in Corvus.PersonBenchmark.Current.PersonSchema.NameComponent.Source lastName = default,
+                in Corvus.PersonBenchmark.Current.PersonSchema.OtherNames.Source otherNames = default)
             {
-                firstName.AddAsProperty(JsonPropertyNamesEscaped.FirstName, ref builder, escapeName: false);
-                lastName.AddAsProperty(JsonPropertyNamesEscaped.LastName, ref builder, escapeName: false);
-                otherNames.AddAsProperty(JsonPropertyNamesEscaped.OtherNamesValue, ref builder, escapeName: false);
+                firstName.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.FirstName, ref builder);
+                lastName.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.LastName, ref builder);
+                otherNames.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.OtherNamesValue, ref builder);
             }
 
             /// <summary>
             /// Creates an instance of a <see cref="PersonName"/>.
             /// </summary>
             public void Create(
-                in Corvus.Benchmark.Current.Schema.NameComponent.Source firstName,
-                in Corvus.Benchmark.Current.Schema.NameComponent.Source lastName = default,
-                in Corvus.Benchmark.Current.Schema.OtherNames.Source otherNames = default)
+                in Corvus.PersonBenchmark.Current.PersonSchema.NameComponent.Source firstName,
+                in Corvus.PersonBenchmark.Current.PersonSchema.NameComponent.Source lastName = default,
+                in Corvus.PersonBenchmark.Current.PersonSchema.OtherNames.Source otherNames = default)
             {
                 Create(ref _builder, firstName, lastName, otherNames);
             }
@@ -1059,16 +1137,16 @@ public readonly partial struct Schema
             internal static void Create<TContext>(
                 in TContext context,
                 ref ComplexValueBuilder builder,
-                in Corvus.Benchmark.Current.Schema.NameComponent.Source firstName,
-                in Corvus.Benchmark.Current.Schema.NameComponent.Source lastName = default,
-                in Corvus.Benchmark.Current.Schema.OtherNames.Source<TContext> otherNames = default)
+                in Corvus.PersonBenchmark.Current.PersonSchema.NameComponent.Source firstName,
+                in Corvus.PersonBenchmark.Current.PersonSchema.NameComponent.Source lastName = default,
+                in Corvus.PersonBenchmark.Current.PersonSchema.OtherNames.Source<TContext> otherNames = default)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif
             {
-                firstName.AddAsProperty(JsonPropertyNamesEscaped.FirstName, ref builder, escapeName: false);
-                lastName.AddAsProperty(JsonPropertyNamesEscaped.LastName, ref builder, escapeName: false);
-                otherNames.AddAsProperty(JsonPropertyNamesEscaped.OtherNamesValue, ref builder, escapeName: false);
+                firstName.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.FirstName, ref builder);
+                lastName.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.LastName, ref builder);
+                otherNames.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.OtherNamesValue, ref builder);
             }
 
             /// <summary>
@@ -1076,9 +1154,9 @@ public readonly partial struct Schema
             /// </summary>
             public void Create<TContext>(
                 in TContext context,
-                in Corvus.Benchmark.Current.Schema.NameComponent.Source firstName,
-                in Corvus.Benchmark.Current.Schema.NameComponent.Source lastName = default,
-                in Corvus.Benchmark.Current.Schema.OtherNames.Source<TContext> otherNames = default)
+                in Corvus.PersonBenchmark.Current.PersonSchema.NameComponent.Source firstName,
+                in Corvus.PersonBenchmark.Current.PersonSchema.NameComponent.Source lastName = default,
+                in Corvus.PersonBenchmark.Current.PersonSchema.OtherNames.Source<TContext> otherNames = default)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif
@@ -1194,12 +1272,13 @@ public readonly partial struct Schema
         /// <param name="workspace">The JSON workspace.</param>
         /// <param name="value">The value with which to initialize the builder.</param>
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
         /// <returns>An instance of a mutable document initialized with the given value.</returns>
         public static JsonDocumentBuilder<Mutable> CreateBuilder(
-            JsonWorkspace workspace, scoped in Builder.Build value, int initialCapacity = 30)
+            JsonWorkspace workspace, scoped in Builder.Build value, int initialCapacity = 30, int initialValueBufferSize = 8192)
         {
             // Create the document builder without a MetadataDb
-            JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+            JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
             ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
             var source = new Source(value);
             source.AddAsItem(ref cvb);
@@ -1216,15 +1295,16 @@ public readonly partial struct Schema
         /// <param name="context">The context to pass to the builder.</param>
         /// <param name="value">The value with which to initialize the builder.</param>
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
+        /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
         /// <returns>An instance of a mutable document initialized with the given value.</returns>
         public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(
-            JsonWorkspace workspace, scoped in TContext context, scoped in Builder.Build<TContext> value, int initialCapacity = 30)
+            JsonWorkspace workspace, scoped in TContext context, scoped in Builder.Build<TContext> value, int initialCapacity = 30, int initialValueBufferSize = 8192)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif
         {
             // Create the document builder without a MetadataDb
-            JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
+            JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
             ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
             var source = new Source<TContext>(context, value);
             source.AddAsItem(ref cvb);
@@ -1242,7 +1322,7 @@ public readonly partial struct Schema
         /// <param name="otherNames">The value of the property.</param>
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
         /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-        public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.Benchmark.Current.Schema.NameComponent.Source firstName, in Corvus.Benchmark.Current.Schema.NameComponent.Source lastName = default, in Corvus.Benchmark.Current.Schema.OtherNames.Source otherNames = default, int initialCapacity = 30)
+        public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.PersonBenchmark.Current.PersonSchema.NameComponent.Source firstName, in Corvus.PersonBenchmark.Current.PersonSchema.NameComponent.Source lastName = default, in Corvus.PersonBenchmark.Current.PersonSchema.OtherNames.Source otherNames = default, int initialCapacity = 30)
         {
             JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
             ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
@@ -1266,7 +1346,7 @@ public readonly partial struct Schema
         /// <param name="otherNames">The value of the property.</param>
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
         /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-        public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.Benchmark.Current.Schema.NameComponent.Source firstName, in Corvus.Benchmark.Current.Schema.NameComponent.Source lastName = default, in Corvus.Benchmark.Current.Schema.OtherNames.Source<TContext> otherNames = default, int initialCapacity = 30)
+        public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.PersonBenchmark.Current.PersonSchema.NameComponent.Source firstName, in Corvus.PersonBenchmark.Current.PersonSchema.NameComponent.Source lastName = default, in Corvus.PersonBenchmark.Current.PersonSchema.OtherNames.Source<TContext> otherNames = default, int initialCapacity = 30)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif

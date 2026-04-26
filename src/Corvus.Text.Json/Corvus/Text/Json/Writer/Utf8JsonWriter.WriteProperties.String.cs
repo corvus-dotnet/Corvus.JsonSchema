@@ -144,6 +144,54 @@ public sealed partial class Utf8JsonWriter
     }
 
     /// <summary>
+    /// Writes a pre-escaped, pre-quoted UTF-8 property name directly to the output.
+    /// The span must include the surrounding quotes (e.g. <c>"firstName"</c>).
+    /// </summary>
+    /// <param name="preEscapedQuotedPropertyName">The pre-escaped property name including quotes.</param>
+    /// <remarks>
+    /// <para>
+    /// This is an internal fast path for minimized, non-indented output with the default encoder.
+    /// The caller guarantees:
+    /// </para>
+    /// <list type="bullet">
+    /// <item>The name is already escaped for <see cref="System.Text.Encodings.Web.JavaScriptEncoder.Default"/>.</item>
+    /// <item>The span starts with <c>0x22</c> (quote) and ends with <c>0x22</c> (quote).</item>
+    /// <item>The writer is in a valid state to write a property name.</item>
+    /// <item>The writer is configured for minimized (non-indented) output.</item>
+    /// </list>
+    /// </remarks>
+    internal void WritePrebakedPropertyName(ReadOnlySpan<byte> preEscapedQuotedPropertyName)
+    {
+        Debug.Assert(preEscapedQuotedPropertyName.Length >= 2);
+        Debug.Assert(preEscapedQuotedPropertyName[0] == JsonConstants.Quote);
+        Debug.Assert(preEscapedQuotedPropertyName[^1] == JsonConstants.Quote);
+        Debug.Assert(!_options.Indented);
+
+        int maxRequired = preEscapedQuotedPropertyName.Length + 2; // colon + optional comma
+
+        if (_memory.Length - BytesPending < maxRequired)
+        {
+            Grow(maxRequired);
+        }
+
+        Span<byte> output = _memory.Span;
+
+        if (_currentDepth < 0)
+        {
+            output[BytesPending++] = JsonConstants.ListSeparator;
+        }
+
+        preEscapedQuotedPropertyName.CopyTo(output.Slice(BytesPending));
+        BytesPending += preEscapedQuotedPropertyName.Length;
+
+        output[BytesPending++] = JsonConstants.KeyValueSeparator;
+
+        _currentDepth &= JsonConstants.RemoveFlagsBitMask;
+        _tokenType = JsonTokenType.PropertyName;
+        _commentAfterNoneOrPropertyName = false;
+    }
+
+    /// <summary>
     /// Writes the pre-encoded property name and pre-encoded value (as a JSON string) as part of a name/value pair of a JSON object.
     /// </summary>
     /// <param name="propertyName">The JSON-encoded name of the property to write.</param>

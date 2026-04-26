@@ -29,8 +29,8 @@ public class BenchmarkBuildAndWrite
             new System.Text.Json.Nodes.JsonObject([
                 new ("firstName", "Michael"),
                 new ("lastName", "Adams"),
-                new ("otherNames", new System.Text.Json.Nodes.JsonArray("Francis", "James")),
-            new ("competedInYears", new System.Text.Json.Nodes.JsonArray(2012, 2016, 2024))])),
+                new ("otherNames", new System.Text.Json.Nodes.JsonArray("Francis", "James"))])),
+            new ("competedInYears", new System.Text.Json.Nodes.JsonArray(2012, 2016, 2024)),
         ];
 
         jsonObject.WriteTo(writer);
@@ -80,12 +80,7 @@ public class BenchmarkBuildAndWrite
                         otherNames.AddItem("James"u8);
                     }));
             }),
-            competedInYears: CompetedInYears.Build(static (ref competedInYears) =>
-            {
-                competedInYears.AddItem(2012);
-                competedInYears.AddItem(2016);
-                competedInYears.AddItem(2024);
-            })));
+            competedInYears: CompetedInYears.Build([2012, 2016, 2024])));
 
         Utf8JsonWriter writer = workspace.RentWriterAndBuffer(defaultBufferSize: 1024, out IByteBufferWriter bufferWriter);
         person.WriteTo(writer);
@@ -136,8 +131,8 @@ public class BenchmarkBuildOnly
             new System.Text.Json.Nodes.JsonObject([
                 new ("firstName", "Michael"),
                 new ("lastName", "Adams"),
-                new ("otherNames", new System.Text.Json.Nodes.JsonArray("Francis", "James")),
-            new ("competedInYears", new System.Text.Json.Nodes.JsonArray(2012, 2016, 2024))])),
+                new ("otherNames", new System.Text.Json.Nodes.JsonArray("Francis", "James"))])),
+            new ("competedInYears", new System.Text.Json.Nodes.JsonArray(2012, 2016, 2024)),
         ];
     }
 
@@ -161,12 +156,7 @@ public class BenchmarkBuildOnly
                         otherNames.AddItem("James"u8);
                     }));
             }),
-            competedInYears: CompetedInYears.Build(static (ref competedInYears) =>
-            {
-                competedInYears.AddItem(2012);
-                competedInYears.AddItem(2016);
-                competedInYears.AddItem(2024);
-            })));
+            competedInYears: CompetedInYears.Build([2012, 2016, 2024])));
     }
 
     [Benchmark]
@@ -196,6 +186,7 @@ public class BenchmarkWriteOnly
     private System.Text.Json.Nodes.JsonObject _jsonObject = default!;
     private JsonWorkspace _workspace;
     private JsonDocumentBuilder<Person.Mutable> _person = default!;
+    private Benchmark.CorvusJsonSchema.Person _corvusJsonSchema;
     private PersonPoco _poco = default!;
 
     [GlobalSetup]
@@ -208,8 +199,8 @@ public class BenchmarkWriteOnly
             new System.Text.Json.Nodes.JsonObject([
                 new ("firstName", "Michael"),
                 new ("lastName", "Adams"),
-                new ("otherNames", new System.Text.Json.Nodes.JsonArray("Francis", "James")),
-            new ("competedInYears", new System.Text.Json.Nodes.JsonArray(2012, 2016, 2024))])),
+                new ("otherNames", new System.Text.Json.Nodes.JsonArray("Francis", "James"))])),
+            new ("competedInYears", new System.Text.Json.Nodes.JsonArray(2012, 2016, 2024)),
         ];
 
         _workspace = JsonWorkspace.Create();
@@ -228,12 +219,15 @@ public class BenchmarkWriteOnly
                         otherNames.AddItem("James"u8);
                     }));
             }),
-            competedInYears: CompetedInYears.Build(static (ref competedInYears) =>
-            {
-                competedInYears.AddItem(2012);
-                competedInYears.AddItem(2016);
-                competedInYears.AddItem(2024);
-            })));
+            competedInYears: CompetedInYears.Build([2012, 2016, 2024])));
+
+        _corvusJsonSchema = Benchmark.CorvusJsonSchema.Person.Create(
+            age: 51,
+            name: Benchmark.CorvusJsonSchema.PersonName.Create(
+                firstName: "Michael",
+                lastName: "Adams",
+                otherNames: ["Francis", "James"]),
+            competedInYears: [2012, 2016, 2024]);
 
         _poco = new()
         {
@@ -261,6 +255,18 @@ public class BenchmarkWriteOnly
         var bufferWriter = new ArrayPoolBufferWriter<byte>();
         System.Text.Json.Utf8JsonWriter writer = new(bufferWriter);
         _jsonObject.WriteTo(writer);
+        writer.Flush();
+        writer.Dispose();
+        bufferWriter.Dispose();
+        return true;
+    }
+
+    [Benchmark]
+    public bool WriteCorvusJsonSchema()
+    {
+        var bufferWriter = new ArrayPoolBufferWriter<byte>();
+        System.Text.Json.Utf8JsonWriter writer = new(bufferWriter);
+        _corvusJsonSchema.WriteTo(writer);
         writer.Flush();
         writer.Dispose();
         bufferWriter.Dispose();

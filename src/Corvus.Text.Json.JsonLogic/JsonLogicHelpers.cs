@@ -449,15 +449,26 @@ public static class JsonLogicHelpers
         }
 
         int resultLen = actualLength + 2;
+        byte[]? rentedResult = null;
         Span<byte> result = resultLen <= 256
             ? stackalloc byte[256]
-            : new byte[resultLen];
+            : (rentedResult = ArrayPool<byte>.Shared.Rent(resultLen));
 
-        result[0] = (byte)'"';
-        content.Slice(start, actualLength).CopyTo(result.Slice(1));
-        result[actualLength + 1] = (byte)'"';
+        try
+        {
+            result[0] = (byte)'"';
+            content.Slice(start, actualLength).CopyTo(result.Slice(1));
+            result[actualLength + 1] = (byte)'"';
 
-        return StringFromQuotedUtf8Span(result.Slice(0, resultLen), workspace);
+            return StringFromQuotedUtf8Span(result.Slice(0, resultLen), workspace);
+        }
+        finally
+        {
+            if (rentedResult is not null)
+            {
+                ArrayPool<byte>.Shared.Return(rentedResult);
+            }
+        }
     }
 
     private static JsonElement SubstrFromManagedString(string str, int start, int length, JsonWorkspace workspace)
@@ -651,20 +662,31 @@ public static class JsonLogicHelpers
         ReadOnlySpan<byte> span = raw.Span;
 
         // JSON numbers are always ASCII, so byte-to-char is 1:1
+        char[]? rentedChars = null;
         Span<char> chars = span.Length <= 128
             ? stackalloc char[128]
-            : new char[span.Length];
+            : (rentedChars = ArrayPool<char>.Shared.Rent(span.Length));
 
-        for (int i = 0; i < span.Length; i++)
+        try
         {
-            chars[i] = (char)span[i];
-        }
+            for (int i = 0; i < span.Length; i++)
+            {
+                chars[i] = (char)span[i];
+            }
 
 #if NET
-        return new string(chars.Slice(0, span.Length));
+            return new string(chars.Slice(0, span.Length));
 #else
-        return new string(chars.Slice(0, span.Length).ToArray());
+            return new string(chars.Slice(0, span.Length).ToArray());
 #endif
+        }
+        finally
+        {
+            if (rentedChars is not null)
+            {
+                ArrayPool<char>.Shared.Return(rentedChars);
+            }
+        }
     }
 
     // ─── Code-generation helpers ─────────────────────────────────
@@ -786,9 +808,13 @@ public static class JsonLogicHelpers
     /// </summary>
     public static BigNumber CoerceToBigNumber(in JsonElement element)
     {
-        if (element.ValueKind == JsonValueKind.Number && BigNumber.TryParse(element.GetRawText(), out BigNumber result))
+        if (element.ValueKind == JsonValueKind.Number)
         {
-            return result;
+            using RawUtf8JsonString raw = JsonMarshal.GetRawUtf8Value(element);
+            if (BigNumber.TryParse(raw.Span, out BigNumber result))
+            {
+                return result;
+            }
         }
 
         if (element.ValueKind == JsonValueKind.True)
@@ -801,9 +827,13 @@ public static class JsonLogicHelpers
             return BigNumber.Zero;
         }
 
-        if (element.ValueKind == JsonValueKind.String && TryCoerceToNumber(element, out JsonElement numElem) && BigNumber.TryParse(numElem.GetRawText(), out BigNumber numResult))
+        if (element.ValueKind == JsonValueKind.String && TryCoerceToNumber(element, out JsonElement numElem))
         {
-            return numResult;
+            using RawUtf8JsonString raw = JsonMarshal.GetRawUtf8Value(numElem);
+            if (BigNumber.TryParse(raw.Span, out BigNumber result))
+            {
+                return result;
+            }
         }
 
         return BigNumber.Zero;

@@ -115,6 +115,14 @@ public interface IMutableJsonDocument : IWorkspaceManagedDocument
     int StoreRawNumberValue(ReadOnlySpan<byte> value);
 
     /// <summary>
+    /// Stores a pre-baked dynamic value in the value buffer and returns its offset.
+    /// The value must contain the complete encoded representation including the 4-byte header.
+    /// </summary>
+    /// <param name="prebakedValue">The complete pre-baked value including header and payload.</param>
+    /// <returns>The index of the stored value.</returns>
+    int StorePrebakedValue(ReadOnlySpan<byte> prebakedValue);
+
+    /// <summary>
     /// Stores a null value in the document.
     /// </summary>
     /// <returns>The index of the stored value.</returns>

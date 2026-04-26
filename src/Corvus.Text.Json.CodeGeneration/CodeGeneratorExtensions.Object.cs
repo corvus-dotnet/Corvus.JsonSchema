@@ -386,6 +386,85 @@ internal static partial class CodeGeneratorExtensions
     }
 
     /// <summary>
+    /// Appends a JsonPropertyNamesPrebaked nested class containing pre-baked property name blobs
+    /// for fast builder property storage (single memcpy instead of per-call header computation).
+    /// </summary>
+    /// <param name="generator">The code generator.</param>
+    /// <param name="typeDeclaration">The type declaration for which to emit the pre-baked property names class.</param>
+    /// <returns>A reference to the generator having completed the operation.</returns>
+    public static CodeGenerator AppendJsonPropertyNamesPrebaked(this CodeGenerator generator, TypeDeclaration typeDeclaration)
+    {
+        if (generator.IsCancellationRequested)
+        {
+            return generator;
+        }
+
+        if (!typeDeclaration.HasPropertyDeclarations)
+        {
+            return generator;
+        }
+
+        generator
+            .AppendSeparatorLine()
+            .AppendLineIndent("/// <summary>")
+            .AppendLineIndent("/// Provides pre-baked property name blobs for fast builder property storage.")
+            .AppendLineIndent("/// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].")
+            .AppendLineIndent("/// </summary>")
+            .BeginPrivateStaticClassDeclaration(generator.JsonPropertyNamesPrebakedClassName());
+
+        int i = 0;
+
+        foreach (PropertyDeclaration property in typeDeclaration.PropertyDeclarations)
+        {
+            if (generator.IsCancellationRequested)
+            {
+                return generator;
+            }
+
+            if (i > 0)
+            {
+                generator
+                    .AppendLine();
+            }
+
+            string encodedName = JavaScriptEncoder.Default.Encode(property.JsonPropertyName);
+            byte[] utf8Bytes = Encoding.UTF8.GetBytes(encodedName);
+            int payloadLength = utf8Bytes.Length + 2;
+            uint header = ((uint)payloadLength << 4) | 5u; // DynamicValueType.NormalizedQuotedUtf8String = 5
+
+            generator
+                .AppendLineIndent("/// <summary>")
+                .AppendLineIndent("/// Gets the pre-baked property name blob for <see cref=\"", property.DotnetPropertyName(), "\"/>.")
+                .AppendLineIndent("/// </summary>")
+                .AppendIndent("public static ReadOnlySpan<byte> ", property.DotnetPropertyName(), " => [");
+
+            // Emit header bytes (little-endian)
+            generator.Append("0x" + ((byte)(header & 0xFF)).ToString("X2"));
+            generator.Append(", 0x" + ((byte)((header >> 8) & 0xFF)).ToString("X2"));
+            generator.Append(", 0x" + ((byte)((header >> 16) & 0xFF)).ToString("X2"));
+            generator.Append(", 0x" + ((byte)((header >> 24) & 0xFF)).ToString("X2"));
+
+            // Opening quote
+            generator.Append(", 0x22");
+
+            // UTF-8 name bytes
+            for (int b = 0; b < utf8Bytes.Length; b++)
+            {
+                generator.Append(", 0x" + utf8Bytes[b].ToString("X2"));
+            }
+
+            // Closing quote
+            generator.Append(", 0x22");
+
+            generator.AppendLine("];");
+            i++;
+        }
+
+        return generator
+            .EndClassStructOrEnumDeclaration();
+    }
+
+    /// <summary>
     /// Append object indexer properties.
     /// </summary>
     /// <param name="generator">The code generator.</param>
@@ -704,7 +783,7 @@ internal static partial class CodeGeneratorExtensions
                     .AppendLineIndent("{")
                     .PushIndent()
                         .AppendLineIndent("// We are going to insert the new value")
-                        .AppendLineIndent("value.AddAsProperty(", generator.JsonPropertyNamesEscapedClassName(), ".", property.DotnetPropertyName(), ", ref cvb, escapeName: false, nameRequiresUnescaping: ", requiresEncoding ? "true" : "false", ");")
+                        .AppendLineIndent("value.AddAsPrebakedProperty(", generator.JsonPropertyNamesPrebakedClassName(), ".", property.DotnetPropertyName(), ", ref cvb);")
                         .AppendLineIndent("int endIndex = _idx + _parent.GetDbSize(_idx, false);")
                         .AppendLineIndent("_parent.InsertAndDispose(_idx, endIndex, ref cvb);")
                     .PopIndent()
@@ -772,7 +851,7 @@ internal static partial class CodeGeneratorExtensions
                         .AppendLineIndent("{")
                         .PushIndent()
                             .AppendLineIndent("// We are going to insert the new value")
-                            .AppendLineIndent("value.AddAsProperty(", generator.JsonPropertyNamesEscapedClassName(), ".", property.DotnetPropertyName(), ", ref cvb, escapeName: false, nameRequiresUnescaping: ", requiresEncoding ? "true" : "false", ");")
+                            .AppendLineIndent("value.AddAsPrebakedProperty(", generator.JsonPropertyNamesPrebakedClassName(), ".", property.DotnetPropertyName(), ", ref cvb);")
                             .AppendLineIndent("int endIndex = _idx + _parent.GetDbSize(_idx, false);")
                             .AppendLineIndent("_parent.InsertAndDispose(_idx, endIndex, ref cvb);")
                         .PopIndent()

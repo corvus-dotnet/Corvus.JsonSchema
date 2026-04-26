@@ -16,6 +16,10 @@ internal class DummyDocument : IJsonDocument
     public bool IsDisposable => false;
     public bool IsImmutable => true;
 
+    JsonWorkspace? IJsonDocument.CachedWorkspace { get; set; }
+    int IJsonDocument.CachedWorkspaceDocumentIndex { get; set; }
+    int IJsonDocument.CachedWorkspaceGeneration { get; set; }
+
     bool IJsonDocument.IsDisposable { get; }
     bool IJsonDocument.IsImmutable { get; }
 
