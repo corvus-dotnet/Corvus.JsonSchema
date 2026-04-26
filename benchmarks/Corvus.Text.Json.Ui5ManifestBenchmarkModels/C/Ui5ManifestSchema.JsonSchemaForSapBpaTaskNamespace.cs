@@ -121,16 +121,16 @@ public readonly partial struct Ui5ManifestSchema
         /// Represents the inputs of the task ui
         /// </para>
         /// </remarks>
-        public Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Http11jsonSchemaOrg1draft071schema Inputs
+        public Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Schema Inputs
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.InputsUtf8, out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Http11jsonSchemaOrg1draft071schema value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.InputsUtf8, out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Schema value))
                 {
                     return value;
                 }
 
-                return Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Http11jsonSchemaOrg1draft071schema.DefaultInstance;
+                return Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Schema.DefaultInstance;
             }
         }
 
@@ -167,16 +167,16 @@ public readonly partial struct Ui5ManifestSchema
         /// Represents the outputs of the task ui
         /// </para>
         /// </remarks>
-        public Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Http11jsonSchemaOrg1draft071schema Outputs
+        public Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Schema Outputs
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.OutputsUtf8, out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Http11jsonSchemaOrg1draft071schema value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.OutputsUtf8, out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Schema value))
                 {
                     return value;
                 }
 
-                return Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Http11jsonSchemaOrg1draft071schema.DefaultInstance;
+                return Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Schema.DefaultInstance;
             }
         }
 

@@ -86,11 +86,11 @@ public readonly partial struct Ui5ManifestSchema
     /// The resource identifier for the JSON schema to be used. The value of this keyword MUST be a URI [RFC3986] (containing a scheme) and this URI MUST be normalized. The current schema MUST be valid against the meta-schema identified by this URI. If this URI identifies a retrievable resource, that resource SHOULD be of media type &quot;application/schema+json&quot;.
     /// </para>
     /// </remarks>
-    public Corvus.Ui5ManifestBenchmark.Current.JsonUri Schema
+    public Corvus.Ui5ManifestBenchmark.Current.JsonUri SchemaValue
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SchemaUtf8, out Corvus.Ui5ManifestBenchmark.Current.JsonUri value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SchemaValueUtf8, out Corvus.Ui5ManifestBenchmark.Current.JsonUri value))
             {
                 return value;
             }
@@ -1213,9 +1213,9 @@ public readonly partial struct Ui5ManifestSchema
         public const string Version = "_version";
 
         /// <summary>
-        /// Gets the JSON property name for <see cref="Schema"/>.
+        /// Gets the JSON property name for <see cref="SchemaValue"/>.
         /// </summary>
-        public const string Schema = "$schema";
+        public const string SchemaValue = "$schema";
 
         /// <summary>
         /// Gets the JSON property name for <see cref="SapApf"/>.
@@ -1378,9 +1378,9 @@ public readonly partial struct Ui5ManifestSchema
         public static ReadOnlySpan<byte> VersionUtf8 => "_version"u8;
 
         /// <summary>
-        /// Gets the JSON property name for <see cref="Schema"/>.
+        /// Gets the JSON property name for <see cref="SchemaValue"/>.
         /// </summary>
-        public static ReadOnlySpan<byte> SchemaUtf8 => "$schema"u8;
+        public static ReadOnlySpan<byte> SchemaValueUtf8 => "$schema"u8;
 
         /// <summary>
         /// Gets the JSON property name for <see cref="SapApf"/>.
@@ -1549,9 +1549,9 @@ public readonly partial struct Ui5ManifestSchema
         public static ReadOnlySpan<byte> Version => "_version"u8;
 
         /// <summary>
-        /// Gets the escaped UTF-8 JSON property name for <see cref="Schema"/>.
+        /// Gets the escaped UTF-8 JSON property name for <see cref="SchemaValue"/>.
         /// </summary>
-        public static ReadOnlySpan<byte> Schema => "$schema"u8;
+        public static ReadOnlySpan<byte> SchemaValue => "$schema"u8;
 
         /// <summary>
         /// Gets the escaped UTF-8 JSON property name for <see cref="SapApf"/>.
@@ -1721,9 +1721,9 @@ public readonly partial struct Ui5ManifestSchema
         public static ReadOnlySpan<byte> Version => [0xA5, 0x00, 0x00, 0x00, 0x22, 0x5F, 0x76, 0x65, 0x72, 0x73, 0x69, 0x6F, 0x6E, 0x22];
 
         /// <summary>
-        /// Gets the pre-baked property name blob for <see cref="Schema"/>.
+        /// Gets the pre-baked property name blob for <see cref="SchemaValue"/>.
         /// </summary>
-        public static ReadOnlySpan<byte> Schema => [0x95, 0x00, 0x00, 0x00, 0x22, 0x24, 0x73, 0x63, 0x68, 0x65, 0x6D, 0x61, 0x22];
+        public static ReadOnlySpan<byte> SchemaValue => [0x95, 0x00, 0x00, 0x00, 0x22, 0x24, 0x73, 0x63, 0x68, 0x65, 0x6D, 0x61, 0x22];
 
         /// <summary>
         /// Gets the pre-baked property name blob for <see cref="SapApf"/>.

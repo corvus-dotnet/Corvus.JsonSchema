@@ -112,14 +112,14 @@ public readonly partial struct Ui5ManifestSchema
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext2 =
-                    Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Http11jsonSchemaOrg1draft071schema.JsonSchema.PushChildContextUnescaped(
+                    Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Schema.JsonSchema.PushChildContextUnescaped(
                         parentDocument,
                         parentDocumentIndex,
                         ref context,
                         JsonPropertyNames.InputsUtf8,
                         evaluationPath: InputsSchemaEvaluationPath);
 
-                Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Http11jsonSchemaOrg1draft071schema.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext2);
+                Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Schema.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext2);
                 context.CommitChildContext(childContext2.IsMatch, ref childContext2);
             }
 
@@ -149,14 +149,14 @@ public readonly partial struct Ui5ManifestSchema
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext4 =
-                    Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Http11jsonSchemaOrg1draft071schema.JsonSchema.PushChildContextUnescaped(
+                    Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Schema.JsonSchema.PushChildContextUnescaped(
                         parentDocument,
                         parentDocumentIndex,
                         ref context,
                         JsonPropertyNames.OutputsUtf8,
                         evaluationPath: OutputsSchemaEvaluationPath);
 
-                Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Http11jsonSchemaOrg1draft071schema.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext4);
+                Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Schema.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext4);
                 context.CommitChildContext(childContext4.IsMatch, ref childContext4);
             }
 

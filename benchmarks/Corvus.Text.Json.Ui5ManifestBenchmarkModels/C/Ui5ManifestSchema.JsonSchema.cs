@@ -48,7 +48,7 @@ public readonly partial struct Ui5ManifestSchema
         private const uint RequiredBitMask0 =
             RequiredBitForVersion | RequiredBitForSapApp | RequiredBitForSapUi;
         private static readonly JsonSchemaPathProvider VersionSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/_version"u8, buffer, out written);
-        private static readonly JsonSchemaPathProvider SchemaSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/$schema"u8, buffer, out written);
+        private static readonly JsonSchemaPathProvider SchemaValueSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/$schema"u8, buffer, out written);
         private static readonly JsonSchemaPathProvider SapApfSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/sap.apf"u8, buffer, out written);
         private static readonly JsonSchemaPathProvider SapAppSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/sap.app"u8, buffer, out written);
         private static readonly JsonSchemaPathProvider SapArtifactSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/sap.artifact"u8, buffer, out written);
@@ -103,7 +103,7 @@ public readonly partial struct Ui5ManifestSchema
             requiredBitBuffer[RequiredOffsetForVersion] |= RequiredBitForVersion;
         }
 
-        private static void MatchSchema(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+        private static void MatchSchemaValue(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext1 =
@@ -111,8 +111,8 @@ public readonly partial struct Ui5ManifestSchema
                     parentDocument,
                     parentDocumentIndex,
                     ref context,
-                    JsonPropertyNames.SchemaUtf8,
-                    evaluationPath: SchemaSchemaEvaluationPath);
+                    JsonPropertyNames.SchemaValueUtf8,
+                    evaluationPath: SchemaValueSchemaEvaluationPath);
 
             Corvus.Ui5ManifestBenchmark.Current.JsonUri.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext1);
             context.CommitChildContext(childContext1.IsMatch, ref childContext1);
@@ -601,7 +601,7 @@ public readonly partial struct Ui5ManifestSchema
         {
             return new PropertySchemaMatchers<Corvus.Ui5ManifestBenchmark.Current.PropertiesValidationHandler_NamedPropertyValidator>([
                 (static () => JsonPropertyNames.VersionUtf8, MatchVersion),
-                (static () => JsonPropertyNames.SchemaUtf8, MatchSchema),
+                (static () => JsonPropertyNames.SchemaValueUtf8, MatchSchemaValue),
                 (static () => JsonPropertyNames.SapApfUtf8, MatchSapApf),
                 (static () => JsonPropertyNames.SapAppUtf8, MatchSapApp),
                 (static () => JsonPropertyNames.SapArtifactUtf8, MatchSapArtifact),

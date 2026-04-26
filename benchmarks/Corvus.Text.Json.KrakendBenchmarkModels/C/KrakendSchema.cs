@@ -104,11 +104,11 @@ public readonly partial struct KrakendSchema
     /// See: https://www.krakend.io/docs/async/
     /// </para>
     /// </remarks>
-    public Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271asyncAgentJson AsyncAgent
+    public Corvus.KrakendBenchmark.Current.KrakendSchema.AsyncAgent AsyncAgentValue
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.AsyncAgentUtf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271asyncAgentJson value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.AsyncAgentValueUtf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.AsyncAgent value))
             {
                 return value;
             }
@@ -157,11 +157,11 @@ public readonly partial struct KrakendSchema
     /// See: https://www.krakend.io/docs/service-settings/tls/
     /// </para>
     /// </remarks>
-    public Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271clientTlsJson ClientTls
+    public Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls ClientTlsValue
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ClientTlsUtf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271clientTlsJson value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ClientTlsValueUtf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls value))
             {
                 return value;
             }
@@ -410,11 +410,11 @@ public readonly partial struct KrakendSchema
     /// See: https://www.krakend.io/docs/endpoints/
     /// </para>
     /// </remarks>
-    public Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271endpointJsonArray Endpoints
+    public Corvus.KrakendBenchmark.Current.KrakendSchema.EndpointArray Endpoints
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.EndpointsUtf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271endpointJsonArray value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.EndpointsUtf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.EndpointArray value))
             {
                 return value;
             }
@@ -460,11 +460,11 @@ public readonly partial struct KrakendSchema
     /// The optional configuration that extends the core functionality of the gateway is specified here. The `extra_config` at this level enables service components, meaning that they apply globally to all endpoints or activity.
     /// </para>
     /// </remarks>
-    public Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271serviceExtraConfigJson ExtraConfig
+    public Corvus.KrakendBenchmark.Current.KrakendSchema.ServiceExtraConfig ExtraConfig
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ExtraConfigUtf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271serviceExtraConfigJson value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ExtraConfigUtf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.ServiceExtraConfig value))
             {
                 return value;
             }
@@ -887,11 +887,11 @@ public readonly partial struct KrakendSchema
     /// See: https://www.krakend.io/docs/service-settings/tls/
     /// </para>
     /// </remarks>
-    public Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271tlsJson Tls
+    public Corvus.KrakendBenchmark.Current.KrakendSchema.Tls TlsValue
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TlsUtf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271tlsJson value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TlsValueUtf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.Tls value))
             {
                 return value;
             }
@@ -1400,9 +1400,9 @@ public readonly partial struct KrakendSchema
     public static class JsonPropertyNames
     {
         /// <summary>
-        /// Gets the JSON property name for <see cref="AsyncAgent"/>.
+        /// Gets the JSON property name for <see cref="AsyncAgentValue"/>.
         /// </summary>
-        public const string AsyncAgent = "async_agent";
+        public const string AsyncAgentValue = "async_agent";
 
         /// <summary>
         /// Gets the JSON property name for <see cref="CacheTtl"/>.
@@ -1410,9 +1410,9 @@ public readonly partial struct KrakendSchema
         public const string CacheTtl = "cache_ttl";
 
         /// <summary>
-        /// Gets the JSON property name for <see cref="ClientTls"/>.
+        /// Gets the JSON property name for <see cref="ClientTlsValue"/>.
         /// </summary>
-        public const string ClientTls = "client_tls";
+        public const string ClientTlsValue = "client_tls";
 
         /// <summary>
         /// Gets the JSON property name for <see cref="DebugEndpointValue"/>.
@@ -1555,9 +1555,9 @@ public readonly partial struct KrakendSchema
         public const string Timeout = "timeout";
 
         /// <summary>
-        /// Gets the JSON property name for <see cref="Tls"/>.
+        /// Gets the JSON property name for <see cref="TlsValue"/>.
         /// </summary>
-        public const string Tls = "tls";
+        public const string TlsValue = "tls";
 
         /// <summary>
         /// Gets the JSON property name for <see cref="UseH2c"/>.
@@ -1575,9 +1575,9 @@ public readonly partial struct KrakendSchema
         public const string WriteTimeout = "write_timeout";
 
         /// <summary>
-        /// Gets the JSON property name for <see cref="AsyncAgent"/>.
+        /// Gets the JSON property name for <see cref="AsyncAgentValue"/>.
         /// </summary>
-        public static ReadOnlySpan<byte> AsyncAgentUtf8 => "async_agent"u8;
+        public static ReadOnlySpan<byte> AsyncAgentValueUtf8 => "async_agent"u8;
 
         /// <summary>
         /// Gets the JSON property name for <see cref="CacheTtl"/>.
@@ -1585,9 +1585,9 @@ public readonly partial struct KrakendSchema
         public static ReadOnlySpan<byte> CacheTtlUtf8 => "cache_ttl"u8;
 
         /// <summary>
-        /// Gets the JSON property name for <see cref="ClientTls"/>.
+        /// Gets the JSON property name for <see cref="ClientTlsValue"/>.
         /// </summary>
-        public static ReadOnlySpan<byte> ClientTlsUtf8 => "client_tls"u8;
+        public static ReadOnlySpan<byte> ClientTlsValueUtf8 => "client_tls"u8;
 
         /// <summary>
         /// Gets the JSON property name for <see cref="DebugEndpointValue"/>.
@@ -1730,9 +1730,9 @@ public readonly partial struct KrakendSchema
         public static ReadOnlySpan<byte> TimeoutUtf8 => "timeout"u8;
 
         /// <summary>
-        /// Gets the JSON property name for <see cref="Tls"/>.
+        /// Gets the JSON property name for <see cref="TlsValue"/>.
         /// </summary>
-        public static ReadOnlySpan<byte> TlsUtf8 => "tls"u8;
+        public static ReadOnlySpan<byte> TlsValueUtf8 => "tls"u8;
 
         /// <summary>
         /// Gets the JSON property name for <see cref="UseH2c"/>.
@@ -1756,9 +1756,9 @@ public readonly partial struct KrakendSchema
     private static class JsonPropertyNamesEscaped
     {
         /// <summary>
-        /// Gets the escaped UTF-8 JSON property name for <see cref="AsyncAgent"/>.
+        /// Gets the escaped UTF-8 JSON property name for <see cref="AsyncAgentValue"/>.
         /// </summary>
-        public static ReadOnlySpan<byte> AsyncAgent => "async_agent"u8;
+        public static ReadOnlySpan<byte> AsyncAgentValue => "async_agent"u8;
 
         /// <summary>
         /// Gets the escaped UTF-8 JSON property name for <see cref="CacheTtl"/>.
@@ -1766,9 +1766,9 @@ public readonly partial struct KrakendSchema
         public static ReadOnlySpan<byte> CacheTtl => "cache_ttl"u8;
 
         /// <summary>
-        /// Gets the escaped UTF-8 JSON property name for <see cref="ClientTls"/>.
+        /// Gets the escaped UTF-8 JSON property name for <see cref="ClientTlsValue"/>.
         /// </summary>
-        public static ReadOnlySpan<byte> ClientTls => "client_tls"u8;
+        public static ReadOnlySpan<byte> ClientTlsValue => "client_tls"u8;
 
         /// <summary>
         /// Gets the escaped UTF-8 JSON property name for <see cref="DebugEndpointValue"/>.
@@ -1911,9 +1911,9 @@ public readonly partial struct KrakendSchema
         public static ReadOnlySpan<byte> Timeout => "timeout"u8;
 
         /// <summary>
-        /// Gets the escaped UTF-8 JSON property name for <see cref="Tls"/>.
+        /// Gets the escaped UTF-8 JSON property name for <see cref="TlsValue"/>.
         /// </summary>
-        public static ReadOnlySpan<byte> Tls => "tls"u8;
+        public static ReadOnlySpan<byte> TlsValue => "tls"u8;
 
         /// <summary>
         /// Gets the escaped UTF-8 JSON property name for <see cref="UseH2c"/>.
@@ -1938,9 +1938,9 @@ public readonly partial struct KrakendSchema
     private static class JsonPropertyNamesPrebaked
     {
         /// <summary>
-        /// Gets the pre-baked property name blob for <see cref="AsyncAgent"/>.
+        /// Gets the pre-baked property name blob for <see cref="AsyncAgentValue"/>.
         /// </summary>
-        public static ReadOnlySpan<byte> AsyncAgent => [0xD5, 0x00, 0x00, 0x00, 0x22, 0x61, 0x73, 0x79, 0x6E, 0x63, 0x5F, 0x61, 0x67, 0x65, 0x6E, 0x74, 0x22];
+        public static ReadOnlySpan<byte> AsyncAgentValue => [0xD5, 0x00, 0x00, 0x00, 0x22, 0x61, 0x73, 0x79, 0x6E, 0x63, 0x5F, 0x61, 0x67, 0x65, 0x6E, 0x74, 0x22];
 
         /// <summary>
         /// Gets the pre-baked property name blob for <see cref="CacheTtl"/>.
@@ -1948,9 +1948,9 @@ public readonly partial struct KrakendSchema
         public static ReadOnlySpan<byte> CacheTtl => [0xB5, 0x00, 0x00, 0x00, 0x22, 0x63, 0x61, 0x63, 0x68, 0x65, 0x5F, 0x74, 0x74, 0x6C, 0x22];
 
         /// <summary>
-        /// Gets the pre-baked property name blob for <see cref="ClientTls"/>.
+        /// Gets the pre-baked property name blob for <see cref="ClientTlsValue"/>.
         /// </summary>
-        public static ReadOnlySpan<byte> ClientTls => [0xC5, 0x00, 0x00, 0x00, 0x22, 0x63, 0x6C, 0x69, 0x65, 0x6E, 0x74, 0x5F, 0x74, 0x6C, 0x73, 0x22];
+        public static ReadOnlySpan<byte> ClientTlsValue => [0xC5, 0x00, 0x00, 0x00, 0x22, 0x63, 0x6C, 0x69, 0x65, 0x6E, 0x74, 0x5F, 0x74, 0x6C, 0x73, 0x22];
 
         /// <summary>
         /// Gets the pre-baked property name blob for <see cref="DebugEndpointValue"/>.
@@ -2093,9 +2093,9 @@ public readonly partial struct KrakendSchema
         public static ReadOnlySpan<byte> Timeout => [0x95, 0x00, 0x00, 0x00, 0x22, 0x74, 0x69, 0x6D, 0x65, 0x6F, 0x75, 0x74, 0x22];
 
         /// <summary>
-        /// Gets the pre-baked property name blob for <see cref="Tls"/>.
+        /// Gets the pre-baked property name blob for <see cref="TlsValue"/>.
         /// </summary>
-        public static ReadOnlySpan<byte> Tls => [0x55, 0x00, 0x00, 0x00, 0x22, 0x74, 0x6C, 0x73, 0x22];
+        public static ReadOnlySpan<byte> TlsValue => [0x55, 0x00, 0x00, 0x00, 0x22, 0x74, 0x6C, 0x73, 0x22];
 
         /// <summary>
         /// Gets the pre-baked property name blob for <see cref="UseH2c"/>.

@@ -193,11 +193,11 @@ public readonly partial struct Ui5ManifestSchema
         /// The resource identifier for the JSON schema to be used. The value of this keyword MUST be a URI [RFC3986] (containing a scheme) and this URI MUST be normalized. The current schema MUST be valid against the meta-schema identified by this URI. If this URI identifies a retrievable resource, that resource SHOULD be of media type &quot;application/schema+json&quot;.
         /// </para>
         /// </remarks>
-        public Corvus.Ui5ManifestBenchmark.Current.JsonUri.Mutable Schema
+        public Corvus.Ui5ManifestBenchmark.Current.JsonUri.Mutable SchemaValue
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SchemaUtf8, out Corvus.Ui5ManifestBenchmark.Current.JsonUri.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SchemaValueUtf8, out Corvus.Ui5ManifestBenchmark.Current.JsonUri.Mutable value))
                 {
                     return value;
                 }
@@ -957,19 +957,19 @@ public readonly partial struct Ui5ManifestSchema
         /// Set the <c>$schema</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetSchema(in Corvus.Ui5ManifestBenchmark.Current.JsonUri.Source value)
+        public void SetSchemaValue(in Corvus.Ui5ManifestBenchmark.Current.JsonUri.Source value)
         {
             CheckValidInstance();
 
             if (value.IsUndefined)
             {
-                JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.SchemaUtf8);
+                JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.SchemaValueUtf8);
                 _documentVersion = _parent.Version;
                 return;
             }
 
             ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SchemaUtf8, out IJsonDocument? elementParent, out int elementIdx))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SchemaValueUtf8, out IJsonDocument? elementParent, out int elementIdx))
             {
                 // We are going to replace just the value
                 value.AddAsItem(ref cvb);
@@ -978,7 +978,7 @@ public readonly partial struct Ui5ManifestSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Schema, ref cvb);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SchemaValue, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -990,10 +990,10 @@ public readonly partial struct Ui5ManifestSchema
         /// Remove the <c>$schema</c> property, if present.
         /// </summary>
         /// <returns><see langword="true"/> if the property was found and removed; otherwise, <see langword="false"/>.</returns>
-        public bool RemoveSchema()
+        public bool RemoveSchemaValue()
         {
             CheckValidInstance();
-            bool result = JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.SchemaUtf8);
+            bool result = JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.SchemaValueUtf8);
             _documentVersion = _parent.Version;
             return result;
         }
@@ -3880,7 +3880,7 @@ public readonly partial struct Ui5ManifestSchema
             version.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Version, ref builder);
             sapApp.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapApp, ref builder);
             sapUi.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapUi, ref builder);
-            schema.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Schema, ref builder);
+            schema.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SchemaValue, ref builder);
             sapApf.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapApf, ref builder);
             sapArtifact.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapArtifact, ref builder);
             sapBpaTask.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapBpaTask, ref builder);
@@ -3999,7 +3999,7 @@ public readonly partial struct Ui5ManifestSchema
             version.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Version, ref builder);
             sapApp.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapApp, ref builder);
             sapUi.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapUi, ref builder);
-            schema.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Schema, ref builder);
+            schema.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SchemaValue, ref builder);
             sapApf.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapApf, ref builder);
             sapArtifact.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapArtifact, ref builder);
             sapBpaTask.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapBpaTask, ref builder);

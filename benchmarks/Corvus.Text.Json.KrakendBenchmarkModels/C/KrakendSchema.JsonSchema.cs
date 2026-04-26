@@ -36,9 +36,9 @@ public readonly partial struct KrakendSchema
 
         private const uint RequiredBitMask0 =
             RequiredBitForVersion;
-        private static readonly JsonSchemaPathProvider AsyncAgentSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/async_agent/$ref"u8, buffer, out written);
+        private static readonly JsonSchemaPathProvider AsyncAgentValueSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/async_agent/$ref"u8, buffer, out written);
         private static readonly JsonSchemaPathProvider CacheTtlSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/cache_ttl/$ref"u8, buffer, out written);
-        private static readonly JsonSchemaPathProvider ClientTlsSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/client_tls/$ref"u8, buffer, out written);
+        private static readonly JsonSchemaPathProvider ClientTlsValueSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/client_tls/$ref"u8, buffer, out written);
         private static readonly JsonSchemaPathProvider DebugEndpointValueSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/debug_endpoint"u8, buffer, out written);
         private static readonly JsonSchemaPathProvider DialerFallbackDelaySchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/dialer_fallback_delay/$ref"u8, buffer, out written);
         private static readonly JsonSchemaPathProvider DialerKeepAliveSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/dialer_keep_alive/$ref"u8, buffer, out written);
@@ -67,23 +67,23 @@ public readonly partial struct KrakendSchema
         private static readonly JsonSchemaPathProvider ResponseHeaderTimeoutSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/response_header_timeout/$ref"u8, buffer, out written);
         private static readonly JsonSchemaPathProvider SequentialStartValueSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/sequential_start"u8, buffer, out written);
         private static readonly JsonSchemaPathProvider TimeoutSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/timeout/$ref"u8, buffer, out written);
-        private static readonly JsonSchemaPathProvider TlsSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/tls/$ref"u8, buffer, out written);
+        private static readonly JsonSchemaPathProvider TlsValueSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/tls/$ref"u8, buffer, out written);
         private static readonly JsonSchemaPathProvider UseH2cSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/use_h2c"u8, buffer, out written);
         private static readonly JsonSchemaPathProvider VersionSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/version"u8, buffer, out written);
         private static readonly JsonSchemaPathProvider WriteTimeoutSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/write_timeout/$ref"u8, buffer, out written);
 
-        private static void MatchAsyncAgent(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+        private static void MatchAsyncAgentValue(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext =
-                Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271asyncAgentJson.JsonSchema.PushChildContextUnescaped(
+                Corvus.KrakendBenchmark.Current.KrakendSchema.AsyncAgent.JsonSchema.PushChildContextUnescaped(
                     parentDocument,
                     parentDocumentIndex,
                     ref context,
-                    JsonPropertyNames.AsyncAgentUtf8,
-                    evaluationPath: AsyncAgentSchemaEvaluationPath);
+                    JsonPropertyNames.AsyncAgentValueUtf8,
+                    evaluationPath: AsyncAgentValueSchemaEvaluationPath);
 
-            Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271asyncAgentJson.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext);
+            Corvus.KrakendBenchmark.Current.KrakendSchema.AsyncAgent.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext);
             context.CommitChildContext(childContext.IsMatch, ref childContext);
         }
 
@@ -102,18 +102,18 @@ public readonly partial struct KrakendSchema
             context.CommitChildContext(childContext1.IsMatch, ref childContext1);
         }
 
-        private static void MatchClientTls(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+        private static void MatchClientTlsValue(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext2 =
-                Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271clientTlsJson.JsonSchema.PushChildContextUnescaped(
+                Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.JsonSchema.PushChildContextUnescaped(
                     parentDocument,
                     parentDocumentIndex,
                     ref context,
-                    JsonPropertyNames.ClientTlsUtf8,
-                    evaluationPath: ClientTlsSchemaEvaluationPath);
+                    JsonPropertyNames.ClientTlsValueUtf8,
+                    evaluationPath: ClientTlsValueSchemaEvaluationPath);
 
-            Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271clientTlsJson.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext2);
+            Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext2);
             context.CommitChildContext(childContext2.IsMatch, ref childContext2);
         }
 
@@ -256,14 +256,14 @@ public readonly partial struct KrakendSchema
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext12 =
-                Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271endpointJsonArray.JsonSchema.PushChildContextUnescaped(
+                Corvus.KrakendBenchmark.Current.KrakendSchema.EndpointArray.JsonSchema.PushChildContextUnescaped(
                     parentDocument,
                     parentDocumentIndex,
                     ref context,
                     JsonPropertyNames.EndpointsUtf8,
                     evaluationPath: EndpointsSchemaEvaluationPath);
 
-            Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271endpointJsonArray.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext12);
+            Corvus.KrakendBenchmark.Current.KrakendSchema.EndpointArray.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext12);
             context.CommitChildContext(childContext12.IsMatch, ref childContext12);
         }
 
@@ -286,14 +286,14 @@ public readonly partial struct KrakendSchema
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext14 =
-                Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271serviceExtraConfigJson.JsonSchema.PushChildContextUnescaped(
+                Corvus.KrakendBenchmark.Current.KrakendSchema.ServiceExtraConfig.JsonSchema.PushChildContextUnescaped(
                     parentDocument,
                     parentDocumentIndex,
                     ref context,
                     JsonPropertyNames.ExtraConfigUtf8,
                     evaluationPath: ExtraConfigSchemaEvaluationPath);
 
-            Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271serviceExtraConfigJson.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext14);
+            Corvus.KrakendBenchmark.Current.KrakendSchema.ServiceExtraConfig.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext14);
             context.CommitChildContext(childContext14.IsMatch, ref childContext14);
         }
 
@@ -537,18 +537,18 @@ public readonly partial struct KrakendSchema
             context.CommitChildContext(childContext30.IsMatch, ref childContext30);
         }
 
-        private static void MatchTls(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+        private static void MatchTlsValue(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext31 =
-                Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271tlsJson.JsonSchema.PushChildContextUnescaped(
+                Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.JsonSchema.PushChildContextUnescaped(
                     parentDocument,
                     parentDocumentIndex,
                     ref context,
-                    JsonPropertyNames.TlsUtf8,
-                    evaluationPath: TlsSchemaEvaluationPath);
+                    JsonPropertyNames.TlsValueUtf8,
+                    evaluationPath: TlsValueSchemaEvaluationPath);
 
-            Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271tlsJson.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext31);
+            Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext31);
             context.CommitChildContext(childContext31.IsMatch, ref childContext31);
         }
 
@@ -607,9 +607,9 @@ public readonly partial struct KrakendSchema
         private static PropertySchemaMatchers<Corvus.KrakendBenchmark.Current.PropertiesValidationHandler_NamedPropertyValidator> MatchersBuilder()
         {
             return new PropertySchemaMatchers<Corvus.KrakendBenchmark.Current.PropertiesValidationHandler_NamedPropertyValidator>([
-                (static () => JsonPropertyNames.AsyncAgentUtf8, MatchAsyncAgent),
+                (static () => JsonPropertyNames.AsyncAgentValueUtf8, MatchAsyncAgentValue),
                 (static () => JsonPropertyNames.CacheTtlUtf8, MatchCacheTtl),
-                (static () => JsonPropertyNames.ClientTlsUtf8, MatchClientTls),
+                (static () => JsonPropertyNames.ClientTlsValueUtf8, MatchClientTlsValue),
                 (static () => JsonPropertyNames.DebugEndpointValueUtf8, MatchDebugEndpointValue),
                 (static () => JsonPropertyNames.DialerFallbackDelayUtf8, MatchDialerFallbackDelay),
                 (static () => JsonPropertyNames.DialerKeepAliveUtf8, MatchDialerKeepAlive),
@@ -638,7 +638,7 @@ public readonly partial struct KrakendSchema
                 (static () => JsonPropertyNames.ResponseHeaderTimeoutUtf8, MatchResponseHeaderTimeout),
                 (static () => JsonPropertyNames.SequentialStartValueUtf8, MatchSequentialStartValue),
                 (static () => JsonPropertyNames.TimeoutUtf8, MatchTimeout),
-                (static () => JsonPropertyNames.TlsUtf8, MatchTls),
+                (static () => JsonPropertyNames.TlsValueUtf8, MatchTlsValue),
                 (static () => JsonPropertyNames.UseH2cUtf8, MatchUseH2c),
                 (static () => JsonPropertyNames.VersionUtf8, MatchVersion),
                 (static () => JsonPropertyNames.WriteTimeoutUtf8, MatchWriteTimeout),
