@@ -208,6 +208,8 @@
     <Compile Include="Corvus\Text\Json\JsonSchema\Internal\IPV4AddressHelper.cs" />
     <Compile Include="Corvus\Text\Json\JsonSchema\Internal\IPV6AddressHelper.cs" />
     <Compile Include="Corvus\Text\Json\JsonSchema\Internal\JsonSchemaContext.cs" />
+    <Compile Include="Corvus\Text\Json\Canonicalization\Es6NumberFormatter.cs" />
+    <Compile Include="Corvus\Text\Json\Canonicalization\JsonCanonicalizer.cs" />
     <Compile Include="Corvus\Text\Json\Document\JsonElement.JsonSchema.cs" />
     <Compile Include="Corvus\Text\Json\Document\JsonElementExtensions.cs" />
     <Compile Include="Corvus\Text\Json\Document\JsonElementExtensions.JsonPointer.cs" />

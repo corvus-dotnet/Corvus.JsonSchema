@@ -156,6 +156,7 @@
     <Compile Include="JsonSchemaCodeGeneratorTests.cs" />
     <Compile Include="JsonRegexValidatorTests.cs" />
     <Compile Include="JsonSchemaContextTests.cs" />
+    <Compile Include="Canonicalization\JsonCanonicalizerTests.cs" />
     <Compile Include="JsonSchemaMatchingNumberTests.cs" />
     <Compile Include="JsonSchemaMatchingStringTests.cs" />
     <Compile Include="JsonSchemaResultsCollectorTests.cs" />
