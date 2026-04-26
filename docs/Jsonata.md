@@ -16,7 +16,7 @@ Three evaluation modes are available:
 | **Source generator** | Expressions are known at build time, embedded in your project | `Corvus.Text.Json.Jsonata.SourceGenerator` |
 | **CLI code generation** | Expressions are known ahead of time, generated outside the build | `Corvus.Json.Cli` (the `jsonata` command) |
 
-The source generator and CLI tool produce optimized static C# that eliminates delegate dispatch. Benchmarks show the interpreted evaluator is **up to 8× faster** than [Jsonata.Net.Native](https://github.com/mikhail-barg/jsonata.net.native) (the .NET reference implementation) with **90–100% less memory allocation**, and code-generated evaluators can be **up to 12× faster**.
+The source generator and CLI tool produce optimized static C# that eliminates delegate dispatch. Benchmarks show the interpreted evaluator is **up to 9× faster** than [Jsonata.Net.Native](https://github.com/mikhail-barg/jsonata.net.native) (the .NET reference implementation) with **90–100% less memory allocation**, and code-generated evaluators can be **up to 13× faster**.
 
 > **Choosing between JSONata and JsonLogic:** JSONata is ideal for **querying, reshaping, and transforming** JSON data — path navigation, filtering, object construction, and string manipulation. If you need **declarative business rules** — branching logic, predicates, and simple calculations expressed as JSON — see [JsonLogic](JsonLogic.md) instead.
 
@@ -823,10 +823,10 @@ The Corvus JSONata implementation is designed for high-throughput scenarios wher
 
 ### Benchmark summary
 
-Across 95 scenarios, the Corvus implementation consistently outperforms [Jsonata.Net.Native](https://github.com/mikhail-barg/jsonata.net.native) (the reference .NET implementation):
+Across 95 scenarios, the Corvus implementation outperforms [Jsonata.Net.Native](https://github.com/mikhail-barg/jsonata.net.native) (the reference .NET implementation) in all but one scenario (`$millis`, where evaluator framework overhead exceeds the trivial function cost):
 
-- **Interpreted runtime:** 1.2–8× faster with 90–100% less memory allocation
-- **Code-generated:** 1.5–12× faster with near-zero allocation (0–200 B vs 1–12 KB)
+- **Interpreted runtime:** 1.1–9× faster with 90–100% less memory allocation
+- **Code-generated:** 1.1–13× faster with near-zero allocation (0–216 B vs 1–12 KB)
 - **Zero allocation** in 70+ of 95 scenarios for the interpreted evaluator
 - **Constant folding** by the source generator reduces pure arithmetic and constant `$zip` to sub-nanosecond evaluation
 
@@ -877,7 +877,7 @@ Cold start runtime is 1.6× faster than native, and Corvus allocates 58% less me
 | 5-level path | `a.b.c.d.e.value` | 158 ns | 189 ns | 668 ns | 0 B | 0 B | 1,936 B |
 | 10-level path | `a.b.c.d.e.f.g.h.i.j.value` | 298 ns | 312 ns | 1,095 ns | 0 B | 0 B | 3,328 B |
 
-The runtime evaluator is **3.7–4.0× faster** for simple property access and **3.5–4.2× faster** for deep navigation, with zero allocation. Flatten path (`Product[]`) through nested arrays is slower due to document model overhead, but uses **91% less memory**. Code-gen is **3.5–4.7× faster** for most navigation patterns.
+The runtime evaluator is **3.7–4.0× faster** for simple property access (quoted names, array indices) and **3.7–4.2× faster** for deep multi-level navigation, with zero allocation for paths of 4+ levels. Nested-array traversal (deep path, flatten) is **1.1–1.3× faster** with **91% less memory**. Code-gen is **3.5–4.7× faster** for simple and deep navigation patterns.
 
 ##### Arithmetic
 
@@ -887,7 +887,7 @@ The runtime evaluator is **3.7–4.0× faster** for simple property access and *
 | Map arithmetic | `Account.Order.Product.(Price * Quantity)` | 1,101 ns | 810 ns | 1,324 ns | 168 B | 136 B | 5,536 B |
 | Pure arithmetic | `1 + 2 * 3 - 4 / 2 + 10 % 3` | 185 ns | 0.6 ns | 300 ns | 0 B | 0 B | 1,352 B |
 
-Code-gen achieves **2× speedup** over the reference implementation for arithmetic with **zero allocation**. Pure arithmetic is **constant-folded at compile time** by the source generator (0.6 ns), achieving effectively infinite speedup. Map arithmetic shows runtime at parity with native while using **97% less memory**.
+Code-gen achieves **1.6–3.8× speedup** over the reference implementation for arithmetic with **zero or minimal allocation**. Pure arithmetic is **constant-folded at compile time** by the source generator (0.6 ns), achieving effectively infinite speedup. The runtime evaluator is **1.2–1.3× faster** than native for both sum-product and map arithmetic, using **97% less memory**.
 
 ##### Math functions
 
@@ -926,7 +926,7 @@ Code-gen is **2–6× faster** than the reference implementation for string oper
 | $substringAfter | `$substringAfter(Product."Product Name", " ")` | 417 ns | 280 ns | 1,418 ns | 0 B | 0 B | 3,112 B |
 | $pad | `$pad(Account.Order[0].Product[0]."Product Name", 20)` | 586 ns | 430 ns | 1,484 ns | 360 B | 0 B | 3,808 B |
 
-String functions show **3–6× speedup** across the board with **zero or minimal allocation** for both runtime and code-gen. Code-gen `$pad` achieves zero allocation by using `stackalloc` for code-point indexing. The reference implementation allocates 2–4 KB per call due to `JToken` intermediaries.
+String functions show **2–6× speedup** with **zero or minimal allocation** for both runtime and code-gen. Code-gen achieves **3.5–6.4× faster** across all nine functions; the runtime evaluator ranges from **2–3.8× faster**. Code-gen `$pad` achieves zero allocation by using `stackalloc` for code-point indexing. The reference implementation allocates 2–4 KB per call due to `JToken` intermediaries.
 
 ##### Pattern matching
 
@@ -1001,7 +1001,7 @@ Code-gen achieves **1.8–3.4× speedup** for object construction with **98–99
 | $flatten | `Account.Order.Product[]` | 439 ns | 515 ns | 560 ns | 136 B | 136 B | 1,520 B |
 | $single | `$single(Account.Order[0].Product, function($v) { $v.Price > 30 })` | 739 ns | 441 ns | 2,147 ns | 80 B | 0 B | 4,960 B |
 
-Array functions are **1.2–5× faster** with zero or minimal allocation. `$count` is **3.2× faster** with zero allocation. `$single` achieves **zero allocation** in code-gen by inlining the predicate as a direct comparison. `$distinct` uses a zero-copy `UniqueItemsHashSet` for deduplication via document-internal element references.
+Array functions are **1.1–5× faster** with zero or minimal allocation. `$count` is **3.2× faster** with zero allocation. `$single` achieves **zero allocation** in code-gen by inlining the predicate as a direct comparison. `$distinct` uses a zero-copy `UniqueItemsHashSet` for deduplication via document-internal element references.
 
 ##### Object functions
 
