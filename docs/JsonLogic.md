@@ -758,25 +758,25 @@ Measured on .NET 10.0 (13th Gen Intel Core i7-13800H) across 19 scenarios. **RT*
 
 | Scenario | JE (ns) | RT (ns) | CG (ns) | RT/JE | CG/JE |
 |---|---:|---:|---:|---:|---:|
-| Simple var | 64 | 18 | 16 | 0.29 | 0.25 |
-| Comparison | 223 | 65 | 34 | 0.29 | 0.15 |
-| Arithmetic | 332 | 113 | 98 | 0.34 | 0.30 |
-| String cat | 244 | 129 | 115 | 0.53 | 0.47 |
-| Substr | 305 | 94 | 93 | 0.31 | 0.30 |
-| Min/max | 48 | 668 | 405 | **14.0** | **8.5** |
-| In (array) | 457 | 115 | 106 | 0.25 | 0.23 |
-| Logic short-circuit | 620 | 306 | 226 | 0.49 | 0.36 |
-| Quantifier (all) | 1,179 | 227 | 190 | 0.19 | 0.16 |
-| Complex rule | 828 | 219 | 160 | 0.26 | 0.19 |
-| Deep nested | 4,936 | 110 | 103 | 0.02 | 0.02 |
-| Missing data | 1,361 | 218 | 184 | 0.16 | 0.14 |
-| Merge (constant) | 1,725 | 390 | 12 | 0.23 | **0.007** |
-| Merge (mixed) | 1,604 | 462 | 509 | 0.29 | 0.32 |
-| Reduce (strings) | 2,640 | 2,058 | 2,811 | 0.78 | 1.06 |
-| Array filter | 1,839 | 758 | 386 | 0.41 | 0.21 |
-| Object filter | 2,359 | 644 | 543 | 0.27 | 0.23 |
-| Map (strings) | 1,726 | 735 | 710 | 0.43 | 0.41 |
-| Array map/reduce | 5,227 | 563 | 278 | 0.11 | 0.05 |
+| Simple var | 136 | 38 | 34 | 0.28 | 0.25 |
+| Comparison | 373 | 78 | 35 | 0.21 | 0.09 |
+| Arithmetic | 663 | 202 | 181 | 0.30 | 0.27 |
+| String cat | 356 | 148 | 136 | 0.42 | 0.38 |
+| Substr | 398 | 113 | 108 | 0.28 | 0.27 |
+| Min/max | 34 | 327 | 386 | **9.75** | **11.5** |
+| In (array) | 513 | 117 | 107 | 0.23 | 0.21 |
+| Logic short-circuit | 648 | 165 | 110 | 0.25 | 0.17 |
+| Quantifier (all) | 2,488 | 453 | 388 | 0.18 | 0.16 |
+| Complex rule | 903 | 219 | 165 | 0.24 | 0.18 |
+| Deep nested | 5,242 | 106 | 94 | 0.02 | 0.02 |
+| Missing data | 1,782 | 474 | 358 | 0.27 | 0.20 |
+| Merge (constant) | 1,185 | 170 | 7 | 0.14 | **0.006** |
+| Merge (mixed) | 1,231 | 242 | 254 | 0.20 | 0.21 |
+| Reduce (strings) | 5,699 | 4,015 | 5,239 | 0.71 | 0.92 |
+| Array filter | 3,741 | 804 | 672 | 0.22 | 0.18 |
+| Object filter | 4,890 | 1,201 | 969 | 0.25 | 0.20 |
+| Map (strings) | 1,108 | 366 | 352 | 0.33 | 0.32 |
+| Array map/reduce | 10,017 | 1,146 | 536 | 0.11 | 0.05 |
 
 #### Memory comparison
 
@@ -794,19 +794,19 @@ Measured on .NET 10.0 (13th Gen Intel Core i7-13800H) across 19 scenarios. **RT*
 | Complex rule | 2,040 | 0 | 0 |
 | Deep nested | 10,120 | 0 | 0 |
 | Missing data | 2,184 | 0 | 0 |
-| Merge (constant) | 4,376 | 120 | 0 |
-| Merge (mixed) | 3,800 | 120 | 120 |
-| Reduce (strings) | 9,368 | 120 | 120 |
-| Array filter | 4,032 | 120 | 120 |
-| Object filter | 6,280 | 120 | 120 |
-| Map (strings) | 2,912 | 120 | 120 |
+| Merge (constant) | 4,376 | 136 | 0 |
+| Merge (mixed) | 3,800 | 136 | 136 |
+| Reduce (strings) | 9,368 | 136 | 136 |
+| Array filter | 4,032 | 136 | 136 |
+| Object filter | 6,280 | 136 | 136 |
+| Map (strings) | 2,912 | 136 | 136 |
 | Array map/reduce | 12,856 | 0 | 0 |
 
 #### Summary
 
-- **RT is faster than JE in 18/19 scenarios** (0.02×–0.78× JE), with a geometric mean of **0.22× JE** across those 18.
-- **CG is faster than JE in 17/19 scenarios** (0.007×–0.47× JE), with a geometric mean of **0.16× JE** across those 17.
+- **RT is faster than JE in 18/19 scenarios** (0.02×–0.71× JE), with a geometric mean of **0.21× JE** across those 18.
+- **CG is faster than JE in 18/19 scenarios** (0.006×–0.92× JE), with a geometric mean of **0.16× JE** across those 18.
 - **Min/max** is the notable outlier where JE is faster: JE's `JsonNode` stores pre-parsed `double` values, while Corvus's `JsonElement` re-parses UTF-8 bytes to `double` on each call. Both RT and CG still allocate 0 B vs JE's 136 B.
-- **Reduce (strings)** is at parity for CG (1.06× JE); RT is faster at 0.78×.
-- **Memory**: RT allocates 0 B in 13/19 scenarios, CG in 14/19. The remaining scenarios allocate exactly 120 B (a single `ElementBuffer` array). JE allocates 136–12,856 B in every scenario.
+- **Reduce (strings)** is the closest scenario at 0.71× (RT) and 0.92× (CG).
+- **Memory**: RT allocates 0 B in 13/19 scenarios, CG in 14/19. The remaining scenarios allocate exactly 136 B (a single `JsonDocumentBuilder`). JE allocates 136–12,856 B in every scenario.
 - **Merge (constant)** showcases compile-time constant folding: CG evaluates at 12 ns (0.007× JE) by pre-computing the entire merged array as a static field.
