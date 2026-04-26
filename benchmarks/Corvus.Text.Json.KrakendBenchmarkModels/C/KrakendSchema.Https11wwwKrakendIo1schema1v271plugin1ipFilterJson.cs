@@ -150,11 +150,11 @@ public readonly partial struct KrakendSchema
         /// See: https://www.krakend.io/docs/enterprise/throttling/ipfilter/
         /// </para>
         /// </remarks>
-        public Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271plugin1ipFilterJson.Cidr CidrValue
+        public Corvus.KrakendBenchmark.Current.JsonArray Cidr
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CidrValueUtf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271plugin1ipFilterJson.Cidr value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CidrUtf8, out Corvus.KrakendBenchmark.Current.JsonArray value))
                 {
                     return value;
                 }
@@ -175,11 +175,11 @@ public readonly partial struct KrakendSchema
         /// See: https://www.krakend.io/docs/enterprise/throttling/ipfilter/
         /// </para>
         /// </remarks>
-        public Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271plugin1ipFilterJson.ClientIpHeaders ClientIpHeadersValue
+        public Corvus.KrakendBenchmark.Current.JsonArray ClientIpHeaders
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ClientIpHeadersValueUtf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271plugin1ipFilterJson.ClientIpHeaders value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ClientIpHeadersUtf8, out Corvus.KrakendBenchmark.Current.JsonArray value))
                 {
                     return value;
                 }
@@ -200,11 +200,11 @@ public readonly partial struct KrakendSchema
         /// See: https://www.krakend.io/docs/enterprise/throttling/ipfilter/
         /// </para>
         /// </remarks>
-        public Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271plugin1ipFilterJson.TrustedProxies TrustedProxiesValue
+        public Corvus.KrakendBenchmark.Current.JsonArray TrustedProxies
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TrustedProxiesValueUtf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271plugin1ipFilterJson.TrustedProxies value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TrustedProxiesUtf8, out Corvus.KrakendBenchmark.Current.JsonArray value))
                 {
                     return value;
                 }
@@ -640,19 +640,19 @@ public readonly partial struct KrakendSchema
             public const string Allow = "allow";
 
             /// <summary>
-            /// Gets the JSON property name for <see cref="CidrValue"/>.
+            /// Gets the JSON property name for <see cref="Cidr"/>.
             /// </summary>
-            public const string CidrValue = "CIDR";
+            public const string Cidr = "CIDR";
 
             /// <summary>
-            /// Gets the JSON property name for <see cref="ClientIpHeadersValue"/>.
+            /// Gets the JSON property name for <see cref="ClientIpHeaders"/>.
             /// </summary>
-            public const string ClientIpHeadersValue = "client_ip_headers";
+            public const string ClientIpHeaders = "client_ip_headers";
 
             /// <summary>
-            /// Gets the JSON property name for <see cref="TrustedProxiesValue"/>.
+            /// Gets the JSON property name for <see cref="TrustedProxies"/>.
             /// </summary>
-            public const string TrustedProxiesValue = "trusted_proxies";
+            public const string TrustedProxies = "trusted_proxies";
 
             /// <summary>
             /// Gets the JSON property name for <see cref="Allow"/>.
@@ -660,19 +660,19 @@ public readonly partial struct KrakendSchema
             public static ReadOnlySpan<byte> AllowUtf8 => "allow"u8;
 
             /// <summary>
-            /// Gets the JSON property name for <see cref="CidrValue"/>.
+            /// Gets the JSON property name for <see cref="Cidr"/>.
             /// </summary>
-            public static ReadOnlySpan<byte> CidrValueUtf8 => "CIDR"u8;
+            public static ReadOnlySpan<byte> CidrUtf8 => "CIDR"u8;
 
             /// <summary>
-            /// Gets the JSON property name for <see cref="ClientIpHeadersValue"/>.
+            /// Gets the JSON property name for <see cref="ClientIpHeaders"/>.
             /// </summary>
-            public static ReadOnlySpan<byte> ClientIpHeadersValueUtf8 => "client_ip_headers"u8;
+            public static ReadOnlySpan<byte> ClientIpHeadersUtf8 => "client_ip_headers"u8;
 
             /// <summary>
-            /// Gets the JSON property name for <see cref="TrustedProxiesValue"/>.
+            /// Gets the JSON property name for <see cref="TrustedProxies"/>.
             /// </summary>
-            public static ReadOnlySpan<byte> TrustedProxiesValueUtf8 => "trusted_proxies"u8;
+            public static ReadOnlySpan<byte> TrustedProxiesUtf8 => "trusted_proxies"u8;
         }
 
         /// <summary>
@@ -686,19 +686,46 @@ public readonly partial struct KrakendSchema
             public static ReadOnlySpan<byte> Allow => "allow"u8;
 
             /// <summary>
-            /// Gets the escaped UTF-8 JSON property name for <see cref="CidrValue"/>.
+            /// Gets the escaped UTF-8 JSON property name for <see cref="Cidr"/>.
             /// </summary>
-            public static ReadOnlySpan<byte> CidrValue => "CIDR"u8;
+            public static ReadOnlySpan<byte> Cidr => "CIDR"u8;
 
             /// <summary>
-            /// Gets the escaped UTF-8 JSON property name for <see cref="ClientIpHeadersValue"/>.
+            /// Gets the escaped UTF-8 JSON property name for <see cref="ClientIpHeaders"/>.
             /// </summary>
-            public static ReadOnlySpan<byte> ClientIpHeadersValue => "client_ip_headers"u8;
+            public static ReadOnlySpan<byte> ClientIpHeaders => "client_ip_headers"u8;
 
             /// <summary>
-            /// Gets the escaped UTF-8 JSON property name for <see cref="TrustedProxiesValue"/>.
+            /// Gets the escaped UTF-8 JSON property name for <see cref="TrustedProxies"/>.
             /// </summary>
-            public static ReadOnlySpan<byte> TrustedProxiesValue => "trusted_proxies"u8;
+            public static ReadOnlySpan<byte> TrustedProxies => "trusted_proxies"u8;
+        }
+
+        /// <summary>
+        /// Provides pre-baked property name blobs for fast builder property storage.
+        /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
+        /// </summary>
+        private static class JsonPropertyNamesPrebaked
+        {
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Allow"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Allow => [0x75, 0x00, 0x00, 0x00, 0x22, 0x61, 0x6C, 0x6C, 0x6F, 0x77, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Cidr"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Cidr => [0x65, 0x00, 0x00, 0x00, 0x22, 0x43, 0x49, 0x44, 0x52, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="ClientIpHeaders"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> ClientIpHeaders => [0x35, 0x01, 0x00, 0x00, 0x22, 0x63, 0x6C, 0x69, 0x65, 0x6E, 0x74, 0x5F, 0x69, 0x70, 0x5F, 0x68, 0x65, 0x61, 0x64, 0x65, 0x72, 0x73, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="TrustedProxies"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> TrustedProxies => [0x15, 0x01, 0x00, 0x00, 0x22, 0x74, 0x72, 0x75, 0x73, 0x74, 0x65, 0x64, 0x5F, 0x70, 0x72, 0x6F, 0x78, 0x69, 0x65, 0x73, 0x22];
         }
     }
 }

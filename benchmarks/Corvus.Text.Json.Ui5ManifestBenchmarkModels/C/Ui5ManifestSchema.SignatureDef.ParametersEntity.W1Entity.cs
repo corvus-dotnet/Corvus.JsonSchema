@@ -677,6 +677,38 @@ public readonly partial struct Ui5ManifestSchema
                     /// </summary>
                     public static ReadOnlySpan<byte> Required => "required"u8;
                 }
+
+                /// <summary>
+                /// Provides pre-baked property name blobs for fast builder property storage.
+                /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
+                /// </summary>
+                private static class JsonPropertyNamesPrebaked
+                {
+                    /// <summary>
+                    /// Gets the pre-baked property name blob for <see cref="DefaultValue"/>.
+                    /// </summary>
+                    public static ReadOnlySpan<byte> DefaultValue => [0xE5, 0x00, 0x00, 0x00, 0x22, 0x64, 0x65, 0x66, 0x61, 0x75, 0x6C, 0x74, 0x56, 0x61, 0x6C, 0x75, 0x65, 0x22];
+
+                    /// <summary>
+                    /// Gets the pre-baked property name blob for <see cref="Filter"/>.
+                    /// </summary>
+                    public static ReadOnlySpan<byte> Filter => [0x85, 0x00, 0x00, 0x00, 0x22, 0x66, 0x69, 0x6C, 0x74, 0x65, 0x72, 0x22];
+
+                    /// <summary>
+                    /// Gets the pre-baked property name blob for <see cref="LauncherValue"/>.
+                    /// </summary>
+                    public static ReadOnlySpan<byte> LauncherValue => [0xF5, 0x00, 0x00, 0x00, 0x22, 0x6C, 0x61, 0x75, 0x6E, 0x63, 0x68, 0x65, 0x72, 0x56, 0x61, 0x6C, 0x75, 0x65, 0x22];
+
+                    /// <summary>
+                    /// Gets the pre-baked property name blob for <see cref="RenameTo"/>.
+                    /// </summary>
+                    public static ReadOnlySpan<byte> RenameTo => [0xA5, 0x00, 0x00, 0x00, 0x22, 0x72, 0x65, 0x6E, 0x61, 0x6D, 0x65, 0x54, 0x6F, 0x22];
+
+                    /// <summary>
+                    /// Gets the pre-baked property name blob for <see cref="Required"/>.
+                    /// </summary>
+                    public static ReadOnlySpan<byte> Required => [0xA5, 0x00, 0x00, 0x00, 0x22, 0x72, 0x65, 0x71, 0x75, 0x69, 0x72, 0x65, 0x64, 0x22];
+                }
             }
         }
     }

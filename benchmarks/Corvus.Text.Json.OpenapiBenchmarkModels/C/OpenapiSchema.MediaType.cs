@@ -783,5 +783,32 @@ public readonly partial struct OpenapiSchema
             /// </summary>
             public static ReadOnlySpan<byte> SchemaValue => "schema"u8;
         }
+
+        /// <summary>
+        /// Provides pre-baked property name blobs for fast builder property storage.
+        /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
+        /// </summary>
+        private static class JsonPropertyNamesPrebaked
+        {
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Encoding"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Encoding => [0xA5, 0x00, 0x00, 0x00, 0x22, 0x65, 0x6E, 0x63, 0x6F, 0x64, 0x69, 0x6E, 0x67, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Example"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Example => [0x95, 0x00, 0x00, 0x00, 0x22, 0x65, 0x78, 0x61, 0x6D, 0x70, 0x6C, 0x65, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="ExamplesValue"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> ExamplesValue => [0xA5, 0x00, 0x00, 0x00, 0x22, 0x65, 0x78, 0x61, 0x6D, 0x70, 0x6C, 0x65, 0x73, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="SchemaValue"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> SchemaValue => [0x85, 0x00, 0x00, 0x00, 0x22, 0x73, 0x63, 0x68, 0x65, 0x6D, 0x61, 0x22];
+        }
     }
 }

@@ -338,7 +338,7 @@ public readonly partial struct KrakendSchema
                         else
                         {
                             // We are going to insert the new value
-                            value.AddAsProperty(JsonPropertyNamesEscaped.DisableMetricsValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                            value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DisableMetricsValue, ref cvb);
                             int endIndex = _idx + _parent.GetDbSize(_idx, false);
                             _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                         }
@@ -383,7 +383,7 @@ public readonly partial struct KrakendSchema
                         else
                         {
                             // We are going to insert the new value
-                            value.AddAsProperty(JsonPropertyNamesEscaped.DisableTraces, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                            value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DisableTraces, ref cvb);
                             int endIndex = _idx + _parent.GetDbSize(_idx, false);
                             _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                         }
@@ -766,6 +766,24 @@ public readonly partial struct KrakendSchema
                         }
                     }
 
+                    internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+                    {
+                        switch(_kind)
+                        {
+                            case Kind.Unknown:
+                                break;
+                            case Kind.JsonElement:
+                                valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                                break;
+                            case Kind.Builder:
+                                valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
+                                break;
+                            default:
+                                Debug.Fail("Unexpected Kind");
+                                break;
+                        }
+                    }
+
                     internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
                     {
                         switch(_kind)
@@ -867,6 +885,24 @@ public readonly partial struct KrakendSchema
                         }
                     }
 
+                    internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+                    {
+                        switch(_kind)
+                        {
+                            case Kind.Unknown:
+                                break;
+                            case Kind.Source:
+                                _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                                break;
+                            case Kind.Builder:
+                                valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
+                                break;
+                            default:
+                                Debug.Fail("Unexpected Kind");
+                                break;
+                        }
+                    }
+
                     internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
                     {
                         switch(_kind)
@@ -948,8 +984,8 @@ public readonly partial struct KrakendSchema
                         in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271grpcJson.GrpcServer.OpenTelemetrySettings.DisableMetrics.Source disableMetrics = default,
                         in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271grpcJson.GrpcServer.OpenTelemetrySettings.DisableTrace.Source disableTraces = default)
                     {
-                        disableMetrics.AddAsProperty(JsonPropertyNamesEscaped.DisableMetricsValue, ref builder, escapeName: false);
-                        disableTraces.AddAsProperty(JsonPropertyNamesEscaped.DisableTraces, ref builder, escapeName: false);
+                        disableMetrics.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DisableMetricsValue, ref builder);
+                        disableTraces.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DisableTraces, ref builder);
                     }
 
                     /// <summary>

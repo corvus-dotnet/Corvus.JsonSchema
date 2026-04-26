@@ -244,11 +244,11 @@ public readonly partial struct KrakendSchema
         /// See: https://www.krakend.io/docs/authorization/jwt-signing/
         /// </para>
         /// </remarks>
-        public Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271auth1signerJson.JwkFingerprints JwkFingerprintsValue
+        public Corvus.KrakendBenchmark.Current.JsonArray JwkFingerprints
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.JwkFingerprintsValueUtf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271auth1signerJson.JwkFingerprints value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.JwkFingerprintsUtf8, out Corvus.KrakendBenchmark.Current.JsonArray value))
                 {
                     return value;
                 }
@@ -347,11 +347,11 @@ public readonly partial struct KrakendSchema
         /// See: https://www.krakend.io/docs/authorization/jwt-signing/
         /// </para>
         /// </remarks>
-        public Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271auth1signerJson.KeysToSign KeysToSignValue
+        public Corvus.KrakendBenchmark.Current.JsonArray KeysToSign
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.KeysToSignValueUtf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271auth1signerJson.KeysToSign value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.KeysToSignUtf8, out Corvus.KrakendBenchmark.Current.JsonArray value))
                 {
                     return value;
                 }
@@ -1016,9 +1016,9 @@ public readonly partial struct KrakendSchema
             public const string Full = "full";
 
             /// <summary>
-            /// Gets the JSON property name for <see cref="JwkFingerprintsValue"/>.
+            /// Gets the JSON property name for <see cref="JwkFingerprints"/>.
             /// </summary>
-            public const string JwkFingerprintsValue = "jwk_fingerprints";
+            public const string JwkFingerprints = "jwk_fingerprints";
 
             /// <summary>
             /// Gets the JSON property name for <see cref="JwkLocalCa"/>.
@@ -1036,9 +1036,9 @@ public readonly partial struct KrakendSchema
             public const string JwkUrl = "jwk_url";
 
             /// <summary>
-            /// Gets the JSON property name for <see cref="KeysToSignValue"/>.
+            /// Gets the JSON property name for <see cref="KeysToSign"/>.
             /// </summary>
-            public const string KeysToSignValue = "keys_to_sign";
+            public const string KeysToSign = "keys_to_sign";
 
             /// <summary>
             /// Gets the JSON property name for <see cref="Kid"/>.
@@ -1081,9 +1081,9 @@ public readonly partial struct KrakendSchema
             public static ReadOnlySpan<byte> FullUtf8 => "full"u8;
 
             /// <summary>
-            /// Gets the JSON property name for <see cref="JwkFingerprintsValue"/>.
+            /// Gets the JSON property name for <see cref="JwkFingerprints"/>.
             /// </summary>
-            public static ReadOnlySpan<byte> JwkFingerprintsValueUtf8 => "jwk_fingerprints"u8;
+            public static ReadOnlySpan<byte> JwkFingerprintsUtf8 => "jwk_fingerprints"u8;
 
             /// <summary>
             /// Gets the JSON property name for <see cref="JwkLocalCa"/>.
@@ -1101,9 +1101,9 @@ public readonly partial struct KrakendSchema
             public static ReadOnlySpan<byte> JwkUrlUtf8 => "jwk_url"u8;
 
             /// <summary>
-            /// Gets the JSON property name for <see cref="KeysToSignValue"/>.
+            /// Gets the JSON property name for <see cref="KeysToSign"/>.
             /// </summary>
-            public static ReadOnlySpan<byte> KeysToSignValueUtf8 => "keys_to_sign"u8;
+            public static ReadOnlySpan<byte> KeysToSignUtf8 => "keys_to_sign"u8;
 
             /// <summary>
             /// Gets the JSON property name for <see cref="Kid"/>.
@@ -1152,9 +1152,9 @@ public readonly partial struct KrakendSchema
             public static ReadOnlySpan<byte> Full => "full"u8;
 
             /// <summary>
-            /// Gets the escaped UTF-8 JSON property name for <see cref="JwkFingerprintsValue"/>.
+            /// Gets the escaped UTF-8 JSON property name for <see cref="JwkFingerprints"/>.
             /// </summary>
-            public static ReadOnlySpan<byte> JwkFingerprintsValue => "jwk_fingerprints"u8;
+            public static ReadOnlySpan<byte> JwkFingerprints => "jwk_fingerprints"u8;
 
             /// <summary>
             /// Gets the escaped UTF-8 JSON property name for <see cref="JwkLocalCa"/>.
@@ -1172,9 +1172,9 @@ public readonly partial struct KrakendSchema
             public static ReadOnlySpan<byte> JwkUrl => "jwk_url"u8;
 
             /// <summary>
-            /// Gets the escaped UTF-8 JSON property name for <see cref="KeysToSignValue"/>.
+            /// Gets the escaped UTF-8 JSON property name for <see cref="KeysToSign"/>.
             /// </summary>
-            public static ReadOnlySpan<byte> KeysToSignValue => "keys_to_sign"u8;
+            public static ReadOnlySpan<byte> KeysToSign => "keys_to_sign"u8;
 
             /// <summary>
             /// Gets the escaped UTF-8 JSON property name for <see cref="Kid"/>.
@@ -1190,6 +1190,78 @@ public readonly partial struct KrakendSchema
             /// Gets the escaped UTF-8 JSON property name for <see cref="SecretUrl"/>.
             /// </summary>
             public static ReadOnlySpan<byte> SecretUrl => "secret_url"u8;
+        }
+
+        /// <summary>
+        /// Provides pre-baked property name blobs for fast builder property storage.
+        /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
+        /// </summary>
+        private static class JsonPropertyNamesPrebaked
+        {
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Alg"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Alg => [0x55, 0x00, 0x00, 0x00, 0x22, 0x61, 0x6C, 0x67, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="CipherSuites"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> CipherSuites => [0xF5, 0x00, 0x00, 0x00, 0x22, 0x63, 0x69, 0x70, 0x68, 0x65, 0x72, 0x5F, 0x73, 0x75, 0x69, 0x74, 0x65, 0x73, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="CypherKey"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> CypherKey => [0xC5, 0x00, 0x00, 0x00, 0x22, 0x63, 0x79, 0x70, 0x68, 0x65, 0x72, 0x5F, 0x6B, 0x65, 0x79, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="DisableJwkSecurityValue"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> DisableJwkSecurityValue => [0x65, 0x01, 0x00, 0x00, 0x22, 0x64, 0x69, 0x73, 0x61, 0x62, 0x6C, 0x65, 0x5F, 0x6A, 0x77, 0x6B, 0x5F, 0x73, 0x65, 0x63, 0x75, 0x72, 0x69, 0x74, 0x79, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Full"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Full => [0x65, 0x00, 0x00, 0x00, 0x22, 0x66, 0x75, 0x6C, 0x6C, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="JwkFingerprints"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> JwkFingerprints => [0x25, 0x01, 0x00, 0x00, 0x22, 0x6A, 0x77, 0x6B, 0x5F, 0x66, 0x69, 0x6E, 0x67, 0x65, 0x72, 0x70, 0x72, 0x69, 0x6E, 0x74, 0x73, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="JwkLocalCa"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> JwkLocalCa => [0xE5, 0x00, 0x00, 0x00, 0x22, 0x6A, 0x77, 0x6B, 0x5F, 0x6C, 0x6F, 0x63, 0x61, 0x6C, 0x5F, 0x63, 0x61, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="JwkLocalPath"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> JwkLocalPath => [0x05, 0x01, 0x00, 0x00, 0x22, 0x6A, 0x77, 0x6B, 0x5F, 0x6C, 0x6F, 0x63, 0x61, 0x6C, 0x5F, 0x70, 0x61, 0x74, 0x68, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="JwkUrl"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> JwkUrl => [0x95, 0x00, 0x00, 0x00, 0x22, 0x6A, 0x77, 0x6B, 0x5F, 0x75, 0x72, 0x6C, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="KeysToSign"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> KeysToSign => [0xE5, 0x00, 0x00, 0x00, 0x22, 0x6B, 0x65, 0x79, 0x73, 0x5F, 0x74, 0x6F, 0x5F, 0x73, 0x69, 0x67, 0x6E, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Kid"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Kid => [0x55, 0x00, 0x00, 0x00, 0x22, 0x6B, 0x69, 0x64, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Leeway"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Leeway => [0x85, 0x00, 0x00, 0x00, 0x22, 0x6C, 0x65, 0x65, 0x77, 0x61, 0x79, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="SecretUrl"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> SecretUrl => [0xC5, 0x00, 0x00, 0x00, 0x22, 0x73, 0x65, 0x63, 0x72, 0x65, 0x74, 0x5F, 0x75, 0x72, 0x6C, 0x22];
         }
     }
 }

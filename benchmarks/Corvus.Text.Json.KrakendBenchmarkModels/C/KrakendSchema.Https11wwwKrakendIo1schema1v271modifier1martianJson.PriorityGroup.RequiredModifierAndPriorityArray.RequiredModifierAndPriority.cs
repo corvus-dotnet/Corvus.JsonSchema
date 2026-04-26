@@ -716,6 +716,23 @@ public readonly partial struct KrakendSchema
                         /// </summary>
                         public static ReadOnlySpan<byte> Priority => "priority"u8;
                     }
+
+                    /// <summary>
+                    /// Provides pre-baked property name blobs for fast builder property storage.
+                    /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
+                    /// </summary>
+                    private static class JsonPropertyNamesPrebaked
+                    {
+                        /// <summary>
+                        /// Gets the pre-baked property name blob for <see cref="Modifier"/>.
+                        /// </summary>
+                        public static ReadOnlySpan<byte> Modifier => [0xA5, 0x00, 0x00, 0x00, 0x22, 0x6D, 0x6F, 0x64, 0x69, 0x66, 0x69, 0x65, 0x72, 0x22];
+
+                        /// <summary>
+                        /// Gets the pre-baked property name blob for <see cref="Priority"/>.
+                        /// </summary>
+                        public static ReadOnlySpan<byte> Priority => [0xA5, 0x00, 0x00, 0x00, 0x22, 0x70, 0x72, 0x69, 0x6F, 0x72, 0x69, 0x74, 0x79, 0x22];
+                    }
                 }
             }
         }

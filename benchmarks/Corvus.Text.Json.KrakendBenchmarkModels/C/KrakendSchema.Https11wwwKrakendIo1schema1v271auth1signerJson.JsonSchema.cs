@@ -67,11 +67,11 @@ public readonly partial struct KrakendSchema
             private static readonly JsonSchemaPathProvider CypherKeySchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/cypher_key"u8, buffer, out written);
             private static readonly JsonSchemaPathProvider DisableJwkSecurityValueSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/disable_jwk_security"u8, buffer, out written);
             private static readonly JsonSchemaPathProvider FullSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/full"u8, buffer, out written);
-            private static readonly JsonSchemaPathProvider JwkFingerprintsValueSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/jwk_fingerprints"u8, buffer, out written);
+            private static readonly JsonSchemaPathProvider JwkFingerprintsSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/jwk_fingerprints"u8, buffer, out written);
             private static readonly JsonSchemaPathProvider JwkLocalCaSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/jwk_local_ca"u8, buffer, out written);
             private static readonly JsonSchemaPathProvider JwkLocalPathSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/jwk_local_path"u8, buffer, out written);
             private static readonly JsonSchemaPathProvider JwkUrlSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/jwk_url"u8, buffer, out written);
-            private static readonly JsonSchemaPathProvider KeysToSignValueSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/keys_to_sign"u8, buffer, out written);
+            private static readonly JsonSchemaPathProvider KeysToSignSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/keys_to_sign"u8, buffer, out written);
             private static readonly JsonSchemaPathProvider KidSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/kid"u8, buffer, out written);
             private static readonly JsonSchemaPathProvider LeewaySchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/leeway/$ref"u8, buffer, out written);
             private static readonly JsonSchemaPathProvider SecretUrlSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/secret_url"u8, buffer, out written);
@@ -158,18 +158,18 @@ public readonly partial struct KrakendSchema
                 context.CommitChildContext(childContext4.IsMatch, ref childContext4);
             }
 
-            private static void MatchJwkFingerprintsValue(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+            private static void MatchJwkFingerprints(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext5 =
-                    Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271auth1signerJson.JwkFingerprints.JsonSchema.PushChildContextUnescaped(
+                    Corvus.KrakendBenchmark.Current.JsonArray.JsonSchema.PushChildContextUnescaped(
                         parentDocument,
                         parentDocumentIndex,
                         ref context,
-                        JsonPropertyNames.JwkFingerprintsValueUtf8,
-                        evaluationPath: JwkFingerprintsValueSchemaEvaluationPath);
+                        JsonPropertyNames.JwkFingerprintsUtf8,
+                        evaluationPath: JwkFingerprintsSchemaEvaluationPath);
 
-                Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271auth1signerJson.JwkFingerprints.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext5);
+                Corvus.KrakendBenchmark.Current.JsonArray.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext5);
                 context.CommitChildContext(childContext5.IsMatch, ref childContext5);
             }
 
@@ -218,18 +218,18 @@ public readonly partial struct KrakendSchema
                 context.CommitChildContext(childContext8.IsMatch, ref childContext8);
             }
 
-            private static void MatchKeysToSignValue(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+            private static void MatchKeysToSign(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext9 =
-                    Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271auth1signerJson.KeysToSign.JsonSchema.PushChildContextUnescaped(
+                    Corvus.KrakendBenchmark.Current.JsonArray.JsonSchema.PushChildContextUnescaped(
                         parentDocument,
                         parentDocumentIndex,
                         ref context,
-                        JsonPropertyNames.KeysToSignValueUtf8,
-                        evaluationPath: KeysToSignValueSchemaEvaluationPath);
+                        JsonPropertyNames.KeysToSignUtf8,
+                        evaluationPath: KeysToSignSchemaEvaluationPath);
 
-                Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271auth1signerJson.KeysToSign.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext9);
+                Corvus.KrakendBenchmark.Current.JsonArray.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext9);
                 context.CommitChildContext(childContext9.IsMatch, ref childContext9);
 
                 if (!context.HasCollector && !context.IsMatch)
@@ -300,11 +300,11 @@ public readonly partial struct KrakendSchema
                     (static () => JsonPropertyNames.CypherKeyUtf8, MatchCypherKey),
                     (static () => JsonPropertyNames.DisableJwkSecurityValueUtf8, MatchDisableJwkSecurityValue),
                     (static () => JsonPropertyNames.FullUtf8, MatchFull),
-                    (static () => JsonPropertyNames.JwkFingerprintsValueUtf8, MatchJwkFingerprintsValue),
+                    (static () => JsonPropertyNames.JwkFingerprintsUtf8, MatchJwkFingerprints),
                     (static () => JsonPropertyNames.JwkLocalCaUtf8, MatchJwkLocalCa),
                     (static () => JsonPropertyNames.JwkLocalPathUtf8, MatchJwkLocalPath),
                     (static () => JsonPropertyNames.JwkUrlUtf8, MatchJwkUrl),
-                    (static () => JsonPropertyNames.KeysToSignValueUtf8, MatchKeysToSignValue),
+                    (static () => JsonPropertyNames.KeysToSignUtf8, MatchKeysToSign),
                     (static () => JsonPropertyNames.KidUtf8, MatchKid),
                     (static () => JsonPropertyNames.LeewayUtf8, MatchLeeway),
                     (static () => JsonPropertyNames.SecretUrlUtf8, MatchSecretUrl),
@@ -334,17 +334,17 @@ public readonly partial struct KrakendSchema
             /// <summary>
             /// Gets a provider for the schema location from which this type was generated.
             /// </summary>
-            public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("krakend-schema.json#/definitions/https:~1~1www.krakend.io~1schema~1v2.7~1auth~1signer.json"u8, buffer, out written);
+            public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/definitions/https:~1~1www.krakend.io~1schema~1v2.7~1auth~1signer.json"u8, buffer, out written);
 
             /// <summary>
             /// Gets the schema location from which this type was generated.
             /// </summary>
-            public const string SchemaLocation = "krakend-schema.json#/definitions/https:~1~1www.krakend.io~1schema~1v2.7~1auth~1signer.json";
+            public const string SchemaLocation = "/definitions/https:~1~1www.krakend.io~1schema~1v2.7~1auth~1signer.json";
 
             /// <summary>
             /// Gets the schema location from which this type was generated as a UTF-8 string.
             /// </summary>
-            public static ReadOnlySpan<byte> SchemaLocationUtf8 => "krakend-schema.json#/definitions/https:~1~1www.krakend.io~1schema~1v2.7~1auth~1signer.json"u8;
+            public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/definitions/https:~1~1www.krakend.io~1schema~1v2.7~1auth~1signer.json"u8;
             private static readonly JsonSchemaPathProvider OneOf0SchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/oneOf/0"u8, buffer, out written);
             private static readonly JsonSchemaPathProvider OneOf1SchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/oneOf/1"u8, buffer, out written);
 

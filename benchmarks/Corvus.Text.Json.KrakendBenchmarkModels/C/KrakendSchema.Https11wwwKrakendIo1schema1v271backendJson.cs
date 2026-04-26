@@ -257,11 +257,11 @@ public readonly partial struct KrakendSchema
         /// An array with all the available hosts to [load balance](https://www.krakend.io/docs/throttling/load-balancing/#balancing-egress-traffic-to-upstream) requests, including the schema (when possible) `schema://host:port`. E.g.: ` https://my.users-ms.com`. If you are in a platform where hosts or services are balanced (e.g., a K8S service), write a single entry in the array with the service name/balancer address. Defaults to the `host` declaration at the configuration&#39;s root level, and the service fails starting when there is none.
         /// </para>
         /// </remarks>
-        public Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271backendJson.HostArray Host
+        public Corvus.KrakendBenchmark.Current.JsonArray Host
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.HostUtf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271backendJson.HostArray value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.HostUtf8, out Corvus.KrakendBenchmark.Current.JsonArray value))
                 {
                     return value;
                 }
@@ -357,11 +357,11 @@ public readonly partial struct KrakendSchema
         /// See: https://www.krakend.io/docs/backends/data-manipulation/
         /// </para>
         /// </remarks>
-        public Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271backendJson.Mapping MappingValue
+        public Corvus.KrakendBenchmark.Current.JsonObject Mapping
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.MappingValueUtf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271backendJson.Mapping value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.MappingUtf8, out Corvus.KrakendBenchmark.Current.JsonObject value))
                 {
                     return value;
                 }
@@ -970,9 +970,9 @@ public readonly partial struct KrakendSchema
             public const string IsCollection = "is_collection";
 
             /// <summary>
-            /// Gets the JSON property name for <see cref="MappingValue"/>.
+            /// Gets the JSON property name for <see cref="Mapping"/>.
             /// </summary>
-            public const string MappingValue = "mapping";
+            public const string Mapping = "mapping";
 
             /// <summary>
             /// Gets the JSON property name for <see cref="MethodValue"/>.
@@ -1050,9 +1050,9 @@ public readonly partial struct KrakendSchema
             public static ReadOnlySpan<byte> IsCollectionUtf8 => "is_collection"u8;
 
             /// <summary>
-            /// Gets the JSON property name for <see cref="MappingValue"/>.
+            /// Gets the JSON property name for <see cref="Mapping"/>.
             /// </summary>
-            public static ReadOnlySpan<byte> MappingValueUtf8 => "mapping"u8;
+            public static ReadOnlySpan<byte> MappingUtf8 => "mapping"u8;
 
             /// <summary>
             /// Gets the JSON property name for <see cref="MethodValue"/>.
@@ -1136,9 +1136,9 @@ public readonly partial struct KrakendSchema
             public static ReadOnlySpan<byte> IsCollection => "is_collection"u8;
 
             /// <summary>
-            /// Gets the escaped UTF-8 JSON property name for <see cref="MappingValue"/>.
+            /// Gets the escaped UTF-8 JSON property name for <see cref="Mapping"/>.
             /// </summary>
-            public static ReadOnlySpan<byte> MappingValue => "mapping"u8;
+            public static ReadOnlySpan<byte> Mapping => "mapping"u8;
 
             /// <summary>
             /// Gets the escaped UTF-8 JSON property name for <see cref="MethodValue"/>.
@@ -1164,6 +1164,93 @@ public readonly partial struct KrakendSchema
             /// Gets the escaped UTF-8 JSON property name for <see cref="UrlPattern"/>.
             /// </summary>
             public static ReadOnlySpan<byte> UrlPattern => "url_pattern"u8;
+        }
+
+        /// <summary>
+        /// Provides pre-baked property name blobs for fast builder property storage.
+        /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
+        /// </summary>
+        private static class JsonPropertyNamesPrebaked
+        {
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Allow"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Allow => [0x75, 0x00, 0x00, 0x00, 0x22, 0x61, 0x6C, 0x6C, 0x6F, 0x77, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Deny"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Deny => [0x65, 0x00, 0x00, 0x00, 0x22, 0x64, 0x65, 0x6E, 0x79, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="DisableHostSanitizeValue"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> DisableHostSanitizeValue => [0x75, 0x01, 0x00, 0x00, 0x22, 0x64, 0x69, 0x73, 0x61, 0x62, 0x6C, 0x65, 0x5F, 0x68, 0x6F, 0x73, 0x74, 0x5F, 0x73, 0x61, 0x6E, 0x69, 0x74, 0x69, 0x7A, 0x65, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Encoding"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Encoding => [0xA5, 0x00, 0x00, 0x00, 0x22, 0x65, 0x6E, 0x63, 0x6F, 0x64, 0x69, 0x6E, 0x67, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="ExtraConfig"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> ExtraConfig => [0xE5, 0x00, 0x00, 0x00, 0x22, 0x65, 0x78, 0x74, 0x72, 0x61, 0x5F, 0x63, 0x6F, 0x6E, 0x66, 0x69, 0x67, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Group"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Group => [0x75, 0x00, 0x00, 0x00, 0x22, 0x67, 0x72, 0x6F, 0x75, 0x70, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Host"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Host => [0x65, 0x00, 0x00, 0x00, 0x22, 0x68, 0x6F, 0x73, 0x74, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="InputHeaders"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> InputHeaders => [0xF5, 0x00, 0x00, 0x00, 0x22, 0x69, 0x6E, 0x70, 0x75, 0x74, 0x5F, 0x68, 0x65, 0x61, 0x64, 0x65, 0x72, 0x73, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="InputQueryStrings"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> InputQueryStrings => [0x55, 0x01, 0x00, 0x00, 0x22, 0x69, 0x6E, 0x70, 0x75, 0x74, 0x5F, 0x71, 0x75, 0x65, 0x72, 0x79, 0x5F, 0x73, 0x74, 0x72, 0x69, 0x6E, 0x67, 0x73, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="IsCollection"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> IsCollection => [0xF5, 0x00, 0x00, 0x00, 0x22, 0x69, 0x73, 0x5F, 0x63, 0x6F, 0x6C, 0x6C, 0x65, 0x63, 0x74, 0x69, 0x6F, 0x6E, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Mapping"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Mapping => [0x95, 0x00, 0x00, 0x00, 0x22, 0x6D, 0x61, 0x70, 0x70, 0x69, 0x6E, 0x67, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="MethodValue"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> MethodValue => [0x85, 0x00, 0x00, 0x00, 0x22, 0x6D, 0x65, 0x74, 0x68, 0x6F, 0x64, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Sd"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Sd => [0x45, 0x00, 0x00, 0x00, 0x22, 0x73, 0x64, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="SdScheme"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> SdScheme => [0xB5, 0x00, 0x00, 0x00, 0x22, 0x73, 0x64, 0x5F, 0x73, 0x63, 0x68, 0x65, 0x6D, 0x65, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Target"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Target => [0x85, 0x00, 0x00, 0x00, 0x22, 0x74, 0x61, 0x72, 0x67, 0x65, 0x74, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="UrlPattern"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> UrlPattern => [0xD5, 0x00, 0x00, 0x00, 0x22, 0x75, 0x72, 0x6C, 0x5F, 0x70, 0x61, 0x74, 0x74, 0x65, 0x72, 0x6E, 0x22];
         }
     }
 }

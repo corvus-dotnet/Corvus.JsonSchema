@@ -510,11 +510,11 @@ public readonly partial struct KrakendSchema
             /// See: https://www.krakend.io/docs/backends/amqp-consumer/
             /// </para>
             /// </remarks>
-            public Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271backend1amqp1consumerJson.RoutingKeys.Mutable RoutingKey
+            public Corvus.KrakendBenchmark.Current.JsonArray.Mutable RoutingKey
             {
                 get
                 {
-                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.RoutingKeyUtf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271backend1amqp1consumerJson.RoutingKeys.Mutable value))
+                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.RoutingKeyUtf8, out Corvus.KrakendBenchmark.Current.JsonArray.Mutable value))
                     {
                         return value;
                     }
@@ -577,7 +577,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.AutoAckValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AutoAckValue, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -622,7 +622,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.BackoffStrategyValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.BackoffStrategyValue, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -667,7 +667,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.DeleteValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DeleteValue, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -712,7 +712,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.DurableValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DurableValue, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -755,7 +755,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Exchange, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Exchange, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -788,7 +788,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.ExclusiveValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ExclusiveValue, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -833,7 +833,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.MaxRetriesValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MaxRetriesValue, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -876,7 +876,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Name, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Name, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -909,7 +909,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.NoLocal, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.NoLocal, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -954,7 +954,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.NoWait, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.NoWait, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -999,7 +999,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.PrefetchCountValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PrefetchCountValue, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1023,7 +1023,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>routing_key</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetRoutingKey(in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271backend1amqp1consumerJson.RoutingKeys.Source value)
+            public void SetRoutingKey(in Corvus.KrakendBenchmark.Current.JsonArray.Source value)
             {
                 CheckValidInstance();
 
@@ -1042,7 +1042,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.RoutingKey, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.RoutingKey, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1054,7 +1054,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>routing_key</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetRoutingKey<TContext>(in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271backend1amqp1consumerJson.RoutingKeys.Source<TContext> value)
+            public void SetRoutingKey<TContext>(in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> value)
 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
 #endif
@@ -1076,7 +1076,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.RoutingKey, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.RoutingKey, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1447,6 +1447,24 @@ public readonly partial struct KrakendSchema
                 }
             }
 
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.JsonElement:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                        break;
+                    case Kind.Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
             internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
             {
                 switch(_kind)
@@ -1548,6 +1566,24 @@ public readonly partial struct KrakendSchema
                 }
             }
 
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.Source:
+                        _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                        break;
+                    case Kind.Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
             internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
             {
                 switch(_kind)
@@ -1628,7 +1664,7 @@ public readonly partial struct KrakendSchema
                 ref ComplexValueBuilder builder,
                 in Corvus.KrakendBenchmark.Current.JsonString.Source exchange,
                 in Corvus.KrakendBenchmark.Current.JsonString.Source name,
-                in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271backend1amqp1consumerJson.RoutingKeys.Source routingKey,
+                in Corvus.KrakendBenchmark.Current.JsonArray.Source routingKey,
                 in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271backend1amqp1consumerJson.AutoAck.Source autoAck = default,
                 in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271backend1amqp1consumerJson.BackoffStrategy.Source backoffStrategy = default,
                 in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271backend1amqp1consumerJson.Delete.Source delete = default,
@@ -1639,18 +1675,18 @@ public readonly partial struct KrakendSchema
                 in Corvus.KrakendBenchmark.Current.JsonBoolean.Source noWait = default,
                 in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271backend1amqp1consumerJson.PrefetchCount.Source prefetchCount = default)
             {
-                exchange.AddAsProperty(JsonPropertyNamesEscaped.Exchange, ref builder, escapeName: false);
-                name.AddAsProperty(JsonPropertyNamesEscaped.Name, ref builder, escapeName: false);
-                routingKey.AddAsProperty(JsonPropertyNamesEscaped.RoutingKey, ref builder, escapeName: false);
-                autoAck.AddAsProperty(JsonPropertyNamesEscaped.AutoAckValue, ref builder, escapeName: false);
-                backoffStrategy.AddAsProperty(JsonPropertyNamesEscaped.BackoffStrategyValue, ref builder, escapeName: false);
-                delete.AddAsProperty(JsonPropertyNamesEscaped.DeleteValue, ref builder, escapeName: false);
-                durable.AddAsProperty(JsonPropertyNamesEscaped.DurableValue, ref builder, escapeName: false);
-                exclusive.AddAsProperty(JsonPropertyNamesEscaped.ExclusiveValue, ref builder, escapeName: false);
-                maxRetries.AddAsProperty(JsonPropertyNamesEscaped.MaxRetriesValue, ref builder, escapeName: false);
-                noLocal.AddAsProperty(JsonPropertyNamesEscaped.NoLocal, ref builder, escapeName: false);
-                noWait.AddAsProperty(JsonPropertyNamesEscaped.NoWait, ref builder, escapeName: false);
-                prefetchCount.AddAsProperty(JsonPropertyNamesEscaped.PrefetchCountValue, ref builder, escapeName: false);
+                exchange.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Exchange, ref builder);
+                name.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Name, ref builder);
+                routingKey.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.RoutingKey, ref builder);
+                autoAck.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AutoAckValue, ref builder);
+                backoffStrategy.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.BackoffStrategyValue, ref builder);
+                delete.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DeleteValue, ref builder);
+                durable.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DurableValue, ref builder);
+                exclusive.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ExclusiveValue, ref builder);
+                maxRetries.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MaxRetriesValue, ref builder);
+                noLocal.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.NoLocal, ref builder);
+                noWait.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.NoWait, ref builder);
+                prefetchCount.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PrefetchCountValue, ref builder);
             }
 
             /// <summary>
@@ -1659,7 +1695,7 @@ public readonly partial struct KrakendSchema
             public void Create(
                 in Corvus.KrakendBenchmark.Current.JsonString.Source exchange,
                 in Corvus.KrakendBenchmark.Current.JsonString.Source name,
-                in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271backend1amqp1consumerJson.RoutingKeys.Source routingKey,
+                in Corvus.KrakendBenchmark.Current.JsonArray.Source routingKey,
                 in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271backend1amqp1consumerJson.AutoAck.Source autoAck = default,
                 in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271backend1amqp1consumerJson.BackoffStrategy.Source backoffStrategy = default,
                 in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271backend1amqp1consumerJson.Delete.Source delete = default,
@@ -1681,7 +1717,7 @@ public readonly partial struct KrakendSchema
                 ref ComplexValueBuilder builder,
                 in Corvus.KrakendBenchmark.Current.JsonString.Source exchange,
                 in Corvus.KrakendBenchmark.Current.JsonString.Source name,
-                in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271backend1amqp1consumerJson.RoutingKeys.Source<TContext> routingKey,
+                in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> routingKey,
                 in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271backend1amqp1consumerJson.AutoAck.Source autoAck = default,
                 in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271backend1amqp1consumerJson.BackoffStrategy.Source backoffStrategy = default,
                 in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271backend1amqp1consumerJson.Delete.Source delete = default,
@@ -1695,18 +1731,18 @@ public readonly partial struct KrakendSchema
             where TContext : allows ref struct
             #endif
             {
-                exchange.AddAsProperty(JsonPropertyNamesEscaped.Exchange, ref builder, escapeName: false);
-                name.AddAsProperty(JsonPropertyNamesEscaped.Name, ref builder, escapeName: false);
-                routingKey.AddAsProperty(JsonPropertyNamesEscaped.RoutingKey, ref builder, escapeName: false);
-                autoAck.AddAsProperty(JsonPropertyNamesEscaped.AutoAckValue, ref builder, escapeName: false);
-                backoffStrategy.AddAsProperty(JsonPropertyNamesEscaped.BackoffStrategyValue, ref builder, escapeName: false);
-                delete.AddAsProperty(JsonPropertyNamesEscaped.DeleteValue, ref builder, escapeName: false);
-                durable.AddAsProperty(JsonPropertyNamesEscaped.DurableValue, ref builder, escapeName: false);
-                exclusive.AddAsProperty(JsonPropertyNamesEscaped.ExclusiveValue, ref builder, escapeName: false);
-                maxRetries.AddAsProperty(JsonPropertyNamesEscaped.MaxRetriesValue, ref builder, escapeName: false);
-                noLocal.AddAsProperty(JsonPropertyNamesEscaped.NoLocal, ref builder, escapeName: false);
-                noWait.AddAsProperty(JsonPropertyNamesEscaped.NoWait, ref builder, escapeName: false);
-                prefetchCount.AddAsProperty(JsonPropertyNamesEscaped.PrefetchCountValue, ref builder, escapeName: false);
+                exchange.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Exchange, ref builder);
+                name.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Name, ref builder);
+                routingKey.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.RoutingKey, ref builder);
+                autoAck.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AutoAckValue, ref builder);
+                backoffStrategy.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.BackoffStrategyValue, ref builder);
+                delete.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DeleteValue, ref builder);
+                durable.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DurableValue, ref builder);
+                exclusive.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ExclusiveValue, ref builder);
+                maxRetries.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MaxRetriesValue, ref builder);
+                noLocal.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.NoLocal, ref builder);
+                noWait.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.NoWait, ref builder);
+                prefetchCount.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PrefetchCountValue, ref builder);
             }
 
             /// <summary>
@@ -1716,7 +1752,7 @@ public readonly partial struct KrakendSchema
                 in TContext context,
                 in Corvus.KrakendBenchmark.Current.JsonString.Source exchange,
                 in Corvus.KrakendBenchmark.Current.JsonString.Source name,
-                in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271backend1amqp1consumerJson.RoutingKeys.Source<TContext> routingKey,
+                in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> routingKey,
                 in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271backend1amqp1consumerJson.AutoAck.Source autoAck = default,
                 in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271backend1amqp1consumerJson.BackoffStrategy.Source backoffStrategy = default,
                 in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271backend1amqp1consumerJson.Delete.Source delete = default,
@@ -1900,7 +1936,7 @@ public readonly partial struct KrakendSchema
         /// <param name="prefetchCount">The value of the property.</param>
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
         /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-        public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.KrakendBenchmark.Current.JsonString.Source exchange, in Corvus.KrakendBenchmark.Current.JsonString.Source name, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271backend1amqp1consumerJson.RoutingKeys.Source routingKey, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271backend1amqp1consumerJson.AutoAck.Source autoAck = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271backend1amqp1consumerJson.BackoffStrategy.Source backoffStrategy = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271backend1amqp1consumerJson.Delete.Source delete = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271backend1amqp1consumerJson.Durable.Source durable = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271backend1amqp1consumerJson.Exclusive.Source exclusive = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271backend1amqp1consumerJson.MaxRetries.Source maxRetries = default, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source noLocal = default, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source noWait = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271backend1amqp1consumerJson.PrefetchCount.Source prefetchCount = default, int initialCapacity = 30)
+        public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.KrakendBenchmark.Current.JsonString.Source exchange, in Corvus.KrakendBenchmark.Current.JsonString.Source name, in Corvus.KrakendBenchmark.Current.JsonArray.Source routingKey, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271backend1amqp1consumerJson.AutoAck.Source autoAck = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271backend1amqp1consumerJson.BackoffStrategy.Source backoffStrategy = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271backend1amqp1consumerJson.Delete.Source delete = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271backend1amqp1consumerJson.Durable.Source durable = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271backend1amqp1consumerJson.Exclusive.Source exclusive = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271backend1amqp1consumerJson.MaxRetries.Source maxRetries = default, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source noLocal = default, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source noWait = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271backend1amqp1consumerJson.PrefetchCount.Source prefetchCount = default, int initialCapacity = 30)
         {
             JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
             ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
@@ -1933,7 +1969,7 @@ public readonly partial struct KrakendSchema
         /// <param name="prefetchCount">The value of the property.</param>
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
         /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-        public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.KrakendBenchmark.Current.JsonString.Source exchange, in Corvus.KrakendBenchmark.Current.JsonString.Source name, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271backend1amqp1consumerJson.RoutingKeys.Source<TContext> routingKey, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271backend1amqp1consumerJson.AutoAck.Source autoAck = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271backend1amqp1consumerJson.BackoffStrategy.Source backoffStrategy = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271backend1amqp1consumerJson.Delete.Source delete = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271backend1amqp1consumerJson.Durable.Source durable = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271backend1amqp1consumerJson.Exclusive.Source exclusive = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271backend1amqp1consumerJson.MaxRetries.Source maxRetries = default, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source noLocal = default, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source noWait = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271backend1amqp1consumerJson.PrefetchCount.Source prefetchCount = default, int initialCapacity = 30)
+        public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.KrakendBenchmark.Current.JsonString.Source exchange, in Corvus.KrakendBenchmark.Current.JsonString.Source name, in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> routingKey, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271backend1amqp1consumerJson.AutoAck.Source autoAck = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271backend1amqp1consumerJson.BackoffStrategy.Source backoffStrategy = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271backend1amqp1consumerJson.Delete.Source delete = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271backend1amqp1consumerJson.Durable.Source durable = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271backend1amqp1consumerJson.Exclusive.Source exclusive = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271backend1amqp1consumerJson.MaxRetries.Source maxRetries = default, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source noLocal = default, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source noWait = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271backend1amqp1consumerJson.PrefetchCount.Source prefetchCount = default, int initialCapacity = 30)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif

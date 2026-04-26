@@ -419,7 +419,7 @@ public readonly partial struct AnsibleMetaSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.AllowDuplicates, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AllowDuplicates, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -464,7 +464,7 @@ public readonly partial struct AnsibleMetaSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.CollectionsValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CollectionsValue, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -500,7 +500,7 @@ public readonly partial struct AnsibleMetaSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.CollectionsValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CollectionsValue, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -545,7 +545,7 @@ public readonly partial struct AnsibleMetaSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Dependencies, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Dependencies, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -581,7 +581,7 @@ public readonly partial struct AnsibleMetaSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Dependencies, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Dependencies, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -626,7 +626,7 @@ public readonly partial struct AnsibleMetaSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.GalaxyInfo, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.GalaxyInfo, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -662,7 +662,7 @@ public readonly partial struct AnsibleMetaSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.GalaxyInfo, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.GalaxyInfo, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1054,6 +1054,27 @@ public readonly partial struct AnsibleMetaSchema
             }
         }
 
+        internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+        {
+            switch(_kind)
+            {
+                case Kind.Unknown:
+                    break;
+                case Kind.JsonElement:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                    break;
+                case Kind.Null:
+                    valueBuilder.AddPrebakedPropertyNullValue(prebakedPropertyName);
+                    break;
+                case Kind.Builder:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
+                    break;
+                default:
+                    Debug.Fail("Unexpected Kind");
+                    break;
+            }
+        }
+
         internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
         {
             switch(_kind)
@@ -1164,6 +1185,24 @@ public readonly partial struct AnsibleMetaSchema
             }
         }
 
+        internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+        {
+            switch(_kind)
+            {
+                case Kind.Unknown:
+                    break;
+                case Kind.Source:
+                    _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                    break;
+                case Kind.Builder:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
+                    break;
+                default:
+                    Debug.Fail("Unexpected Kind");
+                    break;
+            }
+        }
+
         internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
         {
             switch(_kind)
@@ -1247,10 +1286,10 @@ public readonly partial struct AnsibleMetaSchema
             in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DependencyModelArray.Source dependencies = default,
             in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GalaxyInfoModel.Source galaxyInfo = default)
         {
-            allowDuplicates.AddAsProperty(JsonPropertyNamesEscaped.AllowDuplicates, ref builder, escapeName: false);
-            collections.AddAsProperty(JsonPropertyNamesEscaped.CollectionsValue, ref builder, escapeName: false);
-            dependencies.AddAsProperty(JsonPropertyNamesEscaped.Dependencies, ref builder, escapeName: false);
-            galaxyInfo.AddAsProperty(JsonPropertyNamesEscaped.GalaxyInfo, ref builder, escapeName: false);
+            allowDuplicates.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AllowDuplicates, ref builder);
+            collections.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CollectionsValue, ref builder);
+            dependencies.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Dependencies, ref builder);
+            galaxyInfo.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.GalaxyInfo, ref builder);
         }
 
         /// <summary>
@@ -1279,10 +1318,10 @@ public readonly partial struct AnsibleMetaSchema
         where TContext : allows ref struct
         #endif
         {
-            allowDuplicates.AddAsProperty(JsonPropertyNamesEscaped.AllowDuplicates, ref builder, escapeName: false);
-            collections.AddAsProperty(JsonPropertyNamesEscaped.CollectionsValue, ref builder, escapeName: false);
-            dependencies.AddAsProperty(JsonPropertyNamesEscaped.Dependencies, ref builder, escapeName: false);
-            galaxyInfo.AddAsProperty(JsonPropertyNamesEscaped.GalaxyInfo, ref builder, escapeName: false);
+            allowDuplicates.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AllowDuplicates, ref builder);
+            collections.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CollectionsValue, ref builder);
+            dependencies.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Dependencies, ref builder);
+            galaxyInfo.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.GalaxyInfo, ref builder);
         }
 
         /// <summary>

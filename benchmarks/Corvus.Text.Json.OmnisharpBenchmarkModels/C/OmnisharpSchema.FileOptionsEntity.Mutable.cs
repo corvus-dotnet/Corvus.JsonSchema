@@ -377,7 +377,7 @@ public readonly partial struct OmnisharpSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.ExcludeSearchPatterns, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ExcludeSearchPatterns, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -413,7 +413,7 @@ public readonly partial struct OmnisharpSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.ExcludeSearchPatterns, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ExcludeSearchPatterns, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -458,7 +458,7 @@ public readonly partial struct OmnisharpSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.SystemExcludeSearchPatterns, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SystemExcludeSearchPatterns, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -494,7 +494,7 @@ public readonly partial struct OmnisharpSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.SystemExcludeSearchPatterns, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SystemExcludeSearchPatterns, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -877,6 +877,24 @@ public readonly partial struct OmnisharpSchema
                 }
             }
 
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.JsonElement:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                        break;
+                    case Kind.Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
             internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
             {
                 switch(_kind)
@@ -978,6 +996,24 @@ public readonly partial struct OmnisharpSchema
                 }
             }
 
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.Source:
+                        _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                        break;
+                    case Kind.Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
             internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
             {
                 switch(_kind)
@@ -1059,8 +1095,8 @@ public readonly partial struct OmnisharpSchema
                 in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.FileOptionsEntity.JsonStringArray.Source excludeSearchPatterns = default,
                 in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.FileOptionsEntity.RecommendeArray.Source systemExcludeSearchPatterns = default)
             {
-                excludeSearchPatterns.AddAsProperty(JsonPropertyNamesEscaped.ExcludeSearchPatterns, ref builder, escapeName: false);
-                systemExcludeSearchPatterns.AddAsProperty(JsonPropertyNamesEscaped.SystemExcludeSearchPatterns, ref builder, escapeName: false);
+                excludeSearchPatterns.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ExcludeSearchPatterns, ref builder);
+                systemExcludeSearchPatterns.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SystemExcludeSearchPatterns, ref builder);
             }
 
             /// <summary>
@@ -1083,8 +1119,8 @@ public readonly partial struct OmnisharpSchema
             where TContext : allows ref struct
             #endif
             {
-                excludeSearchPatterns.AddAsProperty(JsonPropertyNamesEscaped.ExcludeSearchPatterns, ref builder, escapeName: false);
-                systemExcludeSearchPatterns.AddAsProperty(JsonPropertyNamesEscaped.SystemExcludeSearchPatterns, ref builder, escapeName: false);
+                excludeSearchPatterns.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ExcludeSearchPatterns, ref builder);
+                systemExcludeSearchPatterns.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SystemExcludeSearchPatterns, ref builder);
             }
 
             /// <summary>

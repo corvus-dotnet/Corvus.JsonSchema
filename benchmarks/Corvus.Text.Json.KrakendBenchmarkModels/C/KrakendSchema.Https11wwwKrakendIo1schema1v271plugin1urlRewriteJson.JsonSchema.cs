@@ -49,14 +49,14 @@ public readonly partial struct KrakendSchema
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext =
-                    Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271plugin1urlRewriteJson.LiteralMatch.JsonSchema.PushChildContextUnescaped(
+                    Corvus.KrakendBenchmark.Current.JsonObject.JsonSchema.PushChildContextUnescaped(
                         parentDocument,
                         parentDocumentIndex,
                         ref context,
                         JsonPropertyNames.LiteralUtf8,
                         evaluationPath: LiteralSchemaEvaluationPath);
 
-                Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271plugin1urlRewriteJson.LiteralMatch.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext);
+                Corvus.KrakendBenchmark.Current.JsonObject.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext);
                 context.CommitChildContext(childContext.IsMatch, ref childContext);
             }
 
@@ -64,14 +64,14 @@ public readonly partial struct KrakendSchema
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext1 =
-                    Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271plugin1urlRewriteJson.RegexpArrayArray.JsonSchema.PushChildContextUnescaped(
+                    Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271plugin1urlRewriteJson.JsonArrayArray.JsonSchema.PushChildContextUnescaped(
                         parentDocument,
                         parentDocumentIndex,
                         ref context,
                         JsonPropertyNames.RegexpUtf8,
                         evaluationPath: RegexpSchemaEvaluationPath);
 
-                Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271plugin1urlRewriteJson.RegexpArrayArray.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext1);
+                Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271plugin1urlRewriteJson.JsonArrayArray.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext1);
                 context.CommitChildContext(childContext1.IsMatch, ref childContext1);
             }
 
@@ -106,17 +106,17 @@ public readonly partial struct KrakendSchema
             /// <summary>
             /// Gets a provider for the schema location from which this type was generated.
             /// </summary>
-            public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("krakend-schema.json#/definitions/https:~1~1www.krakend.io~1schema~1v2.7~1plugin~1url-rewrite.json"u8, buffer, out written);
+            public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/definitions/https:~1~1www.krakend.io~1schema~1v2.7~1plugin~1url-rewrite.json"u8, buffer, out written);
 
             /// <summary>
             /// Gets the schema location from which this type was generated.
             /// </summary>
-            public const string SchemaLocation = "krakend-schema.json#/definitions/https:~1~1www.krakend.io~1schema~1v2.7~1plugin~1url-rewrite.json";
+            public const string SchemaLocation = "/definitions/https:~1~1www.krakend.io~1schema~1v2.7~1plugin~1url-rewrite.json";
 
             /// <summary>
             /// Gets the schema location from which this type was generated as a UTF-8 string.
             /// </summary>
-            public static ReadOnlySpan<byte> SchemaLocationUtf8 => "krakend-schema.json#/definitions/https:~1~1www.krakend.io~1schema~1v2.7~1plugin~1url-rewrite.json"u8;
+            public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/definitions/https:~1~1www.krakend.io~1schema~1v2.7~1plugin~1url-rewrite.json"u8;
             private static readonly JsonSchemaPathProvider AnyOf0SchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/anyOf/0"u8, buffer, out written);
             private static readonly JsonSchemaPathProvider AnyOf1SchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/anyOf/1"u8, buffer, out written);
 

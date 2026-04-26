@@ -147,11 +147,11 @@ public readonly partial struct KrakendSchema
         /// See: https://www.krakend.io/docs/enterprise/endpoints/response-schema-validator/
         /// </para>
         /// </remarks>
-        public Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271plugin1responseSchemaValidatorJson.JsonSchemaEntity Schema
+        public Corvus.KrakendBenchmark.Current.JsonObject Schema
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SchemaUtf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271plugin1responseSchemaValidatorJson.JsonSchemaEntity value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SchemaUtf8, out Corvus.KrakendBenchmark.Current.JsonObject value))
                 {
                     return value;
                 }
@@ -616,6 +616,23 @@ public readonly partial struct KrakendSchema
             /// Gets the escaped UTF-8 JSON property name for <see cref="Schema"/>.
             /// </summary>
             public static ReadOnlySpan<byte> Schema => "schema"u8;
+        }
+
+        /// <summary>
+        /// Provides pre-baked property name blobs for fast builder property storage.
+        /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
+        /// </summary>
+        private static class JsonPropertyNamesPrebaked
+        {
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Error"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Error => [0x75, 0x00, 0x00, 0x00, 0x22, 0x65, 0x72, 0x72, 0x6F, 0x72, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Schema"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Schema => [0x85, 0x00, 0x00, 0x00, 0x22, 0x73, 0x63, 0x68, 0x65, 0x6D, 0x61, 0x22];
         }
     }
 }

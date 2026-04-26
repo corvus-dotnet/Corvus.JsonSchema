@@ -171,11 +171,11 @@ public readonly partial struct OpenapiSchema
         /// <summary>
         /// Gets the (optional) <c>termsOfService</c> property.
         /// </summary>
-        public Corvus.OpenapiBenchmark.Current.JsonUriNotAsserted TermsOfService
+        public Corvus.OpenapiBenchmark.Current.JsonUri TermsOfService
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TermsOfServiceUtf8, out Corvus.OpenapiBenchmark.Current.JsonUriNotAsserted value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TermsOfServiceUtf8, out Corvus.OpenapiBenchmark.Current.JsonUri value))
                 {
                     return value;
                 }
@@ -792,6 +792,48 @@ public readonly partial struct OpenapiSchema
             /// Gets the escaped UTF-8 JSON property name for <see cref="Version"/>.
             /// </summary>
             public static ReadOnlySpan<byte> Version => "version"u8;
+        }
+
+        /// <summary>
+        /// Provides pre-baked property name blobs for fast builder property storage.
+        /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
+        /// </summary>
+        private static class JsonPropertyNamesPrebaked
+        {
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="ContactValue"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> ContactValue => [0x95, 0x00, 0x00, 0x00, 0x22, 0x63, 0x6F, 0x6E, 0x74, 0x61, 0x63, 0x74, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Description"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Description => [0xD5, 0x00, 0x00, 0x00, 0x22, 0x64, 0x65, 0x73, 0x63, 0x72, 0x69, 0x70, 0x74, 0x69, 0x6F, 0x6E, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="LicenseValue"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> LicenseValue => [0x95, 0x00, 0x00, 0x00, 0x22, 0x6C, 0x69, 0x63, 0x65, 0x6E, 0x73, 0x65, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Summary"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Summary => [0x95, 0x00, 0x00, 0x00, 0x22, 0x73, 0x75, 0x6D, 0x6D, 0x61, 0x72, 0x79, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="TermsOfService"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> TermsOfService => [0x05, 0x01, 0x00, 0x00, 0x22, 0x74, 0x65, 0x72, 0x6D, 0x73, 0x4F, 0x66, 0x53, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Title"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Title => [0x75, 0x00, 0x00, 0x00, 0x22, 0x74, 0x69, 0x74, 0x6C, 0x65, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Version"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Version => [0x95, 0x00, 0x00, 0x00, 0x22, 0x76, 0x65, 0x72, 0x73, 0x69, 0x6F, 0x6E, 0x22];
         }
     }
 }

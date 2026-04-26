@@ -122,11 +122,11 @@ public readonly partial struct KrakendSchema
         /// See: https://www.krakend.io/docs/enterprise/endpoints/wildcard/
         /// </para>
         /// </remarks>
-        public Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271plugin1wildcardJson.Endpoints EndpointsValue
+        public Corvus.KrakendBenchmark.Current.JsonObject Endpoints
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.EndpointsValueUtf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271plugin1wildcardJson.Endpoints value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.EndpointsUtf8, out Corvus.KrakendBenchmark.Current.JsonObject value))
                 {
                     return value;
                 }
@@ -557,14 +557,14 @@ public readonly partial struct KrakendSchema
         public static class JsonPropertyNames
         {
             /// <summary>
-            /// Gets the JSON property name for <see cref="EndpointsValue"/>.
+            /// Gets the JSON property name for <see cref="Endpoints"/>.
             /// </summary>
-            public const string EndpointsValue = "endpoints";
+            public const string Endpoints = "endpoints";
 
             /// <summary>
-            /// Gets the JSON property name for <see cref="EndpointsValue"/>.
+            /// Gets the JSON property name for <see cref="Endpoints"/>.
             /// </summary>
-            public static ReadOnlySpan<byte> EndpointsValueUtf8 => "endpoints"u8;
+            public static ReadOnlySpan<byte> EndpointsUtf8 => "endpoints"u8;
         }
 
         /// <summary>
@@ -573,9 +573,21 @@ public readonly partial struct KrakendSchema
         private static class JsonPropertyNamesEscaped
         {
             /// <summary>
-            /// Gets the escaped UTF-8 JSON property name for <see cref="EndpointsValue"/>.
+            /// Gets the escaped UTF-8 JSON property name for <see cref="Endpoints"/>.
             /// </summary>
-            public static ReadOnlySpan<byte> EndpointsValue => "endpoints"u8;
+            public static ReadOnlySpan<byte> Endpoints => "endpoints"u8;
+        }
+
+        /// <summary>
+        /// Provides pre-baked property name blobs for fast builder property storage.
+        /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
+        /// </summary>
+        private static class JsonPropertyNamesPrebaked
+        {
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Endpoints"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Endpoints => [0xB5, 0x00, 0x00, 0x00, 0x22, 0x65, 0x6E, 0x64, 0x70, 0x6F, 0x69, 0x6E, 0x74, 0x73, 0x22];
         }
     }
 }

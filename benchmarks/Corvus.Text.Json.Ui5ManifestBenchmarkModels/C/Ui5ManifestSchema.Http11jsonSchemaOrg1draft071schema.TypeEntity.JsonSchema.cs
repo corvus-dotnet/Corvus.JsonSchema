@@ -51,17 +51,17 @@ public readonly partial struct Ui5ManifestSchema
                 /// <summary>
                 /// Gets a provider for the schema location from which this type was generated.
                 /// </summary>
-                public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("http://json-schema.org/draft-07/schema#/properties/type"u8, buffer, out written);
+                public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/definitions/http:~1~1json-schema.org~1draft-07~1schema/properties/type"u8, buffer, out written);
 
                 /// <summary>
                 /// Gets the schema location from which this type was generated.
                 /// </summary>
-                public const string SchemaLocation = "http://json-schema.org/draft-07/schema#/properties/type";
+                public const string SchemaLocation = "/definitions/http:~1~1json-schema.org~1draft-07~1schema/properties/type";
 
                 /// <summary>
                 /// Gets the schema location from which this type was generated as a UTF-8 string.
                 /// </summary>
-                public static ReadOnlySpan<byte> SchemaLocationUtf8 => "http://json-schema.org/draft-07/schema#/properties/type"u8;
+                public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/definitions/http:~1~1json-schema.org~1draft-07~1schema/properties/type"u8;
                 private static readonly JsonSchemaPathProvider AnyOf0SchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/anyOf/0/$ref"u8, buffer, out written);
                 private static readonly JsonSchemaPathProvider AnyOf1SchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/anyOf/1"u8, buffer, out written);
 

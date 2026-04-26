@@ -1287,6 +1287,33 @@ public readonly partial struct Ui5ManifestSchema
                         }
                     }
 
+                    internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+                    {
+                        switch(_kind)
+                        {
+                            case Kind.Unknown:
+                                break;
+                            case Kind.JsonElement:
+                                valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                                break;
+                            case Kind.True:
+                                valueBuilder.AddPrebakedProperty(prebakedPropertyName, true);
+                                break;
+                            case Kind.False:
+                                valueBuilder.AddPrebakedProperty(prebakedPropertyName, false);
+                                break;
+                            case Kind.ArrayBuilder:
+                                valueBuilder.AddPrebakedProperty(prebakedPropertyName, _arrayBuilder!, static (in b, ref o) => ArrayBuilder.BuildValue(b, ref o));
+                                break;
+                            case Kind.Http11jsonSchemaOrg1draft071schemaBuilder:
+                                valueBuilder.AddPrebakedProperty(prebakedPropertyName, _http11jsonSchemaOrg1draft071schemaBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Http11jsonSchemaOrg1draft071schema.Builder.BuildValue(b, ref o));
+                                break;
+                            default:
+                                Debug.Fail("Unexpected Kind");
+                                break;
+                        }
+                    }
+
                     internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
                     {
                         switch(_kind)
@@ -1415,6 +1442,27 @@ public readonly partial struct Ui5ManifestSchema
                                 break;
                             case Kind.Http11jsonSchemaOrg1draft071schemaBuilder:
                                 valueBuilder.AddProperty(utf8Name, BuildWithContext.Create(_context, _http11jsonSchemaOrg1draft071schemaBuilderInstance!), static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Http11jsonSchemaOrg1draft071schema.Builder.BuildValue(b.Context, b.Build, ref o), escapeName, nameRequiresUnescaping);
+                                break;
+                            default:
+                                Debug.Fail("Unexpected Kind");
+                                break;
+                        }
+                    }
+
+                    internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+                    {
+                        switch(_kind)
+                        {
+                            case Kind.Unknown:
+                                break;
+                            case Kind.Source:
+                                _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                                break;
+                            case Kind.ArrayBuilder:
+                                valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _arrayBuilder!), static (in b, ref o) => ArrayBuilder.BuildValue(b.Context, b.Build, ref o));
+                                break;
+                            case Kind.Http11jsonSchemaOrg1draft071schemaBuilder:
+                                valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _http11jsonSchemaOrg1draft071schemaBuilderInstance!), static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Http11jsonSchemaOrg1draft071schema.Builder.BuildValue(b.Context, b.Build, ref o));
                                 break;
                             default:
                                 Debug.Fail("Unexpected Kind");

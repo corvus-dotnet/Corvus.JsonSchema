@@ -707,7 +707,7 @@ public readonly partial struct CspellSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.AllowCompoundWords, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AllowCompoundWords, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -752,7 +752,7 @@ public readonly partial struct CspellSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.CaseSensitive, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CaseSensitive, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -797,7 +797,7 @@ public readonly partial struct CspellSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Description, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Description, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -842,7 +842,7 @@ public readonly partial struct CspellSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Dictionaries, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Dictionaries, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -878,7 +878,7 @@ public readonly partial struct CspellSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Dictionaries, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Dictionaries, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -923,7 +923,7 @@ public readonly partial struct CspellSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.DictionaryDefinitions, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DictionaryDefinitions, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -959,7 +959,7 @@ public readonly partial struct CspellSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.DictionaryDefinitions, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DictionaryDefinitions, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1004,7 +1004,7 @@ public readonly partial struct CspellSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Enabled, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Enabled, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1049,7 +1049,7 @@ public readonly partial struct CspellSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.FlagWords, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.FlagWords, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1085,7 +1085,7 @@ public readonly partial struct CspellSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.FlagWords, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.FlagWords, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1130,7 +1130,7 @@ public readonly partial struct CspellSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Id, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Id, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1175,7 +1175,7 @@ public readonly partial struct CspellSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.IgnoreRegExpList, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IgnoreRegExpList, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1211,7 +1211,7 @@ public readonly partial struct CspellSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.IgnoreRegExpList, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IgnoreRegExpList, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1256,7 +1256,7 @@ public readonly partial struct CspellSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.IgnoreWords, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IgnoreWords, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1292,7 +1292,7 @@ public readonly partial struct CspellSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.IgnoreWords, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IgnoreWords, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1337,7 +1337,7 @@ public readonly partial struct CspellSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.IncludeRegExpList, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IncludeRegExpList, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1373,7 +1373,7 @@ public readonly partial struct CspellSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.IncludeRegExpList, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IncludeRegExpList, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1416,7 +1416,7 @@ public readonly partial struct CspellSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.LanguageId, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.LanguageId, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1450,7 +1450,7 @@ public readonly partial struct CspellSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.LanguageId, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.LanguageId, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1483,7 +1483,7 @@ public readonly partial struct CspellSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Local, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Local, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1519,7 +1519,7 @@ public readonly partial struct CspellSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Local, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Local, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1564,7 +1564,7 @@ public readonly partial struct CspellSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Locale, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Locale, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1600,7 +1600,7 @@ public readonly partial struct CspellSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Locale, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Locale, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1645,7 +1645,7 @@ public readonly partial struct CspellSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Name, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Name, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1690,7 +1690,7 @@ public readonly partial struct CspellSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.NoSuggestDictionaries, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.NoSuggestDictionaries, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1726,7 +1726,7 @@ public readonly partial struct CspellSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.NoSuggestDictionaries, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.NoSuggestDictionaries, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1771,7 +1771,7 @@ public readonly partial struct CspellSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Patterns, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Patterns, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1807,7 +1807,7 @@ public readonly partial struct CspellSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Patterns, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Patterns, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1852,7 +1852,7 @@ public readonly partial struct CspellSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.SuggestWords, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SuggestWords, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1888,7 +1888,7 @@ public readonly partial struct CspellSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.SuggestWords, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SuggestWords, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1933,7 +1933,7 @@ public readonly partial struct CspellSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Words, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Words, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1969,7 +1969,7 @@ public readonly partial struct CspellSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Words, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Words, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -2176,6 +2176,24 @@ public readonly partial struct CspellSchema
                 }
             }
 
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.JsonElement:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                        break;
+                    case Kind.Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
             internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
             {
                 switch(_kind)
@@ -2270,6 +2288,24 @@ public readonly partial struct CspellSchema
                         break;
                     case Kind.Builder:
                         valueBuilder.AddProperty(utf8Name, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o), escapeName, nameRequiresUnescaping);
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.Source:
+                        _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                        break;
+                    case Kind.Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                         break;
                     default:
                         Debug.Fail("Unexpected Kind");
@@ -2375,25 +2411,25 @@ public readonly partial struct CspellSchema
                 in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.SuggestWorArray.Source suggestWords = default,
                 in Corvus.CspellBenchmark.Current.CspellSchema.LanguageSetting.ListOfWordArray.Source words = default)
             {
-                languageId.AddAsProperty(JsonPropertyNamesEscaped.LanguageId, ref builder, escapeName: false);
-                allowCompoundWords.AddAsProperty(JsonPropertyNamesEscaped.AllowCompoundWords, ref builder, escapeName: false);
-                caseSensitive.AddAsProperty(JsonPropertyNamesEscaped.CaseSensitive, ref builder, escapeName: false);
-                description.AddAsProperty(JsonPropertyNamesEscaped.Description, ref builder, escapeName: false);
-                dictionaries.AddAsProperty(JsonPropertyNamesEscaped.Dictionaries, ref builder, escapeName: false);
-                dictionaryDefinitions.AddAsProperty(JsonPropertyNamesEscaped.DictionaryDefinitions, ref builder, escapeName: false);
-                enabled.AddAsProperty(JsonPropertyNamesEscaped.Enabled, ref builder, escapeName: false);
-                flagWords.AddAsProperty(JsonPropertyNamesEscaped.FlagWords, ref builder, escapeName: false);
-                id.AddAsProperty(JsonPropertyNamesEscaped.Id, ref builder, escapeName: false);
-                ignoreRegExpList.AddAsProperty(JsonPropertyNamesEscaped.IgnoreRegExpList, ref builder, escapeName: false);
-                ignoreWords.AddAsProperty(JsonPropertyNamesEscaped.IgnoreWords, ref builder, escapeName: false);
-                includeRegExpList.AddAsProperty(JsonPropertyNamesEscaped.IncludeRegExpList, ref builder, escapeName: false);
-                local.AddAsProperty(JsonPropertyNamesEscaped.Local, ref builder, escapeName: false);
-                locale.AddAsProperty(JsonPropertyNamesEscaped.Locale, ref builder, escapeName: false);
-                name.AddAsProperty(JsonPropertyNamesEscaped.Name, ref builder, escapeName: false);
-                noSuggestDictionaries.AddAsProperty(JsonPropertyNamesEscaped.NoSuggestDictionaries, ref builder, escapeName: false);
-                patterns.AddAsProperty(JsonPropertyNamesEscaped.Patterns, ref builder, escapeName: false);
-                suggestWords.AddAsProperty(JsonPropertyNamesEscaped.SuggestWords, ref builder, escapeName: false);
-                words.AddAsProperty(JsonPropertyNamesEscaped.Words, ref builder, escapeName: false);
+                languageId.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.LanguageId, ref builder);
+                allowCompoundWords.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AllowCompoundWords, ref builder);
+                caseSensitive.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CaseSensitive, ref builder);
+                description.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Description, ref builder);
+                dictionaries.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Dictionaries, ref builder);
+                dictionaryDefinitions.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DictionaryDefinitions, ref builder);
+                enabled.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Enabled, ref builder);
+                flagWords.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.FlagWords, ref builder);
+                id.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Id, ref builder);
+                ignoreRegExpList.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IgnoreRegExpList, ref builder);
+                ignoreWords.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IgnoreWords, ref builder);
+                includeRegExpList.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IncludeRegExpList, ref builder);
+                local.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Local, ref builder);
+                locale.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Locale, ref builder);
+                name.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Name, ref builder);
+                noSuggestDictionaries.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.NoSuggestDictionaries, ref builder);
+                patterns.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Patterns, ref builder);
+                suggestWords.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SuggestWords, ref builder);
+                words.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Words, ref builder);
             }
 
             /// <summary>
@@ -2452,25 +2488,25 @@ public readonly partial struct CspellSchema
             where TContext : allows ref struct
             #endif
             {
-                languageId.AddAsProperty(JsonPropertyNamesEscaped.LanguageId, ref builder, escapeName: false);
-                allowCompoundWords.AddAsProperty(JsonPropertyNamesEscaped.AllowCompoundWords, ref builder, escapeName: false);
-                caseSensitive.AddAsProperty(JsonPropertyNamesEscaped.CaseSensitive, ref builder, escapeName: false);
-                description.AddAsProperty(JsonPropertyNamesEscaped.Description, ref builder, escapeName: false);
-                dictionaries.AddAsProperty(JsonPropertyNamesEscaped.Dictionaries, ref builder, escapeName: false);
-                dictionaryDefinitions.AddAsProperty(JsonPropertyNamesEscaped.DictionaryDefinitions, ref builder, escapeName: false);
-                enabled.AddAsProperty(JsonPropertyNamesEscaped.Enabled, ref builder, escapeName: false);
-                flagWords.AddAsProperty(JsonPropertyNamesEscaped.FlagWords, ref builder, escapeName: false);
-                id.AddAsProperty(JsonPropertyNamesEscaped.Id, ref builder, escapeName: false);
-                ignoreRegExpList.AddAsProperty(JsonPropertyNamesEscaped.IgnoreRegExpList, ref builder, escapeName: false);
-                ignoreWords.AddAsProperty(JsonPropertyNamesEscaped.IgnoreWords, ref builder, escapeName: false);
-                includeRegExpList.AddAsProperty(JsonPropertyNamesEscaped.IncludeRegExpList, ref builder, escapeName: false);
-                local.AddAsProperty(JsonPropertyNamesEscaped.Local, ref builder, escapeName: false);
-                locale.AddAsProperty(JsonPropertyNamesEscaped.Locale, ref builder, escapeName: false);
-                name.AddAsProperty(JsonPropertyNamesEscaped.Name, ref builder, escapeName: false);
-                noSuggestDictionaries.AddAsProperty(JsonPropertyNamesEscaped.NoSuggestDictionaries, ref builder, escapeName: false);
-                patterns.AddAsProperty(JsonPropertyNamesEscaped.Patterns, ref builder, escapeName: false);
-                suggestWords.AddAsProperty(JsonPropertyNamesEscaped.SuggestWords, ref builder, escapeName: false);
-                words.AddAsProperty(JsonPropertyNamesEscaped.Words, ref builder, escapeName: false);
+                languageId.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.LanguageId, ref builder);
+                allowCompoundWords.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AllowCompoundWords, ref builder);
+                caseSensitive.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CaseSensitive, ref builder);
+                description.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Description, ref builder);
+                dictionaries.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Dictionaries, ref builder);
+                dictionaryDefinitions.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DictionaryDefinitions, ref builder);
+                enabled.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Enabled, ref builder);
+                flagWords.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.FlagWords, ref builder);
+                id.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Id, ref builder);
+                ignoreRegExpList.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IgnoreRegExpList, ref builder);
+                ignoreWords.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IgnoreWords, ref builder);
+                includeRegExpList.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IncludeRegExpList, ref builder);
+                local.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Local, ref builder);
+                locale.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Locale, ref builder);
+                name.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Name, ref builder);
+                noSuggestDictionaries.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.NoSuggestDictionaries, ref builder);
+                patterns.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Patterns, ref builder);
+                suggestWords.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SuggestWords, ref builder);
+                words.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Words, ref builder);
             }
 
             /// <summary>

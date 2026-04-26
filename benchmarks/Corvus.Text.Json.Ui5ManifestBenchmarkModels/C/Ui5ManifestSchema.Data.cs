@@ -780,5 +780,52 @@ public readonly partial struct Ui5ManifestSchema
             /// </summary>
             public static ReadOnlySpan<byte> UpdateInterval => "updateInterval"u8;
         }
+
+        /// <summary>
+        /// Provides pre-baked property name blobs for fast builder property storage.
+        /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
+        /// </summary>
+        private static class JsonPropertyNamesPrebaked
+        {
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="ExtensionValue"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> ExtensionValue => [0xB5, 0x00, 0x00, 0x00, 0x22, 0x65, 0x78, 0x74, 0x65, 0x6E, 0x73, 0x69, 0x6F, 0x6E, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Json"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Json => [0x65, 0x00, 0x00, 0x00, 0x22, 0x6A, 0x73, 0x6F, 0x6E, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="MockData"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> MockData => [0xA5, 0x00, 0x00, 0x00, 0x22, 0x6D, 0x6F, 0x63, 0x6B, 0x44, 0x61, 0x74, 0x61, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Name"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Name => [0x65, 0x00, 0x00, 0x00, 0x22, 0x6E, 0x61, 0x6D, 0x65, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Path"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Path => [0x65, 0x00, 0x00, 0x00, 0x22, 0x70, 0x61, 0x74, 0x68, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="RequestValue"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> RequestValue => [0x95, 0x00, 0x00, 0x00, 0x22, 0x72, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="ServiceValue"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> ServiceValue => [0x95, 0x00, 0x00, 0x00, 0x22, 0x73, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="UpdateInterval"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> UpdateInterval => [0x05, 0x01, 0x00, 0x00, 0x22, 0x75, 0x70, 0x64, 0x61, 0x74, 0x65, 0x49, 0x6E, 0x74, 0x65, 0x72, 0x76, 0x61, 0x6C, 0x22];
+        }
     }
 }

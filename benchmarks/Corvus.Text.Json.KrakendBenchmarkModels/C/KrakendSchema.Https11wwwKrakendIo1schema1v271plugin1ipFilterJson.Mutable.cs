@@ -257,11 +257,11 @@ public readonly partial struct KrakendSchema
             /// See: https://www.krakend.io/docs/enterprise/throttling/ipfilter/
             /// </para>
             /// </remarks>
-            public Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271plugin1ipFilterJson.Cidr.Mutable CidrValue
+            public Corvus.KrakendBenchmark.Current.JsonArray.Mutable Cidr
             {
                 get
                 {
-                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CidrValueUtf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271plugin1ipFilterJson.Cidr.Mutable value))
+                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CidrUtf8, out Corvus.KrakendBenchmark.Current.JsonArray.Mutable value))
                     {
                         return value;
                     }
@@ -282,11 +282,11 @@ public readonly partial struct KrakendSchema
             /// See: https://www.krakend.io/docs/enterprise/throttling/ipfilter/
             /// </para>
             /// </remarks>
-            public Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271plugin1ipFilterJson.ClientIpHeaders.Mutable ClientIpHeadersValue
+            public Corvus.KrakendBenchmark.Current.JsonArray.Mutable ClientIpHeaders
             {
                 get
                 {
-                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ClientIpHeadersValueUtf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271plugin1ipFilterJson.ClientIpHeaders.Mutable value))
+                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ClientIpHeadersUtf8, out Corvus.KrakendBenchmark.Current.JsonArray.Mutable value))
                     {
                         return value;
                     }
@@ -307,11 +307,11 @@ public readonly partial struct KrakendSchema
             /// See: https://www.krakend.io/docs/enterprise/throttling/ipfilter/
             /// </para>
             /// </remarks>
-            public Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271plugin1ipFilterJson.TrustedProxies.Mutable TrustedProxiesValue
+            public Corvus.KrakendBenchmark.Current.JsonArray.Mutable TrustedProxies
             {
                 get
                 {
-                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TrustedProxiesValueUtf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271plugin1ipFilterJson.TrustedProxies.Mutable value))
+                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TrustedProxiesUtf8, out Corvus.KrakendBenchmark.Current.JsonArray.Mutable value))
                     {
                         return value;
                     }
@@ -372,7 +372,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Allow, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Allow, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -384,7 +384,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>CIDR</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetCidrValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271plugin1ipFilterJson.Cidr.Source value)
+            public void SetCidr(in Corvus.KrakendBenchmark.Current.JsonArray.Source value)
             {
                 CheckValidInstance();
 
@@ -394,7 +394,7 @@ public readonly partial struct KrakendSchema
                 }
 
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CidrValueUtf8, out IJsonDocument? elementParent, out int elementIdx))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CidrUtf8, out IJsonDocument? elementParent, out int elementIdx))
                 {
                     // We are going to replace just the value
                     value.AddAsItem(ref cvb);
@@ -403,7 +403,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.CidrValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Cidr, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -415,7 +415,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>CIDR</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetCidrValue<TContext>(in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271plugin1ipFilterJson.Cidr.Source<TContext> value)
+            public void SetCidr<TContext>(in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> value)
 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
 #endif
@@ -428,7 +428,7 @@ public readonly partial struct KrakendSchema
                 }
 
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CidrValueUtf8, out IJsonDocument? elementParent, out int elementIdx))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CidrUtf8, out IJsonDocument? elementParent, out int elementIdx))
                 {
                     // We are going to replace just the value
                     value.AddAsItem(ref cvb);
@@ -437,7 +437,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.CidrValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Cidr, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -449,19 +449,19 @@ public readonly partial struct KrakendSchema
             /// Set the <c>client_ip_headers</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetClientIpHeadersValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271plugin1ipFilterJson.ClientIpHeaders.Source value)
+            public void SetClientIpHeaders(in Corvus.KrakendBenchmark.Current.JsonArray.Source value)
             {
                 CheckValidInstance();
 
                 if (value.IsUndefined)
                 {
-                    JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.ClientIpHeadersValueUtf8);
+                    JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.ClientIpHeadersUtf8);
                     _documentVersion = _parent.Version;
                     return;
                 }
 
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ClientIpHeadersValueUtf8, out IJsonDocument? elementParent, out int elementIdx))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ClientIpHeadersUtf8, out IJsonDocument? elementParent, out int elementIdx))
                 {
                     // We are going to replace just the value
                     value.AddAsItem(ref cvb);
@@ -470,7 +470,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.ClientIpHeadersValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ClientIpHeaders, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -482,7 +482,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>client_ip_headers</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetClientIpHeadersValue<TContext>(in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271plugin1ipFilterJson.ClientIpHeaders.Source<TContext> value)
+            public void SetClientIpHeaders<TContext>(in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> value)
 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
 #endif
@@ -491,13 +491,13 @@ public readonly partial struct KrakendSchema
 
                 if (value.IsUndefined)
                 {
-                    JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.ClientIpHeadersValueUtf8);
+                    JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.ClientIpHeadersUtf8);
                     _documentVersion = _parent.Version;
                     return;
                 }
 
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ClientIpHeadersValueUtf8, out IJsonDocument? elementParent, out int elementIdx))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ClientIpHeadersUtf8, out IJsonDocument? elementParent, out int elementIdx))
                 {
                     // We are going to replace just the value
                     value.AddAsItem(ref cvb);
@@ -506,7 +506,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.ClientIpHeadersValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ClientIpHeaders, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -518,10 +518,10 @@ public readonly partial struct KrakendSchema
             /// Remove the <c>client_ip_headers</c> property, if present.
             /// </summary>
             /// <returns><see langword="true"/> if the property was found and removed; otherwise, <see langword="false"/>.</returns>
-            public bool RemoveClientIpHeadersValue()
+            public bool RemoveClientIpHeaders()
             {
                 CheckValidInstance();
-                bool result = JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.ClientIpHeadersValueUtf8);
+                bool result = JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.ClientIpHeadersUtf8);
                 _documentVersion = _parent.Version;
                 return result;
             }
@@ -530,19 +530,19 @@ public readonly partial struct KrakendSchema
             /// Set the <c>trusted_proxies</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetTrustedProxiesValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271plugin1ipFilterJson.TrustedProxies.Source value)
+            public void SetTrustedProxies(in Corvus.KrakendBenchmark.Current.JsonArray.Source value)
             {
                 CheckValidInstance();
 
                 if (value.IsUndefined)
                 {
-                    JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.TrustedProxiesValueUtf8);
+                    JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.TrustedProxiesUtf8);
                     _documentVersion = _parent.Version;
                     return;
                 }
 
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TrustedProxiesValueUtf8, out IJsonDocument? elementParent, out int elementIdx))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TrustedProxiesUtf8, out IJsonDocument? elementParent, out int elementIdx))
                 {
                     // We are going to replace just the value
                     value.AddAsItem(ref cvb);
@@ -551,7 +551,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.TrustedProxiesValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TrustedProxies, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -563,7 +563,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>trusted_proxies</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetTrustedProxiesValue<TContext>(in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271plugin1ipFilterJson.TrustedProxies.Source<TContext> value)
+            public void SetTrustedProxies<TContext>(in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> value)
 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
 #endif
@@ -572,13 +572,13 @@ public readonly partial struct KrakendSchema
 
                 if (value.IsUndefined)
                 {
-                    JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.TrustedProxiesValueUtf8);
+                    JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.TrustedProxiesUtf8);
                     _documentVersion = _parent.Version;
                     return;
                 }
 
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TrustedProxiesValueUtf8, out IJsonDocument? elementParent, out int elementIdx))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TrustedProxiesUtf8, out IJsonDocument? elementParent, out int elementIdx))
                 {
                     // We are going to replace just the value
                     value.AddAsItem(ref cvb);
@@ -587,7 +587,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.TrustedProxiesValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TrustedProxies, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -599,10 +599,10 @@ public readonly partial struct KrakendSchema
             /// Remove the <c>trusted_proxies</c> property, if present.
             /// </summary>
             /// <returns><see langword="true"/> if the property was found and removed; otherwise, <see langword="false"/>.</returns>
-            public bool RemoveTrustedProxiesValue()
+            public bool RemoveTrustedProxies()
             {
                 CheckValidInstance();
-                bool result = JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.TrustedProxiesValueUtf8);
+                bool result = JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.TrustedProxiesUtf8);
                 _documentVersion = _parent.Version;
                 return result;
             }
@@ -970,6 +970,24 @@ public readonly partial struct KrakendSchema
                 }
             }
 
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.JsonElement:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                        break;
+                    case Kind.Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
             internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
             {
                 switch(_kind)
@@ -1071,6 +1089,24 @@ public readonly partial struct KrakendSchema
                 }
             }
 
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.Source:
+                        _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                        break;
+                    case Kind.Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
             internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
             {
                 switch(_kind)
@@ -1150,14 +1186,14 @@ public readonly partial struct KrakendSchema
             internal static void Create(
                 ref ComplexValueBuilder builder,
                 in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271plugin1ipFilterJson.AllowOrDenyMode.Source allow,
-                in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271plugin1ipFilterJson.Cidr.Source cIdr,
-                in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271plugin1ipFilterJson.ClientIpHeaders.Source clientIpHeaders = default,
-                in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271plugin1ipFilterJson.TrustedProxies.Source trustedProxies = default)
+                in Corvus.KrakendBenchmark.Current.JsonArray.Source cIdr,
+                in Corvus.KrakendBenchmark.Current.JsonArray.Source clientIpHeaders = default,
+                in Corvus.KrakendBenchmark.Current.JsonArray.Source trustedProxies = default)
             {
-                allow.AddAsProperty(JsonPropertyNamesEscaped.Allow, ref builder, escapeName: false);
-                cIdr.AddAsProperty(JsonPropertyNamesEscaped.CidrValue, ref builder, escapeName: false);
-                clientIpHeaders.AddAsProperty(JsonPropertyNamesEscaped.ClientIpHeadersValue, ref builder, escapeName: false);
-                trustedProxies.AddAsProperty(JsonPropertyNamesEscaped.TrustedProxiesValue, ref builder, escapeName: false);
+                allow.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Allow, ref builder);
+                cIdr.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Cidr, ref builder);
+                clientIpHeaders.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ClientIpHeaders, ref builder);
+                trustedProxies.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TrustedProxies, ref builder);
             }
 
             /// <summary>
@@ -1165,9 +1201,9 @@ public readonly partial struct KrakendSchema
             /// </summary>
             public void Create(
                 in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271plugin1ipFilterJson.AllowOrDenyMode.Source allow,
-                in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271plugin1ipFilterJson.Cidr.Source cIdr,
-                in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271plugin1ipFilterJson.ClientIpHeaders.Source clientIpHeaders = default,
-                in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271plugin1ipFilterJson.TrustedProxies.Source trustedProxies = default)
+                in Corvus.KrakendBenchmark.Current.JsonArray.Source cIdr,
+                in Corvus.KrakendBenchmark.Current.JsonArray.Source clientIpHeaders = default,
+                in Corvus.KrakendBenchmark.Current.JsonArray.Source trustedProxies = default)
             {
                 Create(ref _builder, allow, cIdr, clientIpHeaders, trustedProxies);
             }
@@ -1179,17 +1215,17 @@ public readonly partial struct KrakendSchema
                 in TContext context,
                 ref ComplexValueBuilder builder,
                 in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271plugin1ipFilterJson.AllowOrDenyMode.Source allow,
-                in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271plugin1ipFilterJson.Cidr.Source<TContext> cIdr,
-                in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271plugin1ipFilterJson.ClientIpHeaders.Source<TContext> clientIpHeaders = default,
-                in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271plugin1ipFilterJson.TrustedProxies.Source<TContext> trustedProxies = default)
+                in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> cIdr,
+                in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> clientIpHeaders = default,
+                in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> trustedProxies = default)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif
             {
-                allow.AddAsProperty(JsonPropertyNamesEscaped.Allow, ref builder, escapeName: false);
-                cIdr.AddAsProperty(JsonPropertyNamesEscaped.CidrValue, ref builder, escapeName: false);
-                clientIpHeaders.AddAsProperty(JsonPropertyNamesEscaped.ClientIpHeadersValue, ref builder, escapeName: false);
-                trustedProxies.AddAsProperty(JsonPropertyNamesEscaped.TrustedProxiesValue, ref builder, escapeName: false);
+                allow.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Allow, ref builder);
+                cIdr.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Cidr, ref builder);
+                clientIpHeaders.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ClientIpHeaders, ref builder);
+                trustedProxies.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TrustedProxies, ref builder);
             }
 
             /// <summary>
@@ -1198,9 +1234,9 @@ public readonly partial struct KrakendSchema
             public void Create<TContext>(
                 in TContext context,
                 in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271plugin1ipFilterJson.AllowOrDenyMode.Source allow,
-                in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271plugin1ipFilterJson.Cidr.Source<TContext> cIdr,
-                in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271plugin1ipFilterJson.ClientIpHeaders.Source<TContext> clientIpHeaders = default,
-                in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271plugin1ipFilterJson.TrustedProxies.Source<TContext> trustedProxies = default)
+                in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> cIdr,
+                in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> clientIpHeaders = default,
+                in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> trustedProxies = default)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif
@@ -1367,7 +1403,7 @@ public readonly partial struct KrakendSchema
         /// <param name="trustedProxies">The value of the property.</param>
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
         /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-        public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271plugin1ipFilterJson.AllowOrDenyMode.Source allow, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271plugin1ipFilterJson.Cidr.Source cIdr, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271plugin1ipFilterJson.ClientIpHeaders.Source clientIpHeaders = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271plugin1ipFilterJson.TrustedProxies.Source trustedProxies = default, int initialCapacity = 30)
+        public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271plugin1ipFilterJson.AllowOrDenyMode.Source allow, in Corvus.KrakendBenchmark.Current.JsonArray.Source cIdr, in Corvus.KrakendBenchmark.Current.JsonArray.Source clientIpHeaders = default, in Corvus.KrakendBenchmark.Current.JsonArray.Source trustedProxies = default, int initialCapacity = 30)
         {
             JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
             ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
@@ -1392,7 +1428,7 @@ public readonly partial struct KrakendSchema
         /// <param name="trustedProxies">The value of the property.</param>
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
         /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-        public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271plugin1ipFilterJson.AllowOrDenyMode.Source allow, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271plugin1ipFilterJson.Cidr.Source<TContext> cIdr, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271plugin1ipFilterJson.ClientIpHeaders.Source<TContext> clientIpHeaders = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271plugin1ipFilterJson.TrustedProxies.Source<TContext> trustedProxies = default, int initialCapacity = 30)
+        public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271plugin1ipFilterJson.AllowOrDenyMode.Source allow, in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> cIdr, in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> clientIpHeaders = default, in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> trustedProxies = default, int initialCapacity = 30)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif

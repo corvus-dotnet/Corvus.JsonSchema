@@ -191,24 +191,6 @@ public readonly partial struct GeoJsonSchema
             private JsonTokenType TokenType => _parent?.GetJsonTokenType(_idx) ?? JsonTokenType.None;
 
             /// <summary>
-            /// Conversion to <see cref="Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.PropertiesEntity.OneOf1Entity"/>.
-            /// </summary>
-            /// <param name="value">The value from which to convert.</param>
-            public static explicit operator Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.PropertiesEntity.OneOf1Entity(PropertiesEntity value)
-            {
-                return Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.PropertiesEntity.OneOf1Entity.From(value);
-            }
-
-            /// <summary>
-            /// Conversion from <see cref="Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.PropertiesEntity.OneOf1Entity"/>.
-            /// </summary>
-            /// <param name="value">The value from which to convert.</param>
-            public static implicit operator PropertiesEntity(Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.PropertiesEntity.OneOf1Entity value)
-            {
-                return From(value);
-            }
-
-            /// <summary>
             /// Operator ==.
             /// </summary>
             /// <param name="left">The lhs of the operator.</param>
@@ -626,15 +608,15 @@ public readonly partial struct GeoJsonSchema
             }
 
             /// <summary>
-            /// Gets the value as a <see cref="Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.PropertiesEntity.OneOf1Entity" />.
+            /// Gets the value as a <see cref="Corvus.GeoJsonBenchmark.Current.JsonObject" />.
             /// </summary>
             /// <param name="result">The result of the conversions.</param>
             /// <returns><see langword="true" /> if the conversion was valid.</returns>
-            public bool TryGetAsOneOf1Entity(out Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.PropertiesEntity.OneOf1Entity result)
+            public bool TryGetAsJsonObject(out Corvus.GeoJsonBenchmark.Current.JsonObject result)
             {
-                if (Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.PropertiesEntity.OneOf1Entity.JsonSchema.Evaluate(_parent, _idx))
+                if (Corvus.GeoJsonBenchmark.Current.JsonObject.JsonSchema.Evaluate(_parent, _idx))
                 {
-                    result = Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.PropertiesEntity.OneOf1Entity.From(this);
+                    result = Corvus.GeoJsonBenchmark.Current.JsonObject.From(this);
                     return true;
                 }
 
@@ -649,13 +631,13 @@ public readonly partial struct GeoJsonSchema
             /// <typeparam name="TResult">The result of calling the match function.</typeparam>
             /// <param name="context">The context to pass to the match function.</param>
             /// <param name="matchJsonNull">Match a <see cref="Corvus.GeoJsonBenchmark.Current.JsonNull"/>.</param>
-            /// <param name="matchOneOf1Entity">Match a <see cref="Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.PropertiesEntity.OneOf1Entity"/>.</param>
+            /// <param name="matchJsonObject">Match a <see cref="Corvus.GeoJsonBenchmark.Current.JsonObject"/>.</param>
             /// <param name="defaultMatch">Match any other value.</param>
             /// <returns>An instance of the value returned by the match function.</returns>
             public TResult Match<TContext, TResult>(
                 in TContext context,
                 Matcher<Corvus.GeoJsonBenchmark.Current.JsonNull, TContext, TResult> matchJsonNull,
-                Matcher<Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.PropertiesEntity.OneOf1Entity, TContext, TResult> matchOneOf1Entity,
+                Matcher<Corvus.GeoJsonBenchmark.Current.JsonObject, TContext, TResult> matchJsonObject,
                 Matcher<Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.PropertiesEntity, TContext, TResult> defaultMatch)
 #if NET9_0_OR_GREATER
             where TContext : allows ref struct
@@ -666,9 +648,9 @@ public readonly partial struct GeoJsonSchema
                     return matchJsonNull(Corvus.GeoJsonBenchmark.Current.JsonNull.From(this), context);
                 }
 
-                if (Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.PropertiesEntity.OneOf1Entity.JsonSchema.Evaluate(_parent, _idx))
+                if (Corvus.GeoJsonBenchmark.Current.JsonObject.JsonSchema.Evaluate(_parent, _idx))
                 {
-                    return matchOneOf1Entity(Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.PropertiesEntity.OneOf1Entity.From(this), context);
+                    return matchJsonObject(Corvus.GeoJsonBenchmark.Current.JsonObject.From(this), context);
                 }
 
                 return defaultMatch(this, context);
@@ -679,12 +661,12 @@ public readonly partial struct GeoJsonSchema
             /// </summary>
             /// <typeparam name="TResult">The result of calling the match function.</typeparam>
             /// <param name="matchJsonNull">Match a <see cref="Corvus.GeoJsonBenchmark.Current.JsonNull"/>.</param>
-            /// <param name="matchOneOf1Entity">Match a <see cref="Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.PropertiesEntity.OneOf1Entity"/>.</param>
+            /// <param name="matchJsonObject">Match a <see cref="Corvus.GeoJsonBenchmark.Current.JsonObject"/>.</param>
             /// <param name="defaultMatch">Match any other value.</param>
             /// <returns>An instance of the value returned by the match function.</returns>
             public TResult Match<TResult>(
                 Matcher<Corvus.GeoJsonBenchmark.Current.JsonNull, TResult> matchJsonNull,
-                Matcher<Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.PropertiesEntity.OneOf1Entity, TResult> matchOneOf1Entity,
+                Matcher<Corvus.GeoJsonBenchmark.Current.JsonObject, TResult> matchJsonObject,
                 Matcher<Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.PropertiesEntity, TResult> defaultMatch)
             {
                 if (Corvus.GeoJsonBenchmark.Current.JsonNull.JsonSchema.Evaluate(_parent, _idx))
@@ -692,9 +674,9 @@ public readonly partial struct GeoJsonSchema
                     return matchJsonNull(Corvus.GeoJsonBenchmark.Current.JsonNull.From(this));
                 }
 
-                if (Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.PropertiesEntity.OneOf1Entity.JsonSchema.Evaluate(_parent, _idx))
+                if (Corvus.GeoJsonBenchmark.Current.JsonObject.JsonSchema.Evaluate(_parent, _idx))
                 {
-                    return matchOneOf1Entity(Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.PropertiesEntity.OneOf1Entity.From(this));
+                    return matchJsonObject(Corvus.GeoJsonBenchmark.Current.JsonObject.From(this));
                 }
 
                 return defaultMatch(this);

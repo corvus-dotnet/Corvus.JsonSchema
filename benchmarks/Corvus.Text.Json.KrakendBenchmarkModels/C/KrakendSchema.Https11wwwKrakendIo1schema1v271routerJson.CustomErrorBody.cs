@@ -129,11 +129,11 @@ public readonly partial struct KrakendSchema
             /// Write any JSON object structure you would like to return to users when they request an endpoint not known by KrakenD. 404 Not Found errors.
             /// </para>
             /// </remarks>
-            public Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271routerJson.CustomErrorBody.Type404Errors V404
+            public Corvus.KrakendBenchmark.Current.JsonObject V404
             {
                 get
                 {
-                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.V404Utf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271routerJson.CustomErrorBody.Type404Errors value))
+                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.V404Utf8, out Corvus.KrakendBenchmark.Current.JsonObject value))
                     {
                         return value;
                     }
@@ -151,11 +151,11 @@ public readonly partial struct KrakendSchema
             /// Write any JSON object structure you would like to return to users
             /// </para>
             /// </remarks>
-            public Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271routerJson.CustomErrorBody.Type405Errors V405
+            public Corvus.KrakendBenchmark.Current.JsonObject V405
             {
                 get
                 {
-                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.V405Utf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271routerJson.CustomErrorBody.Type405Errors value))
+                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.V405Utf8, out Corvus.KrakendBenchmark.Current.JsonObject value))
                     {
                         return value;
                     }
@@ -620,6 +620,23 @@ public readonly partial struct KrakendSchema
                 /// Gets the escaped UTF-8 JSON property name for <see cref="V405"/>.
                 /// </summary>
                 public static ReadOnlySpan<byte> V405 => "405"u8;
+            }
+
+            /// <summary>
+            /// Provides pre-baked property name blobs for fast builder property storage.
+            /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
+            /// </summary>
+            private static class JsonPropertyNamesPrebaked
+            {
+                /// <summary>
+                /// Gets the pre-baked property name blob for <see cref="V404"/>.
+                /// </summary>
+                public static ReadOnlySpan<byte> V404 => [0x55, 0x00, 0x00, 0x00, 0x22, 0x34, 0x30, 0x34, 0x22];
+
+                /// <summary>
+                /// Gets the pre-baked property name blob for <see cref="V405"/>.
+                /// </summary>
+                public static ReadOnlySpan<byte> V405 => [0x55, 0x00, 0x00, 0x00, 0x22, 0x34, 0x30, 0x35, 0x22];
             }
         }
     }

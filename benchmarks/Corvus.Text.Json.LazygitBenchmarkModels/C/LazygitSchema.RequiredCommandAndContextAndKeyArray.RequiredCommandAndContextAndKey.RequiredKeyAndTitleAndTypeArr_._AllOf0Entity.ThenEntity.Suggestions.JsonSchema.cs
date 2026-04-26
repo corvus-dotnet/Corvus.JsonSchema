@@ -114,17 +114,17 @@ public readonly partial struct LazygitSchema
                                     /// <summary>
                                     /// Gets a provider for the schema location from which this type was generated.
                                     /// </summary>
-                                    public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("https://json.schemastore.org/lazygit.json#/properties/customCommands/items/properties/prompts/items/allOf/0/then/properties/suggestions"u8, buffer, out written);
+                                    public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/properties/customCommands/items/properties/prompts/items/allOf/0/then/properties/suggestions"u8, buffer, out written);
 
                                     /// <summary>
                                     /// Gets the schema location from which this type was generated.
                                     /// </summary>
-                                    public const string SchemaLocation = "https://json.schemastore.org/lazygit.json#/properties/customCommands/items/properties/prompts/items/allOf/0/then/properties/suggestions";
+                                    public const string SchemaLocation = "/properties/customCommands/items/properties/prompts/items/allOf/0/then/properties/suggestions";
 
                                     /// <summary>
                                     /// Gets the schema location from which this type was generated as a UTF-8 string.
                                     /// </summary>
-                                    public static ReadOnlySpan<byte> SchemaLocationUtf8 => "https://json.schemastore.org/lazygit.json#/properties/customCommands/items/properties/prompts/items/allOf/0/then/properties/suggestions"u8;
+                                    public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/properties/customCommands/items/properties/prompts/items/allOf/0/then/properties/suggestions"u8;
                                     private static readonly JsonSchemaPathProvider OneOf0SchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/oneOf/0"u8, buffer, out written);
                                     private static readonly JsonSchemaPathProvider OneOf1SchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/oneOf/1"u8, buffer, out written);
 

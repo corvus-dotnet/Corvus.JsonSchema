@@ -435,7 +435,7 @@ public readonly partial struct FabricModSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Email, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Email, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -480,7 +480,7 @@ public readonly partial struct FabricModSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Homepage, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Homepage, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -525,7 +525,7 @@ public readonly partial struct FabricModSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Irc, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Irc, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -570,7 +570,7 @@ public readonly partial struct FabricModSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Issues, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Issues, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -615,7 +615,7 @@ public readonly partial struct FabricModSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Sources, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Sources, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -998,6 +998,24 @@ public readonly partial struct FabricModSchema
                 }
             }
 
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.JsonElement:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                        break;
+                    case Kind.Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
             internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
             {
                 switch(_kind)
@@ -1099,6 +1117,24 @@ public readonly partial struct FabricModSchema
                 }
             }
 
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.Source:
+                        _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                        break;
+                    case Kind.Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
             internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
             {
                 switch(_kind)
@@ -1183,11 +1219,11 @@ public readonly partial struct FabricModSchema
                 in Corvus.FabricModBenchmark.Current.JsonString.Source issues = default,
                 in Corvus.FabricModBenchmark.Current.JsonString.Source sources = default)
             {
-                email.AddAsProperty(JsonPropertyNamesEscaped.Email, ref builder, escapeName: false);
-                homepage.AddAsProperty(JsonPropertyNamesEscaped.Homepage, ref builder, escapeName: false);
-                irc.AddAsProperty(JsonPropertyNamesEscaped.Irc, ref builder, escapeName: false);
-                issues.AddAsProperty(JsonPropertyNamesEscaped.Issues, ref builder, escapeName: false);
-                sources.AddAsProperty(JsonPropertyNamesEscaped.Sources, ref builder, escapeName: false);
+                email.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Email, ref builder);
+                homepage.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Homepage, ref builder);
+                irc.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Irc, ref builder);
+                issues.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Issues, ref builder);
+                sources.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Sources, ref builder);
             }
 
             /// <summary>

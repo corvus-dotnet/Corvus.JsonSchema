@@ -817,5 +817,47 @@ public readonly partial struct KrakendSchema
             /// </summary>
             public static ReadOnlySpan<byte> TraceSampleRateValue => "trace_sample_rate"u8;
         }
+
+        /// <summary>
+        /// Provides pre-baked property name blobs for fast builder property storage.
+        /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
+        /// </summary>
+        private static class JsonPropertyNamesPrebaked
+        {
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="ExportersValue"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> ExportersValue => [0xB5, 0x00, 0x00, 0x00, 0x22, 0x65, 0x78, 0x70, 0x6F, 0x72, 0x74, 0x65, 0x72, 0x73, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="LayersValue"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> LayersValue => [0x85, 0x00, 0x00, 0x00, 0x22, 0x6C, 0x61, 0x79, 0x65, 0x72, 0x73, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="MetricReportingPeriod"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> MetricReportingPeriod => [0x95, 0x01, 0x00, 0x00, 0x22, 0x6D, 0x65, 0x74, 0x72, 0x69, 0x63, 0x5F, 0x72, 0x65, 0x70, 0x6F, 0x72, 0x74, 0x69, 0x6E, 0x67, 0x5F, 0x70, 0x65, 0x72, 0x69, 0x6F, 0x64, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="ServiceName"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> ServiceName => [0xE5, 0x00, 0x00, 0x00, 0x22, 0x73, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x5F, 0x6E, 0x61, 0x6D, 0x65, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="ServiceVersion"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> ServiceVersion => [0x15, 0x01, 0x00, 0x00, 0x22, 0x73, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x5F, 0x76, 0x65, 0x72, 0x73, 0x69, 0x6F, 0x6E, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="SkipPaths"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> SkipPaths => [0xC5, 0x00, 0x00, 0x00, 0x22, 0x73, 0x6B, 0x69, 0x70, 0x5F, 0x70, 0x61, 0x74, 0x68, 0x73, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="TraceSampleRateValue"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> TraceSampleRateValue => [0x35, 0x01, 0x00, 0x00, 0x22, 0x74, 0x72, 0x61, 0x63, 0x65, 0x5F, 0x73, 0x61, 0x6D, 0x70, 0x6C, 0x65, 0x5F, 0x72, 0x61, 0x74, 0x65, 0x22];
+        }
     }
 }

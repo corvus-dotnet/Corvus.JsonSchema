@@ -787,6 +787,43 @@ public readonly partial struct KrakendSchema
                 /// </summary>
                 public static ReadOnlySpan<byte> Name => "name"u8;
             }
+
+            /// <summary>
+            /// Provides pre-baked property name blobs for fast builder property storage.
+            /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
+            /// </summary>
+            private static class JsonPropertyNamesPrebaked
+            {
+                /// <summary>
+                /// Gets the pre-baked property name blob for <see cref="Backend"/>.
+                /// </summary>
+                public static ReadOnlySpan<byte> Backend => [0x95, 0x00, 0x00, 0x00, 0x22, 0x62, 0x61, 0x63, 0x6B, 0x65, 0x6E, 0x64, 0x22];
+
+                /// <summary>
+                /// Gets the pre-baked property name blob for <see cref="ConnectionValue"/>.
+                /// </summary>
+                public static ReadOnlySpan<byte> ConnectionValue => [0xC5, 0x00, 0x00, 0x00, 0x22, 0x63, 0x6F, 0x6E, 0x6E, 0x65, 0x63, 0x74, 0x69, 0x6F, 0x6E, 0x22];
+
+                /// <summary>
+                /// Gets the pre-baked property name blob for <see cref="ConsumerValue"/>.
+                /// </summary>
+                public static ReadOnlySpan<byte> ConsumerValue => [0xA5, 0x00, 0x00, 0x00, 0x22, 0x63, 0x6F, 0x6E, 0x73, 0x75, 0x6D, 0x65, 0x72, 0x22];
+
+                /// <summary>
+                /// Gets the pre-baked property name blob for <see cref="Encoding"/>.
+                /// </summary>
+                public static ReadOnlySpan<byte> Encoding => [0xA5, 0x00, 0x00, 0x00, 0x22, 0x65, 0x6E, 0x63, 0x6F, 0x64, 0x69, 0x6E, 0x67, 0x22];
+
+                /// <summary>
+                /// Gets the pre-baked property name blob for <see cref="ExtraConfig"/>.
+                /// </summary>
+                public static ReadOnlySpan<byte> ExtraConfig => [0xE5, 0x00, 0x00, 0x00, 0x22, 0x65, 0x78, 0x74, 0x72, 0x61, 0x5F, 0x63, 0x6F, 0x6E, 0x66, 0x69, 0x67, 0x22];
+
+                /// <summary>
+                /// Gets the pre-baked property name blob for <see cref="Name"/>.
+                /// </summary>
+                public static ReadOnlySpan<byte> Name => [0x65, 0x00, 0x00, 0x00, 0x22, 0x6E, 0x61, 0x6D, 0x65, 0x22];
+            }
         }
     }
 }

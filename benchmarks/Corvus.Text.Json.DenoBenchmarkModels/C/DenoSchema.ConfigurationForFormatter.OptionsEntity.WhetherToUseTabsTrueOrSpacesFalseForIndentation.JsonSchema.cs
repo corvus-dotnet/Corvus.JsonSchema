@@ -69,17 +69,17 @@ public readonly partial struct DenoSchema
                     /// <summary>
                     /// Gets a provider for the schema location from which this type was generated.
                     /// </summary>
-                    public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("https://deno.land/x/deno/cli/schemas/config-file.v1.json#/properties/fmt/properties/options/properties/useTabs"u8, buffer, out written);
+                    public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/properties/fmt/properties/options/properties/useTabs"u8, buffer, out written);
 
                     /// <summary>
                     /// Gets the schema location from which this type was generated.
                     /// </summary>
-                    public const string SchemaLocation = "https://deno.land/x/deno/cli/schemas/config-file.v1.json#/properties/fmt/properties/options/properties/useTabs";
+                    public const string SchemaLocation = "/properties/fmt/properties/options/properties/useTabs";
 
                     /// <summary>
                     /// Gets the schema location from which this type was generated as a UTF-8 string.
                     /// </summary>
-                    public static ReadOnlySpan<byte> SchemaLocationUtf8 => "https://deno.land/x/deno/cli/schemas/config-file.v1.json#/properties/fmt/properties/options/properties/useTabs"u8;
+                    public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/properties/fmt/properties/options/properties/useTabs"u8;
 
                     /// <summary>
                     /// Applies the JSON schema semantics defined by this type to the instance determined by the given document and index.

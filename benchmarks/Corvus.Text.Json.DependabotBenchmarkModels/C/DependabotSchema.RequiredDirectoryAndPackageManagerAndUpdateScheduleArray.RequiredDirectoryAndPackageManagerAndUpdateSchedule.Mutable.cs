@@ -617,7 +617,7 @@ public readonly partial struct DependabotSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.AllowedUpdates, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AllowedUpdates, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -653,7 +653,7 @@ public readonly partial struct DependabotSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.AllowedUpdates, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AllowedUpdates, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -698,7 +698,7 @@ public readonly partial struct DependabotSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.AutomergedUpdates, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AutomergedUpdates, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -734,7 +734,7 @@ public readonly partial struct DependabotSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.AutomergedUpdates, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AutomergedUpdates, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -779,7 +779,7 @@ public readonly partial struct DependabotSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.CommitMessage, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CommitMessage, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -815,7 +815,7 @@ public readonly partial struct DependabotSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.CommitMessage, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CommitMessage, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -860,7 +860,7 @@ public readonly partial struct DependabotSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.DefaultAssignees, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DefaultAssignees, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -896,7 +896,7 @@ public readonly partial struct DependabotSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.DefaultAssignees, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DefaultAssignees, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -941,7 +941,7 @@ public readonly partial struct DependabotSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.DefaultLabels, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DefaultLabels, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -977,7 +977,7 @@ public readonly partial struct DependabotSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.DefaultLabels, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DefaultLabels, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -1022,7 +1022,7 @@ public readonly partial struct DependabotSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.DefaultMilestone, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DefaultMilestone, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -1067,7 +1067,7 @@ public readonly partial struct DependabotSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.DefaultReviewers, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DefaultReviewers, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -1103,7 +1103,7 @@ public readonly partial struct DependabotSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.DefaultReviewers, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DefaultReviewers, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -1146,7 +1146,7 @@ public readonly partial struct DependabotSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.Directory, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Directory, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -1179,7 +1179,7 @@ public readonly partial struct DependabotSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.IgnoredUpdates, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IgnoredUpdates, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -1215,7 +1215,7 @@ public readonly partial struct DependabotSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.IgnoredUpdates, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IgnoredUpdates, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -1258,7 +1258,7 @@ public readonly partial struct DependabotSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.PackageManager, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PackageManager, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -1291,7 +1291,7 @@ public readonly partial struct DependabotSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.TargetBranch, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TargetBranch, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -1327,7 +1327,7 @@ public readonly partial struct DependabotSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.TargetBranch, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TargetBranch, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -1370,7 +1370,7 @@ public readonly partial struct DependabotSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.UpdateSchedule, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.UpdateSchedule, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -1403,7 +1403,7 @@ public readonly partial struct DependabotSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.VersionRequirementUpdates, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.VersionRequirementUpdates, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -1786,6 +1786,24 @@ public readonly partial struct DependabotSchema
                     }
                 }
 
+                internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+                {
+                    switch(_kind)
+                    {
+                        case Kind.Unknown:
+                            break;
+                        case Kind.JsonElement:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                            break;
+                        case Kind.Builder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
+                            break;
+                        default:
+                            Debug.Fail("Unexpected Kind");
+                            break;
+                    }
+                }
+
                 internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
                 {
                     switch(_kind)
@@ -1887,6 +1905,24 @@ public readonly partial struct DependabotSchema
                     }
                 }
 
+                internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+                {
+                    switch(_kind)
+                    {
+                        case Kind.Unknown:
+                            break;
+                        case Kind.Source:
+                            _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                            break;
+                        case Kind.Builder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
+                            break;
+                        default:
+                            Debug.Fail("Unexpected Kind");
+                            break;
+                    }
+                }
+
                 internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
                 {
                     switch(_kind)
@@ -1979,19 +2015,19 @@ public readonly partial struct DependabotSchema
                     in Corvus.DependabotBenchmark.Current.DependabotSchema.RequiredDirectoryAndPackageManagerAndUpdateScheduleArray.RequiredDirectoryAndPackageManagerAndUpdateSchedule.TargetBranchEntity.Source targetBranch = default,
                     in Corvus.DependabotBenchmark.Current.DependabotSchema.RequiredDirectoryAndPackageManagerAndUpdateScheduleArray.RequiredDirectoryAndPackageManagerAndUpdateSchedule.VersionRequirementUpdatesEntity.Source versionRequirementUpdates = default)
                 {
-                    directory.AddAsProperty(JsonPropertyNamesEscaped.Directory, ref builder, escapeName: false);
-                    packageManager.AddAsProperty(JsonPropertyNamesEscaped.PackageManager, ref builder, escapeName: false);
-                    updateSchedule.AddAsProperty(JsonPropertyNamesEscaped.UpdateSchedule, ref builder, escapeName: false);
-                    allowedUpdates.AddAsProperty(JsonPropertyNamesEscaped.AllowedUpdates, ref builder, escapeName: false);
-                    automergedUpdates.AddAsProperty(JsonPropertyNamesEscaped.AutomergedUpdates, ref builder, escapeName: false);
-                    commitMessage.AddAsProperty(JsonPropertyNamesEscaped.CommitMessage, ref builder, escapeName: false);
-                    defaultAssignees.AddAsProperty(JsonPropertyNamesEscaped.DefaultAssignees, ref builder, escapeName: false);
-                    defaultLabels.AddAsProperty(JsonPropertyNamesEscaped.DefaultLabels, ref builder, escapeName: false);
-                    defaultMilestone.AddAsProperty(JsonPropertyNamesEscaped.DefaultMilestone, ref builder, escapeName: false);
-                    defaultReviewers.AddAsProperty(JsonPropertyNamesEscaped.DefaultReviewers, ref builder, escapeName: false);
-                    ignoredUpdates.AddAsProperty(JsonPropertyNamesEscaped.IgnoredUpdates, ref builder, escapeName: false);
-                    targetBranch.AddAsProperty(JsonPropertyNamesEscaped.TargetBranch, ref builder, escapeName: false);
-                    versionRequirementUpdates.AddAsProperty(JsonPropertyNamesEscaped.VersionRequirementUpdates, ref builder, escapeName: false);
+                    directory.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Directory, ref builder);
+                    packageManager.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PackageManager, ref builder);
+                    updateSchedule.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.UpdateSchedule, ref builder);
+                    allowedUpdates.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AllowedUpdates, ref builder);
+                    automergedUpdates.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AutomergedUpdates, ref builder);
+                    commitMessage.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CommitMessage, ref builder);
+                    defaultAssignees.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DefaultAssignees, ref builder);
+                    defaultLabels.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DefaultLabels, ref builder);
+                    defaultMilestone.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DefaultMilestone, ref builder);
+                    defaultReviewers.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DefaultReviewers, ref builder);
+                    ignoredUpdates.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IgnoredUpdates, ref builder);
+                    targetBranch.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TargetBranch, ref builder);
+                    versionRequirementUpdates.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.VersionRequirementUpdates, ref builder);
                 }
 
                 /// <summary>
@@ -2038,19 +2074,19 @@ public readonly partial struct DependabotSchema
                 where TContext : allows ref struct
                 #endif
                 {
-                    directory.AddAsProperty(JsonPropertyNamesEscaped.Directory, ref builder, escapeName: false);
-                    packageManager.AddAsProperty(JsonPropertyNamesEscaped.PackageManager, ref builder, escapeName: false);
-                    updateSchedule.AddAsProperty(JsonPropertyNamesEscaped.UpdateSchedule, ref builder, escapeName: false);
-                    allowedUpdates.AddAsProperty(JsonPropertyNamesEscaped.AllowedUpdates, ref builder, escapeName: false);
-                    automergedUpdates.AddAsProperty(JsonPropertyNamesEscaped.AutomergedUpdates, ref builder, escapeName: false);
-                    commitMessage.AddAsProperty(JsonPropertyNamesEscaped.CommitMessage, ref builder, escapeName: false);
-                    defaultAssignees.AddAsProperty(JsonPropertyNamesEscaped.DefaultAssignees, ref builder, escapeName: false);
-                    defaultLabels.AddAsProperty(JsonPropertyNamesEscaped.DefaultLabels, ref builder, escapeName: false);
-                    defaultMilestone.AddAsProperty(JsonPropertyNamesEscaped.DefaultMilestone, ref builder, escapeName: false);
-                    defaultReviewers.AddAsProperty(JsonPropertyNamesEscaped.DefaultReviewers, ref builder, escapeName: false);
-                    ignoredUpdates.AddAsProperty(JsonPropertyNamesEscaped.IgnoredUpdates, ref builder, escapeName: false);
-                    targetBranch.AddAsProperty(JsonPropertyNamesEscaped.TargetBranch, ref builder, escapeName: false);
-                    versionRequirementUpdates.AddAsProperty(JsonPropertyNamesEscaped.VersionRequirementUpdates, ref builder, escapeName: false);
+                    directory.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Directory, ref builder);
+                    packageManager.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PackageManager, ref builder);
+                    updateSchedule.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.UpdateSchedule, ref builder);
+                    allowedUpdates.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AllowedUpdates, ref builder);
+                    automergedUpdates.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AutomergedUpdates, ref builder);
+                    commitMessage.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CommitMessage, ref builder);
+                    defaultAssignees.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DefaultAssignees, ref builder);
+                    defaultLabels.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DefaultLabels, ref builder);
+                    defaultMilestone.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DefaultMilestone, ref builder);
+                    defaultReviewers.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DefaultReviewers, ref builder);
+                    ignoredUpdates.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IgnoredUpdates, ref builder);
+                    targetBranch.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TargetBranch, ref builder);
+                    versionRequirementUpdates.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.VersionRequirementUpdates, ref builder);
                 }
 
                 /// <summary>

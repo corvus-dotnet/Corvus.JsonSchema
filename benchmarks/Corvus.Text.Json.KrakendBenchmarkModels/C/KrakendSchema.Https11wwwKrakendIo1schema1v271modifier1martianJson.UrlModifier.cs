@@ -801,6 +801,38 @@ public readonly partial struct KrakendSchema
                 /// </summary>
                 public static ReadOnlySpan<byte> ScopeValue => "scope"u8;
             }
+
+            /// <summary>
+            /// Provides pre-baked property name blobs for fast builder property storage.
+            /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
+            /// </summary>
+            private static class JsonPropertyNamesPrebaked
+            {
+                /// <summary>
+                /// Gets the pre-baked property name blob for <see cref="Host"/>.
+                /// </summary>
+                public static ReadOnlySpan<byte> Host => [0x65, 0x00, 0x00, 0x00, 0x22, 0x68, 0x6F, 0x73, 0x74, 0x22];
+
+                /// <summary>
+                /// Gets the pre-baked property name blob for <see cref="Path"/>.
+                /// </summary>
+                public static ReadOnlySpan<byte> Path => [0x65, 0x00, 0x00, 0x00, 0x22, 0x70, 0x61, 0x74, 0x68, 0x22];
+
+                /// <summary>
+                /// Gets the pre-baked property name blob for <see cref="Query"/>.
+                /// </summary>
+                public static ReadOnlySpan<byte> Query => [0x75, 0x00, 0x00, 0x00, 0x22, 0x71, 0x75, 0x65, 0x72, 0x79, 0x22];
+
+                /// <summary>
+                /// Gets the pre-baked property name blob for <see cref="Scheme"/>.
+                /// </summary>
+                public static ReadOnlySpan<byte> Scheme => [0x85, 0x00, 0x00, 0x00, 0x22, 0x73, 0x63, 0x68, 0x65, 0x6D, 0x65, 0x22];
+
+                /// <summary>
+                /// Gets the pre-baked property name blob for <see cref="ScopeValue"/>.
+                /// </summary>
+                public static ReadOnlySpan<byte> ScopeValue => [0x75, 0x00, 0x00, 0x00, 0x22, 0x73, 0x63, 0x6F, 0x70, 0x65, 0x22];
+            }
         }
     }
 }

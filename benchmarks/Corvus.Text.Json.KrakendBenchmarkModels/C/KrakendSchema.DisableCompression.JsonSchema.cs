@@ -52,17 +52,17 @@ public readonly partial struct KrakendSchema
             /// <summary>
             /// Gets a provider for the schema location from which this type was generated.
             /// </summary>
-            public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("krakend-schema.json#/properties/disable_compression"u8, buffer, out written);
+            public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/properties/disable_compression"u8, buffer, out written);
 
             /// <summary>
             /// Gets the schema location from which this type was generated.
             /// </summary>
-            public const string SchemaLocation = "krakend-schema.json#/properties/disable_compression";
+            public const string SchemaLocation = "/properties/disable_compression";
 
             /// <summary>
             /// Gets the schema location from which this type was generated as a UTF-8 string.
             /// </summary>
-            public static ReadOnlySpan<byte> SchemaLocationUtf8 => "krakend-schema.json#/properties/disable_compression"u8;
+            public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/properties/disable_compression"u8;
 
             /// <summary>
             /// Applies the JSON schema semantics defined by this type to the instance determined by the given document and index.

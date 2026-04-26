@@ -1088,6 +1088,27 @@ public readonly partial struct CmakePresetsSchema
                         }
                     }
 
+                    internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+                    {
+                        switch(_kind)
+                        {
+                            case Kind.Unknown:
+                                break;
+                            case Kind.JsonElement:
+                                valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                                break;
+                            case Kind.ObjectBuilder:
+                                valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => ObjectBuilder.BuildValue(b, ref o));
+                                break;
+                            case Kind.ArrayBuilder:
+                                valueBuilder.AddPrebakedProperty(prebakedPropertyName, _arrayBuilder!, static (in b, ref o) => ArrayBuilder.BuildValue(b, ref o));
+                                break;
+                            default:
+                                Debug.Fail("Unexpected Kind");
+                                break;
+                        }
+                    }
+
                     internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
                     {
                         switch(_kind)
@@ -1198,6 +1219,27 @@ public readonly partial struct CmakePresetsSchema
                                 break;
                             case Kind.ArrayBuilder:
                                 valueBuilder.AddProperty(utf8Name, BuildWithContext.Create(_context, _arrayBuilder!), static (in b, ref o) => ArrayBuilder.BuildValue(b.Context, b.Build, ref o), escapeName, nameRequiresUnescaping);
+                                break;
+                            default:
+                                Debug.Fail("Unexpected Kind");
+                                break;
+                        }
+                    }
+
+                    internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+                    {
+                        switch(_kind)
+                        {
+                            case Kind.Unknown:
+                                break;
+                            case Kind.Source:
+                                _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                                break;
+                            case Kind.ObjectBuilder:
+                                valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => ObjectBuilder.BuildValue(b.Context, b.Build, ref o));
+                                break;
+                            case Kind.ArrayBuilder:
+                                valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _arrayBuilder!), static (in b, ref o) => ArrayBuilder.BuildValue(b.Context, b.Build, ref o));
                                 break;
                             default:
                                 Debug.Fail("Unexpected Kind");

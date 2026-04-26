@@ -175,11 +175,11 @@ public readonly partial struct KrakendSchema
         /// See: https://www.krakend.io/docs/enterprise/endpoints/serve-static-content/
         /// </para>
         /// </remarks>
-        public Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271plugin1staticFilesystemJson.SkipPaths Skip
+        public Corvus.KrakendBenchmark.Current.JsonArray Skip
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SkipUtf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271plugin1staticFilesystemJson.SkipPaths value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SkipUtf8, out Corvus.KrakendBenchmark.Current.JsonArray value))
                 {
                     return value;
                 }
@@ -659,6 +659,28 @@ public readonly partial struct KrakendSchema
             /// Gets the escaped UTF-8 JSON property name for <see cref="Skip"/>.
             /// </summary>
             public static ReadOnlySpan<byte> Skip => "skip"u8;
+        }
+
+        /// <summary>
+        /// Provides pre-baked property name blobs for fast builder property storage.
+        /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
+        /// </summary>
+        private static class JsonPropertyNamesPrebaked
+        {
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Path"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Path => [0x65, 0x00, 0x00, 0x00, 0x22, 0x70, 0x61, 0x74, 0x68, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Prefix"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Prefix => [0x85, 0x00, 0x00, 0x00, 0x22, 0x70, 0x72, 0x65, 0x66, 0x69, 0x78, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Skip"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Skip => [0x65, 0x00, 0x00, 0x00, 0x22, 0x73, 0x6B, 0x69, 0x70, 0x22];
         }
     }
 }

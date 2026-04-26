@@ -173,11 +173,11 @@ public readonly partial struct KrakendSchema
                 /// See: https://www.krakend.io/docs/telemetry/datadog/
                 /// </para>
                 /// </remarks>
-                public Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271telemetry1opencensusJson.Exporters.Datadog.GlobalTags GlobalTagsValue
+                public Corvus.KrakendBenchmark.Current.JsonObject GlobalTags
                 {
                     get
                     {
-                        if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.GlobalTagsValueUtf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271telemetry1opencensusJson.Exporters.Datadog.GlobalTags value))
+                        if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.GlobalTagsUtf8, out Corvus.KrakendBenchmark.Current.JsonObject value))
                         {
                             return value;
                         }
@@ -285,11 +285,11 @@ public readonly partial struct KrakendSchema
                 /// See: https://www.krakend.io/docs/telemetry/datadog/
                 /// </para>
                 /// </remarks>
-                public Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271telemetry1opencensusJson.Exporters.Datadog.Tags TagsValue
+                public Corvus.KrakendBenchmark.Current.JsonArray Tags
                 {
                     get
                     {
-                        if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TagsValueUtf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271telemetry1opencensusJson.Exporters.Datadog.Tags value))
+                        if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TagsUtf8, out Corvus.KrakendBenchmark.Current.JsonArray value))
                         {
                             return value;
                         }
@@ -753,9 +753,9 @@ public readonly partial struct KrakendSchema
                     public const string DisableCountPerBucketsValue = "disable_count_per_buckets";
 
                     /// <summary>
-                    /// Gets the JSON property name for <see cref="GlobalTagsValue"/>.
+                    /// Gets the JSON property name for <see cref="GlobalTags"/>.
                     /// </summary>
-                    public const string GlobalTagsValue = "global_tags";
+                    public const string GlobalTags = "global_tags";
 
                     /// <summary>
                     /// Gets the JSON property name for <see cref="Namespace"/>.
@@ -773,9 +773,9 @@ public readonly partial struct KrakendSchema
                     public const string StatsAddressValue = "stats_address";
 
                     /// <summary>
-                    /// Gets the JSON property name for <see cref="TagsValue"/>.
+                    /// Gets the JSON property name for <see cref="Tags"/>.
                     /// </summary>
-                    public const string TagsValue = "tags";
+                    public const string Tags = "tags";
 
                     /// <summary>
                     /// Gets the JSON property name for <see cref="TraceAddressValue"/>.
@@ -788,9 +788,9 @@ public readonly partial struct KrakendSchema
                     public static ReadOnlySpan<byte> DisableCountPerBucketsValueUtf8 => "disable_count_per_buckets"u8;
 
                     /// <summary>
-                    /// Gets the JSON property name for <see cref="GlobalTagsValue"/>.
+                    /// Gets the JSON property name for <see cref="GlobalTags"/>.
                     /// </summary>
-                    public static ReadOnlySpan<byte> GlobalTagsValueUtf8 => "global_tags"u8;
+                    public static ReadOnlySpan<byte> GlobalTagsUtf8 => "global_tags"u8;
 
                     /// <summary>
                     /// Gets the JSON property name for <see cref="Namespace"/>.
@@ -808,9 +808,9 @@ public readonly partial struct KrakendSchema
                     public static ReadOnlySpan<byte> StatsAddressValueUtf8 => "stats_address"u8;
 
                     /// <summary>
-                    /// Gets the JSON property name for <see cref="TagsValue"/>.
+                    /// Gets the JSON property name for <see cref="Tags"/>.
                     /// </summary>
-                    public static ReadOnlySpan<byte> TagsValueUtf8 => "tags"u8;
+                    public static ReadOnlySpan<byte> TagsUtf8 => "tags"u8;
 
                     /// <summary>
                     /// Gets the JSON property name for <see cref="TraceAddressValue"/>.
@@ -829,9 +829,9 @@ public readonly partial struct KrakendSchema
                     public static ReadOnlySpan<byte> DisableCountPerBucketsValue => "disable_count_per_buckets"u8;
 
                     /// <summary>
-                    /// Gets the escaped UTF-8 JSON property name for <see cref="GlobalTagsValue"/>.
+                    /// Gets the escaped UTF-8 JSON property name for <see cref="GlobalTags"/>.
                     /// </summary>
-                    public static ReadOnlySpan<byte> GlobalTagsValue => "global_tags"u8;
+                    public static ReadOnlySpan<byte> GlobalTags => "global_tags"u8;
 
                     /// <summary>
                     /// Gets the escaped UTF-8 JSON property name for <see cref="Namespace"/>.
@@ -849,14 +849,56 @@ public readonly partial struct KrakendSchema
                     public static ReadOnlySpan<byte> StatsAddressValue => "stats_address"u8;
 
                     /// <summary>
-                    /// Gets the escaped UTF-8 JSON property name for <see cref="TagsValue"/>.
+                    /// Gets the escaped UTF-8 JSON property name for <see cref="Tags"/>.
                     /// </summary>
-                    public static ReadOnlySpan<byte> TagsValue => "tags"u8;
+                    public static ReadOnlySpan<byte> Tags => "tags"u8;
 
                     /// <summary>
                     /// Gets the escaped UTF-8 JSON property name for <see cref="TraceAddressValue"/>.
                     /// </summary>
                     public static ReadOnlySpan<byte> TraceAddressValue => "trace_address"u8;
+                }
+
+                /// <summary>
+                /// Provides pre-baked property name blobs for fast builder property storage.
+                /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
+                /// </summary>
+                private static class JsonPropertyNamesPrebaked
+                {
+                    /// <summary>
+                    /// Gets the pre-baked property name blob for <see cref="DisableCountPerBucketsValue"/>.
+                    /// </summary>
+                    public static ReadOnlySpan<byte> DisableCountPerBucketsValue => [0xB5, 0x01, 0x00, 0x00, 0x22, 0x64, 0x69, 0x73, 0x61, 0x62, 0x6C, 0x65, 0x5F, 0x63, 0x6F, 0x75, 0x6E, 0x74, 0x5F, 0x70, 0x65, 0x72, 0x5F, 0x62, 0x75, 0x63, 0x6B, 0x65, 0x74, 0x73, 0x22];
+
+                    /// <summary>
+                    /// Gets the pre-baked property name blob for <see cref="GlobalTags"/>.
+                    /// </summary>
+                    public static ReadOnlySpan<byte> GlobalTags => [0xD5, 0x00, 0x00, 0x00, 0x22, 0x67, 0x6C, 0x6F, 0x62, 0x61, 0x6C, 0x5F, 0x74, 0x61, 0x67, 0x73, 0x22];
+
+                    /// <summary>
+                    /// Gets the pre-baked property name blob for <see cref="Namespace"/>.
+                    /// </summary>
+                    public static ReadOnlySpan<byte> Namespace => [0xB5, 0x00, 0x00, 0x00, 0x22, 0x6E, 0x61, 0x6D, 0x65, 0x73, 0x70, 0x61, 0x63, 0x65, 0x22];
+
+                    /// <summary>
+                    /// Gets the pre-baked property name blob for <see cref="Service"/>.
+                    /// </summary>
+                    public static ReadOnlySpan<byte> Service => [0x95, 0x00, 0x00, 0x00, 0x22, 0x73, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x22];
+
+                    /// <summary>
+                    /// Gets the pre-baked property name blob for <see cref="StatsAddressValue"/>.
+                    /// </summary>
+                    public static ReadOnlySpan<byte> StatsAddressValue => [0xF5, 0x00, 0x00, 0x00, 0x22, 0x73, 0x74, 0x61, 0x74, 0x73, 0x5F, 0x61, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73, 0x22];
+
+                    /// <summary>
+                    /// Gets the pre-baked property name blob for <see cref="Tags"/>.
+                    /// </summary>
+                    public static ReadOnlySpan<byte> Tags => [0x65, 0x00, 0x00, 0x00, 0x22, 0x74, 0x61, 0x67, 0x73, 0x22];
+
+                    /// <summary>
+                    /// Gets the pre-baked property name blob for <see cref="TraceAddressValue"/>.
+                    /// </summary>
+                    public static ReadOnlySpan<byte> TraceAddressValue => [0xF5, 0x00, 0x00, 0x00, 0x22, 0x74, 0x72, 0x61, 0x63, 0x65, 0x5F, 0x61, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73, 0x22];
                 }
             }
         }

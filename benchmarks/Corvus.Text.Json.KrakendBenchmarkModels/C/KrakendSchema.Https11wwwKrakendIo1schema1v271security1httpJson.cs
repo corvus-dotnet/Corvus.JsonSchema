@@ -313,11 +313,11 @@ public readonly partial struct KrakendSchema
         /// See: https://www.krakend.io/docs/service-settings/security/
         /// </para>
         /// </remarks>
-        public Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.SslHost HostProxyHeaders
+        public Corvus.KrakendBenchmark.Current.JsonArray HostProxyHeaders
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.HostProxyHeadersUtf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.SslHost value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.HostProxyHeadersUtf8, out Corvus.KrakendBenchmark.Current.JsonArray value))
                 {
                     return value;
                 }
@@ -413,16 +413,16 @@ public readonly partial struct KrakendSchema
         /// See: https://www.krakend.io/docs/service-settings/security/
         /// </para>
         /// </remarks>
-        public Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.Https11wwwKrakendIo1schema1v271security1httpJsonSslHost SslHostValue
+        public Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.SslHost SslHostValue
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SslHostValueUtf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.Https11wwwKrakendIo1schema1v271security1httpJsonSslHost value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SslHostValueUtf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.SslHost value))
                 {
                     return value;
                 }
 
-                return Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.Https11wwwKrakendIo1schema1v271security1httpJsonSslHost.DefaultInstance;
+                return Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.SslHost.DefaultInstance;
             }
         }
 
@@ -438,11 +438,11 @@ public readonly partial struct KrakendSchema
         /// See: https://www.krakend.io/docs/service-settings/security/
         /// </para>
         /// </remarks>
-        public Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.SslProxyHeaders SslProxyHeadersValue
+        public Corvus.KrakendBenchmark.Current.JsonObject SslProxyHeaders
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SslProxyHeadersValueUtf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.SslProxyHeaders value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SslProxyHeadersUtf8, out Corvus.KrakendBenchmark.Current.JsonObject value))
                 {
                     return value;
                 }
@@ -1013,9 +1013,9 @@ public readonly partial struct KrakendSchema
             public const string SslHostValue = "ssl_host";
 
             /// <summary>
-            /// Gets the JSON property name for <see cref="SslProxyHeadersValue"/>.
+            /// Gets the JSON property name for <see cref="SslProxyHeaders"/>.
             /// </summary>
-            public const string SslProxyHeadersValue = "ssl_proxy_headers";
+            public const string SslProxyHeaders = "ssl_proxy_headers";
 
             /// <summary>
             /// Gets the JSON property name for <see cref="SslRedirectValue"/>.
@@ -1098,9 +1098,9 @@ public readonly partial struct KrakendSchema
             public static ReadOnlySpan<byte> SslHostValueUtf8 => "ssl_host"u8;
 
             /// <summary>
-            /// Gets the JSON property name for <see cref="SslProxyHeadersValue"/>.
+            /// Gets the JSON property name for <see cref="SslProxyHeaders"/>.
             /// </summary>
-            public static ReadOnlySpan<byte> SslProxyHeadersValueUtf8 => "ssl_proxy_headers"u8;
+            public static ReadOnlySpan<byte> SslProxyHeadersUtf8 => "ssl_proxy_headers"u8;
 
             /// <summary>
             /// Gets the JSON property name for <see cref="SslRedirectValue"/>.
@@ -1189,9 +1189,9 @@ public readonly partial struct KrakendSchema
             public static ReadOnlySpan<byte> SslHostValue => "ssl_host"u8;
 
             /// <summary>
-            /// Gets the escaped UTF-8 JSON property name for <see cref="SslProxyHeadersValue"/>.
+            /// Gets the escaped UTF-8 JSON property name for <see cref="SslProxyHeaders"/>.
             /// </summary>
-            public static ReadOnlySpan<byte> SslProxyHeadersValue => "ssl_proxy_headers"u8;
+            public static ReadOnlySpan<byte> SslProxyHeaders => "ssl_proxy_headers"u8;
 
             /// <summary>
             /// Gets the escaped UTF-8 JSON property name for <see cref="SslRedirectValue"/>.
@@ -1207,6 +1207,98 @@ public readonly partial struct KrakendSchema
             /// Gets the escaped UTF-8 JSON property name for <see cref="StsSeconds"/>.
             /// </summary>
             public static ReadOnlySpan<byte> StsSeconds => "sts_seconds"u8;
+        }
+
+        /// <summary>
+        /// Provides pre-baked property name blobs for fast builder property storage.
+        /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
+        /// </summary>
+        private static class JsonPropertyNamesPrebaked
+        {
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="AllowedHostsValue"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> AllowedHostsValue => [0xF5, 0x00, 0x00, 0x00, 0x22, 0x61, 0x6C, 0x6C, 0x6F, 0x77, 0x65, 0x64, 0x5F, 0x68, 0x6F, 0x73, 0x74, 0x73, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="AllowedHostsAreRegex"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> AllowedHostsAreRegex => [0x95, 0x01, 0x00, 0x00, 0x22, 0x61, 0x6C, 0x6C, 0x6F, 0x77, 0x65, 0x64, 0x5F, 0x68, 0x6F, 0x73, 0x74, 0x73, 0x5F, 0x61, 0x72, 0x65, 0x5F, 0x72, 0x65, 0x67, 0x65, 0x78, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="BrowserXssFilter"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> BrowserXssFilter => [0x45, 0x01, 0x00, 0x00, 0x22, 0x62, 0x72, 0x6F, 0x77, 0x73, 0x65, 0x72, 0x5F, 0x78, 0x73, 0x73, 0x5F, 0x66, 0x69, 0x6C, 0x74, 0x65, 0x72, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="ContentSecurityPolicy"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> ContentSecurityPolicy => [0x95, 0x01, 0x00, 0x00, 0x22, 0x63, 0x6F, 0x6E, 0x74, 0x65, 0x6E, 0x74, 0x5F, 0x73, 0x65, 0x63, 0x75, 0x72, 0x69, 0x74, 0x79, 0x5F, 0x70, 0x6F, 0x6C, 0x69, 0x63, 0x79, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="ContentTypeNosniff"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> ContentTypeNosniff => [0x65, 0x01, 0x00, 0x00, 0x22, 0x63, 0x6F, 0x6E, 0x74, 0x65, 0x6E, 0x74, 0x5F, 0x74, 0x79, 0x70, 0x65, 0x5F, 0x6E, 0x6F, 0x73, 0x6E, 0x69, 0x66, 0x66, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="CustomFrameOptionsValue"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> CustomFrameOptionsValue => [0xC5, 0x01, 0x00, 0x00, 0x22, 0x63, 0x75, 0x73, 0x74, 0x6F, 0x6D, 0x5F, 0x66, 0x72, 0x61, 0x6D, 0x65, 0x5F, 0x6F, 0x70, 0x74, 0x69, 0x6F, 0x6E, 0x73, 0x5F, 0x76, 0x61, 0x6C, 0x75, 0x65, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="ForceStsHeaderValue"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> ForceStsHeaderValue => [0x25, 0x01, 0x00, 0x00, 0x22, 0x66, 0x6F, 0x72, 0x63, 0x65, 0x5F, 0x73, 0x74, 0x73, 0x5F, 0x68, 0x65, 0x61, 0x64, 0x65, 0x72, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="FrameDeny"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> FrameDeny => [0xC5, 0x00, 0x00, 0x00, 0x22, 0x66, 0x72, 0x61, 0x6D, 0x65, 0x5F, 0x64, 0x65, 0x6E, 0x79, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="HostProxyHeaders"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> HostProxyHeaders => [0x45, 0x01, 0x00, 0x00, 0x22, 0x68, 0x6F, 0x73, 0x74, 0x5F, 0x70, 0x72, 0x6F, 0x78, 0x79, 0x5F, 0x68, 0x65, 0x61, 0x64, 0x65, 0x72, 0x73, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="HpkpPublicKey"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> HpkpPublicKey => [0x15, 0x01, 0x00, 0x00, 0x22, 0x68, 0x70, 0x6B, 0x70, 0x5F, 0x70, 0x75, 0x62, 0x6C, 0x69, 0x63, 0x5F, 0x6B, 0x65, 0x79, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="IsDevelopment"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> IsDevelopment => [0x05, 0x01, 0x00, 0x00, 0x22, 0x69, 0x73, 0x5F, 0x64, 0x65, 0x76, 0x65, 0x6C, 0x6F, 0x70, 0x6D, 0x65, 0x6E, 0x74, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="ReferrerPolicyValue"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> ReferrerPolicyValue => [0x15, 0x01, 0x00, 0x00, 0x22, 0x72, 0x65, 0x66, 0x65, 0x72, 0x72, 0x65, 0x72, 0x5F, 0x70, 0x6F, 0x6C, 0x69, 0x63, 0x79, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="SslHostValue"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> SslHostValue => [0xA5, 0x00, 0x00, 0x00, 0x22, 0x73, 0x73, 0x6C, 0x5F, 0x68, 0x6F, 0x73, 0x74, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="SslProxyHeaders"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> SslProxyHeaders => [0x35, 0x01, 0x00, 0x00, 0x22, 0x73, 0x73, 0x6C, 0x5F, 0x70, 0x72, 0x6F, 0x78, 0x79, 0x5F, 0x68, 0x65, 0x61, 0x64, 0x65, 0x72, 0x73, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="SslRedirectValue"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> SslRedirectValue => [0xE5, 0x00, 0x00, 0x00, 0x22, 0x73, 0x73, 0x6C, 0x5F, 0x72, 0x65, 0x64, 0x69, 0x72, 0x65, 0x63, 0x74, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="StsIncludeSubdomains"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> StsIncludeSubdomains => [0x85, 0x01, 0x00, 0x00, 0x22, 0x73, 0x74, 0x73, 0x5F, 0x69, 0x6E, 0x63, 0x6C, 0x75, 0x64, 0x65, 0x5F, 0x73, 0x75, 0x62, 0x64, 0x6F, 0x6D, 0x61, 0x69, 0x6E, 0x73, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="StsSeconds"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> StsSeconds => [0xD5, 0x00, 0x00, 0x00, 0x22, 0x73, 0x74, 0x73, 0x5F, 0x73, 0x65, 0x63, 0x6F, 0x6E, 0x64, 0x73, 0x22];
         }
     }
 }

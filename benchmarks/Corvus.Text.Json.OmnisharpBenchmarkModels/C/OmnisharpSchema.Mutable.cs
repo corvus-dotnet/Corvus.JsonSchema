@@ -498,7 +498,7 @@ public readonly partial struct OmnisharpSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Cake, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Cake, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -534,7 +534,7 @@ public readonly partial struct OmnisharpSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Cake, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Cake, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -579,7 +579,7 @@ public readonly partial struct OmnisharpSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.FileOptions, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.FileOptions, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -615,7 +615,7 @@ public readonly partial struct OmnisharpSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.FileOptions, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.FileOptions, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -660,7 +660,7 @@ public readonly partial struct OmnisharpSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.FormattingOptions, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.FormattingOptions, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -696,7 +696,7 @@ public readonly partial struct OmnisharpSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.FormattingOptions, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.FormattingOptions, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -741,7 +741,7 @@ public readonly partial struct OmnisharpSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.ImplementTypeOptions, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ImplementTypeOptions, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -777,7 +777,7 @@ public readonly partial struct OmnisharpSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.ImplementTypeOptions, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ImplementTypeOptions, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -822,7 +822,7 @@ public readonly partial struct OmnisharpSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Msbuild, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Msbuild, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -858,7 +858,7 @@ public readonly partial struct OmnisharpSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Msbuild, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Msbuild, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -903,7 +903,7 @@ public readonly partial struct OmnisharpSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Plugins, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Plugins, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -939,7 +939,7 @@ public readonly partial struct OmnisharpSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Plugins, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Plugins, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -984,7 +984,7 @@ public readonly partial struct OmnisharpSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.RenameOptions, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.RenameOptions, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1020,7 +1020,7 @@ public readonly partial struct OmnisharpSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.RenameOptions, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.RenameOptions, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1065,7 +1065,7 @@ public readonly partial struct OmnisharpSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.RoslynExtensionsOptions, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.RoslynExtensionsOptions, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1101,7 +1101,7 @@ public readonly partial struct OmnisharpSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.RoslynExtensionsOptions, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.RoslynExtensionsOptions, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1146,7 +1146,7 @@ public readonly partial struct OmnisharpSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Script, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Script, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1182,7 +1182,7 @@ public readonly partial struct OmnisharpSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Script, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Script, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1565,6 +1565,24 @@ public readonly partial struct OmnisharpSchema
             }
         }
 
+        internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+        {
+            switch(_kind)
+            {
+                case Kind.Unknown:
+                    break;
+                case Kind.JsonElement:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                    break;
+                case Kind.Builder:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
+                    break;
+                default:
+                    Debug.Fail("Unexpected Kind");
+                    break;
+            }
+        }
+
         internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
         {
             switch(_kind)
@@ -1666,6 +1684,24 @@ public readonly partial struct OmnisharpSchema
             }
         }
 
+        internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+        {
+            switch(_kind)
+            {
+                case Kind.Unknown:
+                    break;
+                case Kind.Source:
+                    _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                    break;
+                case Kind.Builder:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
+                    break;
+                default:
+                    Debug.Fail("Unexpected Kind");
+                    break;
+            }
+        }
+
         internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
         {
             switch(_kind)
@@ -1754,15 +1790,15 @@ public readonly partial struct OmnisharpSchema
             in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.RoslynExtensionsOptionsEntity.Source roslynExtensionsOptions = default,
             in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureCScriptingCsxFiles.Source script = default)
         {
-            cake.AddAsProperty(JsonPropertyNamesEscaped.Cake, ref builder, escapeName: false);
-            fileOptions.AddAsProperty(JsonPropertyNamesEscaped.FileOptions, ref builder, escapeName: false);
-            formattingOptions.AddAsProperty(JsonPropertyNamesEscaped.FormattingOptions, ref builder, escapeName: false);
-            implementTypeOptions.AddAsProperty(JsonPropertyNamesEscaped.ImplementTypeOptions, ref builder, escapeName: false);
-            msbuild.AddAsProperty(JsonPropertyNamesEscaped.Msbuild, ref builder, escapeName: false);
-            plugins.AddAsProperty(JsonPropertyNamesEscaped.Plugins, ref builder, escapeName: false);
-            renameOptions.AddAsProperty(JsonPropertyNamesEscaped.RenameOptions, ref builder, escapeName: false);
-            roslynExtensionsOptions.AddAsProperty(JsonPropertyNamesEscaped.RoslynExtensionsOptions, ref builder, escapeName: false);
-            script.AddAsProperty(JsonPropertyNamesEscaped.Script, ref builder, escapeName: false);
+            cake.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Cake, ref builder);
+            fileOptions.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.FileOptions, ref builder);
+            formattingOptions.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.FormattingOptions, ref builder);
+            implementTypeOptions.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ImplementTypeOptions, ref builder);
+            msbuild.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Msbuild, ref builder);
+            plugins.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Plugins, ref builder);
+            renameOptions.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.RenameOptions, ref builder);
+            roslynExtensionsOptions.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.RoslynExtensionsOptions, ref builder);
+            script.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Script, ref builder);
         }
 
         /// <summary>
@@ -1801,15 +1837,15 @@ public readonly partial struct OmnisharpSchema
         where TContext : allows ref struct
         #endif
         {
-            cake.AddAsProperty(JsonPropertyNamesEscaped.Cake, ref builder, escapeName: false);
-            fileOptions.AddAsProperty(JsonPropertyNamesEscaped.FileOptions, ref builder, escapeName: false);
-            formattingOptions.AddAsProperty(JsonPropertyNamesEscaped.FormattingOptions, ref builder, escapeName: false);
-            implementTypeOptions.AddAsProperty(JsonPropertyNamesEscaped.ImplementTypeOptions, ref builder, escapeName: false);
-            msbuild.AddAsProperty(JsonPropertyNamesEscaped.Msbuild, ref builder, escapeName: false);
-            plugins.AddAsProperty(JsonPropertyNamesEscaped.Plugins, ref builder, escapeName: false);
-            renameOptions.AddAsProperty(JsonPropertyNamesEscaped.RenameOptions, ref builder, escapeName: false);
-            roslynExtensionsOptions.AddAsProperty(JsonPropertyNamesEscaped.RoslynExtensionsOptions, ref builder, escapeName: false);
-            script.AddAsProperty(JsonPropertyNamesEscaped.Script, ref builder, escapeName: false);
+            cake.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Cake, ref builder);
+            fileOptions.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.FileOptions, ref builder);
+            formattingOptions.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.FormattingOptions, ref builder);
+            implementTypeOptions.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ImplementTypeOptions, ref builder);
+            msbuild.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Msbuild, ref builder);
+            plugins.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Plugins, ref builder);
+            renameOptions.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.RenameOptions, ref builder);
+            roslynExtensionsOptions.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.RoslynExtensionsOptions, ref builder);
+            script.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Script, ref builder);
         }
 
         /// <summary>

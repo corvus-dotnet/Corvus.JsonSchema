@@ -51,17 +51,17 @@ public readonly partial struct OpenapiSchema
             /// <summary>
             /// Gets a provider for the schema location from which this type was generated.
             /// </summary>
-            public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("https://spec.openapis.org/oas/3.1/schema/2022-10-07#/properties/jsonSchemaDialect"u8, buffer, out written);
+            public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/properties/jsonSchemaDialect"u8, buffer, out written);
 
             /// <summary>
             /// Gets the schema location from which this type was generated.
             /// </summary>
-            public const string SchemaLocation = "https://spec.openapis.org/oas/3.1/schema/2022-10-07#/properties/jsonSchemaDialect";
+            public const string SchemaLocation = "/properties/jsonSchemaDialect";
 
             /// <summary>
             /// Gets the schema location from which this type was generated as a UTF-8 string.
             /// </summary>
-            public static ReadOnlySpan<byte> SchemaLocationUtf8 => "https://spec.openapis.org/oas/3.1/schema/2022-10-07#/properties/jsonSchemaDialect"u8;
+            public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/properties/jsonSchemaDialect"u8;
 
             /// <summary>
             /// Applies the JSON schema semantics defined by this type to the instance determined by the given document and index.
@@ -92,7 +92,8 @@ public readonly partial struct OpenapiSchema
                 }
                 else
                 {
-                    context.IgnoredKeyword(JsonSchemaEvaluation.IgnoredFormatNotAsserted, "format"u8);
+                    using UnescapedUtf8JsonString unescapedUtf8JsonString = parentDocument.GetUtf8JsonString(parentIndex, JsonTokenType.String);
+                    JsonSchemaEvaluation.MatchUri(unescapedUtf8JsonString.Span, "format"u8, ref context);
                 }
             }
 

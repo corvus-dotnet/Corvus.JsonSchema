@@ -543,6 +543,30 @@ public readonly partial struct TargetElement
                     }
                 }
 
+                internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+                {
+                    switch(_kind)
+                    {
+                        case Kind.Unknown:
+                            break;
+                        case Kind.JsonElement:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                            break;
+                        case Kind.Null:
+                            valueBuilder.AddPrebakedPropertyNullValue(prebakedPropertyName);
+                            break;
+                        case Kind.True:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, true);
+                            break;
+                        case Kind.False:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, false);
+                            break;
+                        default:
+                            Debug.Fail("Unexpected Kind");
+                            break;
+                    }
+                }
+
                 internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
                 {
                     switch(_kind)

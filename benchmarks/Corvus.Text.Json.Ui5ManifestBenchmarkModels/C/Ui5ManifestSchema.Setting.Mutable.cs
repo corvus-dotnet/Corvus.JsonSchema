@@ -456,7 +456,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Annotations, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Annotations, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -492,7 +492,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Annotations, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Annotations, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -537,7 +537,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.IgnoreAnnotationsFromMetadata, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IgnoreAnnotationsFromMetadata, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -582,7 +582,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.LocalUri, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.LocalUri, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -627,7 +627,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.MaxAge, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MaxAge, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -672,7 +672,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Objects, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Objects, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -708,7 +708,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Objects, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Objects, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -753,7 +753,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.OdataVersion, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.OdataVersion, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1136,6 +1136,24 @@ public readonly partial struct Ui5ManifestSchema
                 }
             }
 
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.JsonElement:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                        break;
+                    case Kind.Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
             internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
             {
                 switch(_kind)
@@ -1237,6 +1255,24 @@ public readonly partial struct Ui5ManifestSchema
                 }
             }
 
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.Source:
+                        _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                        break;
+                    case Kind.Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
             internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
             {
                 switch(_kind)
@@ -1322,12 +1358,12 @@ public readonly partial struct Ui5ManifestSchema
                 in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Setting.DictionaryOfCatalogObjectsOfferedByTheDatasource.Source objects = default,
                 in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Setting.RepresentsVersionOfOData20IsDefault.Source odataVersion = default)
             {
-                annotations.AddAsProperty(JsonPropertyNamesEscaped.Annotations, ref builder, escapeName: false);
-                ignoreAnnotationsFromMetadata.AddAsProperty(JsonPropertyNamesEscaped.IgnoreAnnotationsFromMetadata, ref builder, escapeName: false);
-                localUri.AddAsProperty(JsonPropertyNamesEscaped.LocalUri, ref builder, escapeName: false);
-                maxAge.AddAsProperty(JsonPropertyNamesEscaped.MaxAge, ref builder, escapeName: false);
-                objects.AddAsProperty(JsonPropertyNamesEscaped.Objects, ref builder, escapeName: false);
-                odataVersion.AddAsProperty(JsonPropertyNamesEscaped.OdataVersion, ref builder, escapeName: false);
+                annotations.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Annotations, ref builder);
+                ignoreAnnotationsFromMetadata.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IgnoreAnnotationsFromMetadata, ref builder);
+                localUri.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.LocalUri, ref builder);
+                maxAge.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MaxAge, ref builder);
+                objects.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Objects, ref builder);
+                odataVersion.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.OdataVersion, ref builder);
             }
 
             /// <summary>
@@ -1360,12 +1396,12 @@ public readonly partial struct Ui5ManifestSchema
             where TContext : allows ref struct
             #endif
             {
-                annotations.AddAsProperty(JsonPropertyNamesEscaped.Annotations, ref builder, escapeName: false);
-                ignoreAnnotationsFromMetadata.AddAsProperty(JsonPropertyNamesEscaped.IgnoreAnnotationsFromMetadata, ref builder, escapeName: false);
-                localUri.AddAsProperty(JsonPropertyNamesEscaped.LocalUri, ref builder, escapeName: false);
-                maxAge.AddAsProperty(JsonPropertyNamesEscaped.MaxAge, ref builder, escapeName: false);
-                objects.AddAsProperty(JsonPropertyNamesEscaped.Objects, ref builder, escapeName: false);
-                odataVersion.AddAsProperty(JsonPropertyNamesEscaped.OdataVersion, ref builder, escapeName: false);
+                annotations.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Annotations, ref builder);
+                ignoreAnnotationsFromMetadata.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IgnoreAnnotationsFromMetadata, ref builder);
+                localUri.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.LocalUri, ref builder);
+                maxAge.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MaxAge, ref builder);
+                objects.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Objects, ref builder);
+                odataVersion.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.OdataVersion, ref builder);
             }
 
             /// <summary>

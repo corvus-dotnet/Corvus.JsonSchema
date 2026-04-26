@@ -350,11 +350,11 @@ public readonly partial struct Ui5ManifestSchema
         /// Represents Cloud Portal specific attributes
         /// </para>
         /// </remarks>
-        public Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCloudPortalNamespace.Mutable SapCloudPortal
+        public Corvus.Ui5ManifestBenchmark.Current.JsonObject.Mutable SapCloudPortal
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SapCloudPortalUtf8, out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCloudPortalNamespace.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SapCloudPortalUtf8, out Corvus.Ui5ManifestBenchmark.Current.JsonObject.Mutable value))
                 {
                     return value;
                 }
@@ -394,11 +394,11 @@ public readonly partial struct Ui5ManifestSchema
         /// Represents specific attributes for Fiori Elements 
         /// </para>
         /// </remarks>
-        public Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFeNamespace.Mutable SapFe
+        public Corvus.Ui5ManifestBenchmark.Current.JsonObject.Mutable SapFe
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SapFeUtf8, out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFeNamespace.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SapFeUtf8, out Corvus.Ui5ManifestBenchmark.Current.JsonObject.Mutable value))
                 {
                     return value;
                 }
@@ -526,11 +526,11 @@ public readonly partial struct Ui5ManifestSchema
         /// Represents specific attributes for SAP.MAP  
         /// </para>
         /// </remarks>
-        public Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapMapNamespace.Mutable SapMap
+        public Corvus.Ui5ManifestBenchmark.Current.JsonObject.Mutable SapMap
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SapMapUtf8, out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapMapNamespace.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SapMapUtf8, out Corvus.Ui5ManifestBenchmark.Current.JsonObject.Mutable value))
                 {
                     return value;
                 }
@@ -771,11 +771,11 @@ public readonly partial struct Ui5ManifestSchema
         /// Represents specific attributes for Smart Business  
         /// </para>
         /// </remarks>
-        public Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiSmartbusinessAppNamespace.Mutable SapUiSmartbusinessApp
+        public Corvus.Ui5ManifestBenchmark.Current.JsonObject.Mutable SapUiSmartbusinessApp
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SapUiSmartbusinessAppUtf8, out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiSmartbusinessAppNamespace.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SapUiSmartbusinessAppUtf8, out Corvus.Ui5ManifestBenchmark.Current.JsonObject.Mutable value))
                 {
                     return value;
                 }
@@ -945,7 +945,7 @@ public readonly partial struct Ui5ManifestSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Version, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Version, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -978,7 +978,7 @@ public readonly partial struct Ui5ManifestSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Schema, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Schema, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1023,7 +1023,7 @@ public readonly partial struct Ui5ManifestSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.SapApf, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapApf, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1059,7 +1059,7 @@ public readonly partial struct Ui5ManifestSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.SapApf, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapApf, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1102,7 +1102,7 @@ public readonly partial struct Ui5ManifestSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.SapApp, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapApp, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1136,7 +1136,7 @@ public readonly partial struct Ui5ManifestSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.SapApp, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapApp, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1169,7 +1169,7 @@ public readonly partial struct Ui5ManifestSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.SapArtifact, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapArtifact, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1205,7 +1205,7 @@ public readonly partial struct Ui5ManifestSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.SapArtifact, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapArtifact, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1250,7 +1250,7 @@ public readonly partial struct Ui5ManifestSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.SapBpaTask, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapBpaTask, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1286,7 +1286,7 @@ public readonly partial struct Ui5ManifestSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.SapBpaTask, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapBpaTask, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1331,7 +1331,7 @@ public readonly partial struct Ui5ManifestSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.SapCard, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapCard, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1367,7 +1367,7 @@ public readonly partial struct Ui5ManifestSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.SapCard, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapCard, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1412,7 +1412,7 @@ public readonly partial struct Ui5ManifestSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.SapCloud, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapCloud, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1448,7 +1448,7 @@ public readonly partial struct Ui5ManifestSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.SapCloud, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapCloud, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1472,7 +1472,7 @@ public readonly partial struct Ui5ManifestSchema
         /// Set the <c>sap.cloud.portal</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetSapCloudPortal(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCloudPortalNamespace.Source value)
+        public void SetSapCloudPortal(in Corvus.Ui5ManifestBenchmark.Current.JsonObject.Source value)
         {
             CheckValidInstance();
 
@@ -1493,7 +1493,7 @@ public readonly partial struct Ui5ManifestSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.SapCloudPortal, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapCloudPortal, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1505,7 +1505,7 @@ public readonly partial struct Ui5ManifestSchema
         /// Set the <c>sap.cloud.portal</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetSapCloudPortal<TContext>(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCloudPortalNamespace.Source<TContext> value)
+        public void SetSapCloudPortal<TContext>(in Corvus.Ui5ManifestBenchmark.Current.JsonObject.Source<TContext> value)
 #if NET9_0_OR_GREATER
             where TContext : allows ref struct
 #endif
@@ -1529,7 +1529,7 @@ public readonly partial struct Ui5ManifestSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.SapCloudPortal, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapCloudPortal, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1574,7 +1574,7 @@ public readonly partial struct Ui5ManifestSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.SapCopilot, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapCopilot, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1610,7 +1610,7 @@ public readonly partial struct Ui5ManifestSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.SapCopilot, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapCopilot, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1634,7 +1634,7 @@ public readonly partial struct Ui5ManifestSchema
         /// Set the <c>sap.fe</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetSapFe(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFeNamespace.Source value)
+        public void SetSapFe(in Corvus.Ui5ManifestBenchmark.Current.JsonObject.Source value)
         {
             CheckValidInstance();
 
@@ -1655,7 +1655,7 @@ public readonly partial struct Ui5ManifestSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.SapFe, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapFe, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1667,7 +1667,7 @@ public readonly partial struct Ui5ManifestSchema
         /// Set the <c>sap.fe</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetSapFe<TContext>(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFeNamespace.Source<TContext> value)
+        public void SetSapFe<TContext>(in Corvus.Ui5ManifestBenchmark.Current.JsonObject.Source<TContext> value)
 #if NET9_0_OR_GREATER
             where TContext : allows ref struct
 #endif
@@ -1691,7 +1691,7 @@ public readonly partial struct Ui5ManifestSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.SapFe, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapFe, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1736,7 +1736,7 @@ public readonly partial struct Ui5ManifestSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.SapFiori, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapFiori, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1772,7 +1772,7 @@ public readonly partial struct Ui5ManifestSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.SapFiori, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapFiori, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1817,7 +1817,7 @@ public readonly partial struct Ui5ManifestSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.SapFlp, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapFlp, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1853,7 +1853,7 @@ public readonly partial struct Ui5ManifestSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.SapFlp, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapFlp, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1898,7 +1898,7 @@ public readonly partial struct Ui5ManifestSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.SapGui, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapGui, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1934,7 +1934,7 @@ public readonly partial struct Ui5ManifestSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.SapGui, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapGui, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1979,7 +1979,7 @@ public readonly partial struct Ui5ManifestSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.SapInsights, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapInsights, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -2015,7 +2015,7 @@ public readonly partial struct Ui5ManifestSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.SapInsights, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapInsights, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -2060,7 +2060,7 @@ public readonly partial struct Ui5ManifestSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.SapIntegration, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapIntegration, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -2096,7 +2096,7 @@ public readonly partial struct Ui5ManifestSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.SapIntegration, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapIntegration, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -2120,7 +2120,7 @@ public readonly partial struct Ui5ManifestSchema
         /// Set the <c>sap.map</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetSapMap(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapMapNamespace.Source value)
+        public void SetSapMap(in Corvus.Ui5ManifestBenchmark.Current.JsonObject.Source value)
         {
             CheckValidInstance();
 
@@ -2141,7 +2141,7 @@ public readonly partial struct Ui5ManifestSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.SapMap, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapMap, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -2153,7 +2153,7 @@ public readonly partial struct Ui5ManifestSchema
         /// Set the <c>sap.map</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetSapMap<TContext>(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapMapNamespace.Source<TContext> value)
+        public void SetSapMap<TContext>(in Corvus.Ui5ManifestBenchmark.Current.JsonObject.Source<TContext> value)
 #if NET9_0_OR_GREATER
             where TContext : allows ref struct
 #endif
@@ -2177,7 +2177,7 @@ public readonly partial struct Ui5ManifestSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.SapMap, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapMap, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -2222,7 +2222,7 @@ public readonly partial struct Ui5ManifestSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.SapMobile, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapMobile, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -2258,7 +2258,7 @@ public readonly partial struct Ui5ManifestSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.SapMobile, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapMobile, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -2303,7 +2303,7 @@ public readonly partial struct Ui5ManifestSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.SapOvp, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapOvp, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -2339,7 +2339,7 @@ public readonly partial struct Ui5ManifestSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.SapOvp, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapOvp, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -2384,7 +2384,7 @@ public readonly partial struct Ui5ManifestSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.SapPackage, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapPackage, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -2420,7 +2420,7 @@ public readonly partial struct Ui5ManifestSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.SapPackage, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapPackage, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -2465,7 +2465,7 @@ public readonly partial struct Ui5ManifestSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.SapPlatformAbap, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapPlatformAbap, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -2501,7 +2501,7 @@ public readonly partial struct Ui5ManifestSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.SapPlatformAbap, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapPlatformAbap, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -2546,7 +2546,7 @@ public readonly partial struct Ui5ManifestSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.SapPlatformCf, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapPlatformCf, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -2582,7 +2582,7 @@ public readonly partial struct Ui5ManifestSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.SapPlatformCf, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapPlatformCf, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -2627,7 +2627,7 @@ public readonly partial struct Ui5ManifestSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.SapPlatformHcp, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapPlatformHcp, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -2663,7 +2663,7 @@ public readonly partial struct Ui5ManifestSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.SapPlatformHcp, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapPlatformHcp, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -2708,7 +2708,7 @@ public readonly partial struct Ui5ManifestSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.SapPlatformMobilecards, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapPlatformMobilecards, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -2744,7 +2744,7 @@ public readonly partial struct Ui5ManifestSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.SapPlatformMobilecards, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapPlatformMobilecards, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -2789,7 +2789,7 @@ public readonly partial struct Ui5ManifestSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.SapPlatformSfsf, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapPlatformSfsf, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -2825,7 +2825,7 @@ public readonly partial struct Ui5ManifestSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.SapPlatformSfsf, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapPlatformSfsf, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -2868,7 +2868,7 @@ public readonly partial struct Ui5ManifestSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.SapUi, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapUi, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -2902,7 +2902,7 @@ public readonly partial struct Ui5ManifestSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.SapUi, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapUi, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -2935,7 +2935,7 @@ public readonly partial struct Ui5ManifestSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.SapUiGenericApp, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapUiGenericApp, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -2971,7 +2971,7 @@ public readonly partial struct Ui5ManifestSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.SapUiGenericApp, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapUiGenericApp, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -2995,7 +2995,7 @@ public readonly partial struct Ui5ManifestSchema
         /// Set the <c>sap.ui.smartbusiness.app</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetSapUiSmartbusinessApp(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiSmartbusinessAppNamespace.Source value)
+        public void SetSapUiSmartbusinessApp(in Corvus.Ui5ManifestBenchmark.Current.JsonObject.Source value)
         {
             CheckValidInstance();
 
@@ -3016,7 +3016,7 @@ public readonly partial struct Ui5ManifestSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.SapUiSmartbusinessApp, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapUiSmartbusinessApp, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -3028,7 +3028,7 @@ public readonly partial struct Ui5ManifestSchema
         /// Set the <c>sap.ui.smartbusiness.app</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetSapUiSmartbusinessApp<TContext>(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiSmartbusinessAppNamespace.Source<TContext> value)
+        public void SetSapUiSmartbusinessApp<TContext>(in Corvus.Ui5ManifestBenchmark.Current.JsonObject.Source<TContext> value)
 #if NET9_0_OR_GREATER
             where TContext : allows ref struct
 #endif
@@ -3052,7 +3052,7 @@ public readonly partial struct Ui5ManifestSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.SapUiSmartbusinessApp, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapUiSmartbusinessApp, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -3097,7 +3097,7 @@ public readonly partial struct Ui5ManifestSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.SapUi5, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapUi5, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -3133,7 +3133,7 @@ public readonly partial struct Ui5ManifestSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.SapUi5, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapUi5, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -3178,7 +3178,7 @@ public readonly partial struct Ui5ManifestSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.SapUrl, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapUrl, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -3214,7 +3214,7 @@ public readonly partial struct Ui5ManifestSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.SapUrl, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapUrl, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -3259,7 +3259,7 @@ public readonly partial struct Ui5ManifestSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.SapWcf, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapWcf, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -3295,7 +3295,7 @@ public readonly partial struct Ui5ManifestSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.SapWcf, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapWcf, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -3340,7 +3340,7 @@ public readonly partial struct Ui5ManifestSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.SapWda, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapWda, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -3376,7 +3376,7 @@ public readonly partial struct Ui5ManifestSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.SapWda, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapWda, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -3421,7 +3421,7 @@ public readonly partial struct Ui5ManifestSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.StartUrl, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.StartUrl, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -3628,6 +3628,24 @@ public readonly partial struct Ui5ManifestSchema
             }
         }
 
+        internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+        {
+            switch(_kind)
+            {
+                case Kind.Unknown:
+                    break;
+                case Kind.JsonElement:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                    break;
+                case Kind.Builder:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
+                    break;
+                default:
+                    Debug.Fail("Unexpected Kind");
+                    break;
+            }
+        }
+
         internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
         {
             switch(_kind)
@@ -3729,6 +3747,24 @@ public readonly partial struct Ui5ManifestSchema
             }
         }
 
+        internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+        {
+            switch(_kind)
+            {
+                case Kind.Unknown:
+                    break;
+                case Kind.Source:
+                    _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                    break;
+                case Kind.Builder:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
+                    break;
+                default:
+                    Debug.Fail("Unexpected Kind");
+                    break;
+            }
+        }
+
         internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
         {
             switch(_kind)
@@ -3816,15 +3852,15 @@ public readonly partial struct Ui5ManifestSchema
             in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapBpaTaskNamespace.Source sapBpaTask = default,
             in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.Source sapCard = default,
             in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCloudNamespace.Source sapCloud = default,
-            in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCloudPortalNamespace.Source sapCloudPortal = default,
+            in Corvus.Ui5ManifestBenchmark.Current.JsonObject.Source sapCloudPortal = default,
             in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCopilotNamespace.Source sapCopilot = default,
-            in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFeNamespace.Source sapFe = default,
+            in Corvus.Ui5ManifestBenchmark.Current.JsonObject.Source sapFe = default,
             in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFioriNamespace.Source sapFiori = default,
             in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFlpNamespace.Source sapFlp = default,
             in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapGuiNamespace.Source sapGui = default,
             in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.Source sapInsights = default,
             in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapIntegrationNamespace.Source sapIntegration = default,
-            in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapMapNamespace.Source sapMap = default,
+            in Corvus.Ui5ManifestBenchmark.Current.JsonObject.Source sapMap = default,
             in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapMobileNamespace.Source sapMobile = default,
             in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.Source sapOvp = default,
             in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.Source sapPackage = default,
@@ -3834,46 +3870,46 @@ public readonly partial struct Ui5ManifestSchema
             in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPlatformMobilecardsNamespace.Source sapPlatformMobilecards = default,
             in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPlatformSfsfNamespace.Source sapPlatformSfsf = default,
             in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiGenericAppNamespace.Source sapUiGenericApp = default,
-            in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiSmartbusinessAppNamespace.Source sapUiSmartbusinessApp = default,
+            in Corvus.Ui5ManifestBenchmark.Current.JsonObject.Source sapUiSmartbusinessApp = default,
             in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.Source sapUi5 = default,
             in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUrlNamespace.Source sapUrl = default,
             in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapWcfNamespace.Source sapWcf = default,
             in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapWdaNamespace.Source sapWda = default,
             in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source startUrl = default)
         {
-            version.AddAsProperty(JsonPropertyNamesEscaped.Version, ref builder, escapeName: false);
-            sapApp.AddAsProperty(JsonPropertyNamesEscaped.SapApp, ref builder, escapeName: false);
-            sapUi.AddAsProperty(JsonPropertyNamesEscaped.SapUi, ref builder, escapeName: false);
-            schema.AddAsProperty(JsonPropertyNamesEscaped.Schema, ref builder, escapeName: false);
-            sapApf.AddAsProperty(JsonPropertyNamesEscaped.SapApf, ref builder, escapeName: false);
-            sapArtifact.AddAsProperty(JsonPropertyNamesEscaped.SapArtifact, ref builder, escapeName: false);
-            sapBpaTask.AddAsProperty(JsonPropertyNamesEscaped.SapBpaTask, ref builder, escapeName: false);
-            sapCard.AddAsProperty(JsonPropertyNamesEscaped.SapCard, ref builder, escapeName: false);
-            sapCloud.AddAsProperty(JsonPropertyNamesEscaped.SapCloud, ref builder, escapeName: false);
-            sapCloudPortal.AddAsProperty(JsonPropertyNamesEscaped.SapCloudPortal, ref builder, escapeName: false);
-            sapCopilot.AddAsProperty(JsonPropertyNamesEscaped.SapCopilot, ref builder, escapeName: false);
-            sapFe.AddAsProperty(JsonPropertyNamesEscaped.SapFe, ref builder, escapeName: false);
-            sapFiori.AddAsProperty(JsonPropertyNamesEscaped.SapFiori, ref builder, escapeName: false);
-            sapFlp.AddAsProperty(JsonPropertyNamesEscaped.SapFlp, ref builder, escapeName: false);
-            sapGui.AddAsProperty(JsonPropertyNamesEscaped.SapGui, ref builder, escapeName: false);
-            sapInsights.AddAsProperty(JsonPropertyNamesEscaped.SapInsights, ref builder, escapeName: false);
-            sapIntegration.AddAsProperty(JsonPropertyNamesEscaped.SapIntegration, ref builder, escapeName: false);
-            sapMap.AddAsProperty(JsonPropertyNamesEscaped.SapMap, ref builder, escapeName: false);
-            sapMobile.AddAsProperty(JsonPropertyNamesEscaped.SapMobile, ref builder, escapeName: false);
-            sapOvp.AddAsProperty(JsonPropertyNamesEscaped.SapOvp, ref builder, escapeName: false);
-            sapPackage.AddAsProperty(JsonPropertyNamesEscaped.SapPackage, ref builder, escapeName: false);
-            sapPlatformAbap.AddAsProperty(JsonPropertyNamesEscaped.SapPlatformAbap, ref builder, escapeName: false);
-            sapPlatformCf.AddAsProperty(JsonPropertyNamesEscaped.SapPlatformCf, ref builder, escapeName: false);
-            sapPlatformHcp.AddAsProperty(JsonPropertyNamesEscaped.SapPlatformHcp, ref builder, escapeName: false);
-            sapPlatformMobilecards.AddAsProperty(JsonPropertyNamesEscaped.SapPlatformMobilecards, ref builder, escapeName: false);
-            sapPlatformSfsf.AddAsProperty(JsonPropertyNamesEscaped.SapPlatformSfsf, ref builder, escapeName: false);
-            sapUiGenericApp.AddAsProperty(JsonPropertyNamesEscaped.SapUiGenericApp, ref builder, escapeName: false);
-            sapUiSmartbusinessApp.AddAsProperty(JsonPropertyNamesEscaped.SapUiSmartbusinessApp, ref builder, escapeName: false);
-            sapUi5.AddAsProperty(JsonPropertyNamesEscaped.SapUi5, ref builder, escapeName: false);
-            sapUrl.AddAsProperty(JsonPropertyNamesEscaped.SapUrl, ref builder, escapeName: false);
-            sapWcf.AddAsProperty(JsonPropertyNamesEscaped.SapWcf, ref builder, escapeName: false);
-            sapWda.AddAsProperty(JsonPropertyNamesEscaped.SapWda, ref builder, escapeName: false);
-            startUrl.AddAsProperty(JsonPropertyNamesEscaped.StartUrl, ref builder, escapeName: false);
+            version.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Version, ref builder);
+            sapApp.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapApp, ref builder);
+            sapUi.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapUi, ref builder);
+            schema.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Schema, ref builder);
+            sapApf.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapApf, ref builder);
+            sapArtifact.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapArtifact, ref builder);
+            sapBpaTask.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapBpaTask, ref builder);
+            sapCard.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapCard, ref builder);
+            sapCloud.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapCloud, ref builder);
+            sapCloudPortal.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapCloudPortal, ref builder);
+            sapCopilot.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapCopilot, ref builder);
+            sapFe.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapFe, ref builder);
+            sapFiori.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapFiori, ref builder);
+            sapFlp.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapFlp, ref builder);
+            sapGui.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapGui, ref builder);
+            sapInsights.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapInsights, ref builder);
+            sapIntegration.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapIntegration, ref builder);
+            sapMap.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapMap, ref builder);
+            sapMobile.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapMobile, ref builder);
+            sapOvp.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapOvp, ref builder);
+            sapPackage.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapPackage, ref builder);
+            sapPlatformAbap.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapPlatformAbap, ref builder);
+            sapPlatformCf.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapPlatformCf, ref builder);
+            sapPlatformHcp.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapPlatformHcp, ref builder);
+            sapPlatformMobilecards.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapPlatformMobilecards, ref builder);
+            sapPlatformSfsf.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapPlatformSfsf, ref builder);
+            sapUiGenericApp.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapUiGenericApp, ref builder);
+            sapUiSmartbusinessApp.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapUiSmartbusinessApp, ref builder);
+            sapUi5.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapUi5, ref builder);
+            sapUrl.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapUrl, ref builder);
+            sapWcf.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapWcf, ref builder);
+            sapWda.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapWda, ref builder);
+            startUrl.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.StartUrl, ref builder);
         }
 
         /// <summary>
@@ -3889,15 +3925,15 @@ public readonly partial struct Ui5ManifestSchema
             in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapBpaTaskNamespace.Source sapBpaTask = default,
             in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.Source sapCard = default,
             in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCloudNamespace.Source sapCloud = default,
-            in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCloudPortalNamespace.Source sapCloudPortal = default,
+            in Corvus.Ui5ManifestBenchmark.Current.JsonObject.Source sapCloudPortal = default,
             in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCopilotNamespace.Source sapCopilot = default,
-            in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFeNamespace.Source sapFe = default,
+            in Corvus.Ui5ManifestBenchmark.Current.JsonObject.Source sapFe = default,
             in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFioriNamespace.Source sapFiori = default,
             in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFlpNamespace.Source sapFlp = default,
             in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapGuiNamespace.Source sapGui = default,
             in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.Source sapInsights = default,
             in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapIntegrationNamespace.Source sapIntegration = default,
-            in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapMapNamespace.Source sapMap = default,
+            in Corvus.Ui5ManifestBenchmark.Current.JsonObject.Source sapMap = default,
             in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapMobileNamespace.Source sapMobile = default,
             in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.Source sapOvp = default,
             in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.Source sapPackage = default,
@@ -3907,7 +3943,7 @@ public readonly partial struct Ui5ManifestSchema
             in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPlatformMobilecardsNamespace.Source sapPlatformMobilecards = default,
             in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPlatformSfsfNamespace.Source sapPlatformSfsf = default,
             in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiGenericAppNamespace.Source sapUiGenericApp = default,
-            in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiSmartbusinessAppNamespace.Source sapUiSmartbusinessApp = default,
+            in Corvus.Ui5ManifestBenchmark.Current.JsonObject.Source sapUiSmartbusinessApp = default,
             in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.Source sapUi5 = default,
             in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUrlNamespace.Source sapUrl = default,
             in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapWcfNamespace.Source sapWcf = default,
@@ -3932,15 +3968,15 @@ public readonly partial struct Ui5ManifestSchema
             in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapBpaTaskNamespace.Source<TContext> sapBpaTask = default,
             in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.Source<TContext> sapCard = default,
             in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCloudNamespace.Source<TContext> sapCloud = default,
-            in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCloudPortalNamespace.Source<TContext> sapCloudPortal = default,
+            in Corvus.Ui5ManifestBenchmark.Current.JsonObject.Source<TContext> sapCloudPortal = default,
             in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCopilotNamespace.Source<TContext> sapCopilot = default,
-            in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFeNamespace.Source<TContext> sapFe = default,
+            in Corvus.Ui5ManifestBenchmark.Current.JsonObject.Source<TContext> sapFe = default,
             in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFioriNamespace.Source<TContext> sapFiori = default,
             in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFlpNamespace.Source<TContext> sapFlp = default,
             in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapGuiNamespace.Source<TContext> sapGui = default,
             in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.Source<TContext> sapInsights = default,
             in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapIntegrationNamespace.Source<TContext> sapIntegration = default,
-            in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapMapNamespace.Source<TContext> sapMap = default,
+            in Corvus.Ui5ManifestBenchmark.Current.JsonObject.Source<TContext> sapMap = default,
             in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapMobileNamespace.Source<TContext> sapMobile = default,
             in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.Source<TContext> sapOvp = default,
             in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.Source<TContext> sapPackage = default,
@@ -3950,7 +3986,7 @@ public readonly partial struct Ui5ManifestSchema
             in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPlatformMobilecardsNamespace.Source<TContext> sapPlatformMobilecards = default,
             in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPlatformSfsfNamespace.Source<TContext> sapPlatformSfsf = default,
             in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiGenericAppNamespace.Source<TContext> sapUiGenericApp = default,
-            in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiSmartbusinessAppNamespace.Source<TContext> sapUiSmartbusinessApp = default,
+            in Corvus.Ui5ManifestBenchmark.Current.JsonObject.Source<TContext> sapUiSmartbusinessApp = default,
             in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.Source<TContext> sapUi5 = default,
             in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUrlNamespace.Source<TContext> sapUrl = default,
             in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapWcfNamespace.Source<TContext> sapWcf = default,
@@ -3960,39 +3996,39 @@ public readonly partial struct Ui5ManifestSchema
         where TContext : allows ref struct
         #endif
         {
-            version.AddAsProperty(JsonPropertyNamesEscaped.Version, ref builder, escapeName: false);
-            sapApp.AddAsProperty(JsonPropertyNamesEscaped.SapApp, ref builder, escapeName: false);
-            sapUi.AddAsProperty(JsonPropertyNamesEscaped.SapUi, ref builder, escapeName: false);
-            schema.AddAsProperty(JsonPropertyNamesEscaped.Schema, ref builder, escapeName: false);
-            sapApf.AddAsProperty(JsonPropertyNamesEscaped.SapApf, ref builder, escapeName: false);
-            sapArtifact.AddAsProperty(JsonPropertyNamesEscaped.SapArtifact, ref builder, escapeName: false);
-            sapBpaTask.AddAsProperty(JsonPropertyNamesEscaped.SapBpaTask, ref builder, escapeName: false);
-            sapCard.AddAsProperty(JsonPropertyNamesEscaped.SapCard, ref builder, escapeName: false);
-            sapCloud.AddAsProperty(JsonPropertyNamesEscaped.SapCloud, ref builder, escapeName: false);
-            sapCloudPortal.AddAsProperty(JsonPropertyNamesEscaped.SapCloudPortal, ref builder, escapeName: false);
-            sapCopilot.AddAsProperty(JsonPropertyNamesEscaped.SapCopilot, ref builder, escapeName: false);
-            sapFe.AddAsProperty(JsonPropertyNamesEscaped.SapFe, ref builder, escapeName: false);
-            sapFiori.AddAsProperty(JsonPropertyNamesEscaped.SapFiori, ref builder, escapeName: false);
-            sapFlp.AddAsProperty(JsonPropertyNamesEscaped.SapFlp, ref builder, escapeName: false);
-            sapGui.AddAsProperty(JsonPropertyNamesEscaped.SapGui, ref builder, escapeName: false);
-            sapInsights.AddAsProperty(JsonPropertyNamesEscaped.SapInsights, ref builder, escapeName: false);
-            sapIntegration.AddAsProperty(JsonPropertyNamesEscaped.SapIntegration, ref builder, escapeName: false);
-            sapMap.AddAsProperty(JsonPropertyNamesEscaped.SapMap, ref builder, escapeName: false);
-            sapMobile.AddAsProperty(JsonPropertyNamesEscaped.SapMobile, ref builder, escapeName: false);
-            sapOvp.AddAsProperty(JsonPropertyNamesEscaped.SapOvp, ref builder, escapeName: false);
-            sapPackage.AddAsProperty(JsonPropertyNamesEscaped.SapPackage, ref builder, escapeName: false);
-            sapPlatformAbap.AddAsProperty(JsonPropertyNamesEscaped.SapPlatformAbap, ref builder, escapeName: false);
-            sapPlatformCf.AddAsProperty(JsonPropertyNamesEscaped.SapPlatformCf, ref builder, escapeName: false);
-            sapPlatformHcp.AddAsProperty(JsonPropertyNamesEscaped.SapPlatformHcp, ref builder, escapeName: false);
-            sapPlatformMobilecards.AddAsProperty(JsonPropertyNamesEscaped.SapPlatformMobilecards, ref builder, escapeName: false);
-            sapPlatformSfsf.AddAsProperty(JsonPropertyNamesEscaped.SapPlatformSfsf, ref builder, escapeName: false);
-            sapUiGenericApp.AddAsProperty(JsonPropertyNamesEscaped.SapUiGenericApp, ref builder, escapeName: false);
-            sapUiSmartbusinessApp.AddAsProperty(JsonPropertyNamesEscaped.SapUiSmartbusinessApp, ref builder, escapeName: false);
-            sapUi5.AddAsProperty(JsonPropertyNamesEscaped.SapUi5, ref builder, escapeName: false);
-            sapUrl.AddAsProperty(JsonPropertyNamesEscaped.SapUrl, ref builder, escapeName: false);
-            sapWcf.AddAsProperty(JsonPropertyNamesEscaped.SapWcf, ref builder, escapeName: false);
-            sapWda.AddAsProperty(JsonPropertyNamesEscaped.SapWda, ref builder, escapeName: false);
-            startUrl.AddAsProperty(JsonPropertyNamesEscaped.StartUrl, ref builder, escapeName: false);
+            version.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Version, ref builder);
+            sapApp.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapApp, ref builder);
+            sapUi.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapUi, ref builder);
+            schema.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Schema, ref builder);
+            sapApf.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapApf, ref builder);
+            sapArtifact.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapArtifact, ref builder);
+            sapBpaTask.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapBpaTask, ref builder);
+            sapCard.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapCard, ref builder);
+            sapCloud.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapCloud, ref builder);
+            sapCloudPortal.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapCloudPortal, ref builder);
+            sapCopilot.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapCopilot, ref builder);
+            sapFe.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapFe, ref builder);
+            sapFiori.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapFiori, ref builder);
+            sapFlp.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapFlp, ref builder);
+            sapGui.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapGui, ref builder);
+            sapInsights.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapInsights, ref builder);
+            sapIntegration.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapIntegration, ref builder);
+            sapMap.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapMap, ref builder);
+            sapMobile.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapMobile, ref builder);
+            sapOvp.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapOvp, ref builder);
+            sapPackage.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapPackage, ref builder);
+            sapPlatformAbap.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapPlatformAbap, ref builder);
+            sapPlatformCf.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapPlatformCf, ref builder);
+            sapPlatformHcp.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapPlatformHcp, ref builder);
+            sapPlatformMobilecards.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapPlatformMobilecards, ref builder);
+            sapPlatformSfsf.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapPlatformSfsf, ref builder);
+            sapUiGenericApp.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapUiGenericApp, ref builder);
+            sapUiSmartbusinessApp.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapUiSmartbusinessApp, ref builder);
+            sapUi5.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapUi5, ref builder);
+            sapUrl.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapUrl, ref builder);
+            sapWcf.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapWcf, ref builder);
+            sapWda.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SapWda, ref builder);
+            startUrl.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.StartUrl, ref builder);
         }
 
         /// <summary>
@@ -4009,15 +4045,15 @@ public readonly partial struct Ui5ManifestSchema
             in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapBpaTaskNamespace.Source<TContext> sapBpaTask = default,
             in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.Source<TContext> sapCard = default,
             in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCloudNamespace.Source<TContext> sapCloud = default,
-            in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCloudPortalNamespace.Source<TContext> sapCloudPortal = default,
+            in Corvus.Ui5ManifestBenchmark.Current.JsonObject.Source<TContext> sapCloudPortal = default,
             in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCopilotNamespace.Source<TContext> sapCopilot = default,
-            in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFeNamespace.Source<TContext> sapFe = default,
+            in Corvus.Ui5ManifestBenchmark.Current.JsonObject.Source<TContext> sapFe = default,
             in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFioriNamespace.Source<TContext> sapFiori = default,
             in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFlpNamespace.Source<TContext> sapFlp = default,
             in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapGuiNamespace.Source<TContext> sapGui = default,
             in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.Source<TContext> sapInsights = default,
             in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapIntegrationNamespace.Source<TContext> sapIntegration = default,
-            in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapMapNamespace.Source<TContext> sapMap = default,
+            in Corvus.Ui5ManifestBenchmark.Current.JsonObject.Source<TContext> sapMap = default,
             in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapMobileNamespace.Source<TContext> sapMobile = default,
             in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.Source<TContext> sapOvp = default,
             in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.Source<TContext> sapPackage = default,
@@ -4027,7 +4063,7 @@ public readonly partial struct Ui5ManifestSchema
             in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPlatformMobilecardsNamespace.Source<TContext> sapPlatformMobilecards = default,
             in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPlatformSfsfNamespace.Source<TContext> sapPlatformSfsf = default,
             in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiGenericAppNamespace.Source<TContext> sapUiGenericApp = default,
-            in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiSmartbusinessAppNamespace.Source<TContext> sapUiSmartbusinessApp = default,
+            in Corvus.Ui5ManifestBenchmark.Current.JsonObject.Source<TContext> sapUiSmartbusinessApp = default,
             in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.Source<TContext> sapUi5 = default,
             in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUrlNamespace.Source<TContext> sapUrl = default,
             in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapWcfNamespace.Source<TContext> sapWcf = default,
@@ -4198,7 +4234,7 @@ public readonly partial struct Ui5ManifestSchema
     /// <param name="startUrl">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.VersionEntity.Source version, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.Source sapApp, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiNamespace.Source sapUi, in Corvus.Ui5ManifestBenchmark.Current.JsonUri.Source schema = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapApfNamespace.Source sapApf = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapArtifactNamespace.Source sapArtifact = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapBpaTaskNamespace.Source sapBpaTask = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.Source sapCard = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCloudNamespace.Source sapCloud = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCloudPortalNamespace.Source sapCloudPortal = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCopilotNamespace.Source sapCopilot = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFeNamespace.Source sapFe = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFioriNamespace.Source sapFiori = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFlpNamespace.Source sapFlp = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapGuiNamespace.Source sapGui = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.Source sapInsights = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapIntegrationNamespace.Source sapIntegration = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapMapNamespace.Source sapMap = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapMobileNamespace.Source sapMobile = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.Source sapOvp = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.Source sapPackage = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPlatformAbapNamespace.Source sapPlatformAbap = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPlatformCfNamespace.Source sapPlatformCf = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPlatformHcpNamespace.Source sapPlatformHcp = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPlatformMobilecardsNamespace.Source sapPlatformMobilecards = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPlatformSfsfNamespace.Source sapPlatformSfsf = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiGenericAppNamespace.Source sapUiGenericApp = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiSmartbusinessAppNamespace.Source sapUiSmartbusinessApp = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.Source sapUi5 = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUrlNamespace.Source sapUrl = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapWcfNamespace.Source sapWcf = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapWdaNamespace.Source sapWda = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source startUrl = default, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.VersionEntity.Source version, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.Source sapApp, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiNamespace.Source sapUi, in Corvus.Ui5ManifestBenchmark.Current.JsonUri.Source schema = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapApfNamespace.Source sapApf = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapArtifactNamespace.Source sapArtifact = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapBpaTaskNamespace.Source sapBpaTask = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.Source sapCard = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCloudNamespace.Source sapCloud = default, in Corvus.Ui5ManifestBenchmark.Current.JsonObject.Source sapCloudPortal = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCopilotNamespace.Source sapCopilot = default, in Corvus.Ui5ManifestBenchmark.Current.JsonObject.Source sapFe = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFioriNamespace.Source sapFiori = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFlpNamespace.Source sapFlp = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapGuiNamespace.Source sapGui = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.Source sapInsights = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapIntegrationNamespace.Source sapIntegration = default, in Corvus.Ui5ManifestBenchmark.Current.JsonObject.Source sapMap = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapMobileNamespace.Source sapMobile = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.Source sapOvp = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.Source sapPackage = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPlatformAbapNamespace.Source sapPlatformAbap = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPlatformCfNamespace.Source sapPlatformCf = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPlatformHcpNamespace.Source sapPlatformHcp = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPlatformMobilecardsNamespace.Source sapPlatformMobilecards = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPlatformSfsfNamespace.Source sapPlatformSfsf = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiGenericAppNamespace.Source sapUiGenericApp = default, in Corvus.Ui5ManifestBenchmark.Current.JsonObject.Source sapUiSmartbusinessApp = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.Source sapUi5 = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUrlNamespace.Source sapUrl = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapWcfNamespace.Source sapWcf = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapWdaNamespace.Source sapWda = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source startUrl = default, int initialCapacity = 30)
     {
         JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
@@ -4252,7 +4288,7 @@ public readonly partial struct Ui5ManifestSchema
     /// <param name="startUrl">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.VersionEntity.Source version, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.Source<TContext> sapApp, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiNamespace.Source<TContext> sapUi, in Corvus.Ui5ManifestBenchmark.Current.JsonUri.Source schema = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapApfNamespace.Source<TContext> sapApf = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapArtifactNamespace.Source<TContext> sapArtifact = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapBpaTaskNamespace.Source<TContext> sapBpaTask = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.Source<TContext> sapCard = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCloudNamespace.Source<TContext> sapCloud = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCloudPortalNamespace.Source<TContext> sapCloudPortal = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCopilotNamespace.Source<TContext> sapCopilot = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFeNamespace.Source<TContext> sapFe = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFioriNamespace.Source<TContext> sapFiori = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFlpNamespace.Source<TContext> sapFlp = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapGuiNamespace.Source<TContext> sapGui = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.Source<TContext> sapInsights = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapIntegrationNamespace.Source<TContext> sapIntegration = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapMapNamespace.Source<TContext> sapMap = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapMobileNamespace.Source<TContext> sapMobile = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.Source<TContext> sapOvp = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.Source<TContext> sapPackage = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPlatformAbapNamespace.Source<TContext> sapPlatformAbap = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPlatformCfNamespace.Source<TContext> sapPlatformCf = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPlatformHcpNamespace.Source<TContext> sapPlatformHcp = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPlatformMobilecardsNamespace.Source<TContext> sapPlatformMobilecards = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPlatformSfsfNamespace.Source<TContext> sapPlatformSfsf = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiGenericAppNamespace.Source<TContext> sapUiGenericApp = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiSmartbusinessAppNamespace.Source<TContext> sapUiSmartbusinessApp = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.Source<TContext> sapUi5 = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUrlNamespace.Source<TContext> sapUrl = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapWcfNamespace.Source<TContext> sapWcf = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapWdaNamespace.Source<TContext> sapWda = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source startUrl = default, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.VersionEntity.Source version, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.Source<TContext> sapApp, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiNamespace.Source<TContext> sapUi, in Corvus.Ui5ManifestBenchmark.Current.JsonUri.Source schema = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapApfNamespace.Source<TContext> sapApf = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapArtifactNamespace.Source<TContext> sapArtifact = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapBpaTaskNamespace.Source<TContext> sapBpaTask = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.Source<TContext> sapCard = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCloudNamespace.Source<TContext> sapCloud = default, in Corvus.Ui5ManifestBenchmark.Current.JsonObject.Source<TContext> sapCloudPortal = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCopilotNamespace.Source<TContext> sapCopilot = default, in Corvus.Ui5ManifestBenchmark.Current.JsonObject.Source<TContext> sapFe = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFioriNamespace.Source<TContext> sapFiori = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFlpNamespace.Source<TContext> sapFlp = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapGuiNamespace.Source<TContext> sapGui = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapInsightsNamespace.Source<TContext> sapInsights = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapIntegrationNamespace.Source<TContext> sapIntegration = default, in Corvus.Ui5ManifestBenchmark.Current.JsonObject.Source<TContext> sapMap = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapMobileNamespace.Source<TContext> sapMobile = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.Source<TContext> sapOvp = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.Source<TContext> sapPackage = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPlatformAbapNamespace.Source<TContext> sapPlatformAbap = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPlatformCfNamespace.Source<TContext> sapPlatformCf = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPlatformHcpNamespace.Source<TContext> sapPlatformHcp = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPlatformMobilecardsNamespace.Source<TContext> sapPlatformMobilecards = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPlatformSfsfNamespace.Source<TContext> sapPlatformSfsf = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiGenericAppNamespace.Source<TContext> sapUiGenericApp = default, in Corvus.Ui5ManifestBenchmark.Current.JsonObject.Source<TContext> sapUiSmartbusinessApp = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.Source<TContext> sapUi5 = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUrlNamespace.Source<TContext> sapUrl = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapWcfNamespace.Source<TContext> sapWcf = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapWdaNamespace.Source<TContext> sapWda = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source startUrl = default, int initialCapacity = 30)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif

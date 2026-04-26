@@ -632,5 +632,17 @@ public readonly partial struct NestCliSchema
             /// </summary>
             public static ReadOnlySpan<byte> TypeFileNameSuffix => "typeFileNameSuffix"u8;
         }
+
+        /// <summary>
+        /// Provides pre-baked property name blobs for fast builder property storage.
+        /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
+        /// </summary>
+        private static class JsonPropertyNamesPrebaked
+        {
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="TypeFileNameSuffix"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> TypeFileNameSuffix => [0x45, 0x01, 0x00, 0x00, 0x22, 0x74, 0x79, 0x70, 0x65, 0x46, 0x69, 0x6C, 0x65, 0x4E, 0x61, 0x6D, 0x65, 0x53, 0x75, 0x66, 0x66, 0x69, 0x78, 0x22];
+        }
     }
 }

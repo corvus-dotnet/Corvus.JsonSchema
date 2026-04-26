@@ -78,17 +78,17 @@ public readonly partial struct Cql2Schema
                     /// <summary>
                     /// Gets a provider for the schema location from which this type was generated.
                     /// </summary>
-                    public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("cql2-schema.json#/$defs/intervalArray/items/oneOf/1"u8, buffer, out written);
+                    public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/$defs/intervalArray/items/oneOf/1"u8, buffer, out written);
 
                     /// <summary>
                     /// Gets the schema location from which this type was generated.
                     /// </summary>
-                    public const string SchemaLocation = "cql2-schema.json#/$defs/intervalArray/items/oneOf/1";
+                    public const string SchemaLocation = "/$defs/intervalArray/items/oneOf/1";
 
                     /// <summary>
                     /// Gets the schema location from which this type was generated as a UTF-8 string.
                     /// </summary>
-                    public static ReadOnlySpan<byte> SchemaLocationUtf8 => "cql2-schema.json#/$defs/intervalArray/items/oneOf/1"u8;
+                    public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/$defs/intervalArray/items/oneOf/1"u8;
 
                     /// <summary>
                     /// Applies the JSON schema semantics defined by this type to the instance determined by the given document and index.

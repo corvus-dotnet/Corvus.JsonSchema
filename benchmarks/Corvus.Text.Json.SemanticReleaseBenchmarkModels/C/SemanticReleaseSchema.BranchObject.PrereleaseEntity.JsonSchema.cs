@@ -41,17 +41,17 @@ public readonly partial struct SemanticReleaseSchema
                 /// <summary>
                 /// Gets a provider for the schema location from which this type was generated.
                 /// </summary>
-                public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("https://json.schemastore.org/semantic-release.json#/definitions/branch-object/properties/prerelease"u8, buffer, out written);
+                public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/definitions/branch-object/properties/prerelease"u8, buffer, out written);
 
                 /// <summary>
                 /// Gets the schema location from which this type was generated.
                 /// </summary>
-                public const string SchemaLocation = "https://json.schemastore.org/semantic-release.json#/definitions/branch-object/properties/prerelease";
+                public const string SchemaLocation = "/definitions/branch-object/properties/prerelease";
 
                 /// <summary>
                 /// Gets the schema location from which this type was generated as a UTF-8 string.
                 /// </summary>
-                public static ReadOnlySpan<byte> SchemaLocationUtf8 => "https://json.schemastore.org/semantic-release.json#/definitions/branch-object/properties/prerelease"u8;
+                public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/definitions/branch-object/properties/prerelease"u8;
                 private static readonly JsonSchemaPathProvider OneOf0SchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/oneOf/0"u8, buffer, out written);
                 private static readonly JsonSchemaPathProvider OneOf1SchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/oneOf/1"u8, buffer, out written);
 

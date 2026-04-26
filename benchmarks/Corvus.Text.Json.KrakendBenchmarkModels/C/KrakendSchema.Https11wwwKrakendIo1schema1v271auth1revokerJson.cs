@@ -359,11 +359,11 @@ public readonly partial struct KrakendSchema
         /// See: https://www.krakend.io/docs/authorization/revoking-tokens/
         /// </para>
         /// </remarks>
-        public Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271auth1revokerJson.TokenKeys TokenKeysValue
+        public Corvus.KrakendBenchmark.Current.JsonArray TokenKeys
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TokenKeysValueUtf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271auth1revokerJson.TokenKeys value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TokenKeysUtf8, out Corvus.KrakendBenchmark.Current.JsonArray value))
                 {
                     return value;
                 }
@@ -867,9 +867,9 @@ public readonly partial struct KrakendSchema
             public const string RevokeServerPingUrl = "revoke_server_ping_url";
 
             /// <summary>
-            /// Gets the JSON property name for <see cref="TokenKeysValue"/>.
+            /// Gets the JSON property name for <see cref="TokenKeys"/>.
             /// </summary>
-            public const string TokenKeysValue = "token_keys";
+            public const string TokenKeys = "token_keys";
 
             /// <summary>
             /// Gets the JSON property name for <see cref="Ttl"/>.
@@ -922,9 +922,9 @@ public readonly partial struct KrakendSchema
             public static ReadOnlySpan<byte> RevokeServerPingUrlUtf8 => "revoke_server_ping_url"u8;
 
             /// <summary>
-            /// Gets the JSON property name for <see cref="TokenKeysValue"/>.
+            /// Gets the JSON property name for <see cref="TokenKeys"/>.
             /// </summary>
-            public static ReadOnlySpan<byte> TokenKeysValueUtf8 => "token_keys"u8;
+            public static ReadOnlySpan<byte> TokenKeysUtf8 => "token_keys"u8;
 
             /// <summary>
             /// Gets the JSON property name for <see cref="Ttl"/>.
@@ -983,14 +983,76 @@ public readonly partial struct KrakendSchema
             public static ReadOnlySpan<byte> RevokeServerPingUrl => "revoke_server_ping_url"u8;
 
             /// <summary>
-            /// Gets the escaped UTF-8 JSON property name for <see cref="TokenKeysValue"/>.
+            /// Gets the escaped UTF-8 JSON property name for <see cref="TokenKeys"/>.
             /// </summary>
-            public static ReadOnlySpan<byte> TokenKeysValue => "token_keys"u8;
+            public static ReadOnlySpan<byte> TokenKeys => "token_keys"u8;
 
             /// <summary>
             /// Gets the escaped UTF-8 JSON property name for <see cref="Ttl"/>.
             /// </summary>
             public static ReadOnlySpan<byte> Ttl => "TTL"u8;
+        }
+
+        /// <summary>
+        /// Provides pre-baked property name blobs for fast builder property storage.
+        /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
+        /// </summary>
+        private static class JsonPropertyNamesPrebaked
+        {
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="HashName"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> HashName => [0xB5, 0x00, 0x00, 0x00, 0x22, 0x68, 0x61, 0x73, 0x68, 0x5F, 0x6E, 0x61, 0x6D, 0x65, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="N"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> N => [0x35, 0x00, 0x00, 0x00, 0x22, 0x4E, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="P"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> P => [0x35, 0x00, 0x00, 0x00, 0x22, 0x50, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Port"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Port => [0x65, 0x00, 0x00, 0x00, 0x22, 0x70, 0x6F, 0x72, 0x74, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="RevokeServerApiKey"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> RevokeServerApiKey => [0x75, 0x01, 0x00, 0x00, 0x22, 0x72, 0x65, 0x76, 0x6F, 0x6B, 0x65, 0x5F, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x5F, 0x61, 0x70, 0x69, 0x5F, 0x6B, 0x65, 0x79, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="RevokeServerMaxRetriesValue"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> RevokeServerMaxRetriesValue => [0xB5, 0x01, 0x00, 0x00, 0x22, 0x72, 0x65, 0x76, 0x6F, 0x6B, 0x65, 0x5F, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x5F, 0x6D, 0x61, 0x78, 0x5F, 0x72, 0x65, 0x74, 0x72, 0x69, 0x65, 0x73, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="RevokeServerMaxWorkers"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> RevokeServerMaxWorkers => [0xB5, 0x01, 0x00, 0x00, 0x22, 0x72, 0x65, 0x76, 0x6F, 0x6B, 0x65, 0x5F, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x5F, 0x6D, 0x61, 0x78, 0x5F, 0x77, 0x6F, 0x72, 0x6B, 0x65, 0x72, 0x73, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="RevokeServerPingInterval"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> RevokeServerPingInterval => [0xD5, 0x01, 0x00, 0x00, 0x22, 0x72, 0x65, 0x76, 0x6F, 0x6B, 0x65, 0x5F, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x5F, 0x70, 0x69, 0x6E, 0x67, 0x5F, 0x69, 0x6E, 0x74, 0x65, 0x72, 0x76, 0x61, 0x6C, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="RevokeServerPingUrl"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> RevokeServerPingUrl => [0x85, 0x01, 0x00, 0x00, 0x22, 0x72, 0x65, 0x76, 0x6F, 0x6B, 0x65, 0x5F, 0x73, 0x65, 0x72, 0x76, 0x65, 0x72, 0x5F, 0x70, 0x69, 0x6E, 0x67, 0x5F, 0x75, 0x72, 0x6C, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="TokenKeys"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> TokenKeys => [0xC5, 0x00, 0x00, 0x00, 0x22, 0x74, 0x6F, 0x6B, 0x65, 0x6E, 0x5F, 0x6B, 0x65, 0x79, 0x73, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Ttl"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Ttl => [0x55, 0x00, 0x00, 0x00, 0x22, 0x54, 0x54, 0x4C, 0x22];
         }
     }
 }

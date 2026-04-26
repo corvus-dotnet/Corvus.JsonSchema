@@ -185,11 +185,11 @@ public readonly partial struct VercelSchema
                 /// Optionally, an object including arbitrary metadata to be passed to the Builder
                 /// </para>
                 /// </remarks>
-                public Corvus.VercelBenchmark.Current.VercelSchema.RequiredUseArray.RequiredUse.ConfigEntity.Mutable Config
+                public Corvus.VercelBenchmark.Current.JsonObject.Mutable Config
                 {
                     get
                     {
-                        if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ConfigUtf8, out Corvus.VercelBenchmark.Current.VercelSchema.RequiredUseArray.RequiredUse.ConfigEntity.Mutable value))
+                        if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ConfigUtf8, out Corvus.VercelBenchmark.Current.JsonObject.Mutable value))
                         {
                             return value;
                         }
@@ -276,7 +276,7 @@ public readonly partial struct VercelSchema
                 /// Set the <c>config</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetConfig(in Corvus.VercelBenchmark.Current.VercelSchema.RequiredUseArray.RequiredUse.ConfigEntity.Source value)
+                public void SetConfig(in Corvus.VercelBenchmark.Current.JsonObject.Source value)
                 {
                     CheckValidInstance();
 
@@ -297,7 +297,7 @@ public readonly partial struct VercelSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.Config, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Config, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -309,7 +309,7 @@ public readonly partial struct VercelSchema
                 /// Set the <c>config</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetConfig<TContext>(in Corvus.VercelBenchmark.Current.VercelSchema.RequiredUseArray.RequiredUse.ConfigEntity.Source<TContext> value)
+                public void SetConfig<TContext>(in Corvus.VercelBenchmark.Current.JsonObject.Source<TContext> value)
 #if NET9_0_OR_GREATER
                     where TContext : allows ref struct
 #endif
@@ -333,7 +333,7 @@ public readonly partial struct VercelSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.Config, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Config, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -378,7 +378,7 @@ public readonly partial struct VercelSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.Src, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Src, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -421,7 +421,7 @@ public readonly partial struct VercelSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.Use, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Use, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -616,6 +616,24 @@ public readonly partial struct VercelSchema
                     }
                 }
 
+                internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+                {
+                    switch(_kind)
+                    {
+                        case Kind.Unknown:
+                            break;
+                        case Kind.JsonElement:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                            break;
+                        case Kind.Builder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
+                            break;
+                        default:
+                            Debug.Fail("Unexpected Kind");
+                            break;
+                    }
+                }
+
                 internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
                 {
                     switch(_kind)
@@ -717,6 +735,24 @@ public readonly partial struct VercelSchema
                     }
                 }
 
+                internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+                {
+                    switch(_kind)
+                    {
+                        case Kind.Unknown:
+                            break;
+                        case Kind.Source:
+                            _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                            break;
+                        case Kind.Builder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
+                            break;
+                        default:
+                            Debug.Fail("Unexpected Kind");
+                            break;
+                    }
+                }
+
                 internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
                 {
                     switch(_kind)
@@ -796,12 +832,12 @@ public readonly partial struct VercelSchema
                 internal static void Create(
                     ref ComplexValueBuilder builder,
                     in Corvus.VercelBenchmark.Current.VercelSchema.RequiredUseArray.RequiredUse.UseEntity.Source use,
-                    in Corvus.VercelBenchmark.Current.VercelSchema.RequiredUseArray.RequiredUse.ConfigEntity.Source config = default,
+                    in Corvus.VercelBenchmark.Current.JsonObject.Source config = default,
                     in Corvus.VercelBenchmark.Current.VercelSchema.RequiredUseArray.RequiredUse.SrcEntity.Source src = default)
                 {
-                    use.AddAsProperty(JsonPropertyNamesEscaped.Use, ref builder, escapeName: false);
-                    config.AddAsProperty(JsonPropertyNamesEscaped.Config, ref builder, escapeName: false);
-                    src.AddAsProperty(JsonPropertyNamesEscaped.Src, ref builder, escapeName: false);
+                    use.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Use, ref builder);
+                    config.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Config, ref builder);
+                    src.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Src, ref builder);
                 }
 
                 /// <summary>
@@ -809,7 +845,7 @@ public readonly partial struct VercelSchema
                 /// </summary>
                 public void Create(
                     in Corvus.VercelBenchmark.Current.VercelSchema.RequiredUseArray.RequiredUse.UseEntity.Source use,
-                    in Corvus.VercelBenchmark.Current.VercelSchema.RequiredUseArray.RequiredUse.ConfigEntity.Source config = default,
+                    in Corvus.VercelBenchmark.Current.JsonObject.Source config = default,
                     in Corvus.VercelBenchmark.Current.VercelSchema.RequiredUseArray.RequiredUse.SrcEntity.Source src = default)
                 {
                     Create(ref _builder, use, config, src);
@@ -822,15 +858,15 @@ public readonly partial struct VercelSchema
                     in TContext context,
                     ref ComplexValueBuilder builder,
                     in Corvus.VercelBenchmark.Current.VercelSchema.RequiredUseArray.RequiredUse.UseEntity.Source use,
-                    in Corvus.VercelBenchmark.Current.VercelSchema.RequiredUseArray.RequiredUse.ConfigEntity.Source<TContext> config = default,
+                    in Corvus.VercelBenchmark.Current.JsonObject.Source<TContext> config = default,
                     in Corvus.VercelBenchmark.Current.VercelSchema.RequiredUseArray.RequiredUse.SrcEntity.Source src = default)
                 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
                 #endif
                 {
-                    use.AddAsProperty(JsonPropertyNamesEscaped.Use, ref builder, escapeName: false);
-                    config.AddAsProperty(JsonPropertyNamesEscaped.Config, ref builder, escapeName: false);
-                    src.AddAsProperty(JsonPropertyNamesEscaped.Src, ref builder, escapeName: false);
+                    use.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Use, ref builder);
+                    config.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Config, ref builder);
+                    src.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Src, ref builder);
                 }
 
                 /// <summary>
@@ -839,7 +875,7 @@ public readonly partial struct VercelSchema
                 public void Create<TContext>(
                     in TContext context,
                     in Corvus.VercelBenchmark.Current.VercelSchema.RequiredUseArray.RequiredUse.UseEntity.Source use,
-                    in Corvus.VercelBenchmark.Current.VercelSchema.RequiredUseArray.RequiredUse.ConfigEntity.Source<TContext> config = default,
+                    in Corvus.VercelBenchmark.Current.JsonObject.Source<TContext> config = default,
                     in Corvus.VercelBenchmark.Current.VercelSchema.RequiredUseArray.RequiredUse.SrcEntity.Source src = default)
                 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
@@ -976,7 +1012,7 @@ public readonly partial struct VercelSchema
             /// <param name="src">The value of the property.</param>
             /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
             /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-            public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredUseArray.RequiredUse.UseEntity.Source use, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredUseArray.RequiredUse.ConfigEntity.Source config = default, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredUseArray.RequiredUse.SrcEntity.Source src = default, int initialCapacity = 30)
+            public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredUseArray.RequiredUse.UseEntity.Source use, in Corvus.VercelBenchmark.Current.JsonObject.Source config = default, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredUseArray.RequiredUse.SrcEntity.Source src = default, int initialCapacity = 30)
             {
                 JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
@@ -1000,7 +1036,7 @@ public readonly partial struct VercelSchema
             /// <param name="src">The value of the property.</param>
             /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
             /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-            public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredUseArray.RequiredUse.UseEntity.Source use, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredUseArray.RequiredUse.ConfigEntity.Source<TContext> config = default, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredUseArray.RequiredUse.SrcEntity.Source src = default, int initialCapacity = 30)
+            public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredUseArray.RequiredUse.UseEntity.Source use, in Corvus.VercelBenchmark.Current.JsonObject.Source<TContext> config = default, in Corvus.VercelBenchmark.Current.VercelSchema.RequiredUseArray.RequiredUse.SrcEntity.Source src = default, int initialCapacity = 30)
                 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
                 #endif

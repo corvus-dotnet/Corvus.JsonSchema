@@ -940,4 +940,61 @@ public readonly partial struct NestCliSchema
         /// </summary>
         public static ReadOnlySpan<byte> SourceRoot => "sourceRoot"u8;
     }
+
+    /// <summary>
+    /// Provides pre-baked property name blobs for fast builder property storage.
+    /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
+    /// </summary>
+    private static class JsonPropertyNamesPrebaked
+    {
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Collection"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Collection => [0xC5, 0x00, 0x00, 0x00, 0x22, 0x63, 0x6F, 0x6C, 0x6C, 0x65, 0x63, 0x74, 0x69, 0x6F, 0x6E, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="CompilerOptionsValue"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> CompilerOptionsValue => [0x15, 0x01, 0x00, 0x00, 0x22, 0x63, 0x6F, 0x6D, 0x70, 0x69, 0x6C, 0x65, 0x72, 0x4F, 0x70, 0x74, 0x69, 0x6F, 0x6E, 0x73, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="DefaultLibraryPrefix"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> DefaultLibraryPrefix => [0x65, 0x01, 0x00, 0x00, 0x22, 0x64, 0x65, 0x66, 0x61, 0x75, 0x6C, 0x74, 0x4C, 0x69, 0x62, 0x72, 0x61, 0x72, 0x79, 0x50, 0x72, 0x65, 0x66, 0x69, 0x78, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="EntryFile"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> EntryFile => [0xB5, 0x00, 0x00, 0x00, 0x22, 0x65, 0x6E, 0x74, 0x72, 0x79, 0x46, 0x69, 0x6C, 0x65, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="GenerateOptionsValue"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> GenerateOptionsValue => [0x15, 0x01, 0x00, 0x00, 0x22, 0x67, 0x65, 0x6E, 0x65, 0x72, 0x61, 0x74, 0x65, 0x4F, 0x70, 0x74, 0x69, 0x6F, 0x6E, 0x73, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Language"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Language => [0xA5, 0x00, 0x00, 0x00, 0x22, 0x6C, 0x61, 0x6E, 0x67, 0x75, 0x61, 0x67, 0x65, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Monorepo"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Monorepo => [0xA5, 0x00, 0x00, 0x00, 0x22, 0x6D, 0x6F, 0x6E, 0x6F, 0x72, 0x65, 0x70, 0x6F, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Projects"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Projects => [0xA5, 0x00, 0x00, 0x00, 0x22, 0x70, 0x72, 0x6F, 0x6A, 0x65, 0x63, 0x74, 0x73, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Root"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Root => [0x65, 0x00, 0x00, 0x00, 0x22, 0x72, 0x6F, 0x6F, 0x74, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="SourceRoot"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> SourceRoot => [0xC5, 0x00, 0x00, 0x00, 0x22, 0x73, 0x6F, 0x75, 0x72, 0x63, 0x65, 0x52, 0x6F, 0x6F, 0x74, 0x22];
+    }
 }

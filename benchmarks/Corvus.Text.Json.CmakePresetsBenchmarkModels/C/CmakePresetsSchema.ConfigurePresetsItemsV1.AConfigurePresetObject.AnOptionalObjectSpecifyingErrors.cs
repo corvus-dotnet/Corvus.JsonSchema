@@ -589,6 +589,23 @@ public readonly partial struct CmakePresetsSchema
                     /// </summary>
                     public static ReadOnlySpan<byte> Dev => "dev"u8;
                 }
+
+                /// <summary>
+                /// Provides pre-baked property name blobs for fast builder property storage.
+                /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
+                /// </summary>
+                private static class JsonPropertyNamesPrebaked
+                {
+                    /// <summary>
+                    /// Gets the pre-baked property name blob for <see cref="Deprecated"/>.
+                    /// </summary>
+                    public static ReadOnlySpan<byte> Deprecated => [0xC5, 0x00, 0x00, 0x00, 0x22, 0x64, 0x65, 0x70, 0x72, 0x65, 0x63, 0x61, 0x74, 0x65, 0x64, 0x22];
+
+                    /// <summary>
+                    /// Gets the pre-baked property name blob for <see cref="Dev"/>.
+                    /// </summary>
+                    public static ReadOnlySpan<byte> Dev => [0x55, 0x00, 0x00, 0x00, 0x22, 0x64, 0x65, 0x76, 0x22];
+                }
             }
         }
     }

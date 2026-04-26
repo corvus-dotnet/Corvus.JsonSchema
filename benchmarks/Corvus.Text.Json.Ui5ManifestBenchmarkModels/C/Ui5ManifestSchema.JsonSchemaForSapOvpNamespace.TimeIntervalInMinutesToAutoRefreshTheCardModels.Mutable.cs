@@ -484,10 +484,20 @@ public readonly partial struct Ui5ManifestSchema
 
                 private Source(double value) { SimpleTypesBacking.Initialize(ref _simpleTypeBacking, value, static (isAlsoArray, buffer, out written) => Utf8Formatter.TryFormat(isAlsoArray, buffer, out written)); _kind = Kind.NumericSimpleType; }
 
+                private Source(int value) { SimpleTypesBacking.Initialize(ref _simpleTypeBacking, value, static (isAlsoArray, buffer, out written) => Utf8Formatter.TryFormat(isAlsoArray, buffer, out written)); _kind = Kind.NumericSimpleType; }
+
+                private Source(long value) { SimpleTypesBacking.Initialize(ref _simpleTypeBacking, value, static (isAlsoArray, buffer, out written) => Utf8Formatter.TryFormat(isAlsoArray, buffer, out written)); _kind = Kind.NumericSimpleType; }
+
                 public static implicit operator Source(TimeIntervalInMinutesToAutoRefreshTheCardModels instance) => new(JsonElement.From(instance));
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static implicit operator Source(double value) => new (value);
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static implicit operator Source(int value) => new (value);
+
+                [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                public static implicit operator Source(long value) => new (value);
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static Source FormattedNumber(ReadOnlySpan<byte> value) => new(value, Kind.FormattedNumber);
@@ -506,6 +516,27 @@ public readonly partial struct Ui5ManifestSchema
                             break;
                         case Kind.FormattedNumber:
                             valueBuilder.AddPropertyFormattedNumber(utf8Name, _utf8Backing, escapeName, nameRequiresUnescaping);
+                            break;
+                        default:
+                            Debug.Fail("Unexpected Kind");
+                            break;
+                    }
+                }
+
+                internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+                {
+                    switch(_kind)
+                    {
+                        case Kind.Unknown:
+                            break;
+                        case Kind.JsonElement:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                            break;
+                        case Kind.NumericSimpleType:
+                            valueBuilder.AddPrebakedPropertyFormattedNumber(prebakedPropertyName, _simpleTypeBacking.Span());
+                            break;
+                        case Kind.FormattedNumber:
+                            valueBuilder.AddPrebakedPropertyFormattedNumber(prebakedPropertyName, _utf8Backing);
                             break;
                         default:
                             Debug.Fail("Unexpected Kind");

@@ -309,7 +309,7 @@ public readonly partial struct JsonEmail
             return JsonSchema.Evaluate(_parent, _idx, resultsCollector);
         }
 
-        private void CheckValidInstance()
+        private readonly void CheckValidInstance()
         {
             if (_parent == null)
             {
@@ -343,6 +343,48 @@ public readonly partial struct JsonEmail
 
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         JsonValueKind IJsonElement.ValueKind => ValueKind;
+
+        /// <summary>
+        /// Gets a <see cref="JsonEmail"/> which can be safely stored beyond the lifetime of the
+        /// original document.
+        /// </summary>
+        /// <returns>
+        /// A <see cref="JsonEmail"/> which can be safely stored beyond the lifetime of the
+        /// original document.
+        /// </returns>
+        /// <remarks>
+        /// <para>
+        /// This serializes the element and re-parses it into a standalone heap-allocated
+        /// document. The result is independent of the workspace.
+        /// </para>
+        /// </remarks>
+        public readonly JsonEmail Clone()
+        {
+            CheckValidInstance();
+            return _parent.CloneElement<JsonEmail>(_idx);
+        }
+
+        /// <summary>
+        /// Creates a frozen (immutable) copy of this element, backed by a new
+        /// document builder registered in the same workspace.
+        /// </summary>
+        /// <returns>
+        /// An immutable <see cref="JsonEmail"/> that lives for the lifetime of its
+        /// workspace and its associated documents.
+        /// </returns>
+        /// <remarks>
+        /// <para>
+        /// Unlike <see cref="Clone()"/>, which serializes the element and re-parses it
+        /// into a standalone heap-allocated document, <c>Freeze()</c> performs a cheap
+        /// blit of the metadata and value backing arrays. The resulting element is
+        /// immutable but is only valid for the lifetime of the workspace.
+        /// </para>
+        /// </remarks>
+        public readonly JsonEmail Freeze()
+        {
+            CheckValidInstance();
+            return _parent.FreezeElement<JsonEmail>(_idx);
+        }
     }
 
     public ref struct Source
@@ -425,6 +467,33 @@ public readonly partial struct JsonEmail
                     break;
                 case Kind.Utf16String:
                     valueBuilder.AddProperty(utf8Name, _utf16Backing, escapeName, nameRequiresUnescaping);
+                    break;
+                default:
+                    Debug.Fail("Unexpected Kind");
+                    break;
+            }
+        }
+
+        internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+        {
+            switch(_kind)
+            {
+                case Kind.Unknown:
+                    break;
+                case Kind.JsonElement:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                    break;
+                case Kind.RawUtf8StringRequiresUnescaping:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, _utf8Backing, escapeValue: false, valueRequiresUnescaping: true);
+                    break;
+                case Kind.RawUtf8StringNotRequiresUnescaping:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, _utf8Backing, escapeValue: false, valueRequiresUnescaping: false);
+                    break;
+                case Kind.Utf8String:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, _utf8Backing, escapeValue: true, valueRequiresUnescaping: false);
+                    break;
+                case Kind.Utf16String:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, _utf16Backing);
                     break;
                 default:
                     Debug.Fail("Unexpected Kind");

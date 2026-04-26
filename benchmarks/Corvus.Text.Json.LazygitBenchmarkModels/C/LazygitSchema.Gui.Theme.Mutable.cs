@@ -500,7 +500,7 @@ public readonly partial struct LazygitSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.ActiveBorderColor, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ActiveBorderColor, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -536,7 +536,7 @@ public readonly partial struct LazygitSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.ActiveBorderColor, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ActiveBorderColor, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -581,7 +581,7 @@ public readonly partial struct LazygitSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.CherryPickedCommitBgColor, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CherryPickedCommitBgColor, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -617,7 +617,7 @@ public readonly partial struct LazygitSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.CherryPickedCommitBgColor, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CherryPickedCommitBgColor, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -662,7 +662,7 @@ public readonly partial struct LazygitSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.CherryPickedCommitFgColor, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CherryPickedCommitFgColor, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -698,7 +698,7 @@ public readonly partial struct LazygitSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.CherryPickedCommitFgColor, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CherryPickedCommitFgColor, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -743,7 +743,7 @@ public readonly partial struct LazygitSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.DefaultFgColor, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DefaultFgColor, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -779,7 +779,7 @@ public readonly partial struct LazygitSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.DefaultFgColor, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DefaultFgColor, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -824,7 +824,7 @@ public readonly partial struct LazygitSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.InactiveBorderColor, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.InactiveBorderColor, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -860,7 +860,7 @@ public readonly partial struct LazygitSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.InactiveBorderColor, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.InactiveBorderColor, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -905,7 +905,7 @@ public readonly partial struct LazygitSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.OptionsTextColor, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.OptionsTextColor, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -941,7 +941,7 @@ public readonly partial struct LazygitSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.OptionsTextColor, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.OptionsTextColor, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -986,7 +986,7 @@ public readonly partial struct LazygitSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.SearchingActiveBorderColor, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SearchingActiveBorderColor, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -1022,7 +1022,7 @@ public readonly partial struct LazygitSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.SearchingActiveBorderColor, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SearchingActiveBorderColor, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -1067,7 +1067,7 @@ public readonly partial struct LazygitSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.SelectedLineBgColor, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SelectedLineBgColor, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -1103,7 +1103,7 @@ public readonly partial struct LazygitSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.SelectedLineBgColor, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SelectedLineBgColor, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -1148,7 +1148,7 @@ public readonly partial struct LazygitSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.SelectedRangeBgColor, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SelectedRangeBgColor, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -1184,7 +1184,7 @@ public readonly partial struct LazygitSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.SelectedRangeBgColor, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SelectedRangeBgColor, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -1229,7 +1229,7 @@ public readonly partial struct LazygitSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.UnstagedChangesColor, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.UnstagedChangesColor, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -1265,7 +1265,7 @@ public readonly partial struct LazygitSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.UnstagedChangesColor, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.UnstagedChangesColor, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -1472,6 +1472,24 @@ public readonly partial struct LazygitSchema
                     }
                 }
 
+                internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+                {
+                    switch(_kind)
+                    {
+                        case Kind.Unknown:
+                            break;
+                        case Kind.JsonElement:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                            break;
+                        case Kind.Builder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
+                            break;
+                        default:
+                            Debug.Fail("Unexpected Kind");
+                            break;
+                    }
+                }
+
                 internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
                 {
                     switch(_kind)
@@ -1573,6 +1591,24 @@ public readonly partial struct LazygitSchema
                     }
                 }
 
+                internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+                {
+                    switch(_kind)
+                    {
+                        case Kind.Unknown:
+                            break;
+                        case Kind.Source:
+                            _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                            break;
+                        case Kind.Builder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
+                            break;
+                        default:
+                            Debug.Fail("Unexpected Kind");
+                            break;
+                    }
+                }
+
                 internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
                 {
                     switch(_kind)
@@ -1662,16 +1698,16 @@ public readonly partial struct LazygitSchema
                     in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.SelecArray.Source selectedRangeBgColor = default,
                     in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.Theme.UnstaArray.Source unstagedChangesColor = default)
                 {
-                    activeBorderColor.AddAsProperty(JsonPropertyNamesEscaped.ActiveBorderColor, ref builder, escapeName: false);
-                    cherryPickedCommitBgColor.AddAsProperty(JsonPropertyNamesEscaped.CherryPickedCommitBgColor, ref builder, escapeName: false);
-                    cherryPickedCommitFgColor.AddAsProperty(JsonPropertyNamesEscaped.CherryPickedCommitFgColor, ref builder, escapeName: false);
-                    defaultFgColor.AddAsProperty(JsonPropertyNamesEscaped.DefaultFgColor, ref builder, escapeName: false);
-                    inactiveBorderColor.AddAsProperty(JsonPropertyNamesEscaped.InactiveBorderColor, ref builder, escapeName: false);
-                    optionsTextColor.AddAsProperty(JsonPropertyNamesEscaped.OptionsTextColor, ref builder, escapeName: false);
-                    searchingActiveBorderColor.AddAsProperty(JsonPropertyNamesEscaped.SearchingActiveBorderColor, ref builder, escapeName: false);
-                    selectedLineBgColor.AddAsProperty(JsonPropertyNamesEscaped.SelectedLineBgColor, ref builder, escapeName: false);
-                    selectedRangeBgColor.AddAsProperty(JsonPropertyNamesEscaped.SelectedRangeBgColor, ref builder, escapeName: false);
-                    unstagedChangesColor.AddAsProperty(JsonPropertyNamesEscaped.UnstagedChangesColor, ref builder, escapeName: false);
+                    activeBorderColor.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ActiveBorderColor, ref builder);
+                    cherryPickedCommitBgColor.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CherryPickedCommitBgColor, ref builder);
+                    cherryPickedCommitFgColor.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CherryPickedCommitFgColor, ref builder);
+                    defaultFgColor.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DefaultFgColor, ref builder);
+                    inactiveBorderColor.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.InactiveBorderColor, ref builder);
+                    optionsTextColor.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.OptionsTextColor, ref builder);
+                    searchingActiveBorderColor.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SearchingActiveBorderColor, ref builder);
+                    selectedLineBgColor.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SelectedLineBgColor, ref builder);
+                    selectedRangeBgColor.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SelectedRangeBgColor, ref builder);
+                    unstagedChangesColor.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.UnstagedChangesColor, ref builder);
                 }
 
                 /// <summary>
@@ -1712,16 +1748,16 @@ public readonly partial struct LazygitSchema
                 where TContext : allows ref struct
                 #endif
                 {
-                    activeBorderColor.AddAsProperty(JsonPropertyNamesEscaped.ActiveBorderColor, ref builder, escapeName: false);
-                    cherryPickedCommitBgColor.AddAsProperty(JsonPropertyNamesEscaped.CherryPickedCommitBgColor, ref builder, escapeName: false);
-                    cherryPickedCommitFgColor.AddAsProperty(JsonPropertyNamesEscaped.CherryPickedCommitFgColor, ref builder, escapeName: false);
-                    defaultFgColor.AddAsProperty(JsonPropertyNamesEscaped.DefaultFgColor, ref builder, escapeName: false);
-                    inactiveBorderColor.AddAsProperty(JsonPropertyNamesEscaped.InactiveBorderColor, ref builder, escapeName: false);
-                    optionsTextColor.AddAsProperty(JsonPropertyNamesEscaped.OptionsTextColor, ref builder, escapeName: false);
-                    searchingActiveBorderColor.AddAsProperty(JsonPropertyNamesEscaped.SearchingActiveBorderColor, ref builder, escapeName: false);
-                    selectedLineBgColor.AddAsProperty(JsonPropertyNamesEscaped.SelectedLineBgColor, ref builder, escapeName: false);
-                    selectedRangeBgColor.AddAsProperty(JsonPropertyNamesEscaped.SelectedRangeBgColor, ref builder, escapeName: false);
-                    unstagedChangesColor.AddAsProperty(JsonPropertyNamesEscaped.UnstagedChangesColor, ref builder, escapeName: false);
+                    activeBorderColor.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ActiveBorderColor, ref builder);
+                    cherryPickedCommitBgColor.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CherryPickedCommitBgColor, ref builder);
+                    cherryPickedCommitFgColor.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CherryPickedCommitFgColor, ref builder);
+                    defaultFgColor.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DefaultFgColor, ref builder);
+                    inactiveBorderColor.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.InactiveBorderColor, ref builder);
+                    optionsTextColor.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.OptionsTextColor, ref builder);
+                    searchingActiveBorderColor.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SearchingActiveBorderColor, ref builder);
+                    selectedLineBgColor.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SelectedLineBgColor, ref builder);
+                    selectedRangeBgColor.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SelectedRangeBgColor, ref builder);
+                    unstagedChangesColor.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.UnstagedChangesColor, ref builder);
                 }
 
                 /// <summary>

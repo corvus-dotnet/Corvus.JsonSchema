@@ -107,17 +107,17 @@ public readonly partial struct AnsibleMetaSchema
                 /// <summary>
                 /// Gets a provider for the schema location from which this type was generated.
                 /// </summary>
-                public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("https://raw.githubusercontent.com/ansible/ansible-lint/main/src/ansiblelint/schemas/meta.json#/definitions/platforms/items"u8, buffer, out written);
+                public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/definitions/platforms/items"u8, buffer, out written);
 
                 /// <summary>
                 /// Gets the schema location from which this type was generated.
                 /// </summary>
-                public const string SchemaLocation = "https://raw.githubusercontent.com/ansible/ansible-lint/main/src/ansiblelint/schemas/meta.json#/definitions/platforms/items";
+                public const string SchemaLocation = "/definitions/platforms/items";
 
                 /// <summary>
                 /// Gets the schema location from which this type was generated as a UTF-8 string.
                 /// </summary>
-                public static ReadOnlySpan<byte> SchemaLocationUtf8 => "https://raw.githubusercontent.com/ansible/ansible-lint/main/src/ansiblelint/schemas/meta.json#/definitions/platforms/items"u8;
+                public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/definitions/platforms/items"u8;
                 private static readonly JsonSchemaPathProvider AnyOf0SchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/anyOf/0/$ref"u8, buffer, out written);
                 private static readonly JsonSchemaPathProvider AnyOf1SchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/anyOf/1/$ref"u8, buffer, out written);
                 private static readonly JsonSchemaPathProvider AnyOf2SchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/anyOf/2/$ref"u8, buffer, out written);

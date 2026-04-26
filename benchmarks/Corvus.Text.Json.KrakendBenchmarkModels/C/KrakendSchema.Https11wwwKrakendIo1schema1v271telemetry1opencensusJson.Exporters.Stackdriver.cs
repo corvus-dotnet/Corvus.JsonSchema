@@ -142,11 +142,11 @@ public readonly partial struct KrakendSchema
                 /// See: https://www.krakend.io/docs/telemetry/stackdriver/
                 /// </para>
                 /// </remarks>
-                public Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271telemetry1opencensusJson.Exporters.Stackdriver.DefaultLabels DefaultLabelsValue
+                public Corvus.KrakendBenchmark.Current.JsonObject DefaultLabels
                 {
                     get
                     {
-                        if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.DefaultLabelsValueUtf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271telemetry1opencensusJson.Exporters.Stackdriver.DefaultLabels value))
+                        if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.DefaultLabelsUtf8, out Corvus.KrakendBenchmark.Current.JsonObject value))
                         {
                             return value;
                         }
@@ -630,9 +630,9 @@ public readonly partial struct KrakendSchema
                 public static class JsonPropertyNames
                 {
                     /// <summary>
-                    /// Gets the JSON property name for <see cref="DefaultLabelsValue"/>.
+                    /// Gets the JSON property name for <see cref="DefaultLabels"/>.
                     /// </summary>
-                    public const string DefaultLabelsValue = "default_labels";
+                    public const string DefaultLabels = "default_labels";
 
                     /// <summary>
                     /// Gets the JSON property name for <see cref="MetricPrefix"/>.
@@ -645,9 +645,9 @@ public readonly partial struct KrakendSchema
                     public const string ProjectIdValue = "project_id";
 
                     /// <summary>
-                    /// Gets the JSON property name for <see cref="DefaultLabelsValue"/>.
+                    /// Gets the JSON property name for <see cref="DefaultLabels"/>.
                     /// </summary>
-                    public static ReadOnlySpan<byte> DefaultLabelsValueUtf8 => "default_labels"u8;
+                    public static ReadOnlySpan<byte> DefaultLabelsUtf8 => "default_labels"u8;
 
                     /// <summary>
                     /// Gets the JSON property name for <see cref="MetricPrefix"/>.
@@ -666,9 +666,9 @@ public readonly partial struct KrakendSchema
                 private static class JsonPropertyNamesEscaped
                 {
                     /// <summary>
-                    /// Gets the escaped UTF-8 JSON property name for <see cref="DefaultLabelsValue"/>.
+                    /// Gets the escaped UTF-8 JSON property name for <see cref="DefaultLabels"/>.
                     /// </summary>
-                    public static ReadOnlySpan<byte> DefaultLabelsValue => "default_labels"u8;
+                    public static ReadOnlySpan<byte> DefaultLabels => "default_labels"u8;
 
                     /// <summary>
                     /// Gets the escaped UTF-8 JSON property name for <see cref="MetricPrefix"/>.
@@ -679,6 +679,28 @@ public readonly partial struct KrakendSchema
                     /// Gets the escaped UTF-8 JSON property name for <see cref="ProjectIdValue"/>.
                     /// </summary>
                     public static ReadOnlySpan<byte> ProjectIdValue => "project_id"u8;
+                }
+
+                /// <summary>
+                /// Provides pre-baked property name blobs for fast builder property storage.
+                /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
+                /// </summary>
+                private static class JsonPropertyNamesPrebaked
+                {
+                    /// <summary>
+                    /// Gets the pre-baked property name blob for <see cref="DefaultLabels"/>.
+                    /// </summary>
+                    public static ReadOnlySpan<byte> DefaultLabels => [0x05, 0x01, 0x00, 0x00, 0x22, 0x64, 0x65, 0x66, 0x61, 0x75, 0x6C, 0x74, 0x5F, 0x6C, 0x61, 0x62, 0x65, 0x6C, 0x73, 0x22];
+
+                    /// <summary>
+                    /// Gets the pre-baked property name blob for <see cref="MetricPrefix"/>.
+                    /// </summary>
+                    public static ReadOnlySpan<byte> MetricPrefix => [0xF5, 0x00, 0x00, 0x00, 0x22, 0x6D, 0x65, 0x74, 0x72, 0x69, 0x63, 0x5F, 0x70, 0x72, 0x65, 0x66, 0x69, 0x78, 0x22];
+
+                    /// <summary>
+                    /// Gets the pre-baked property name blob for <see cref="ProjectIdValue"/>.
+                    /// </summary>
+                    public static ReadOnlySpan<byte> ProjectIdValue => [0xC5, 0x00, 0x00, 0x00, 0x22, 0x70, 0x72, 0x6F, 0x6A, 0x65, 0x63, 0x74, 0x5F, 0x69, 0x64, 0x22];
                 }
             }
         }

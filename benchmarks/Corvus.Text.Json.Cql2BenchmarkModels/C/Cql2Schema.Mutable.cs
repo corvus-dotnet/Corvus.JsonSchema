@@ -1443,6 +1443,60 @@ public readonly partial struct Cql2Schema
             }
         }
 
+        internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+        {
+            switch(_kind)
+            {
+                case Kind.Unknown:
+                    break;
+                case Kind.JsonElement:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                    break;
+                case Kind.True:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, true);
+                    break;
+                case Kind.False:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, false);
+                    break;
+                case Kind.AndOrExpressionBuilder:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, _andOrExpressionBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.AndOrExpression.Builder.BuildValue(b, ref o));
+                    break;
+                case Kind.ArrayPredicateBuilder:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, _arrayPredicateBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.ArrayPredicate.Builder.BuildValue(b, ref o));
+                    break;
+                case Kind.BinaryComparisonPredicateBuilder:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, _binaryComparisonPredicateBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.BinaryComparisonPredicate.Builder.BuildValue(b, ref o));
+                    break;
+                case Kind.FunctionRefBuilder:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, _functionRefBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.FunctionRef.Builder.BuildValue(b, ref o));
+                    break;
+                case Kind.IsBetweenPredicateBuilder:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, _isBetweenPredicateBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.IsBetweenPredicate.Builder.BuildValue(b, ref o));
+                    break;
+                case Kind.IsInListPredicateBuilder:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, _isInListPredicateBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.IsInListPredicate.Builder.BuildValue(b, ref o));
+                    break;
+                case Kind.IsLikePredicateBuilder:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, _isLikePredicateBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.IsLikePredicate.Builder.BuildValue(b, ref o));
+                    break;
+                case Kind.IsNullPredicateBuilder:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, _isNullPredicateBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.IsNullPredicate.Builder.BuildValue(b, ref o));
+                    break;
+                case Kind.NotExpressionBuilder:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, _notExpressionBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.NotExpression.Builder.BuildValue(b, ref o));
+                    break;
+                case Kind.SpatialPredicateBuilder:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, _spatialPredicateBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.SpatialPredicate.Builder.BuildValue(b, ref o));
+                    break;
+                case Kind.TemporalPredicateBuilder:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, _temporalPredicateBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.TemporalPredicate.Builder.BuildValue(b, ref o));
+                    break;
+                default:
+                    Debug.Fail("Unexpected Kind");
+                    break;
+            }
+        }
+
         internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
         {
             switch(_kind)
@@ -1715,6 +1769,54 @@ public readonly partial struct Cql2Schema
                     break;
                 case Kind.TemporalPredicateBuilder:
                     valueBuilder.AddProperty(utf8Name, BuildWithContext.Create(_context, _temporalPredicateBuilderInstance!), static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.TemporalPredicate.Builder.BuildValue(b.Context, b.Build, ref o), escapeName, nameRequiresUnescaping);
+                    break;
+                default:
+                    Debug.Fail("Unexpected Kind");
+                    break;
+            }
+        }
+
+        internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+        {
+            switch(_kind)
+            {
+                case Kind.Unknown:
+                    break;
+                case Kind.Source:
+                    _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                    break;
+                case Kind.AndOrExpressionBuilder:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _andOrExpressionBuilderInstance!), static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.AndOrExpression.Builder.BuildValue(b.Context, b.Build, ref o));
+                    break;
+                case Kind.ArrayPredicateBuilder:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _arrayPredicateBuilderInstance!), static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.ArrayPredicate.Builder.BuildValue(b.Context, b.Build, ref o));
+                    break;
+                case Kind.BinaryComparisonPredicateBuilder:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _binaryComparisonPredicateBuilderInstance!), static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.BinaryComparisonPredicate.Builder.BuildValue(b.Context, b.Build, ref o));
+                    break;
+                case Kind.FunctionRefBuilder:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _functionRefBuilderInstance!), static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.FunctionRef.Builder.BuildValue(b.Context, b.Build, ref o));
+                    break;
+                case Kind.IsBetweenPredicateBuilder:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _isBetweenPredicateBuilderInstance!), static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.IsBetweenPredicate.Builder.BuildValue(b.Context, b.Build, ref o));
+                    break;
+                case Kind.IsInListPredicateBuilder:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _isInListPredicateBuilderInstance!), static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.IsInListPredicate.Builder.BuildValue(b.Context, b.Build, ref o));
+                    break;
+                case Kind.IsLikePredicateBuilder:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _isLikePredicateBuilderInstance!), static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.IsLikePredicate.Builder.BuildValue(b.Context, b.Build, ref o));
+                    break;
+                case Kind.IsNullPredicateBuilder:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _isNullPredicateBuilderInstance!), static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.IsNullPredicate.Builder.BuildValue(b.Context, b.Build, ref o));
+                    break;
+                case Kind.NotExpressionBuilder:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _notExpressionBuilderInstance!), static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.NotExpression.Builder.BuildValue(b.Context, b.Build, ref o));
+                    break;
+                case Kind.SpatialPredicateBuilder:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _spatialPredicateBuilderInstance!), static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.SpatialPredicate.Builder.BuildValue(b.Context, b.Build, ref o));
+                    break;
+                case Kind.TemporalPredicateBuilder:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _temporalPredicateBuilderInstance!), static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.TemporalPredicate.Builder.BuildValue(b.Context, b.Build, ref o));
                     break;
                 default:
                     Debug.Fail("Unexpected Kind");

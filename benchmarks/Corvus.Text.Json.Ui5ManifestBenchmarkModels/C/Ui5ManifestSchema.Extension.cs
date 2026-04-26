@@ -73,11 +73,11 @@ public readonly partial struct Ui5ManifestSchema
         /// The arguments, with which the method will be called
         /// </para>
         /// </remarks>
-        public Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Extension.TheArgumentsWithWhichTheMethodWillBeCalled Args
+        public Corvus.Ui5ManifestBenchmark.Current.JsonArray Args
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ArgsUtf8, out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Extension.TheArgumentsWithWhichTheMethodWillBeCalled value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ArgsUtf8, out Corvus.Ui5ManifestBenchmark.Current.JsonArray value))
                 {
                     return value;
                 }
@@ -566,6 +566,23 @@ public readonly partial struct Ui5ManifestSchema
             /// Gets the escaped UTF-8 JSON property name for <see cref="Method"/>.
             /// </summary>
             public static ReadOnlySpan<byte> Method => "method"u8;
+        }
+
+        /// <summary>
+        /// Provides pre-baked property name blobs for fast builder property storage.
+        /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
+        /// </summary>
+        private static class JsonPropertyNamesPrebaked
+        {
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Args"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Args => [0x65, 0x00, 0x00, 0x00, 0x22, 0x61, 0x72, 0x67, 0x73, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Method"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Method => [0x85, 0x00, 0x00, 0x00, 0x22, 0x6D, 0x65, 0x74, 0x68, 0x6F, 0x64, 0x22];
         }
     }
 }

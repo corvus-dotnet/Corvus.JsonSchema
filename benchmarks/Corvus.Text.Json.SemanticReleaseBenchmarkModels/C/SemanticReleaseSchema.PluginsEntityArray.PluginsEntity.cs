@@ -137,24 +137,6 @@ public readonly partial struct SemanticReleaseSchema
             [DebuggerBrowsable(DebuggerBrowsableState.Never)]
             private JsonTokenType TokenType => _parent?.GetJsonTokenType(_idx) ?? JsonTokenType.None;
 
-            /// <summary>
-            /// Conversion to <see cref="Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.PluginsEntityArray.PluginsEntity.AnyOf1Array"/>.
-            /// </summary>
-            /// <param name="value">The value from which to convert.</param>
-            public static explicit operator Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.PluginsEntityArray.PluginsEntity.AnyOf1Array(PluginsEntity value)
-            {
-                return Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.PluginsEntityArray.PluginsEntity.AnyOf1Array.From(value);
-            }
-
-            /// <summary>
-            /// Conversion from <see cref="Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.PluginsEntityArray.PluginsEntity.AnyOf1Array"/>.
-            /// </summary>
-            /// <param name="value">The value from which to convert.</param>
-            public static implicit operator PluginsEntity(Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.PluginsEntityArray.PluginsEntity.AnyOf1Array value)
-            {
-                return From(value);
-            }
-
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static explicit operator string(PluginsEntity value) => value._parent.GetString(value._idx, JsonTokenType.String) ?? throw new FormatException();
 
@@ -627,15 +609,15 @@ public readonly partial struct SemanticReleaseSchema
             }
 
             /// <summary>
-            /// Gets the value as a <see cref="Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.PluginsEntityArray.PluginsEntity.AnyOf1Array" />.
+            /// Gets the value as a <see cref="Corvus.SemanticReleaseBenchmark.Current.JsonArray" />.
             /// </summary>
             /// <param name="result">The result of the conversions.</param>
             /// <returns><see langword="true" /> if the conversion was valid.</returns>
-            public bool TryGetAsAnyOf1Array(out Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.PluginsEntityArray.PluginsEntity.AnyOf1Array result)
+            public bool TryGetAsJsonArray(out Corvus.SemanticReleaseBenchmark.Current.JsonArray result)
             {
-                if (Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.PluginsEntityArray.PluginsEntity.AnyOf1Array.JsonSchema.Evaluate(_parent, _idx))
+                if (Corvus.SemanticReleaseBenchmark.Current.JsonArray.JsonSchema.Evaluate(_parent, _idx))
                 {
-                    result = Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.PluginsEntityArray.PluginsEntity.AnyOf1Array.From(this);
+                    result = Corvus.SemanticReleaseBenchmark.Current.JsonArray.From(this);
                     return true;
                 }
 
@@ -650,13 +632,13 @@ public readonly partial struct SemanticReleaseSchema
             /// <typeparam name="TResult">The result of calling the match function.</typeparam>
             /// <param name="context">The context to pass to the match function.</param>
             /// <param name="matchJsonString">Match a <see cref="Corvus.SemanticReleaseBenchmark.Current.JsonString"/>.</param>
-            /// <param name="matchAnyOf1Array">Match a <see cref="Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.PluginsEntityArray.PluginsEntity.AnyOf1Array"/>.</param>
+            /// <param name="matchJsonArray">Match a <see cref="Corvus.SemanticReleaseBenchmark.Current.JsonArray"/>.</param>
             /// <param name="defaultMatch">Match any other value.</param>
             /// <returns>An instance of the value returned by the match function.</returns>
             public TResult Match<TContext, TResult>(
                 in TContext context,
                 Matcher<Corvus.SemanticReleaseBenchmark.Current.JsonString, TContext, TResult> matchJsonString,
-                Matcher<Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.PluginsEntityArray.PluginsEntity.AnyOf1Array, TContext, TResult> matchAnyOf1Array,
+                Matcher<Corvus.SemanticReleaseBenchmark.Current.JsonArray, TContext, TResult> matchJsonArray,
                 Matcher<Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.PluginsEntityArray.PluginsEntity, TContext, TResult> defaultMatch)
 #if NET9_0_OR_GREATER
             where TContext : allows ref struct
@@ -667,9 +649,9 @@ public readonly partial struct SemanticReleaseSchema
                     return matchJsonString(Corvus.SemanticReleaseBenchmark.Current.JsonString.From(this), context);
                 }
 
-                if (Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.PluginsEntityArray.PluginsEntity.AnyOf1Array.JsonSchema.Evaluate(_parent, _idx))
+                if (Corvus.SemanticReleaseBenchmark.Current.JsonArray.JsonSchema.Evaluate(_parent, _idx))
                 {
-                    return matchAnyOf1Array(Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.PluginsEntityArray.PluginsEntity.AnyOf1Array.From(this), context);
+                    return matchJsonArray(Corvus.SemanticReleaseBenchmark.Current.JsonArray.From(this), context);
                 }
 
                 return defaultMatch(this, context);
@@ -680,12 +662,12 @@ public readonly partial struct SemanticReleaseSchema
             /// </summary>
             /// <typeparam name="TResult">The result of calling the match function.</typeparam>
             /// <param name="matchJsonString">Match a <see cref="Corvus.SemanticReleaseBenchmark.Current.JsonString"/>.</param>
-            /// <param name="matchAnyOf1Array">Match a <see cref="Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.PluginsEntityArray.PluginsEntity.AnyOf1Array"/>.</param>
+            /// <param name="matchJsonArray">Match a <see cref="Corvus.SemanticReleaseBenchmark.Current.JsonArray"/>.</param>
             /// <param name="defaultMatch">Match any other value.</param>
             /// <returns>An instance of the value returned by the match function.</returns>
             public TResult Match<TResult>(
                 Matcher<Corvus.SemanticReleaseBenchmark.Current.JsonString, TResult> matchJsonString,
-                Matcher<Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.PluginsEntityArray.PluginsEntity.AnyOf1Array, TResult> matchAnyOf1Array,
+                Matcher<Corvus.SemanticReleaseBenchmark.Current.JsonArray, TResult> matchJsonArray,
                 Matcher<Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.PluginsEntityArray.PluginsEntity, TResult> defaultMatch)
             {
                 if (Corvus.SemanticReleaseBenchmark.Current.JsonString.JsonSchema.Evaluate(_parent, _idx))
@@ -693,9 +675,9 @@ public readonly partial struct SemanticReleaseSchema
                     return matchJsonString(Corvus.SemanticReleaseBenchmark.Current.JsonString.From(this));
                 }
 
-                if (Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.PluginsEntityArray.PluginsEntity.AnyOf1Array.JsonSchema.Evaluate(_parent, _idx))
+                if (Corvus.SemanticReleaseBenchmark.Current.JsonArray.JsonSchema.Evaluate(_parent, _idx))
                 {
-                    return matchAnyOf1Array(Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.PluginsEntityArray.PluginsEntity.AnyOf1Array.From(this));
+                    return matchJsonArray(Corvus.SemanticReleaseBenchmark.Current.JsonArray.From(this));
                 }
 
                 return defaultMatch(this);

@@ -92,17 +92,17 @@ public readonly partial struct LernaSchema
                 /// <summary>
                 /// Gets a provider for the schema location from which this type was generated.
                 /// </summary>
-                public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("https://json.schemastore.org/lerna#/properties/command/properties/init"u8, buffer, out written);
+                public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/properties/command/properties/init"u8, buffer, out written);
 
                 /// <summary>
                 /// Gets the schema location from which this type was generated.
                 /// </summary>
-                public const string SchemaLocation = "https://json.schemastore.org/lerna#/properties/command/properties/init";
+                public const string SchemaLocation = "/properties/command/properties/init";
 
                 /// <summary>
                 /// Gets the schema location from which this type was generated as a UTF-8 string.
                 /// </summary>
-                public static ReadOnlySpan<byte> SchemaLocationUtf8 => "https://json.schemastore.org/lerna#/properties/command/properties/init"u8;
+                public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/properties/command/properties/init"u8;
 
                 /// <summary>
                 /// Applies the JSON schema semantics defined by this type to the instance determined by the given document and index.

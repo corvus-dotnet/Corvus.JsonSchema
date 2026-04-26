@@ -845,6 +845,27 @@ public readonly partial struct Cql2Schema
                 }
             }
 
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.JsonElement:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                        break;
+                    case Kind.DateInstantBuilder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _dateInstantBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.DateInstant.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.TimestampInstantBuilder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _timestampInstantBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.TimestampInstant.Builder.BuildValue(b, ref o));
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
             internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
             {
                 switch(_kind)
@@ -955,6 +976,27 @@ public readonly partial struct Cql2Schema
                         break;
                     case Kind.TimestampInstantBuilder:
                         valueBuilder.AddProperty(utf8Name, BuildWithContext.Create(_context, _timestampInstantBuilderInstance!), static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.TimestampInstant.Builder.BuildValue(b.Context, b.Build, ref o), escapeName, nameRequiresUnescaping);
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.Source:
+                        _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                        break;
+                    case Kind.DateInstantBuilder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _dateInstantBuilderInstance!), static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.DateInstant.Builder.BuildValue(b.Context, b.Build, ref o));
+                        break;
+                    case Kind.TimestampInstantBuilder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _timestampInstantBuilderInstance!), static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.TimestampInstant.Builder.BuildValue(b.Context, b.Build, ref o));
                         break;
                     default:
                         Debug.Fail("Unexpected Kind");

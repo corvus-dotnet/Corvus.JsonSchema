@@ -852,5 +852,62 @@ public readonly partial struct CmakePresetsSchema
             /// </summary>
             public static ReadOnlySpan<byte> WorkflowPresets => "workflowPresets"u8;
         }
+
+        /// <summary>
+        /// Provides pre-baked property name blobs for fast builder property storage.
+        /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
+        /// </summary>
+        private static class JsonPropertyNamesPrebaked
+        {
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Schema"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Schema => [0x95, 0x00, 0x00, 0x00, 0x22, 0x24, 0x73, 0x63, 0x68, 0x65, 0x6D, 0x61, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="BuildPresets"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> BuildPresets => [0xE5, 0x00, 0x00, 0x00, 0x22, 0x62, 0x75, 0x69, 0x6C, 0x64, 0x50, 0x72, 0x65, 0x73, 0x65, 0x74, 0x73, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="CmakeMinimumRequiredValue"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> CmakeMinimumRequiredValue => [0x65, 0x01, 0x00, 0x00, 0x22, 0x63, 0x6D, 0x61, 0x6B, 0x65, 0x4D, 0x69, 0x6E, 0x69, 0x6D, 0x75, 0x6D, 0x52, 0x65, 0x71, 0x75, 0x69, 0x72, 0x65, 0x64, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="ConfigurePresets"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> ConfigurePresets => [0x25, 0x01, 0x00, 0x00, 0x22, 0x63, 0x6F, 0x6E, 0x66, 0x69, 0x67, 0x75, 0x72, 0x65, 0x50, 0x72, 0x65, 0x73, 0x65, 0x74, 0x73, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="IncludeValue"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> IncludeValue => [0x95, 0x00, 0x00, 0x00, 0x22, 0x69, 0x6E, 0x63, 0x6C, 0x75, 0x64, 0x65, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="PackagePresets"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> PackagePresets => [0x05, 0x01, 0x00, 0x00, 0x22, 0x70, 0x61, 0x63, 0x6B, 0x61, 0x67, 0x65, 0x50, 0x72, 0x65, 0x73, 0x65, 0x74, 0x73, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="TestPresets"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> TestPresets => [0xD5, 0x00, 0x00, 0x00, 0x22, 0x74, 0x65, 0x73, 0x74, 0x50, 0x72, 0x65, 0x73, 0x65, 0x74, 0x73, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="VendorValue"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> VendorValue => [0x85, 0x00, 0x00, 0x00, 0x22, 0x76, 0x65, 0x6E, 0x64, 0x6F, 0x72, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Version"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Version => [0x95, 0x00, 0x00, 0x00, 0x22, 0x76, 0x65, 0x72, 0x73, 0x69, 0x6F, 0x6E, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="WorkflowPresets"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> WorkflowPresets => [0x15, 0x01, 0x00, 0x00, 0x22, 0x77, 0x6F, 0x72, 0x6B, 0x66, 0x6C, 0x6F, 0x77, 0x50, 0x72, 0x65, 0x73, 0x65, 0x74, 0x73, 0x22];
+        }
     }
 }

@@ -207,14 +207,14 @@ public readonly partial struct CypressSchema
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext8 =
-                    Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.EnvEntity.JsonSchema.PushChildContextUnescaped(
+                    Corvus.CypressBenchmark.Current.JsonObject.JsonSchema.PushChildContextUnescaped(
                         parentDocument,
                         parentDocumentIndex,
                         ref context,
                         JsonPropertyNames.EnvUtf8,
                         evaluationPath: EnvSchemaEvaluationPath);
 
-                Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.EnvEntity.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext8);
+                Corvus.CypressBenchmark.Current.JsonObject.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext8);
                 context.CommitChildContext(childContext8.IsMatch, ref childContext8);
             }
 
@@ -887,17 +887,17 @@ public readonly partial struct CypressSchema
             /// <summary>
             /// Gets a provider for the schema location from which this type was generated.
             /// </summary>
-            public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("cypress-schema.json#/definitions/cypressConfig"u8, buffer, out written);
+            public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/definitions/cypressConfig"u8, buffer, out written);
 
             /// <summary>
             /// Gets the schema location from which this type was generated.
             /// </summary>
-            public const string SchemaLocation = "cypress-schema.json#/definitions/cypressConfig";
+            public const string SchemaLocation = "/definitions/cypressConfig";
 
             /// <summary>
             /// Gets the schema location from which this type was generated as a UTF-8 string.
             /// </summary>
-            public static ReadOnlySpan<byte> SchemaLocationUtf8 => "cypress-schema.json#/definitions/cypressConfig"u8;
+            public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/definitions/cypressConfig"u8;
 
             /// <summary>
             /// Applies the JSON schema semantics defined by this type to the instance determined by the given document and index.

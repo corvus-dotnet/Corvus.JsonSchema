@@ -243,11 +243,11 @@ public readonly partial struct Ui5ManifestSchema
     /// Represents Cloud Portal specific attributes
     /// </para>
     /// </remarks>
-    public Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCloudPortalNamespace SapCloudPortal
+    public Corvus.Ui5ManifestBenchmark.Current.JsonObject SapCloudPortal
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SapCloudPortalUtf8, out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCloudPortalNamespace value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SapCloudPortalUtf8, out Corvus.Ui5ManifestBenchmark.Current.JsonObject value))
             {
                 return value;
             }
@@ -287,11 +287,11 @@ public readonly partial struct Ui5ManifestSchema
     /// Represents specific attributes for Fiori Elements 
     /// </para>
     /// </remarks>
-    public Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFeNamespace SapFe
+    public Corvus.Ui5ManifestBenchmark.Current.JsonObject SapFe
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SapFeUtf8, out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapFeNamespace value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SapFeUtf8, out Corvus.Ui5ManifestBenchmark.Current.JsonObject value))
             {
                 return value;
             }
@@ -419,11 +419,11 @@ public readonly partial struct Ui5ManifestSchema
     /// Represents specific attributes for SAP.MAP  
     /// </para>
     /// </remarks>
-    public Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapMapNamespace SapMap
+    public Corvus.Ui5ManifestBenchmark.Current.JsonObject SapMap
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SapMapUtf8, out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapMapNamespace value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SapMapUtf8, out Corvus.Ui5ManifestBenchmark.Current.JsonObject value))
             {
                 return value;
             }
@@ -664,11 +664,11 @@ public readonly partial struct Ui5ManifestSchema
     /// Represents specific attributes for Smart Business  
     /// </para>
     /// </remarks>
-    public Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiSmartbusinessAppNamespace SapUiSmartbusinessApp
+    public Corvus.Ui5ManifestBenchmark.Current.JsonObject SapUiSmartbusinessApp
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SapUiSmartbusinessAppUtf8, out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUiSmartbusinessAppNamespace value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SapUiSmartbusinessAppUtf8, out Corvus.Ui5ManifestBenchmark.Current.JsonObject value))
             {
                 return value;
             }
@@ -1707,5 +1707,177 @@ public readonly partial struct Ui5ManifestSchema
         /// Gets the escaped UTF-8 JSON property name for <see cref="StartUrl"/>.
         /// </summary>
         public static ReadOnlySpan<byte> StartUrl => "start_url"u8;
+    }
+
+    /// <summary>
+    /// Provides pre-baked property name blobs for fast builder property storage.
+    /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
+    /// </summary>
+    private static class JsonPropertyNamesPrebaked
+    {
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Version"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Version => [0xA5, 0x00, 0x00, 0x00, 0x22, 0x5F, 0x76, 0x65, 0x72, 0x73, 0x69, 0x6F, 0x6E, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Schema"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Schema => [0x95, 0x00, 0x00, 0x00, 0x22, 0x24, 0x73, 0x63, 0x68, 0x65, 0x6D, 0x61, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="SapApf"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> SapApf => [0x95, 0x00, 0x00, 0x00, 0x22, 0x73, 0x61, 0x70, 0x2E, 0x61, 0x70, 0x66, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="SapApp"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> SapApp => [0x95, 0x00, 0x00, 0x00, 0x22, 0x73, 0x61, 0x70, 0x2E, 0x61, 0x70, 0x70, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="SapArtifact"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> SapArtifact => [0xE5, 0x00, 0x00, 0x00, 0x22, 0x73, 0x61, 0x70, 0x2E, 0x61, 0x72, 0x74, 0x69, 0x66, 0x61, 0x63, 0x74, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="SapBpaTask"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> SapBpaTask => [0xE5, 0x00, 0x00, 0x00, 0x22, 0x73, 0x61, 0x70, 0x2E, 0x62, 0x70, 0x61, 0x2E, 0x74, 0x61, 0x73, 0x6B, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="SapCard"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> SapCard => [0xA5, 0x00, 0x00, 0x00, 0x22, 0x73, 0x61, 0x70, 0x2E, 0x63, 0x61, 0x72, 0x64, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="SapCloud"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> SapCloud => [0xB5, 0x00, 0x00, 0x00, 0x22, 0x73, 0x61, 0x70, 0x2E, 0x63, 0x6C, 0x6F, 0x75, 0x64, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="SapCloudPortal"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> SapCloudPortal => [0x25, 0x01, 0x00, 0x00, 0x22, 0x73, 0x61, 0x70, 0x2E, 0x63, 0x6C, 0x6F, 0x75, 0x64, 0x2E, 0x70, 0x6F, 0x72, 0x74, 0x61, 0x6C, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="SapCopilot"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> SapCopilot => [0xD5, 0x00, 0x00, 0x00, 0x22, 0x73, 0x61, 0x70, 0x2E, 0x63, 0x6F, 0x70, 0x69, 0x6C, 0x6F, 0x74, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="SapFe"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> SapFe => [0x85, 0x00, 0x00, 0x00, 0x22, 0x73, 0x61, 0x70, 0x2E, 0x66, 0x65, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="SapFiori"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> SapFiori => [0xB5, 0x00, 0x00, 0x00, 0x22, 0x73, 0x61, 0x70, 0x2E, 0x66, 0x69, 0x6F, 0x72, 0x69, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="SapFlp"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> SapFlp => [0x95, 0x00, 0x00, 0x00, 0x22, 0x73, 0x61, 0x70, 0x2E, 0x66, 0x6C, 0x70, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="SapGui"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> SapGui => [0x95, 0x00, 0x00, 0x00, 0x22, 0x73, 0x61, 0x70, 0x2E, 0x67, 0x75, 0x69, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="SapInsights"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> SapInsights => [0xE5, 0x00, 0x00, 0x00, 0x22, 0x73, 0x61, 0x70, 0x2E, 0x69, 0x6E, 0x73, 0x69, 0x67, 0x68, 0x74, 0x73, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="SapIntegration"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> SapIntegration => [0x15, 0x01, 0x00, 0x00, 0x22, 0x73, 0x61, 0x70, 0x2E, 0x69, 0x6E, 0x74, 0x65, 0x67, 0x72, 0x61, 0x74, 0x69, 0x6F, 0x6E, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="SapMap"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> SapMap => [0x95, 0x00, 0x00, 0x00, 0x22, 0x73, 0x61, 0x70, 0x2E, 0x6D, 0x61, 0x70, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="SapMobile"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> SapMobile => [0xC5, 0x00, 0x00, 0x00, 0x22, 0x73, 0x61, 0x70, 0x2E, 0x6D, 0x6F, 0x62, 0x69, 0x6C, 0x65, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="SapOvp"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> SapOvp => [0x95, 0x00, 0x00, 0x00, 0x22, 0x73, 0x61, 0x70, 0x2E, 0x6F, 0x76, 0x70, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="SapPackage"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> SapPackage => [0xD5, 0x00, 0x00, 0x00, 0x22, 0x73, 0x61, 0x70, 0x2E, 0x70, 0x61, 0x63, 0x6B, 0x61, 0x67, 0x65, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="SapPlatformAbap"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> SapPlatformAbap => [0x35, 0x01, 0x00, 0x00, 0x22, 0x73, 0x61, 0x70, 0x2E, 0x70, 0x6C, 0x61, 0x74, 0x66, 0x6F, 0x72, 0x6D, 0x2E, 0x61, 0x62, 0x61, 0x70, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="SapPlatformCf"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> SapPlatformCf => [0x15, 0x01, 0x00, 0x00, 0x22, 0x73, 0x61, 0x70, 0x2E, 0x70, 0x6C, 0x61, 0x74, 0x66, 0x6F, 0x72, 0x6D, 0x2E, 0x63, 0x66, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="SapPlatformHcp"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> SapPlatformHcp => [0x25, 0x01, 0x00, 0x00, 0x22, 0x73, 0x61, 0x70, 0x2E, 0x70, 0x6C, 0x61, 0x74, 0x66, 0x6F, 0x72, 0x6D, 0x2E, 0x68, 0x63, 0x70, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="SapPlatformMobilecards"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> SapPlatformMobilecards => [0xA5, 0x01, 0x00, 0x00, 0x22, 0x73, 0x61, 0x70, 0x2E, 0x70, 0x6C, 0x61, 0x74, 0x66, 0x6F, 0x72, 0x6D, 0x2E, 0x6D, 0x6F, 0x62, 0x69, 0x6C, 0x65, 0x63, 0x61, 0x72, 0x64, 0x73, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="SapPlatformSfsf"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> SapPlatformSfsf => [0x35, 0x01, 0x00, 0x00, 0x22, 0x73, 0x61, 0x70, 0x2E, 0x70, 0x6C, 0x61, 0x74, 0x66, 0x6F, 0x72, 0x6D, 0x2E, 0x73, 0x66, 0x73, 0x66, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="SapUi"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> SapUi => [0x85, 0x00, 0x00, 0x00, 0x22, 0x73, 0x61, 0x70, 0x2E, 0x75, 0x69, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="SapUiGenericApp"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> SapUiGenericApp => [0x45, 0x01, 0x00, 0x00, 0x22, 0x73, 0x61, 0x70, 0x2E, 0x75, 0x69, 0x2E, 0x67, 0x65, 0x6E, 0x65, 0x72, 0x69, 0x63, 0x2E, 0x61, 0x70, 0x70, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="SapUiSmartbusinessApp"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> SapUiSmartbusinessApp => [0xA5, 0x01, 0x00, 0x00, 0x22, 0x73, 0x61, 0x70, 0x2E, 0x75, 0x69, 0x2E, 0x73, 0x6D, 0x61, 0x72, 0x74, 0x62, 0x75, 0x73, 0x69, 0x6E, 0x65, 0x73, 0x73, 0x2E, 0x61, 0x70, 0x70, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="SapUi5"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> SapUi5 => [0x95, 0x00, 0x00, 0x00, 0x22, 0x73, 0x61, 0x70, 0x2E, 0x75, 0x69, 0x35, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="SapUrl"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> SapUrl => [0x95, 0x00, 0x00, 0x00, 0x22, 0x73, 0x61, 0x70, 0x2E, 0x75, 0x72, 0x6C, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="SapWcf"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> SapWcf => [0x95, 0x00, 0x00, 0x00, 0x22, 0x73, 0x61, 0x70, 0x2E, 0x77, 0x63, 0x66, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="SapWda"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> SapWda => [0x95, 0x00, 0x00, 0x00, 0x22, 0x73, 0x61, 0x70, 0x2E, 0x77, 0x64, 0x61, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="StartUrl"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> StartUrl => [0xB5, 0x00, 0x00, 0x00, 0x22, 0x73, 0x74, 0x61, 0x72, 0x74, 0x5F, 0x75, 0x72, 0x6C, 0x22];
     }
 }

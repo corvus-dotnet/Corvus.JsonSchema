@@ -951,11 +951,11 @@ public readonly partial struct Ui5ManifestSchema
             /// Represents the static content that will be displayed in this card
             /// </para>
             /// </remarks>
-            public Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.StaticContentEntityArray.Mutable StaticContent
+            public Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.JsonObjectArray.Mutable StaticContent
             {
                 get
                 {
-                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.StaticContentUtf8, out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.StaticContentEntityArray.Mutable value))
+                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.StaticContentUtf8, out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.JsonObjectArray.Mutable value))
                     {
                         return value;
                     }
@@ -1094,7 +1094,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.AnnotationPath, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AnnotationPath, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1139,7 +1139,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Category, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Category, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1184,7 +1184,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.ChartAnnotationPath, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ChartAnnotationPath, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1229,7 +1229,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.ChartProperties, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ChartProperties, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1265,7 +1265,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.ChartProperties, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ChartProperties, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1310,7 +1310,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.ColorPalette, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ColorPalette, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1346,7 +1346,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.ColorPalette, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ColorPalette, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1391,7 +1391,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.CustomParams, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CustomParams, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1436,7 +1436,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.DataPointAnnotationPath, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DataPointAnnotationPath, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1481,7 +1481,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.DefaultSpan, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DefaultSpan, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1517,7 +1517,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.DefaultSpan, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DefaultSpan, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1562,7 +1562,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.DynamicSubtitleAnnotationPath, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DynamicSubtitleAnnotationPath, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1607,7 +1607,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.EnableAddToInsights, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.EnableAddToInsights, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1652,7 +1652,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.EnableLocaleCurrencyFormatting, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.EnableLocaleCurrencyFormatting, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1697,7 +1697,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.EntitySet, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.EntitySet, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1742,7 +1742,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.IdentificationAnnotationPath, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IdentificationAnnotationPath, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1787,7 +1787,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.IgnoreSapText, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IgnoreSapText, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1832,7 +1832,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.ImageSupported, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ImageSupported, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1877,7 +1877,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.ItemText, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ItemText, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1922,7 +1922,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.KpiAnnotationPath, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.KpiAnnotationPath, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1967,7 +1967,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.ListFlavor, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ListFlavor, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -2012,7 +2012,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.ListType, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ListType, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -2057,7 +2057,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Navigation, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Navigation, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -2102,7 +2102,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.ObjectStreamCardsSettings, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ObjectStreamCardsSettings, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -2138,7 +2138,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.ObjectStreamCardsSettings, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ObjectStreamCardsSettings, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -2183,7 +2183,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.PresentationAnnotationPath, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PresentationAnnotationPath, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -2228,7 +2228,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.RequireAppAuthorization, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.RequireAppAuthorization, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -2273,7 +2273,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.SelectionAnnotationPath, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SelectionAnnotationPath, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -2318,7 +2318,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.SelectionPresentationAnnotationPath, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SelectionPresentationAnnotationPath, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -2363,7 +2363,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.ShowFilterInHeader, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ShowFilterInHeader, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -2408,7 +2408,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.ShowLabelText, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ShowLabelText, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -2453,7 +2453,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.ShowLineItemDetail, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ShowLineItemDetail, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -2498,7 +2498,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.ShowRefresh, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ShowRefresh, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -2543,7 +2543,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.ShowSortingInHeader, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ShowSortingInHeader, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -2588,7 +2588,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.SortBy, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SortBy, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -2633,7 +2633,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.SortOrder, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SortOrder, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -2657,7 +2657,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>staticContent</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetStaticContent(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.StaticContentEntityArray.Source value)
+            public void SetStaticContent(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.JsonObjectArray.Source value)
             {
                 CheckValidInstance();
 
@@ -2678,7 +2678,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.StaticContent, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.StaticContent, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -2690,7 +2690,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>staticContent</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetStaticContent<TContext>(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.StaticContentEntityArray.Source<TContext> value)
+            public void SetStaticContent<TContext>(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.JsonObjectArray.Source<TContext> value)
 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
 #endif
@@ -2714,7 +2714,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.StaticContent, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.StaticContent, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -2759,7 +2759,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.SubTitle, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SubTitle, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -2802,7 +2802,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Title, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Title, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -2835,7 +2835,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.ValueSelectionInfo, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ValueSelectionInfo, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -3218,6 +3218,24 @@ public readonly partial struct Ui5ManifestSchema
                 }
             }
 
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.JsonElement:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                        break;
+                    case Kind.Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
             internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
             {
                 switch(_kind)
@@ -3312,6 +3330,24 @@ public readonly partial struct Ui5ManifestSchema
                         break;
                     case Kind.Builder:
                         valueBuilder.AddProperty(utf8Name, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o), escapeName, nameRequiresUnescaping);
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.Source:
+                        _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                        break;
+                    case Kind.Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                         break;
                     default:
                         Debug.Fail("Unexpected Kind");
@@ -3430,46 +3466,46 @@ public readonly partial struct Ui5ManifestSchema
                 in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.ShowSortingInHeaderEntity.Source showSortingInHeader = default,
                 in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source sortBy = default,
                 in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.RepresentsTheSortOrderForTheEntitySet.Source sortOrder = default,
-                in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.StaticContentEntityArray.Source staticContent = default,
+                in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.JsonObjectArray.Source staticContent = default,
                 in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.SubTitleEntity.Source subTitle = default,
                 in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.RepresentsThingsLikePeopleNumberOfItems.Source valueSelectionInfo = default)
             {
-                title.AddAsProperty(JsonPropertyNamesEscaped.Title, ref builder, escapeName: false);
-                annotationPath.AddAsProperty(JsonPropertyNamesEscaped.AnnotationPath, ref builder, escapeName: false);
-                category.AddAsProperty(JsonPropertyNamesEscaped.Category, ref builder, escapeName: false);
-                chartAnnotationPath.AddAsProperty(JsonPropertyNamesEscaped.ChartAnnotationPath, ref builder, escapeName: false);
-                chartProperties.AddAsProperty(JsonPropertyNamesEscaped.ChartProperties, ref builder, escapeName: false);
-                colorPalette.AddAsProperty(JsonPropertyNamesEscaped.ColorPalette, ref builder, escapeName: false);
-                customParams.AddAsProperty(JsonPropertyNamesEscaped.CustomParams, ref builder, escapeName: false);
-                dataPointAnnotationPath.AddAsProperty(JsonPropertyNamesEscaped.DataPointAnnotationPath, ref builder, escapeName: false);
-                defaultSpan.AddAsProperty(JsonPropertyNamesEscaped.DefaultSpan, ref builder, escapeName: false);
-                dynamicSubtitleAnnotationPath.AddAsProperty(JsonPropertyNamesEscaped.DynamicSubtitleAnnotationPath, ref builder, escapeName: false);
-                enableAddToInsights.AddAsProperty(JsonPropertyNamesEscaped.EnableAddToInsights, ref builder, escapeName: false);
-                enableLocaleCurrencyFormatting.AddAsProperty(JsonPropertyNamesEscaped.EnableLocaleCurrencyFormatting, ref builder, escapeName: false);
-                entitySet.AddAsProperty(JsonPropertyNamesEscaped.EntitySet, ref builder, escapeName: false);
-                identificationAnnotationPath.AddAsProperty(JsonPropertyNamesEscaped.IdentificationAnnotationPath, ref builder, escapeName: false);
-                ignoreSapText.AddAsProperty(JsonPropertyNamesEscaped.IgnoreSapText, ref builder, escapeName: false);
-                imageSupported.AddAsProperty(JsonPropertyNamesEscaped.ImageSupported, ref builder, escapeName: false);
-                itemText.AddAsProperty(JsonPropertyNamesEscaped.ItemText, ref builder, escapeName: false);
-                kpiAnnotationPath.AddAsProperty(JsonPropertyNamesEscaped.KpiAnnotationPath, ref builder, escapeName: false);
-                listFlavor.AddAsProperty(JsonPropertyNamesEscaped.ListFlavor, ref builder, escapeName: false);
-                listType.AddAsProperty(JsonPropertyNamesEscaped.ListType, ref builder, escapeName: false);
-                navigation.AddAsProperty(JsonPropertyNamesEscaped.Navigation, ref builder, escapeName: false);
-                objectStreamCardsSettings.AddAsProperty(JsonPropertyNamesEscaped.ObjectStreamCardsSettings, ref builder, escapeName: false);
-                presentationAnnotationPath.AddAsProperty(JsonPropertyNamesEscaped.PresentationAnnotationPath, ref builder, escapeName: false);
-                requireAppAuthorization.AddAsProperty(JsonPropertyNamesEscaped.RequireAppAuthorization, ref builder, escapeName: false);
-                selectionAnnotationPath.AddAsProperty(JsonPropertyNamesEscaped.SelectionAnnotationPath, ref builder, escapeName: false);
-                selectionPresentationAnnotationPath.AddAsProperty(JsonPropertyNamesEscaped.SelectionPresentationAnnotationPath, ref builder, escapeName: false);
-                showFilterInHeader.AddAsProperty(JsonPropertyNamesEscaped.ShowFilterInHeader, ref builder, escapeName: false);
-                showLabelText.AddAsProperty(JsonPropertyNamesEscaped.ShowLabelText, ref builder, escapeName: false);
-                showLineItemDetail.AddAsProperty(JsonPropertyNamesEscaped.ShowLineItemDetail, ref builder, escapeName: false);
-                showRefresh.AddAsProperty(JsonPropertyNamesEscaped.ShowRefresh, ref builder, escapeName: false);
-                showSortingInHeader.AddAsProperty(JsonPropertyNamesEscaped.ShowSortingInHeader, ref builder, escapeName: false);
-                sortBy.AddAsProperty(JsonPropertyNamesEscaped.SortBy, ref builder, escapeName: false);
-                sortOrder.AddAsProperty(JsonPropertyNamesEscaped.SortOrder, ref builder, escapeName: false);
-                staticContent.AddAsProperty(JsonPropertyNamesEscaped.StaticContent, ref builder, escapeName: false);
-                subTitle.AddAsProperty(JsonPropertyNamesEscaped.SubTitle, ref builder, escapeName: false);
-                valueSelectionInfo.AddAsProperty(JsonPropertyNamesEscaped.ValueSelectionInfo, ref builder, escapeName: false);
+                title.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Title, ref builder);
+                annotationPath.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AnnotationPath, ref builder);
+                category.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Category, ref builder);
+                chartAnnotationPath.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ChartAnnotationPath, ref builder);
+                chartProperties.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ChartProperties, ref builder);
+                colorPalette.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ColorPalette, ref builder);
+                customParams.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CustomParams, ref builder);
+                dataPointAnnotationPath.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DataPointAnnotationPath, ref builder);
+                defaultSpan.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DefaultSpan, ref builder);
+                dynamicSubtitleAnnotationPath.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DynamicSubtitleAnnotationPath, ref builder);
+                enableAddToInsights.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.EnableAddToInsights, ref builder);
+                enableLocaleCurrencyFormatting.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.EnableLocaleCurrencyFormatting, ref builder);
+                entitySet.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.EntitySet, ref builder);
+                identificationAnnotationPath.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IdentificationAnnotationPath, ref builder);
+                ignoreSapText.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IgnoreSapText, ref builder);
+                imageSupported.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ImageSupported, ref builder);
+                itemText.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ItemText, ref builder);
+                kpiAnnotationPath.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.KpiAnnotationPath, ref builder);
+                listFlavor.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ListFlavor, ref builder);
+                listType.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ListType, ref builder);
+                navigation.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Navigation, ref builder);
+                objectStreamCardsSettings.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ObjectStreamCardsSettings, ref builder);
+                presentationAnnotationPath.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PresentationAnnotationPath, ref builder);
+                requireAppAuthorization.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.RequireAppAuthorization, ref builder);
+                selectionAnnotationPath.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SelectionAnnotationPath, ref builder);
+                selectionPresentationAnnotationPath.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SelectionPresentationAnnotationPath, ref builder);
+                showFilterInHeader.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ShowFilterInHeader, ref builder);
+                showLabelText.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ShowLabelText, ref builder);
+                showLineItemDetail.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ShowLineItemDetail, ref builder);
+                showRefresh.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ShowRefresh, ref builder);
+                showSortingInHeader.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ShowSortingInHeader, ref builder);
+                sortBy.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SortBy, ref builder);
+                sortOrder.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SortOrder, ref builder);
+                staticContent.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.StaticContent, ref builder);
+                subTitle.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SubTitle, ref builder);
+                valueSelectionInfo.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ValueSelectionInfo, ref builder);
             }
 
             /// <summary>
@@ -3509,7 +3545,7 @@ public readonly partial struct Ui5ManifestSchema
                 in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.ShowSortingInHeaderEntity.Source showSortingInHeader = default,
                 in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source sortBy = default,
                 in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.RepresentsTheSortOrderForTheEntitySet.Source sortOrder = default,
-                in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.StaticContentEntityArray.Source staticContent = default,
+                in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.JsonObjectArray.Source staticContent = default,
                 in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.SubTitleEntity.Source subTitle = default,
                 in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.RepresentsThingsLikePeopleNumberOfItems.Source valueSelectionInfo = default)
             {
@@ -3555,49 +3591,49 @@ public readonly partial struct Ui5ManifestSchema
                 in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.ShowSortingInHeaderEntity.Source showSortingInHeader = default,
                 in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source sortBy = default,
                 in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.RepresentsTheSortOrderForTheEntitySet.Source sortOrder = default,
-                in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.StaticContentEntityArray.Source<TContext> staticContent = default,
+                in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.JsonObjectArray.Source<TContext> staticContent = default,
                 in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.SubTitleEntity.Source subTitle = default,
                 in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.RepresentsThingsLikePeopleNumberOfItems.Source valueSelectionInfo = default)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif
             {
-                title.AddAsProperty(JsonPropertyNamesEscaped.Title, ref builder, escapeName: false);
-                annotationPath.AddAsProperty(JsonPropertyNamesEscaped.AnnotationPath, ref builder, escapeName: false);
-                category.AddAsProperty(JsonPropertyNamesEscaped.Category, ref builder, escapeName: false);
-                chartAnnotationPath.AddAsProperty(JsonPropertyNamesEscaped.ChartAnnotationPath, ref builder, escapeName: false);
-                chartProperties.AddAsProperty(JsonPropertyNamesEscaped.ChartProperties, ref builder, escapeName: false);
-                colorPalette.AddAsProperty(JsonPropertyNamesEscaped.ColorPalette, ref builder, escapeName: false);
-                customParams.AddAsProperty(JsonPropertyNamesEscaped.CustomParams, ref builder, escapeName: false);
-                dataPointAnnotationPath.AddAsProperty(JsonPropertyNamesEscaped.DataPointAnnotationPath, ref builder, escapeName: false);
-                defaultSpan.AddAsProperty(JsonPropertyNamesEscaped.DefaultSpan, ref builder, escapeName: false);
-                dynamicSubtitleAnnotationPath.AddAsProperty(JsonPropertyNamesEscaped.DynamicSubtitleAnnotationPath, ref builder, escapeName: false);
-                enableAddToInsights.AddAsProperty(JsonPropertyNamesEscaped.EnableAddToInsights, ref builder, escapeName: false);
-                enableLocaleCurrencyFormatting.AddAsProperty(JsonPropertyNamesEscaped.EnableLocaleCurrencyFormatting, ref builder, escapeName: false);
-                entitySet.AddAsProperty(JsonPropertyNamesEscaped.EntitySet, ref builder, escapeName: false);
-                identificationAnnotationPath.AddAsProperty(JsonPropertyNamesEscaped.IdentificationAnnotationPath, ref builder, escapeName: false);
-                ignoreSapText.AddAsProperty(JsonPropertyNamesEscaped.IgnoreSapText, ref builder, escapeName: false);
-                imageSupported.AddAsProperty(JsonPropertyNamesEscaped.ImageSupported, ref builder, escapeName: false);
-                itemText.AddAsProperty(JsonPropertyNamesEscaped.ItemText, ref builder, escapeName: false);
-                kpiAnnotationPath.AddAsProperty(JsonPropertyNamesEscaped.KpiAnnotationPath, ref builder, escapeName: false);
-                listFlavor.AddAsProperty(JsonPropertyNamesEscaped.ListFlavor, ref builder, escapeName: false);
-                listType.AddAsProperty(JsonPropertyNamesEscaped.ListType, ref builder, escapeName: false);
-                navigation.AddAsProperty(JsonPropertyNamesEscaped.Navigation, ref builder, escapeName: false);
-                objectStreamCardsSettings.AddAsProperty(JsonPropertyNamesEscaped.ObjectStreamCardsSettings, ref builder, escapeName: false);
-                presentationAnnotationPath.AddAsProperty(JsonPropertyNamesEscaped.PresentationAnnotationPath, ref builder, escapeName: false);
-                requireAppAuthorization.AddAsProperty(JsonPropertyNamesEscaped.RequireAppAuthorization, ref builder, escapeName: false);
-                selectionAnnotationPath.AddAsProperty(JsonPropertyNamesEscaped.SelectionAnnotationPath, ref builder, escapeName: false);
-                selectionPresentationAnnotationPath.AddAsProperty(JsonPropertyNamesEscaped.SelectionPresentationAnnotationPath, ref builder, escapeName: false);
-                showFilterInHeader.AddAsProperty(JsonPropertyNamesEscaped.ShowFilterInHeader, ref builder, escapeName: false);
-                showLabelText.AddAsProperty(JsonPropertyNamesEscaped.ShowLabelText, ref builder, escapeName: false);
-                showLineItemDetail.AddAsProperty(JsonPropertyNamesEscaped.ShowLineItemDetail, ref builder, escapeName: false);
-                showRefresh.AddAsProperty(JsonPropertyNamesEscaped.ShowRefresh, ref builder, escapeName: false);
-                showSortingInHeader.AddAsProperty(JsonPropertyNamesEscaped.ShowSortingInHeader, ref builder, escapeName: false);
-                sortBy.AddAsProperty(JsonPropertyNamesEscaped.SortBy, ref builder, escapeName: false);
-                sortOrder.AddAsProperty(JsonPropertyNamesEscaped.SortOrder, ref builder, escapeName: false);
-                staticContent.AddAsProperty(JsonPropertyNamesEscaped.StaticContent, ref builder, escapeName: false);
-                subTitle.AddAsProperty(JsonPropertyNamesEscaped.SubTitle, ref builder, escapeName: false);
-                valueSelectionInfo.AddAsProperty(JsonPropertyNamesEscaped.ValueSelectionInfo, ref builder, escapeName: false);
+                title.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Title, ref builder);
+                annotationPath.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AnnotationPath, ref builder);
+                category.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Category, ref builder);
+                chartAnnotationPath.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ChartAnnotationPath, ref builder);
+                chartProperties.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ChartProperties, ref builder);
+                colorPalette.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ColorPalette, ref builder);
+                customParams.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CustomParams, ref builder);
+                dataPointAnnotationPath.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DataPointAnnotationPath, ref builder);
+                defaultSpan.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DefaultSpan, ref builder);
+                dynamicSubtitleAnnotationPath.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DynamicSubtitleAnnotationPath, ref builder);
+                enableAddToInsights.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.EnableAddToInsights, ref builder);
+                enableLocaleCurrencyFormatting.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.EnableLocaleCurrencyFormatting, ref builder);
+                entitySet.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.EntitySet, ref builder);
+                identificationAnnotationPath.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IdentificationAnnotationPath, ref builder);
+                ignoreSapText.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IgnoreSapText, ref builder);
+                imageSupported.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ImageSupported, ref builder);
+                itemText.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ItemText, ref builder);
+                kpiAnnotationPath.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.KpiAnnotationPath, ref builder);
+                listFlavor.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ListFlavor, ref builder);
+                listType.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ListType, ref builder);
+                navigation.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Navigation, ref builder);
+                objectStreamCardsSettings.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ObjectStreamCardsSettings, ref builder);
+                presentationAnnotationPath.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PresentationAnnotationPath, ref builder);
+                requireAppAuthorization.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.RequireAppAuthorization, ref builder);
+                selectionAnnotationPath.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SelectionAnnotationPath, ref builder);
+                selectionPresentationAnnotationPath.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SelectionPresentationAnnotationPath, ref builder);
+                showFilterInHeader.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ShowFilterInHeader, ref builder);
+                showLabelText.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ShowLabelText, ref builder);
+                showLineItemDetail.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ShowLineItemDetail, ref builder);
+                showRefresh.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ShowRefresh, ref builder);
+                showSortingInHeader.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ShowSortingInHeader, ref builder);
+                sortBy.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SortBy, ref builder);
+                sortOrder.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SortOrder, ref builder);
+                staticContent.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.StaticContent, ref builder);
+                subTitle.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SubTitle, ref builder);
+                valueSelectionInfo.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ValueSelectionInfo, ref builder);
             }
 
             /// <summary>
@@ -3638,7 +3674,7 @@ public readonly partial struct Ui5ManifestSchema
                 in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.ShowSortingInHeaderEntity.Source showSortingInHeader = default,
                 in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source sortBy = default,
                 in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.RepresentsTheSortOrderForTheEntitySet.Source sortOrder = default,
-                in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.StaticContentEntityArray.Source<TContext> staticContent = default,
+                in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.JsonObjectArray.Source<TContext> staticContent = default,
                 in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.SubTitleEntity.Source subTitle = default,
                 in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.RepresentsThingsLikePeopleNumberOfItems.Source valueSelectionInfo = default)
             #if NET9_0_OR_GREATER
@@ -3839,7 +3875,7 @@ public readonly partial struct Ui5ManifestSchema
         /// <param name="valueSelectionInfo">The value of the property.</param>
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
         /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-        public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.TitleEntity.Source title, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.RepresentsTheAnnotationPath.Source annotationPath = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.RepresentsTheCategoryOfTheCardUsedInTheCardHeader.Source category = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.RepresentsTheChartAnnotationPath.Source chartAnnotationPath = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.ChartPropertiesEntity.Source chartProperties = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.ColorPaletteEntity.Source colorPalette = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.CustomParamsEntity.Source customParams = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.RepresentsTheDataPointAnnotationPath.Source dataPointAnnotationPath = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.DefaultSpanDef.Source defaultSpan = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.RepresentsTheDynamicSubtitleAnnotationPath.Source dynamicSubtitleAnnotationPath = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.EnableAddToInsightsEntity.Source enableAddToInsights = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.EnableLocaleCurrencyFormattingEntity.Source enableLocaleCurrencyFormatting = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.RepresentsTheEntitySetThatWillBeDisplayedInThisCard.Source entitySet = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.RepresentsTheIdentificationAnnotationPath.Source identificationAnnotationPath = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.IgnoreSapTextEntity.Source ignoreSapText = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.FlagForEnablingImagesInACondensedListCard.Source imageSupported = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.RepresentsTheUserDefinedStringInPlaceholderCard.Source itemText = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.RepresentsTheKpiAnnotationPath.Source kpiAnnotationPath = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.ListFlavorEntity.Source listFlavor = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.ListTypeEntity.Source listType = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.NavigationEntity.Source navigation = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ObjectStreamCardsSettingsDef.Source objectStreamCardsSettings = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.RepresentsThePresentationAnnotationPath.Source presentationAnnotationPath = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source requireAppAuthorization = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.RepresentsTheSelectionAnnotationPath.Source selectionAnnotationPath = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.RepresentsTheSelectionPresentationAnnotationPath.Source selectionPresentationAnnotationPath = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.ShowFilterInHeaderEntity.Source showFilterInHeader = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.ShowLabelTextEntity.Source showLabelText = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.FlagForShowLineItemDetailInListAndTableCard.Source showLineItemDetail = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.ShowRefreshEntity.Source showRefresh = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.ShowSortingInHeaderEntity.Source showSortingInHeader = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source sortBy = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.RepresentsTheSortOrderForTheEntitySet.Source sortOrder = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.StaticContentEntityArray.Source staticContent = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.SubTitleEntity.Source subTitle = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.RepresentsThingsLikePeopleNumberOfItems.Source valueSelectionInfo = default, int initialCapacity = 30)
+        public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.TitleEntity.Source title, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.RepresentsTheAnnotationPath.Source annotationPath = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.RepresentsTheCategoryOfTheCardUsedInTheCardHeader.Source category = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.RepresentsTheChartAnnotationPath.Source chartAnnotationPath = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.ChartPropertiesEntity.Source chartProperties = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.ColorPaletteEntity.Source colorPalette = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.CustomParamsEntity.Source customParams = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.RepresentsTheDataPointAnnotationPath.Source dataPointAnnotationPath = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.DefaultSpanDef.Source defaultSpan = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.RepresentsTheDynamicSubtitleAnnotationPath.Source dynamicSubtitleAnnotationPath = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.EnableAddToInsightsEntity.Source enableAddToInsights = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.EnableLocaleCurrencyFormattingEntity.Source enableLocaleCurrencyFormatting = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.RepresentsTheEntitySetThatWillBeDisplayedInThisCard.Source entitySet = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.RepresentsTheIdentificationAnnotationPath.Source identificationAnnotationPath = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.IgnoreSapTextEntity.Source ignoreSapText = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.FlagForEnablingImagesInACondensedListCard.Source imageSupported = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.RepresentsTheUserDefinedStringInPlaceholderCard.Source itemText = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.RepresentsTheKpiAnnotationPath.Source kpiAnnotationPath = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.ListFlavorEntity.Source listFlavor = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.ListTypeEntity.Source listType = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.NavigationEntity.Source navigation = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ObjectStreamCardsSettingsDef.Source objectStreamCardsSettings = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.RepresentsThePresentationAnnotationPath.Source presentationAnnotationPath = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source requireAppAuthorization = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.RepresentsTheSelectionAnnotationPath.Source selectionAnnotationPath = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.RepresentsTheSelectionPresentationAnnotationPath.Source selectionPresentationAnnotationPath = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.ShowFilterInHeaderEntity.Source showFilterInHeader = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.ShowLabelTextEntity.Source showLabelText = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.FlagForShowLineItemDetailInListAndTableCard.Source showLineItemDetail = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.ShowRefreshEntity.Source showRefresh = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.ShowSortingInHeaderEntity.Source showSortingInHeader = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source sortBy = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.RepresentsTheSortOrderForTheEntitySet.Source sortOrder = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.JsonObjectArray.Source staticContent = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.SubTitleEntity.Source subTitle = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.RepresentsThingsLikePeopleNumberOfItems.Source valueSelectionInfo = default, int initialCapacity = 30)
         {
             JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
             ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
@@ -3896,7 +3932,7 @@ public readonly partial struct Ui5ManifestSchema
         /// <param name="valueSelectionInfo">The value of the property.</param>
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
         /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-        public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.TitleEntity.Source title, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.RepresentsTheAnnotationPath.Source annotationPath = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.RepresentsTheCategoryOfTheCardUsedInTheCardHeader.Source category = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.RepresentsTheChartAnnotationPath.Source chartAnnotationPath = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.ChartPropertiesEntity.Source<TContext> chartProperties = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.ColorPaletteEntity.Source<TContext> colorPalette = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.CustomParamsEntity.Source customParams = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.RepresentsTheDataPointAnnotationPath.Source dataPointAnnotationPath = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.DefaultSpanDef.Source<TContext> defaultSpan = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.RepresentsTheDynamicSubtitleAnnotationPath.Source dynamicSubtitleAnnotationPath = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.EnableAddToInsightsEntity.Source enableAddToInsights = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.EnableLocaleCurrencyFormattingEntity.Source enableLocaleCurrencyFormatting = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.RepresentsTheEntitySetThatWillBeDisplayedInThisCard.Source entitySet = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.RepresentsTheIdentificationAnnotationPath.Source identificationAnnotationPath = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.IgnoreSapTextEntity.Source ignoreSapText = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.FlagForEnablingImagesInACondensedListCard.Source imageSupported = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.RepresentsTheUserDefinedStringInPlaceholderCard.Source itemText = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.RepresentsTheKpiAnnotationPath.Source kpiAnnotationPath = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.ListFlavorEntity.Source listFlavor = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.ListTypeEntity.Source listType = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.NavigationEntity.Source navigation = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ObjectStreamCardsSettingsDef.Source<TContext> objectStreamCardsSettings = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.RepresentsThePresentationAnnotationPath.Source presentationAnnotationPath = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source requireAppAuthorization = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.RepresentsTheSelectionAnnotationPath.Source selectionAnnotationPath = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.RepresentsTheSelectionPresentationAnnotationPath.Source selectionPresentationAnnotationPath = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.ShowFilterInHeaderEntity.Source showFilterInHeader = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.ShowLabelTextEntity.Source showLabelText = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.FlagForShowLineItemDetailInListAndTableCard.Source showLineItemDetail = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.ShowRefreshEntity.Source showRefresh = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.ShowSortingInHeaderEntity.Source showSortingInHeader = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source sortBy = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.RepresentsTheSortOrderForTheEntitySet.Source sortOrder = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.StaticContentEntityArray.Source<TContext> staticContent = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.SubTitleEntity.Source subTitle = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.RepresentsThingsLikePeopleNumberOfItems.Source valueSelectionInfo = default, int initialCapacity = 30)
+        public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.TitleEntity.Source title, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.RepresentsTheAnnotationPath.Source annotationPath = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.RepresentsTheCategoryOfTheCardUsedInTheCardHeader.Source category = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.RepresentsTheChartAnnotationPath.Source chartAnnotationPath = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.ChartPropertiesEntity.Source<TContext> chartProperties = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.ColorPaletteEntity.Source<TContext> colorPalette = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.CustomParamsEntity.Source customParams = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.RepresentsTheDataPointAnnotationPath.Source dataPointAnnotationPath = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.DefaultSpanDef.Source<TContext> defaultSpan = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.RepresentsTheDynamicSubtitleAnnotationPath.Source dynamicSubtitleAnnotationPath = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.EnableAddToInsightsEntity.Source enableAddToInsights = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.EnableLocaleCurrencyFormattingEntity.Source enableLocaleCurrencyFormatting = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.RepresentsTheEntitySetThatWillBeDisplayedInThisCard.Source entitySet = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.RepresentsTheIdentificationAnnotationPath.Source identificationAnnotationPath = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.IgnoreSapTextEntity.Source ignoreSapText = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.FlagForEnablingImagesInACondensedListCard.Source imageSupported = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.RepresentsTheUserDefinedStringInPlaceholderCard.Source itemText = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.RepresentsTheKpiAnnotationPath.Source kpiAnnotationPath = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.ListFlavorEntity.Source listFlavor = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.ListTypeEntity.Source listType = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.NavigationEntity.Source navigation = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ObjectStreamCardsSettingsDef.Source<TContext> objectStreamCardsSettings = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.RepresentsThePresentationAnnotationPath.Source presentationAnnotationPath = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source requireAppAuthorization = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.RepresentsTheSelectionAnnotationPath.Source selectionAnnotationPath = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.RepresentsTheSelectionPresentationAnnotationPath.Source selectionPresentationAnnotationPath = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.ShowFilterInHeaderEntity.Source showFilterInHeader = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.ShowLabelTextEntity.Source showLabelText = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.FlagForShowLineItemDetailInListAndTableCard.Source showLineItemDetail = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.ShowRefreshEntity.Source showRefresh = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.ShowSortingInHeaderEntity.Source showSortingInHeader = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source sortBy = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.RepresentsTheSortOrderForTheEntitySet.Source sortOrder = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.JsonObjectArray.Source<TContext> staticContent = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.SubTitleEntity.Source subTitle = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.CardSetting.RepresentsThingsLikePeopleNumberOfItems.Source valueSelectionInfo = default, int initialCapacity = 30)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif

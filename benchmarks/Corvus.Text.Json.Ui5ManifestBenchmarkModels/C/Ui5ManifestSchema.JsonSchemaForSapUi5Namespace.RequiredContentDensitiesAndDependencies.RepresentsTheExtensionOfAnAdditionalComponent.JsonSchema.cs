@@ -76,14 +76,14 @@ public readonly partial struct Ui5ManifestSchema
                     {
                         context.AddLocalEvaluatedProperty(propertyCount);
                         JsonSchemaContext childContext1 =
-                            Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.RepresentsTheExtensionOfAnAdditionalComponent.RepresentsExtensionsOfTheComponent.JsonSchema.PushChildContextUnescaped(
+                            Corvus.Ui5ManifestBenchmark.Current.JsonObject.JsonSchema.PushChildContextUnescaped(
                                 parentDocument,
                                 parentDocumentIndex,
                                 ref context,
                                 JsonPropertyNames.ExtensionsUtf8,
                                 evaluationPath: ExtensionsSchemaEvaluationPath);
 
-                        Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.RepresentsTheExtensionOfAnAdditionalComponent.RepresentsExtensionsOfTheComponent.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext1);
+                        Corvus.Ui5ManifestBenchmark.Current.JsonObject.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext1);
                         context.CommitChildContext(childContext1.IsMatch, ref childContext1);
                     }
 
@@ -127,17 +127,17 @@ public readonly partial struct Ui5ManifestSchema
                     /// <summary>
                     /// Gets a provider for the schema location from which this type was generated.
                     /// </summary>
-                    public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("ui5-manifest-schema.json#/properties/sap.ui5/allOf/0/properties/extends"u8, buffer, out written);
+                    public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/properties/sap.ui5/allOf/0/properties/extends"u8, buffer, out written);
 
                     /// <summary>
                     /// Gets the schema location from which this type was generated.
                     /// </summary>
-                    public const string SchemaLocation = "ui5-manifest-schema.json#/properties/sap.ui5/allOf/0/properties/extends";
+                    public const string SchemaLocation = "/properties/sap.ui5/allOf/0/properties/extends";
 
                     /// <summary>
                     /// Gets the schema location from which this type was generated as a UTF-8 string.
                     /// </summary>
-                    public static ReadOnlySpan<byte> SchemaLocationUtf8 => "ui5-manifest-schema.json#/properties/sap.ui5/allOf/0/properties/extends"u8;
+                    public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/properties/sap.ui5/allOf/0/properties/extends"u8;
 
                     /// <summary>
                     /// Applies the JSON schema semantics defined by this type to the instance determined by the given document and index.

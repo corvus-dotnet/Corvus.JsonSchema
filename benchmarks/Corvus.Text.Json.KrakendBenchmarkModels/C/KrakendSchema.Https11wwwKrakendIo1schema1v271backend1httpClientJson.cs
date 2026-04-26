@@ -657,5 +657,27 @@ public readonly partial struct KrakendSchema
             /// </summary>
             public static ReadOnlySpan<byte> ProxyAddress => "proxy_address"u8;
         }
+
+        /// <summary>
+        /// Provides pre-baked property name blobs for fast builder property storage.
+        /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
+        /// </summary>
+        private static class JsonPropertyNamesPrebaked
+        {
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="ClientTls"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> ClientTls => [0xC5, 0x00, 0x00, 0x00, 0x22, 0x63, 0x6C, 0x69, 0x65, 0x6E, 0x74, 0x5F, 0x74, 0x6C, 0x73, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="NoRedirectValue"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> NoRedirectValue => [0xD5, 0x00, 0x00, 0x00, 0x22, 0x6E, 0x6F, 0x5F, 0x72, 0x65, 0x64, 0x69, 0x72, 0x65, 0x63, 0x74, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="ProxyAddress"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> ProxyAddress => [0xF5, 0x00, 0x00, 0x00, 0x22, 0x70, 0x72, 0x6F, 0x78, 0x79, 0x5F, 0x61, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73, 0x22];
+        }
     }
 }

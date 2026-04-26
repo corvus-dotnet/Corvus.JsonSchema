@@ -242,11 +242,11 @@ public readonly partial struct OpenapiSchema
                 /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
                 /// </para>
                 /// </remarks>
-                public Corvus.OpenapiBenchmark.Current.JsonUriNotAsserted.Mutable AuthorizationUrl
+                public Corvus.OpenapiBenchmark.Current.JsonUri.Mutable AuthorizationUrl
                 {
                     get
                     {
-                        if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.AuthorizationUrlUtf8, out Corvus.OpenapiBenchmark.Current.JsonUriNotAsserted.Mutable value))
+                        if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.AuthorizationUrlUtf8, out Corvus.OpenapiBenchmark.Current.JsonUri.Mutable value))
                         {
                             return value;
                         }
@@ -258,11 +258,11 @@ public readonly partial struct OpenapiSchema
                 /// <summary>
                 /// Gets the (optional) <c>refreshUrl</c> property.
                 /// </summary>
-                public Corvus.OpenapiBenchmark.Current.JsonUriNotAsserted.Mutable RefreshUrl
+                public Corvus.OpenapiBenchmark.Current.JsonUri.Mutable RefreshUrl
                 {
                     get
                     {
-                        if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.RefreshUrlUtf8, out Corvus.OpenapiBenchmark.Current.JsonUriNotAsserted.Mutable value))
+                        if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.RefreshUrlUtf8, out Corvus.OpenapiBenchmark.Current.JsonUri.Mutable value))
                         {
                             return value;
                         }
@@ -300,11 +300,11 @@ public readonly partial struct OpenapiSchema
                 /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
                 /// </para>
                 /// </remarks>
-                public Corvus.OpenapiBenchmark.Current.JsonUriNotAsserted.Mutable TokenUrl
+                public Corvus.OpenapiBenchmark.Current.JsonUri.Mutable TokenUrl
                 {
                     get
                     {
-                        if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TokenUrlUtf8, out Corvus.OpenapiBenchmark.Current.JsonUriNotAsserted.Mutable value))
+                        if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TokenUrlUtf8, out Corvus.OpenapiBenchmark.Current.JsonUri.Mutable value))
                         {
                             return value;
                         }
@@ -346,7 +346,7 @@ public readonly partial struct OpenapiSchema
                 /// Set the <c>authorizationUrl</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetAuthorizationUrl(in Corvus.OpenapiBenchmark.Current.JsonUriNotAsserted.Source value)
+                public void SetAuthorizationUrl(in Corvus.OpenapiBenchmark.Current.JsonUri.Source value)
                 {
                     CheckValidInstance();
 
@@ -365,7 +365,7 @@ public readonly partial struct OpenapiSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.AuthorizationUrl, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AuthorizationUrl, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -377,7 +377,7 @@ public readonly partial struct OpenapiSchema
                 /// Set the <c>refreshUrl</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetRefreshUrl(in Corvus.OpenapiBenchmark.Current.JsonUriNotAsserted.Source value)
+                public void SetRefreshUrl(in Corvus.OpenapiBenchmark.Current.JsonUri.Source value)
                 {
                     CheckValidInstance();
 
@@ -398,7 +398,7 @@ public readonly partial struct OpenapiSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.RefreshUrl, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.RefreshUrl, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -441,7 +441,7 @@ public readonly partial struct OpenapiSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.Scopes, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Scopes, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -475,7 +475,7 @@ public readonly partial struct OpenapiSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.Scopes, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Scopes, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -487,7 +487,7 @@ public readonly partial struct OpenapiSchema
                 /// Set the <c>tokenUrl</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetTokenUrl(in Corvus.OpenapiBenchmark.Current.JsonUriNotAsserted.Source value)
+                public void SetTokenUrl(in Corvus.OpenapiBenchmark.Current.JsonUri.Source value)
                 {
                     CheckValidInstance();
 
@@ -506,7 +506,7 @@ public readonly partial struct OpenapiSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.TokenUrl, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TokenUrl, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -912,6 +912,24 @@ public readonly partial struct OpenapiSchema
                     }
                 }
 
+                internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+                {
+                    switch(_kind)
+                    {
+                        case Kind.Unknown:
+                            break;
+                        case Kind.JsonElement:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                            break;
+                        case Kind.Builder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
+                            break;
+                        default:
+                            Debug.Fail("Unexpected Kind");
+                            break;
+                    }
+                }
+
                 internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
                 {
                     switch(_kind)
@@ -1013,6 +1031,24 @@ public readonly partial struct OpenapiSchema
                     }
                 }
 
+                internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+                {
+                    switch(_kind)
+                    {
+                        case Kind.Unknown:
+                            break;
+                        case Kind.Source:
+                            _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                            break;
+                        case Kind.Builder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
+                            break;
+                        default:
+                            Debug.Fail("Unexpected Kind");
+                            break;
+                    }
+                }
+
                 internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
                 {
                     switch(_kind)
@@ -1091,25 +1127,25 @@ public readonly partial struct OpenapiSchema
                 /// </summary>
                 internal static void Create(
                     ref ComplexValueBuilder builder,
-                    in Corvus.OpenapiBenchmark.Current.JsonUriNotAsserted.Source authorizationUrl,
+                    in Corvus.OpenapiBenchmark.Current.JsonUri.Source authorizationUrl,
                     in Corvus.OpenapiBenchmark.Current.OpenapiSchema.MapOfStrings.Source scopes,
-                    in Corvus.OpenapiBenchmark.Current.JsonUriNotAsserted.Source tokenUrl,
-                    in Corvus.OpenapiBenchmark.Current.JsonUriNotAsserted.Source refreshUrl = default)
+                    in Corvus.OpenapiBenchmark.Current.JsonUri.Source tokenUrl,
+                    in Corvus.OpenapiBenchmark.Current.JsonUri.Source refreshUrl = default)
                 {
-                    authorizationUrl.AddAsProperty(JsonPropertyNamesEscaped.AuthorizationUrl, ref builder, escapeName: false);
-                    scopes.AddAsProperty(JsonPropertyNamesEscaped.Scopes, ref builder, escapeName: false);
-                    tokenUrl.AddAsProperty(JsonPropertyNamesEscaped.TokenUrl, ref builder, escapeName: false);
-                    refreshUrl.AddAsProperty(JsonPropertyNamesEscaped.RefreshUrl, ref builder, escapeName: false);
+                    authorizationUrl.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AuthorizationUrl, ref builder);
+                    scopes.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Scopes, ref builder);
+                    tokenUrl.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TokenUrl, ref builder);
+                    refreshUrl.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.RefreshUrl, ref builder);
                 }
 
                 /// <summary>
                 /// Creates an instance of a <see cref="RequiredAuthorizationUrlAndScopesAndTokenUrl"/>.
                 /// </summary>
                 public void Create(
-                    in Corvus.OpenapiBenchmark.Current.JsonUriNotAsserted.Source authorizationUrl,
+                    in Corvus.OpenapiBenchmark.Current.JsonUri.Source authorizationUrl,
                     in Corvus.OpenapiBenchmark.Current.OpenapiSchema.MapOfStrings.Source scopes,
-                    in Corvus.OpenapiBenchmark.Current.JsonUriNotAsserted.Source tokenUrl,
-                    in Corvus.OpenapiBenchmark.Current.JsonUriNotAsserted.Source refreshUrl = default)
+                    in Corvus.OpenapiBenchmark.Current.JsonUri.Source tokenUrl,
+                    in Corvus.OpenapiBenchmark.Current.JsonUri.Source refreshUrl = default)
                 {
                     Create(ref _builder, authorizationUrl, scopes, tokenUrl, refreshUrl);
                 }
@@ -1120,18 +1156,18 @@ public readonly partial struct OpenapiSchema
                 internal static void Create<TContext>(
                     in TContext context,
                     ref ComplexValueBuilder builder,
-                    in Corvus.OpenapiBenchmark.Current.JsonUriNotAsserted.Source authorizationUrl,
+                    in Corvus.OpenapiBenchmark.Current.JsonUri.Source authorizationUrl,
                     in Corvus.OpenapiBenchmark.Current.OpenapiSchema.MapOfStrings.Source<TContext> scopes,
-                    in Corvus.OpenapiBenchmark.Current.JsonUriNotAsserted.Source tokenUrl,
-                    in Corvus.OpenapiBenchmark.Current.JsonUriNotAsserted.Source refreshUrl = default)
+                    in Corvus.OpenapiBenchmark.Current.JsonUri.Source tokenUrl,
+                    in Corvus.OpenapiBenchmark.Current.JsonUri.Source refreshUrl = default)
                 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
                 #endif
                 {
-                    authorizationUrl.AddAsProperty(JsonPropertyNamesEscaped.AuthorizationUrl, ref builder, escapeName: false);
-                    scopes.AddAsProperty(JsonPropertyNamesEscaped.Scopes, ref builder, escapeName: false);
-                    tokenUrl.AddAsProperty(JsonPropertyNamesEscaped.TokenUrl, ref builder, escapeName: false);
-                    refreshUrl.AddAsProperty(JsonPropertyNamesEscaped.RefreshUrl, ref builder, escapeName: false);
+                    authorizationUrl.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AuthorizationUrl, ref builder);
+                    scopes.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Scopes, ref builder);
+                    tokenUrl.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TokenUrl, ref builder);
+                    refreshUrl.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.RefreshUrl, ref builder);
                 }
 
                 /// <summary>
@@ -1139,10 +1175,10 @@ public readonly partial struct OpenapiSchema
                 /// </summary>
                 public void Create<TContext>(
                     in TContext context,
-                    in Corvus.OpenapiBenchmark.Current.JsonUriNotAsserted.Source authorizationUrl,
+                    in Corvus.OpenapiBenchmark.Current.JsonUri.Source authorizationUrl,
                     in Corvus.OpenapiBenchmark.Current.OpenapiSchema.MapOfStrings.Source<TContext> scopes,
-                    in Corvus.OpenapiBenchmark.Current.JsonUriNotAsserted.Source tokenUrl,
-                    in Corvus.OpenapiBenchmark.Current.JsonUriNotAsserted.Source refreshUrl = default)
+                    in Corvus.OpenapiBenchmark.Current.JsonUri.Source tokenUrl,
+                    in Corvus.OpenapiBenchmark.Current.JsonUri.Source refreshUrl = default)
                 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
                 #endif
@@ -1327,7 +1363,7 @@ public readonly partial struct OpenapiSchema
             /// <param name="refreshUrl">The value of the property.</param>
             /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
             /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-            public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.OpenapiBenchmark.Current.JsonUriNotAsserted.Source authorizationUrl, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.MapOfStrings.Source scopes, in Corvus.OpenapiBenchmark.Current.JsonUriNotAsserted.Source tokenUrl, in Corvus.OpenapiBenchmark.Current.JsonUriNotAsserted.Source refreshUrl = default, int initialCapacity = 30)
+            public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.OpenapiBenchmark.Current.JsonUri.Source authorizationUrl, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.MapOfStrings.Source scopes, in Corvus.OpenapiBenchmark.Current.JsonUri.Source tokenUrl, in Corvus.OpenapiBenchmark.Current.JsonUri.Source refreshUrl = default, int initialCapacity = 30)
             {
                 JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
@@ -1352,7 +1388,7 @@ public readonly partial struct OpenapiSchema
             /// <param name="refreshUrl">The value of the property.</param>
             /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
             /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-            public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.OpenapiBenchmark.Current.JsonUriNotAsserted.Source authorizationUrl, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.MapOfStrings.Source<TContext> scopes, in Corvus.OpenapiBenchmark.Current.JsonUriNotAsserted.Source tokenUrl, in Corvus.OpenapiBenchmark.Current.JsonUriNotAsserted.Source refreshUrl = default, int initialCapacity = 30)
+            public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.OpenapiBenchmark.Current.JsonUri.Source authorizationUrl, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.MapOfStrings.Source<TContext> scopes, in Corvus.OpenapiBenchmark.Current.JsonUri.Source tokenUrl, in Corvus.OpenapiBenchmark.Current.JsonUri.Source refreshUrl = default, int initialCapacity = 30)
                 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
                 #endif

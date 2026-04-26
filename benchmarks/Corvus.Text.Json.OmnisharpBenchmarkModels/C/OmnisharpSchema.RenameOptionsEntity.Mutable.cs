@@ -378,7 +378,7 @@ public readonly partial struct OmnisharpSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.RenameInComments, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.RenameInComments, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -423,7 +423,7 @@ public readonly partial struct OmnisharpSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.RenameInStrings, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.RenameInStrings, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -468,7 +468,7 @@ public readonly partial struct OmnisharpSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.RenameOverloads, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.RenameOverloads, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -851,6 +851,24 @@ public readonly partial struct OmnisharpSchema
                 }
             }
 
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.JsonElement:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                        break;
+                    case Kind.Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
             internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
             {
                 switch(_kind)
@@ -952,6 +970,24 @@ public readonly partial struct OmnisharpSchema
                 }
             }
 
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.Source:
+                        _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                        break;
+                    case Kind.Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
             internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
             {
                 switch(_kind)
@@ -1034,9 +1070,9 @@ public readonly partial struct OmnisharpSchema
                 in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.RenameOptionsEntity.RenameInStringsEntity.Source renameInStrings = default,
                 in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.RenameOptionsEntity.RenameOverloadsEntity.Source renameOverloads = default)
             {
-                renameInComments.AddAsProperty(JsonPropertyNamesEscaped.RenameInComments, ref builder, escapeName: false);
-                renameInStrings.AddAsProperty(JsonPropertyNamesEscaped.RenameInStrings, ref builder, escapeName: false);
-                renameOverloads.AddAsProperty(JsonPropertyNamesEscaped.RenameOverloads, ref builder, escapeName: false);
+                renameInComments.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.RenameInComments, ref builder);
+                renameInStrings.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.RenameInStrings, ref builder);
+                renameOverloads.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.RenameOverloads, ref builder);
             }
 
             /// <summary>

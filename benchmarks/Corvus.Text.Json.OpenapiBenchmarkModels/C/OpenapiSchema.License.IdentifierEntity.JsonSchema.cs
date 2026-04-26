@@ -46,17 +46,17 @@ public readonly partial struct OpenapiSchema
                 /// <summary>
                 /// Gets a provider for the schema location from which this type was generated.
                 /// </summary>
-                public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("https://spec.openapis.org/oas/3.1/schema/2022-10-07#/$defs/license/dependentSchemas/identifier"u8, buffer, out written);
+                public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/$defs/license/dependentSchemas/identifier"u8, buffer, out written);
 
                 /// <summary>
                 /// Gets the schema location from which this type was generated.
                 /// </summary>
-                public const string SchemaLocation = "https://spec.openapis.org/oas/3.1/schema/2022-10-07#/$defs/license/dependentSchemas/identifier";
+                public const string SchemaLocation = "/$defs/license/dependentSchemas/identifier";
 
                 /// <summary>
                 /// Gets the schema location from which this type was generated as a UTF-8 string.
                 /// </summary>
-                public static ReadOnlySpan<byte> SchemaLocationUtf8 => "https://spec.openapis.org/oas/3.1/schema/2022-10-07#/$defs/license/dependentSchemas/identifier"u8;
+                public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/$defs/license/dependentSchemas/identifier"u8;
                 private static readonly JsonSchemaPathProvider NotSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/not"u8, buffer, out written);
 
                 /// <summary>

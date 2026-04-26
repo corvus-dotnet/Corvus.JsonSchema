@@ -112,11 +112,11 @@ public readonly partial struct OpenapiSchema
             /// <summary>
             /// Gets the (optional) <c>refreshUrl</c> property.
             /// </summary>
-            public Corvus.OpenapiBenchmark.Current.JsonUriNotAsserted RefreshUrl
+            public Corvus.OpenapiBenchmark.Current.JsonUri RefreshUrl
             {
                 get
                 {
-                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.RefreshUrlUtf8, out Corvus.OpenapiBenchmark.Current.JsonUriNotAsserted value))
+                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.RefreshUrlUtf8, out Corvus.OpenapiBenchmark.Current.JsonUri value))
                     {
                         return value;
                     }
@@ -154,11 +154,11 @@ public readonly partial struct OpenapiSchema
             /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
             /// </para>
             /// </remarks>
-            public Corvus.OpenapiBenchmark.Current.JsonUriNotAsserted TokenUrl
+            public Corvus.OpenapiBenchmark.Current.JsonUri TokenUrl
             {
                 get
                 {
-                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TokenUrlUtf8, out Corvus.OpenapiBenchmark.Current.JsonUriNotAsserted value))
+                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TokenUrlUtf8, out Corvus.OpenapiBenchmark.Current.JsonUri value))
                     {
                         return value;
                     }
@@ -673,6 +673,28 @@ public readonly partial struct OpenapiSchema
                 /// Gets the escaped UTF-8 JSON property name for <see cref="TokenUrl"/>.
                 /// </summary>
                 public static ReadOnlySpan<byte> TokenUrl => "tokenUrl"u8;
+            }
+
+            /// <summary>
+            /// Provides pre-baked property name blobs for fast builder property storage.
+            /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
+            /// </summary>
+            private static class JsonPropertyNamesPrebaked
+            {
+                /// <summary>
+                /// Gets the pre-baked property name blob for <see cref="RefreshUrl"/>.
+                /// </summary>
+                public static ReadOnlySpan<byte> RefreshUrl => [0xC5, 0x00, 0x00, 0x00, 0x22, 0x72, 0x65, 0x66, 0x72, 0x65, 0x73, 0x68, 0x55, 0x72, 0x6C, 0x22];
+
+                /// <summary>
+                /// Gets the pre-baked property name blob for <see cref="Scopes"/>.
+                /// </summary>
+                public static ReadOnlySpan<byte> Scopes => [0x85, 0x00, 0x00, 0x00, 0x22, 0x73, 0x63, 0x6F, 0x70, 0x65, 0x73, 0x22];
+
+                /// <summary>
+                /// Gets the pre-baked property name blob for <see cref="TokenUrl"/>.
+                /// </summary>
+                public static ReadOnlySpan<byte> TokenUrl => [0xA5, 0x00, 0x00, 0x00, 0x22, 0x74, 0x6F, 0x6B, 0x65, 0x6E, 0x55, 0x72, 0x6C, 0x22];
             }
         }
     }

@@ -885,7 +885,7 @@ public readonly partial struct BabelrcSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Ast, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Ast, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -930,7 +930,7 @@ public readonly partial struct BabelrcSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.AuxiliaryCommentAfter, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AuxiliaryCommentAfter, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -975,7 +975,7 @@ public readonly partial struct BabelrcSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.AuxiliaryCommentBefore, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AuxiliaryCommentBefore, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1020,7 +1020,7 @@ public readonly partial struct BabelrcSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Code, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Code, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1065,7 +1065,7 @@ public readonly partial struct BabelrcSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Comments, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Comments, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1110,7 +1110,7 @@ public readonly partial struct BabelrcSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Compact, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Compact, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1155,7 +1155,7 @@ public readonly partial struct BabelrcSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Env, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Env, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1191,7 +1191,7 @@ public readonly partial struct BabelrcSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Env, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Env, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1236,7 +1236,7 @@ public readonly partial struct BabelrcSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Extends, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Extends, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1281,7 +1281,7 @@ public readonly partial struct BabelrcSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Filename, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Filename, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1326,7 +1326,7 @@ public readonly partial struct BabelrcSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.FilenameRelative, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.FilenameRelative, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1371,7 +1371,7 @@ public readonly partial struct BabelrcSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.HighlightCode, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.HighlightCode, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1416,7 +1416,7 @@ public readonly partial struct BabelrcSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Ignore, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Ignore, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1452,7 +1452,7 @@ public readonly partial struct BabelrcSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Ignore, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Ignore, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1497,7 +1497,7 @@ public readonly partial struct BabelrcSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.InputSourceMap, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.InputSourceMap, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1533,7 +1533,7 @@ public readonly partial struct BabelrcSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.InputSourceMap, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.InputSourceMap, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1578,7 +1578,7 @@ public readonly partial struct BabelrcSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.KeepModuleIdExtensions, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.KeepModuleIdExtensions, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1623,7 +1623,7 @@ public readonly partial struct BabelrcSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.ModuleId, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ModuleId, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1668,7 +1668,7 @@ public readonly partial struct BabelrcSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.ModuleIds, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ModuleIds, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1713,7 +1713,7 @@ public readonly partial struct BabelrcSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.ModuleRoot, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ModuleRoot, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1758,7 +1758,7 @@ public readonly partial struct BabelrcSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Only, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Only, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1794,7 +1794,7 @@ public readonly partial struct BabelrcSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Only, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Only, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1839,7 +1839,7 @@ public readonly partial struct BabelrcSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Plugins, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Plugins, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1875,7 +1875,7 @@ public readonly partial struct BabelrcSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Plugins, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Plugins, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1920,7 +1920,7 @@ public readonly partial struct BabelrcSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Presets, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Presets, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1956,7 +1956,7 @@ public readonly partial struct BabelrcSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Presets, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Presets, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -2001,7 +2001,7 @@ public readonly partial struct BabelrcSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.RetainLines, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.RetainLines, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -2046,7 +2046,7 @@ public readonly partial struct BabelrcSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.SourceFileName, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SourceFileName, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -2091,7 +2091,7 @@ public readonly partial struct BabelrcSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.SourceMaps, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SourceMaps, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -2136,7 +2136,7 @@ public readonly partial struct BabelrcSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.SourceMapTarget, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SourceMapTarget, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -2181,7 +2181,7 @@ public readonly partial struct BabelrcSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.SourceRoot, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SourceRoot, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -2692,6 +2692,24 @@ public readonly partial struct BabelrcSchema
             }
         }
 
+        internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+        {
+            switch(_kind)
+            {
+                case Kind.Unknown:
+                    break;
+                case Kind.JsonElement:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                    break;
+                case Kind.Builder:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
+                    break;
+                default:
+                    Debug.Fail("Unexpected Kind");
+                    break;
+            }
+        }
+
         internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
         {
             switch(_kind)
@@ -2786,6 +2804,24 @@ public readonly partial struct BabelrcSchema
                     break;
                 case Kind.Builder:
                     valueBuilder.AddProperty(utf8Name, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o), escapeName, nameRequiresUnescaping);
+                    break;
+                default:
+                    Debug.Fail("Unexpected Kind");
+                    break;
+            }
+        }
+
+        internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+        {
+            switch(_kind)
+            {
+                case Kind.Unknown:
+                    break;
+                case Kind.Source:
+                    _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                    break;
+                case Kind.Builder:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                     break;
                 default:
                     Debug.Fail("Unexpected Kind");
@@ -2897,31 +2933,31 @@ public readonly partial struct BabelrcSchema
             in Corvus.BabelrcBenchmark.Current.JsonString.Source sourceMapTarget = default,
             in Corvus.BabelrcBenchmark.Current.JsonString.Source sourceRoot = default)
         {
-            ast.AddAsProperty(JsonPropertyNamesEscaped.Ast, ref builder, escapeName: false);
-            auxiliaryCommentAfter.AddAsProperty(JsonPropertyNamesEscaped.AuxiliaryCommentAfter, ref builder, escapeName: false);
-            auxiliaryCommentBefore.AddAsProperty(JsonPropertyNamesEscaped.AuxiliaryCommentBefore, ref builder, escapeName: false);
-            code.AddAsProperty(JsonPropertyNamesEscaped.Code, ref builder, escapeName: false);
-            comments.AddAsProperty(JsonPropertyNamesEscaped.Comments, ref builder, escapeName: false);
-            compact.AddAsProperty(JsonPropertyNamesEscaped.Compact, ref builder, escapeName: false);
-            env.AddAsProperty(JsonPropertyNamesEscaped.Env, ref builder, escapeName: false);
-            extends.AddAsProperty(JsonPropertyNamesEscaped.Extends, ref builder, escapeName: false);
-            filename.AddAsProperty(JsonPropertyNamesEscaped.Filename, ref builder, escapeName: false);
-            filenameRelative.AddAsProperty(JsonPropertyNamesEscaped.FilenameRelative, ref builder, escapeName: false);
-            highlightCode.AddAsProperty(JsonPropertyNamesEscaped.HighlightCode, ref builder, escapeName: false);
-            ignore.AddAsProperty(JsonPropertyNamesEscaped.Ignore, ref builder, escapeName: false);
-            inputSourceMap.AddAsProperty(JsonPropertyNamesEscaped.InputSourceMap, ref builder, escapeName: false);
-            keepModuleIdExtensions.AddAsProperty(JsonPropertyNamesEscaped.KeepModuleIdExtensions, ref builder, escapeName: false);
-            moduleId.AddAsProperty(JsonPropertyNamesEscaped.ModuleId, ref builder, escapeName: false);
-            moduleIds.AddAsProperty(JsonPropertyNamesEscaped.ModuleIds, ref builder, escapeName: false);
-            moduleRoot.AddAsProperty(JsonPropertyNamesEscaped.ModuleRoot, ref builder, escapeName: false);
-            only.AddAsProperty(JsonPropertyNamesEscaped.Only, ref builder, escapeName: false);
-            plugins.AddAsProperty(JsonPropertyNamesEscaped.Plugins, ref builder, escapeName: false);
-            presets.AddAsProperty(JsonPropertyNamesEscaped.Presets, ref builder, escapeName: false);
-            retainLines.AddAsProperty(JsonPropertyNamesEscaped.RetainLines, ref builder, escapeName: false);
-            sourceFileName.AddAsProperty(JsonPropertyNamesEscaped.SourceFileName, ref builder, escapeName: false);
-            sourceMaps.AddAsProperty(JsonPropertyNamesEscaped.SourceMaps, ref builder, escapeName: false);
-            sourceMapTarget.AddAsProperty(JsonPropertyNamesEscaped.SourceMapTarget, ref builder, escapeName: false);
-            sourceRoot.AddAsProperty(JsonPropertyNamesEscaped.SourceRoot, ref builder, escapeName: false);
+            ast.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Ast, ref builder);
+            auxiliaryCommentAfter.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AuxiliaryCommentAfter, ref builder);
+            auxiliaryCommentBefore.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AuxiliaryCommentBefore, ref builder);
+            code.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Code, ref builder);
+            comments.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Comments, ref builder);
+            compact.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Compact, ref builder);
+            env.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Env, ref builder);
+            extends.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Extends, ref builder);
+            filename.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Filename, ref builder);
+            filenameRelative.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.FilenameRelative, ref builder);
+            highlightCode.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.HighlightCode, ref builder);
+            ignore.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Ignore, ref builder);
+            inputSourceMap.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.InputSourceMap, ref builder);
+            keepModuleIdExtensions.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.KeepModuleIdExtensions, ref builder);
+            moduleId.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ModuleId, ref builder);
+            moduleIds.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ModuleIds, ref builder);
+            moduleRoot.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ModuleRoot, ref builder);
+            only.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Only, ref builder);
+            plugins.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Plugins, ref builder);
+            presets.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Presets, ref builder);
+            retainLines.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.RetainLines, ref builder);
+            sourceFileName.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SourceFileName, ref builder);
+            sourceMaps.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SourceMaps, ref builder);
+            sourceMapTarget.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SourceMapTarget, ref builder);
+            sourceRoot.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SourceRoot, ref builder);
         }
 
         /// <summary>
@@ -2992,31 +3028,31 @@ public readonly partial struct BabelrcSchema
         where TContext : allows ref struct
         #endif
         {
-            ast.AddAsProperty(JsonPropertyNamesEscaped.Ast, ref builder, escapeName: false);
-            auxiliaryCommentAfter.AddAsProperty(JsonPropertyNamesEscaped.AuxiliaryCommentAfter, ref builder, escapeName: false);
-            auxiliaryCommentBefore.AddAsProperty(JsonPropertyNamesEscaped.AuxiliaryCommentBefore, ref builder, escapeName: false);
-            code.AddAsProperty(JsonPropertyNamesEscaped.Code, ref builder, escapeName: false);
-            comments.AddAsProperty(JsonPropertyNamesEscaped.Comments, ref builder, escapeName: false);
-            compact.AddAsProperty(JsonPropertyNamesEscaped.Compact, ref builder, escapeName: false);
-            env.AddAsProperty(JsonPropertyNamesEscaped.Env, ref builder, escapeName: false);
-            extends.AddAsProperty(JsonPropertyNamesEscaped.Extends, ref builder, escapeName: false);
-            filename.AddAsProperty(JsonPropertyNamesEscaped.Filename, ref builder, escapeName: false);
-            filenameRelative.AddAsProperty(JsonPropertyNamesEscaped.FilenameRelative, ref builder, escapeName: false);
-            highlightCode.AddAsProperty(JsonPropertyNamesEscaped.HighlightCode, ref builder, escapeName: false);
-            ignore.AddAsProperty(JsonPropertyNamesEscaped.Ignore, ref builder, escapeName: false);
-            inputSourceMap.AddAsProperty(JsonPropertyNamesEscaped.InputSourceMap, ref builder, escapeName: false);
-            keepModuleIdExtensions.AddAsProperty(JsonPropertyNamesEscaped.KeepModuleIdExtensions, ref builder, escapeName: false);
-            moduleId.AddAsProperty(JsonPropertyNamesEscaped.ModuleId, ref builder, escapeName: false);
-            moduleIds.AddAsProperty(JsonPropertyNamesEscaped.ModuleIds, ref builder, escapeName: false);
-            moduleRoot.AddAsProperty(JsonPropertyNamesEscaped.ModuleRoot, ref builder, escapeName: false);
-            only.AddAsProperty(JsonPropertyNamesEscaped.Only, ref builder, escapeName: false);
-            plugins.AddAsProperty(JsonPropertyNamesEscaped.Plugins, ref builder, escapeName: false);
-            presets.AddAsProperty(JsonPropertyNamesEscaped.Presets, ref builder, escapeName: false);
-            retainLines.AddAsProperty(JsonPropertyNamesEscaped.RetainLines, ref builder, escapeName: false);
-            sourceFileName.AddAsProperty(JsonPropertyNamesEscaped.SourceFileName, ref builder, escapeName: false);
-            sourceMaps.AddAsProperty(JsonPropertyNamesEscaped.SourceMaps, ref builder, escapeName: false);
-            sourceMapTarget.AddAsProperty(JsonPropertyNamesEscaped.SourceMapTarget, ref builder, escapeName: false);
-            sourceRoot.AddAsProperty(JsonPropertyNamesEscaped.SourceRoot, ref builder, escapeName: false);
+            ast.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Ast, ref builder);
+            auxiliaryCommentAfter.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AuxiliaryCommentAfter, ref builder);
+            auxiliaryCommentBefore.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AuxiliaryCommentBefore, ref builder);
+            code.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Code, ref builder);
+            comments.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Comments, ref builder);
+            compact.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Compact, ref builder);
+            env.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Env, ref builder);
+            extends.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Extends, ref builder);
+            filename.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Filename, ref builder);
+            filenameRelative.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.FilenameRelative, ref builder);
+            highlightCode.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.HighlightCode, ref builder);
+            ignore.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Ignore, ref builder);
+            inputSourceMap.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.InputSourceMap, ref builder);
+            keepModuleIdExtensions.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.KeepModuleIdExtensions, ref builder);
+            moduleId.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ModuleId, ref builder);
+            moduleIds.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ModuleIds, ref builder);
+            moduleRoot.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ModuleRoot, ref builder);
+            only.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Only, ref builder);
+            plugins.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Plugins, ref builder);
+            presets.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Presets, ref builder);
+            retainLines.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.RetainLines, ref builder);
+            sourceFileName.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SourceFileName, ref builder);
+            sourceMaps.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SourceMaps, ref builder);
+            sourceMapTarget.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SourceMapTarget, ref builder);
+            sourceRoot.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SourceRoot, ref builder);
         }
 
         /// <summary>

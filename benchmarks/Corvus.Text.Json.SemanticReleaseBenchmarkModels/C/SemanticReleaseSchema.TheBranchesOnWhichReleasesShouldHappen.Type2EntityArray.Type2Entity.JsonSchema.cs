@@ -72,17 +72,17 @@ public readonly partial struct SemanticReleaseSchema
                     /// <summary>
                     /// Gets a provider for the schema location from which this type was generated.
                     /// </summary>
-                    public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("https://json.schemastore.org/semantic-release.json#/properties/branches/oneOf/2/items"u8, buffer, out written);
+                    public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/properties/branches/oneOf/2/items"u8, buffer, out written);
 
                     /// <summary>
                     /// Gets the schema location from which this type was generated.
                     /// </summary>
-                    public const string SchemaLocation = "https://json.schemastore.org/semantic-release.json#/properties/branches/oneOf/2/items";
+                    public const string SchemaLocation = "/properties/branches/oneOf/2/items";
 
                     /// <summary>
                     /// Gets the schema location from which this type was generated as a UTF-8 string.
                     /// </summary>
-                    public static ReadOnlySpan<byte> SchemaLocationUtf8 => "https://json.schemastore.org/semantic-release.json#/properties/branches/oneOf/2/items"u8;
+                    public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/properties/branches/oneOf/2/items"u8;
                     private static readonly JsonSchemaPathProvider AnyOf0SchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/anyOf/0"u8, buffer, out written);
                     private static readonly JsonSchemaPathProvider AnyOf1SchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/anyOf/1/$ref"u8, buffer, out written);
 

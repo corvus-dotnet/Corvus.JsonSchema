@@ -87,7 +87,7 @@ public readonly partial struct KrakendSchema
             private static readonly JsonSchemaPathProvider RevokeServerMaxWorkersSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/revoke_server_max_workers"u8, buffer, out written);
             private static readonly JsonSchemaPathProvider RevokeServerPingIntervalSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/revoke_server_ping_interval/$ref"u8, buffer, out written);
             private static readonly JsonSchemaPathProvider RevokeServerPingUrlSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/revoke_server_ping_url"u8, buffer, out written);
-            private static readonly JsonSchemaPathProvider TokenKeysValueSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/token_keys"u8, buffer, out written);
+            private static readonly JsonSchemaPathProvider TokenKeysSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/token_keys"u8, buffer, out written);
             private static readonly JsonSchemaPathProvider TtlSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/TTL"u8, buffer, out written);
 
             private static void MatchHashName(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
@@ -253,18 +253,18 @@ public readonly partial struct KrakendSchema
                 context.CommitChildContext(childContext8.IsMatch, ref childContext8);
             }
 
-            private static void MatchTokenKeysValue(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+            private static void MatchTokenKeys(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext9 =
-                    Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271auth1revokerJson.TokenKeys.JsonSchema.PushChildContextUnescaped(
+                    Corvus.KrakendBenchmark.Current.JsonArray.JsonSchema.PushChildContextUnescaped(
                         parentDocument,
                         parentDocumentIndex,
                         ref context,
-                        JsonPropertyNames.TokenKeysValueUtf8,
-                        evaluationPath: TokenKeysValueSchemaEvaluationPath);
+                        JsonPropertyNames.TokenKeysUtf8,
+                        evaluationPath: TokenKeysSchemaEvaluationPath);
 
-                Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271auth1revokerJson.TokenKeys.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext9);
+                Corvus.KrakendBenchmark.Current.JsonArray.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext9);
                 context.CommitChildContext(childContext9.IsMatch, ref childContext9);
 
                 if (!context.HasCollector && !context.IsMatch)
@@ -309,7 +309,7 @@ public readonly partial struct KrakendSchema
                     (static () => JsonPropertyNames.RevokeServerMaxWorkersUtf8, MatchRevokeServerMaxWorkers),
                     (static () => JsonPropertyNames.RevokeServerPingIntervalUtf8, MatchRevokeServerPingInterval),
                     (static () => JsonPropertyNames.RevokeServerPingUrlUtf8, MatchRevokeServerPingUrl),
-                    (static () => JsonPropertyNames.TokenKeysValueUtf8, MatchTokenKeysValue),
+                    (static () => JsonPropertyNames.TokenKeysUtf8, MatchTokenKeys),
                     (static () => JsonPropertyNames.TtlUtf8, MatchTtl),
                 ]);
             }
@@ -337,17 +337,17 @@ public readonly partial struct KrakendSchema
             /// <summary>
             /// Gets a provider for the schema location from which this type was generated.
             /// </summary>
-            public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("krakend-schema.json#/definitions/https:~1~1www.krakend.io~1schema~1v2.7~1auth~1revoker.json"u8, buffer, out written);
+            public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/definitions/https:~1~1www.krakend.io~1schema~1v2.7~1auth~1revoker.json"u8, buffer, out written);
 
             /// <summary>
             /// Gets the schema location from which this type was generated.
             /// </summary>
-            public const string SchemaLocation = "krakend-schema.json#/definitions/https:~1~1www.krakend.io~1schema~1v2.7~1auth~1revoker.json";
+            public const string SchemaLocation = "/definitions/https:~1~1www.krakend.io~1schema~1v2.7~1auth~1revoker.json";
 
             /// <summary>
             /// Gets the schema location from which this type was generated as a UTF-8 string.
             /// </summary>
-            public static ReadOnlySpan<byte> SchemaLocationUtf8 => "krakend-schema.json#/definitions/https:~1~1www.krakend.io~1schema~1v2.7~1auth~1revoker.json"u8;
+            public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/definitions/https:~1~1www.krakend.io~1schema~1v2.7~1auth~1revoker.json"u8;
 
             /// <summary>
             /// Applies the JSON schema semantics defined by this type to the instance determined by the given document and index.

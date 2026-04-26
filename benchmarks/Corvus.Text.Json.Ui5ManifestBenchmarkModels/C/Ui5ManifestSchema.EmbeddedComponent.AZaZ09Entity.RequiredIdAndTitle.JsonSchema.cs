@@ -151,14 +151,14 @@ public readonly partial struct Ui5ManifestSchema
                     {
                         context.AddLocalEvaluatedProperty(propertyCount);
                         JsonSchemaContext childContext5 =
-                            Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.EmbeddedComponent.AZaZ09Entity.RequiredIdAndTitle.RepresentsAMapToPopulateTheApiOfTheReuseComponent.JsonSchema.PushChildContextUnescaped(
+                            Corvus.Ui5ManifestBenchmark.Current.JsonObject.JsonSchema.PushChildContextUnescaped(
                                 parentDocument,
                                 parentDocumentIndex,
                                 ref context,
                                 JsonPropertyNames.SettingsUtf8,
                                 evaluationPath: SettingsSchemaEvaluationPath);
 
-                        Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.EmbeddedComponent.AZaZ09Entity.RequiredIdAndTitle.RepresentsAMapToPopulateTheApiOfTheReuseComponent.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext5);
+                        Corvus.Ui5ManifestBenchmark.Current.JsonObject.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext5);
                         context.CommitChildContext(childContext5.IsMatch, ref childContext5);
                     }
 
@@ -211,17 +211,17 @@ public readonly partial struct Ui5ManifestSchema
                     /// <summary>
                     /// Gets a provider for the schema location from which this type was generated.
                     /// </summary>
-                    public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("ui5-manifest-schema.json#/definitions/embeddedComponent/patternProperties/^[a-zA-Z0-9_.:-]+$/allOf/0"u8, buffer, out written);
+                    public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/definitions/embeddedComponent/patternProperties/^[a-zA-Z0-9_.:-]+$/allOf/0"u8, buffer, out written);
 
                     /// <summary>
                     /// Gets the schema location from which this type was generated.
                     /// </summary>
-                    public const string SchemaLocation = "ui5-manifest-schema.json#/definitions/embeddedComponent/patternProperties/^[a-zA-Z0-9_.:-]+$/allOf/0";
+                    public const string SchemaLocation = "/definitions/embeddedComponent/patternProperties/^[a-zA-Z0-9_.:-]+$/allOf/0";
 
                     /// <summary>
                     /// Gets the schema location from which this type was generated as a UTF-8 string.
                     /// </summary>
-                    public static ReadOnlySpan<byte> SchemaLocationUtf8 => "ui5-manifest-schema.json#/definitions/embeddedComponent/patternProperties/^[a-zA-Z0-9_.:-]+$/allOf/0"u8;
+                    public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/definitions/embeddedComponent/patternProperties/^[a-zA-Z0-9_.:-]+$/allOf/0"u8;
 
                     /// <summary>
                     /// Applies the JSON schema semantics defined by this type to the instance determined by the given document and index.

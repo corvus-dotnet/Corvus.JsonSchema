@@ -286,7 +286,7 @@ public readonly partial struct Refresh
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Action, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Action, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -322,7 +322,7 @@ public readonly partial struct Refresh
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Action, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Action, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -367,7 +367,7 @@ public readonly partial struct Refresh
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Type, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Type, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -412,7 +412,7 @@ public readonly partial struct Refresh
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.UserIds, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.UserIds, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -448,7 +448,7 @@ public readonly partial struct Refresh
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.UserIds, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.UserIds, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -655,6 +655,24 @@ public readonly partial struct Refresh
             }
         }
 
+        internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+        {
+            switch(_kind)
+            {
+                case Kind.Unknown:
+                    break;
+                case Kind.JsonElement:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                    break;
+                case Kind.Builder:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
+                    break;
+                default:
+                    Debug.Fail("Unexpected Kind");
+                    break;
+            }
+        }
+
         internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
         {
             switch(_kind)
@@ -756,6 +774,24 @@ public readonly partial struct Refresh
             }
         }
 
+        internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+        {
+            switch(_kind)
+            {
+                case Kind.Unknown:
+                    break;
+                case Kind.Source:
+                    _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                    break;
+                case Kind.Builder:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
+                    break;
+                default:
+                    Debug.Fail("Unexpected Kind");
+                    break;
+            }
+        }
+
         internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
         {
             switch(_kind)
@@ -838,9 +874,9 @@ public readonly partial struct Refresh
             in Corvus.Ui5ManifestBenchmark.Current.Refresh.MustBeRefresh.Source type = default,
             in Corvus.Ui5ManifestBenchmark.Current.Refresh.JsonStringArray.Source userIds = default)
         {
-            action.AddAsProperty(JsonPropertyNamesEscaped.Action, ref builder, escapeName: false);
-            type.AddAsProperty(JsonPropertyNamesEscaped.Type, ref builder, escapeName: false);
-            userIds.AddAsProperty(JsonPropertyNamesEscaped.UserIds, ref builder, escapeName: false);
+            action.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Action, ref builder);
+            type.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Type, ref builder);
+            userIds.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.UserIds, ref builder);
         }
 
         /// <summary>
@@ -867,9 +903,9 @@ public readonly partial struct Refresh
         where TContext : allows ref struct
         #endif
         {
-            action.AddAsProperty(JsonPropertyNamesEscaped.Action, ref builder, escapeName: false);
-            type.AddAsProperty(JsonPropertyNamesEscaped.Type, ref builder, escapeName: false);
-            userIds.AddAsProperty(JsonPropertyNamesEscaped.UserIds, ref builder, escapeName: false);
+            action.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Action, ref builder);
+            type.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Type, ref builder);
+            userIds.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.UserIds, ref builder);
         }
 
         /// <summary>

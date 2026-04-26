@@ -452,7 +452,7 @@ public readonly partial struct KrakendSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.Header, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Header, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -483,7 +483,7 @@ public readonly partial struct KrakendSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.Modifier, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Modifier, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -517,7 +517,7 @@ public readonly partial struct KrakendSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.Modifier, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Modifier, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -548,7 +548,7 @@ public readonly partial struct KrakendSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.Regex, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Regex, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -579,7 +579,7 @@ public readonly partial struct KrakendSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.ScopeValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ScopeValue, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -613,7 +613,7 @@ public readonly partial struct KrakendSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.ScopeValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ScopeValue, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -984,6 +984,24 @@ public readonly partial struct KrakendSchema
                     }
                 }
 
+                internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+                {
+                    switch(_kind)
+                    {
+                        case Kind.Unknown:
+                            break;
+                        case Kind.JsonElement:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                            break;
+                        case Kind.Builder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
+                            break;
+                        default:
+                            Debug.Fail("Unexpected Kind");
+                            break;
+                    }
+                }
+
                 internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
                 {
                     switch(_kind)
@@ -1085,6 +1103,24 @@ public readonly partial struct KrakendSchema
                     }
                 }
 
+                internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+                {
+                    switch(_kind)
+                    {
+                        case Kind.Unknown:
+                            break;
+                        case Kind.Source:
+                            _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                            break;
+                        case Kind.Builder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
+                            break;
+                        default:
+                            Debug.Fail("Unexpected Kind");
+                            break;
+                    }
+                }
+
                 internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
                 {
                     switch(_kind)
@@ -1168,10 +1204,10 @@ public readonly partial struct KrakendSchema
                     in Corvus.KrakendBenchmark.Current.JsonString.Source regex,
                     in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271modifier1martianJson.HeaderRegexFilter.Scope.Source scope)
                 {
-                    header.AddAsProperty(JsonPropertyNamesEscaped.Header, ref builder, escapeName: false);
-                    modifier.AddAsProperty(JsonPropertyNamesEscaped.Modifier, ref builder, escapeName: false);
-                    regex.AddAsProperty(JsonPropertyNamesEscaped.Regex, ref builder, escapeName: false);
-                    scope.AddAsProperty(JsonPropertyNamesEscaped.ScopeValue, ref builder, escapeName: false);
+                    header.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Header, ref builder);
+                    modifier.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Modifier, ref builder);
+                    regex.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Regex, ref builder);
+                    scope.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ScopeValue, ref builder);
                 }
 
                 /// <summary>
@@ -1200,10 +1236,10 @@ public readonly partial struct KrakendSchema
                 where TContext : allows ref struct
                 #endif
                 {
-                    header.AddAsProperty(JsonPropertyNamesEscaped.Header, ref builder, escapeName: false);
-                    modifier.AddAsProperty(JsonPropertyNamesEscaped.Modifier, ref builder, escapeName: false);
-                    regex.AddAsProperty(JsonPropertyNamesEscaped.Regex, ref builder, escapeName: false);
-                    scope.AddAsProperty(JsonPropertyNamesEscaped.ScopeValue, ref builder, escapeName: false);
+                    header.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Header, ref builder);
+                    modifier.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Modifier, ref builder);
+                    regex.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Regex, ref builder);
+                    scope.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ScopeValue, ref builder);
                 }
 
                 /// <summary>

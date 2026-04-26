@@ -62,14 +62,14 @@ public readonly partial struct OpenapiSchema
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext1 =
-                    Corvus.OpenapiBenchmark.Current.JsonUriNotAsserted.JsonSchema.PushChildContextUnescaped(
+                    Corvus.OpenapiBenchmark.Current.JsonUri.JsonSchema.PushChildContextUnescaped(
                         parentDocument,
                         parentDocumentIndex,
                         ref context,
                         JsonPropertyNames.ExternalValueUtf8,
                         evaluationPath: ExternalValueSchemaEvaluationPath);
 
-                Corvus.OpenapiBenchmark.Current.JsonUriNotAsserted.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext1);
+                Corvus.OpenapiBenchmark.Current.JsonUri.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext1);
                 context.CommitChildContext(childContext1.IsMatch, ref childContext1);
             }
 
@@ -129,17 +129,17 @@ public readonly partial struct OpenapiSchema
             /// <summary>
             /// Gets a provider for the schema location from which this type was generated.
             /// </summary>
-            public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("https://spec.openapis.org/oas/3.1/schema/2022-10-07#/$defs/example"u8, buffer, out written);
+            public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/$defs/example"u8, buffer, out written);
 
             /// <summary>
             /// Gets the schema location from which this type was generated.
             /// </summary>
-            public const string SchemaLocation = "https://spec.openapis.org/oas/3.1/schema/2022-10-07#/$defs/example";
+            public const string SchemaLocation = "/$defs/example";
 
             /// <summary>
             /// Gets the schema location from which this type was generated as a UTF-8 string.
             /// </summary>
-            public static ReadOnlySpan<byte> SchemaLocationUtf8 => "https://spec.openapis.org/oas/3.1/schema/2022-10-07#/$defs/example"u8;
+            public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/$defs/example"u8;
             private static readonly JsonSchemaPathProvider Ref0SchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/$ref"u8, buffer, out written);
             private static readonly JsonSchemaPathProvider NotSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/not"u8, buffer, out written);
 

@@ -812,5 +812,42 @@ public readonly partial struct Ui5ManifestSchema
             /// </summary>
             public static ReadOnlySpan<byte> OdataVersion => "odataVersion"u8;
         }
+
+        /// <summary>
+        /// Provides pre-baked property name blobs for fast builder property storage.
+        /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
+        /// </summary>
+        private static class JsonPropertyNamesPrebaked
+        {
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Annotations"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Annotations => [0xD5, 0x00, 0x00, 0x00, 0x22, 0x61, 0x6E, 0x6E, 0x6F, 0x74, 0x61, 0x74, 0x69, 0x6F, 0x6E, 0x73, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="IgnoreAnnotationsFromMetadata"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> IgnoreAnnotationsFromMetadata => [0xF5, 0x01, 0x00, 0x00, 0x22, 0x69, 0x67, 0x6E, 0x6F, 0x72, 0x65, 0x41, 0x6E, 0x6E, 0x6F, 0x74, 0x61, 0x74, 0x69, 0x6F, 0x6E, 0x73, 0x46, 0x72, 0x6F, 0x6D, 0x4D, 0x65, 0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="LocalUri"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> LocalUri => [0xA5, 0x00, 0x00, 0x00, 0x22, 0x6C, 0x6F, 0x63, 0x61, 0x6C, 0x55, 0x72, 0x69, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="MaxAge"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> MaxAge => [0x85, 0x00, 0x00, 0x00, 0x22, 0x6D, 0x61, 0x78, 0x41, 0x67, 0x65, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Objects"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Objects => [0x95, 0x00, 0x00, 0x00, 0x22, 0x6F, 0x62, 0x6A, 0x65, 0x63, 0x74, 0x73, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="OdataVersion"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> OdataVersion => [0xE5, 0x00, 0x00, 0x00, 0x22, 0x6F, 0x64, 0x61, 0x74, 0x61, 0x56, 0x65, 0x72, 0x73, 0x69, 0x6F, 0x6E, 0x22];
+        }
     }
 }

@@ -126,11 +126,11 @@ public readonly partial struct KrakendSchema
             /// Overrides the metrics exporters used in this endpoint
             /// </para>
             /// </remarks>
-            public Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271telemetry1opentelemetryEndpointJson.ExportersOverride.MetricsExporters MetricExporters
+            public Corvus.KrakendBenchmark.Current.JsonArray MetricExporters
             {
                 get
                 {
-                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.MetricExportersUtf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271telemetry1opentelemetryEndpointJson.ExportersOverride.MetricsExporters value))
+                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.MetricExportersUtf8, out Corvus.KrakendBenchmark.Current.JsonArray value))
                     {
                         return value;
                     }
@@ -173,11 +173,11 @@ public readonly partial struct KrakendSchema
             /// Overrides the trace exporters used in this endpoint
             /// </para>
             /// </remarks>
-            public Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271telemetry1opentelemetryEndpointJson.ExportersOverride.TraceExporters TraceExportersValue
+            public Corvus.KrakendBenchmark.Current.JsonArray TraceExporters
             {
                 get
                 {
-                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TraceExportersValueUtf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271telemetry1opentelemetryEndpointJson.ExportersOverride.TraceExporters value))
+                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TraceExportersUtf8, out Corvus.KrakendBenchmark.Current.JsonArray value))
                     {
                         return value;
                     }
@@ -643,9 +643,9 @@ public readonly partial struct KrakendSchema
                 public const string MetricReportingPeriod = "metric_reporting_period";
 
                 /// <summary>
-                /// Gets the JSON property name for <see cref="TraceExportersValue"/>.
+                /// Gets the JSON property name for <see cref="TraceExporters"/>.
                 /// </summary>
-                public const string TraceExportersValue = "trace_exporters";
+                public const string TraceExporters = "trace_exporters";
 
                 /// <summary>
                 /// Gets the JSON property name for <see cref="TraceSampleRateValue"/>.
@@ -663,9 +663,9 @@ public readonly partial struct KrakendSchema
                 public static ReadOnlySpan<byte> MetricReportingPeriodUtf8 => "metric_reporting_period"u8;
 
                 /// <summary>
-                /// Gets the JSON property name for <see cref="TraceExportersValue"/>.
+                /// Gets the JSON property name for <see cref="TraceExporters"/>.
                 /// </summary>
-                public static ReadOnlySpan<byte> TraceExportersValueUtf8 => "trace_exporters"u8;
+                public static ReadOnlySpan<byte> TraceExportersUtf8 => "trace_exporters"u8;
 
                 /// <summary>
                 /// Gets the JSON property name for <see cref="TraceSampleRateValue"/>.
@@ -689,14 +689,41 @@ public readonly partial struct KrakendSchema
                 public static ReadOnlySpan<byte> MetricReportingPeriod => "metric_reporting_period"u8;
 
                 /// <summary>
-                /// Gets the escaped UTF-8 JSON property name for <see cref="TraceExportersValue"/>.
+                /// Gets the escaped UTF-8 JSON property name for <see cref="TraceExporters"/>.
                 /// </summary>
-                public static ReadOnlySpan<byte> TraceExportersValue => "trace_exporters"u8;
+                public static ReadOnlySpan<byte> TraceExporters => "trace_exporters"u8;
 
                 /// <summary>
                 /// Gets the escaped UTF-8 JSON property name for <see cref="TraceSampleRateValue"/>.
                 /// </summary>
                 public static ReadOnlySpan<byte> TraceSampleRateValue => "trace_sample_rate"u8;
+            }
+
+            /// <summary>
+            /// Provides pre-baked property name blobs for fast builder property storage.
+            /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
+            /// </summary>
+            private static class JsonPropertyNamesPrebaked
+            {
+                /// <summary>
+                /// Gets the pre-baked property name blob for <see cref="MetricExporters"/>.
+                /// </summary>
+                public static ReadOnlySpan<byte> MetricExporters => [0x25, 0x01, 0x00, 0x00, 0x22, 0x6D, 0x65, 0x74, 0x72, 0x69, 0x63, 0x5F, 0x65, 0x78, 0x70, 0x6F, 0x72, 0x74, 0x65, 0x72, 0x73, 0x22];
+
+                /// <summary>
+                /// Gets the pre-baked property name blob for <see cref="MetricReportingPeriod"/>.
+                /// </summary>
+                public static ReadOnlySpan<byte> MetricReportingPeriod => [0x95, 0x01, 0x00, 0x00, 0x22, 0x6D, 0x65, 0x74, 0x72, 0x69, 0x63, 0x5F, 0x72, 0x65, 0x70, 0x6F, 0x72, 0x74, 0x69, 0x6E, 0x67, 0x5F, 0x70, 0x65, 0x72, 0x69, 0x6F, 0x64, 0x22];
+
+                /// <summary>
+                /// Gets the pre-baked property name blob for <see cref="TraceExporters"/>.
+                /// </summary>
+                public static ReadOnlySpan<byte> TraceExporters => [0x15, 0x01, 0x00, 0x00, 0x22, 0x74, 0x72, 0x61, 0x63, 0x65, 0x5F, 0x65, 0x78, 0x70, 0x6F, 0x72, 0x74, 0x65, 0x72, 0x73, 0x22];
+
+                /// <summary>
+                /// Gets the pre-baked property name blob for <see cref="TraceSampleRateValue"/>.
+                /// </summary>
+                public static ReadOnlySpan<byte> TraceSampleRateValue => [0x35, 0x01, 0x00, 0x00, 0x22, 0x74, 0x72, 0x61, 0x63, 0x65, 0x5F, 0x73, 0x61, 0x6D, 0x70, 0x6C, 0x65, 0x5F, 0x72, 0x61, 0x74, 0x65, 0x22];
             }
         }
     }

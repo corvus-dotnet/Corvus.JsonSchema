@@ -180,17 +180,17 @@ public readonly partial struct Ui5ManifestSchema
             /// <summary>
             /// Gets a provider for the schema location from which this type was generated.
             /// </summary>
-            public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("ui5-manifest-schema.json#/properties/sap.platform.hcp"u8, buffer, out written);
+            public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/properties/sap.platform.hcp"u8, buffer, out written);
 
             /// <summary>
             /// Gets the schema location from which this type was generated.
             /// </summary>
-            public const string SchemaLocation = "ui5-manifest-schema.json#/properties/sap.platform.hcp";
+            public const string SchemaLocation = "/properties/sap.platform.hcp";
 
             /// <summary>
             /// Gets the schema location from which this type was generated as a UTF-8 string.
             /// </summary>
-            public static ReadOnlySpan<byte> SchemaLocationUtf8 => "ui5-manifest-schema.json#/properties/sap.platform.hcp"u8;
+            public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/properties/sap.platform.hcp"u8;
 
             /// <summary>
             /// Applies the JSON schema semantics defined by this type to the instance determined by the given document and index.

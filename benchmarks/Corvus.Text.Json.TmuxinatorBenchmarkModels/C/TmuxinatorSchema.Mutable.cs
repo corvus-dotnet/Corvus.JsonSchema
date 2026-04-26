@@ -206,11 +206,11 @@ public readonly partial struct TmuxinatorSchema
         /// <summary>
         /// Gets the (optional) <c>defaults</c> property.
         /// </summary>
-        public Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.DefaultsEntity.Mutable Defaults
+        public Corvus.TmuxinatorBenchmark.Current.JsonObject.Mutable Defaults
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.DefaultsUtf8, out Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.DefaultsEntity.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.DefaultsUtf8, out Corvus.TmuxinatorBenchmark.Current.JsonObject.Mutable value))
                 {
                     return value;
                 }
@@ -699,7 +699,7 @@ public readonly partial struct TmuxinatorSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Attach, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Attach, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -744,7 +744,7 @@ public readonly partial struct TmuxinatorSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.CliArgs, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CliArgs, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -768,7 +768,7 @@ public readonly partial struct TmuxinatorSchema
         /// Set the <c>defaults</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetDefaults(in Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.DefaultsEntity.Source value)
+        public void SetDefaults(in Corvus.TmuxinatorBenchmark.Current.JsonObject.Source value)
         {
             CheckValidInstance();
 
@@ -789,7 +789,7 @@ public readonly partial struct TmuxinatorSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Defaults, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Defaults, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -801,7 +801,7 @@ public readonly partial struct TmuxinatorSchema
         /// Set the <c>defaults</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetDefaults<TContext>(in Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.DefaultsEntity.Source<TContext> value)
+        public void SetDefaults<TContext>(in Corvus.TmuxinatorBenchmark.Current.JsonObject.Source<TContext> value)
 #if NET9_0_OR_GREATER
             where TContext : allows ref struct
 #endif
@@ -825,7 +825,7 @@ public readonly partial struct TmuxinatorSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Defaults, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Defaults, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -870,7 +870,7 @@ public readonly partial struct TmuxinatorSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Name, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Name, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -915,7 +915,7 @@ public readonly partial struct TmuxinatorSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.OnProjectExit, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.OnProjectExit, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -960,7 +960,7 @@ public readonly partial struct TmuxinatorSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.OnProjectFirstStart, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.OnProjectFirstStart, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1005,7 +1005,7 @@ public readonly partial struct TmuxinatorSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.OnProjectRestart, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.OnProjectRestart, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1050,7 +1050,7 @@ public readonly partial struct TmuxinatorSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.OnProjectStart, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.OnProjectStart, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1095,7 +1095,7 @@ public readonly partial struct TmuxinatorSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.OnProjectStop, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.OnProjectStop, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1140,7 +1140,7 @@ public readonly partial struct TmuxinatorSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Post, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Post, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1185,7 +1185,7 @@ public readonly partial struct TmuxinatorSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Pre, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Pre, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1230,7 +1230,7 @@ public readonly partial struct TmuxinatorSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.PreWindow, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PreWindow, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1275,7 +1275,7 @@ public readonly partial struct TmuxinatorSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.ProjectName, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ProjectName, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1320,7 +1320,7 @@ public readonly partial struct TmuxinatorSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.ProjectRoot, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ProjectRoot, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1365,7 +1365,7 @@ public readonly partial struct TmuxinatorSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Rbenv, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Rbenv, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1410,7 +1410,7 @@ public readonly partial struct TmuxinatorSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Root, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Root, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1455,7 +1455,7 @@ public readonly partial struct TmuxinatorSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.SocketName, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SocketName, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1500,7 +1500,7 @@ public readonly partial struct TmuxinatorSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.StartupPane, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.StartupPane, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1545,7 +1545,7 @@ public readonly partial struct TmuxinatorSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.StartupWindow, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.StartupWindow, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1590,7 +1590,7 @@ public readonly partial struct TmuxinatorSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Tabs, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Tabs, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1626,7 +1626,7 @@ public readonly partial struct TmuxinatorSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Tabs, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Tabs, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1671,7 +1671,7 @@ public readonly partial struct TmuxinatorSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.TmuxCommand, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TmuxCommand, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1716,7 +1716,7 @@ public readonly partial struct TmuxinatorSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.TmuxDetached, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TmuxDetached, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1761,7 +1761,7 @@ public readonly partial struct TmuxinatorSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.TmuxOptions, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TmuxOptions, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1806,7 +1806,7 @@ public readonly partial struct TmuxinatorSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Windows, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Windows, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1842,7 +1842,7 @@ public readonly partial struct TmuxinatorSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Windows, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Windows, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -2049,6 +2049,24 @@ public readonly partial struct TmuxinatorSchema
             }
         }
 
+        internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+        {
+            switch(_kind)
+            {
+                case Kind.Unknown:
+                    break;
+                case Kind.JsonElement:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                    break;
+                case Kind.Builder:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
+                    break;
+                default:
+                    Debug.Fail("Unexpected Kind");
+                    break;
+            }
+        }
+
         internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
         {
             switch(_kind)
@@ -2150,6 +2168,24 @@ public readonly partial struct TmuxinatorSchema
             }
         }
 
+        internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+        {
+            switch(_kind)
+            {
+                case Kind.Unknown:
+                    break;
+                case Kind.Source:
+                    _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                    break;
+                case Kind.Builder:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
+                    break;
+                default:
+                    Debug.Fail("Unexpected Kind");
+                    break;
+            }
+        }
+
         internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
         {
             switch(_kind)
@@ -2230,7 +2266,7 @@ public readonly partial struct TmuxinatorSchema
             ref ComplexValueBuilder builder,
             in Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.AttachEntity.Source attach = default,
             in Corvus.TmuxinatorBenchmark.Current.JsonString.Source cliArgs = default,
-            in Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.DefaultsEntity.Source defaults = default,
+            in Corvus.TmuxinatorBenchmark.Current.JsonObject.Source defaults = default,
             in Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.NameEntity.Source name = default,
             in Corvus.TmuxinatorBenchmark.Current.JsonString.Source onProjectExit = default,
             in Corvus.TmuxinatorBenchmark.Current.JsonString.Source onProjectFirstStart = default,
@@ -2253,30 +2289,30 @@ public readonly partial struct TmuxinatorSchema
             in Corvus.TmuxinatorBenchmark.Current.JsonString.Source tmuxOptions = default,
             in Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.WindowsEntityArray.Source windows = default)
         {
-            attach.AddAsProperty(JsonPropertyNamesEscaped.Attach, ref builder, escapeName: false);
-            cliArgs.AddAsProperty(JsonPropertyNamesEscaped.CliArgs, ref builder, escapeName: false);
-            defaults.AddAsProperty(JsonPropertyNamesEscaped.Defaults, ref builder, escapeName: false);
-            name.AddAsProperty(JsonPropertyNamesEscaped.Name, ref builder, escapeName: false);
-            onProjectExit.AddAsProperty(JsonPropertyNamesEscaped.OnProjectExit, ref builder, escapeName: false);
-            onProjectFirstStart.AddAsProperty(JsonPropertyNamesEscaped.OnProjectFirstStart, ref builder, escapeName: false);
-            onProjectRestart.AddAsProperty(JsonPropertyNamesEscaped.OnProjectRestart, ref builder, escapeName: false);
-            onProjectStart.AddAsProperty(JsonPropertyNamesEscaped.OnProjectStart, ref builder, escapeName: false);
-            onProjectStop.AddAsProperty(JsonPropertyNamesEscaped.OnProjectStop, ref builder, escapeName: false);
-            post.AddAsProperty(JsonPropertyNamesEscaped.Post, ref builder, escapeName: false);
-            pre.AddAsProperty(JsonPropertyNamesEscaped.Pre, ref builder, escapeName: false);
-            preWindow.AddAsProperty(JsonPropertyNamesEscaped.PreWindow, ref builder, escapeName: false);
-            projectName.AddAsProperty(JsonPropertyNamesEscaped.ProjectName, ref builder, escapeName: false);
-            projectRoot.AddAsProperty(JsonPropertyNamesEscaped.ProjectRoot, ref builder, escapeName: false);
-            rbenv.AddAsProperty(JsonPropertyNamesEscaped.Rbenv, ref builder, escapeName: false);
-            root.AddAsProperty(JsonPropertyNamesEscaped.Root, ref builder, escapeName: false);
-            socketName.AddAsProperty(JsonPropertyNamesEscaped.SocketName, ref builder, escapeName: false);
-            startupPane.AddAsProperty(JsonPropertyNamesEscaped.StartupPane, ref builder, escapeName: false);
-            startupWindow.AddAsProperty(JsonPropertyNamesEscaped.StartupWindow, ref builder, escapeName: false);
-            tabs.AddAsProperty(JsonPropertyNamesEscaped.Tabs, ref builder, escapeName: false);
-            tmuxCommand.AddAsProperty(JsonPropertyNamesEscaped.TmuxCommand, ref builder, escapeName: false);
-            tmuxDetached.AddAsProperty(JsonPropertyNamesEscaped.TmuxDetached, ref builder, escapeName: false);
-            tmuxOptions.AddAsProperty(JsonPropertyNamesEscaped.TmuxOptions, ref builder, escapeName: false);
-            windows.AddAsProperty(JsonPropertyNamesEscaped.Windows, ref builder, escapeName: false);
+            attach.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Attach, ref builder);
+            cliArgs.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CliArgs, ref builder);
+            defaults.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Defaults, ref builder);
+            name.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Name, ref builder);
+            onProjectExit.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.OnProjectExit, ref builder);
+            onProjectFirstStart.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.OnProjectFirstStart, ref builder);
+            onProjectRestart.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.OnProjectRestart, ref builder);
+            onProjectStart.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.OnProjectStart, ref builder);
+            onProjectStop.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.OnProjectStop, ref builder);
+            post.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Post, ref builder);
+            pre.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Pre, ref builder);
+            preWindow.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PreWindow, ref builder);
+            projectName.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ProjectName, ref builder);
+            projectRoot.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ProjectRoot, ref builder);
+            rbenv.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Rbenv, ref builder);
+            root.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Root, ref builder);
+            socketName.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SocketName, ref builder);
+            startupPane.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.StartupPane, ref builder);
+            startupWindow.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.StartupWindow, ref builder);
+            tabs.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Tabs, ref builder);
+            tmuxCommand.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TmuxCommand, ref builder);
+            tmuxDetached.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TmuxDetached, ref builder);
+            tmuxOptions.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TmuxOptions, ref builder);
+            windows.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Windows, ref builder);
         }
 
         /// <summary>
@@ -2285,7 +2321,7 @@ public readonly partial struct TmuxinatorSchema
         public void Create(
             in Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.AttachEntity.Source attach = default,
             in Corvus.TmuxinatorBenchmark.Current.JsonString.Source cliArgs = default,
-            in Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.DefaultsEntity.Source defaults = default,
+            in Corvus.TmuxinatorBenchmark.Current.JsonObject.Source defaults = default,
             in Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.NameEntity.Source name = default,
             in Corvus.TmuxinatorBenchmark.Current.JsonString.Source onProjectExit = default,
             in Corvus.TmuxinatorBenchmark.Current.JsonString.Source onProjectFirstStart = default,
@@ -2319,7 +2355,7 @@ public readonly partial struct TmuxinatorSchema
             ref ComplexValueBuilder builder,
             in Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.AttachEntity.Source attach = default,
             in Corvus.TmuxinatorBenchmark.Current.JsonString.Source cliArgs = default,
-            in Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.DefaultsEntity.Source<TContext> defaults = default,
+            in Corvus.TmuxinatorBenchmark.Current.JsonObject.Source<TContext> defaults = default,
             in Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.NameEntity.Source name = default,
             in Corvus.TmuxinatorBenchmark.Current.JsonString.Source onProjectExit = default,
             in Corvus.TmuxinatorBenchmark.Current.JsonString.Source onProjectFirstStart = default,
@@ -2345,30 +2381,30 @@ public readonly partial struct TmuxinatorSchema
         where TContext : allows ref struct
         #endif
         {
-            attach.AddAsProperty(JsonPropertyNamesEscaped.Attach, ref builder, escapeName: false);
-            cliArgs.AddAsProperty(JsonPropertyNamesEscaped.CliArgs, ref builder, escapeName: false);
-            defaults.AddAsProperty(JsonPropertyNamesEscaped.Defaults, ref builder, escapeName: false);
-            name.AddAsProperty(JsonPropertyNamesEscaped.Name, ref builder, escapeName: false);
-            onProjectExit.AddAsProperty(JsonPropertyNamesEscaped.OnProjectExit, ref builder, escapeName: false);
-            onProjectFirstStart.AddAsProperty(JsonPropertyNamesEscaped.OnProjectFirstStart, ref builder, escapeName: false);
-            onProjectRestart.AddAsProperty(JsonPropertyNamesEscaped.OnProjectRestart, ref builder, escapeName: false);
-            onProjectStart.AddAsProperty(JsonPropertyNamesEscaped.OnProjectStart, ref builder, escapeName: false);
-            onProjectStop.AddAsProperty(JsonPropertyNamesEscaped.OnProjectStop, ref builder, escapeName: false);
-            post.AddAsProperty(JsonPropertyNamesEscaped.Post, ref builder, escapeName: false);
-            pre.AddAsProperty(JsonPropertyNamesEscaped.Pre, ref builder, escapeName: false);
-            preWindow.AddAsProperty(JsonPropertyNamesEscaped.PreWindow, ref builder, escapeName: false);
-            projectName.AddAsProperty(JsonPropertyNamesEscaped.ProjectName, ref builder, escapeName: false);
-            projectRoot.AddAsProperty(JsonPropertyNamesEscaped.ProjectRoot, ref builder, escapeName: false);
-            rbenv.AddAsProperty(JsonPropertyNamesEscaped.Rbenv, ref builder, escapeName: false);
-            root.AddAsProperty(JsonPropertyNamesEscaped.Root, ref builder, escapeName: false);
-            socketName.AddAsProperty(JsonPropertyNamesEscaped.SocketName, ref builder, escapeName: false);
-            startupPane.AddAsProperty(JsonPropertyNamesEscaped.StartupPane, ref builder, escapeName: false);
-            startupWindow.AddAsProperty(JsonPropertyNamesEscaped.StartupWindow, ref builder, escapeName: false);
-            tabs.AddAsProperty(JsonPropertyNamesEscaped.Tabs, ref builder, escapeName: false);
-            tmuxCommand.AddAsProperty(JsonPropertyNamesEscaped.TmuxCommand, ref builder, escapeName: false);
-            tmuxDetached.AddAsProperty(JsonPropertyNamesEscaped.TmuxDetached, ref builder, escapeName: false);
-            tmuxOptions.AddAsProperty(JsonPropertyNamesEscaped.TmuxOptions, ref builder, escapeName: false);
-            windows.AddAsProperty(JsonPropertyNamesEscaped.Windows, ref builder, escapeName: false);
+            attach.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Attach, ref builder);
+            cliArgs.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CliArgs, ref builder);
+            defaults.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Defaults, ref builder);
+            name.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Name, ref builder);
+            onProjectExit.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.OnProjectExit, ref builder);
+            onProjectFirstStart.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.OnProjectFirstStart, ref builder);
+            onProjectRestart.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.OnProjectRestart, ref builder);
+            onProjectStart.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.OnProjectStart, ref builder);
+            onProjectStop.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.OnProjectStop, ref builder);
+            post.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Post, ref builder);
+            pre.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Pre, ref builder);
+            preWindow.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PreWindow, ref builder);
+            projectName.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ProjectName, ref builder);
+            projectRoot.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ProjectRoot, ref builder);
+            rbenv.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Rbenv, ref builder);
+            root.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Root, ref builder);
+            socketName.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SocketName, ref builder);
+            startupPane.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.StartupPane, ref builder);
+            startupWindow.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.StartupWindow, ref builder);
+            tabs.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Tabs, ref builder);
+            tmuxCommand.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TmuxCommand, ref builder);
+            tmuxDetached.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TmuxDetached, ref builder);
+            tmuxOptions.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TmuxOptions, ref builder);
+            windows.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Windows, ref builder);
         }
 
         /// <summary>
@@ -2378,7 +2414,7 @@ public readonly partial struct TmuxinatorSchema
             in TContext context,
             in Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.AttachEntity.Source attach = default,
             in Corvus.TmuxinatorBenchmark.Current.JsonString.Source cliArgs = default,
-            in Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.DefaultsEntity.Source<TContext> defaults = default,
+            in Corvus.TmuxinatorBenchmark.Current.JsonObject.Source<TContext> defaults = default,
             in Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.NameEntity.Source name = default,
             in Corvus.TmuxinatorBenchmark.Current.JsonString.Source onProjectExit = default,
             in Corvus.TmuxinatorBenchmark.Current.JsonString.Source onProjectFirstStart = default,
@@ -2556,7 +2592,7 @@ public readonly partial struct TmuxinatorSchema
     /// <param name="windows">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.AttachEntity.Source attach = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source cliArgs = default, in Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.DefaultsEntity.Source defaults = default, in Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.NameEntity.Source name = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source onProjectExit = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source onProjectFirstStart = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source onProjectRestart = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source onProjectStart = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source onProjectStop = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source post = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source pre = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source preWindow = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source projectName = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source projectRoot = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source rbenv = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source root = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source socketName = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source startupPane = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source startupWindow = default, in Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.TabsEntityArray.Source tabs = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source tmuxCommand = default, in Corvus.TmuxinatorBenchmark.Current.JsonBoolean.Source tmuxDetached = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source tmuxOptions = default, in Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.WindowsEntityArray.Source windows = default, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.AttachEntity.Source attach = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source cliArgs = default, in Corvus.TmuxinatorBenchmark.Current.JsonObject.Source defaults = default, in Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.NameEntity.Source name = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source onProjectExit = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source onProjectFirstStart = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source onProjectRestart = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source onProjectStart = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source onProjectStop = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source post = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source pre = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source preWindow = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source projectName = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source projectRoot = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source rbenv = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source root = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source socketName = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source startupPane = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source startupWindow = default, in Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.TabsEntityArray.Source tabs = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source tmuxCommand = default, in Corvus.TmuxinatorBenchmark.Current.JsonBoolean.Source tmuxDetached = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source tmuxOptions = default, in Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.WindowsEntityArray.Source windows = default, int initialCapacity = 30)
     {
         JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
@@ -2601,7 +2637,7 @@ public readonly partial struct TmuxinatorSchema
     /// <param name="windows">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.AttachEntity.Source attach = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source cliArgs = default, in Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.DefaultsEntity.Source<TContext> defaults = default, in Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.NameEntity.Source name = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source onProjectExit = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source onProjectFirstStart = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source onProjectRestart = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source onProjectStart = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source onProjectStop = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source post = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source pre = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source preWindow = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source projectName = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source projectRoot = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source rbenv = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source root = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source socketName = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source startupPane = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source startupWindow = default, in Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.TabsEntityArray.Source<TContext> tabs = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source tmuxCommand = default, in Corvus.TmuxinatorBenchmark.Current.JsonBoolean.Source tmuxDetached = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source tmuxOptions = default, in Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.WindowsEntityArray.Source<TContext> windows = default, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.AttachEntity.Source attach = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source cliArgs = default, in Corvus.TmuxinatorBenchmark.Current.JsonObject.Source<TContext> defaults = default, in Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.NameEntity.Source name = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source onProjectExit = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source onProjectFirstStart = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source onProjectRestart = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source onProjectStart = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source onProjectStop = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source post = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source pre = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source preWindow = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source projectName = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source projectRoot = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source rbenv = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source root = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source socketName = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source startupPane = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source startupWindow = default, in Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.TabsEntityArray.Source<TContext> tabs = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source tmuxCommand = default, in Corvus.TmuxinatorBenchmark.Current.JsonBoolean.Source tmuxDetached = default, in Corvus.TmuxinatorBenchmark.Current.JsonString.Source tmuxOptions = default, in Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.WindowsEntityArray.Source<TContext> windows = default, int initialCapacity = 30)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif

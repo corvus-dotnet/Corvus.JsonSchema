@@ -933,6 +933,73 @@ public readonly partial struct Ui5ManifestSchema
                 /// </summary>
                 public static ReadOnlySpan<byte> Title => "title"u8;
             }
+
+            /// <summary>
+            /// Provides pre-baked property name blobs for fast builder property storage.
+            /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
+            /// </summary>
+            private static class JsonPropertyNamesPrebaked
+            {
+                /// <summary>
+                /// Gets the pre-baked property name blob for <see cref="Action"/>.
+                /// </summary>
+                public static ReadOnlySpan<byte> Action => [0x85, 0x00, 0x00, 0x00, 0x22, 0x61, 0x63, 0x74, 0x69, 0x6F, 0x6E, 0x22];
+
+                /// <summary>
+                /// Gets the pre-baked property name blob for <see cref="DeviceTypes"/>.
+                /// </summary>
+                public static ReadOnlySpan<byte> DeviceTypes => [0xD5, 0x00, 0x00, 0x00, 0x22, 0x64, 0x65, 0x76, 0x69, 0x63, 0x65, 0x54, 0x79, 0x70, 0x65, 0x73, 0x22];
+
+                /// <summary>
+                /// Gets the pre-baked property name blob for <see cref="DisplayMode"/>.
+                /// </summary>
+                public static ReadOnlySpan<byte> DisplayMode => [0xD5, 0x00, 0x00, 0x00, 0x22, 0x64, 0x69, 0x73, 0x70, 0x6C, 0x61, 0x79, 0x4D, 0x6F, 0x64, 0x65, 0x22];
+
+                /// <summary>
+                /// Gets the pre-baked property name blob for <see cref="HideLauncher"/>.
+                /// </summary>
+                public static ReadOnlySpan<byte> HideLauncher => [0xE5, 0x00, 0x00, 0x00, 0x22, 0x68, 0x69, 0x64, 0x65, 0x4C, 0x61, 0x75, 0x6E, 0x63, 0x68, 0x65, 0x72, 0x22];
+
+                /// <summary>
+                /// Gets the pre-baked property name blob for <see cref="Icon"/>.
+                /// </summary>
+                public static ReadOnlySpan<byte> Icon => [0x65, 0x00, 0x00, 0x00, 0x22, 0x69, 0x63, 0x6F, 0x6E, 0x22];
+
+                /// <summary>
+                /// Gets the pre-baked property name blob for <see cref="IndicatorDataSource"/>.
+                /// </summary>
+                public static ReadOnlySpan<byte> IndicatorDataSource => [0x55, 0x01, 0x00, 0x00, 0x22, 0x69, 0x6E, 0x64, 0x69, 0x63, 0x61, 0x74, 0x6F, 0x72, 0x44, 0x61, 0x74, 0x61, 0x53, 0x6F, 0x75, 0x72, 0x63, 0x65, 0x22];
+
+                /// <summary>
+                /// Gets the pre-baked property name blob for <see cref="Info"/>.
+                /// </summary>
+                public static ReadOnlySpan<byte> Info => [0x65, 0x00, 0x00, 0x00, 0x22, 0x69, 0x6E, 0x66, 0x6F, 0x22];
+
+                /// <summary>
+                /// Gets the pre-baked property name blob for <see cref="SemanticObject"/>.
+                /// </summary>
+                public static ReadOnlySpan<byte> SemanticObject => [0x05, 0x01, 0x00, 0x00, 0x22, 0x73, 0x65, 0x6D, 0x61, 0x6E, 0x74, 0x69, 0x63, 0x4F, 0x62, 0x6A, 0x65, 0x63, 0x74, 0x22];
+
+                /// <summary>
+                /// Gets the pre-baked property name blob for <see cref="ShortTitle"/>.
+                /// </summary>
+                public static ReadOnlySpan<byte> ShortTitle => [0xC5, 0x00, 0x00, 0x00, 0x22, 0x73, 0x68, 0x6F, 0x72, 0x74, 0x54, 0x69, 0x74, 0x6C, 0x65, 0x22];
+
+                /// <summary>
+                /// Gets the pre-baked property name blob for <see cref="Signature"/>.
+                /// </summary>
+                public static ReadOnlySpan<byte> Signature => [0xB5, 0x00, 0x00, 0x00, 0x22, 0x73, 0x69, 0x67, 0x6E, 0x61, 0x74, 0x75, 0x72, 0x65, 0x22];
+
+                /// <summary>
+                /// Gets the pre-baked property name blob for <see cref="SubTitle"/>.
+                /// </summary>
+                public static ReadOnlySpan<byte> SubTitle => [0xA5, 0x00, 0x00, 0x00, 0x22, 0x73, 0x75, 0x62, 0x54, 0x69, 0x74, 0x6C, 0x65, 0x22];
+
+                /// <summary>
+                /// Gets the pre-baked property name blob for <see cref="Title"/>.
+                /// </summary>
+                public static ReadOnlySpan<byte> Title => [0x75, 0x00, 0x00, 0x00, 0x22, 0x74, 0x69, 0x74, 0x6C, 0x65, 0x22];
+            }
         }
     }
 }

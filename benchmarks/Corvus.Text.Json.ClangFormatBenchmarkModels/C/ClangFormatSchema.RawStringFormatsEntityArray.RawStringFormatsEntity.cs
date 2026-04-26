@@ -776,6 +776,38 @@ public readonly partial struct ClangFormatSchema
                 /// </summary>
                 public static ReadOnlySpan<byte> Language => "Language"u8;
             }
+
+            /// <summary>
+            /// Provides pre-baked property name blobs for fast builder property storage.
+            /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
+            /// </summary>
+            private static class JsonPropertyNamesPrebaked
+            {
+                /// <summary>
+                /// Gets the pre-baked property name blob for <see cref="BasedOnStyle"/>.
+                /// </summary>
+                public static ReadOnlySpan<byte> BasedOnStyle => [0xE5, 0x00, 0x00, 0x00, 0x22, 0x42, 0x61, 0x73, 0x65, 0x64, 0x4F, 0x6E, 0x53, 0x74, 0x79, 0x6C, 0x65, 0x22];
+
+                /// <summary>
+                /// Gets the pre-baked property name blob for <see cref="CanonicalDelimiter"/>.
+                /// </summary>
+                public static ReadOnlySpan<byte> CanonicalDelimiter => [0x45, 0x01, 0x00, 0x00, 0x22, 0x43, 0x61, 0x6E, 0x6F, 0x6E, 0x69, 0x63, 0x61, 0x6C, 0x44, 0x65, 0x6C, 0x69, 0x6D, 0x69, 0x74, 0x65, 0x72, 0x22];
+
+                /// <summary>
+                /// Gets the pre-baked property name blob for <see cref="Delimiters"/>.
+                /// </summary>
+                public static ReadOnlySpan<byte> Delimiters => [0xC5, 0x00, 0x00, 0x00, 0x22, 0x44, 0x65, 0x6C, 0x69, 0x6D, 0x69, 0x74, 0x65, 0x72, 0x73, 0x22];
+
+                /// <summary>
+                /// Gets the pre-baked property name blob for <see cref="EnclosingFunctions"/>.
+                /// </summary>
+                public static ReadOnlySpan<byte> EnclosingFunctions => [0x45, 0x01, 0x00, 0x00, 0x22, 0x45, 0x6E, 0x63, 0x6C, 0x6F, 0x73, 0x69, 0x6E, 0x67, 0x46, 0x75, 0x6E, 0x63, 0x74, 0x69, 0x6F, 0x6E, 0x73, 0x22];
+
+                /// <summary>
+                /// Gets the pre-baked property name blob for <see cref="Language"/>.
+                /// </summary>
+                public static ReadOnlySpan<byte> Language => [0xA5, 0x00, 0x00, 0x00, 0x22, 0x4C, 0x61, 0x6E, 0x67, 0x75, 0x61, 0x67, 0x65, 0x22];
+            }
         }
     }
 }

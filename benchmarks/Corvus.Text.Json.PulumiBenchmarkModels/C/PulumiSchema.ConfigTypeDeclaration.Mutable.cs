@@ -322,7 +322,7 @@ public readonly partial struct PulumiSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Default, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Default, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -358,7 +358,7 @@ public readonly partial struct PulumiSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Default, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Default, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -403,7 +403,7 @@ public readonly partial struct PulumiSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Description, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Description, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -448,7 +448,7 @@ public readonly partial struct PulumiSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Items, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Items, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -484,7 +484,7 @@ public readonly partial struct PulumiSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Items, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Items, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -529,7 +529,7 @@ public readonly partial struct PulumiSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Secret, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Secret, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -574,7 +574,7 @@ public readonly partial struct PulumiSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Type, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Type, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -619,7 +619,7 @@ public readonly partial struct PulumiSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Value, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Value, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -655,7 +655,7 @@ public readonly partial struct PulumiSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Value, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Value, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -862,6 +862,24 @@ public readonly partial struct PulumiSchema
                 }
             }
 
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.JsonElement:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                        break;
+                    case Kind.Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
             internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
             {
                 switch(_kind)
@@ -963,6 +981,24 @@ public readonly partial struct PulumiSchema
                 }
             }
 
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.Source:
+                        _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                        break;
+                    case Kind.Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
             internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
             {
                 switch(_kind)
@@ -1048,12 +1084,12 @@ public readonly partial struct PulumiSchema
                 in Corvus.PulumiBenchmark.Current.PulumiSchema.SimpleConfigType.Source type = default,
                 in Corvus.Text.Json.JsonElement.Source value = default)
             {
-                defaultValue.AddAsProperty(JsonPropertyNamesEscaped.Default, ref builder, escapeName: false);
-                description.AddAsProperty(JsonPropertyNamesEscaped.Description, ref builder, escapeName: false);
-                items.AddAsProperty(JsonPropertyNamesEscaped.Items, ref builder, escapeName: false);
-                secret.AddAsProperty(JsonPropertyNamesEscaped.Secret, ref builder, escapeName: false);
-                type.AddAsProperty(JsonPropertyNamesEscaped.Type, ref builder, escapeName: false);
-                value.AddAsProperty(JsonPropertyNamesEscaped.Value, ref builder, escapeName: false);
+                defaultValue.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Default, ref builder);
+                description.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Description, ref builder);
+                items.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Items, ref builder);
+                secret.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Secret, ref builder);
+                type.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Type, ref builder);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Value, ref builder);
             }
 
             /// <summary>
@@ -1086,12 +1122,12 @@ public readonly partial struct PulumiSchema
             where TContext : allows ref struct
             #endif
             {
-                defaultValue.AddAsProperty(JsonPropertyNamesEscaped.Default, ref builder, escapeName: false);
-                description.AddAsProperty(JsonPropertyNamesEscaped.Description, ref builder, escapeName: false);
-                items.AddAsProperty(JsonPropertyNamesEscaped.Items, ref builder, escapeName: false);
-                secret.AddAsProperty(JsonPropertyNamesEscaped.Secret, ref builder, escapeName: false);
-                type.AddAsProperty(JsonPropertyNamesEscaped.Type, ref builder, escapeName: false);
-                value.AddAsProperty(JsonPropertyNamesEscaped.Value, ref builder, escapeName: false);
+                defaultValue.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Default, ref builder);
+                description.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Description, ref builder);
+                items.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Items, ref builder);
+                secret.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Secret, ref builder);
+                type.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Type, ref builder);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Value, ref builder);
             }
 
             /// <summary>

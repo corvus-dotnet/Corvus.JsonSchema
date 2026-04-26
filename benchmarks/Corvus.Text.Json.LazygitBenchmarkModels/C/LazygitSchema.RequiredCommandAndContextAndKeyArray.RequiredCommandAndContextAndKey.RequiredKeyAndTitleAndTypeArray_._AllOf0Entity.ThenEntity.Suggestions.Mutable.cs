@@ -887,6 +887,27 @@ public readonly partial struct LazygitSchema
                                         }
                                     }
 
+                                    internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+                                    {
+                                        switch(_kind)
+                                        {
+                                            case Kind.Unknown:
+                                                break;
+                                            case Kind.JsonElement:
+                                                valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                                                break;
+                                            case Kind.OneOf0EntityBuilder:
+                                                valueBuilder.AddPrebakedProperty(prebakedPropertyName, _oneOf0EntityBuilderInstance!, static (in b, ref o) => Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.RequiredKeyAndTitleAndTypeArray.RequiredKeyAndTitleAndType.AllOf0Entity.ThenEntity.Suggestions.OneOf0Entity.Builder.BuildValue(b, ref o));
+                                                break;
+                                            case Kind.OneOf1EntityBuilder:
+                                                valueBuilder.AddPrebakedProperty(prebakedPropertyName, _oneOf1EntityBuilderInstance!, static (in b, ref o) => Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.RequiredKeyAndTitleAndTypeArray.RequiredKeyAndTitleAndType.AllOf0Entity.ThenEntity.Suggestions.OneOf1Entity.Builder.BuildValue(b, ref o));
+                                                break;
+                                            default:
+                                                Debug.Fail("Unexpected Kind");
+                                                break;
+                                        }
+                                    }
+
                                     internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
                                     {
                                         switch(_kind)
@@ -997,6 +1018,27 @@ public readonly partial struct LazygitSchema
                                                 break;
                                             case Kind.OneOf1EntityBuilder:
                                                 valueBuilder.AddProperty(utf8Name, BuildWithContext.Create(_context, _oneOf1EntityBuilderInstance!), static (in b, ref o) => Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.RequiredKeyAndTitleAndTypeArray.RequiredKeyAndTitleAndType.AllOf0Entity.ThenEntity.Suggestions.OneOf1Entity.Builder.BuildValue(b.Context, b.Build, ref o), escapeName, nameRequiresUnescaping);
+                                                break;
+                                            default:
+                                                Debug.Fail("Unexpected Kind");
+                                                break;
+                                        }
+                                    }
+
+                                    internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+                                    {
+                                        switch(_kind)
+                                        {
+                                            case Kind.Unknown:
+                                                break;
+                                            case Kind.Source:
+                                                _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                                                break;
+                                            case Kind.OneOf0EntityBuilder:
+                                                valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _oneOf0EntityBuilderInstance!), static (in b, ref o) => Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.RequiredKeyAndTitleAndTypeArray.RequiredKeyAndTitleAndType.AllOf0Entity.ThenEntity.Suggestions.OneOf0Entity.Builder.BuildValue(b.Context, b.Build, ref o));
+                                                break;
+                                            case Kind.OneOf1EntityBuilder:
+                                                valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _oneOf1EntityBuilderInstance!), static (in b, ref o) => Corvus.LazygitBenchmark.Current.LazygitSchema.RequiredCommandAndContextAndKeyArray.RequiredCommandAndContextAndKey.RequiredKeyAndTitleAndTypeArray.RequiredKeyAndTitleAndType.AllOf0Entity.ThenEntity.Suggestions.OneOf1Entity.Builder.BuildValue(b.Context, b.Build, ref o));
                                                 break;
                                             default:
                                                 Debug.Fail("Unexpected Kind");

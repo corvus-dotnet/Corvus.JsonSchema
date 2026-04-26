@@ -803,5 +803,47 @@ public readonly partial struct KrakendSchema
             /// </summary>
             public static ReadOnlySpan<byte> Timeout => "timeout"u8;
         }
+
+        /// <summary>
+        /// Provides pre-baked property name blobs for fast builder property storage.
+        /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
+        /// </summary>
+        private static class JsonPropertyNamesPrebaked
+        {
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Backend"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Backend => [0x95, 0x00, 0x00, 0x00, 0x22, 0x62, 0x61, 0x63, 0x6B, 0x65, 0x6E, 0x64, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="ConcurrentCallsValue"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> ConcurrentCallsValue => [0x25, 0x01, 0x00, 0x00, 0x22, 0x63, 0x6F, 0x6E, 0x63, 0x75, 0x72, 0x72, 0x65, 0x6E, 0x74, 0x5F, 0x63, 0x61, 0x6C, 0x6C, 0x73, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Endpoint"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Endpoint => [0xA5, 0x00, 0x00, 0x00, 0x22, 0x65, 0x6E, 0x64, 0x70, 0x6F, 0x69, 0x6E, 0x74, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="ExtraConfig"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> ExtraConfig => [0xE5, 0x00, 0x00, 0x00, 0x22, 0x65, 0x78, 0x74, 0x72, 0x61, 0x5F, 0x63, 0x6F, 0x6E, 0x66, 0x69, 0x67, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="IgnoreErrorsValue"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> IgnoreErrorsValue => [0xF5, 0x00, 0x00, 0x00, 0x22, 0x69, 0x67, 0x6E, 0x6F, 0x72, 0x65, 0x5F, 0x65, 0x72, 0x72, 0x6F, 0x72, 0x73, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="OutputEncodingValue"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> OutputEncodingValue => [0x15, 0x01, 0x00, 0x00, 0x22, 0x6F, 0x75, 0x74, 0x70, 0x75, 0x74, 0x5F, 0x65, 0x6E, 0x63, 0x6F, 0x64, 0x69, 0x6E, 0x67, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Timeout"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Timeout => [0x95, 0x00, 0x00, 0x00, 0x22, 0x74, 0x69, 0x6D, 0x65, 0x6F, 0x75, 0x74, 0x22];
+        }
     }
 }

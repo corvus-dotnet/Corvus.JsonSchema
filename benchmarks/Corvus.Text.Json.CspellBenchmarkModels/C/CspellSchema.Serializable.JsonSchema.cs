@@ -36,17 +36,17 @@ public readonly partial struct CspellSchema
             /// <summary>
             /// Gets a provider for the schema location from which this type was generated.
             /// </summary>
-            public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("cspell-schema.json#/definitions/Serializable"u8, buffer, out written);
+            public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/definitions/Serializable"u8, buffer, out written);
 
             /// <summary>
             /// Gets the schema location from which this type was generated.
             /// </summary>
-            public const string SchemaLocation = "cspell-schema.json#/definitions/Serializable";
+            public const string SchemaLocation = "/definitions/Serializable";
 
             /// <summary>
             /// Gets the schema location from which this type was generated as a UTF-8 string.
             /// </summary>
-            public static ReadOnlySpan<byte> SchemaLocationUtf8 => "cspell-schema.json#/definitions/Serializable"u8;
+            public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/definitions/Serializable"u8;
             private static readonly JsonSchemaPathProvider AnyOf0SchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/anyOf/0"u8, buffer, out written);
             private static readonly JsonSchemaPathProvider AnyOf1SchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/anyOf/1"u8, buffer, out written);
             private static readonly JsonSchemaPathProvider AnyOf2SchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/anyOf/2"u8, buffer, out written);
@@ -161,8 +161,8 @@ public readonly partial struct CspellSchema
                 }
 
                 JsonSchemaContext anyOfContext4 =
-                    Corvus.CspellBenchmark.Current.CspellSchema.Serializable.AnyOf4Entity.JsonSchema.PushChildContext(parentDocument, parentIndex, ref context, schemaEvaluationPath: AnyOf4SchemaEvaluationPath);
-                Corvus.CspellBenchmark.Current.CspellSchema.Serializable.AnyOf4Entity.JsonSchema.Evaluate(parentDocument, parentIndex, ref anyOfContext4);
+                    Corvus.CspellBenchmark.Current.JsonObject.JsonSchema.PushChildContext(parentDocument, parentIndex, ref context, schemaEvaluationPath: AnyOf4SchemaEvaluationPath);
+                Corvus.CspellBenchmark.Current.JsonObject.JsonSchema.Evaluate(parentDocument, parentIndex, ref anyOfContext4);
                 anyOfComposedIsMatch = anyOfComposedIsMatch || anyOfContext4.IsMatch;
 
                 if (anyOfContext4.IsMatch)

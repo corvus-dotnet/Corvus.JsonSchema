@@ -620,11 +620,11 @@ public readonly partial struct KrakendSchema
         /// See: https://www.krakend.io/docs/service-settings/router-options/
         /// </para>
         /// </remarks>
-        public Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271routerJson.RemoteIpHeaders RemoteIpHeadersValue
+        public Corvus.KrakendBenchmark.Current.JsonArray RemoteIpHeaders
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.RemoteIpHeadersValueUtf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271routerJson.RemoteIpHeaders value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.RemoteIpHeadersUtf8, out Corvus.KrakendBenchmark.Current.JsonArray value))
                 {
                     return value;
                 }
@@ -695,11 +695,11 @@ public readonly partial struct KrakendSchema
         /// See: https://www.krakend.io/docs/service-settings/router-options/
         /// </para>
         /// </remarks>
-        public Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271routerJson.TrustedProxies TrustedProxiesValue
+        public Corvus.KrakendBenchmark.Current.JsonArray TrustedProxies
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TrustedProxiesValueUtf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271routerJson.TrustedProxies value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TrustedProxiesUtf8, out Corvus.KrakendBenchmark.Current.JsonArray value))
                 {
                     return value;
                 }
@@ -1270,9 +1270,9 @@ public readonly partial struct KrakendSchema
             public const string MaxPayload = "max_payload";
 
             /// <summary>
-            /// Gets the JSON property name for <see cref="RemoteIpHeadersValue"/>.
+            /// Gets the JSON property name for <see cref="RemoteIpHeaders"/>.
             /// </summary>
-            public const string RemoteIpHeadersValue = "remote_ip_headers";
+            public const string RemoteIpHeaders = "remote_ip_headers";
 
             /// <summary>
             /// Gets the JSON property name for <see cref="RemoveExtraSlashValue"/>.
@@ -1285,9 +1285,9 @@ public readonly partial struct KrakendSchema
             public const string ReturnErrorMsg = "return_error_msg";
 
             /// <summary>
-            /// Gets the JSON property name for <see cref="TrustedProxiesValue"/>.
+            /// Gets the JSON property name for <see cref="TrustedProxies"/>.
             /// </summary>
-            public const string TrustedProxiesValue = "trusted_proxies";
+            public const string TrustedProxies = "trusted_proxies";
 
             /// <summary>
             /// Gets the JSON property name for <see cref="UseH2c"/>.
@@ -1380,9 +1380,9 @@ public readonly partial struct KrakendSchema
             public static ReadOnlySpan<byte> MaxPayloadUtf8 => "max_payload"u8;
 
             /// <summary>
-            /// Gets the JSON property name for <see cref="RemoteIpHeadersValue"/>.
+            /// Gets the JSON property name for <see cref="RemoteIpHeaders"/>.
             /// </summary>
-            public static ReadOnlySpan<byte> RemoteIpHeadersValueUtf8 => "remote_ip_headers"u8;
+            public static ReadOnlySpan<byte> RemoteIpHeadersUtf8 => "remote_ip_headers"u8;
 
             /// <summary>
             /// Gets the JSON property name for <see cref="RemoveExtraSlashValue"/>.
@@ -1395,9 +1395,9 @@ public readonly partial struct KrakendSchema
             public static ReadOnlySpan<byte> ReturnErrorMsgUtf8 => "return_error_msg"u8;
 
             /// <summary>
-            /// Gets the JSON property name for <see cref="TrustedProxiesValue"/>.
+            /// Gets the JSON property name for <see cref="TrustedProxies"/>.
             /// </summary>
-            public static ReadOnlySpan<byte> TrustedProxiesValueUtf8 => "trusted_proxies"u8;
+            public static ReadOnlySpan<byte> TrustedProxiesUtf8 => "trusted_proxies"u8;
 
             /// <summary>
             /// Gets the JSON property name for <see cref="UseH2c"/>.
@@ -1496,9 +1496,9 @@ public readonly partial struct KrakendSchema
             public static ReadOnlySpan<byte> MaxPayload => "max_payload"u8;
 
             /// <summary>
-            /// Gets the escaped UTF-8 JSON property name for <see cref="RemoteIpHeadersValue"/>.
+            /// Gets the escaped UTF-8 JSON property name for <see cref="RemoteIpHeaders"/>.
             /// </summary>
-            public static ReadOnlySpan<byte> RemoteIpHeadersValue => "remote_ip_headers"u8;
+            public static ReadOnlySpan<byte> RemoteIpHeaders => "remote_ip_headers"u8;
 
             /// <summary>
             /// Gets the escaped UTF-8 JSON property name for <see cref="RemoveExtraSlashValue"/>.
@@ -1511,14 +1511,131 @@ public readonly partial struct KrakendSchema
             public static ReadOnlySpan<byte> ReturnErrorMsg => "return_error_msg"u8;
 
             /// <summary>
-            /// Gets the escaped UTF-8 JSON property name for <see cref="TrustedProxiesValue"/>.
+            /// Gets the escaped UTF-8 JSON property name for <see cref="TrustedProxies"/>.
             /// </summary>
-            public static ReadOnlySpan<byte> TrustedProxiesValue => "trusted_proxies"u8;
+            public static ReadOnlySpan<byte> TrustedProxies => "trusted_proxies"u8;
 
             /// <summary>
             /// Gets the escaped UTF-8 JSON property name for <see cref="UseH2c"/>.
             /// </summary>
             public static ReadOnlySpan<byte> UseH2c => "use_h2c"u8;
+        }
+
+        /// <summary>
+        /// Provides pre-baked property name blobs for fast builder property storage.
+        /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
+        /// </summary>
+        private static class JsonPropertyNamesPrebaked
+        {
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="AppEngine"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> AppEngine => [0xC5, 0x00, 0x00, 0x00, 0x22, 0x61, 0x70, 0x70, 0x5F, 0x65, 0x6E, 0x67, 0x69, 0x6E, 0x65, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="AutoOptions"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> AutoOptions => [0xE5, 0x00, 0x00, 0x00, 0x22, 0x61, 0x75, 0x74, 0x6F, 0x5F, 0x6F, 0x70, 0x74, 0x69, 0x6F, 0x6E, 0x73, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="DecompressGzipValue"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> DecompressGzipValue => [0x15, 0x01, 0x00, 0x00, 0x22, 0x64, 0x65, 0x63, 0x6F, 0x6D, 0x70, 0x72, 0x65, 0x73, 0x73, 0x5F, 0x67, 0x7A, 0x69, 0x70, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="DisableAccessLogValue"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> DisableAccessLogValue => [0x45, 0x01, 0x00, 0x00, 0x22, 0x64, 0x69, 0x73, 0x61, 0x62, 0x6C, 0x65, 0x5F, 0x61, 0x63, 0x63, 0x65, 0x73, 0x73, 0x5F, 0x6C, 0x6F, 0x67, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="DisableGzip"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> DisableGzip => [0xE5, 0x00, 0x00, 0x00, 0x22, 0x64, 0x69, 0x73, 0x61, 0x62, 0x6C, 0x65, 0x5F, 0x67, 0x7A, 0x69, 0x70, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="DisableHandleMethodNotAllowed"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> DisableHandleMethodNotAllowed => [0x35, 0x02, 0x00, 0x00, 0x22, 0x64, 0x69, 0x73, 0x61, 0x62, 0x6C, 0x65, 0x5F, 0x68, 0x61, 0x6E, 0x64, 0x6C, 0x65, 0x5F, 0x6D, 0x65, 0x74, 0x68, 0x6F, 0x64, 0x5F, 0x6E, 0x6F, 0x74, 0x5F, 0x61, 0x6C, 0x6C, 0x6F, 0x77, 0x65, 0x64, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="DisableHealthValue"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> DisableHealthValue => [0x05, 0x01, 0x00, 0x00, 0x22, 0x64, 0x69, 0x73, 0x61, 0x62, 0x6C, 0x65, 0x5F, 0x68, 0x65, 0x61, 0x6C, 0x74, 0x68, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="DisablePathDecoding"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> DisablePathDecoding => [0x75, 0x01, 0x00, 0x00, 0x22, 0x64, 0x69, 0x73, 0x61, 0x62, 0x6C, 0x65, 0x5F, 0x70, 0x61, 0x74, 0x68, 0x5F, 0x64, 0x65, 0x63, 0x6F, 0x64, 0x69, 0x6E, 0x67, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="DisableRedirectFixedPath"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> DisableRedirectFixedPath => [0xD5, 0x01, 0x00, 0x00, 0x22, 0x64, 0x69, 0x73, 0x61, 0x62, 0x6C, 0x65, 0x5F, 0x72, 0x65, 0x64, 0x69, 0x72, 0x65, 0x63, 0x74, 0x5F, 0x66, 0x69, 0x78, 0x65, 0x64, 0x5F, 0x70, 0x61, 0x74, 0x68, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="DisableRedirectTrailingSlash"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> DisableRedirectTrailingSlash => [0x15, 0x02, 0x00, 0x00, 0x22, 0x64, 0x69, 0x73, 0x61, 0x62, 0x6C, 0x65, 0x5F, 0x72, 0x65, 0x64, 0x69, 0x72, 0x65, 0x63, 0x74, 0x5F, 0x74, 0x72, 0x61, 0x69, 0x6C, 0x69, 0x6E, 0x67, 0x5F, 0x73, 0x6C, 0x61, 0x73, 0x68, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="ErrorBody"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> ErrorBody => [0xC5, 0x00, 0x00, 0x00, 0x22, 0x65, 0x72, 0x72, 0x6F, 0x72, 0x5F, 0x62, 0x6F, 0x64, 0x79, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="ForwardedByClientIpValue"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> ForwardedByClientIpValue => [0x85, 0x01, 0x00, 0x00, 0x22, 0x66, 0x6F, 0x72, 0x77, 0x61, 0x72, 0x64, 0x65, 0x64, 0x5F, 0x62, 0x79, 0x5F, 0x63, 0x6C, 0x69, 0x65, 0x6E, 0x74, 0x5F, 0x69, 0x70, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="HealthPath"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> HealthPath => [0xD5, 0x00, 0x00, 0x00, 0x22, 0x68, 0x65, 0x61, 0x6C, 0x74, 0x68, 0x5F, 0x70, 0x61, 0x74, 0x68, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="HideVersionHeaderValue"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> HideVersionHeaderValue => [0x55, 0x01, 0x00, 0x00, 0x22, 0x68, 0x69, 0x64, 0x65, 0x5F, 0x76, 0x65, 0x72, 0x73, 0x69, 0x6F, 0x6E, 0x5F, 0x68, 0x65, 0x61, 0x64, 0x65, 0x72, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="LoggerSkipPaths"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> LoggerSkipPaths => [0x35, 0x01, 0x00, 0x00, 0x22, 0x6C, 0x6F, 0x67, 0x67, 0x65, 0x72, 0x5F, 0x73, 0x6B, 0x69, 0x70, 0x5F, 0x70, 0x61, 0x74, 0x68, 0x73, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="MaxMultipartMemory"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> MaxMultipartMemory => [0x65, 0x01, 0x00, 0x00, 0x22, 0x6D, 0x61, 0x78, 0x5F, 0x6D, 0x75, 0x6C, 0x74, 0x69, 0x70, 0x61, 0x72, 0x74, 0x5F, 0x6D, 0x65, 0x6D, 0x6F, 0x72, 0x79, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="MaxPayload"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> MaxPayload => [0xD5, 0x00, 0x00, 0x00, 0x22, 0x6D, 0x61, 0x78, 0x5F, 0x70, 0x61, 0x79, 0x6C, 0x6F, 0x61, 0x64, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="RemoteIpHeaders"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> RemoteIpHeaders => [0x35, 0x01, 0x00, 0x00, 0x22, 0x72, 0x65, 0x6D, 0x6F, 0x74, 0x65, 0x5F, 0x69, 0x70, 0x5F, 0x68, 0x65, 0x61, 0x64, 0x65, 0x72, 0x73, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="RemoveExtraSlashValue"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> RemoveExtraSlashValue => [0x45, 0x01, 0x00, 0x00, 0x22, 0x72, 0x65, 0x6D, 0x6F, 0x76, 0x65, 0x5F, 0x65, 0x78, 0x74, 0x72, 0x61, 0x5F, 0x73, 0x6C, 0x61, 0x73, 0x68, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="ReturnErrorMsg"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> ReturnErrorMsg => [0x25, 0x01, 0x00, 0x00, 0x22, 0x72, 0x65, 0x74, 0x75, 0x72, 0x6E, 0x5F, 0x65, 0x72, 0x72, 0x6F, 0x72, 0x5F, 0x6D, 0x73, 0x67, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="TrustedProxies"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> TrustedProxies => [0x15, 0x01, 0x00, 0x00, 0x22, 0x74, 0x72, 0x75, 0x73, 0x74, 0x65, 0x64, 0x5F, 0x70, 0x72, 0x6F, 0x78, 0x69, 0x65, 0x73, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="UseH2c"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> UseH2c => [0x95, 0x00, 0x00, 0x00, 0x22, 0x75, 0x73, 0x65, 0x5F, 0x68, 0x32, 0x63, 0x22];
         }
     }
 }

@@ -827,6 +827,43 @@ public readonly partial struct DenoSchema
                 /// </summary>
                 public static ReadOnlySpan<byte> UseTabs => "useTabs"u8;
             }
+
+            /// <summary>
+            /// Provides pre-baked property name blobs for fast builder property storage.
+            /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
+            /// </summary>
+            private static class JsonPropertyNamesPrebaked
+            {
+                /// <summary>
+                /// Gets the pre-baked property name blob for <see cref="IndentWidth"/>.
+                /// </summary>
+                public static ReadOnlySpan<byte> IndentWidth => [0xD5, 0x00, 0x00, 0x00, 0x22, 0x69, 0x6E, 0x64, 0x65, 0x6E, 0x74, 0x57, 0x69, 0x64, 0x74, 0x68, 0x22];
+
+                /// <summary>
+                /// Gets the pre-baked property name blob for <see cref="LineWidth"/>.
+                /// </summary>
+                public static ReadOnlySpan<byte> LineWidth => [0xB5, 0x00, 0x00, 0x00, 0x22, 0x6C, 0x69, 0x6E, 0x65, 0x57, 0x69, 0x64, 0x74, 0x68, 0x22];
+
+                /// <summary>
+                /// Gets the pre-baked property name blob for <see cref="ProseWrap"/>.
+                /// </summary>
+                public static ReadOnlySpan<byte> ProseWrap => [0xB5, 0x00, 0x00, 0x00, 0x22, 0x70, 0x72, 0x6F, 0x73, 0x65, 0x57, 0x72, 0x61, 0x70, 0x22];
+
+                /// <summary>
+                /// Gets the pre-baked property name blob for <see cref="SemiColons"/>.
+                /// </summary>
+                public static ReadOnlySpan<byte> SemiColons => [0xC5, 0x00, 0x00, 0x00, 0x22, 0x73, 0x65, 0x6D, 0x69, 0x43, 0x6F, 0x6C, 0x6F, 0x6E, 0x73, 0x22];
+
+                /// <summary>
+                /// Gets the pre-baked property name blob for <see cref="SingleQuote"/>.
+                /// </summary>
+                public static ReadOnlySpan<byte> SingleQuote => [0xD5, 0x00, 0x00, 0x00, 0x22, 0x73, 0x69, 0x6E, 0x67, 0x6C, 0x65, 0x51, 0x75, 0x6F, 0x74, 0x65, 0x22];
+
+                /// <summary>
+                /// Gets the pre-baked property name blob for <see cref="UseTabs"/>.
+                /// </summary>
+                public static ReadOnlySpan<byte> UseTabs => [0x95, 0x00, 0x00, 0x00, 0x22, 0x75, 0x73, 0x65, 0x54, 0x61, 0x62, 0x73, 0x22];
+            }
         }
     }
 }

@@ -54,17 +54,17 @@ public readonly partial struct PreCommitHooksSchema
                 /// <summary>
                 /// Gets a provider for the schema location from which this type was generated.
                 /// </summary>
-                public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("https://json.schemastore.org/pre-commit-hooks.json#/items/properties/require_serial"u8, buffer, out written);
+                public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/items/properties/require_serial"u8, buffer, out written);
 
                 /// <summary>
                 /// Gets the schema location from which this type was generated.
                 /// </summary>
-                public const string SchemaLocation = "https://json.schemastore.org/pre-commit-hooks.json#/items/properties/require_serial";
+                public const string SchemaLocation = "/items/properties/require_serial";
 
                 /// <summary>
                 /// Gets the schema location from which this type was generated as a UTF-8 string.
                 /// </summary>
-                public static ReadOnlySpan<byte> SchemaLocationUtf8 => "https://json.schemastore.org/pre-commit-hooks.json#/items/properties/require_serial"u8;
+                public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/items/properties/require_serial"u8;
 
                 /// <summary>
                 /// Applies the JSON schema semantics defined by this type to the instance determined by the given document and index.

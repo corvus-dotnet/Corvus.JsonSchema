@@ -168,14 +168,14 @@ public readonly partial struct KrakendSchema
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext8 =
-                    Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271workflowExtraConfigJson.ValidatingTheBodyWithTheJsonSchema.JsonSchema.PushChildContextUnescaped(
+                    Corvus.KrakendBenchmark.Current.JsonObject.JsonSchema.PushChildContextUnescaped(
                         parentDocument,
                         parentDocumentIndex,
                         ref context,
                         JsonPropertyNames.ValidationJsonSchemaUtf8,
                         evaluationPath: ValidationJsonSchemaSchemaEvaluationPath);
 
-                Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271workflowExtraConfigJson.ValidatingTheBodyWithTheJsonSchema.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext8);
+                Corvus.KrakendBenchmark.Current.JsonObject.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext8);
                 context.CommitChildContext(childContext8.IsMatch, ref childContext8);
             }
 
@@ -217,17 +217,17 @@ public readonly partial struct KrakendSchema
             /// <summary>
             /// Gets a provider for the schema location from which this type was generated.
             /// </summary>
-            public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("krakend-schema.json#/definitions/https:~1~1www.krakend.io~1schema~1v2.7~1workflow_extra_config.json"u8, buffer, out written);
+            public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/definitions/https:~1~1www.krakend.io~1schema~1v2.7~1workflow_extra_config.json"u8, buffer, out written);
 
             /// <summary>
             /// Gets the schema location from which this type was generated.
             /// </summary>
-            public const string SchemaLocation = "krakend-schema.json#/definitions/https:~1~1www.krakend.io~1schema~1v2.7~1workflow_extra_config.json";
+            public const string SchemaLocation = "/definitions/https:~1~1www.krakend.io~1schema~1v2.7~1workflow_extra_config.json";
 
             /// <summary>
             /// Gets the schema location from which this type was generated as a UTF-8 string.
             /// </summary>
-            public static ReadOnlySpan<byte> SchemaLocationUtf8 => "krakend-schema.json#/definitions/https:~1~1www.krakend.io~1schema~1v2.7~1workflow_extra_config.json"u8;
+            public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/definitions/https:~1~1www.krakend.io~1schema~1v2.7~1workflow_extra_config.json"u8;
 
             /// <summary>
             /// Applies the JSON schema semantics defined by this type to the instance determined by the given document and index.

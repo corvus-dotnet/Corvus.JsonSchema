@@ -288,11 +288,11 @@ public readonly partial struct KrakendSchema
         /// See: https://www.krakend.io/docs/endpoints/json-schema/
         /// </para>
         /// </remarks>
-        public Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271workflowExtraConfigJson.ValidatingTheBodyWithTheJsonSchema ValidationJsonSchema
+        public Corvus.KrakendBenchmark.Current.JsonObject ValidationJsonSchema
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ValidationJsonSchemaUtf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271workflowExtraConfigJson.ValidatingTheBodyWithTheJsonSchema value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ValidationJsonSchemaUtf8, out Corvus.KrakendBenchmark.Current.JsonObject value))
                 {
                     return value;
                 }
@@ -862,6 +862,58 @@ public readonly partial struct KrakendSchema
             /// Gets the escaped UTF-8 JSON property name for <see cref="ValidationJsonSchema"/>.
             /// </summary>
             public static ReadOnlySpan<byte> ValidationJsonSchema => "validation/json-schema"u8;
+        }
+
+        /// <summary>
+        /// Provides pre-baked property name blobs for fast builder property storage.
+        /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
+        /// </summary>
+        private static class JsonPropertyNamesPrebaked
+        {
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="ModifierJmespath"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> ModifierJmespath => [0x35, 0x01, 0x00, 0x00, 0x22, 0x6D, 0x6F, 0x64, 0x69, 0x66, 0x69, 0x65, 0x72, 0x2F, 0x6A, 0x6D, 0x65, 0x73, 0x70, 0x61, 0x74, 0x68, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="ModifierLuaProxy"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> ModifierLuaProxy => [0x45, 0x01, 0x00, 0x00, 0x22, 0x6D, 0x6F, 0x64, 0x69, 0x66, 0x69, 0x65, 0x72, 0x2F, 0x6C, 0x75, 0x61, 0x2D, 0x70, 0x72, 0x6F, 0x78, 0x79, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="ModifierRequestBodyGenerator"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> ModifierRequestBodyGenerator => [0x15, 0x02, 0x00, 0x00, 0x22, 0x6D, 0x6F, 0x64, 0x69, 0x66, 0x69, 0x65, 0x72, 0x2F, 0x72, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x2D, 0x62, 0x6F, 0x64, 0x79, 0x2D, 0x67, 0x65, 0x6E, 0x65, 0x72, 0x61, 0x74, 0x6F, 0x72, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="ModifierResponseBodyGenerator"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> ModifierResponseBodyGenerator => [0x25, 0x02, 0x00, 0x00, 0x22, 0x6D, 0x6F, 0x64, 0x69, 0x66, 0x69, 0x65, 0x72, 0x2F, 0x72, 0x65, 0x73, 0x70, 0x6F, 0x6E, 0x73, 0x65, 0x2D, 0x62, 0x6F, 0x64, 0x79, 0x2D, 0x67, 0x65, 0x6E, 0x65, 0x72, 0x61, 0x74, 0x6F, 0x72, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="PluginReqRespModifier"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> PluginReqRespModifier => [0xA5, 0x01, 0x00, 0x00, 0x22, 0x70, 0x6C, 0x75, 0x67, 0x69, 0x6E, 0x2F, 0x72, 0x65, 0x71, 0x2D, 0x72, 0x65, 0x73, 0x70, 0x2D, 0x6D, 0x6F, 0x64, 0x69, 0x66, 0x69, 0x65, 0x72, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="ProxyValue"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> ProxyValue => [0x75, 0x00, 0x00, 0x00, 0x22, 0x70, 0x72, 0x6F, 0x78, 0x79, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="SecurityPolicies"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> SecurityPolicies => [0x35, 0x01, 0x00, 0x00, 0x22, 0x73, 0x65, 0x63, 0x75, 0x72, 0x69, 0x74, 0x79, 0x2F, 0x70, 0x6F, 0x6C, 0x69, 0x63, 0x69, 0x65, 0x73, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="ValidationCel"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> ValidationCel => [0x05, 0x01, 0x00, 0x00, 0x22, 0x76, 0x61, 0x6C, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6F, 0x6E, 0x2F, 0x63, 0x65, 0x6C, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="ValidationJsonSchema"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> ValidationJsonSchema => [0x85, 0x01, 0x00, 0x00, 0x22, 0x76, 0x61, 0x6C, 0x69, 0x64, 0x61, 0x74, 0x69, 0x6F, 0x6E, 0x2F, 0x6A, 0x73, 0x6F, 0x6E, 0x2D, 0x73, 0x63, 0x68, 0x65, 0x6D, 0x61, 0x22];
         }
     }
 }

@@ -80,24 +80,6 @@ public readonly partial struct PulumiSchema
                 private JsonTokenType TokenType => _parent?.GetJsonTokenType(_idx) ?? JsonTokenType.None;
 
                 /// <summary>
-                /// Conversion to <see cref="Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigEntity.AdditionalPropertiesEntity.OneOf3Array"/>.
-                /// </summary>
-                /// <param name="value">The value from which to convert.</param>
-                public static explicit operator Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigEntity.AdditionalPropertiesEntity.OneOf3Array.Mutable(Mutable value)
-                {
-                    return Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigEntity.AdditionalPropertiesEntity.OneOf3Array.Mutable.From(value);
-                }
-
-                /// <summary>
-                /// Conversion from <see cref="Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigEntity.AdditionalPropertiesEntity.OneOf3Array"/>.
-                /// </summary>
-                /// <param name="value">The value from which to convert.</param>
-                public static implicit operator Mutable(Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigEntity.AdditionalPropertiesEntity.OneOf3Array.Mutable value)
-                {
-                    return From(value);
-                }
-
-                /// <summary>
                 /// Conversion to <see cref="Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigTypeDeclaration"/>.
                 /// </summary>
                 /// <param name="value">The value from which to convert.</param>
@@ -1276,7 +1258,7 @@ public readonly partial struct PulumiSchema
                 /// <param name="matchJsonString">Match a <see cref="Corvus.PulumiBenchmark.Current.JsonString"/>.</param>
                 /// <param name="matchJsonInteger">Match a <see cref="Corvus.PulumiBenchmark.Current.JsonInteger"/>.</param>
                 /// <param name="matchJsonBoolean">Match a <see cref="Corvus.PulumiBenchmark.Current.JsonBoolean"/>.</param>
-                /// <param name="matchOneOf3Array">Match a <see cref="Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigEntity.AdditionalPropertiesEntity.OneOf3Array"/>.</param>
+                /// <param name="matchJsonArray">Match a <see cref="Corvus.PulumiBenchmark.Current.JsonArray"/>.</param>
                 /// <param name="matchConfigTypeDeclaration">Match a <see cref="Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigTypeDeclaration"/>.</param>
                 /// <param name="defaultMatch">Match any other value.</param>
                 /// <returns>An instance of the value returned by the match function.</returns>
@@ -1285,7 +1267,7 @@ public readonly partial struct PulumiSchema
                     Matcher<Corvus.PulumiBenchmark.Current.JsonString, TContext, TResult> matchJsonString,
                     Matcher<Corvus.PulumiBenchmark.Current.JsonInteger, TContext, TResult> matchJsonInteger,
                     Matcher<Corvus.PulumiBenchmark.Current.JsonBoolean, TContext, TResult> matchJsonBoolean,
-                    Matcher<Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigEntity.AdditionalPropertiesEntity.OneOf3Array, TContext, TResult> matchOneOf3Array,
+                    Matcher<Corvus.PulumiBenchmark.Current.JsonArray, TContext, TResult> matchJsonArray,
                     Matcher<Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigTypeDeclaration, TContext, TResult> matchConfigTypeDeclaration,
                     Matcher<Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigEntity.AdditionalPropertiesEntity.Mutable, TContext, TResult> defaultMatch)
 #if NET9_0_OR_GREATER
@@ -1307,9 +1289,9 @@ public readonly partial struct PulumiSchema
                         return matchJsonBoolean(Corvus.PulumiBenchmark.Current.JsonBoolean.Mutable.From(this), context);
                     }
 
-                    if (Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigEntity.AdditionalPropertiesEntity.OneOf3Array.JsonSchema.Evaluate(_parent, _idx))
+                    if (Corvus.PulumiBenchmark.Current.JsonArray.JsonSchema.Evaluate(_parent, _idx))
                     {
-                        return matchOneOf3Array(Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigEntity.AdditionalPropertiesEntity.OneOf3Array.Mutable.From(this), context);
+                        return matchJsonArray(Corvus.PulumiBenchmark.Current.JsonArray.Mutable.From(this), context);
                     }
 
                     if (Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigTypeDeclaration.JsonSchema.Evaluate(_parent, _idx))
@@ -1327,7 +1309,7 @@ public readonly partial struct PulumiSchema
                 /// <param name="matchJsonString">Match a <see cref="Corvus.PulumiBenchmark.Current.JsonString"/>.</param>
                 /// <param name="matchJsonInteger">Match a <see cref="Corvus.PulumiBenchmark.Current.JsonInteger"/>.</param>
                 /// <param name="matchJsonBoolean">Match a <see cref="Corvus.PulumiBenchmark.Current.JsonBoolean"/>.</param>
-                /// <param name="matchOneOf3Array">Match a <see cref="Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigEntity.AdditionalPropertiesEntity.OneOf3Array"/>.</param>
+                /// <param name="matchJsonArray">Match a <see cref="Corvus.PulumiBenchmark.Current.JsonArray"/>.</param>
                 /// <param name="matchConfigTypeDeclaration">Match a <see cref="Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigTypeDeclaration"/>.</param>
                 /// <param name="defaultMatch">Match any other value.</param>
                 /// <returns>An instance of the value returned by the match function.</returns>
@@ -1335,7 +1317,7 @@ public readonly partial struct PulumiSchema
                     Matcher<Corvus.PulumiBenchmark.Current.JsonString, TResult> matchJsonString,
                     Matcher<Corvus.PulumiBenchmark.Current.JsonInteger, TResult> matchJsonInteger,
                     Matcher<Corvus.PulumiBenchmark.Current.JsonBoolean, TResult> matchJsonBoolean,
-                    Matcher<Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigEntity.AdditionalPropertiesEntity.OneOf3Array, TResult> matchOneOf3Array,
+                    Matcher<Corvus.PulumiBenchmark.Current.JsonArray, TResult> matchJsonArray,
                     Matcher<Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigTypeDeclaration, TResult> matchConfigTypeDeclaration,
                     Matcher<Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigEntity.AdditionalPropertiesEntity.Mutable, TResult> defaultMatch)
                 {
@@ -1354,9 +1336,9 @@ public readonly partial struct PulumiSchema
                         return matchJsonBoolean(Corvus.PulumiBenchmark.Current.JsonBoolean.Mutable.From(this));
                     }
 
-                    if (Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigEntity.AdditionalPropertiesEntity.OneOf3Array.JsonSchema.Evaluate(_parent, _idx))
+                    if (Corvus.PulumiBenchmark.Current.JsonArray.JsonSchema.Evaluate(_parent, _idx))
                     {
-                        return matchOneOf3Array(Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigEntity.AdditionalPropertiesEntity.OneOf3Array.Mutable.From(this));
+                        return matchJsonArray(Corvus.PulumiBenchmark.Current.JsonArray.Mutable.From(this));
                     }
 
                     if (Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigTypeDeclaration.JsonSchema.Evaluate(_parent, _idx))
@@ -1436,15 +1418,15 @@ public readonly partial struct PulumiSchema
                 }
 
                 /// <summary>
-                /// Gets the value as a <see cref="Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigEntity.AdditionalPropertiesEntity.OneOf3Array" />.
+                /// Gets the value as a <see cref="Corvus.PulumiBenchmark.Current.JsonArray" />.
                 /// </summary>
                 /// <param name="result">The result of the conversions.</param>
                 /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                public bool TryGetAsOneOf3Array(out Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigEntity.AdditionalPropertiesEntity.OneOf3Array result)
+                public bool TryGetAsJsonArray(out Corvus.PulumiBenchmark.Current.JsonArray result)
                 {
-                    if (Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigEntity.AdditionalPropertiesEntity.OneOf3Array.JsonSchema.Evaluate(_parent, _idx))
+                    if (Corvus.PulumiBenchmark.Current.JsonArray.JsonSchema.Evaluate(_parent, _idx))
                     {
-                        result = Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigEntity.AdditionalPropertiesEntity.OneOf3Array.Mutable.From(this);
+                        result = Corvus.PulumiBenchmark.Current.JsonArray.Mutable.From(this);
                         return true;
                     }
 
@@ -1516,6 +1498,8 @@ public readonly partial struct PulumiSchema
                 }
 
                 private Source(long value) { SimpleTypesBacking.Initialize(ref _simpleTypeBacking, value, static (isAlsoArray, buffer, out written) => Utf8Formatter.TryFormat(isAlsoArray, buffer, out written)); _kind = Kind.NumericSimpleType; }
+
+                private Source(int value) { SimpleTypesBacking.Initialize(ref _simpleTypeBacking, value, static (isAlsoArray, buffer, out written) => Utf8Formatter.TryFormat(isAlsoArray, buffer, out written)); _kind = Kind.NumericSimpleType; }
 
                 private Source(bool value) { _kind = value ? Kind.True : Kind.False; }
 
@@ -1593,6 +1577,51 @@ public readonly partial struct PulumiSchema
                             break;
                         case Kind.ConfigTypeDeclarationBuilder:
                             valueBuilder.AddProperty(utf8Name, _configTypeDeclarationBuilderInstance!, static (in b, ref o) => Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigTypeDeclaration.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
+                            break;
+                        default:
+                            Debug.Fail("Unexpected Kind");
+                            break;
+                    }
+                }
+
+                internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+                {
+                    switch(_kind)
+                    {
+                        case Kind.Unknown:
+                            break;
+                        case Kind.JsonElement:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                            break;
+                        case Kind.True:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, true);
+                            break;
+                        case Kind.False:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, false);
+                            break;
+                        case Kind.RawUtf8StringRequiresUnescaping:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, _utf8Backing, escapeValue: false, valueRequiresUnescaping: true);
+                            break;
+                        case Kind.RawUtf8StringNotRequiresUnescaping:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, _utf8Backing, escapeValue: false, valueRequiresUnescaping: false);
+                            break;
+                        case Kind.Utf8String:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, _utf8Backing, escapeValue: true, valueRequiresUnescaping: false);
+                            break;
+                        case Kind.Utf16String:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, _utf16Backing);
+                            break;
+                        case Kind.NumericSimpleType:
+                            valueBuilder.AddPrebakedPropertyFormattedNumber(prebakedPropertyName, _simpleTypeBacking.Span());
+                            break;
+                        case Kind.FormattedNumber:
+                            valueBuilder.AddPrebakedPropertyFormattedNumber(prebakedPropertyName, _utf8Backing);
+                            break;
+                        case Kind.ArrayBuilder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, _arrayBuilder!, static (in b, ref o) => ArrayBuilder.BuildValue(b, ref o));
+                            break;
+                        case Kind.ConfigTypeDeclarationBuilder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, _configTypeDeclarationBuilderInstance!, static (in b, ref o) => Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigTypeDeclaration.Builder.BuildValue(b, ref o));
                             break;
                         default:
                             Debug.Fail("Unexpected Kind");
@@ -1782,6 +1811,27 @@ public readonly partial struct PulumiSchema
                             break;
                         case Kind.ConfigTypeDeclarationBuilder:
                             valueBuilder.AddProperty(utf8Name, BuildWithContext.Create(_context, _configTypeDeclarationBuilderInstance!), static (in b, ref o) => Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigTypeDeclaration.Builder.BuildValue(b.Context, b.Build, ref o), escapeName, nameRequiresUnescaping);
+                            break;
+                        default:
+                            Debug.Fail("Unexpected Kind");
+                            break;
+                    }
+                }
+
+                internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+                {
+                    switch(_kind)
+                    {
+                        case Kind.Unknown:
+                            break;
+                        case Kind.Source:
+                            _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                            break;
+                        case Kind.ArrayBuilder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _arrayBuilder!), static (in b, ref o) => ArrayBuilder.BuildValue(b.Context, b.Build, ref o));
+                            break;
+                        case Kind.ConfigTypeDeclarationBuilder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _configTypeDeclarationBuilderInstance!), static (in b, ref o) => Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigTypeDeclaration.Builder.BuildValue(b.Context, b.Build, ref o));
                             break;
                         default:
                             Debug.Fail("Unexpected Kind");

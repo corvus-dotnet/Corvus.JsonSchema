@@ -719,6 +719,28 @@ public readonly partial struct Ui5ManifestSchema
                     /// </summary>
                     public static ReadOnlySpan<byte> RoutingValue => "routing"u8;
                 }
+
+                /// <summary>
+                /// Provides pre-baked property name blobs for fast builder property storage.
+                /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
+                /// </summary>
+                private static class JsonPropertyNamesPrebaked
+                {
+                    /// <summary>
+                    /// Gets the pre-baked property name blob for <see cref="FlexEnabled"/>.
+                    /// </summary>
+                    public static ReadOnlySpan<byte> FlexEnabled => [0xD5, 0x00, 0x00, 0x00, 0x22, 0x66, 0x6C, 0x65, 0x78, 0x45, 0x6E, 0x61, 0x62, 0x6C, 0x65, 0x64, 0x22];
+
+                    /// <summary>
+                    /// Gets the pre-baked property name blob for <see cref="RootView"/>.
+                    /// </summary>
+                    public static ReadOnlySpan<byte> RootView => [0xA5, 0x00, 0x00, 0x00, 0x22, 0x72, 0x6F, 0x6F, 0x74, 0x56, 0x69, 0x65, 0x77, 0x22];
+
+                    /// <summary>
+                    /// Gets the pre-baked property name blob for <see cref="RoutingValue"/>.
+                    /// </summary>
+                    public static ReadOnlySpan<byte> RoutingValue => [0x95, 0x00, 0x00, 0x00, 0x22, 0x72, 0x6F, 0x75, 0x74, 0x69, 0x6E, 0x67, 0x22];
+                }
             }
         }
     }

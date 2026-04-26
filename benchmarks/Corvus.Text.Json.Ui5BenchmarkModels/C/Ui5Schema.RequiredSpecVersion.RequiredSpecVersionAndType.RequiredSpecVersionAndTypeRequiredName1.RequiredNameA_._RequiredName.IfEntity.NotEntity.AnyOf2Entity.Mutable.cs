@@ -679,6 +679,10 @@ public readonly partial struct Ui5Schema
 
                                         private Source(double value) { SimpleTypesBacking.Initialize(ref _simpleTypeBacking, value, static (isAlsoArray, buffer, out written) => Utf8Formatter.TryFormat(isAlsoArray, buffer, out written)); _kind = Kind.NumericSimpleType; }
 
+                                        private Source(int value) { SimpleTypesBacking.Initialize(ref _simpleTypeBacking, value, static (isAlsoArray, buffer, out written) => Utf8Formatter.TryFormat(isAlsoArray, buffer, out written)); _kind = Kind.NumericSimpleType; }
+
+                                        private Source(long value) { SimpleTypesBacking.Initialize(ref _simpleTypeBacking, value, static (isAlsoArray, buffer, out written) => Utf8Formatter.TryFormat(isAlsoArray, buffer, out written)); _kind = Kind.NumericSimpleType; }
+
                                         private Source(bool value) { _kind = value ? Kind.True : Kind.False; }
 
                                         private Source(Kind kind) { Debug.Assert(kind == Kind.Null); _kind = Kind.Null; }
@@ -700,6 +704,12 @@ public readonly partial struct Ui5Schema
 
                                         [MethodImpl(MethodImplOptions.AggressiveInlining)]
                                         public static implicit operator Source(double value) => new (value);
+
+                                        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                                        public static implicit operator Source(int value) => new (value);
+
+                                        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+                                        public static implicit operator Source(long value) => new (value);
 
                                         [MethodImpl(MethodImplOptions.AggressiveInlining)]
                                         public static implicit operator Source(bool value) => new (value);
@@ -754,6 +764,54 @@ public readonly partial struct Ui5Schema
                                                     break;
                                                 case Kind.ArrayBuilder:
                                                     valueBuilder.AddProperty(utf8Name, _arrayBuilder!, static (in b, ref o) => ArrayBuilder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
+                                                    break;
+                                                default:
+                                                    Debug.Fail("Unexpected Kind");
+                                                    break;
+                                            }
+                                        }
+
+                                        internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+                                        {
+                                            switch(_kind)
+                                            {
+                                                case Kind.Unknown:
+                                                    break;
+                                                case Kind.JsonElement:
+                                                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                                                    break;
+                                                case Kind.Null:
+                                                    valueBuilder.AddPrebakedPropertyNullValue(prebakedPropertyName);
+                                                    break;
+                                                case Kind.True:
+                                                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, true);
+                                                    break;
+                                                case Kind.False:
+                                                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, false);
+                                                    break;
+                                                case Kind.RawUtf8StringRequiresUnescaping:
+                                                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, _utf8Backing, escapeValue: false, valueRequiresUnescaping: true);
+                                                    break;
+                                                case Kind.RawUtf8StringNotRequiresUnescaping:
+                                                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, _utf8Backing, escapeValue: false, valueRequiresUnescaping: false);
+                                                    break;
+                                                case Kind.Utf8String:
+                                                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, _utf8Backing, escapeValue: true, valueRequiresUnescaping: false);
+                                                    break;
+                                                case Kind.Utf16String:
+                                                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, _utf16Backing);
+                                                    break;
+                                                case Kind.NumericSimpleType:
+                                                    valueBuilder.AddPrebakedPropertyFormattedNumber(prebakedPropertyName, _simpleTypeBacking.Span());
+                                                    break;
+                                                case Kind.FormattedNumber:
+                                                    valueBuilder.AddPrebakedPropertyFormattedNumber(prebakedPropertyName, _utf8Backing);
+                                                    break;
+                                                case Kind.ObjectBuilder:
+                                                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => ObjectBuilder.BuildValue(b, ref o));
+                                                    break;
+                                                case Kind.ArrayBuilder:
+                                                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, _arrayBuilder!, static (in b, ref o) => ArrayBuilder.BuildValue(b, ref o));
                                                     break;
                                                 default:
                                                     Debug.Fail("Unexpected Kind");
@@ -952,6 +1010,27 @@ public readonly partial struct Ui5Schema
                                                     break;
                                                 case Kind.ArrayBuilder:
                                                     valueBuilder.AddProperty(utf8Name, BuildWithContext.Create(_context, _arrayBuilder!), static (in b, ref o) => ArrayBuilder.BuildValue(b.Context, b.Build, ref o), escapeName, nameRequiresUnescaping);
+                                                    break;
+                                                default:
+                                                    Debug.Fail("Unexpected Kind");
+                                                    break;
+                                            }
+                                        }
+
+                                        internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+                                        {
+                                            switch(_kind)
+                                            {
+                                                case Kind.Unknown:
+                                                    break;
+                                                case Kind.Source:
+                                                    _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                                                    break;
+                                                case Kind.ObjectBuilder:
+                                                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => ObjectBuilder.BuildValue(b.Context, b.Build, ref o));
+                                                    break;
+                                                case Kind.ArrayBuilder:
+                                                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _arrayBuilder!), static (in b, ref o) => ArrayBuilder.BuildValue(b.Context, b.Build, ref o));
                                                     break;
                                                 default:
                                                     Debug.Fail("Unexpected Kind");

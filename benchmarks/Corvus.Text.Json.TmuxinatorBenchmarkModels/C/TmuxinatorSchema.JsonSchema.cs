@@ -86,14 +86,14 @@ public readonly partial struct TmuxinatorSchema
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext2 =
-                Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.DefaultsEntity.JsonSchema.PushChildContextUnescaped(
+                Corvus.TmuxinatorBenchmark.Current.JsonObject.JsonSchema.PushChildContextUnescaped(
                     parentDocument,
                     parentDocumentIndex,
                     ref context,
                     JsonPropertyNames.DefaultsUtf8,
                     evaluationPath: DefaultsSchemaEvaluationPath);
 
-            Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.DefaultsEntity.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext2);
+            Corvus.TmuxinatorBenchmark.Current.JsonObject.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext2);
             context.CommitChildContext(childContext2.IsMatch, ref childContext2);
         }
 
@@ -458,17 +458,17 @@ public readonly partial struct TmuxinatorSchema
         /// <summary>
         /// Gets a provider for the schema location from which this type was generated.
         /// </summary>
-        public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("tmuxinator-schema.json"u8, buffer, out written);
+        public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath(""u8, buffer, out written);
 
         /// <summary>
         /// Gets the schema location from which this type was generated.
         /// </summary>
-        public const string SchemaLocation = "tmuxinator-schema.json";
+        public const string SchemaLocation = "";
 
         /// <summary>
         /// Gets the schema location from which this type was generated as a UTF-8 string.
         /// </summary>
-        public static ReadOnlySpan<byte> SchemaLocationUtf8 => "tmuxinator-schema.json"u8;
+        public static ReadOnlySpan<byte> SchemaLocationUtf8 => ""u8;
 
         /// <summary>
         /// Applies the JSON schema semantics defined by this type to the instance determined by the given document and index.

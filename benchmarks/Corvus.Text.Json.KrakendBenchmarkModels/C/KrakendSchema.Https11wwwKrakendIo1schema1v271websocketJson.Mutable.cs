@@ -655,7 +655,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.BackoffStrategyValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.BackoffStrategyValue, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -700,7 +700,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.ConnectEvent, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ConnectEvent, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -745,7 +745,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.DisconnectEvent, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DisconnectEvent, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -790,7 +790,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.EnableDirectCommunication, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.EnableDirectCommunication, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -835,7 +835,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.InputHeaders, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.InputHeaders, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -871,7 +871,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.InputHeaders, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.InputHeaders, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -916,7 +916,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.MaxMessageSize, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MaxMessageSize, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -961,7 +961,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.MaxRetriesValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MaxRetriesValue, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1006,7 +1006,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.MessageBufferSizeValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MessageBufferSizeValue, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1051,7 +1051,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.PingPeriod, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PingPeriod, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1096,7 +1096,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.PongWait, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PongWait, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1141,7 +1141,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.ReadBufferSizeValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ReadBufferSizeValue, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1186,7 +1186,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.ReturnErrorDetailsValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ReturnErrorDetailsValue, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1231,7 +1231,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Timeout, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Timeout, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1276,7 +1276,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.WriteBufferSizeValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.WriteBufferSizeValue, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1321,7 +1321,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.WriteWait, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.WriteWait, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1704,6 +1704,24 @@ public readonly partial struct KrakendSchema
                 }
             }
 
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.JsonElement:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                        break;
+                    case Kind.Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
             internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
             {
                 switch(_kind)
@@ -1805,6 +1823,24 @@ public readonly partial struct KrakendSchema
                 }
             }
 
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.Source:
+                        _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                        break;
+                    case Kind.Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
             internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
             {
                 switch(_kind)
@@ -1899,21 +1935,21 @@ public readonly partial struct KrakendSchema
                 in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271websocketJson.WriteBufferSize.Source writeBufferSize = default,
                 in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source writeWait = default)
             {
-                backoffStrategy.AddAsProperty(JsonPropertyNamesEscaped.BackoffStrategyValue, ref builder, escapeName: false);
-                connectEvent.AddAsProperty(JsonPropertyNamesEscaped.ConnectEvent, ref builder, escapeName: false);
-                disconnectEvent.AddAsProperty(JsonPropertyNamesEscaped.DisconnectEvent, ref builder, escapeName: false);
-                enableDirectCommunication.AddAsProperty(JsonPropertyNamesEscaped.EnableDirectCommunication, ref builder, escapeName: false);
-                inputHeaders.AddAsProperty(JsonPropertyNamesEscaped.InputHeaders, ref builder, escapeName: false);
-                maxMessageSize.AddAsProperty(JsonPropertyNamesEscaped.MaxMessageSize, ref builder, escapeName: false);
-                maxRetries.AddAsProperty(JsonPropertyNamesEscaped.MaxRetriesValue, ref builder, escapeName: false);
-                messageBufferSize.AddAsProperty(JsonPropertyNamesEscaped.MessageBufferSizeValue, ref builder, escapeName: false);
-                pingPeriod.AddAsProperty(JsonPropertyNamesEscaped.PingPeriod, ref builder, escapeName: false);
-                pongWait.AddAsProperty(JsonPropertyNamesEscaped.PongWait, ref builder, escapeName: false);
-                readBufferSize.AddAsProperty(JsonPropertyNamesEscaped.ReadBufferSizeValue, ref builder, escapeName: false);
-                returnErrorDetails.AddAsProperty(JsonPropertyNamesEscaped.ReturnErrorDetailsValue, ref builder, escapeName: false);
-                timeout.AddAsProperty(JsonPropertyNamesEscaped.Timeout, ref builder, escapeName: false);
-                writeBufferSize.AddAsProperty(JsonPropertyNamesEscaped.WriteBufferSizeValue, ref builder, escapeName: false);
-                writeWait.AddAsProperty(JsonPropertyNamesEscaped.WriteWait, ref builder, escapeName: false);
+                backoffStrategy.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.BackoffStrategyValue, ref builder);
+                connectEvent.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ConnectEvent, ref builder);
+                disconnectEvent.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DisconnectEvent, ref builder);
+                enableDirectCommunication.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.EnableDirectCommunication, ref builder);
+                inputHeaders.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.InputHeaders, ref builder);
+                maxMessageSize.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MaxMessageSize, ref builder);
+                maxRetries.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MaxRetriesValue, ref builder);
+                messageBufferSize.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MessageBufferSizeValue, ref builder);
+                pingPeriod.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PingPeriod, ref builder);
+                pongWait.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PongWait, ref builder);
+                readBufferSize.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ReadBufferSizeValue, ref builder);
+                returnErrorDetails.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ReturnErrorDetailsValue, ref builder);
+                timeout.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Timeout, ref builder);
+                writeBufferSize.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.WriteBufferSizeValue, ref builder);
+                writeWait.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.WriteWait, ref builder);
             }
 
             /// <summary>
@@ -1964,21 +2000,21 @@ public readonly partial struct KrakendSchema
             where TContext : allows ref struct
             #endif
             {
-                backoffStrategy.AddAsProperty(JsonPropertyNamesEscaped.BackoffStrategyValue, ref builder, escapeName: false);
-                connectEvent.AddAsProperty(JsonPropertyNamesEscaped.ConnectEvent, ref builder, escapeName: false);
-                disconnectEvent.AddAsProperty(JsonPropertyNamesEscaped.DisconnectEvent, ref builder, escapeName: false);
-                enableDirectCommunication.AddAsProperty(JsonPropertyNamesEscaped.EnableDirectCommunication, ref builder, escapeName: false);
-                inputHeaders.AddAsProperty(JsonPropertyNamesEscaped.InputHeaders, ref builder, escapeName: false);
-                maxMessageSize.AddAsProperty(JsonPropertyNamesEscaped.MaxMessageSize, ref builder, escapeName: false);
-                maxRetries.AddAsProperty(JsonPropertyNamesEscaped.MaxRetriesValue, ref builder, escapeName: false);
-                messageBufferSize.AddAsProperty(JsonPropertyNamesEscaped.MessageBufferSizeValue, ref builder, escapeName: false);
-                pingPeriod.AddAsProperty(JsonPropertyNamesEscaped.PingPeriod, ref builder, escapeName: false);
-                pongWait.AddAsProperty(JsonPropertyNamesEscaped.PongWait, ref builder, escapeName: false);
-                readBufferSize.AddAsProperty(JsonPropertyNamesEscaped.ReadBufferSizeValue, ref builder, escapeName: false);
-                returnErrorDetails.AddAsProperty(JsonPropertyNamesEscaped.ReturnErrorDetailsValue, ref builder, escapeName: false);
-                timeout.AddAsProperty(JsonPropertyNamesEscaped.Timeout, ref builder, escapeName: false);
-                writeBufferSize.AddAsProperty(JsonPropertyNamesEscaped.WriteBufferSizeValue, ref builder, escapeName: false);
-                writeWait.AddAsProperty(JsonPropertyNamesEscaped.WriteWait, ref builder, escapeName: false);
+                backoffStrategy.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.BackoffStrategyValue, ref builder);
+                connectEvent.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ConnectEvent, ref builder);
+                disconnectEvent.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DisconnectEvent, ref builder);
+                enableDirectCommunication.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.EnableDirectCommunication, ref builder);
+                inputHeaders.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.InputHeaders, ref builder);
+                maxMessageSize.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MaxMessageSize, ref builder);
+                maxRetries.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MaxRetriesValue, ref builder);
+                messageBufferSize.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MessageBufferSizeValue, ref builder);
+                pingPeriod.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PingPeriod, ref builder);
+                pongWait.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PongWait, ref builder);
+                readBufferSize.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ReadBufferSizeValue, ref builder);
+                returnErrorDetails.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ReturnErrorDetailsValue, ref builder);
+                timeout.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Timeout, ref builder);
+                writeBufferSize.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.WriteBufferSizeValue, ref builder);
+                writeWait.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.WriteWait, ref builder);
             }
 
             /// <summary>

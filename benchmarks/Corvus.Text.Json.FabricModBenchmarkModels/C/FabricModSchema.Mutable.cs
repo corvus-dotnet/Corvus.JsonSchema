@@ -394,11 +394,11 @@ public readonly partial struct FabricModSchema
         /// A map of namespace:id→value for custom data fields.
         /// </para>
         /// </remarks>
-        public Corvus.FabricModBenchmark.Current.FabricModSchema.AMapOfNamespaceIdValueForCustomDataFields.Mutable Custom
+        public Corvus.FabricModBenchmark.Current.JsonObject.Mutable Custom
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CustomUtf8, out Corvus.FabricModBenchmark.Current.FabricModSchema.AMapOfNamespaceIdValueForCustomDataFields.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CustomUtf8, out Corvus.FabricModBenchmark.Current.JsonObject.Mutable value))
                 {
                     return value;
                 }
@@ -785,7 +785,7 @@ public readonly partial struct FabricModSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.AccessWidener, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AccessWidener, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -830,7 +830,7 @@ public readonly partial struct FabricModSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Authors, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Authors, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -866,7 +866,7 @@ public readonly partial struct FabricModSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Authors, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Authors, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -911,7 +911,7 @@ public readonly partial struct FabricModSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Breaks, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Breaks, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -947,7 +947,7 @@ public readonly partial struct FabricModSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Breaks, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Breaks, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -992,7 +992,7 @@ public readonly partial struct FabricModSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Conflicts, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Conflicts, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1028,7 +1028,7 @@ public readonly partial struct FabricModSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Conflicts, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Conflicts, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1073,7 +1073,7 @@ public readonly partial struct FabricModSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Contact, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Contact, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1109,7 +1109,7 @@ public readonly partial struct FabricModSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Contact, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Contact, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1154,7 +1154,7 @@ public readonly partial struct FabricModSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Contributors, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Contributors, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1190,7 +1190,7 @@ public readonly partial struct FabricModSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Contributors, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Contributors, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1214,7 +1214,7 @@ public readonly partial struct FabricModSchema
         /// Set the <c>custom</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetCustom(in Corvus.FabricModBenchmark.Current.FabricModSchema.AMapOfNamespaceIdValueForCustomDataFields.Source value)
+        public void SetCustom(in Corvus.FabricModBenchmark.Current.JsonObject.Source value)
         {
             CheckValidInstance();
 
@@ -1235,7 +1235,7 @@ public readonly partial struct FabricModSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Custom, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Custom, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1247,7 +1247,7 @@ public readonly partial struct FabricModSchema
         /// Set the <c>custom</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetCustom<TContext>(in Corvus.FabricModBenchmark.Current.FabricModSchema.AMapOfNamespaceIdValueForCustomDataFields.Source<TContext> value)
+        public void SetCustom<TContext>(in Corvus.FabricModBenchmark.Current.JsonObject.Source<TContext> value)
 #if NET9_0_OR_GREATER
             where TContext : allows ref struct
 #endif
@@ -1271,7 +1271,7 @@ public readonly partial struct FabricModSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Custom, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Custom, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1316,7 +1316,7 @@ public readonly partial struct FabricModSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Depends, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Depends, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1352,7 +1352,7 @@ public readonly partial struct FabricModSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Depends, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Depends, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1397,7 +1397,7 @@ public readonly partial struct FabricModSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Description, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Description, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1442,7 +1442,7 @@ public readonly partial struct FabricModSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Entrypoints, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Entrypoints, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1478,7 +1478,7 @@ public readonly partial struct FabricModSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Entrypoints, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Entrypoints, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1523,7 +1523,7 @@ public readonly partial struct FabricModSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.EnvironmentValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.EnvironmentValue, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1568,7 +1568,7 @@ public readonly partial struct FabricModSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Icon, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Icon, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1604,7 +1604,7 @@ public readonly partial struct FabricModSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Icon, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Icon, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1647,7 +1647,7 @@ public readonly partial struct FabricModSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Id, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Id, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1680,7 +1680,7 @@ public readonly partial struct FabricModSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Jars, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Jars, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1716,7 +1716,7 @@ public readonly partial struct FabricModSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Jars, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Jars, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1761,7 +1761,7 @@ public readonly partial struct FabricModSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.LanguageAdapters, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.LanguageAdapters, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1797,7 +1797,7 @@ public readonly partial struct FabricModSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.LanguageAdapters, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.LanguageAdapters, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1842,7 +1842,7 @@ public readonly partial struct FabricModSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.License, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.License, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1878,7 +1878,7 @@ public readonly partial struct FabricModSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.License, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.License, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1923,7 +1923,7 @@ public readonly partial struct FabricModSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Mixins, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Mixins, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1959,7 +1959,7 @@ public readonly partial struct FabricModSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Mixins, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Mixins, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -2004,7 +2004,7 @@ public readonly partial struct FabricModSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Name, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Name, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -2049,7 +2049,7 @@ public readonly partial struct FabricModSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Recommends, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Recommends, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -2085,7 +2085,7 @@ public readonly partial struct FabricModSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Recommends, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Recommends, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -2128,7 +2128,7 @@ public readonly partial struct FabricModSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.SchemaVersion, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SchemaVersion, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -2161,7 +2161,7 @@ public readonly partial struct FabricModSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Suggests, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Suggests, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -2197,7 +2197,7 @@ public readonly partial struct FabricModSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Suggests, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Suggests, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -2240,7 +2240,7 @@ public readonly partial struct FabricModSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Version, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Version, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -2611,6 +2611,24 @@ public readonly partial struct FabricModSchema
             }
         }
 
+        internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+        {
+            switch(_kind)
+            {
+                case Kind.Unknown:
+                    break;
+                case Kind.JsonElement:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                    break;
+                case Kind.Builder:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
+                    break;
+                default:
+                    Debug.Fail("Unexpected Kind");
+                    break;
+            }
+        }
+
         internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
         {
             switch(_kind)
@@ -2712,6 +2730,24 @@ public readonly partial struct FabricModSchema
             }
         }
 
+        internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+        {
+            switch(_kind)
+            {
+                case Kind.Unknown:
+                    break;
+                case Kind.Source:
+                    _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                    break;
+                case Kind.Builder:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
+                    break;
+                default:
+                    Debug.Fail("Unexpected Kind");
+                    break;
+            }
+        }
+
         internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
         {
             switch(_kind)
@@ -2798,7 +2834,7 @@ public readonly partial struct FabricModSchema
             in Corvus.FabricModBenchmark.Current.FabricModSchema.ConflictsEntity.Source conflicts = default,
             in Corvus.FabricModBenchmark.Current.FabricModSchema.ContactInfo.Source contact = default,
             in Corvus.FabricModBenchmark.Current.FabricModSchema.ContriArray.Source contributors = default,
-            in Corvus.FabricModBenchmark.Current.FabricModSchema.AMapOfNamespaceIdValueForCustomDataFields.Source custom = default,
+            in Corvus.FabricModBenchmark.Current.JsonObject.Source custom = default,
             in Corvus.FabricModBenchmark.Current.FabricModSchema.DependsEntity.Source depends = default,
             in Corvus.FabricModBenchmark.Current.JsonString.Source description = default,
             in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.Source entrypoints = default,
@@ -2812,28 +2848,28 @@ public readonly partial struct FabricModSchema
             in Corvus.FabricModBenchmark.Current.FabricModSchema.RecommendsEntity.Source recommends = default,
             in Corvus.FabricModBenchmark.Current.FabricModSchema.SuggestsEntity.Source suggests = default)
         {
-            id.AddAsProperty(JsonPropertyNamesEscaped.Id, ref builder, escapeName: false);
-            builder.AddProperty(JsonPropertyNamesEscaped.SchemaVersion, Corvus.FabricModBenchmark.Current.FabricModSchema.TheVersionOfTheFabricModJsonSchema.ConstInstance);
-            version.AddAsProperty(JsonPropertyNamesEscaped.Version, ref builder, escapeName: false);
-            accessWidener.AddAsProperty(JsonPropertyNamesEscaped.AccessWidener, ref builder, escapeName: false);
-            authors.AddAsProperty(JsonPropertyNamesEscaped.Authors, ref builder, escapeName: false);
-            breaks.AddAsProperty(JsonPropertyNamesEscaped.Breaks, ref builder, escapeName: false);
-            conflicts.AddAsProperty(JsonPropertyNamesEscaped.Conflicts, ref builder, escapeName: false);
-            contact.AddAsProperty(JsonPropertyNamesEscaped.Contact, ref builder, escapeName: false);
-            contributors.AddAsProperty(JsonPropertyNamesEscaped.Contributors, ref builder, escapeName: false);
-            custom.AddAsProperty(JsonPropertyNamesEscaped.Custom, ref builder, escapeName: false);
-            depends.AddAsProperty(JsonPropertyNamesEscaped.Depends, ref builder, escapeName: false);
-            description.AddAsProperty(JsonPropertyNamesEscaped.Description, ref builder, escapeName: false);
-            entrypoints.AddAsProperty(JsonPropertyNamesEscaped.Entrypoints, ref builder, escapeName: false);
-            environment.AddAsProperty(JsonPropertyNamesEscaped.EnvironmentValue, ref builder, escapeName: false);
-            icon.AddAsProperty(JsonPropertyNamesEscaped.Icon, ref builder, escapeName: false);
-            jars.AddAsProperty(JsonPropertyNamesEscaped.Jars, ref builder, escapeName: false);
-            languageAdapters.AddAsProperty(JsonPropertyNamesEscaped.LanguageAdapters, ref builder, escapeName: false);
-            license.AddAsProperty(JsonPropertyNamesEscaped.License, ref builder, escapeName: false);
-            mixins.AddAsProperty(JsonPropertyNamesEscaped.Mixins, ref builder, escapeName: false);
-            name.AddAsProperty(JsonPropertyNamesEscaped.Name, ref builder, escapeName: false);
-            recommends.AddAsProperty(JsonPropertyNamesEscaped.Recommends, ref builder, escapeName: false);
-            suggests.AddAsProperty(JsonPropertyNamesEscaped.Suggests, ref builder, escapeName: false);
+            id.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Id, ref builder);
+            builder.AddPrebakedProperty(JsonPropertyNamesPrebaked.SchemaVersion, Corvus.FabricModBenchmark.Current.FabricModSchema.TheVersionOfTheFabricModJsonSchema.ConstInstance);
+            version.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Version, ref builder);
+            accessWidener.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AccessWidener, ref builder);
+            authors.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Authors, ref builder);
+            breaks.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Breaks, ref builder);
+            conflicts.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Conflicts, ref builder);
+            contact.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Contact, ref builder);
+            contributors.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Contributors, ref builder);
+            custom.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Custom, ref builder);
+            depends.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Depends, ref builder);
+            description.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Description, ref builder);
+            entrypoints.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Entrypoints, ref builder);
+            environment.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.EnvironmentValue, ref builder);
+            icon.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Icon, ref builder);
+            jars.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Jars, ref builder);
+            languageAdapters.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.LanguageAdapters, ref builder);
+            license.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.License, ref builder);
+            mixins.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Mixins, ref builder);
+            name.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Name, ref builder);
+            recommends.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Recommends, ref builder);
+            suggests.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Suggests, ref builder);
         }
 
         /// <summary>
@@ -2848,7 +2884,7 @@ public readonly partial struct FabricModSchema
             in Corvus.FabricModBenchmark.Current.FabricModSchema.ConflictsEntity.Source conflicts = default,
             in Corvus.FabricModBenchmark.Current.FabricModSchema.ContactInfo.Source contact = default,
             in Corvus.FabricModBenchmark.Current.FabricModSchema.ContriArray.Source contributors = default,
-            in Corvus.FabricModBenchmark.Current.FabricModSchema.AMapOfNamespaceIdValueForCustomDataFields.Source custom = default,
+            in Corvus.FabricModBenchmark.Current.JsonObject.Source custom = default,
             in Corvus.FabricModBenchmark.Current.FabricModSchema.DependsEntity.Source depends = default,
             in Corvus.FabricModBenchmark.Current.JsonString.Source description = default,
             in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.Source entrypoints = default,
@@ -2879,7 +2915,7 @@ public readonly partial struct FabricModSchema
             in Corvus.FabricModBenchmark.Current.FabricModSchema.ConflictsEntity.Source<TContext> conflicts = default,
             in Corvus.FabricModBenchmark.Current.FabricModSchema.ContactInfo.Source<TContext> contact = default,
             in Corvus.FabricModBenchmark.Current.FabricModSchema.ContriArray.Source<TContext> contributors = default,
-            in Corvus.FabricModBenchmark.Current.FabricModSchema.AMapOfNamespaceIdValueForCustomDataFields.Source<TContext> custom = default,
+            in Corvus.FabricModBenchmark.Current.JsonObject.Source<TContext> custom = default,
             in Corvus.FabricModBenchmark.Current.FabricModSchema.DependsEntity.Source<TContext> depends = default,
             in Corvus.FabricModBenchmark.Current.JsonString.Source description = default,
             in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.Source<TContext> entrypoints = default,
@@ -2896,28 +2932,28 @@ public readonly partial struct FabricModSchema
         where TContext : allows ref struct
         #endif
         {
-            id.AddAsProperty(JsonPropertyNamesEscaped.Id, ref builder, escapeName: false);
-            builder.AddProperty(JsonPropertyNamesEscaped.SchemaVersion, Corvus.FabricModBenchmark.Current.FabricModSchema.TheVersionOfTheFabricModJsonSchema.ConstInstance);
-            version.AddAsProperty(JsonPropertyNamesEscaped.Version, ref builder, escapeName: false);
-            accessWidener.AddAsProperty(JsonPropertyNamesEscaped.AccessWidener, ref builder, escapeName: false);
-            authors.AddAsProperty(JsonPropertyNamesEscaped.Authors, ref builder, escapeName: false);
-            breaks.AddAsProperty(JsonPropertyNamesEscaped.Breaks, ref builder, escapeName: false);
-            conflicts.AddAsProperty(JsonPropertyNamesEscaped.Conflicts, ref builder, escapeName: false);
-            contact.AddAsProperty(JsonPropertyNamesEscaped.Contact, ref builder, escapeName: false);
-            contributors.AddAsProperty(JsonPropertyNamesEscaped.Contributors, ref builder, escapeName: false);
-            custom.AddAsProperty(JsonPropertyNamesEscaped.Custom, ref builder, escapeName: false);
-            depends.AddAsProperty(JsonPropertyNamesEscaped.Depends, ref builder, escapeName: false);
-            description.AddAsProperty(JsonPropertyNamesEscaped.Description, ref builder, escapeName: false);
-            entrypoints.AddAsProperty(JsonPropertyNamesEscaped.Entrypoints, ref builder, escapeName: false);
-            environment.AddAsProperty(JsonPropertyNamesEscaped.EnvironmentValue, ref builder, escapeName: false);
-            icon.AddAsProperty(JsonPropertyNamesEscaped.Icon, ref builder, escapeName: false);
-            jars.AddAsProperty(JsonPropertyNamesEscaped.Jars, ref builder, escapeName: false);
-            languageAdapters.AddAsProperty(JsonPropertyNamesEscaped.LanguageAdapters, ref builder, escapeName: false);
-            license.AddAsProperty(JsonPropertyNamesEscaped.License, ref builder, escapeName: false);
-            mixins.AddAsProperty(JsonPropertyNamesEscaped.Mixins, ref builder, escapeName: false);
-            name.AddAsProperty(JsonPropertyNamesEscaped.Name, ref builder, escapeName: false);
-            recommends.AddAsProperty(JsonPropertyNamesEscaped.Recommends, ref builder, escapeName: false);
-            suggests.AddAsProperty(JsonPropertyNamesEscaped.Suggests, ref builder, escapeName: false);
+            id.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Id, ref builder);
+            builder.AddPrebakedProperty(JsonPropertyNamesPrebaked.SchemaVersion, Corvus.FabricModBenchmark.Current.FabricModSchema.TheVersionOfTheFabricModJsonSchema.ConstInstance);
+            version.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Version, ref builder);
+            accessWidener.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AccessWidener, ref builder);
+            authors.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Authors, ref builder);
+            breaks.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Breaks, ref builder);
+            conflicts.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Conflicts, ref builder);
+            contact.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Contact, ref builder);
+            contributors.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Contributors, ref builder);
+            custom.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Custom, ref builder);
+            depends.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Depends, ref builder);
+            description.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Description, ref builder);
+            entrypoints.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Entrypoints, ref builder);
+            environment.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.EnvironmentValue, ref builder);
+            icon.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Icon, ref builder);
+            jars.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Jars, ref builder);
+            languageAdapters.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.LanguageAdapters, ref builder);
+            license.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.License, ref builder);
+            mixins.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Mixins, ref builder);
+            name.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Name, ref builder);
+            recommends.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Recommends, ref builder);
+            suggests.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Suggests, ref builder);
         }
 
         /// <summary>
@@ -2933,7 +2969,7 @@ public readonly partial struct FabricModSchema
             in Corvus.FabricModBenchmark.Current.FabricModSchema.ConflictsEntity.Source<TContext> conflicts = default,
             in Corvus.FabricModBenchmark.Current.FabricModSchema.ContactInfo.Source<TContext> contact = default,
             in Corvus.FabricModBenchmark.Current.FabricModSchema.ContriArray.Source<TContext> contributors = default,
-            in Corvus.FabricModBenchmark.Current.FabricModSchema.AMapOfNamespaceIdValueForCustomDataFields.Source<TContext> custom = default,
+            in Corvus.FabricModBenchmark.Current.JsonObject.Source<TContext> custom = default,
             in Corvus.FabricModBenchmark.Current.FabricModSchema.DependsEntity.Source<TContext> depends = default,
             in Corvus.FabricModBenchmark.Current.JsonString.Source description = default,
             in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.Source<TContext> entrypoints = default,
@@ -3129,7 +3165,7 @@ public readonly partial struct FabricModSchema
     /// <param name="suggests">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.FabricModBenchmark.Current.FabricModSchema.TheModIdentifier.Source id, in Corvus.FabricModBenchmark.Current.JsonString.Source version, in Corvus.FabricModBenchmark.Current.JsonString.Source accessWidener = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.PersonArray.Source authors = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.BreaksEntity.Source breaks = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.ConflictsEntity.Source conflicts = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.ContactInfo.Source contact = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.ContriArray.Source contributors = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.AMapOfNamespaceIdValueForCustomDataFields.Source custom = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.DependsEntity.Source depends = default, in Corvus.FabricModBenchmark.Current.JsonString.Source description = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.Source entrypoints = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.Environment.Source environment = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.IconEntity.Source icon = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.NestedJarArray.Source jars = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.LanguageAdaptersEntity.Source languageAdapters = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.TheLicenseTheModUses.Source license = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.MixinsEntityArray.Source mixins = default, in Corvus.FabricModBenchmark.Current.JsonString.Source name = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.RecommendsEntity.Source recommends = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.SuggestsEntity.Source suggests = default, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.FabricModBenchmark.Current.FabricModSchema.TheModIdentifier.Source id, in Corvus.FabricModBenchmark.Current.JsonString.Source version, in Corvus.FabricModBenchmark.Current.JsonString.Source accessWidener = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.PersonArray.Source authors = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.BreaksEntity.Source breaks = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.ConflictsEntity.Source conflicts = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.ContactInfo.Source contact = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.ContriArray.Source contributors = default, in Corvus.FabricModBenchmark.Current.JsonObject.Source custom = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.DependsEntity.Source depends = default, in Corvus.FabricModBenchmark.Current.JsonString.Source description = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.Source entrypoints = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.Environment.Source environment = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.IconEntity.Source icon = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.NestedJarArray.Source jars = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.LanguageAdaptersEntity.Source languageAdapters = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.TheLicenseTheModUses.Source license = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.MixinsEntityArray.Source mixins = default, in Corvus.FabricModBenchmark.Current.JsonString.Source name = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.RecommendsEntity.Source recommends = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.SuggestsEntity.Source suggests = default, int initialCapacity = 30)
     {
         JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
@@ -3171,7 +3207,7 @@ public readonly partial struct FabricModSchema
     /// <param name="suggests">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.FabricModBenchmark.Current.FabricModSchema.TheModIdentifier.Source id, in Corvus.FabricModBenchmark.Current.JsonString.Source version, in Corvus.FabricModBenchmark.Current.JsonString.Source accessWidener = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.PersonArray.Source<TContext> authors = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.BreaksEntity.Source<TContext> breaks = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.ConflictsEntity.Source<TContext> conflicts = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.ContactInfo.Source<TContext> contact = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.ContriArray.Source<TContext> contributors = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.AMapOfNamespaceIdValueForCustomDataFields.Source<TContext> custom = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.DependsEntity.Source<TContext> depends = default, in Corvus.FabricModBenchmark.Current.JsonString.Source description = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.Source<TContext> entrypoints = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.Environment.Source environment = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.IconEntity.Source<TContext> icon = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.NestedJarArray.Source<TContext> jars = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.LanguageAdaptersEntity.Source<TContext> languageAdapters = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.TheLicenseTheModUses.Source<TContext> license = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.MixinsEntityArray.Source<TContext> mixins = default, in Corvus.FabricModBenchmark.Current.JsonString.Source name = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.RecommendsEntity.Source<TContext> recommends = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.SuggestsEntity.Source<TContext> suggests = default, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.FabricModBenchmark.Current.FabricModSchema.TheModIdentifier.Source id, in Corvus.FabricModBenchmark.Current.JsonString.Source version, in Corvus.FabricModBenchmark.Current.JsonString.Source accessWidener = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.PersonArray.Source<TContext> authors = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.BreaksEntity.Source<TContext> breaks = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.ConflictsEntity.Source<TContext> conflicts = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.ContactInfo.Source<TContext> contact = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.ContriArray.Source<TContext> contributors = default, in Corvus.FabricModBenchmark.Current.JsonObject.Source<TContext> custom = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.DependsEntity.Source<TContext> depends = default, in Corvus.FabricModBenchmark.Current.JsonString.Source description = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.Source<TContext> entrypoints = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.Environment.Source environment = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.IconEntity.Source<TContext> icon = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.NestedJarArray.Source<TContext> jars = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.LanguageAdaptersEntity.Source<TContext> languageAdapters = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.TheLicenseTheModUses.Source<TContext> license = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.MixinsEntityArray.Source<TContext> mixins = default, in Corvus.FabricModBenchmark.Current.JsonString.Source name = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.RecommendsEntity.Source<TContext> recommends = default, in Corvus.FabricModBenchmark.Current.FabricModSchema.SuggestsEntity.Source<TContext> suggests = default, int initialCapacity = 30)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif

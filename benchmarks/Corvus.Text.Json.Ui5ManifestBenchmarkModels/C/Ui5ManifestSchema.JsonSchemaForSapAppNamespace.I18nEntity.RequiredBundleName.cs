@@ -162,11 +162,11 @@ public readonly partial struct Ui5ManifestSchema
                 /// Represents the list of supported locales
                 /// </para>
                 /// </remarks>
-                public Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.I18nEntity.RequiredBundleName.RepresentsTheListOfSupportedLocales SupportedLocales
+                public Corvus.Ui5ManifestBenchmark.Current.JsonArray SupportedLocales
                 {
                     get
                     {
-                        if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SupportedLocalesUtf8, out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapAppNamespace.I18nEntity.RequiredBundleName.RepresentsTheListOfSupportedLocales value))
+                        if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SupportedLocalesUtf8, out Corvus.Ui5ManifestBenchmark.Current.JsonArray value))
                         {
                             return value;
                         }
@@ -697,6 +697,38 @@ public readonly partial struct Ui5ManifestSchema
                     /// Gets the escaped UTF-8 JSON property name for <see cref="Terminologies"/>.
                     /// </summary>
                     public static ReadOnlySpan<byte> Terminologies => "terminologies"u8;
+                }
+
+                /// <summary>
+                /// Provides pre-baked property name blobs for fast builder property storage.
+                /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
+                /// </summary>
+                private static class JsonPropertyNamesPrebaked
+                {
+                    /// <summary>
+                    /// Gets the pre-baked property name blob for <see cref="BundleName"/>.
+                    /// </summary>
+                    public static ReadOnlySpan<byte> BundleName => [0xC5, 0x00, 0x00, 0x00, 0x22, 0x62, 0x75, 0x6E, 0x64, 0x6C, 0x65, 0x4E, 0x61, 0x6D, 0x65, 0x22];
+
+                    /// <summary>
+                    /// Gets the pre-baked property name blob for <see cref="EnhanceWith"/>.
+                    /// </summary>
+                    public static ReadOnlySpan<byte> EnhanceWith => [0xD5, 0x00, 0x00, 0x00, 0x22, 0x65, 0x6E, 0x68, 0x61, 0x6E, 0x63, 0x65, 0x57, 0x69, 0x74, 0x68, 0x22];
+
+                    /// <summary>
+                    /// Gets the pre-baked property name blob for <see cref="FallbackLocale"/>.
+                    /// </summary>
+                    public static ReadOnlySpan<byte> FallbackLocale => [0x05, 0x01, 0x00, 0x00, 0x22, 0x66, 0x61, 0x6C, 0x6C, 0x62, 0x61, 0x63, 0x6B, 0x4C, 0x6F, 0x63, 0x61, 0x6C, 0x65, 0x22];
+
+                    /// <summary>
+                    /// Gets the pre-baked property name blob for <see cref="SupportedLocales"/>.
+                    /// </summary>
+                    public static ReadOnlySpan<byte> SupportedLocales => [0x25, 0x01, 0x00, 0x00, 0x22, 0x73, 0x75, 0x70, 0x70, 0x6F, 0x72, 0x74, 0x65, 0x64, 0x4C, 0x6F, 0x63, 0x61, 0x6C, 0x65, 0x73, 0x22];
+
+                    /// <summary>
+                    /// Gets the pre-baked property name blob for <see cref="Terminologies"/>.
+                    /// </summary>
+                    public static ReadOnlySpan<byte> Terminologies => [0xF5, 0x00, 0x00, 0x00, 0x22, 0x74, 0x65, 0x72, 0x6D, 0x69, 0x6E, 0x6F, 0x6C, 0x6F, 0x67, 0x69, 0x65, 0x73, 0x22];
                 }
             }
         }

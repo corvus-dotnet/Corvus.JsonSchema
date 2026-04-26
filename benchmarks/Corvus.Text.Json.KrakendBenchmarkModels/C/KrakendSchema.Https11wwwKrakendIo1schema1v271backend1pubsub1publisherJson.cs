@@ -577,5 +577,17 @@ public readonly partial struct KrakendSchema
             /// </summary>
             public static ReadOnlySpan<byte> TopicUrl => "topic_url"u8;
         }
+
+        /// <summary>
+        /// Provides pre-baked property name blobs for fast builder property storage.
+        /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
+        /// </summary>
+        private static class JsonPropertyNamesPrebaked
+        {
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="TopicUrl"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> TopicUrl => [0xB5, 0x00, 0x00, 0x00, 0x22, 0x74, 0x6F, 0x70, 0x69, 0x63, 0x5F, 0x75, 0x72, 0x6C, 0x22];
+        }
     }
 }

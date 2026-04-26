@@ -529,7 +529,7 @@ public readonly partial struct ClangFormatSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.AfterControlStatements, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AfterControlStatements, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -574,7 +574,7 @@ public readonly partial struct ClangFormatSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.AfterForeachMacros, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AfterForeachMacros, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -619,7 +619,7 @@ public readonly partial struct ClangFormatSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.AfterFunctionDeclarationName, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AfterFunctionDeclarationName, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -664,7 +664,7 @@ public readonly partial struct ClangFormatSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.AfterFunctionDefinitionName, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AfterFunctionDefinitionName, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -709,7 +709,7 @@ public readonly partial struct ClangFormatSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.AfterIfMacros, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AfterIfMacros, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -754,7 +754,7 @@ public readonly partial struct ClangFormatSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.AfterOverloadedOperator, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AfterOverloadedOperator, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -799,7 +799,7 @@ public readonly partial struct ClangFormatSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.AfterRequiresInClause, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AfterRequiresInClause, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -844,7 +844,7 @@ public readonly partial struct ClangFormatSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.AfterRequiresInExpression, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AfterRequiresInExpression, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -889,7 +889,7 @@ public readonly partial struct ClangFormatSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.BeforeNonEmptyParentheses, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.BeforeNonEmptyParentheses, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1272,6 +1272,24 @@ public readonly partial struct ClangFormatSchema
                 }
             }
 
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.JsonElement:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                        break;
+                    case Kind.Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
             internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
             {
                 switch(_kind)
@@ -1373,6 +1391,24 @@ public readonly partial struct ClangFormatSchema
                 }
             }
 
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.Source:
+                        _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                        break;
+                    case Kind.Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
             internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
             {
                 switch(_kind)
@@ -1461,15 +1497,15 @@ public readonly partial struct ClangFormatSchema
                 in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source afterRequiresInExpression = default,
                 in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source beforeNonEmptyParentheses = default)
             {
-                afterControlStatements.AddAsProperty(JsonPropertyNamesEscaped.AfterControlStatements, ref builder, escapeName: false);
-                afterForeachMacros.AddAsProperty(JsonPropertyNamesEscaped.AfterForeachMacros, ref builder, escapeName: false);
-                afterFunctionDeclarationName.AddAsProperty(JsonPropertyNamesEscaped.AfterFunctionDeclarationName, ref builder, escapeName: false);
-                afterFunctionDefinitionName.AddAsProperty(JsonPropertyNamesEscaped.AfterFunctionDefinitionName, ref builder, escapeName: false);
-                afterIfMacros.AddAsProperty(JsonPropertyNamesEscaped.AfterIfMacros, ref builder, escapeName: false);
-                afterOverloadedOperator.AddAsProperty(JsonPropertyNamesEscaped.AfterOverloadedOperator, ref builder, escapeName: false);
-                afterRequiresInClause.AddAsProperty(JsonPropertyNamesEscaped.AfterRequiresInClause, ref builder, escapeName: false);
-                afterRequiresInExpression.AddAsProperty(JsonPropertyNamesEscaped.AfterRequiresInExpression, ref builder, escapeName: false);
-                beforeNonEmptyParentheses.AddAsProperty(JsonPropertyNamesEscaped.BeforeNonEmptyParentheses, ref builder, escapeName: false);
+                afterControlStatements.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AfterControlStatements, ref builder);
+                afterForeachMacros.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AfterForeachMacros, ref builder);
+                afterFunctionDeclarationName.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AfterFunctionDeclarationName, ref builder);
+                afterFunctionDefinitionName.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AfterFunctionDefinitionName, ref builder);
+                afterIfMacros.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AfterIfMacros, ref builder);
+                afterOverloadedOperator.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AfterOverloadedOperator, ref builder);
+                afterRequiresInClause.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AfterRequiresInClause, ref builder);
+                afterRequiresInExpression.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AfterRequiresInExpression, ref builder);
+                beforeNonEmptyParentheses.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.BeforeNonEmptyParentheses, ref builder);
             }
 
             /// <summary>

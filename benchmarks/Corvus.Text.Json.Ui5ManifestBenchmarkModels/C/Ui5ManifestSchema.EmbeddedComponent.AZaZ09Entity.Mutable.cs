@@ -477,11 +477,11 @@ public readonly partial struct Ui5ManifestSchema
                 /// Represents a map to populate the API of the reuse component
                 /// </para>
                 /// </remarks>
-                public Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.EmbeddedComponent.AZaZ09Entity.RequiredIdAndTitle.RepresentsAMapToPopulateTheApiOfTheReuseComponent.Mutable Settings
+                public Corvus.Ui5ManifestBenchmark.Current.JsonObject.Mutable Settings
                 {
                     get
                     {
-                        if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SettingsUtf8, out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.EmbeddedComponent.AZaZ09Entity.RequiredIdAndTitle.RepresentsAMapToPopulateTheApiOfTheReuseComponent.Mutable value))
+                        if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SettingsUtf8, out Corvus.Ui5ManifestBenchmark.Current.JsonObject.Mutable value))
                         {
                             return value;
                         }
@@ -578,7 +578,7 @@ public readonly partial struct Ui5ManifestSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.Binding, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Binding, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -623,7 +623,7 @@ public readonly partial struct Ui5ManifestSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.GroupTitle, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.GroupTitle, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -668,7 +668,7 @@ public readonly partial struct Ui5ManifestSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.HiddenByDefault, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.HiddenByDefault, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -704,7 +704,7 @@ public readonly partial struct Ui5ManifestSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.HiddenByDefault, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.HiddenByDefault, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -747,7 +747,7 @@ public readonly partial struct Ui5ManifestSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.Id, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Id, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -780,7 +780,7 @@ public readonly partial struct Ui5ManifestSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.LeadingSectionIdOrPath, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.LeadingSectionIdOrPath, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -804,7 +804,7 @@ public readonly partial struct Ui5ManifestSchema
                 /// Set the <c>settings</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetSettings(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.EmbeddedComponent.AZaZ09Entity.RequiredIdAndTitle.RepresentsAMapToPopulateTheApiOfTheReuseComponent.Source value)
+                public void SetSettings(in Corvus.Ui5ManifestBenchmark.Current.JsonObject.Source value)
                 {
                     CheckValidInstance();
 
@@ -825,7 +825,7 @@ public readonly partial struct Ui5ManifestSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.Settings, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Settings, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -837,7 +837,7 @@ public readonly partial struct Ui5ManifestSchema
                 /// Set the <c>settings</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetSettings<TContext>(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.EmbeddedComponent.AZaZ09Entity.RequiredIdAndTitle.RepresentsAMapToPopulateTheApiOfTheReuseComponent.Source<TContext> value)
+                public void SetSettings<TContext>(in Corvus.Ui5ManifestBenchmark.Current.JsonObject.Source<TContext> value)
 #if NET9_0_OR_GREATER
                     where TContext : allows ref struct
 #endif
@@ -861,7 +861,7 @@ public readonly partial struct Ui5ManifestSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.Settings, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Settings, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -904,7 +904,7 @@ public readonly partial struct Ui5ManifestSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.Title, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Title, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -1403,6 +1403,24 @@ public readonly partial struct Ui5ManifestSchema
                     }
                 }
 
+                internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+                {
+                    switch(_kind)
+                    {
+                        case Kind.Unknown:
+                            break;
+                        case Kind.JsonElement:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                            break;
+                        case Kind.Builder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
+                            break;
+                        default:
+                            Debug.Fail("Unexpected Kind");
+                            break;
+                    }
+                }
+
                 internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
                 {
                     switch(_kind)
@@ -1504,6 +1522,24 @@ public readonly partial struct Ui5ManifestSchema
                     }
                 }
 
+                internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+                {
+                    switch(_kind)
+                    {
+                        case Kind.Unknown:
+                            break;
+                        case Kind.Source:
+                            _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                            break;
+                        case Kind.Builder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
+                            break;
+                        default:
+                            Debug.Fail("Unexpected Kind");
+                            break;
+                    }
+                }
+
                 internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
                 {
                     switch(_kind)
@@ -1588,15 +1624,15 @@ public readonly partial struct Ui5ManifestSchema
                     in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source groupTitle = default,
                     in Corvus.Text.Json.JsonElement.Source hiddenByDefault = default,
                     in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source leadingSectionIdOrPath = default,
-                    in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.EmbeddedComponent.AZaZ09Entity.RequiredIdAndTitle.RepresentsAMapToPopulateTheApiOfTheReuseComponent.Source settings = default)
+                    in Corvus.Ui5ManifestBenchmark.Current.JsonObject.Source settings = default)
                 {
-                    id.AddAsProperty(JsonPropertyNamesEscaped.Id, ref builder, escapeName: false);
-                    title.AddAsProperty(JsonPropertyNamesEscaped.Title, ref builder, escapeName: false);
-                    binding.AddAsProperty(JsonPropertyNamesEscaped.Binding, ref builder, escapeName: false);
-                    groupTitle.AddAsProperty(JsonPropertyNamesEscaped.GroupTitle, ref builder, escapeName: false);
-                    hiddenByDefault.AddAsProperty(JsonPropertyNamesEscaped.HiddenByDefault, ref builder, escapeName: false);
-                    leadingSectionIdOrPath.AddAsProperty(JsonPropertyNamesEscaped.LeadingSectionIdOrPath, ref builder, escapeName: false);
-                    settings.AddAsProperty(JsonPropertyNamesEscaped.Settings, ref builder, escapeName: false);
+                    id.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Id, ref builder);
+                    title.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Title, ref builder);
+                    binding.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Binding, ref builder);
+                    groupTitle.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.GroupTitle, ref builder);
+                    hiddenByDefault.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.HiddenByDefault, ref builder);
+                    leadingSectionIdOrPath.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.LeadingSectionIdOrPath, ref builder);
+                    settings.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Settings, ref builder);
                 }
 
                 /// <summary>
@@ -1609,7 +1645,7 @@ public readonly partial struct Ui5ManifestSchema
                     in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source groupTitle = default,
                     in Corvus.Text.Json.JsonElement.Source hiddenByDefault = default,
                     in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source leadingSectionIdOrPath = default,
-                    in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.EmbeddedComponent.AZaZ09Entity.RequiredIdAndTitle.RepresentsAMapToPopulateTheApiOfTheReuseComponent.Source settings = default)
+                    in Corvus.Ui5ManifestBenchmark.Current.JsonObject.Source settings = default)
                 {
                     Create(ref _builder, id, title, binding, groupTitle, hiddenByDefault, leadingSectionIdOrPath, settings);
                 }
@@ -1626,18 +1662,18 @@ public readonly partial struct Ui5ManifestSchema
                     in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source groupTitle = default,
                     in Corvus.Text.Json.JsonElement.Source<TContext> hiddenByDefault = default,
                     in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source leadingSectionIdOrPath = default,
-                    in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.EmbeddedComponent.AZaZ09Entity.RequiredIdAndTitle.RepresentsAMapToPopulateTheApiOfTheReuseComponent.Source<TContext> settings = default)
+                    in Corvus.Ui5ManifestBenchmark.Current.JsonObject.Source<TContext> settings = default)
                 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
                 #endif
                 {
-                    id.AddAsProperty(JsonPropertyNamesEscaped.Id, ref builder, escapeName: false);
-                    title.AddAsProperty(JsonPropertyNamesEscaped.Title, ref builder, escapeName: false);
-                    binding.AddAsProperty(JsonPropertyNamesEscaped.Binding, ref builder, escapeName: false);
-                    groupTitle.AddAsProperty(JsonPropertyNamesEscaped.GroupTitle, ref builder, escapeName: false);
-                    hiddenByDefault.AddAsProperty(JsonPropertyNamesEscaped.HiddenByDefault, ref builder, escapeName: false);
-                    leadingSectionIdOrPath.AddAsProperty(JsonPropertyNamesEscaped.LeadingSectionIdOrPath, ref builder, escapeName: false);
-                    settings.AddAsProperty(JsonPropertyNamesEscaped.Settings, ref builder, escapeName: false);
+                    id.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Id, ref builder);
+                    title.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Title, ref builder);
+                    binding.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Binding, ref builder);
+                    groupTitle.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.GroupTitle, ref builder);
+                    hiddenByDefault.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.HiddenByDefault, ref builder);
+                    leadingSectionIdOrPath.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.LeadingSectionIdOrPath, ref builder);
+                    settings.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Settings, ref builder);
                 }
 
                 /// <summary>
@@ -1651,7 +1687,7 @@ public readonly partial struct Ui5ManifestSchema
                     in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source groupTitle = default,
                     in Corvus.Text.Json.JsonElement.Source<TContext> hiddenByDefault = default,
                     in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source leadingSectionIdOrPath = default,
-                    in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.EmbeddedComponent.AZaZ09Entity.RequiredIdAndTitle.RepresentsAMapToPopulateTheApiOfTheReuseComponent.Source<TContext> settings = default)
+                    in Corvus.Ui5ManifestBenchmark.Current.JsonObject.Source<TContext> settings = default)
                 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
                 #endif
@@ -1839,7 +1875,7 @@ public readonly partial struct Ui5ManifestSchema
             /// <param name="settings">The value of the property.</param>
             /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
             /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-            public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.EmbeddedComponent.AZaZ09Entity.RequiredIdAndTitle.IdEntity.Source id, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.EmbeddedComponent.AZaZ09Entity.RequiredIdAndTitle.RepresentsTheTitleForTheContentOfTheReuseComponent.Source title, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source binding = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source groupTitle = default, in Corvus.Text.Json.JsonElement.Source hiddenByDefault = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source leadingSectionIdOrPath = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.EmbeddedComponent.AZaZ09Entity.RequiredIdAndTitle.RepresentsAMapToPopulateTheApiOfTheReuseComponent.Source settings = default, int initialCapacity = 30)
+            public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.EmbeddedComponent.AZaZ09Entity.RequiredIdAndTitle.IdEntity.Source id, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.EmbeddedComponent.AZaZ09Entity.RequiredIdAndTitle.RepresentsTheTitleForTheContentOfTheReuseComponent.Source title, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source binding = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source groupTitle = default, in Corvus.Text.Json.JsonElement.Source hiddenByDefault = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source leadingSectionIdOrPath = default, in Corvus.Ui5ManifestBenchmark.Current.JsonObject.Source settings = default, int initialCapacity = 30)
             {
                 JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
@@ -1867,7 +1903,7 @@ public readonly partial struct Ui5ManifestSchema
             /// <param name="settings">The value of the property.</param>
             /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
             /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-            public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.EmbeddedComponent.AZaZ09Entity.RequiredIdAndTitle.IdEntity.Source id, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.EmbeddedComponent.AZaZ09Entity.RequiredIdAndTitle.RepresentsTheTitleForTheContentOfTheReuseComponent.Source title, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source binding = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source groupTitle = default, in Corvus.Text.Json.JsonElement.Source<TContext> hiddenByDefault = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source leadingSectionIdOrPath = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.EmbeddedComponent.AZaZ09Entity.RequiredIdAndTitle.RepresentsAMapToPopulateTheApiOfTheReuseComponent.Source<TContext> settings = default, int initialCapacity = 30)
+            public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.EmbeddedComponent.AZaZ09Entity.RequiredIdAndTitle.IdEntity.Source id, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.EmbeddedComponent.AZaZ09Entity.RequiredIdAndTitle.RepresentsTheTitleForTheContentOfTheReuseComponent.Source title, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source binding = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source groupTitle = default, in Corvus.Text.Json.JsonElement.Source<TContext> hiddenByDefault = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source leadingSectionIdOrPath = default, in Corvus.Ui5ManifestBenchmark.Current.JsonObject.Source<TContext> settings = default, int initialCapacity = 30)
                 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
                 #endif

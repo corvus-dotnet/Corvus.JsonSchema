@@ -54,17 +54,17 @@ public readonly partial struct InputChoiceSet
             /// <summary>
             /// Gets a provider for the schema location from which this type was generated.
             /// </summary>
-            public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("https://adaptivecards.io/schemas/adaptive-card.json#/definitions/Input.ChoiceSet/properties/isMultiSelect"u8, buffer, out written);
+            public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/definitions/https:~1~1adaptivecards.io~1schemas~1adaptive-card.json/definitions/Input.ChoiceSet/properties/isMultiSelect"u8, buffer, out written);
 
             /// <summary>
             /// Gets the schema location from which this type was generated.
             /// </summary>
-            public const string SchemaLocation = "https://adaptivecards.io/schemas/adaptive-card.json#/definitions/Input.ChoiceSet/properties/isMultiSelect";
+            public const string SchemaLocation = "/definitions/https:~1~1adaptivecards.io~1schemas~1adaptive-card.json/definitions/Input.ChoiceSet/properties/isMultiSelect";
 
             /// <summary>
             /// Gets the schema location from which this type was generated as a UTF-8 string.
             /// </summary>
-            public static ReadOnlySpan<byte> SchemaLocationUtf8 => "https://adaptivecards.io/schemas/adaptive-card.json#/definitions/Input.ChoiceSet/properties/isMultiSelect"u8;
+            public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/definitions/https:~1~1adaptivecards.io~1schemas~1adaptive-card.json/definitions/Input.ChoiceSet/properties/isMultiSelect"u8;
 
             /// <summary>
             /// Applies the JSON schema semantics defined by this type to the instance determined by the given document and index.

@@ -61,21 +61,21 @@ public readonly partial struct KrakendSchema
 
                 private const uint RequiredBitMask0 =
                     RequiredBitForArgs | RequiredBitForType;
-                private static readonly JsonSchemaPathProvider ArgsValueSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/args"u8, buffer, out written);
+                private static readonly JsonSchemaPathProvider ArgsSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/args"u8, buffer, out written);
                 private static readonly JsonSchemaPathProvider TypeValueSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/type"u8, buffer, out written);
 
-                private static void MatchArgsValue(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+                private static void MatchArgs(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext =
-                        Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271proxy1flatmapJson.FlatmapOperation.Args.JsonSchema.PushChildContextUnescaped(
+                        Corvus.KrakendBenchmark.Current.JsonArray.JsonSchema.PushChildContextUnescaped(
                             parentDocument,
                             parentDocumentIndex,
                             ref context,
-                            JsonPropertyNames.ArgsValueUtf8,
-                            evaluationPath: ArgsValueSchemaEvaluationPath);
+                            JsonPropertyNames.ArgsUtf8,
+                            evaluationPath: ArgsSchemaEvaluationPath);
 
-                    Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271proxy1flatmapJson.FlatmapOperation.Args.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext);
+                    Corvus.KrakendBenchmark.Current.JsonArray.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext);
                     context.CommitChildContext(childContext.IsMatch, ref childContext);
 
                     if (!context.HasCollector && !context.IsMatch)
@@ -111,7 +111,7 @@ public readonly partial struct KrakendSchema
                 private static PropertySchemaMatchers<Corvus.KrakendBenchmark.Current.PropertiesValidationHandler_NamedPropertyValidator> MatchersBuilder()
                 {
                     return new PropertySchemaMatchers<Corvus.KrakendBenchmark.Current.PropertiesValidationHandler_NamedPropertyValidator>([
-                        (static () => JsonPropertyNames.ArgsValueUtf8, MatchArgsValue),
+                        (static () => JsonPropertyNames.ArgsUtf8, MatchArgs),
                         (static () => JsonPropertyNames.TypeValueUtf8, MatchTypeValue),
                     ]);
                 }
@@ -139,17 +139,17 @@ public readonly partial struct KrakendSchema
                 /// <summary>
                 /// Gets a provider for the schema location from which this type was generated.
                 /// </summary>
-                public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("krakend-schema.json#/definitions/https:~1~1www.krakend.io~1schema~1v2.7~1proxy~1flatmap.json/items"u8, buffer, out written);
+                public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/definitions/https:~1~1www.krakend.io~1schema~1v2.7~1proxy~1flatmap.json/items"u8, buffer, out written);
 
                 /// <summary>
                 /// Gets the schema location from which this type was generated.
                 /// </summary>
-                public const string SchemaLocation = "krakend-schema.json#/definitions/https:~1~1www.krakend.io~1schema~1v2.7~1proxy~1flatmap.json/items";
+                public const string SchemaLocation = "/definitions/https:~1~1www.krakend.io~1schema~1v2.7~1proxy~1flatmap.json/items";
 
                 /// <summary>
                 /// Gets the schema location from which this type was generated as a UTF-8 string.
                 /// </summary>
-                public static ReadOnlySpan<byte> SchemaLocationUtf8 => "krakend-schema.json#/definitions/https:~1~1www.krakend.io~1schema~1v2.7~1proxy~1flatmap.json/items"u8;
+                public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/definitions/https:~1~1www.krakend.io~1schema~1v2.7~1proxy~1flatmap.json/items"u8;
 
                 /// <summary>
                 /// Applies the JSON schema semantics defined by this type to the instance determined by the given document and index.

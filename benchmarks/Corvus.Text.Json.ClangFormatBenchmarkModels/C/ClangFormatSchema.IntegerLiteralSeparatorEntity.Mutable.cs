@@ -466,7 +466,7 @@ public readonly partial struct ClangFormatSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Binary, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Binary, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -511,7 +511,7 @@ public readonly partial struct ClangFormatSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.BinaryMinDigits, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.BinaryMinDigits, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -556,7 +556,7 @@ public readonly partial struct ClangFormatSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.DecimalValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DecimalValue, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -601,7 +601,7 @@ public readonly partial struct ClangFormatSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.DecimalMinDigits, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DecimalMinDigits, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -646,7 +646,7 @@ public readonly partial struct ClangFormatSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Hex, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Hex, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -691,7 +691,7 @@ public readonly partial struct ClangFormatSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.HexMinDigits, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.HexMinDigits, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1074,6 +1074,24 @@ public readonly partial struct ClangFormatSchema
                 }
             }
 
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.JsonElement:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                        break;
+                    case Kind.Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
             internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
             {
                 switch(_kind)
@@ -1175,6 +1193,24 @@ public readonly partial struct ClangFormatSchema
                 }
             }
 
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.Source:
+                        _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                        break;
+                    case Kind.Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
             internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
             {
                 switch(_kind)
@@ -1260,12 +1296,12 @@ public readonly partial struct ClangFormatSchema
                 in Corvus.ClangFormatBenchmark.Current.JsonInteger.Source hex = default,
                 in Corvus.ClangFormatBenchmark.Current.JsonInteger.Source hexMinDigits = default)
             {
-                binary.AddAsProperty(JsonPropertyNamesEscaped.Binary, ref builder, escapeName: false);
-                binaryMinDigits.AddAsProperty(JsonPropertyNamesEscaped.BinaryMinDigits, ref builder, escapeName: false);
-                decimalValue.AddAsProperty(JsonPropertyNamesEscaped.DecimalValue, ref builder, escapeName: false);
-                decimalMinDigits.AddAsProperty(JsonPropertyNamesEscaped.DecimalMinDigits, ref builder, escapeName: false);
-                hex.AddAsProperty(JsonPropertyNamesEscaped.Hex, ref builder, escapeName: false);
-                hexMinDigits.AddAsProperty(JsonPropertyNamesEscaped.HexMinDigits, ref builder, escapeName: false);
+                binary.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Binary, ref builder);
+                binaryMinDigits.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.BinaryMinDigits, ref builder);
+                decimalValue.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DecimalValue, ref builder);
+                decimalMinDigits.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DecimalMinDigits, ref builder);
+                hex.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Hex, ref builder);
+                hexMinDigits.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.HexMinDigits, ref builder);
             }
 
             /// <summary>

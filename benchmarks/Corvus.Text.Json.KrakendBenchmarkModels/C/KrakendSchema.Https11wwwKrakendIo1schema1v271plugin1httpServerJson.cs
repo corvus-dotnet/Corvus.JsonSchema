@@ -953,5 +953,57 @@ public readonly partial struct KrakendSchema
             /// </summary>
             public static ReadOnlySpan<byte> Wildcard => "wildcard"u8;
         }
+
+        /// <summary>
+        /// Provides pre-baked property name blobs for fast builder property storage.
+        /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
+        /// </summary>
+        private static class JsonPropertyNamesPrebaked
+        {
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Geoip"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Geoip => [0x75, 0x00, 0x00, 0x00, 0x22, 0x67, 0x65, 0x6F, 0x69, 0x70, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="IpFilter"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> IpFilter => [0xB5, 0x00, 0x00, 0x00, 0x22, 0x69, 0x70, 0x2D, 0x66, 0x69, 0x6C, 0x74, 0x65, 0x72, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="JwkAggregator"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> JwkAggregator => [0x05, 0x01, 0x00, 0x00, 0x22, 0x6A, 0x77, 0x6B, 0x2D, 0x61, 0x67, 0x67, 0x72, 0x65, 0x67, 0x61, 0x74, 0x6F, 0x72, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Name"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Name => [0x65, 0x00, 0x00, 0x00, 0x22, 0x6E, 0x61, 0x6D, 0x65, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="RedisRatelimit"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> RedisRatelimit => [0x15, 0x01, 0x00, 0x00, 0x22, 0x72, 0x65, 0x64, 0x69, 0x73, 0x2D, 0x72, 0x61, 0x74, 0x65, 0x6C, 0x69, 0x6D, 0x69, 0x74, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="StaticFilesystem"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> StaticFilesystem => [0x35, 0x01, 0x00, 0x00, 0x22, 0x73, 0x74, 0x61, 0x74, 0x69, 0x63, 0x2D, 0x66, 0x69, 0x6C, 0x65, 0x73, 0x79, 0x73, 0x74, 0x65, 0x6D, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="UrlRewrite"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> UrlRewrite => [0xD5, 0x00, 0x00, 0x00, 0x22, 0x75, 0x72, 0x6C, 0x2D, 0x72, 0x65, 0x77, 0x72, 0x69, 0x74, 0x65, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Virtualhost"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Virtualhost => [0xD5, 0x00, 0x00, 0x00, 0x22, 0x76, 0x69, 0x72, 0x74, 0x75, 0x61, 0x6C, 0x68, 0x6F, 0x73, 0x74, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Wildcard"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Wildcard => [0xA5, 0x00, 0x00, 0x00, 0x22, 0x77, 0x69, 0x6C, 0x64, 0x63, 0x61, 0x72, 0x64, 0x22];
+        }
     }
 }

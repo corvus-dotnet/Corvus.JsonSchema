@@ -602,7 +602,7 @@ public readonly partial struct DenoSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Bench, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Bench, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -638,7 +638,7 @@ public readonly partial struct DenoSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Bench, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Bench, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -683,7 +683,7 @@ public readonly partial struct DenoSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.CompilerOptions, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CompilerOptions, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -719,7 +719,7 @@ public readonly partial struct DenoSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.CompilerOptions, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CompilerOptions, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -764,7 +764,7 @@ public readonly partial struct DenoSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Exclude, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Exclude, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -800,7 +800,7 @@ public readonly partial struct DenoSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Exclude, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Exclude, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -845,7 +845,7 @@ public readonly partial struct DenoSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Fmt, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Fmt, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -881,7 +881,7 @@ public readonly partial struct DenoSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Fmt, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Fmt, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -926,7 +926,7 @@ public readonly partial struct DenoSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.ImportMap, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ImportMap, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -971,7 +971,7 @@ public readonly partial struct DenoSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Imports, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Imports, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1007,7 +1007,7 @@ public readonly partial struct DenoSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Imports, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Imports, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1052,7 +1052,7 @@ public readonly partial struct DenoSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Lint, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Lint, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1088,7 +1088,7 @@ public readonly partial struct DenoSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Lint, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Lint, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1133,7 +1133,7 @@ public readonly partial struct DenoSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Lock, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Lock, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1178,7 +1178,7 @@ public readonly partial struct DenoSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.NodeModulesDir, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.NodeModulesDir, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1223,7 +1223,7 @@ public readonly partial struct DenoSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Scopes, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Scopes, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1259,7 +1259,7 @@ public readonly partial struct DenoSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Scopes, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Scopes, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1304,7 +1304,7 @@ public readonly partial struct DenoSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Tasks, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Tasks, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1340,7 +1340,7 @@ public readonly partial struct DenoSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Tasks, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Tasks, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1385,7 +1385,7 @@ public readonly partial struct DenoSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Test, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Test, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1421,7 +1421,7 @@ public readonly partial struct DenoSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Test, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Test, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1466,7 +1466,7 @@ public readonly partial struct DenoSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Vendor, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Vendor, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1849,6 +1849,24 @@ public readonly partial struct DenoSchema
             }
         }
 
+        internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+        {
+            switch(_kind)
+            {
+                case Kind.Unknown:
+                    break;
+                case Kind.JsonElement:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                    break;
+                case Kind.Builder:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
+                    break;
+                default:
+                    Debug.Fail("Unexpected Kind");
+                    break;
+            }
+        }
+
         internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
         {
             switch(_kind)
@@ -1950,6 +1968,24 @@ public readonly partial struct DenoSchema
             }
         }
 
+        internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+        {
+            switch(_kind)
+            {
+                case Kind.Unknown:
+                    break;
+                case Kind.Source:
+                    _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                    break;
+                case Kind.Builder:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
+                    break;
+                default:
+                    Debug.Fail("Unexpected Kind");
+                    break;
+            }
+        }
+
         internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
         {
             switch(_kind)
@@ -2042,19 +2078,19 @@ public readonly partial struct DenoSchema
             in Corvus.DenoBenchmark.Current.DenoSchema.ConfigurationForDenoTest.Source test = default,
             in Corvus.DenoBenchmark.Current.JsonBoolean.Source vendor = default)
         {
-            bench.AddAsProperty(JsonPropertyNamesEscaped.Bench, ref builder, escapeName: false);
-            compilerOptions.AddAsProperty(JsonPropertyNamesEscaped.CompilerOptions, ref builder, escapeName: false);
-            exclude.AddAsProperty(JsonPropertyNamesEscaped.Exclude, ref builder, escapeName: false);
-            fmt.AddAsProperty(JsonPropertyNamesEscaped.Fmt, ref builder, escapeName: false);
-            importMap.AddAsProperty(JsonPropertyNamesEscaped.ImportMap, ref builder, escapeName: false);
-            imports.AddAsProperty(JsonPropertyNamesEscaped.Imports, ref builder, escapeName: false);
-            lint.AddAsProperty(JsonPropertyNamesEscaped.Lint, ref builder, escapeName: false);
-            lockValue.AddAsProperty(JsonPropertyNamesEscaped.Lock, ref builder, escapeName: false);
-            nodeModulesDir.AddAsProperty(JsonPropertyNamesEscaped.NodeModulesDir, ref builder, escapeName: false);
-            scopes.AddAsProperty(JsonPropertyNamesEscaped.Scopes, ref builder, escapeName: false);
-            tasks.AddAsProperty(JsonPropertyNamesEscaped.Tasks, ref builder, escapeName: false);
-            test.AddAsProperty(JsonPropertyNamesEscaped.Test, ref builder, escapeName: false);
-            vendor.AddAsProperty(JsonPropertyNamesEscaped.Vendor, ref builder, escapeName: false);
+            bench.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Bench, ref builder);
+            compilerOptions.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CompilerOptions, ref builder);
+            exclude.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Exclude, ref builder);
+            fmt.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Fmt, ref builder);
+            importMap.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ImportMap, ref builder);
+            imports.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Imports, ref builder);
+            lint.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Lint, ref builder);
+            lockValue.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Lock, ref builder);
+            nodeModulesDir.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.NodeModulesDir, ref builder);
+            scopes.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Scopes, ref builder);
+            tasks.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Tasks, ref builder);
+            test.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Test, ref builder);
+            vendor.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Vendor, ref builder);
         }
 
         /// <summary>
@@ -2101,19 +2137,19 @@ public readonly partial struct DenoSchema
         where TContext : allows ref struct
         #endif
         {
-            bench.AddAsProperty(JsonPropertyNamesEscaped.Bench, ref builder, escapeName: false);
-            compilerOptions.AddAsProperty(JsonPropertyNamesEscaped.CompilerOptions, ref builder, escapeName: false);
-            exclude.AddAsProperty(JsonPropertyNamesEscaped.Exclude, ref builder, escapeName: false);
-            fmt.AddAsProperty(JsonPropertyNamesEscaped.Fmt, ref builder, escapeName: false);
-            importMap.AddAsProperty(JsonPropertyNamesEscaped.ImportMap, ref builder, escapeName: false);
-            imports.AddAsProperty(JsonPropertyNamesEscaped.Imports, ref builder, escapeName: false);
-            lint.AddAsProperty(JsonPropertyNamesEscaped.Lint, ref builder, escapeName: false);
-            lockValue.AddAsProperty(JsonPropertyNamesEscaped.Lock, ref builder, escapeName: false);
-            nodeModulesDir.AddAsProperty(JsonPropertyNamesEscaped.NodeModulesDir, ref builder, escapeName: false);
-            scopes.AddAsProperty(JsonPropertyNamesEscaped.Scopes, ref builder, escapeName: false);
-            tasks.AddAsProperty(JsonPropertyNamesEscaped.Tasks, ref builder, escapeName: false);
-            test.AddAsProperty(JsonPropertyNamesEscaped.Test, ref builder, escapeName: false);
-            vendor.AddAsProperty(JsonPropertyNamesEscaped.Vendor, ref builder, escapeName: false);
+            bench.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Bench, ref builder);
+            compilerOptions.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CompilerOptions, ref builder);
+            exclude.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Exclude, ref builder);
+            fmt.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Fmt, ref builder);
+            importMap.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ImportMap, ref builder);
+            imports.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Imports, ref builder);
+            lint.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Lint, ref builder);
+            lockValue.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Lock, ref builder);
+            nodeModulesDir.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.NodeModulesDir, ref builder);
+            scopes.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Scopes, ref builder);
+            tasks.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Tasks, ref builder);
+            test.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Test, ref builder);
+            vendor.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Vendor, ref builder);
         }
 
         /// <summary>

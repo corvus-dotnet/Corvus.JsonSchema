@@ -449,7 +449,7 @@ public readonly partial struct KrakendSchema
                             else
                             {
                                 // We are going to insert the new value
-                                value.AddAsProperty(JsonPropertyNamesEscaped.DetailedConnection, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DetailedConnection, ref cvb);
                                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                             }
@@ -494,7 +494,7 @@ public readonly partial struct KrakendSchema
                             else
                             {
                                 // We are going to insert the new value
-                                value.AddAsProperty(JsonPropertyNamesEscaped.DisableStage, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DisableStage, ref cvb);
                                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                             }
@@ -539,7 +539,7 @@ public readonly partial struct KrakendSchema
                             else
                             {
                                 // We are going to insert the new value
-                                value.AddAsProperty(JsonPropertyNamesEscaped.ReadPayload, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ReadPayload, ref cvb);
                                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                             }
@@ -584,7 +584,7 @@ public readonly partial struct KrakendSchema
                             else
                             {
                                 // We are going to insert the new value
-                                value.AddAsProperty(JsonPropertyNamesEscaped.ReportHeadersValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ReportHeadersValue, ref cvb);
                                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                             }
@@ -629,7 +629,7 @@ public readonly partial struct KrakendSchema
                             else
                             {
                                 // We are going to insert the new value
-                                value.AddAsProperty(JsonPropertyNamesEscaped.RoundTrip, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.RoundTrip, ref cvb);
                                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                             }
@@ -674,7 +674,7 @@ public readonly partial struct KrakendSchema
                             else
                             {
                                 // We are going to insert the new value
-                                value.AddAsProperty(JsonPropertyNamesEscaped.StaticAttributes, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.StaticAttributes, ref cvb);
                                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                             }
@@ -710,7 +710,7 @@ public readonly partial struct KrakendSchema
                             else
                             {
                                 // We are going to insert the new value
-                                value.AddAsProperty(JsonPropertyNamesEscaped.StaticAttributes, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.StaticAttributes, ref cvb);
                                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                             }
@@ -1093,6 +1093,24 @@ public readonly partial struct KrakendSchema
                             }
                         }
 
+                        internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+                        {
+                            switch(_kind)
+                            {
+                                case Kind.Unknown:
+                                    break;
+                                case Kind.JsonElement:
+                                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                                    break;
+                                case Kind.Builder:
+                                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
+                                    break;
+                                default:
+                                    Debug.Fail("Unexpected Kind");
+                                    break;
+                            }
+                        }
+
                         internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
                         {
                             switch(_kind)
@@ -1194,6 +1212,24 @@ public readonly partial struct KrakendSchema
                             }
                         }
 
+                        internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+                        {
+                            switch(_kind)
+                            {
+                                case Kind.Unknown:
+                                    break;
+                                case Kind.Source:
+                                    _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                                    break;
+                                case Kind.Builder:
+                                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
+                                    break;
+                                default:
+                                    Debug.Fail("Unexpected Kind");
+                                    break;
+                            }
+                        }
+
                         internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
                         {
                             switch(_kind)
@@ -1279,12 +1315,12 @@ public readonly partial struct KrakendSchema
                             in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271telemetry1opentelemetryJson.Layers.ReportBackendActivity.TracesEntity.DetailedRoundTrip.Source roundTrip = default,
                             in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271telemetry1opentelemetryJson.Layers.ReportBackendActivity.TracesEntity.RequiredKeyAndValueArray.Source staticAttributes = default)
                         {
-                            detailedConnection.AddAsProperty(JsonPropertyNamesEscaped.DetailedConnection, ref builder, escapeName: false);
-                            disableStage.AddAsProperty(JsonPropertyNamesEscaped.DisableStage, ref builder, escapeName: false);
-                            readPayload.AddAsProperty(JsonPropertyNamesEscaped.ReadPayload, ref builder, escapeName: false);
-                            reportHeaders.AddAsProperty(JsonPropertyNamesEscaped.ReportHeadersValue, ref builder, escapeName: false);
-                            roundTrip.AddAsProperty(JsonPropertyNamesEscaped.RoundTrip, ref builder, escapeName: false);
-                            staticAttributes.AddAsProperty(JsonPropertyNamesEscaped.StaticAttributes, ref builder, escapeName: false);
+                            detailedConnection.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DetailedConnection, ref builder);
+                            disableStage.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DisableStage, ref builder);
+                            readPayload.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ReadPayload, ref builder);
+                            reportHeaders.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ReportHeadersValue, ref builder);
+                            roundTrip.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.RoundTrip, ref builder);
+                            staticAttributes.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.StaticAttributes, ref builder);
                         }
 
                         /// <summary>
@@ -1317,12 +1353,12 @@ public readonly partial struct KrakendSchema
                         where TContext : allows ref struct
                         #endif
                         {
-                            detailedConnection.AddAsProperty(JsonPropertyNamesEscaped.DetailedConnection, ref builder, escapeName: false);
-                            disableStage.AddAsProperty(JsonPropertyNamesEscaped.DisableStage, ref builder, escapeName: false);
-                            readPayload.AddAsProperty(JsonPropertyNamesEscaped.ReadPayload, ref builder, escapeName: false);
-                            reportHeaders.AddAsProperty(JsonPropertyNamesEscaped.ReportHeadersValue, ref builder, escapeName: false);
-                            roundTrip.AddAsProperty(JsonPropertyNamesEscaped.RoundTrip, ref builder, escapeName: false);
-                            staticAttributes.AddAsProperty(JsonPropertyNamesEscaped.StaticAttributes, ref builder, escapeName: false);
+                            detailedConnection.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DetailedConnection, ref builder);
+                            disableStage.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DisableStage, ref builder);
+                            readPayload.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ReadPayload, ref builder);
+                            reportHeaders.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ReportHeadersValue, ref builder);
+                            roundTrip.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.RoundTrip, ref builder);
+                            staticAttributes.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.StaticAttributes, ref builder);
                         }
 
                         /// <summary>

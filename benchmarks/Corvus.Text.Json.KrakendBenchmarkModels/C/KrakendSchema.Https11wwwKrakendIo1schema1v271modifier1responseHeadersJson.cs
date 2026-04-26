@@ -654,5 +654,27 @@ public readonly partial struct KrakendSchema
             /// </summary>
             public static ReadOnlySpan<byte> Replace => "replace"u8;
         }
+
+        /// <summary>
+        /// Provides pre-baked property name blobs for fast builder property storage.
+        /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
+        /// </summary>
+        private static class JsonPropertyNamesPrebaked
+        {
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Add"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Add => [0x55, 0x00, 0x00, 0x00, 0x22, 0x61, 0x64, 0x64, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Delete"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Delete => [0x85, 0x00, 0x00, 0x00, 0x22, 0x64, 0x65, 0x6C, 0x65, 0x74, 0x65, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Replace"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Replace => [0x95, 0x00, 0x00, 0x00, 0x22, 0x72, 0x65, 0x70, 0x6C, 0x61, 0x63, 0x65, 0x22];
+        }
     }
 }

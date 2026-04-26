@@ -245,11 +245,11 @@ public readonly partial struct KrakendSchema
         /// See: https://www.krakend.io/docs/endpoints/lua/
         /// </para>
         /// </remarks>
-        public Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271modifier1luaJson.Md5Checksum Md5
+        public Corvus.KrakendBenchmark.Current.JsonObject Md5
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.Md5Utf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271modifier1luaJson.Md5Checksum value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.Md5Utf8, out Corvus.KrakendBenchmark.Current.JsonObject value))
                 {
                     return value;
                 }
@@ -345,11 +345,11 @@ public readonly partial struct KrakendSchema
         /// See: https://www.krakend.io/docs/endpoints/lua/
         /// </para>
         /// </remarks>
-        public Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271modifier1luaJson.Sources SourcesValue
+        public Corvus.KrakendBenchmark.Current.JsonArray Sources
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SourcesValueUtf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271modifier1luaJson.Sources value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SourcesUtf8, out Corvus.KrakendBenchmark.Current.JsonArray value))
                 {
                     return value;
                 }
@@ -840,9 +840,9 @@ public readonly partial struct KrakendSchema
             public const string SkipNextValue = "skip_next";
 
             /// <summary>
-            /// Gets the JSON property name for <see cref="SourcesValue"/>.
+            /// Gets the JSON property name for <see cref="Sources"/>.
             /// </summary>
-            public const string SourcesValue = "sources";
+            public const string Sources = "sources";
 
             /// <summary>
             /// Gets the JSON property name for <see cref="AllowOpenLibs"/>.
@@ -875,9 +875,9 @@ public readonly partial struct KrakendSchema
             public static ReadOnlySpan<byte> SkipNextValueUtf8 => "skip_next"u8;
 
             /// <summary>
-            /// Gets the JSON property name for <see cref="SourcesValue"/>.
+            /// Gets the JSON property name for <see cref="Sources"/>.
             /// </summary>
-            public static ReadOnlySpan<byte> SourcesValueUtf8 => "sources"u8;
+            public static ReadOnlySpan<byte> SourcesUtf8 => "sources"u8;
         }
 
         /// <summary>
@@ -916,9 +916,51 @@ public readonly partial struct KrakendSchema
             public static ReadOnlySpan<byte> SkipNextValue => "skip_next"u8;
 
             /// <summary>
-            /// Gets the escaped UTF-8 JSON property name for <see cref="SourcesValue"/>.
+            /// Gets the escaped UTF-8 JSON property name for <see cref="Sources"/>.
             /// </summary>
-            public static ReadOnlySpan<byte> SourcesValue => "sources"u8;
+            public static ReadOnlySpan<byte> Sources => "sources"u8;
+        }
+
+        /// <summary>
+        /// Provides pre-baked property name blobs for fast builder property storage.
+        /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
+        /// </summary>
+        private static class JsonPropertyNamesPrebaked
+        {
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="AllowOpenLibs"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> AllowOpenLibs => [0x15, 0x01, 0x00, 0x00, 0x22, 0x61, 0x6C, 0x6C, 0x6F, 0x77, 0x5F, 0x6F, 0x70, 0x65, 0x6E, 0x5F, 0x6C, 0x69, 0x62, 0x73, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Live"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Live => [0x65, 0x00, 0x00, 0x00, 0x22, 0x6C, 0x69, 0x76, 0x65, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Md5"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Md5 => [0x55, 0x00, 0x00, 0x00, 0x22, 0x6D, 0x64, 0x35, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Post"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Post => [0x65, 0x00, 0x00, 0x00, 0x22, 0x70, 0x6F, 0x73, 0x74, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Pre"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Pre => [0x55, 0x00, 0x00, 0x00, 0x22, 0x70, 0x72, 0x65, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="SkipNextValue"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> SkipNextValue => [0xB5, 0x00, 0x00, 0x00, 0x22, 0x73, 0x6B, 0x69, 0x70, 0x5F, 0x6E, 0x65, 0x78, 0x74, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Sources"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Sources => [0x95, 0x00, 0x00, 0x00, 0x22, 0x73, 0x6F, 0x75, 0x72, 0x63, 0x65, 0x73, 0x22];
         }
     }
 }

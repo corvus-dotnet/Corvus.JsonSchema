@@ -695,7 +695,7 @@ public readonly partial struct PreCommitHooksSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.AdditionalDependencies, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AdditionalDependencies, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -731,7 +731,7 @@ public readonly partial struct PreCommitHooksSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.AdditionalDependencies, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AdditionalDependencies, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -776,7 +776,7 @@ public readonly partial struct PreCommitHooksSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Alias, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Alias, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -821,7 +821,7 @@ public readonly partial struct PreCommitHooksSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.AlwaysRun, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AlwaysRun, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -866,7 +866,7 @@ public readonly partial struct PreCommitHooksSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Args, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Args, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -902,7 +902,7 @@ public readonly partial struct PreCommitHooksSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Args, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Args, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -947,7 +947,7 @@ public readonly partial struct PreCommitHooksSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Description, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Description, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -990,7 +990,7 @@ public readonly partial struct PreCommitHooksSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Entry, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Entry, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1023,7 +1023,7 @@ public readonly partial struct PreCommitHooksSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Exclude, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Exclude, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1068,7 +1068,7 @@ public readonly partial struct PreCommitHooksSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.ExcludeTypes, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ExcludeTypes, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1104,7 +1104,7 @@ public readonly partial struct PreCommitHooksSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.ExcludeTypes, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ExcludeTypes, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1149,7 +1149,7 @@ public readonly partial struct PreCommitHooksSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.FailFast, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.FailFast, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1194,7 +1194,7 @@ public readonly partial struct PreCommitHooksSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Files, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Files, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1237,7 +1237,7 @@ public readonly partial struct PreCommitHooksSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Id, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Id, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1268,7 +1268,7 @@ public readonly partial struct PreCommitHooksSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.LanguageValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.LanguageValue, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1301,7 +1301,7 @@ public readonly partial struct PreCommitHooksSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.LanguageVersion, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.LanguageVersion, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1346,7 +1346,7 @@ public readonly partial struct PreCommitHooksSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.LogFile, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.LogFile, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1391,7 +1391,7 @@ public readonly partial struct PreCommitHooksSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.MinimumPreCommitVersion, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MinimumPreCommitVersion, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1434,7 +1434,7 @@ public readonly partial struct PreCommitHooksSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Name, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Name, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1467,7 +1467,7 @@ public readonly partial struct PreCommitHooksSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.PassFilenames, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PassFilenames, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1512,7 +1512,7 @@ public readonly partial struct PreCommitHooksSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.RequireSerial, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.RequireSerial, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1557,7 +1557,7 @@ public readonly partial struct PreCommitHooksSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.StagesValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.StagesValue, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1593,7 +1593,7 @@ public readonly partial struct PreCommitHooksSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.StagesValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.StagesValue, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1638,7 +1638,7 @@ public readonly partial struct PreCommitHooksSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Types, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Types, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1674,7 +1674,7 @@ public readonly partial struct PreCommitHooksSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Types, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Types, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1719,7 +1719,7 @@ public readonly partial struct PreCommitHooksSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.TypesOr, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TypesOr, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1755,7 +1755,7 @@ public readonly partial struct PreCommitHooksSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.TypesOr, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TypesOr, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1800,7 +1800,7 @@ public readonly partial struct PreCommitHooksSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Verbose, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Verbose, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -2007,6 +2007,24 @@ public readonly partial struct PreCommitHooksSchema
                 }
             }
 
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.JsonElement:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                        break;
+                    case Kind.Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
             internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
             {
                 switch(_kind)
@@ -2101,6 +2119,24 @@ public readonly partial struct PreCommitHooksSchema
                         break;
                     case Kind.Builder:
                         valueBuilder.AddProperty(utf8Name, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o), escapeName, nameRequiresUnescaping);
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.Source:
+                        _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                        break;
+                    case Kind.Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                         break;
                     default:
                         Debug.Fail("Unexpected Kind");
@@ -2209,28 +2245,28 @@ public readonly partial struct PreCommitHooksSchema
                 in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.FileTypes.Source typesOr = default,
                 in Corvus.PreCommitHooksBenchmark.Current.PreCommitHooksSchema.RequiredEntryAndIdAndLanguageAndName.VerboseEntity.Source verbose = default)
             {
-                entry.AddAsProperty(JsonPropertyNamesEscaped.Entry, ref builder, escapeName: false);
-                id.AddAsProperty(JsonPropertyNamesEscaped.Id, ref builder, escapeName: false);
-                language.AddAsProperty(JsonPropertyNamesEscaped.LanguageValue, ref builder, escapeName: false);
-                name.AddAsProperty(JsonPropertyNamesEscaped.Name, ref builder, escapeName: false);
-                additionalDependencies.AddAsProperty(JsonPropertyNamesEscaped.AdditionalDependencies, ref builder, escapeName: false);
-                alias.AddAsProperty(JsonPropertyNamesEscaped.Alias, ref builder, escapeName: false);
-                alwaysRun.AddAsProperty(JsonPropertyNamesEscaped.AlwaysRun, ref builder, escapeName: false);
-                args.AddAsProperty(JsonPropertyNamesEscaped.Args, ref builder, escapeName: false);
-                description.AddAsProperty(JsonPropertyNamesEscaped.Description, ref builder, escapeName: false);
-                exclude.AddAsProperty(JsonPropertyNamesEscaped.Exclude, ref builder, escapeName: false);
-                excludeTypes.AddAsProperty(JsonPropertyNamesEscaped.ExcludeTypes, ref builder, escapeName: false);
-                failFast.AddAsProperty(JsonPropertyNamesEscaped.FailFast, ref builder, escapeName: false);
-                files.AddAsProperty(JsonPropertyNamesEscaped.Files, ref builder, escapeName: false);
-                languageVersion.AddAsProperty(JsonPropertyNamesEscaped.LanguageVersion, ref builder, escapeName: false);
-                logFile.AddAsProperty(JsonPropertyNamesEscaped.LogFile, ref builder, escapeName: false);
-                minimumPreCommitVersion.AddAsProperty(JsonPropertyNamesEscaped.MinimumPreCommitVersion, ref builder, escapeName: false);
-                passFilenames.AddAsProperty(JsonPropertyNamesEscaped.PassFilenames, ref builder, escapeName: false);
-                requireSerial.AddAsProperty(JsonPropertyNamesEscaped.RequireSerial, ref builder, escapeName: false);
-                stages.AddAsProperty(JsonPropertyNamesEscaped.StagesValue, ref builder, escapeName: false);
-                types.AddAsProperty(JsonPropertyNamesEscaped.Types, ref builder, escapeName: false);
-                typesOr.AddAsProperty(JsonPropertyNamesEscaped.TypesOr, ref builder, escapeName: false);
-                verbose.AddAsProperty(JsonPropertyNamesEscaped.Verbose, ref builder, escapeName: false);
+                entry.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Entry, ref builder);
+                id.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Id, ref builder);
+                language.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.LanguageValue, ref builder);
+                name.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Name, ref builder);
+                additionalDependencies.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AdditionalDependencies, ref builder);
+                alias.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Alias, ref builder);
+                alwaysRun.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AlwaysRun, ref builder);
+                args.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Args, ref builder);
+                description.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Description, ref builder);
+                exclude.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Exclude, ref builder);
+                excludeTypes.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ExcludeTypes, ref builder);
+                failFast.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.FailFast, ref builder);
+                files.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Files, ref builder);
+                languageVersion.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.LanguageVersion, ref builder);
+                logFile.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.LogFile, ref builder);
+                minimumPreCommitVersion.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MinimumPreCommitVersion, ref builder);
+                passFilenames.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PassFilenames, ref builder);
+                requireSerial.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.RequireSerial, ref builder);
+                stages.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.StagesValue, ref builder);
+                types.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Types, ref builder);
+                typesOr.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TypesOr, ref builder);
+                verbose.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Verbose, ref builder);
             }
 
             /// <summary>
@@ -2295,28 +2331,28 @@ public readonly partial struct PreCommitHooksSchema
             where TContext : allows ref struct
             #endif
             {
-                entry.AddAsProperty(JsonPropertyNamesEscaped.Entry, ref builder, escapeName: false);
-                id.AddAsProperty(JsonPropertyNamesEscaped.Id, ref builder, escapeName: false);
-                language.AddAsProperty(JsonPropertyNamesEscaped.LanguageValue, ref builder, escapeName: false);
-                name.AddAsProperty(JsonPropertyNamesEscaped.Name, ref builder, escapeName: false);
-                additionalDependencies.AddAsProperty(JsonPropertyNamesEscaped.AdditionalDependencies, ref builder, escapeName: false);
-                alias.AddAsProperty(JsonPropertyNamesEscaped.Alias, ref builder, escapeName: false);
-                alwaysRun.AddAsProperty(JsonPropertyNamesEscaped.AlwaysRun, ref builder, escapeName: false);
-                args.AddAsProperty(JsonPropertyNamesEscaped.Args, ref builder, escapeName: false);
-                description.AddAsProperty(JsonPropertyNamesEscaped.Description, ref builder, escapeName: false);
-                exclude.AddAsProperty(JsonPropertyNamesEscaped.Exclude, ref builder, escapeName: false);
-                excludeTypes.AddAsProperty(JsonPropertyNamesEscaped.ExcludeTypes, ref builder, escapeName: false);
-                failFast.AddAsProperty(JsonPropertyNamesEscaped.FailFast, ref builder, escapeName: false);
-                files.AddAsProperty(JsonPropertyNamesEscaped.Files, ref builder, escapeName: false);
-                languageVersion.AddAsProperty(JsonPropertyNamesEscaped.LanguageVersion, ref builder, escapeName: false);
-                logFile.AddAsProperty(JsonPropertyNamesEscaped.LogFile, ref builder, escapeName: false);
-                minimumPreCommitVersion.AddAsProperty(JsonPropertyNamesEscaped.MinimumPreCommitVersion, ref builder, escapeName: false);
-                passFilenames.AddAsProperty(JsonPropertyNamesEscaped.PassFilenames, ref builder, escapeName: false);
-                requireSerial.AddAsProperty(JsonPropertyNamesEscaped.RequireSerial, ref builder, escapeName: false);
-                stages.AddAsProperty(JsonPropertyNamesEscaped.StagesValue, ref builder, escapeName: false);
-                types.AddAsProperty(JsonPropertyNamesEscaped.Types, ref builder, escapeName: false);
-                typesOr.AddAsProperty(JsonPropertyNamesEscaped.TypesOr, ref builder, escapeName: false);
-                verbose.AddAsProperty(JsonPropertyNamesEscaped.Verbose, ref builder, escapeName: false);
+                entry.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Entry, ref builder);
+                id.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Id, ref builder);
+                language.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.LanguageValue, ref builder);
+                name.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Name, ref builder);
+                additionalDependencies.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AdditionalDependencies, ref builder);
+                alias.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Alias, ref builder);
+                alwaysRun.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AlwaysRun, ref builder);
+                args.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Args, ref builder);
+                description.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Description, ref builder);
+                exclude.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Exclude, ref builder);
+                excludeTypes.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ExcludeTypes, ref builder);
+                failFast.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.FailFast, ref builder);
+                files.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Files, ref builder);
+                languageVersion.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.LanguageVersion, ref builder);
+                logFile.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.LogFile, ref builder);
+                minimumPreCommitVersion.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MinimumPreCommitVersion, ref builder);
+                passFilenames.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PassFilenames, ref builder);
+                requireSerial.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.RequireSerial, ref builder);
+                stages.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.StagesValue, ref builder);
+                types.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Types, ref builder);
+                typesOr.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TypesOr, ref builder);
+                verbose.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Verbose, ref builder);
             }
 
             /// <summary>

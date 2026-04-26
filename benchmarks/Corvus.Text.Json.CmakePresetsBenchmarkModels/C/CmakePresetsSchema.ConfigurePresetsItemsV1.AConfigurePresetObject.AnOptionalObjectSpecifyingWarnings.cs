@@ -697,6 +697,38 @@ public readonly partial struct CmakePresetsSchema
                     /// </summary>
                     public static ReadOnlySpan<byte> UnusedCli => "unusedCli"u8;
                 }
+
+                /// <summary>
+                /// Provides pre-baked property name blobs for fast builder property storage.
+                /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
+                /// </summary>
+                private static class JsonPropertyNamesPrebaked
+                {
+                    /// <summary>
+                    /// Gets the pre-baked property name blob for <see cref="Deprecated"/>.
+                    /// </summary>
+                    public static ReadOnlySpan<byte> Deprecated => [0xC5, 0x00, 0x00, 0x00, 0x22, 0x64, 0x65, 0x70, 0x72, 0x65, 0x63, 0x61, 0x74, 0x65, 0x64, 0x22];
+
+                    /// <summary>
+                    /// Gets the pre-baked property name blob for <see cref="Dev"/>.
+                    /// </summary>
+                    public static ReadOnlySpan<byte> Dev => [0x55, 0x00, 0x00, 0x00, 0x22, 0x64, 0x65, 0x76, 0x22];
+
+                    /// <summary>
+                    /// Gets the pre-baked property name blob for <see cref="SystemVars"/>.
+                    /// </summary>
+                    public static ReadOnlySpan<byte> SystemVars => [0xC5, 0x00, 0x00, 0x00, 0x22, 0x73, 0x79, 0x73, 0x74, 0x65, 0x6D, 0x56, 0x61, 0x72, 0x73, 0x22];
+
+                    /// <summary>
+                    /// Gets the pre-baked property name blob for <see cref="Uninitialized"/>.
+                    /// </summary>
+                    public static ReadOnlySpan<byte> Uninitialized => [0xF5, 0x00, 0x00, 0x00, 0x22, 0x75, 0x6E, 0x69, 0x6E, 0x69, 0x74, 0x69, 0x61, 0x6C, 0x69, 0x7A, 0x65, 0x64, 0x22];
+
+                    /// <summary>
+                    /// Gets the pre-baked property name blob for <see cref="UnusedCli"/>.
+                    /// </summary>
+                    public static ReadOnlySpan<byte> UnusedCli => [0xB5, 0x00, 0x00, 0x00, 0x22, 0x75, 0x6E, 0x75, 0x73, 0x65, 0x64, 0x43, 0x6C, 0x69, 0x22];
+                }
             }
         }
     }

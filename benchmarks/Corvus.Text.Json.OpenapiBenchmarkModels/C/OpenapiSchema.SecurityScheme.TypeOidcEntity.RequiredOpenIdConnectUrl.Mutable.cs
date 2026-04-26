@@ -289,11 +289,11 @@ public readonly partial struct OpenapiSchema
                     /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
                     /// </para>
                     /// </remarks>
-                    public Corvus.OpenapiBenchmark.Current.JsonUriNotAsserted.Mutable OpenIdConnectUrl
+                    public Corvus.OpenapiBenchmark.Current.JsonUri.Mutable OpenIdConnectUrl
                     {
                         get
                         {
-                            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.OpenIdConnectUrlUtf8, out Corvus.OpenapiBenchmark.Current.JsonUriNotAsserted.Mutable value))
+                            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.OpenIdConnectUrlUtf8, out Corvus.OpenapiBenchmark.Current.JsonUri.Mutable value))
                             {
                                 return value;
                             }
@@ -345,7 +345,7 @@ public readonly partial struct OpenapiSchema
                     /// Set the <c>openIdConnectUrl</c> property.
                     /// </summary>
                     /// <param name="value">The value of the property to add.</param>
-                    public void SetOpenIdConnectUrl(in Corvus.OpenapiBenchmark.Current.JsonUriNotAsserted.Source value)
+                    public void SetOpenIdConnectUrl(in Corvus.OpenapiBenchmark.Current.JsonUri.Source value)
                     {
                         CheckValidInstance();
 
@@ -364,7 +364,7 @@ public readonly partial struct OpenapiSchema
                         else
                         {
                             // We are going to insert the new value
-                            value.AddAsProperty(JsonPropertyNamesEscaped.OpenIdConnectUrl, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                            value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.OpenIdConnectUrl, ref cvb);
                             int endIndex = _idx + _parent.GetDbSize(_idx, false);
                             _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                         }
@@ -735,6 +735,24 @@ public readonly partial struct OpenapiSchema
                         }
                     }
 
+                    internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+                    {
+                        switch(_kind)
+                        {
+                            case Kind.Unknown:
+                                break;
+                            case Kind.JsonElement:
+                                valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                                break;
+                            case Kind.Builder:
+                                valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
+                                break;
+                            default:
+                                Debug.Fail("Unexpected Kind");
+                                break;
+                        }
+                    }
+
                     internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
                     {
                         switch(_kind)
@@ -836,6 +854,24 @@ public readonly partial struct OpenapiSchema
                         }
                     }
 
+                    internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+                    {
+                        switch(_kind)
+                        {
+                            case Kind.Unknown:
+                                break;
+                            case Kind.Source:
+                                _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                                break;
+                            case Kind.Builder:
+                                valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
+                                break;
+                            default:
+                                Debug.Fail("Unexpected Kind");
+                                break;
+                        }
+                    }
+
                     internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
                     {
                         switch(_kind)
@@ -912,15 +948,15 @@ public readonly partial struct OpenapiSchema
                     /// <summary>
                     /// Creates an instance of a <see cref="RequiredOpenIdConnectUrl"/>.
                     /// </summary>
-                    internal static void Create(ref ComplexValueBuilder builder, in Corvus.OpenapiBenchmark.Current.JsonUriNotAsserted.Source openIdConnectUrl)
+                    internal static void Create(ref ComplexValueBuilder builder, in Corvus.OpenapiBenchmark.Current.JsonUri.Source openIdConnectUrl)
                     {
-                        openIdConnectUrl.AddAsProperty(JsonPropertyNamesEscaped.OpenIdConnectUrl, ref builder, escapeName: false);
+                        openIdConnectUrl.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.OpenIdConnectUrl, ref builder);
                     }
 
                     /// <summary>
                     /// Creates an instance of a <see cref="RequiredOpenIdConnectUrl"/>.
                     /// </summary>
-                    public void Create(in Corvus.OpenapiBenchmark.Current.JsonUriNotAsserted.Source openIdConnectUrl)
+                    public void Create(in Corvus.OpenapiBenchmark.Current.JsonUri.Source openIdConnectUrl)
                     {
                         Create(ref _builder, openIdConnectUrl);
                     }
@@ -1081,7 +1117,7 @@ public readonly partial struct OpenapiSchema
                 /// <param name="openIdConnectUrl">The value of the property.</param>
                 /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
                 /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-                public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.OpenapiBenchmark.Current.JsonUriNotAsserted.Source openIdConnectUrl, int initialCapacity = 30)
+                public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.OpenapiBenchmark.Current.JsonUri.Source openIdConnectUrl, int initialCapacity = 30)
                 {
                     JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
                     ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);

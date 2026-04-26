@@ -46,17 +46,17 @@ public readonly partial struct Cql2Schema
                     /// <summary>
                     /// Gets a provider for the schema location from which this type was generated.
                     /// </summary>
-                    public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("cql2-schema.json#/$defs/accenti/properties/args/items"u8, buffer, out written);
+                    public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/$defs/accenti/properties/args/items"u8, buffer, out written);
 
                     /// <summary>
                     /// Gets the schema location from which this type was generated.
                     /// </summary>
-                    public const string SchemaLocation = "cql2-schema.json#/$defs/accenti/properties/args/items";
+                    public const string SchemaLocation = "/$defs/accenti/properties/args/items";
 
                     /// <summary>
                     /// Gets the schema location from which this type was generated as a UTF-8 string.
                     /// </summary>
-                    public static ReadOnlySpan<byte> SchemaLocationUtf8 => "cql2-schema.json#/$defs/accenti/properties/args/items"u8;
+                    public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/$defs/accenti/properties/args/items"u8;
                     private static readonly JsonSchemaPathProvider OneOf0SchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/oneOf/0/$ref"u8, buffer, out written);
                     private static readonly JsonSchemaPathProvider OneOf1SchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/oneOf/1/$ref"u8, buffer, out written);
                     private static readonly JsonSchemaPathProvider OneOf2SchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/oneOf/2/$ref"u8, buffer, out written);

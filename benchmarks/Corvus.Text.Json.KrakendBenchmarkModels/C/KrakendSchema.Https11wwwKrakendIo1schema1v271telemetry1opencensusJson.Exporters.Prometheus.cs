@@ -797,6 +797,43 @@ public readonly partial struct KrakendSchema
                     /// </summary>
                     public static ReadOnlySpan<byte> TagStatuscode => "tag_statuscode"u8;
                 }
+
+                /// <summary>
+                /// Provides pre-baked property name blobs for fast builder property storage.
+                /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
+                /// </summary>
+                private static class JsonPropertyNamesPrebaked
+                {
+                    /// <summary>
+                    /// Gets the pre-baked property name blob for <see cref="Namespace"/>.
+                    /// </summary>
+                    public static ReadOnlySpan<byte> Namespace => [0xB5, 0x00, 0x00, 0x00, 0x22, 0x6E, 0x61, 0x6D, 0x65, 0x73, 0x70, 0x61, 0x63, 0x65, 0x22];
+
+                    /// <summary>
+                    /// Gets the pre-baked property name blob for <see cref="Port"/>.
+                    /// </summary>
+                    public static ReadOnlySpan<byte> Port => [0x65, 0x00, 0x00, 0x00, 0x22, 0x70, 0x6F, 0x72, 0x74, 0x22];
+
+                    /// <summary>
+                    /// Gets the pre-baked property name blob for <see cref="TagHostValue"/>.
+                    /// </summary>
+                    public static ReadOnlySpan<byte> TagHostValue => [0xA5, 0x00, 0x00, 0x00, 0x22, 0x74, 0x61, 0x67, 0x5F, 0x68, 0x6F, 0x73, 0x74, 0x22];
+
+                    /// <summary>
+                    /// Gets the pre-baked property name blob for <see cref="TagMethodValue"/>.
+                    /// </summary>
+                    public static ReadOnlySpan<byte> TagMethodValue => [0xC5, 0x00, 0x00, 0x00, 0x22, 0x74, 0x61, 0x67, 0x5F, 0x6D, 0x65, 0x74, 0x68, 0x6F, 0x64, 0x22];
+
+                    /// <summary>
+                    /// Gets the pre-baked property name blob for <see cref="TagPathValue"/>.
+                    /// </summary>
+                    public static ReadOnlySpan<byte> TagPathValue => [0xA5, 0x00, 0x00, 0x00, 0x22, 0x74, 0x61, 0x67, 0x5F, 0x70, 0x61, 0x74, 0x68, 0x22];
+
+                    /// <summary>
+                    /// Gets the pre-baked property name blob for <see cref="TagStatuscode"/>.
+                    /// </summary>
+                    public static ReadOnlySpan<byte> TagStatuscode => [0x05, 0x01, 0x00, 0x00, 0x22, 0x74, 0x61, 0x67, 0x5F, 0x73, 0x74, 0x61, 0x74, 0x75, 0x73, 0x63, 0x6F, 0x64, 0x65, 0x22];
+                }
             }
         }
     }

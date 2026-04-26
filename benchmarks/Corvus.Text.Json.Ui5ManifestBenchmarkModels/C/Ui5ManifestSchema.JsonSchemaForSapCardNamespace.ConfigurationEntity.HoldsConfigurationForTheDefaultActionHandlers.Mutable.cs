@@ -200,11 +200,11 @@ public readonly partial struct Ui5ManifestSchema
                     /// Configuration for the submit action handler
                     /// </para>
                     /// </remarks>
-                    public Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.HoldsConfigurationForTheDefaultActionHandlers.ConfigurationForTheSubmitActionHandler.Mutable Submit
+                    public Corvus.Ui5ManifestBenchmark.Current.JsonObject.Mutable Submit
                     {
                         get
                         {
-                            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SubmitUtf8, out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.HoldsConfigurationForTheDefaultActionHandlers.ConfigurationForTheSubmitActionHandler.Mutable value))
+                            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SubmitUtf8, out Corvus.Ui5ManifestBenchmark.Current.JsonObject.Mutable value))
                             {
                                 return value;
                             }
@@ -246,7 +246,7 @@ public readonly partial struct Ui5ManifestSchema
                     /// Set the <c>submit</c> property.
                     /// </summary>
                     /// <param name="value">The value of the property to add.</param>
-                    public void SetSubmit(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.HoldsConfigurationForTheDefaultActionHandlers.ConfigurationForTheSubmitActionHandler.Source value)
+                    public void SetSubmit(in Corvus.Ui5ManifestBenchmark.Current.JsonObject.Source value)
                     {
                         CheckValidInstance();
 
@@ -267,7 +267,7 @@ public readonly partial struct Ui5ManifestSchema
                         else
                         {
                             // We are going to insert the new value
-                            value.AddAsProperty(JsonPropertyNamesEscaped.Submit, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                            value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Submit, ref cvb);
                             int endIndex = _idx + _parent.GetDbSize(_idx, false);
                             _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                         }
@@ -279,7 +279,7 @@ public readonly partial struct Ui5ManifestSchema
                     /// Set the <c>submit</c> property.
                     /// </summary>
                     /// <param name="value">The value of the property to add.</param>
-                    public void SetSubmit<TContext>(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.HoldsConfigurationForTheDefaultActionHandlers.ConfigurationForTheSubmitActionHandler.Source<TContext> value)
+                    public void SetSubmit<TContext>(in Corvus.Ui5ManifestBenchmark.Current.JsonObject.Source<TContext> value)
 #if NET9_0_OR_GREATER
                         where TContext : allows ref struct
 #endif
@@ -303,7 +303,7 @@ public readonly partial struct Ui5ManifestSchema
                         else
                         {
                             // We are going to insert the new value
-                            value.AddAsProperty(JsonPropertyNamesEscaped.Submit, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                            value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Submit, ref cvb);
                             int endIndex = _idx + _parent.GetDbSize(_idx, false);
                             _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                         }
@@ -510,6 +510,24 @@ public readonly partial struct Ui5ManifestSchema
                         }
                     }
 
+                    internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+                    {
+                        switch(_kind)
+                        {
+                            case Kind.Unknown:
+                                break;
+                            case Kind.JsonElement:
+                                valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                                break;
+                            case Kind.Builder:
+                                valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
+                                break;
+                            default:
+                                Debug.Fail("Unexpected Kind");
+                                break;
+                        }
+                    }
+
                     internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
                     {
                         switch(_kind)
@@ -611,6 +629,24 @@ public readonly partial struct Ui5ManifestSchema
                         }
                     }
 
+                    internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+                    {
+                        switch(_kind)
+                        {
+                            case Kind.Unknown:
+                                break;
+                            case Kind.Source:
+                                _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                                break;
+                            case Kind.Builder:
+                                valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
+                                break;
+                            default:
+                                Debug.Fail("Unexpected Kind");
+                                break;
+                        }
+                    }
+
                     internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
                     {
                         switch(_kind)
@@ -687,15 +723,15 @@ public readonly partial struct Ui5ManifestSchema
                     /// <summary>
                     /// Creates an instance of a <see cref="HoldsConfigurationForTheDefaultActionHandlers"/>.
                     /// </summary>
-                    internal static void Create(ref ComplexValueBuilder builder, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.HoldsConfigurationForTheDefaultActionHandlers.ConfigurationForTheSubmitActionHandler.Source submit = default)
+                    internal static void Create(ref ComplexValueBuilder builder, in Corvus.Ui5ManifestBenchmark.Current.JsonObject.Source submit = default)
                     {
-                        submit.AddAsProperty(JsonPropertyNamesEscaped.Submit, ref builder, escapeName: false);
+                        submit.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Submit, ref builder);
                     }
 
                     /// <summary>
                     /// Creates an instance of a <see cref="HoldsConfigurationForTheDefaultActionHandlers"/>.
                     /// </summary>
-                    public void Create(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.HoldsConfigurationForTheDefaultActionHandlers.ConfigurationForTheSubmitActionHandler.Source submit = default)
+                    public void Create(in Corvus.Ui5ManifestBenchmark.Current.JsonObject.Source submit = default)
                     {
                         Create(ref _builder, submit);
                     }
@@ -706,18 +742,18 @@ public readonly partial struct Ui5ManifestSchema
                     internal static void Create<TContext>(
                         in TContext context,
                         ref ComplexValueBuilder builder,
-                        in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.HoldsConfigurationForTheDefaultActionHandlers.ConfigurationForTheSubmitActionHandler.Source<TContext> submit = default)
+                        in Corvus.Ui5ManifestBenchmark.Current.JsonObject.Source<TContext> submit = default)
                     #if NET9_0_OR_GREATER
                     where TContext : allows ref struct
                     #endif
                     {
-                        submit.AddAsProperty(JsonPropertyNamesEscaped.Submit, ref builder, escapeName: false);
+                        submit.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Submit, ref builder);
                     }
 
                     /// <summary>
                     /// Creates an instance of a <see cref="HoldsConfigurationForTheDefaultActionHandlers"/>.
                     /// </summary>
-                    public void Create<TContext>(in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.HoldsConfigurationForTheDefaultActionHandlers.ConfigurationForTheSubmitActionHandler.Source<TContext> submit = default)
+                    public void Create<TContext>(in TContext context, in Corvus.Ui5ManifestBenchmark.Current.JsonObject.Source<TContext> submit = default)
                     #if NET9_0_OR_GREATER
                     where TContext : allows ref struct
                     #endif
@@ -869,7 +905,7 @@ public readonly partial struct Ui5ManifestSchema
                 /// <param name="submit">The value of the property.</param>
                 /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
                 /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-                public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.HoldsConfigurationForTheDefaultActionHandlers.ConfigurationForTheSubmitActionHandler.Source submit = default, int initialCapacity = 30)
+                public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.Ui5ManifestBenchmark.Current.JsonObject.Source submit = default, int initialCapacity = 30)
                 {
                     JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
                     ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
@@ -891,7 +927,7 @@ public readonly partial struct Ui5ManifestSchema
                 /// <param name="submit">The value of the property.</param>
                 /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
                 /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-                public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.HoldsConfigurationForTheDefaultActionHandlers.ConfigurationForTheSubmitActionHandler.Source<TContext> submit = default, int initialCapacity = 30)
+                public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.Ui5ManifestBenchmark.Current.JsonObject.Source<TContext> submit = default, int initialCapacity = 30)
                     #if NET9_0_OR_GREATER
                     where TContext : allows ref struct
                     #endif

@@ -280,11 +280,11 @@ public readonly partial struct Ui5ManifestSchema
             /// Represents a map to populate the API of the reuse component
             /// </para>
             /// </remarks>
-            public Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.EmbeddedComponent.AZaZ09Entity.RequiredIdAndTitle.RepresentsAMapToPopulateTheApiOfTheReuseComponent Settings
+            public Corvus.Ui5ManifestBenchmark.Current.JsonObject Settings
             {
                 get
                 {
-                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SettingsUtf8, out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.EmbeddedComponent.AZaZ09Entity.RequiredIdAndTitle.RepresentsAMapToPopulateTheApiOfTheReuseComponent value))
+                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SettingsUtf8, out Corvus.Ui5ManifestBenchmark.Current.JsonObject value))
                     {
                         return value;
                     }
@@ -1040,6 +1040,48 @@ public readonly partial struct Ui5ManifestSchema
                 /// Gets the escaped UTF-8 JSON property name for <see cref="Title"/>.
                 /// </summary>
                 public static ReadOnlySpan<byte> Title => "title"u8;
+            }
+
+            /// <summary>
+            /// Provides pre-baked property name blobs for fast builder property storage.
+            /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
+            /// </summary>
+            private static class JsonPropertyNamesPrebaked
+            {
+                /// <summary>
+                /// Gets the pre-baked property name blob for <see cref="Binding"/>.
+                /// </summary>
+                public static ReadOnlySpan<byte> Binding => [0x95, 0x00, 0x00, 0x00, 0x22, 0x62, 0x69, 0x6E, 0x64, 0x69, 0x6E, 0x67, 0x22];
+
+                /// <summary>
+                /// Gets the pre-baked property name blob for <see cref="GroupTitle"/>.
+                /// </summary>
+                public static ReadOnlySpan<byte> GroupTitle => [0xC5, 0x00, 0x00, 0x00, 0x22, 0x67, 0x72, 0x6F, 0x75, 0x70, 0x54, 0x69, 0x74, 0x6C, 0x65, 0x22];
+
+                /// <summary>
+                /// Gets the pre-baked property name blob for <see cref="HiddenByDefault"/>.
+                /// </summary>
+                public static ReadOnlySpan<byte> HiddenByDefault => [0x15, 0x01, 0x00, 0x00, 0x22, 0x68, 0x69, 0x64, 0x64, 0x65, 0x6E, 0x42, 0x79, 0x44, 0x65, 0x66, 0x61, 0x75, 0x6C, 0x74, 0x22];
+
+                /// <summary>
+                /// Gets the pre-baked property name blob for <see cref="Id"/>.
+                /// </summary>
+                public static ReadOnlySpan<byte> Id => [0x45, 0x00, 0x00, 0x00, 0x22, 0x69, 0x64, 0x22];
+
+                /// <summary>
+                /// Gets the pre-baked property name blob for <see cref="LeadingSectionIdOrPath"/>.
+                /// </summary>
+                public static ReadOnlySpan<byte> LeadingSectionIdOrPath => [0x85, 0x01, 0x00, 0x00, 0x22, 0x6C, 0x65, 0x61, 0x64, 0x69, 0x6E, 0x67, 0x53, 0x65, 0x63, 0x74, 0x69, 0x6F, 0x6E, 0x49, 0x64, 0x4F, 0x72, 0x50, 0x61, 0x74, 0x68, 0x22];
+
+                /// <summary>
+                /// Gets the pre-baked property name blob for <see cref="Settings"/>.
+                /// </summary>
+                public static ReadOnlySpan<byte> Settings => [0xA5, 0x00, 0x00, 0x00, 0x22, 0x73, 0x65, 0x74, 0x74, 0x69, 0x6E, 0x67, 0x73, 0x22];
+
+                /// <summary>
+                /// Gets the pre-baked property name blob for <see cref="Title"/>.
+                /// </summary>
+                public static ReadOnlySpan<byte> Title => [0x75, 0x00, 0x00, 0x00, 0x22, 0x74, 0x69, 0x74, 0x6C, 0x65, 0x22];
             }
         }
     }

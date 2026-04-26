@@ -195,11 +195,11 @@ public readonly partial struct KrakendSchema
                 /// See: https://www.krakend.io/docs/telemetry/ocagent/
                 /// </para>
                 /// </remarks>
-                public Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271telemetry1opencensusJson.Exporters.Ocagent.Headers HeadersValue
+                public Corvus.KrakendBenchmark.Current.JsonObject Headers
                 {
                     get
                     {
-                        if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.HeadersValueUtf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271telemetry1opencensusJson.Exporters.Ocagent.Headers value))
+                        if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.HeadersUtf8, out Corvus.KrakendBenchmark.Current.JsonObject value))
                         {
                             return value;
                         }
@@ -721,9 +721,9 @@ public readonly partial struct KrakendSchema
                     public const string EnableCompressionValue = "enable_compression";
 
                     /// <summary>
-                    /// Gets the JSON property name for <see cref="HeadersValue"/>.
+                    /// Gets the JSON property name for <see cref="Headers"/>.
                     /// </summary>
-                    public const string HeadersValue = "headers";
+                    public const string Headers = "headers";
 
                     /// <summary>
                     /// Gets the JSON property name for <see cref="InsecureValue"/>.
@@ -751,9 +751,9 @@ public readonly partial struct KrakendSchema
                     public static ReadOnlySpan<byte> EnableCompressionValueUtf8 => "enable_compression"u8;
 
                     /// <summary>
-                    /// Gets the JSON property name for <see cref="HeadersValue"/>.
+                    /// Gets the JSON property name for <see cref="Headers"/>.
                     /// </summary>
-                    public static ReadOnlySpan<byte> HeadersValueUtf8 => "headers"u8;
+                    public static ReadOnlySpan<byte> HeadersUtf8 => "headers"u8;
 
                     /// <summary>
                     /// Gets the JSON property name for <see cref="InsecureValue"/>.
@@ -787,9 +787,9 @@ public readonly partial struct KrakendSchema
                     public static ReadOnlySpan<byte> EnableCompressionValue => "enable_compression"u8;
 
                     /// <summary>
-                    /// Gets the escaped UTF-8 JSON property name for <see cref="HeadersValue"/>.
+                    /// Gets the escaped UTF-8 JSON property name for <see cref="Headers"/>.
                     /// </summary>
-                    public static ReadOnlySpan<byte> HeadersValue => "headers"u8;
+                    public static ReadOnlySpan<byte> Headers => "headers"u8;
 
                     /// <summary>
                     /// Gets the escaped UTF-8 JSON property name for <see cref="InsecureValue"/>.
@@ -805,6 +805,43 @@ public readonly partial struct KrakendSchema
                     /// Gets the escaped UTF-8 JSON property name for <see cref="ServiceName"/>.
                     /// </summary>
                     public static ReadOnlySpan<byte> ServiceName => "service_name"u8;
+                }
+
+                /// <summary>
+                /// Provides pre-baked property name blobs for fast builder property storage.
+                /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
+                /// </summary>
+                private static class JsonPropertyNamesPrebaked
+                {
+                    /// <summary>
+                    /// Gets the pre-baked property name blob for <see cref="Address"/>.
+                    /// </summary>
+                    public static ReadOnlySpan<byte> Address => [0x95, 0x00, 0x00, 0x00, 0x22, 0x61, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73, 0x22];
+
+                    /// <summary>
+                    /// Gets the pre-baked property name blob for <see cref="EnableCompressionValue"/>.
+                    /// </summary>
+                    public static ReadOnlySpan<byte> EnableCompressionValue => [0x45, 0x01, 0x00, 0x00, 0x22, 0x65, 0x6E, 0x61, 0x62, 0x6C, 0x65, 0x5F, 0x63, 0x6F, 0x6D, 0x70, 0x72, 0x65, 0x73, 0x73, 0x69, 0x6F, 0x6E, 0x22];
+
+                    /// <summary>
+                    /// Gets the pre-baked property name blob for <see cref="Headers"/>.
+                    /// </summary>
+                    public static ReadOnlySpan<byte> Headers => [0x95, 0x00, 0x00, 0x00, 0x22, 0x68, 0x65, 0x61, 0x64, 0x65, 0x72, 0x73, 0x22];
+
+                    /// <summary>
+                    /// Gets the pre-baked property name blob for <see cref="InsecureValue"/>.
+                    /// </summary>
+                    public static ReadOnlySpan<byte> InsecureValue => [0xA5, 0x00, 0x00, 0x00, 0x22, 0x69, 0x6E, 0x73, 0x65, 0x63, 0x75, 0x72, 0x65, 0x22];
+
+                    /// <summary>
+                    /// Gets the pre-baked property name blob for <see cref="Reconnection"/>.
+                    /// </summary>
+                    public static ReadOnlySpan<byte> Reconnection => [0xE5, 0x00, 0x00, 0x00, 0x22, 0x72, 0x65, 0x63, 0x6F, 0x6E, 0x6E, 0x65, 0x63, 0x74, 0x69, 0x6F, 0x6E, 0x22];
+
+                    /// <summary>
+                    /// Gets the pre-baked property name blob for <see cref="ServiceName"/>.
+                    /// </summary>
+                    public static ReadOnlySpan<byte> ServiceName => [0xE5, 0x00, 0x00, 0x00, 0x22, 0x73, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x5F, 0x6E, 0x61, 0x6D, 0x65, 0x22];
                 }
             }
         }

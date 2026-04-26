@@ -688,6 +688,23 @@ public readonly partial struct Ui5ManifestSchema
                             /// </summary>
                             public static ReadOnlySpan<byte> Value => "value"u8;
                         }
+
+                        /// <summary>
+                        /// Provides pre-baked property name blobs for fast builder property storage.
+                        /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
+                        /// </summary>
+                        private static class JsonPropertyNamesPrebaked
+                        {
+                            /// <summary>
+                            /// Gets the pre-baked property name blob for <see cref="Format"/>.
+                            /// </summary>
+                            public static ReadOnlySpan<byte> Format => [0x85, 0x00, 0x00, 0x00, 0x22, 0x66, 0x6F, 0x72, 0x6D, 0x61, 0x74, 0x22];
+
+                            /// <summary>
+                            /// Gets the pre-baked property name blob for <see cref="Value"/>.
+                            /// </summary>
+                            public static ReadOnlySpan<byte> Value => [0x75, 0x00, 0x00, 0x00, 0x22, 0x76, 0x61, 0x6C, 0x75, 0x65, 0x22];
+                        }
                     }
                 }
             }

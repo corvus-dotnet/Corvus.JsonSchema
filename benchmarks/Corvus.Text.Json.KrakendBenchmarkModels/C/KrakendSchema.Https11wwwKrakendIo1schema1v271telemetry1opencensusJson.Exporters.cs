@@ -892,6 +892,58 @@ public readonly partial struct KrakendSchema
                 /// </summary>
                 public static ReadOnlySpan<byte> ZipkinValue => "zipkin"u8;
             }
+
+            /// <summary>
+            /// Provides pre-baked property name blobs for fast builder property storage.
+            /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
+            /// </summary>
+            private static class JsonPropertyNamesPrebaked
+            {
+                /// <summary>
+                /// Gets the pre-baked property name blob for <see cref="DatadogValue"/>.
+                /// </summary>
+                public static ReadOnlySpan<byte> DatadogValue => [0x95, 0x00, 0x00, 0x00, 0x22, 0x64, 0x61, 0x74, 0x61, 0x64, 0x6F, 0x67, 0x22];
+
+                /// <summary>
+                /// Gets the pre-baked property name blob for <see cref="InfluxdbValue"/>.
+                /// </summary>
+                public static ReadOnlySpan<byte> InfluxdbValue => [0xA5, 0x00, 0x00, 0x00, 0x22, 0x69, 0x6E, 0x66, 0x6C, 0x75, 0x78, 0x64, 0x62, 0x22];
+
+                /// <summary>
+                /// Gets the pre-baked property name blob for <see cref="JaegerValue"/>.
+                /// </summary>
+                public static ReadOnlySpan<byte> JaegerValue => [0x85, 0x00, 0x00, 0x00, 0x22, 0x6A, 0x61, 0x65, 0x67, 0x65, 0x72, 0x22];
+
+                /// <summary>
+                /// Gets the pre-baked property name blob for <see cref="LoggerValue"/>.
+                /// </summary>
+                public static ReadOnlySpan<byte> LoggerValue => [0x85, 0x00, 0x00, 0x00, 0x22, 0x6C, 0x6F, 0x67, 0x67, 0x65, 0x72, 0x22];
+
+                /// <summary>
+                /// Gets the pre-baked property name blob for <see cref="OcagentValue"/>.
+                /// </summary>
+                public static ReadOnlySpan<byte> OcagentValue => [0x95, 0x00, 0x00, 0x00, 0x22, 0x6F, 0x63, 0x61, 0x67, 0x65, 0x6E, 0x74, 0x22];
+
+                /// <summary>
+                /// Gets the pre-baked property name blob for <see cref="PrometheusValue"/>.
+                /// </summary>
+                public static ReadOnlySpan<byte> PrometheusValue => [0xC5, 0x00, 0x00, 0x00, 0x22, 0x70, 0x72, 0x6F, 0x6D, 0x65, 0x74, 0x68, 0x65, 0x75, 0x73, 0x22];
+
+                /// <summary>
+                /// Gets the pre-baked property name blob for <see cref="StackdriverValue"/>.
+                /// </summary>
+                public static ReadOnlySpan<byte> StackdriverValue => [0xD5, 0x00, 0x00, 0x00, 0x22, 0x73, 0x74, 0x61, 0x63, 0x6B, 0x64, 0x72, 0x69, 0x76, 0x65, 0x72, 0x22];
+
+                /// <summary>
+                /// Gets the pre-baked property name blob for <see cref="Xray"/>.
+                /// </summary>
+                public static ReadOnlySpan<byte> Xray => [0x65, 0x00, 0x00, 0x00, 0x22, 0x78, 0x72, 0x61, 0x79, 0x22];
+
+                /// <summary>
+                /// Gets the pre-baked property name blob for <see cref="ZipkinValue"/>.
+                /// </summary>
+                public static ReadOnlySpan<byte> ZipkinValue => [0x85, 0x00, 0x00, 0x00, 0x22, 0x7A, 0x69, 0x70, 0x6B, 0x69, 0x6E, 0x22];
+            }
         }
     }
 }

@@ -280,11 +280,11 @@ public readonly partial struct KrakendSchema
                     /// See: https://www.krakend.io/docs/telemetry/datadog/
                     /// </para>
                     /// </remarks>
-                    public Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271telemetry1opencensusJson.Exporters.Datadog.GlobalTags.Mutable GlobalTagsValue
+                    public Corvus.KrakendBenchmark.Current.JsonObject.Mutable GlobalTags
                     {
                         get
                         {
-                            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.GlobalTagsValueUtf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271telemetry1opencensusJson.Exporters.Datadog.GlobalTags.Mutable value))
+                            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.GlobalTagsUtf8, out Corvus.KrakendBenchmark.Current.JsonObject.Mutable value))
                             {
                                 return value;
                             }
@@ -392,11 +392,11 @@ public readonly partial struct KrakendSchema
                     /// See: https://www.krakend.io/docs/telemetry/datadog/
                     /// </para>
                     /// </remarks>
-                    public Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271telemetry1opencensusJson.Exporters.Datadog.Tags.Mutable TagsValue
+                    public Corvus.KrakendBenchmark.Current.JsonArray.Mutable Tags
                     {
                         get
                         {
-                            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TagsValueUtf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271telemetry1opencensusJson.Exporters.Datadog.Tags.Mutable value))
+                            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TagsUtf8, out Corvus.KrakendBenchmark.Current.JsonArray.Mutable value))
                             {
                                 return value;
                             }
@@ -485,7 +485,7 @@ public readonly partial struct KrakendSchema
                         else
                         {
                             // We are going to insert the new value
-                            value.AddAsProperty(JsonPropertyNamesEscaped.DisableCountPerBucketsValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                            value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DisableCountPerBucketsValue, ref cvb);
                             int endIndex = _idx + _parent.GetDbSize(_idx, false);
                             _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                         }
@@ -497,7 +497,7 @@ public readonly partial struct KrakendSchema
                     /// Set the <c>global_tags</c> property.
                     /// </summary>
                     /// <param name="value">The value of the property to add.</param>
-                    public void SetGlobalTagsValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271telemetry1opencensusJson.Exporters.Datadog.GlobalTags.Source value)
+                    public void SetGlobalTags(in Corvus.KrakendBenchmark.Current.JsonObject.Source value)
                     {
                         CheckValidInstance();
 
@@ -507,7 +507,7 @@ public readonly partial struct KrakendSchema
                         }
 
                         ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
-                        if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.GlobalTagsValueUtf8, out IJsonDocument? elementParent, out int elementIdx))
+                        if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.GlobalTagsUtf8, out IJsonDocument? elementParent, out int elementIdx))
                         {
                             // We are going to replace just the value
                             value.AddAsItem(ref cvb);
@@ -516,7 +516,7 @@ public readonly partial struct KrakendSchema
                         else
                         {
                             // We are going to insert the new value
-                            value.AddAsProperty(JsonPropertyNamesEscaped.GlobalTagsValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                            value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.GlobalTags, ref cvb);
                             int endIndex = _idx + _parent.GetDbSize(_idx, false);
                             _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                         }
@@ -528,7 +528,7 @@ public readonly partial struct KrakendSchema
                     /// Set the <c>global_tags</c> property.
                     /// </summary>
                     /// <param name="value">The value of the property to add.</param>
-                    public void SetGlobalTagsValue<TContext>(in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271telemetry1opencensusJson.Exporters.Datadog.GlobalTags.Source<TContext> value)
+                    public void SetGlobalTags<TContext>(in Corvus.KrakendBenchmark.Current.JsonObject.Source<TContext> value)
 #if NET9_0_OR_GREATER
                         where TContext : allows ref struct
 #endif
@@ -541,7 +541,7 @@ public readonly partial struct KrakendSchema
                         }
 
                         ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
-                        if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.GlobalTagsValueUtf8, out IJsonDocument? elementParent, out int elementIdx))
+                        if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.GlobalTagsUtf8, out IJsonDocument? elementParent, out int elementIdx))
                         {
                             // We are going to replace just the value
                             value.AddAsItem(ref cvb);
@@ -550,7 +550,7 @@ public readonly partial struct KrakendSchema
                         else
                         {
                             // We are going to insert the new value
-                            value.AddAsProperty(JsonPropertyNamesEscaped.GlobalTagsValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                            value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.GlobalTags, ref cvb);
                             int endIndex = _idx + _parent.GetDbSize(_idx, false);
                             _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                         }
@@ -581,7 +581,7 @@ public readonly partial struct KrakendSchema
                         else
                         {
                             // We are going to insert the new value
-                            value.AddAsProperty(JsonPropertyNamesEscaped.Namespace, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                            value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Namespace, ref cvb);
                             int endIndex = _idx + _parent.GetDbSize(_idx, false);
                             _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                         }
@@ -612,7 +612,7 @@ public readonly partial struct KrakendSchema
                         else
                         {
                             // We are going to insert the new value
-                            value.AddAsProperty(JsonPropertyNamesEscaped.Service, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                            value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Service, ref cvb);
                             int endIndex = _idx + _parent.GetDbSize(_idx, false);
                             _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                         }
@@ -643,7 +643,7 @@ public readonly partial struct KrakendSchema
                         else
                         {
                             // We are going to insert the new value
-                            value.AddAsProperty(JsonPropertyNamesEscaped.StatsAddressValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                            value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.StatsAddressValue, ref cvb);
                             int endIndex = _idx + _parent.GetDbSize(_idx, false);
                             _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                         }
@@ -655,7 +655,7 @@ public readonly partial struct KrakendSchema
                     /// Set the <c>tags</c> property.
                     /// </summary>
                     /// <param name="value">The value of the property to add.</param>
-                    public void SetTagsValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271telemetry1opencensusJson.Exporters.Datadog.Tags.Source value)
+                    public void SetTags(in Corvus.KrakendBenchmark.Current.JsonArray.Source value)
                     {
                         CheckValidInstance();
 
@@ -665,7 +665,7 @@ public readonly partial struct KrakendSchema
                         }
 
                         ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
-                        if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TagsValueUtf8, out IJsonDocument? elementParent, out int elementIdx))
+                        if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TagsUtf8, out IJsonDocument? elementParent, out int elementIdx))
                         {
                             // We are going to replace just the value
                             value.AddAsItem(ref cvb);
@@ -674,7 +674,7 @@ public readonly partial struct KrakendSchema
                         else
                         {
                             // We are going to insert the new value
-                            value.AddAsProperty(JsonPropertyNamesEscaped.TagsValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                            value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Tags, ref cvb);
                             int endIndex = _idx + _parent.GetDbSize(_idx, false);
                             _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                         }
@@ -686,7 +686,7 @@ public readonly partial struct KrakendSchema
                     /// Set the <c>tags</c> property.
                     /// </summary>
                     /// <param name="value">The value of the property to add.</param>
-                    public void SetTagsValue<TContext>(in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271telemetry1opencensusJson.Exporters.Datadog.Tags.Source<TContext> value)
+                    public void SetTags<TContext>(in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> value)
 #if NET9_0_OR_GREATER
                         where TContext : allows ref struct
 #endif
@@ -699,7 +699,7 @@ public readonly partial struct KrakendSchema
                         }
 
                         ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
-                        if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TagsValueUtf8, out IJsonDocument? elementParent, out int elementIdx))
+                        if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TagsUtf8, out IJsonDocument? elementParent, out int elementIdx))
                         {
                             // We are going to replace just the value
                             value.AddAsItem(ref cvb);
@@ -708,7 +708,7 @@ public readonly partial struct KrakendSchema
                         else
                         {
                             // We are going to insert the new value
-                            value.AddAsProperty(JsonPropertyNamesEscaped.TagsValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                            value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Tags, ref cvb);
                             int endIndex = _idx + _parent.GetDbSize(_idx, false);
                             _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                         }
@@ -739,7 +739,7 @@ public readonly partial struct KrakendSchema
                         else
                         {
                             // We are going to insert the new value
-                            value.AddAsProperty(JsonPropertyNamesEscaped.TraceAddressValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                            value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TraceAddressValue, ref cvb);
                             int endIndex = _idx + _parent.GetDbSize(_idx, false);
                             _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                         }
@@ -1110,6 +1110,24 @@ public readonly partial struct KrakendSchema
                         }
                     }
 
+                    internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+                    {
+                        switch(_kind)
+                        {
+                            case Kind.Unknown:
+                                break;
+                            case Kind.JsonElement:
+                                valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                                break;
+                            case Kind.Builder:
+                                valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
+                                break;
+                            default:
+                                Debug.Fail("Unexpected Kind");
+                                break;
+                        }
+                    }
+
                     internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
                     {
                         switch(_kind)
@@ -1211,6 +1229,24 @@ public readonly partial struct KrakendSchema
                         }
                     }
 
+                    internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+                    {
+                        switch(_kind)
+                        {
+                            case Kind.Unknown:
+                                break;
+                            case Kind.Source:
+                                _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                                break;
+                            case Kind.Builder:
+                                valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
+                                break;
+                            default:
+                                Debug.Fail("Unexpected Kind");
+                                break;
+                        }
+                    }
+
                     internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
                     {
                         switch(_kind)
@@ -1290,20 +1326,20 @@ public readonly partial struct KrakendSchema
                     internal static void Create(
                         ref ComplexValueBuilder builder,
                         in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271telemetry1opencensusJson.Exporters.Datadog.DisableCountPerBuckets.Source disableCountPerBuckets,
-                        in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271telemetry1opencensusJson.Exporters.Datadog.GlobalTags.Source globalTags,
+                        in Corvus.KrakendBenchmark.Current.JsonObject.Source globalTags,
                         in Corvus.KrakendBenchmark.Current.JsonString.Source namespaceValue,
                         in Corvus.KrakendBenchmark.Current.JsonString.Source service,
                         in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271telemetry1opencensusJson.Exporters.Datadog.StatsAddress.Source statsAddress,
-                        in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271telemetry1opencensusJson.Exporters.Datadog.Tags.Source tags,
+                        in Corvus.KrakendBenchmark.Current.JsonArray.Source tags,
                         in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271telemetry1opencensusJson.Exporters.Datadog.TraceAddress.Source traceAddress)
                     {
-                        disableCountPerBuckets.AddAsProperty(JsonPropertyNamesEscaped.DisableCountPerBucketsValue, ref builder, escapeName: false);
-                        globalTags.AddAsProperty(JsonPropertyNamesEscaped.GlobalTagsValue, ref builder, escapeName: false);
-                        namespaceValue.AddAsProperty(JsonPropertyNamesEscaped.Namespace, ref builder, escapeName: false);
-                        service.AddAsProperty(JsonPropertyNamesEscaped.Service, ref builder, escapeName: false);
-                        statsAddress.AddAsProperty(JsonPropertyNamesEscaped.StatsAddressValue, ref builder, escapeName: false);
-                        tags.AddAsProperty(JsonPropertyNamesEscaped.TagsValue, ref builder, escapeName: false);
-                        traceAddress.AddAsProperty(JsonPropertyNamesEscaped.TraceAddressValue, ref builder, escapeName: false);
+                        disableCountPerBuckets.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DisableCountPerBucketsValue, ref builder);
+                        globalTags.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.GlobalTags, ref builder);
+                        namespaceValue.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Namespace, ref builder);
+                        service.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Service, ref builder);
+                        statsAddress.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.StatsAddressValue, ref builder);
+                        tags.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Tags, ref builder);
+                        traceAddress.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TraceAddressValue, ref builder);
                     }
 
                     /// <summary>
@@ -1311,11 +1347,11 @@ public readonly partial struct KrakendSchema
                     /// </summary>
                     public void Create(
                         in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271telemetry1opencensusJson.Exporters.Datadog.DisableCountPerBuckets.Source disableCountPerBuckets,
-                        in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271telemetry1opencensusJson.Exporters.Datadog.GlobalTags.Source globalTags,
+                        in Corvus.KrakendBenchmark.Current.JsonObject.Source globalTags,
                         in Corvus.KrakendBenchmark.Current.JsonString.Source namespaceValue,
                         in Corvus.KrakendBenchmark.Current.JsonString.Source service,
                         in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271telemetry1opencensusJson.Exporters.Datadog.StatsAddress.Source statsAddress,
-                        in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271telemetry1opencensusJson.Exporters.Datadog.Tags.Source tags,
+                        in Corvus.KrakendBenchmark.Current.JsonArray.Source tags,
                         in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271telemetry1opencensusJson.Exporters.Datadog.TraceAddress.Source traceAddress)
                     {
                         Create(ref _builder, disableCountPerBuckets, globalTags, namespaceValue, service, statsAddress, tags, traceAddress);
@@ -1328,23 +1364,23 @@ public readonly partial struct KrakendSchema
                         in TContext context,
                         ref ComplexValueBuilder builder,
                         in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271telemetry1opencensusJson.Exporters.Datadog.DisableCountPerBuckets.Source disableCountPerBuckets,
-                        in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271telemetry1opencensusJson.Exporters.Datadog.GlobalTags.Source<TContext> globalTags,
+                        in Corvus.KrakendBenchmark.Current.JsonObject.Source<TContext> globalTags,
                         in Corvus.KrakendBenchmark.Current.JsonString.Source namespaceValue,
                         in Corvus.KrakendBenchmark.Current.JsonString.Source service,
                         in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271telemetry1opencensusJson.Exporters.Datadog.StatsAddress.Source statsAddress,
-                        in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271telemetry1opencensusJson.Exporters.Datadog.Tags.Source<TContext> tags,
+                        in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> tags,
                         in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271telemetry1opencensusJson.Exporters.Datadog.TraceAddress.Source traceAddress)
                     #if NET9_0_OR_GREATER
                     where TContext : allows ref struct
                     #endif
                     {
-                        disableCountPerBuckets.AddAsProperty(JsonPropertyNamesEscaped.DisableCountPerBucketsValue, ref builder, escapeName: false);
-                        globalTags.AddAsProperty(JsonPropertyNamesEscaped.GlobalTagsValue, ref builder, escapeName: false);
-                        namespaceValue.AddAsProperty(JsonPropertyNamesEscaped.Namespace, ref builder, escapeName: false);
-                        service.AddAsProperty(JsonPropertyNamesEscaped.Service, ref builder, escapeName: false);
-                        statsAddress.AddAsProperty(JsonPropertyNamesEscaped.StatsAddressValue, ref builder, escapeName: false);
-                        tags.AddAsProperty(JsonPropertyNamesEscaped.TagsValue, ref builder, escapeName: false);
-                        traceAddress.AddAsProperty(JsonPropertyNamesEscaped.TraceAddressValue, ref builder, escapeName: false);
+                        disableCountPerBuckets.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DisableCountPerBucketsValue, ref builder);
+                        globalTags.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.GlobalTags, ref builder);
+                        namespaceValue.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Namespace, ref builder);
+                        service.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Service, ref builder);
+                        statsAddress.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.StatsAddressValue, ref builder);
+                        tags.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Tags, ref builder);
+                        traceAddress.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TraceAddressValue, ref builder);
                     }
 
                     /// <summary>
@@ -1353,11 +1389,11 @@ public readonly partial struct KrakendSchema
                     public void Create<TContext>(
                         in TContext context,
                         in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271telemetry1opencensusJson.Exporters.Datadog.DisableCountPerBuckets.Source disableCountPerBuckets,
-                        in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271telemetry1opencensusJson.Exporters.Datadog.GlobalTags.Source<TContext> globalTags,
+                        in Corvus.KrakendBenchmark.Current.JsonObject.Source<TContext> globalTags,
                         in Corvus.KrakendBenchmark.Current.JsonString.Source namespaceValue,
                         in Corvus.KrakendBenchmark.Current.JsonString.Source service,
                         in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271telemetry1opencensusJson.Exporters.Datadog.StatsAddress.Source statsAddress,
-                        in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271telemetry1opencensusJson.Exporters.Datadog.Tags.Source<TContext> tags,
+                        in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> tags,
                         in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271telemetry1opencensusJson.Exporters.Datadog.TraceAddress.Source traceAddress)
                     #if NET9_0_OR_GREATER
                     where TContext : allows ref struct
@@ -1528,7 +1564,7 @@ public readonly partial struct KrakendSchema
                 /// <param name="traceAddress">The value of the property.</param>
                 /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
                 /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-                public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271telemetry1opencensusJson.Exporters.Datadog.DisableCountPerBuckets.Source disableCountPerBuckets, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271telemetry1opencensusJson.Exporters.Datadog.GlobalTags.Source globalTags, in Corvus.KrakendBenchmark.Current.JsonString.Source namespaceValue, in Corvus.KrakendBenchmark.Current.JsonString.Source service, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271telemetry1opencensusJson.Exporters.Datadog.StatsAddress.Source statsAddress, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271telemetry1opencensusJson.Exporters.Datadog.Tags.Source tags, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271telemetry1opencensusJson.Exporters.Datadog.TraceAddress.Source traceAddress, int initialCapacity = 30)
+                public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271telemetry1opencensusJson.Exporters.Datadog.DisableCountPerBuckets.Source disableCountPerBuckets, in Corvus.KrakendBenchmark.Current.JsonObject.Source globalTags, in Corvus.KrakendBenchmark.Current.JsonString.Source namespaceValue, in Corvus.KrakendBenchmark.Current.JsonString.Source service, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271telemetry1opencensusJson.Exporters.Datadog.StatsAddress.Source statsAddress, in Corvus.KrakendBenchmark.Current.JsonArray.Source tags, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271telemetry1opencensusJson.Exporters.Datadog.TraceAddress.Source traceAddress, int initialCapacity = 30)
                 {
                     JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
                     ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
@@ -1556,7 +1592,7 @@ public readonly partial struct KrakendSchema
                 /// <param name="traceAddress">The value of the property.</param>
                 /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
                 /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-                public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271telemetry1opencensusJson.Exporters.Datadog.DisableCountPerBuckets.Source disableCountPerBuckets, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271telemetry1opencensusJson.Exporters.Datadog.GlobalTags.Source<TContext> globalTags, in Corvus.KrakendBenchmark.Current.JsonString.Source namespaceValue, in Corvus.KrakendBenchmark.Current.JsonString.Source service, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271telemetry1opencensusJson.Exporters.Datadog.StatsAddress.Source statsAddress, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271telemetry1opencensusJson.Exporters.Datadog.Tags.Source<TContext> tags, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271telemetry1opencensusJson.Exporters.Datadog.TraceAddress.Source traceAddress, int initialCapacity = 30)
+                public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271telemetry1opencensusJson.Exporters.Datadog.DisableCountPerBuckets.Source disableCountPerBuckets, in Corvus.KrakendBenchmark.Current.JsonObject.Source<TContext> globalTags, in Corvus.KrakendBenchmark.Current.JsonString.Source namespaceValue, in Corvus.KrakendBenchmark.Current.JsonString.Source service, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271telemetry1opencensusJson.Exporters.Datadog.StatsAddress.Source statsAddress, in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> tags, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271telemetry1opencensusJson.Exporters.Datadog.TraceAddress.Source traceAddress, int initialCapacity = 30)
                     #if NET9_0_OR_GREATER
                     where TContext : allows ref struct
                     #endif

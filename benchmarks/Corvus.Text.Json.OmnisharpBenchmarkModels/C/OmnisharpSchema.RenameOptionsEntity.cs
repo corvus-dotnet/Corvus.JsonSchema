@@ -689,5 +689,27 @@ public readonly partial struct OmnisharpSchema
             /// </summary>
             public static ReadOnlySpan<byte> RenameOverloads => "RenameOverloads"u8;
         }
+
+        /// <summary>
+        /// Provides pre-baked property name blobs for fast builder property storage.
+        /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
+        /// </summary>
+        private static class JsonPropertyNamesPrebaked
+        {
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="RenameInComments"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> RenameInComments => [0x25, 0x01, 0x00, 0x00, 0x22, 0x52, 0x65, 0x6E, 0x61, 0x6D, 0x65, 0x49, 0x6E, 0x43, 0x6F, 0x6D, 0x6D, 0x65, 0x6E, 0x74, 0x73, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="RenameInStrings"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> RenameInStrings => [0x15, 0x01, 0x00, 0x00, 0x22, 0x52, 0x65, 0x6E, 0x61, 0x6D, 0x65, 0x49, 0x6E, 0x53, 0x74, 0x72, 0x69, 0x6E, 0x67, 0x73, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="RenameOverloads"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> RenameOverloads => [0x15, 0x01, 0x00, 0x00, 0x22, 0x52, 0x65, 0x6E, 0x61, 0x6D, 0x65, 0x4F, 0x76, 0x65, 0x72, 0x6C, 0x6F, 0x61, 0x64, 0x73, 0x22];
+        }
     }
 }

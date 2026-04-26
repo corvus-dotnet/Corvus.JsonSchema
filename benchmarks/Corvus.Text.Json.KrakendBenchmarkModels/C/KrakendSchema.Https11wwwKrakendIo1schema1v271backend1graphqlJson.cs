@@ -216,11 +216,11 @@ public readonly partial struct KrakendSchema
         /// See: https://www.krakend.io/docs/backends/graphql/
         /// </para>
         /// </remarks>
-        public Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271backend1graphqlJson.Variables VariablesValue
+        public Corvus.KrakendBenchmark.Current.JsonObject Variables
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.VariablesValueUtf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271backend1graphqlJson.Variables value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.VariablesUtf8, out Corvus.KrakendBenchmark.Current.JsonObject value))
                 {
                     return value;
                 }
@@ -799,9 +799,9 @@ public readonly partial struct KrakendSchema
             public const string Type = "type";
 
             /// <summary>
-            /// Gets the JSON property name for <see cref="VariablesValue"/>.
+            /// Gets the JSON property name for <see cref="Variables"/>.
             /// </summary>
-            public const string VariablesValue = "variables";
+            public const string Variables = "variables";
 
             /// <summary>
             /// Gets the JSON property name for <see cref="OperationName"/>.
@@ -824,9 +824,9 @@ public readonly partial struct KrakendSchema
             public static ReadOnlySpan<byte> TypeUtf8 => "type"u8;
 
             /// <summary>
-            /// Gets the JSON property name for <see cref="VariablesValue"/>.
+            /// Gets the JSON property name for <see cref="Variables"/>.
             /// </summary>
-            public static ReadOnlySpan<byte> VariablesValueUtf8 => "variables"u8;
+            public static ReadOnlySpan<byte> VariablesUtf8 => "variables"u8;
         }
 
         /// <summary>
@@ -855,9 +855,41 @@ public readonly partial struct KrakendSchema
             public static ReadOnlySpan<byte> Type => "type"u8;
 
             /// <summary>
-            /// Gets the escaped UTF-8 JSON property name for <see cref="VariablesValue"/>.
+            /// Gets the escaped UTF-8 JSON property name for <see cref="Variables"/>.
             /// </summary>
-            public static ReadOnlySpan<byte> VariablesValue => "variables"u8;
+            public static ReadOnlySpan<byte> Variables => "variables"u8;
+        }
+
+        /// <summary>
+        /// Provides pre-baked property name blobs for fast builder property storage.
+        /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
+        /// </summary>
+        private static class JsonPropertyNamesPrebaked
+        {
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="OperationName"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> OperationName => [0xF5, 0x00, 0x00, 0x00, 0x22, 0x6F, 0x70, 0x65, 0x72, 0x61, 0x74, 0x69, 0x6F, 0x6E, 0x4E, 0x61, 0x6D, 0x65, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Query"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Query => [0x75, 0x00, 0x00, 0x00, 0x22, 0x71, 0x75, 0x65, 0x72, 0x79, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="QueryPath"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> QueryPath => [0xC5, 0x00, 0x00, 0x00, 0x22, 0x71, 0x75, 0x65, 0x72, 0x79, 0x5F, 0x70, 0x61, 0x74, 0x68, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Type"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Type => [0x65, 0x00, 0x00, 0x00, 0x22, 0x74, 0x79, 0x70, 0x65, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Variables"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Variables => [0xB5, 0x00, 0x00, 0x00, 0x22, 0x76, 0x61, 0x72, 0x69, 0x61, 0x62, 0x6C, 0x65, 0x73, 0x22];
         }
     }
 }

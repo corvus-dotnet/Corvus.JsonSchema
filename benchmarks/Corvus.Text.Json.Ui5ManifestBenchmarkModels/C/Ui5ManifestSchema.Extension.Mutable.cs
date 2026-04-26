@@ -180,11 +180,11 @@ public readonly partial struct Ui5ManifestSchema
             /// The arguments, with which the method will be called
             /// </para>
             /// </remarks>
-            public Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Extension.TheArgumentsWithWhichTheMethodWillBeCalled.Mutable Args
+            public Corvus.Ui5ManifestBenchmark.Current.JsonArray.Mutable Args
             {
                 get
                 {
-                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ArgsUtf8, out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Extension.TheArgumentsWithWhichTheMethodWillBeCalled.Mutable value))
+                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ArgsUtf8, out Corvus.Ui5ManifestBenchmark.Current.JsonArray.Mutable value))
                     {
                         return value;
                     }
@@ -250,7 +250,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>args</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetArgs(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Extension.TheArgumentsWithWhichTheMethodWillBeCalled.Source value)
+            public void SetArgs(in Corvus.Ui5ManifestBenchmark.Current.JsonArray.Source value)
             {
                 CheckValidInstance();
 
@@ -271,7 +271,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Args, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Args, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -283,7 +283,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>args</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetArgs<TContext>(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Extension.TheArgumentsWithWhichTheMethodWillBeCalled.Source<TContext> value)
+            public void SetArgs<TContext>(in Corvus.Ui5ManifestBenchmark.Current.JsonArray.Source<TContext> value)
 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
 #endif
@@ -307,7 +307,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Args, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Args, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -350,7 +350,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Method, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Method, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -545,6 +545,24 @@ public readonly partial struct Ui5ManifestSchema
                 }
             }
 
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.JsonElement:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                        break;
+                    case Kind.Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
             internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
             {
                 switch(_kind)
@@ -646,6 +664,24 @@ public readonly partial struct Ui5ManifestSchema
                 }
             }
 
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.Source:
+                        _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                        break;
+                    case Kind.Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
             internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
             {
                 switch(_kind)
@@ -725,16 +761,16 @@ public readonly partial struct Ui5ManifestSchema
             internal static void Create(
                 ref ComplexValueBuilder builder,
                 in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source method,
-                in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Extension.TheArgumentsWithWhichTheMethodWillBeCalled.Source args = default)
+                in Corvus.Ui5ManifestBenchmark.Current.JsonArray.Source args = default)
             {
-                method.AddAsProperty(JsonPropertyNamesEscaped.Method, ref builder, escapeName: false);
-                args.AddAsProperty(JsonPropertyNamesEscaped.Args, ref builder, escapeName: false);
+                method.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Method, ref builder);
+                args.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Args, ref builder);
             }
 
             /// <summary>
             /// Creates an instance of a <see cref="Extension"/>.
             /// </summary>
-            public void Create(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source method, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Extension.TheArgumentsWithWhichTheMethodWillBeCalled.Source args = default)
+            public void Create(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source method, in Corvus.Ui5ManifestBenchmark.Current.JsonArray.Source args = default)
             {
                 Create(ref _builder, method, args);
             }
@@ -746,13 +782,13 @@ public readonly partial struct Ui5ManifestSchema
                 in TContext context,
                 ref ComplexValueBuilder builder,
                 in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source method,
-                in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Extension.TheArgumentsWithWhichTheMethodWillBeCalled.Source<TContext> args = default)
+                in Corvus.Ui5ManifestBenchmark.Current.JsonArray.Source<TContext> args = default)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif
             {
-                method.AddAsProperty(JsonPropertyNamesEscaped.Method, ref builder, escapeName: false);
-                args.AddAsProperty(JsonPropertyNamesEscaped.Args, ref builder, escapeName: false);
+                method.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Method, ref builder);
+                args.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Args, ref builder);
             }
 
             /// <summary>
@@ -761,7 +797,7 @@ public readonly partial struct Ui5ManifestSchema
             public void Create<TContext>(
                 in TContext context,
                 in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source method,
-                in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Extension.TheArgumentsWithWhichTheMethodWillBeCalled.Source<TContext> args = default)
+                in Corvus.Ui5ManifestBenchmark.Current.JsonArray.Source<TContext> args = default)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif
@@ -896,7 +932,7 @@ public readonly partial struct Ui5ManifestSchema
         /// <param name="args">The value of the property.</param>
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
         /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-        public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source method, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Extension.TheArgumentsWithWhichTheMethodWillBeCalled.Source args = default, int initialCapacity = 30)
+        public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source method, in Corvus.Ui5ManifestBenchmark.Current.JsonArray.Source args = default, int initialCapacity = 30)
         {
             JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
             ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
@@ -919,7 +955,7 @@ public readonly partial struct Ui5ManifestSchema
         /// <param name="args">The value of the property.</param>
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
         /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-        public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source method, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Extension.TheArgumentsWithWhichTheMethodWillBeCalled.Source<TContext> args = default, int initialCapacity = 30)
+        public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source method, in Corvus.Ui5ManifestBenchmark.Current.JsonArray.Source<TContext> args = default, int initialCapacity = 30)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif

@@ -744,5 +744,47 @@ public readonly partial struct Ui5ManifestSchema
             /// </summary>
             public static ReadOnlySpan<byte> UriNwbc => "uriNwbc"u8;
         }
+
+        /// <summary>
+        /// Provides pre-baked property name blobs for fast builder property storage.
+        /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
+        /// </summary>
+        private static class JsonPropertyNamesPrebaked
+        {
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Version"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Version => [0xA5, 0x00, 0x00, 0x00, 0x22, 0x5F, 0x76, 0x65, 0x72, 0x73, 0x69, 0x6F, 0x6E, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="AppName"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> AppName => [0x95, 0x00, 0x00, 0x00, 0x22, 0x61, 0x70, 0x70, 0x4E, 0x61, 0x6D, 0x65, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="AppVersion"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> AppVersion => [0xC5, 0x00, 0x00, 0x00, 0x22, 0x61, 0x70, 0x70, 0x56, 0x65, 0x72, 0x73, 0x69, 0x6F, 0x6E, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="MultiVersionApp"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> MultiVersionApp => [0x15, 0x01, 0x00, 0x00, 0x22, 0x6D, 0x75, 0x6C, 0x74, 0x69, 0x56, 0x65, 0x72, 0x73, 0x69, 0x6F, 0x6E, 0x41, 0x70, 0x70, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="ProviderAccount"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> ProviderAccount => [0x15, 0x01, 0x00, 0x00, 0x22, 0x70, 0x72, 0x6F, 0x76, 0x69, 0x64, 0x65, 0x72, 0x41, 0x63, 0x63, 0x6F, 0x75, 0x6E, 0x74, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="UriValue"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> UriValue => [0x55, 0x00, 0x00, 0x00, 0x22, 0x75, 0x72, 0x69, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="UriNwbc"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> UriNwbc => [0x95, 0x00, 0x00, 0x00, 0x22, 0x75, 0x72, 0x69, 0x4E, 0x77, 0x62, 0x63, 0x22];
+        }
     }
 }

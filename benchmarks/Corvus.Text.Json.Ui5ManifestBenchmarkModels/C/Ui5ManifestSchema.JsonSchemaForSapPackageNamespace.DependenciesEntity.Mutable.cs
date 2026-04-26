@@ -387,7 +387,7 @@ public readonly partial struct Ui5ManifestSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.Products, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Products, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -423,7 +423,7 @@ public readonly partial struct Ui5ManifestSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.Products, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Products, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -468,7 +468,7 @@ public readonly partial struct Ui5ManifestSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.Services, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Services, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -504,7 +504,7 @@ public readonly partial struct Ui5ManifestSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.Services, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Services, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -887,6 +887,24 @@ public readonly partial struct Ui5ManifestSchema
                     }
                 }
 
+                internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+                {
+                    switch(_kind)
+                    {
+                        case Kind.Unknown:
+                            break;
+                        case Kind.JsonElement:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                            break;
+                        case Kind.Builder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
+                            break;
+                        default:
+                            Debug.Fail("Unexpected Kind");
+                            break;
+                    }
+                }
+
                 internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
                 {
                     switch(_kind)
@@ -988,6 +1006,24 @@ public readonly partial struct Ui5ManifestSchema
                     }
                 }
 
+                internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+                {
+                    switch(_kind)
+                    {
+                        case Kind.Unknown:
+                            break;
+                        case Kind.Source:
+                            _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                            break;
+                        case Kind.Builder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
+                            break;
+                        default:
+                            Debug.Fail("Unexpected Kind");
+                            break;
+                    }
+                }
+
                 internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
                 {
                     switch(_kind)
@@ -1069,8 +1105,8 @@ public readonly partial struct Ui5ManifestSchema
                     in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.DependenciesEntity.JsonStringArray.Source products = default,
                     in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapPackageNamespace.DependenciesEntity.ListOfServArray.Source services = default)
                 {
-                    products.AddAsProperty(JsonPropertyNamesEscaped.Products, ref builder, escapeName: false);
-                    services.AddAsProperty(JsonPropertyNamesEscaped.Services, ref builder, escapeName: false);
+                    products.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Products, ref builder);
+                    services.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Services, ref builder);
                 }
 
                 /// <summary>
@@ -1093,8 +1129,8 @@ public readonly partial struct Ui5ManifestSchema
                 where TContext : allows ref struct
                 #endif
                 {
-                    products.AddAsProperty(JsonPropertyNamesEscaped.Products, ref builder, escapeName: false);
-                    services.AddAsProperty(JsonPropertyNamesEscaped.Services, ref builder, escapeName: false);
+                    products.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Products, ref builder);
+                    services.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Services, ref builder);
                 }
 
                 /// <summary>

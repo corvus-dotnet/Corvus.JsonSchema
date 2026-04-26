@@ -111,11 +111,11 @@ public readonly partial struct KrakendSchema
                         RequiredBitForDisableCountPerBuckets | RequiredBitForGlobalTags | RequiredBitForNamespace | RequiredBitForService |
                         RequiredBitForStatsAddress | RequiredBitForTags | RequiredBitForTraceAddress;
                     private static readonly JsonSchemaPathProvider DisableCountPerBucketsValueSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/disable_count_per_buckets"u8, buffer, out written);
-                    private static readonly JsonSchemaPathProvider GlobalTagsValueSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/global_tags"u8, buffer, out written);
+                    private static readonly JsonSchemaPathProvider GlobalTagsSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/global_tags"u8, buffer, out written);
                     private static readonly JsonSchemaPathProvider NamespaceSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/namespace"u8, buffer, out written);
                     private static readonly JsonSchemaPathProvider ServiceSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/service"u8, buffer, out written);
                     private static readonly JsonSchemaPathProvider StatsAddressValueSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/stats_address"u8, buffer, out written);
-                    private static readonly JsonSchemaPathProvider TagsValueSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/tags"u8, buffer, out written);
+                    private static readonly JsonSchemaPathProvider TagsSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/tags"u8, buffer, out written);
                     private static readonly JsonSchemaPathProvider TraceAddressValueSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/trace_address"u8, buffer, out written);
 
                     private static void MatchDisableCountPerBucketsValue(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
@@ -140,18 +140,18 @@ public readonly partial struct KrakendSchema
                         requiredBitBuffer[RequiredOffsetForDisableCountPerBuckets] |= RequiredBitForDisableCountPerBuckets;
                     }
 
-                    private static void MatchGlobalTagsValue(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+                    private static void MatchGlobalTags(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
                     {
                         context.AddLocalEvaluatedProperty(propertyCount);
                         JsonSchemaContext childContext1 =
-                            Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271telemetry1opencensusJson.Exporters.Datadog.GlobalTags.JsonSchema.PushChildContextUnescaped(
+                            Corvus.KrakendBenchmark.Current.JsonObject.JsonSchema.PushChildContextUnescaped(
                                 parentDocument,
                                 parentDocumentIndex,
                                 ref context,
-                                JsonPropertyNames.GlobalTagsValueUtf8,
-                                evaluationPath: GlobalTagsValueSchemaEvaluationPath);
+                                JsonPropertyNames.GlobalTagsUtf8,
+                                evaluationPath: GlobalTagsSchemaEvaluationPath);
 
-                        Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271telemetry1opencensusJson.Exporters.Datadog.GlobalTags.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext1);
+                        Corvus.KrakendBenchmark.Current.JsonObject.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext1);
                         context.CommitChildContext(childContext1.IsMatch, ref childContext1);
 
                         if (!context.HasCollector && !context.IsMatch)
@@ -228,18 +228,18 @@ public readonly partial struct KrakendSchema
                         requiredBitBuffer[RequiredOffsetForStatsAddress] |= RequiredBitForStatsAddress;
                     }
 
-                    private static void MatchTagsValue(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+                    private static void MatchTags(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
                     {
                         context.AddLocalEvaluatedProperty(propertyCount);
                         JsonSchemaContext childContext5 =
-                            Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271telemetry1opencensusJson.Exporters.Datadog.Tags.JsonSchema.PushChildContextUnescaped(
+                            Corvus.KrakendBenchmark.Current.JsonArray.JsonSchema.PushChildContextUnescaped(
                                 parentDocument,
                                 parentDocumentIndex,
                                 ref context,
-                                JsonPropertyNames.TagsValueUtf8,
-                                evaluationPath: TagsValueSchemaEvaluationPath);
+                                JsonPropertyNames.TagsUtf8,
+                                evaluationPath: TagsSchemaEvaluationPath);
 
-                        Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271telemetry1opencensusJson.Exporters.Datadog.Tags.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext5);
+                        Corvus.KrakendBenchmark.Current.JsonArray.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext5);
                         context.CommitChildContext(childContext5.IsMatch, ref childContext5);
 
                         if (!context.HasCollector && !context.IsMatch)
@@ -276,11 +276,11 @@ public readonly partial struct KrakendSchema
                     {
                         return new PropertySchemaMatchers<Corvus.KrakendBenchmark.Current.PropertiesValidationHandler_NamedPropertyValidator>([
                             (static () => JsonPropertyNames.DisableCountPerBucketsValueUtf8, MatchDisableCountPerBucketsValue),
-                            (static () => JsonPropertyNames.GlobalTagsValueUtf8, MatchGlobalTagsValue),
+                            (static () => JsonPropertyNames.GlobalTagsUtf8, MatchGlobalTags),
                             (static () => JsonPropertyNames.NamespaceUtf8, MatchNamespace),
                             (static () => JsonPropertyNames.ServiceUtf8, MatchService),
                             (static () => JsonPropertyNames.StatsAddressValueUtf8, MatchStatsAddressValue),
-                            (static () => JsonPropertyNames.TagsValueUtf8, MatchTagsValue),
+                            (static () => JsonPropertyNames.TagsUtf8, MatchTags),
                             (static () => JsonPropertyNames.TraceAddressValueUtf8, MatchTraceAddressValue),
                         ]);
                     }
@@ -308,17 +308,17 @@ public readonly partial struct KrakendSchema
                     /// <summary>
                     /// Gets a provider for the schema location from which this type was generated.
                     /// </summary>
-                    public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("krakend-schema.json#/definitions/https:~1~1www.krakend.io~1schema~1v2.7~1telemetry~1opencensus.json/properties/exporters/properties/datadog"u8, buffer, out written);
+                    public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/definitions/https:~1~1www.krakend.io~1schema~1v2.7~1telemetry~1opencensus.json/properties/exporters/properties/datadog"u8, buffer, out written);
 
                     /// <summary>
                     /// Gets the schema location from which this type was generated.
                     /// </summary>
-                    public const string SchemaLocation = "krakend-schema.json#/definitions/https:~1~1www.krakend.io~1schema~1v2.7~1telemetry~1opencensus.json/properties/exporters/properties/datadog";
+                    public const string SchemaLocation = "/definitions/https:~1~1www.krakend.io~1schema~1v2.7~1telemetry~1opencensus.json/properties/exporters/properties/datadog";
 
                     /// <summary>
                     /// Gets the schema location from which this type was generated as a UTF-8 string.
                     /// </summary>
-                    public static ReadOnlySpan<byte> SchemaLocationUtf8 => "krakend-schema.json#/definitions/https:~1~1www.krakend.io~1schema~1v2.7~1telemetry~1opencensus.json/properties/exporters/properties/datadog"u8;
+                    public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/definitions/https:~1~1www.krakend.io~1schema~1v2.7~1telemetry~1opencensus.json/properties/exporters/properties/datadog"u8;
 
                     /// <summary>
                     /// Applies the JSON schema semantics defined by this type to the instance determined by the given document and index.

@@ -59,17 +59,17 @@ public readonly partial struct SemanticReleaseSchema
                 /// <summary>
                 /// Gets a provider for the schema location from which this type was generated.
                 /// </summary>
-                public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("https://json.schemastore.org/semantic-release.json#/properties/plugins/items"u8, buffer, out written);
+                public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/properties/plugins/items"u8, buffer, out written);
 
                 /// <summary>
                 /// Gets the schema location from which this type was generated.
                 /// </summary>
-                public const string SchemaLocation = "https://json.schemastore.org/semantic-release.json#/properties/plugins/items";
+                public const string SchemaLocation = "/properties/plugins/items";
 
                 /// <summary>
                 /// Gets the schema location from which this type was generated as a UTF-8 string.
                 /// </summary>
-                public static ReadOnlySpan<byte> SchemaLocationUtf8 => "https://json.schemastore.org/semantic-release.json#/properties/plugins/items"u8;
+                public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/properties/plugins/items"u8;
                 private static readonly JsonSchemaPathProvider AnyOf0SchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/anyOf/0"u8, buffer, out written);
                 private static readonly JsonSchemaPathProvider AnyOf1SchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/anyOf/1"u8, buffer, out written);
 
@@ -115,8 +115,8 @@ public readonly partial struct SemanticReleaseSchema
                     }
 
                     JsonSchemaContext anyOfContext1 =
-                        Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.PluginsEntityArray.PluginsEntity.AnyOf1Array.JsonSchema.PushChildContext(parentDocument, parentIndex, ref context, schemaEvaluationPath: AnyOf1SchemaEvaluationPath);
-                    Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.PluginsEntityArray.PluginsEntity.AnyOf1Array.JsonSchema.Evaluate(parentDocument, parentIndex, ref anyOfContext1);
+                        Corvus.SemanticReleaseBenchmark.Current.JsonArray.JsonSchema.PushChildContext(parentDocument, parentIndex, ref context, schemaEvaluationPath: AnyOf1SchemaEvaluationPath);
+                    Corvus.SemanticReleaseBenchmark.Current.JsonArray.JsonSchema.Evaluate(parentDocument, parentIndex, ref anyOfContext1);
                     anyOfComposedIsMatch = anyOfComposedIsMatch || anyOfContext1.IsMatch;
 
                     if (anyOfContext1.IsMatch)

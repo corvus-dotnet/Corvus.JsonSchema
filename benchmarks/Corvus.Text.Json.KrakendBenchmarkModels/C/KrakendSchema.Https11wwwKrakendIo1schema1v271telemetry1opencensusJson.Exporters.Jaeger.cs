@@ -845,6 +845,33 @@ public readonly partial struct KrakendSchema
                     /// </summary>
                     public static ReadOnlySpan<byte> ServiceName => "service_name"u8;
                 }
+
+                /// <summary>
+                /// Provides pre-baked property name blobs for fast builder property storage.
+                /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
+                /// </summary>
+                private static class JsonPropertyNamesPrebaked
+                {
+                    /// <summary>
+                    /// Gets the pre-baked property name blob for <see cref="AgentEndpoint"/>.
+                    /// </summary>
+                    public static ReadOnlySpan<byte> AgentEndpoint => [0x05, 0x01, 0x00, 0x00, 0x22, 0x61, 0x67, 0x65, 0x6E, 0x74, 0x5F, 0x65, 0x6E, 0x64, 0x70, 0x6F, 0x69, 0x6E, 0x74, 0x22];
+
+                    /// <summary>
+                    /// Gets the pre-baked property name blob for <see cref="BufferMaxCount"/>.
+                    /// </summary>
+                    public static ReadOnlySpan<byte> BufferMaxCount => [0x25, 0x01, 0x00, 0x00, 0x22, 0x62, 0x75, 0x66, 0x66, 0x65, 0x72, 0x5F, 0x6D, 0x61, 0x78, 0x5F, 0x63, 0x6F, 0x75, 0x6E, 0x74, 0x22];
+
+                    /// <summary>
+                    /// Gets the pre-baked property name blob for <see cref="Endpoint"/>.
+                    /// </summary>
+                    public static ReadOnlySpan<byte> Endpoint => [0xA5, 0x00, 0x00, 0x00, 0x22, 0x65, 0x6E, 0x64, 0x70, 0x6F, 0x69, 0x6E, 0x74, 0x22];
+
+                    /// <summary>
+                    /// Gets the pre-baked property name blob for <see cref="ServiceName"/>.
+                    /// </summary>
+                    public static ReadOnlySpan<byte> ServiceName => [0xE5, 0x00, 0x00, 0x00, 0x22, 0x73, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x5F, 0x6E, 0x61, 0x6D, 0x65, 0x22];
+                }
             }
         }
     }

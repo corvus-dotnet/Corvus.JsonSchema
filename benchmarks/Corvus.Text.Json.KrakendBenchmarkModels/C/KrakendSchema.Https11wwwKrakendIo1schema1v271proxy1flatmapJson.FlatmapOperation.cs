@@ -127,11 +127,11 @@ public readonly partial struct KrakendSchema
             /// See: https://www.krakend.io/docs/backends/flatmap/
             /// </para>
             /// </remarks>
-            public Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271proxy1flatmapJson.FlatmapOperation.Args ArgsValue
+            public Corvus.KrakendBenchmark.Current.JsonArray Args
             {
                 get
                 {
-                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ArgsValueUtf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271proxy1flatmapJson.FlatmapOperation.Args value))
+                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ArgsUtf8, out Corvus.KrakendBenchmark.Current.JsonArray value))
                     {
                         return value;
                     }
@@ -590,9 +590,9 @@ public readonly partial struct KrakendSchema
             public static class JsonPropertyNames
             {
                 /// <summary>
-                /// Gets the JSON property name for <see cref="ArgsValue"/>.
+                /// Gets the JSON property name for <see cref="Args"/>.
                 /// </summary>
-                public const string ArgsValue = "args";
+                public const string Args = "args";
 
                 /// <summary>
                 /// Gets the JSON property name for <see cref="TypeValue"/>.
@@ -600,9 +600,9 @@ public readonly partial struct KrakendSchema
                 public const string TypeValue = "type";
 
                 /// <summary>
-                /// Gets the JSON property name for <see cref="ArgsValue"/>.
+                /// Gets the JSON property name for <see cref="Args"/>.
                 /// </summary>
-                public static ReadOnlySpan<byte> ArgsValueUtf8 => "args"u8;
+                public static ReadOnlySpan<byte> ArgsUtf8 => "args"u8;
 
                 /// <summary>
                 /// Gets the JSON property name for <see cref="TypeValue"/>.
@@ -616,14 +616,31 @@ public readonly partial struct KrakendSchema
             private static class JsonPropertyNamesEscaped
             {
                 /// <summary>
-                /// Gets the escaped UTF-8 JSON property name for <see cref="ArgsValue"/>.
+                /// Gets the escaped UTF-8 JSON property name for <see cref="Args"/>.
                 /// </summary>
-                public static ReadOnlySpan<byte> ArgsValue => "args"u8;
+                public static ReadOnlySpan<byte> Args => "args"u8;
 
                 /// <summary>
                 /// Gets the escaped UTF-8 JSON property name for <see cref="TypeValue"/>.
                 /// </summary>
                 public static ReadOnlySpan<byte> TypeValue => "type"u8;
+            }
+
+            /// <summary>
+            /// Provides pre-baked property name blobs for fast builder property storage.
+            /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
+            /// </summary>
+            private static class JsonPropertyNamesPrebaked
+            {
+                /// <summary>
+                /// Gets the pre-baked property name blob for <see cref="Args"/>.
+                /// </summary>
+                public static ReadOnlySpan<byte> Args => [0x65, 0x00, 0x00, 0x00, 0x22, 0x61, 0x72, 0x67, 0x73, 0x22];
+
+                /// <summary>
+                /// Gets the pre-baked property name blob for <see cref="TypeValue"/>.
+                /// </summary>
+                public static ReadOnlySpan<byte> TypeValue => [0x65, 0x00, 0x00, 0x00, 0x22, 0x74, 0x79, 0x70, 0x65, 0x22];
             }
         }
     }

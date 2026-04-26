@@ -331,24 +331,6 @@ public readonly partial struct Ui5ManifestSchema
             return From(value);
         }
 
-        /// <summary>
-        /// Conversion to <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Config.OneOf4Entity"/>.
-        /// </summary>
-        /// <param name="value">The value from which to convert.</param>
-        public static explicit operator Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Config.OneOf4Entity(Config value)
-        {
-            return Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Config.OneOf4Entity.From(value);
-        }
-
-        /// <summary>
-        /// Conversion from <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Config.OneOf4Entity"/>.
-        /// </summary>
-        /// <param name="value">The value from which to convert.</param>
-        public static implicit operator Config(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Config.OneOf4Entity value)
-        {
-            return From(value);
-        }
-
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static explicit operator string(Config value) => value._parent.GetString(value._idx, JsonTokenType.String) ?? throw new FormatException();
 
@@ -933,15 +915,15 @@ public readonly partial struct Ui5ManifestSchema
         }
 
         /// <summary>
-        /// Gets the value as a <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Config.OneOf4Entity" />.
+        /// Gets the value as a <see cref="Corvus.Ui5ManifestBenchmark.Current.JsonObject" />.
         /// </summary>
         /// <param name="result">The result of the conversions.</param>
         /// <returns><see langword="true" /> if the conversion was valid.</returns>
-        public bool TryGetAsOneOf4Entity(out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Config.OneOf4Entity result)
+        public bool TryGetAsJsonObject(out Corvus.Ui5ManifestBenchmark.Current.JsonObject result)
         {
-            if (Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Config.OneOf4Entity.JsonSchema.Evaluate(_parent, _idx))
+            if (Corvus.Ui5ManifestBenchmark.Current.JsonObject.JsonSchema.Evaluate(_parent, _idx))
             {
-                result = Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Config.OneOf4Entity.From(this);
+                result = Corvus.Ui5ManifestBenchmark.Current.JsonObject.From(this);
                 return true;
             }
 
@@ -959,7 +941,7 @@ public readonly partial struct Ui5ManifestSchema
         /// <param name="matchJsonString">Match a <see cref="Corvus.Ui5ManifestBenchmark.Current.JsonString"/>.</param>
         /// <param name="matchJsonBoolean">Match a <see cref="Corvus.Ui5ManifestBenchmark.Current.JsonBoolean"/>.</param>
         /// <param name="matchJsonNumber">Match a <see cref="Corvus.Ui5ManifestBenchmark.Current.JsonNumber"/>.</param>
-        /// <param name="matchOneOf4Entity">Match a <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Config.OneOf4Entity"/>.</param>
+        /// <param name="matchJsonObject">Match a <see cref="Corvus.Ui5ManifestBenchmark.Current.JsonObject"/>.</param>
         /// <param name="defaultMatch">Match any other value.</param>
         /// <returns>An instance of the value returned by the match function.</returns>
         public TResult Match<TContext, TResult>(
@@ -968,7 +950,7 @@ public readonly partial struct Ui5ManifestSchema
             Matcher<Corvus.Ui5ManifestBenchmark.Current.JsonString, TContext, TResult> matchJsonString,
             Matcher<Corvus.Ui5ManifestBenchmark.Current.JsonBoolean, TContext, TResult> matchJsonBoolean,
             Matcher<Corvus.Ui5ManifestBenchmark.Current.JsonNumber, TContext, TResult> matchJsonNumber,
-            Matcher<Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Config.OneOf4Entity, TContext, TResult> matchOneOf4Entity,
+            Matcher<Corvus.Ui5ManifestBenchmark.Current.JsonObject, TContext, TResult> matchJsonObject,
             Matcher<Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Config, TContext, TResult> defaultMatch)
 #if NET9_0_OR_GREATER
         where TContext : allows ref struct
@@ -994,9 +976,9 @@ public readonly partial struct Ui5ManifestSchema
                 return matchJsonNumber(Corvus.Ui5ManifestBenchmark.Current.JsonNumber.From(this), context);
             }
 
-            if (Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Config.OneOf4Entity.JsonSchema.Evaluate(_parent, _idx))
+            if (Corvus.Ui5ManifestBenchmark.Current.JsonObject.JsonSchema.Evaluate(_parent, _idx))
             {
-                return matchOneOf4Entity(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Config.OneOf4Entity.From(this), context);
+                return matchJsonObject(Corvus.Ui5ManifestBenchmark.Current.JsonObject.From(this), context);
             }
 
             return defaultMatch(this, context);
@@ -1010,7 +992,7 @@ public readonly partial struct Ui5ManifestSchema
         /// <param name="matchJsonString">Match a <see cref="Corvus.Ui5ManifestBenchmark.Current.JsonString"/>.</param>
         /// <param name="matchJsonBoolean">Match a <see cref="Corvus.Ui5ManifestBenchmark.Current.JsonBoolean"/>.</param>
         /// <param name="matchJsonNumber">Match a <see cref="Corvus.Ui5ManifestBenchmark.Current.JsonNumber"/>.</param>
-        /// <param name="matchOneOf4Entity">Match a <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Config.OneOf4Entity"/>.</param>
+        /// <param name="matchJsonObject">Match a <see cref="Corvus.Ui5ManifestBenchmark.Current.JsonObject"/>.</param>
         /// <param name="defaultMatch">Match any other value.</param>
         /// <returns>An instance of the value returned by the match function.</returns>
         public TResult Match<TResult>(
@@ -1018,7 +1000,7 @@ public readonly partial struct Ui5ManifestSchema
             Matcher<Corvus.Ui5ManifestBenchmark.Current.JsonString, TResult> matchJsonString,
             Matcher<Corvus.Ui5ManifestBenchmark.Current.JsonBoolean, TResult> matchJsonBoolean,
             Matcher<Corvus.Ui5ManifestBenchmark.Current.JsonNumber, TResult> matchJsonNumber,
-            Matcher<Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Config.OneOf4Entity, TResult> matchOneOf4Entity,
+            Matcher<Corvus.Ui5ManifestBenchmark.Current.JsonObject, TResult> matchJsonObject,
             Matcher<Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Config, TResult> defaultMatch)
         {
             if (Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Config.ConfigArray.JsonSchema.Evaluate(_parent, _idx))
@@ -1041,9 +1023,9 @@ public readonly partial struct Ui5ManifestSchema
                 return matchJsonNumber(Corvus.Ui5ManifestBenchmark.Current.JsonNumber.From(this));
             }
 
-            if (Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Config.OneOf4Entity.JsonSchema.Evaluate(_parent, _idx))
+            if (Corvus.Ui5ManifestBenchmark.Current.JsonObject.JsonSchema.Evaluate(_parent, _idx))
             {
-                return matchOneOf4Entity(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Config.OneOf4Entity.From(this));
+                return matchJsonObject(Corvus.Ui5ManifestBenchmark.Current.JsonObject.From(this));
             }
 
             return defaultMatch(this);

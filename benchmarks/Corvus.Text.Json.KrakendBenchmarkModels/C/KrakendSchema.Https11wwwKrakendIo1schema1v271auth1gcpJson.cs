@@ -169,11 +169,11 @@ public readonly partial struct KrakendSchema
         /// See: https://www.krakend.io/docs/enterprise/authentication/gcp/
         /// </para>
         /// </remarks>
-        public Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271auth1gcpJson.JsonCredentialsFile CredentialsJson
+        public Corvus.KrakendBenchmark.Current.JsonObject CredentialsJson
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CredentialsJsonUtf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271auth1gcpJson.JsonCredentialsFile value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CredentialsJsonUtf8, out Corvus.KrakendBenchmark.Current.JsonObject value))
                 {
                     return value;
                 }
@@ -194,11 +194,11 @@ public readonly partial struct KrakendSchema
         /// See: https://www.krakend.io/docs/enterprise/authentication/gcp/
         /// </para>
         /// </remarks>
-        public Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271auth1gcpJson.CustomClaims CustomClaimsValue
+        public Corvus.KrakendBenchmark.Current.JsonObject CustomClaims
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CustomClaimsValueUtf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271auth1gcpJson.CustomClaims value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CustomClaimsUtf8, out Corvus.KrakendBenchmark.Current.JsonObject value))
                 {
                     return value;
                 }
@@ -821,9 +821,9 @@ public readonly partial struct KrakendSchema
             public const string CredentialsJson = "credentials_json";
 
             /// <summary>
-            /// Gets the JSON property name for <see cref="CustomClaimsValue"/>.
+            /// Gets the JSON property name for <see cref="CustomClaims"/>.
             /// </summary>
-            public const string CustomClaimsValue = "custom_claims";
+            public const string CustomClaims = "custom_claims";
 
             /// <summary>
             /// Gets the JSON property name for <see cref="Audience"/>.
@@ -841,9 +841,9 @@ public readonly partial struct KrakendSchema
             public static ReadOnlySpan<byte> CredentialsJsonUtf8 => "credentials_json"u8;
 
             /// <summary>
-            /// Gets the JSON property name for <see cref="CustomClaimsValue"/>.
+            /// Gets the JSON property name for <see cref="CustomClaims"/>.
             /// </summary>
-            public static ReadOnlySpan<byte> CustomClaimsValueUtf8 => "custom_claims"u8;
+            public static ReadOnlySpan<byte> CustomClaimsUtf8 => "custom_claims"u8;
         }
 
         /// <summary>
@@ -867,9 +867,36 @@ public readonly partial struct KrakendSchema
             public static ReadOnlySpan<byte> CredentialsJson => "credentials_json"u8;
 
             /// <summary>
-            /// Gets the escaped UTF-8 JSON property name for <see cref="CustomClaimsValue"/>.
+            /// Gets the escaped UTF-8 JSON property name for <see cref="CustomClaims"/>.
             /// </summary>
-            public static ReadOnlySpan<byte> CustomClaimsValue => "custom_claims"u8;
+            public static ReadOnlySpan<byte> CustomClaims => "custom_claims"u8;
+        }
+
+        /// <summary>
+        /// Provides pre-baked property name blobs for fast builder property storage.
+        /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
+        /// </summary>
+        private static class JsonPropertyNamesPrebaked
+        {
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Audience"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Audience => [0xA5, 0x00, 0x00, 0x00, 0x22, 0x61, 0x75, 0x64, 0x69, 0x65, 0x6E, 0x63, 0x65, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="CredentialsFile"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> CredentialsFile => [0x25, 0x01, 0x00, 0x00, 0x22, 0x63, 0x72, 0x65, 0x64, 0x65, 0x6E, 0x74, 0x69, 0x61, 0x6C, 0x73, 0x5F, 0x66, 0x69, 0x6C, 0x65, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="CredentialsJson"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> CredentialsJson => [0x25, 0x01, 0x00, 0x00, 0x22, 0x63, 0x72, 0x65, 0x64, 0x65, 0x6E, 0x74, 0x69, 0x61, 0x6C, 0x73, 0x5F, 0x6A, 0x73, 0x6F, 0x6E, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="CustomClaims"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> CustomClaims => [0xF5, 0x00, 0x00, 0x00, 0x22, 0x63, 0x75, 0x73, 0x74, 0x6F, 0x6D, 0x5F, 0x63, 0x6C, 0x61, 0x69, 0x6D, 0x73, 0x22];
         }
     }
 }

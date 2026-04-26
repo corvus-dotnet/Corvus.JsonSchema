@@ -582,6 +582,18 @@ public readonly partial struct KrakendSchema
                 /// </summary>
                 public static ReadOnlySpan<byte> CheckExpr => "check_expr"u8;
             }
+
+            /// <summary>
+            /// Provides pre-baked property name blobs for fast builder property storage.
+            /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
+            /// </summary>
+            private static class JsonPropertyNamesPrebaked
+            {
+                /// <summary>
+                /// Gets the pre-baked property name blob for <see cref="CheckExpr"/>.
+                /// </summary>
+                public static ReadOnlySpan<byte> CheckExpr => [0xC5, 0x00, 0x00, 0x00, 0x22, 0x63, 0x68, 0x65, 0x63, 0x6B, 0x5F, 0x65, 0x78, 0x70, 0x72, 0x22];
+            }
         }
     }
 }

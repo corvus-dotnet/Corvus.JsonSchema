@@ -78,11 +78,11 @@ public readonly partial struct Ui5ManifestSchema
             /// <summary>
             /// Gets the (optional) <c>parts</c> property.
             /// </summary>
-            public Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.StatusTextFormatter.DefinesBindingInformation.PartsArray Parts
+            public Corvus.Ui5ManifestBenchmark.Current.JsonArray Parts
             {
                 get
                 {
-                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.PartsUtf8, out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.StatusTextFormatter.DefinesBindingInformation.PartsArray value))
+                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.PartsUtf8, out Corvus.Ui5ManifestBenchmark.Current.JsonArray value))
                     {
                         return value;
                     }
@@ -563,6 +563,23 @@ public readonly partial struct Ui5ManifestSchema
                 /// Gets the escaped UTF-8 JSON property name for <see cref="TranslationKey"/>.
                 /// </summary>
                 public static ReadOnlySpan<byte> TranslationKey => "translationKey"u8;
+            }
+
+            /// <summary>
+            /// Provides pre-baked property name blobs for fast builder property storage.
+            /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
+            /// </summary>
+            private static class JsonPropertyNamesPrebaked
+            {
+                /// <summary>
+                /// Gets the pre-baked property name blob for <see cref="Parts"/>.
+                /// </summary>
+                public static ReadOnlySpan<byte> Parts => [0x75, 0x00, 0x00, 0x00, 0x22, 0x70, 0x61, 0x72, 0x74, 0x73, 0x22];
+
+                /// <summary>
+                /// Gets the pre-baked property name blob for <see cref="TranslationKey"/>.
+                /// </summary>
+                public static ReadOnlySpan<byte> TranslationKey => [0x05, 0x01, 0x00, 0x00, 0x22, 0x74, 0x72, 0x61, 0x6E, 0x73, 0x6C, 0x61, 0x74, 0x69, 0x6F, 0x6E, 0x4B, 0x65, 0x79, 0x22];
             }
         }
     }

@@ -598,7 +598,7 @@ public readonly partial struct UnrealEngineUprojectSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Description, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Description, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -641,7 +641,7 @@ public readonly partial struct UnrealEngineUprojectSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Enabled, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Enabled, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -674,7 +674,7 @@ public readonly partial struct UnrealEngineUprojectSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.HasExplicitPlatforms, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.HasExplicitPlatforms, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -719,7 +719,7 @@ public readonly partial struct UnrealEngineUprojectSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.MarketplaceUrl, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MarketplaceUrl, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -762,7 +762,7 @@ public readonly partial struct UnrealEngineUprojectSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Name, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Name, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -795,7 +795,7 @@ public readonly partial struct UnrealEngineUprojectSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Optional, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Optional, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -840,7 +840,7 @@ public readonly partial struct UnrealEngineUprojectSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.PlatformAllowList, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PlatformAllowList, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -876,7 +876,7 @@ public readonly partial struct UnrealEngineUprojectSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.PlatformAllowList, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PlatformAllowList, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -921,7 +921,7 @@ public readonly partial struct UnrealEngineUprojectSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.PlatformDenyList, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PlatformDenyList, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -957,7 +957,7 @@ public readonly partial struct UnrealEngineUprojectSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.PlatformDenyList, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PlatformDenyList, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1002,7 +1002,7 @@ public readonly partial struct UnrealEngineUprojectSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.TargetAllowList, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TargetAllowList, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1038,7 +1038,7 @@ public readonly partial struct UnrealEngineUprojectSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.TargetAllowList, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TargetAllowList, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1083,7 +1083,7 @@ public readonly partial struct UnrealEngineUprojectSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.TargetConfigurationAllowList, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TargetConfigurationAllowList, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1119,7 +1119,7 @@ public readonly partial struct UnrealEngineUprojectSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.TargetConfigurationAllowList, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TargetConfigurationAllowList, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1164,7 +1164,7 @@ public readonly partial struct UnrealEngineUprojectSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.TargetConfigurationDenyList, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TargetConfigurationDenyList, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1200,7 +1200,7 @@ public readonly partial struct UnrealEngineUprojectSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.TargetConfigurationDenyList, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TargetConfigurationDenyList, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1245,7 +1245,7 @@ public readonly partial struct UnrealEngineUprojectSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.TargetDenyList, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TargetDenyList, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1281,7 +1281,7 @@ public readonly partial struct UnrealEngineUprojectSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.TargetDenyList, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TargetDenyList, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1664,6 +1664,24 @@ public readonly partial struct UnrealEngineUprojectSchema
                 }
             }
 
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.JsonElement:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                        break;
+                    case Kind.Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
             internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
             {
                 switch(_kind)
@@ -1765,6 +1783,24 @@ public readonly partial struct UnrealEngineUprojectSchema
                 }
             }
 
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.Source:
+                        _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                        break;
+                    case Kind.Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
             internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
             {
                 switch(_kind)
@@ -1856,18 +1892,18 @@ public readonly partial struct UnrealEngineUprojectSchema
                 in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.ListOfDisallowedTaArray.Source targetConfigurationDenyList = default,
                 in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptor.ListOfDisalloweArray.Source targetDenyList = default)
             {
-                enabled.AddAsProperty(JsonPropertyNamesEscaped.Enabled, ref builder, escapeName: false);
-                name.AddAsProperty(JsonPropertyNamesEscaped.Name, ref builder, escapeName: false);
-                description.AddAsProperty(JsonPropertyNamesEscaped.Description, ref builder, escapeName: false);
-                hasExplicitPlatforms.AddAsProperty(JsonPropertyNamesEscaped.HasExplicitPlatforms, ref builder, escapeName: false);
-                marketplaceUrl.AddAsProperty(JsonPropertyNamesEscaped.MarketplaceUrl, ref builder, escapeName: false);
-                optional.AddAsProperty(JsonPropertyNamesEscaped.Optional, ref builder, escapeName: false);
-                platformAllowList.AddAsProperty(JsonPropertyNamesEscaped.PlatformAllowList, ref builder, escapeName: false);
-                platformDenyList.AddAsProperty(JsonPropertyNamesEscaped.PlatformDenyList, ref builder, escapeName: false);
-                targetAllowList.AddAsProperty(JsonPropertyNamesEscaped.TargetAllowList, ref builder, escapeName: false);
-                targetConfigurationAllowList.AddAsProperty(JsonPropertyNamesEscaped.TargetConfigurationAllowList, ref builder, escapeName: false);
-                targetConfigurationDenyList.AddAsProperty(JsonPropertyNamesEscaped.TargetConfigurationDenyList, ref builder, escapeName: false);
-                targetDenyList.AddAsProperty(JsonPropertyNamesEscaped.TargetDenyList, ref builder, escapeName: false);
+                enabled.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Enabled, ref builder);
+                name.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Name, ref builder);
+                description.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Description, ref builder);
+                hasExplicitPlatforms.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.HasExplicitPlatforms, ref builder);
+                marketplaceUrl.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MarketplaceUrl, ref builder);
+                optional.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Optional, ref builder);
+                platformAllowList.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PlatformAllowList, ref builder);
+                platformDenyList.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PlatformDenyList, ref builder);
+                targetAllowList.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TargetAllowList, ref builder);
+                targetConfigurationAllowList.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TargetConfigurationAllowList, ref builder);
+                targetConfigurationDenyList.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TargetConfigurationDenyList, ref builder);
+                targetDenyList.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TargetDenyList, ref builder);
             }
 
             /// <summary>
@@ -1912,18 +1948,18 @@ public readonly partial struct UnrealEngineUprojectSchema
             where TContext : allows ref struct
             #endif
             {
-                enabled.AddAsProperty(JsonPropertyNamesEscaped.Enabled, ref builder, escapeName: false);
-                name.AddAsProperty(JsonPropertyNamesEscaped.Name, ref builder, escapeName: false);
-                description.AddAsProperty(JsonPropertyNamesEscaped.Description, ref builder, escapeName: false);
-                hasExplicitPlatforms.AddAsProperty(JsonPropertyNamesEscaped.HasExplicitPlatforms, ref builder, escapeName: false);
-                marketplaceUrl.AddAsProperty(JsonPropertyNamesEscaped.MarketplaceUrl, ref builder, escapeName: false);
-                optional.AddAsProperty(JsonPropertyNamesEscaped.Optional, ref builder, escapeName: false);
-                platformAllowList.AddAsProperty(JsonPropertyNamesEscaped.PlatformAllowList, ref builder, escapeName: false);
-                platformDenyList.AddAsProperty(JsonPropertyNamesEscaped.PlatformDenyList, ref builder, escapeName: false);
-                targetAllowList.AddAsProperty(JsonPropertyNamesEscaped.TargetAllowList, ref builder, escapeName: false);
-                targetConfigurationAllowList.AddAsProperty(JsonPropertyNamesEscaped.TargetConfigurationAllowList, ref builder, escapeName: false);
-                targetConfigurationDenyList.AddAsProperty(JsonPropertyNamesEscaped.TargetConfigurationDenyList, ref builder, escapeName: false);
-                targetDenyList.AddAsProperty(JsonPropertyNamesEscaped.TargetDenyList, ref builder, escapeName: false);
+                enabled.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Enabled, ref builder);
+                name.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Name, ref builder);
+                description.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Description, ref builder);
+                hasExplicitPlatforms.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.HasExplicitPlatforms, ref builder);
+                marketplaceUrl.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MarketplaceUrl, ref builder);
+                optional.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Optional, ref builder);
+                platformAllowList.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PlatformAllowList, ref builder);
+                platformDenyList.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PlatformDenyList, ref builder);
+                targetAllowList.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TargetAllowList, ref builder);
+                targetConfigurationAllowList.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TargetConfigurationAllowList, ref builder);
+                targetConfigurationDenyList.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TargetConfigurationDenyList, ref builder);
+                targetDenyList.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TargetDenyList, ref builder);
             }
 
             /// <summary>

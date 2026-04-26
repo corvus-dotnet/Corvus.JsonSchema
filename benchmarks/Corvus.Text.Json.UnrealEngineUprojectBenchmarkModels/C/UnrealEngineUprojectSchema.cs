@@ -262,11 +262,11 @@ public readonly partial struct UnrealEngineUprojectSchema
     /// Custom steps to execute after building targets in this project.
     /// </para>
     /// </remarks>
-    public Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PostBuildStepsEntity PostBuildSteps
+    public Corvus.UnrealEngineUprojectBenchmark.Current.JsonObject PostBuildSteps
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.PostBuildStepsUtf8, out Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PostBuildStepsEntity value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.PostBuildStepsUtf8, out Corvus.UnrealEngineUprojectBenchmark.Current.JsonObject value))
             {
                 return value;
             }
@@ -283,11 +283,11 @@ public readonly partial struct UnrealEngineUprojectSchema
     /// Custom steps to execute before building targets in this project.
     /// </para>
     /// </remarks>
-    public Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PreBuildStepsEntity PreBuildSteps
+    public Corvus.UnrealEngineUprojectBenchmark.Current.JsonObject PreBuildSteps
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.PreBuildStepsUtf8, out Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PreBuildStepsEntity value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.PreBuildStepsUtf8, out Corvus.UnrealEngineUprojectBenchmark.Current.JsonObject value))
             {
                 return value;
             }
@@ -923,5 +923,72 @@ public readonly partial struct UnrealEngineUprojectSchema
         /// Gets the escaped UTF-8 JSON property name for <see cref="TargetPlatforms"/>.
         /// </summary>
         public static ReadOnlySpan<byte> TargetPlatforms => "TargetPlatforms"u8;
+    }
+
+    /// <summary>
+    /// Provides pre-baked property name blobs for fast builder property storage.
+    /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
+    /// </summary>
+    private static class JsonPropertyNamesPrebaked
+    {
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Category"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Category => [0xA5, 0x00, 0x00, 0x00, 0x22, 0x43, 0x61, 0x74, 0x65, 0x67, 0x6F, 0x72, 0x79, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Description"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Description => [0xD5, 0x00, 0x00, 0x00, 0x22, 0x44, 0x65, 0x73, 0x63, 0x72, 0x69, 0x70, 0x74, 0x69, 0x6F, 0x6E, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="DisableEnginePluginsByDefault"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> DisableEnginePluginsByDefault => [0xF5, 0x01, 0x00, 0x00, 0x22, 0x44, 0x69, 0x73, 0x61, 0x62, 0x6C, 0x65, 0x45, 0x6E, 0x67, 0x69, 0x6E, 0x65, 0x50, 0x6C, 0x75, 0x67, 0x69, 0x6E, 0x73, 0x42, 0x79, 0x44, 0x65, 0x66, 0x61, 0x75, 0x6C, 0x74, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="EngineAssociation"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> EngineAssociation => [0x35, 0x01, 0x00, 0x00, 0x22, 0x45, 0x6E, 0x67, 0x69, 0x6E, 0x65, 0x41, 0x73, 0x73, 0x6F, 0x63, 0x69, 0x61, 0x74, 0x69, 0x6F, 0x6E, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="EpicSampleNameHash"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> EpicSampleNameHash => [0x45, 0x01, 0x00, 0x00, 0x22, 0x45, 0x70, 0x69, 0x63, 0x53, 0x61, 0x6D, 0x70, 0x6C, 0x65, 0x4E, 0x61, 0x6D, 0x65, 0x48, 0x61, 0x73, 0x68, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="FileVersion"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> FileVersion => [0xD5, 0x00, 0x00, 0x00, 0x22, 0x46, 0x69, 0x6C, 0x65, 0x56, 0x65, 0x72, 0x73, 0x69, 0x6F, 0x6E, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="IsEnterpriseProject"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> IsEnterpriseProject => [0x55, 0x01, 0x00, 0x00, 0x22, 0x49, 0x73, 0x45, 0x6E, 0x74, 0x65, 0x72, 0x70, 0x72, 0x69, 0x73, 0x65, 0x50, 0x72, 0x6F, 0x6A, 0x65, 0x63, 0x74, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Modules"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Modules => [0x95, 0x00, 0x00, 0x00, 0x22, 0x4D, 0x6F, 0x64, 0x75, 0x6C, 0x65, 0x73, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Plugins"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Plugins => [0x95, 0x00, 0x00, 0x00, 0x22, 0x50, 0x6C, 0x75, 0x67, 0x69, 0x6E, 0x73, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="PostBuildSteps"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> PostBuildSteps => [0x05, 0x01, 0x00, 0x00, 0x22, 0x50, 0x6F, 0x73, 0x74, 0x42, 0x75, 0x69, 0x6C, 0x64, 0x53, 0x74, 0x65, 0x70, 0x73, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="PreBuildSteps"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> PreBuildSteps => [0xF5, 0x00, 0x00, 0x00, 0x22, 0x50, 0x72, 0x65, 0x42, 0x75, 0x69, 0x6C, 0x64, 0x53, 0x74, 0x65, 0x70, 0x73, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="TargetPlatforms"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> TargetPlatforms => [0x15, 0x01, 0x00, 0x00, 0x22, 0x54, 0x61, 0x72, 0x67, 0x65, 0x74, 0x50, 0x6C, 0x61, 0x74, 0x66, 0x6F, 0x72, 0x6D, 0x73, 0x22];
     }
 }

@@ -76,17 +76,17 @@ public readonly partial struct Ui5Schema
                                         /// <summary>
                                         /// Gets a provider for the schema location from which this type was generated.
                                         /// </summary>
-                                        public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("ui5-schema.json#/then/then/definitions/framework/properties/libraries/items/if/not/anyOf/2"u8, buffer, out written);
+                                        public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/then/then/definitions/framework/properties/libraries/items/if/not/anyOf/2"u8, buffer, out written);
 
                                         /// <summary>
                                         /// Gets the schema location from which this type was generated.
                                         /// </summary>
-                                        public const string SchemaLocation = "ui5-schema.json#/then/then/definitions/framework/properties/libraries/items/if/not/anyOf/2";
+                                        public const string SchemaLocation = "/then/then/definitions/framework/properties/libraries/items/if/not/anyOf/2";
 
                                         /// <summary>
                                         /// Gets the schema location from which this type was generated as a UTF-8 string.
                                         /// </summary>
-                                        public static ReadOnlySpan<byte> SchemaLocationUtf8 => "ui5-schema.json#/then/then/definitions/framework/properties/libraries/items/if/not/anyOf/2"u8;
+                                        public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/then/then/definitions/framework/properties/libraries/items/if/not/anyOf/2"u8;
                                         private static readonly JsonSchemaPathProvider NotSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/not"u8, buffer, out written);
 
                                         /// <summary>

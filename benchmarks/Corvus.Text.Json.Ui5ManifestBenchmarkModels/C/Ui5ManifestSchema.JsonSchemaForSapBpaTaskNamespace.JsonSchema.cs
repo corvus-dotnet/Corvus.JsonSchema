@@ -187,17 +187,17 @@ public readonly partial struct Ui5ManifestSchema
             /// <summary>
             /// Gets a provider for the schema location from which this type was generated.
             /// </summary>
-            public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("ui5-manifest-schema.json#/properties/sap.bpa.task"u8, buffer, out written);
+            public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/properties/sap.bpa.task"u8, buffer, out written);
 
             /// <summary>
             /// Gets the schema location from which this type was generated.
             /// </summary>
-            public const string SchemaLocation = "ui5-manifest-schema.json#/properties/sap.bpa.task";
+            public const string SchemaLocation = "/properties/sap.bpa.task";
 
             /// <summary>
             /// Gets the schema location from which this type was generated as a UTF-8 string.
             /// </summary>
-            public static ReadOnlySpan<byte> SchemaLocationUtf8 => "ui5-manifest-schema.json#/properties/sap.bpa.task"u8;
+            public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/properties/sap.bpa.task"u8;
             private static readonly JsonSchemaPathProvider OneOf0SchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/oneOf/0"u8, buffer, out written);
 
             /// <summary>

@@ -42,10 +42,23 @@ public readonly partial struct KrakendSchema
         /// </summary>
         /// <remarks>
         /// <para>
-        /// A set of header keys that may hold a proxied hostname value for the request.
+        /// When the SSL redirect is true, the host where the request is redirected to.
         /// </para>
         /// <para>
         /// See: https://www.krakend.io/docs/service-settings/security/
+        /// </para>
+        /// <para>
+        /// Examples:
+        /// <example>
+        /// <code>
+        /// &quot;ssl.host.domain&quot;
+        /// </code>
+        /// </example>
+        /// <example>
+        /// <code>
+        /// ssl.host.domain
+        /// </code>
+        /// </example>
         /// </para>
         /// </remarks>
         [DebuggerDisplay("{DebuggerDisplay,nq}")]
@@ -79,49 +92,28 @@ public readonly partial struct KrakendSchema
             /// <summary>
             /// Gets the default instance.
             /// </summary>
-            public static SslHost DefaultInstance { get; }
+            public static SslHost DefaultInstance { get; } = ParsedJsonDocument<SslHost>.StringConstant([.."\"ssl.host.domain\""u8]);
 
-            /// <summary>
-            /// Gets the item at the given index.
-            /// </summary>
-            /// <param name="index">The index at which to retrieve the item.</param>
-            /// <returns>The item at the given index.</returns>
-            /// <exception cref="IndexOutOfRangeException">The index was outside the bounds of the array.</exception>
-            /// <exception cref="InvalidOperationException">The value is not an array.</exception>
-            public JsonElement this[int index]
-            {
-                get
-                {
-                    CheckValidInstance();
-                    return _parent.GetArrayIndexElement<JsonElement>(_idx, index);
-                }
-            }
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public bool TryGetValue(out string? value) { CheckValidInstance(); return _parent.TryGetString(_idx, JsonTokenType.String, out value); }
 
-            /// <summary>
-            /// Gets the array length.
-            /// </summary>
-            /// <exception cref="InvalidOperationException">The value is not an array.</exception>
-            public int GetArrayLength()
-            {
-                CheckValidInstance();
-                return _parent.GetArrayLength(_idx);
-            }
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public UnescapedUtf8JsonString GetUtf8String() { CheckValidInstance(); return _parent.GetUtf8JsonString(_idx, JsonTokenType.String); }
 
-            /// <summary>
-            /// Enumerates the array.
-            /// </summary>
-            /// <exception cref="InvalidOperationException">The value is not an array.</exception>
-            public ArrayEnumerator<JsonElement> EnumerateArray()
-            {
-                CheckValidInstance();
-                return EnumeratorCreator.CreateArrayEnumerator<JsonElement>(_parent, _idx);
-            }
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public UnescapedUtf16JsonString GetUtf16String() { CheckValidInstance(); return _parent.GetUtf16JsonString(_idx, JsonTokenType.String); }
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public string? GetString() { CheckValidInstance(); return _parent.GetString(_idx, JsonTokenType.String); }
 
             /// <inheritdoc/>
             public JsonValueKind ValueKind => TokenType.ToValueKind();
 
             [DebuggerBrowsable(DebuggerBrowsableState.Never)]
             private JsonTokenType TokenType => _parent?.GetJsonTokenType(_idx) ?? JsonTokenType.None;
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static explicit operator string(SslHost value) => value._parent.GetString(value._idx, JsonTokenType.String) ?? throw new FormatException();
 
             /// <summary>
             /// Operator ==.
@@ -378,6 +370,57 @@ public readonly partial struct KrakendSchema
                 where T : struct, IJsonElement
             {
                 return JsonElementHelpers.DeepEquals(this, other);
+            }
+
+            /// <summary>
+            /// Compare with a UTF-8 string.
+            /// </summary>
+            /// <param ref="utf8Text">The UTF-8 text to compare with.</param>
+            /// <returns><see langword="true"/> if the values are equal.</returns>
+            public bool ValueEquals(ReadOnlySpan<byte> utf8Text)
+            {
+                CheckValidInstance();
+
+                if (TokenType != JsonTokenType.String)
+                {
+                    return false;
+                }
+
+                return _parent.TextEquals(_idx, utf8Text, isPropertyName: false, shouldUnescape: true);
+            }
+
+            /// <summary>
+            /// Compare with a string.
+            /// </summary>
+            /// <param ref="utf8Text">The text to compare with.</param>
+            /// <returns><see langword="true"/> if the values are equal.</returns>
+            public bool ValueEquals(ReadOnlySpan<char> text)
+            {
+                CheckValidInstance();
+
+                if (TokenType != JsonTokenType.String)
+                {
+                    return false;
+                }
+
+                return _parent.TextEquals(_idx, text, isPropertyName: false);
+            }
+
+            /// <summary>
+            /// Compare with a string.
+            /// </summary>
+            /// <param ref="utf8Text">The text to compare with.</param>
+            /// <returns><see langword="true"/> if the values are equal.</returns>
+            public bool ValueEquals(string text)
+            {
+                CheckValidInstance();
+
+                if (TokenType != JsonTokenType.String)
+                {
+                    return false;
+                }
+
+                return _parent.TextEquals(_idx, text, isPropertyName: false);
             }
 
             /// <inheritdoc/>

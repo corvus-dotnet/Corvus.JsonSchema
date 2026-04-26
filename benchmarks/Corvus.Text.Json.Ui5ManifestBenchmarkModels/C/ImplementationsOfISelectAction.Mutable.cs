@@ -1101,6 +1101,33 @@ public readonly partial struct ImplementationsOfISelectAction
             }
         }
 
+        internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+        {
+            switch(_kind)
+            {
+                case Kind.Unknown:
+                    break;
+                case Kind.JsonElement:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                    break;
+                case Kind.ImplementationsOfISelectActionRequiredTypeBuilder:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, _implementationsOfISelectActionRequiredTypeBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.ImplementationsOfISelectActionRequiredType.Builder.BuildValue(b, ref o));
+                    break;
+                case Kind.ImplementationsOfISelectActionRequiredType1Builder:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, _implementationsOfISelectActionRequiredType1BuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.ImplementationsOfISelectActionRequiredType1.Builder.BuildValue(b, ref o));
+                    break;
+                case Kind.ImplementationsOfISelectActionRequiredType2Builder:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, _implementationsOfISelectActionRequiredType2BuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.ImplementationsOfISelectActionRequiredType2.Builder.BuildValue(b, ref o));
+                    break;
+                case Kind.RequiredTypeBuilder:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, _requiredTypeBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.RequiredType.Builder.BuildValue(b, ref o));
+                    break;
+                default:
+                    Debug.Fail("Unexpected Kind");
+                    break;
+            }
+        }
+
         internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
         {
             switch(_kind)
@@ -1243,6 +1270,33 @@ public readonly partial struct ImplementationsOfISelectAction
                     break;
                 case Kind.RequiredTypeBuilder:
                     valueBuilder.AddProperty(utf8Name, BuildWithContext.Create(_context, _requiredTypeBuilderInstance!), static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.RequiredType.Builder.BuildValue(b.Context, b.Build, ref o), escapeName, nameRequiresUnescaping);
+                    break;
+                default:
+                    Debug.Fail("Unexpected Kind");
+                    break;
+            }
+        }
+
+        internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+        {
+            switch(_kind)
+            {
+                case Kind.Unknown:
+                    break;
+                case Kind.Source:
+                    _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                    break;
+                case Kind.ImplementationsOfISelectActionRequiredTypeBuilder:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _implementationsOfISelectActionRequiredTypeBuilderInstance!), static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.ImplementationsOfISelectActionRequiredType.Builder.BuildValue(b.Context, b.Build, ref o));
+                    break;
+                case Kind.ImplementationsOfISelectActionRequiredType1Builder:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _implementationsOfISelectActionRequiredType1BuilderInstance!), static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.ImplementationsOfISelectActionRequiredType1.Builder.BuildValue(b.Context, b.Build, ref o));
+                    break;
+                case Kind.ImplementationsOfISelectActionRequiredType2Builder:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _implementationsOfISelectActionRequiredType2BuilderInstance!), static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.ImplementationsOfISelectActionRequiredType2.Builder.BuildValue(b.Context, b.Build, ref o));
+                    break;
+                case Kind.RequiredTypeBuilder:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _requiredTypeBuilderInstance!), static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfISelectAction.RequiredType.Builder.BuildValue(b.Context, b.Build, ref o));
                     break;
                 default:
                     Debug.Fail("Unexpected Kind");

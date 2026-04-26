@@ -399,7 +399,7 @@ public readonly partial struct StylecopSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.DocumentationRules, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DocumentationRules, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -435,7 +435,7 @@ public readonly partial struct StylecopSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.DocumentationRules, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DocumentationRules, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -480,7 +480,7 @@ public readonly partial struct StylecopSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Indentation, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Indentation, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -516,7 +516,7 @@ public readonly partial struct StylecopSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Indentation, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Indentation, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -561,7 +561,7 @@ public readonly partial struct StylecopSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.LayoutRules, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.LayoutRules, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -597,7 +597,7 @@ public readonly partial struct StylecopSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.LayoutRules, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.LayoutRules, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -642,7 +642,7 @@ public readonly partial struct StylecopSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.MaintainabilityRules, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MaintainabilityRules, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -678,7 +678,7 @@ public readonly partial struct StylecopSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.MaintainabilityRules, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MaintainabilityRules, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -723,7 +723,7 @@ public readonly partial struct StylecopSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.NamingRules, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.NamingRules, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -759,7 +759,7 @@ public readonly partial struct StylecopSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.NamingRules, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.NamingRules, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -804,7 +804,7 @@ public readonly partial struct StylecopSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.OrderingRules, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.OrderingRules, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -840,7 +840,7 @@ public readonly partial struct StylecopSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.OrderingRules, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.OrderingRules, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -885,7 +885,7 @@ public readonly partial struct StylecopSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.ReadabilityRules, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ReadabilityRules, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -921,7 +921,7 @@ public readonly partial struct StylecopSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.ReadabilityRules, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ReadabilityRules, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -966,7 +966,7 @@ public readonly partial struct StylecopSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.SpacingRules, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SpacingRules, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1002,7 +1002,7 @@ public readonly partial struct StylecopSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.SpacingRules, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SpacingRules, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1209,6 +1209,24 @@ public readonly partial struct StylecopSchema
                 }
             }
 
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.JsonElement:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                        break;
+                    case Kind.Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
             internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
             {
                 switch(_kind)
@@ -1310,6 +1328,24 @@ public readonly partial struct StylecopSchema
                 }
             }
 
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.Source:
+                        _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                        break;
+                    case Kind.Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
             internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
             {
                 switch(_kind)
@@ -1397,14 +1433,14 @@ public readonly partial struct StylecopSchema
                 in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForReadabilityRulesSa1100.Source readabilityRules = default,
                 in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForSpacingRulesSa1000.Source spacingRules = default)
             {
-                documentationRules.AddAsProperty(JsonPropertyNamesEscaped.DocumentationRules, ref builder, escapeName: false);
-                indentation.AddAsProperty(JsonPropertyNamesEscaped.Indentation, ref builder, escapeName: false);
-                layoutRules.AddAsProperty(JsonPropertyNamesEscaped.LayoutRules, ref builder, escapeName: false);
-                maintainabilityRules.AddAsProperty(JsonPropertyNamesEscaped.MaintainabilityRules, ref builder, escapeName: false);
-                namingRules.AddAsProperty(JsonPropertyNamesEscaped.NamingRules, ref builder, escapeName: false);
-                orderingRules.AddAsProperty(JsonPropertyNamesEscaped.OrderingRules, ref builder, escapeName: false);
-                readabilityRules.AddAsProperty(JsonPropertyNamesEscaped.ReadabilityRules, ref builder, escapeName: false);
-                spacingRules.AddAsProperty(JsonPropertyNamesEscaped.SpacingRules, ref builder, escapeName: false);
+                documentationRules.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DocumentationRules, ref builder);
+                indentation.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Indentation, ref builder);
+                layoutRules.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.LayoutRules, ref builder);
+                maintainabilityRules.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MaintainabilityRules, ref builder);
+                namingRules.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.NamingRules, ref builder);
+                orderingRules.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.OrderingRules, ref builder);
+                readabilityRules.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ReadabilityRules, ref builder);
+                spacingRules.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SpacingRules, ref builder);
             }
 
             /// <summary>
@@ -1441,14 +1477,14 @@ public readonly partial struct StylecopSchema
             where TContext : allows ref struct
             #endif
             {
-                documentationRules.AddAsProperty(JsonPropertyNamesEscaped.DocumentationRules, ref builder, escapeName: false);
-                indentation.AddAsProperty(JsonPropertyNamesEscaped.Indentation, ref builder, escapeName: false);
-                layoutRules.AddAsProperty(JsonPropertyNamesEscaped.LayoutRules, ref builder, escapeName: false);
-                maintainabilityRules.AddAsProperty(JsonPropertyNamesEscaped.MaintainabilityRules, ref builder, escapeName: false);
-                namingRules.AddAsProperty(JsonPropertyNamesEscaped.NamingRules, ref builder, escapeName: false);
-                orderingRules.AddAsProperty(JsonPropertyNamesEscaped.OrderingRules, ref builder, escapeName: false);
-                readabilityRules.AddAsProperty(JsonPropertyNamesEscaped.ReadabilityRules, ref builder, escapeName: false);
-                spacingRules.AddAsProperty(JsonPropertyNamesEscaped.SpacingRules, ref builder, escapeName: false);
+                documentationRules.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DocumentationRules, ref builder);
+                indentation.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Indentation, ref builder);
+                layoutRules.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.LayoutRules, ref builder);
+                maintainabilityRules.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MaintainabilityRules, ref builder);
+                namingRules.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.NamingRules, ref builder);
+                orderingRules.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.OrderingRules, ref builder);
+                readabilityRules.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ReadabilityRules, ref builder);
+                spacingRules.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SpacingRules, ref builder);
             }
 
             /// <summary>

@@ -605,5 +605,27 @@ public readonly partial struct CmakePresetsSchema
             /// </summary>
             public static ReadOnlySpan<byte> Patch => "patch"u8;
         }
+
+        /// <summary>
+        /// Provides pre-baked property name blobs for fast builder property storage.
+        /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
+        /// </summary>
+        private static class JsonPropertyNamesPrebaked
+        {
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Major"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Major => [0x75, 0x00, 0x00, 0x00, 0x22, 0x6D, 0x61, 0x6A, 0x6F, 0x72, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Minor"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Minor => [0x75, 0x00, 0x00, 0x00, 0x22, 0x6D, 0x69, 0x6E, 0x6F, 0x72, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Patch"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Patch => [0x75, 0x00, 0x00, 0x00, 0x22, 0x70, 0x61, 0x74, 0x63, 0x68, 0x22];
+        }
     }
 }

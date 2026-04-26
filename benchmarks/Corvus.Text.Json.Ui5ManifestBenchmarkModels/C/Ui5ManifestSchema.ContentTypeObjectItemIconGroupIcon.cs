@@ -636,5 +636,32 @@ public readonly partial struct Ui5ManifestSchema
             /// </summary>
             public static ReadOnlySpan<byte> Text => "text"u8;
         }
+
+        /// <summary>
+        /// Provides pre-baked property name blobs for fast builder property storage.
+        /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
+        /// </summary>
+        private static class JsonPropertyNamesPrebaked
+        {
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Alt"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Alt => [0x55, 0x00, 0x00, 0x00, 0x22, 0x61, 0x6C, 0x74, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Initials"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Initials => [0xA5, 0x00, 0x00, 0x00, 0x22, 0x69, 0x6E, 0x69, 0x74, 0x69, 0x61, 0x6C, 0x73, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Src"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Src => [0x55, 0x00, 0x00, 0x00, 0x22, 0x73, 0x72, 0x63, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Text"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Text => [0x65, 0x00, 0x00, 0x00, 0x22, 0x74, 0x65, 0x78, 0x74, 0x22];
+        }
     }
 }

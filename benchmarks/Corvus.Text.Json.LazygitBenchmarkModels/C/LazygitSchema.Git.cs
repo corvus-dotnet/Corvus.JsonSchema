@@ -1143,5 +1143,92 @@ public readonly partial struct LazygitSchema
             /// </summary>
             public static ReadOnlySpan<byte> SkipHookPrefixValue => "skipHookPrefix"u8;
         }
+
+        /// <summary>
+        /// Provides pre-baked property name blobs for fast builder property storage.
+        /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
+        /// </summary>
+        private static class JsonPropertyNamesPrebaked
+        {
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="AllBranchesLogCmdValue"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> AllBranchesLogCmdValue => [0x35, 0x01, 0x00, 0x00, 0x22, 0x61, 0x6C, 0x6C, 0x42, 0x72, 0x61, 0x6E, 0x63, 0x68, 0x65, 0x73, 0x4C, 0x6F, 0x67, 0x43, 0x6D, 0x64, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="AutoFetchValue"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> AutoFetchValue => [0xB5, 0x00, 0x00, 0x00, 0x22, 0x61, 0x75, 0x74, 0x6F, 0x46, 0x65, 0x74, 0x63, 0x68, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="AutoRefreshValue"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> AutoRefreshValue => [0xD5, 0x00, 0x00, 0x00, 0x22, 0x61, 0x75, 0x74, 0x6F, 0x52, 0x65, 0x66, 0x72, 0x65, 0x73, 0x68, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="BranchLogCmdValue"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> BranchLogCmdValue => [0xE5, 0x00, 0x00, 0x00, 0x22, 0x62, 0x72, 0x61, 0x6E, 0x63, 0x68, 0x4C, 0x6F, 0x67, 0x43, 0x6D, 0x64, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="CommitValue"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> CommitValue => [0x85, 0x00, 0x00, 0x00, 0x22, 0x63, 0x6F, 0x6D, 0x6D, 0x69, 0x74, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="CommitPrefixesValue"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> CommitPrefixesValue => [0x05, 0x01, 0x00, 0x00, 0x22, 0x63, 0x6F, 0x6D, 0x6D, 0x69, 0x74, 0x50, 0x72, 0x65, 0x66, 0x69, 0x78, 0x65, 0x73, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="DiffContextSizeValue"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> DiffContextSizeValue => [0x15, 0x01, 0x00, 0x00, 0x22, 0x64, 0x69, 0x66, 0x66, 0x43, 0x6F, 0x6E, 0x74, 0x65, 0x78, 0x74, 0x53, 0x69, 0x7A, 0x65, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="DisableForcePushingValue"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> DisableForcePushingValue => [0x55, 0x01, 0x00, 0x00, 0x22, 0x64, 0x69, 0x73, 0x61, 0x62, 0x6C, 0x65, 0x46, 0x6F, 0x72, 0x63, 0x65, 0x50, 0x75, 0x73, 0x68, 0x69, 0x6E, 0x67, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="FetchAllValue"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> FetchAllValue => [0xA5, 0x00, 0x00, 0x00, 0x22, 0x66, 0x65, 0x74, 0x63, 0x68, 0x41, 0x6C, 0x6C, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="LogValue"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> LogValue => [0x55, 0x00, 0x00, 0x00, 0x22, 0x6C, 0x6F, 0x67, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="MainBranches"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> MainBranches => [0xE5, 0x00, 0x00, 0x00, 0x22, 0x6D, 0x61, 0x69, 0x6E, 0x42, 0x72, 0x61, 0x6E, 0x63, 0x68, 0x65, 0x73, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="MergingValue"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> MergingValue => [0x95, 0x00, 0x00, 0x00, 0x22, 0x6D, 0x65, 0x72, 0x67, 0x69, 0x6E, 0x67, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="OverrideGpgValue"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> OverrideGpgValue => [0xD5, 0x00, 0x00, 0x00, 0x22, 0x6F, 0x76, 0x65, 0x72, 0x72, 0x69, 0x64, 0x65, 0x47, 0x70, 0x67, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="PagingValue"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> PagingValue => [0x85, 0x00, 0x00, 0x00, 0x22, 0x70, 0x61, 0x67, 0x69, 0x6E, 0x67, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="ParseEmojiValue"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> ParseEmojiValue => [0xC5, 0x00, 0x00, 0x00, 0x22, 0x70, 0x61, 0x72, 0x73, 0x65, 0x45, 0x6D, 0x6F, 0x6A, 0x69, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="SkipHookPrefixValue"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> SkipHookPrefixValue => [0x05, 0x01, 0x00, 0x00, 0x22, 0x73, 0x6B, 0x69, 0x70, 0x48, 0x6F, 0x6F, 0x6B, 0x50, 0x72, 0x65, 0x66, 0x69, 0x78, 0x22];
+        }
     }
 }

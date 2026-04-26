@@ -983,5 +983,67 @@ public readonly partial struct KrakendSchema
             /// </summary>
             public static ReadOnlySpan<byte> PrefetchSizeValue => "prefetch_size"u8;
         }
+
+        /// <summary>
+        /// Provides pre-baked property name blobs for fast builder property storage.
+        /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
+        /// </summary>
+        private static class JsonPropertyNamesPrebaked
+        {
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="AutoAckValue"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> AutoAckValue => [0xA5, 0x00, 0x00, 0x00, 0x22, 0x61, 0x75, 0x74, 0x6F, 0x5F, 0x61, 0x63, 0x6B, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="DeleteValue"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> DeleteValue => [0x85, 0x00, 0x00, 0x00, 0x22, 0x64, 0x65, 0x6C, 0x65, 0x74, 0x65, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="DurableValue"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> DurableValue => [0x95, 0x00, 0x00, 0x00, 0x22, 0x64, 0x75, 0x72, 0x61, 0x62, 0x6C, 0x65, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Exchange"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Exchange => [0xA5, 0x00, 0x00, 0x00, 0x22, 0x65, 0x78, 0x63, 0x68, 0x61, 0x6E, 0x67, 0x65, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="ExclusiveValue"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> ExclusiveValue => [0xB5, 0x00, 0x00, 0x00, 0x22, 0x65, 0x78, 0x63, 0x6C, 0x75, 0x73, 0x69, 0x76, 0x65, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Host"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Host => [0x65, 0x00, 0x00, 0x00, 0x22, 0x68, 0x6F, 0x73, 0x74, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Name"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Name => [0x65, 0x00, 0x00, 0x00, 0x22, 0x6E, 0x61, 0x6D, 0x65, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="NoLocal"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> NoLocal => [0xA5, 0x00, 0x00, 0x00, 0x22, 0x6E, 0x6F, 0x5F, 0x6C, 0x6F, 0x63, 0x61, 0x6C, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="NoWait"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> NoWait => [0x95, 0x00, 0x00, 0x00, 0x22, 0x6E, 0x6F, 0x5F, 0x77, 0x61, 0x69, 0x74, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="PrefetchCountValue"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> PrefetchCountValue => [0x05, 0x01, 0x00, 0x00, 0x22, 0x70, 0x72, 0x65, 0x66, 0x65, 0x74, 0x63, 0x68, 0x5F, 0x63, 0x6F, 0x75, 0x6E, 0x74, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="PrefetchSizeValue"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> PrefetchSizeValue => [0xF5, 0x00, 0x00, 0x00, 0x22, 0x70, 0x72, 0x65, 0x66, 0x65, 0x74, 0x63, 0x68, 0x5F, 0x73, 0x69, 0x7A, 0x65, 0x22];
+        }
     }
 }

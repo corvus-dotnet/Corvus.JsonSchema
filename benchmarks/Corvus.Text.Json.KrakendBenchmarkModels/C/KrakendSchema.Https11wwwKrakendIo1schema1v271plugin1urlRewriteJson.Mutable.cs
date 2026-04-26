@@ -262,11 +262,11 @@ public readonly partial struct KrakendSchema
             /// See: https://www.krakend.io/docs/enterprise/endpoints/url-rewrite/
             /// </para>
             /// </remarks>
-            public Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271plugin1urlRewriteJson.LiteralMatch.Mutable Literal
+            public Corvus.KrakendBenchmark.Current.JsonObject.Mutable Literal
             {
                 get
                 {
-                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.LiteralUtf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271plugin1urlRewriteJson.LiteralMatch.Mutable value))
+                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.LiteralUtf8, out Corvus.KrakendBenchmark.Current.JsonObject.Mutable value))
                     {
                         return value;
                     }
@@ -287,11 +287,11 @@ public readonly partial struct KrakendSchema
             /// See: https://www.krakend.io/docs/enterprise/endpoints/url-rewrite/
             /// </para>
             /// </remarks>
-            public Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271plugin1urlRewriteJson.RegexpArrayArray.Mutable Regexp
+            public Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271plugin1urlRewriteJson.JsonArrayArray.Mutable Regexp
             {
                 get
                 {
-                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.RegexpUtf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271plugin1urlRewriteJson.RegexpArrayArray.Mutable value))
+                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.RegexpUtf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271plugin1urlRewriteJson.JsonArrayArray.Mutable value))
                     {
                         return value;
                     }
@@ -333,7 +333,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>literal</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetLiteral(in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271plugin1urlRewriteJson.LiteralMatch.Source value)
+            public void SetLiteral(in Corvus.KrakendBenchmark.Current.JsonObject.Source value)
             {
                 CheckValidInstance();
 
@@ -354,7 +354,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Literal, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Literal, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -366,7 +366,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>literal</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetLiteral<TContext>(in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271plugin1urlRewriteJson.LiteralMatch.Source<TContext> value)
+            public void SetLiteral<TContext>(in Corvus.KrakendBenchmark.Current.JsonObject.Source<TContext> value)
 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
 #endif
@@ -390,7 +390,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Literal, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Literal, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -414,7 +414,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>regexp</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetRegexp(in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271plugin1urlRewriteJson.RegexpArrayArray.Source value)
+            public void SetRegexp(in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271plugin1urlRewriteJson.JsonArrayArray.Source value)
             {
                 CheckValidInstance();
 
@@ -435,7 +435,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Regexp, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Regexp, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -447,7 +447,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>regexp</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetRegexp<TContext>(in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271plugin1urlRewriteJson.RegexpArrayArray.Source<TContext> value)
+            public void SetRegexp<TContext>(in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271plugin1urlRewriteJson.JsonArrayArray.Source<TContext> value)
 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
 #endif
@@ -471,7 +471,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Regexp, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Regexp, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -984,6 +984,24 @@ public readonly partial struct KrakendSchema
                 }
             }
 
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.JsonElement:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                        break;
+                    case Kind.Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
             internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
             {
                 switch(_kind)
@@ -1087,6 +1105,24 @@ public readonly partial struct KrakendSchema
                 }
             }
 
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.Source:
+                        _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                        break;
+                    case Kind.Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
             internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
             {
                 switch(_kind)
@@ -1165,17 +1201,17 @@ public readonly partial struct KrakendSchema
             /// </summary>
             internal static void Create(
                 ref ComplexValueBuilder builder,
-                in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271plugin1urlRewriteJson.LiteralMatch.Source literal = default,
-                in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271plugin1urlRewriteJson.RegexpArrayArray.Source regexp = default)
+                in Corvus.KrakendBenchmark.Current.JsonObject.Source literal = default,
+                in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271plugin1urlRewriteJson.JsonArrayArray.Source regexp = default)
             {
-                literal.AddAsProperty(JsonPropertyNamesEscaped.Literal, ref builder, escapeName: false);
-                regexp.AddAsProperty(JsonPropertyNamesEscaped.Regexp, ref builder, escapeName: false);
+                literal.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Literal, ref builder);
+                regexp.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Regexp, ref builder);
             }
 
             /// <summary>
             /// Creates an instance of a <see cref="Https11wwwKrakendIo1schema1v271plugin1urlRewriteJson"/>.
             /// </summary>
-            public void Create(in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271plugin1urlRewriteJson.LiteralMatch.Source literal = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271plugin1urlRewriteJson.RegexpArrayArray.Source regexp = default)
+            public void Create(in Corvus.KrakendBenchmark.Current.JsonObject.Source literal = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271plugin1urlRewriteJson.JsonArrayArray.Source regexp = default)
             {
                 Create(ref _builder, literal, regexp);
             }
@@ -1186,14 +1222,14 @@ public readonly partial struct KrakendSchema
             internal static void Create<TContext>(
                 in TContext context,
                 ref ComplexValueBuilder builder,
-                in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271plugin1urlRewriteJson.LiteralMatch.Source<TContext> literal = default,
-                in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271plugin1urlRewriteJson.RegexpArrayArray.Source<TContext> regexp = default)
+                in Corvus.KrakendBenchmark.Current.JsonObject.Source<TContext> literal = default,
+                in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271plugin1urlRewriteJson.JsonArrayArray.Source<TContext> regexp = default)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif
             {
-                literal.AddAsProperty(JsonPropertyNamesEscaped.Literal, ref builder, escapeName: false);
-                regexp.AddAsProperty(JsonPropertyNamesEscaped.Regexp, ref builder, escapeName: false);
+                literal.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Literal, ref builder);
+                regexp.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Regexp, ref builder);
             }
 
             /// <summary>
@@ -1201,8 +1237,8 @@ public readonly partial struct KrakendSchema
             /// </summary>
             public void Create<TContext>(
                 in TContext context,
-                in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271plugin1urlRewriteJson.LiteralMatch.Source<TContext> literal = default,
-                in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271plugin1urlRewriteJson.RegexpArrayArray.Source<TContext> regexp = default)
+                in Corvus.KrakendBenchmark.Current.JsonObject.Source<TContext> literal = default,
+                in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271plugin1urlRewriteJson.JsonArrayArray.Source<TContext> regexp = default)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif
@@ -1519,7 +1555,7 @@ public readonly partial struct KrakendSchema
         /// <param name="regexp">The value of the property.</param>
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
         /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-        public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271plugin1urlRewriteJson.LiteralMatch.Source literal = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271plugin1urlRewriteJson.RegexpArrayArray.Source regexp = default, int initialCapacity = 30)
+        public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.KrakendBenchmark.Current.JsonObject.Source literal = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271plugin1urlRewriteJson.JsonArrayArray.Source regexp = default, int initialCapacity = 30)
         {
             JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
             ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
@@ -1542,7 +1578,7 @@ public readonly partial struct KrakendSchema
         /// <param name="regexp">The value of the property.</param>
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
         /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-        public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271plugin1urlRewriteJson.LiteralMatch.Source<TContext> literal = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271plugin1urlRewriteJson.RegexpArrayArray.Source<TContext> regexp = default, int initialCapacity = 30)
+        public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.KrakendBenchmark.Current.JsonObject.Source<TContext> literal = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271plugin1urlRewriteJson.JsonArrayArray.Source<TContext> regexp = default, int initialCapacity = 30)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif

@@ -175,11 +175,11 @@ public readonly partial struct KrakendSchema
         /// See: https://www.krakend.io/docs/authorization/client-credentials/
         /// </para>
         /// </remarks>
-        public Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271auth1clientCredentialsJson.EndpointParameters EndpointParams
+        public Corvus.KrakendBenchmark.Current.JsonObject EndpointParams
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.EndpointParamsUtf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271auth1clientCredentialsJson.EndpointParameters value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.EndpointParamsUtf8, out Corvus.KrakendBenchmark.Current.JsonObject value))
                 {
                     return value;
                 }
@@ -742,6 +742,38 @@ public readonly partial struct KrakendSchema
             /// Gets the escaped UTF-8 JSON property name for <see cref="TokenUrl"/>.
             /// </summary>
             public static ReadOnlySpan<byte> TokenUrl => "token_url"u8;
+        }
+
+        /// <summary>
+        /// Provides pre-baked property name blobs for fast builder property storage.
+        /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
+        /// </summary>
+        private static class JsonPropertyNamesPrebaked
+        {
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="ClientId"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> ClientId => [0xB5, 0x00, 0x00, 0x00, 0x22, 0x63, 0x6C, 0x69, 0x65, 0x6E, 0x74, 0x5F, 0x69, 0x64, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="ClientSecret"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> ClientSecret => [0xF5, 0x00, 0x00, 0x00, 0x22, 0x63, 0x6C, 0x69, 0x65, 0x6E, 0x74, 0x5F, 0x73, 0x65, 0x63, 0x72, 0x65, 0x74, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="EndpointParams"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> EndpointParams => [0x15, 0x01, 0x00, 0x00, 0x22, 0x65, 0x6E, 0x64, 0x70, 0x6F, 0x69, 0x6E, 0x74, 0x5F, 0x70, 0x61, 0x72, 0x61, 0x6D, 0x73, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Scopes"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Scopes => [0x85, 0x00, 0x00, 0x00, 0x22, 0x73, 0x63, 0x6F, 0x70, 0x65, 0x73, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="TokenUrl"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> TokenUrl => [0xB5, 0x00, 0x00, 0x00, 0x22, 0x74, 0x6F, 0x6B, 0x65, 0x6E, 0x5F, 0x75, 0x72, 0x6C, 0x22];
         }
     }
 }

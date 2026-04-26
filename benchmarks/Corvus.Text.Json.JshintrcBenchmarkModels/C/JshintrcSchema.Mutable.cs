@@ -1794,7 +1794,7 @@ public readonly partial struct JshintrcSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Asi, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Asi, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1839,7 +1839,7 @@ public readonly partial struct JshintrcSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Bitwise, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Bitwise, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1884,7 +1884,7 @@ public readonly partial struct JshintrcSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Boss, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Boss, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1929,7 +1929,7 @@ public readonly partial struct JshintrcSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Browser, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Browser, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1974,7 +1974,7 @@ public readonly partial struct JshintrcSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Browserify, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Browserify, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -2019,7 +2019,7 @@ public readonly partial struct JshintrcSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Couch, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Couch, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -2064,7 +2064,7 @@ public readonly partial struct JshintrcSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Curly, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Curly, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -2109,7 +2109,7 @@ public readonly partial struct JshintrcSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.DebugValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DebugValue, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -2154,7 +2154,7 @@ public readonly partial struct JshintrcSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Devel, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Devel, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -2199,7 +2199,7 @@ public readonly partial struct JshintrcSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Dojo, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Dojo, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -2244,7 +2244,7 @@ public readonly partial struct JshintrcSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Elision, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Elision, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -2289,7 +2289,7 @@ public readonly partial struct JshintrcSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Eqeqeq, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Eqeqeq, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -2334,7 +2334,7 @@ public readonly partial struct JshintrcSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Eqnull, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Eqnull, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -2379,7 +2379,7 @@ public readonly partial struct JshintrcSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Esversion, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Esversion, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -2424,7 +2424,7 @@ public readonly partial struct JshintrcSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Evil, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Evil, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -2469,7 +2469,7 @@ public readonly partial struct JshintrcSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Expr, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Expr, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -2514,7 +2514,7 @@ public readonly partial struct JshintrcSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Extends, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Extends, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -2559,7 +2559,7 @@ public readonly partial struct JshintrcSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Forin, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Forin, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -2604,7 +2604,7 @@ public readonly partial struct JshintrcSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.FreezeValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.FreezeValue, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -2649,7 +2649,7 @@ public readonly partial struct JshintrcSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Funcscope, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Funcscope, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -2694,7 +2694,7 @@ public readonly partial struct JshintrcSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Futurehostile, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Futurehostile, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -2739,7 +2739,7 @@ public readonly partial struct JshintrcSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Globals, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Globals, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -2775,7 +2775,7 @@ public readonly partial struct JshintrcSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Globals, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Globals, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -2820,7 +2820,7 @@ public readonly partial struct JshintrcSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Iterator, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Iterator, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -2865,7 +2865,7 @@ public readonly partial struct JshintrcSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Jasmine, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Jasmine, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -2910,7 +2910,7 @@ public readonly partial struct JshintrcSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Jquery, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Jquery, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -2955,7 +2955,7 @@ public readonly partial struct JshintrcSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Lastsemic, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Lastsemic, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -3000,7 +3000,7 @@ public readonly partial struct JshintrcSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Latedef, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Latedef, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -3045,7 +3045,7 @@ public readonly partial struct JshintrcSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Leanswitch, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Leanswitch, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -3090,7 +3090,7 @@ public readonly partial struct JshintrcSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Loopfunc, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Loopfunc, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -3135,7 +3135,7 @@ public readonly partial struct JshintrcSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Maxcomplexity, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Maxcomplexity, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -3180,7 +3180,7 @@ public readonly partial struct JshintrcSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Maxdepth, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Maxdepth, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -3225,7 +3225,7 @@ public readonly partial struct JshintrcSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Maxerr, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Maxerr, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -3270,7 +3270,7 @@ public readonly partial struct JshintrcSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Maxparams, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Maxparams, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -3315,7 +3315,7 @@ public readonly partial struct JshintrcSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Maxstatements, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Maxstatements, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -3360,7 +3360,7 @@ public readonly partial struct JshintrcSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Mocha, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Mocha, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -3405,7 +3405,7 @@ public readonly partial struct JshintrcSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Module, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Module, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -3450,7 +3450,7 @@ public readonly partial struct JshintrcSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Mootools, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Mootools, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -3495,7 +3495,7 @@ public readonly partial struct JshintrcSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Moz, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Moz, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -3540,7 +3540,7 @@ public readonly partial struct JshintrcSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Noarg, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Noarg, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -3585,7 +3585,7 @@ public readonly partial struct JshintrcSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Nocomma, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Nocomma, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -3630,7 +3630,7 @@ public readonly partial struct JshintrcSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Node, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Node, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -3675,7 +3675,7 @@ public readonly partial struct JshintrcSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Nonbsp, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Nonbsp, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -3720,7 +3720,7 @@ public readonly partial struct JshintrcSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Nonew, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Nonew, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -3765,7 +3765,7 @@ public readonly partial struct JshintrcSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Nonstandard, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Nonstandard, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -3810,7 +3810,7 @@ public readonly partial struct JshintrcSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Noreturnawait, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Noreturnawait, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -3855,7 +3855,7 @@ public readonly partial struct JshintrcSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Notypeof, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Notypeof, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -3900,7 +3900,7 @@ public readonly partial struct JshintrcSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Noyield, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Noyield, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -3945,7 +3945,7 @@ public readonly partial struct JshintrcSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Overrides, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Overrides, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -3981,7 +3981,7 @@ public readonly partial struct JshintrcSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Overrides, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Overrides, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -4026,7 +4026,7 @@ public readonly partial struct JshintrcSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Phantom, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Phantom, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -4071,7 +4071,7 @@ public readonly partial struct JshintrcSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Plusplus, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Plusplus, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -4116,7 +4116,7 @@ public readonly partial struct JshintrcSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Proto, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Proto, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -4161,7 +4161,7 @@ public readonly partial struct JshintrcSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Prototypejs, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Prototypejs, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -4206,7 +4206,7 @@ public readonly partial struct JshintrcSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Regexpu, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Regexpu, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -4251,7 +4251,7 @@ public readonly partial struct JshintrcSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Rhino, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Rhino, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -4296,7 +4296,7 @@ public readonly partial struct JshintrcSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Scripturl, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Scripturl, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -4341,7 +4341,7 @@ public readonly partial struct JshintrcSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Shadow, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Shadow, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -4386,7 +4386,7 @@ public readonly partial struct JshintrcSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Shelljs, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Shelljs, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -4431,7 +4431,7 @@ public readonly partial struct JshintrcSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.SingleGroups, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SingleGroups, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -4476,7 +4476,7 @@ public readonly partial struct JshintrcSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Strict, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Strict, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -4521,7 +4521,7 @@ public readonly partial struct JshintrcSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Supernew, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Supernew, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -4566,7 +4566,7 @@ public readonly partial struct JshintrcSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Trailingcomma, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Trailingcomma, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -4611,7 +4611,7 @@ public readonly partial struct JshintrcSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Typed, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Typed, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -4656,7 +4656,7 @@ public readonly partial struct JshintrcSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Undef, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Undef, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -4701,7 +4701,7 @@ public readonly partial struct JshintrcSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Unused, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Unused, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -4746,7 +4746,7 @@ public readonly partial struct JshintrcSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Validthis, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Validthis, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -4791,7 +4791,7 @@ public readonly partial struct JshintrcSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Varstmt, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Varstmt, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -4836,7 +4836,7 @@ public readonly partial struct JshintrcSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Withstmt, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Withstmt, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -4881,7 +4881,7 @@ public readonly partial struct JshintrcSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Worker, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Worker, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -4926,7 +4926,7 @@ public readonly partial struct JshintrcSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Wsh, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Wsh, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -4971,7 +4971,7 @@ public readonly partial struct JshintrcSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Yui, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Yui, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -5354,6 +5354,24 @@ public readonly partial struct JshintrcSchema
             }
         }
 
+        internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+        {
+            switch(_kind)
+            {
+                case Kind.Unknown:
+                    break;
+                case Kind.JsonElement:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                    break;
+                case Kind.Builder:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
+                    break;
+                default:
+                    Debug.Fail("Unexpected Kind");
+                    break;
+            }
+        }
+
         internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
         {
             switch(_kind)
@@ -5448,6 +5466,24 @@ public readonly partial struct JshintrcSchema
                     break;
                 case Kind.Builder:
                     valueBuilder.AddProperty(utf8Name, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o), escapeName, nameRequiresUnescaping);
+                    break;
+                default:
+                    Debug.Fail("Unexpected Kind");
+                    break;
+            }
+        }
+
+        internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+        {
+            switch(_kind)
+            {
+                case Kind.Unknown:
+                    break;
+                case Kind.Source:
+                    _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                    break;
+                case Kind.Builder:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                     break;
                 default:
                     Debug.Fail("Unexpected Kind");
@@ -5604,76 +5640,76 @@ public readonly partial struct JshintrcSchema
             in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentWindowsScriptingHost.Source wsh = default,
             in Corvus.JshintrcBenchmark.Current.JshintrcSchema.EnvironmentYahooUserInterface.Source yui = default)
         {
-            asi.AddAsProperty(JsonPropertyNamesEscaped.Asi, ref builder, escapeName: false);
-            bitwise.AddAsProperty(JsonPropertyNamesEscaped.Bitwise, ref builder, escapeName: false);
-            boss.AddAsProperty(JsonPropertyNamesEscaped.Boss, ref builder, escapeName: false);
-            browser.AddAsProperty(JsonPropertyNamesEscaped.Browser, ref builder, escapeName: false);
-            browserify.AddAsProperty(JsonPropertyNamesEscaped.Browserify, ref builder, escapeName: false);
-            couch.AddAsProperty(JsonPropertyNamesEscaped.Couch, ref builder, escapeName: false);
-            curly.AddAsProperty(JsonPropertyNamesEscaped.Curly, ref builder, escapeName: false);
-            debug.AddAsProperty(JsonPropertyNamesEscaped.DebugValue, ref builder, escapeName: false);
-            devel.AddAsProperty(JsonPropertyNamesEscaped.Devel, ref builder, escapeName: false);
-            dojo.AddAsProperty(JsonPropertyNamesEscaped.Dojo, ref builder, escapeName: false);
-            elision.AddAsProperty(JsonPropertyNamesEscaped.Elision, ref builder, escapeName: false);
-            eqeqeq.AddAsProperty(JsonPropertyNamesEscaped.Eqeqeq, ref builder, escapeName: false);
-            eqnull.AddAsProperty(JsonPropertyNamesEscaped.Eqnull, ref builder, escapeName: false);
-            esversion.AddAsProperty(JsonPropertyNamesEscaped.Esversion, ref builder, escapeName: false);
-            evil.AddAsProperty(JsonPropertyNamesEscaped.Evil, ref builder, escapeName: false);
-            expr.AddAsProperty(JsonPropertyNamesEscaped.Expr, ref builder, escapeName: false);
-            extends.AddAsProperty(JsonPropertyNamesEscaped.Extends, ref builder, escapeName: false);
-            forin.AddAsProperty(JsonPropertyNamesEscaped.Forin, ref builder, escapeName: false);
-            freeze.AddAsProperty(JsonPropertyNamesEscaped.FreezeValue, ref builder, escapeName: false);
-            funcscope.AddAsProperty(JsonPropertyNamesEscaped.Funcscope, ref builder, escapeName: false);
-            futurehostile.AddAsProperty(JsonPropertyNamesEscaped.Futurehostile, ref builder, escapeName: false);
-            globals.AddAsProperty(JsonPropertyNamesEscaped.Globals, ref builder, escapeName: false);
-            iterator.AddAsProperty(JsonPropertyNamesEscaped.Iterator, ref builder, escapeName: false);
-            jasmine.AddAsProperty(JsonPropertyNamesEscaped.Jasmine, ref builder, escapeName: false);
-            jquery.AddAsProperty(JsonPropertyNamesEscaped.Jquery, ref builder, escapeName: false);
-            lastsemic.AddAsProperty(JsonPropertyNamesEscaped.Lastsemic, ref builder, escapeName: false);
-            latedef.AddAsProperty(JsonPropertyNamesEscaped.Latedef, ref builder, escapeName: false);
-            leanswitch.AddAsProperty(JsonPropertyNamesEscaped.Leanswitch, ref builder, escapeName: false);
-            loopfunc.AddAsProperty(JsonPropertyNamesEscaped.Loopfunc, ref builder, escapeName: false);
-            maxcomplexity.AddAsProperty(JsonPropertyNamesEscaped.Maxcomplexity, ref builder, escapeName: false);
-            maxdepth.AddAsProperty(JsonPropertyNamesEscaped.Maxdepth, ref builder, escapeName: false);
-            maxerr.AddAsProperty(JsonPropertyNamesEscaped.Maxerr, ref builder, escapeName: false);
-            maxparams.AddAsProperty(JsonPropertyNamesEscaped.Maxparams, ref builder, escapeName: false);
-            maxstatements.AddAsProperty(JsonPropertyNamesEscaped.Maxstatements, ref builder, escapeName: false);
-            mocha.AddAsProperty(JsonPropertyNamesEscaped.Mocha, ref builder, escapeName: false);
-            module.AddAsProperty(JsonPropertyNamesEscaped.Module, ref builder, escapeName: false);
-            mootools.AddAsProperty(JsonPropertyNamesEscaped.Mootools, ref builder, escapeName: false);
-            moz.AddAsProperty(JsonPropertyNamesEscaped.Moz, ref builder, escapeName: false);
-            noarg.AddAsProperty(JsonPropertyNamesEscaped.Noarg, ref builder, escapeName: false);
-            nocomma.AddAsProperty(JsonPropertyNamesEscaped.Nocomma, ref builder, escapeName: false);
-            node.AddAsProperty(JsonPropertyNamesEscaped.Node, ref builder, escapeName: false);
-            nonbsp.AddAsProperty(JsonPropertyNamesEscaped.Nonbsp, ref builder, escapeName: false);
-            nonew.AddAsProperty(JsonPropertyNamesEscaped.Nonew, ref builder, escapeName: false);
-            nonstandard.AddAsProperty(JsonPropertyNamesEscaped.Nonstandard, ref builder, escapeName: false);
-            noreturnawait.AddAsProperty(JsonPropertyNamesEscaped.Noreturnawait, ref builder, escapeName: false);
-            notypeof.AddAsProperty(JsonPropertyNamesEscaped.Notypeof, ref builder, escapeName: false);
-            noyield.AddAsProperty(JsonPropertyNamesEscaped.Noyield, ref builder, escapeName: false);
-            overrides.AddAsProperty(JsonPropertyNamesEscaped.Overrides, ref builder, escapeName: false);
-            phantom.AddAsProperty(JsonPropertyNamesEscaped.Phantom, ref builder, escapeName: false);
-            plusplus.AddAsProperty(JsonPropertyNamesEscaped.Plusplus, ref builder, escapeName: false);
-            proto.AddAsProperty(JsonPropertyNamesEscaped.Proto, ref builder, escapeName: false);
-            prototypejs.AddAsProperty(JsonPropertyNamesEscaped.Prototypejs, ref builder, escapeName: false);
-            regexpu.AddAsProperty(JsonPropertyNamesEscaped.Regexpu, ref builder, escapeName: false);
-            rhino.AddAsProperty(JsonPropertyNamesEscaped.Rhino, ref builder, escapeName: false);
-            scripturl.AddAsProperty(JsonPropertyNamesEscaped.Scripturl, ref builder, escapeName: false);
-            shadow.AddAsProperty(JsonPropertyNamesEscaped.Shadow, ref builder, escapeName: false);
-            shelljs.AddAsProperty(JsonPropertyNamesEscaped.Shelljs, ref builder, escapeName: false);
-            singleGroups.AddAsProperty(JsonPropertyNamesEscaped.SingleGroups, ref builder, escapeName: false);
-            strict.AddAsProperty(JsonPropertyNamesEscaped.Strict, ref builder, escapeName: false);
-            supernew.AddAsProperty(JsonPropertyNamesEscaped.Supernew, ref builder, escapeName: false);
-            trailingcomma.AddAsProperty(JsonPropertyNamesEscaped.Trailingcomma, ref builder, escapeName: false);
-            typed.AddAsProperty(JsonPropertyNamesEscaped.Typed, ref builder, escapeName: false);
-            undef.AddAsProperty(JsonPropertyNamesEscaped.Undef, ref builder, escapeName: false);
-            unused.AddAsProperty(JsonPropertyNamesEscaped.Unused, ref builder, escapeName: false);
-            validthis.AddAsProperty(JsonPropertyNamesEscaped.Validthis, ref builder, escapeName: false);
-            varstmt.AddAsProperty(JsonPropertyNamesEscaped.Varstmt, ref builder, escapeName: false);
-            withstmt.AddAsProperty(JsonPropertyNamesEscaped.Withstmt, ref builder, escapeName: false);
-            worker.AddAsProperty(JsonPropertyNamesEscaped.Worker, ref builder, escapeName: false);
-            wsh.AddAsProperty(JsonPropertyNamesEscaped.Wsh, ref builder, escapeName: false);
-            yui.AddAsProperty(JsonPropertyNamesEscaped.Yui, ref builder, escapeName: false);
+            asi.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Asi, ref builder);
+            bitwise.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Bitwise, ref builder);
+            boss.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Boss, ref builder);
+            browser.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Browser, ref builder);
+            browserify.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Browserify, ref builder);
+            couch.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Couch, ref builder);
+            curly.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Curly, ref builder);
+            debug.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DebugValue, ref builder);
+            devel.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Devel, ref builder);
+            dojo.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Dojo, ref builder);
+            elision.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Elision, ref builder);
+            eqeqeq.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Eqeqeq, ref builder);
+            eqnull.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Eqnull, ref builder);
+            esversion.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Esversion, ref builder);
+            evil.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Evil, ref builder);
+            expr.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Expr, ref builder);
+            extends.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Extends, ref builder);
+            forin.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Forin, ref builder);
+            freeze.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.FreezeValue, ref builder);
+            funcscope.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Funcscope, ref builder);
+            futurehostile.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Futurehostile, ref builder);
+            globals.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Globals, ref builder);
+            iterator.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Iterator, ref builder);
+            jasmine.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Jasmine, ref builder);
+            jquery.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Jquery, ref builder);
+            lastsemic.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Lastsemic, ref builder);
+            latedef.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Latedef, ref builder);
+            leanswitch.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Leanswitch, ref builder);
+            loopfunc.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Loopfunc, ref builder);
+            maxcomplexity.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Maxcomplexity, ref builder);
+            maxdepth.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Maxdepth, ref builder);
+            maxerr.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Maxerr, ref builder);
+            maxparams.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Maxparams, ref builder);
+            maxstatements.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Maxstatements, ref builder);
+            mocha.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Mocha, ref builder);
+            module.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Module, ref builder);
+            mootools.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Mootools, ref builder);
+            moz.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Moz, ref builder);
+            noarg.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Noarg, ref builder);
+            nocomma.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Nocomma, ref builder);
+            node.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Node, ref builder);
+            nonbsp.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Nonbsp, ref builder);
+            nonew.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Nonew, ref builder);
+            nonstandard.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Nonstandard, ref builder);
+            noreturnawait.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Noreturnawait, ref builder);
+            notypeof.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Notypeof, ref builder);
+            noyield.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Noyield, ref builder);
+            overrides.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Overrides, ref builder);
+            phantom.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Phantom, ref builder);
+            plusplus.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Plusplus, ref builder);
+            proto.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Proto, ref builder);
+            prototypejs.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Prototypejs, ref builder);
+            regexpu.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Regexpu, ref builder);
+            rhino.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Rhino, ref builder);
+            scripturl.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Scripturl, ref builder);
+            shadow.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Shadow, ref builder);
+            shelljs.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Shelljs, ref builder);
+            singleGroups.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SingleGroups, ref builder);
+            strict.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Strict, ref builder);
+            supernew.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Supernew, ref builder);
+            trailingcomma.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Trailingcomma, ref builder);
+            typed.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Typed, ref builder);
+            undef.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Undef, ref builder);
+            unused.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Unused, ref builder);
+            validthis.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Validthis, ref builder);
+            varstmt.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Varstmt, ref builder);
+            withstmt.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Withstmt, ref builder);
+            worker.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Worker, ref builder);
+            wsh.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Wsh, ref builder);
+            yui.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Yui, ref builder);
         }
 
         /// <summary>
@@ -5834,76 +5870,76 @@ public readonly partial struct JshintrcSchema
         where TContext : allows ref struct
         #endif
         {
-            asi.AddAsProperty(JsonPropertyNamesEscaped.Asi, ref builder, escapeName: false);
-            bitwise.AddAsProperty(JsonPropertyNamesEscaped.Bitwise, ref builder, escapeName: false);
-            boss.AddAsProperty(JsonPropertyNamesEscaped.Boss, ref builder, escapeName: false);
-            browser.AddAsProperty(JsonPropertyNamesEscaped.Browser, ref builder, escapeName: false);
-            browserify.AddAsProperty(JsonPropertyNamesEscaped.Browserify, ref builder, escapeName: false);
-            couch.AddAsProperty(JsonPropertyNamesEscaped.Couch, ref builder, escapeName: false);
-            curly.AddAsProperty(JsonPropertyNamesEscaped.Curly, ref builder, escapeName: false);
-            debug.AddAsProperty(JsonPropertyNamesEscaped.DebugValue, ref builder, escapeName: false);
-            devel.AddAsProperty(JsonPropertyNamesEscaped.Devel, ref builder, escapeName: false);
-            dojo.AddAsProperty(JsonPropertyNamesEscaped.Dojo, ref builder, escapeName: false);
-            elision.AddAsProperty(JsonPropertyNamesEscaped.Elision, ref builder, escapeName: false);
-            eqeqeq.AddAsProperty(JsonPropertyNamesEscaped.Eqeqeq, ref builder, escapeName: false);
-            eqnull.AddAsProperty(JsonPropertyNamesEscaped.Eqnull, ref builder, escapeName: false);
-            esversion.AddAsProperty(JsonPropertyNamesEscaped.Esversion, ref builder, escapeName: false);
-            evil.AddAsProperty(JsonPropertyNamesEscaped.Evil, ref builder, escapeName: false);
-            expr.AddAsProperty(JsonPropertyNamesEscaped.Expr, ref builder, escapeName: false);
-            extends.AddAsProperty(JsonPropertyNamesEscaped.Extends, ref builder, escapeName: false);
-            forin.AddAsProperty(JsonPropertyNamesEscaped.Forin, ref builder, escapeName: false);
-            freeze.AddAsProperty(JsonPropertyNamesEscaped.FreezeValue, ref builder, escapeName: false);
-            funcscope.AddAsProperty(JsonPropertyNamesEscaped.Funcscope, ref builder, escapeName: false);
-            futurehostile.AddAsProperty(JsonPropertyNamesEscaped.Futurehostile, ref builder, escapeName: false);
-            globals.AddAsProperty(JsonPropertyNamesEscaped.Globals, ref builder, escapeName: false);
-            iterator.AddAsProperty(JsonPropertyNamesEscaped.Iterator, ref builder, escapeName: false);
-            jasmine.AddAsProperty(JsonPropertyNamesEscaped.Jasmine, ref builder, escapeName: false);
-            jquery.AddAsProperty(JsonPropertyNamesEscaped.Jquery, ref builder, escapeName: false);
-            lastsemic.AddAsProperty(JsonPropertyNamesEscaped.Lastsemic, ref builder, escapeName: false);
-            latedef.AddAsProperty(JsonPropertyNamesEscaped.Latedef, ref builder, escapeName: false);
-            leanswitch.AddAsProperty(JsonPropertyNamesEscaped.Leanswitch, ref builder, escapeName: false);
-            loopfunc.AddAsProperty(JsonPropertyNamesEscaped.Loopfunc, ref builder, escapeName: false);
-            maxcomplexity.AddAsProperty(JsonPropertyNamesEscaped.Maxcomplexity, ref builder, escapeName: false);
-            maxdepth.AddAsProperty(JsonPropertyNamesEscaped.Maxdepth, ref builder, escapeName: false);
-            maxerr.AddAsProperty(JsonPropertyNamesEscaped.Maxerr, ref builder, escapeName: false);
-            maxparams.AddAsProperty(JsonPropertyNamesEscaped.Maxparams, ref builder, escapeName: false);
-            maxstatements.AddAsProperty(JsonPropertyNamesEscaped.Maxstatements, ref builder, escapeName: false);
-            mocha.AddAsProperty(JsonPropertyNamesEscaped.Mocha, ref builder, escapeName: false);
-            module.AddAsProperty(JsonPropertyNamesEscaped.Module, ref builder, escapeName: false);
-            mootools.AddAsProperty(JsonPropertyNamesEscaped.Mootools, ref builder, escapeName: false);
-            moz.AddAsProperty(JsonPropertyNamesEscaped.Moz, ref builder, escapeName: false);
-            noarg.AddAsProperty(JsonPropertyNamesEscaped.Noarg, ref builder, escapeName: false);
-            nocomma.AddAsProperty(JsonPropertyNamesEscaped.Nocomma, ref builder, escapeName: false);
-            node.AddAsProperty(JsonPropertyNamesEscaped.Node, ref builder, escapeName: false);
-            nonbsp.AddAsProperty(JsonPropertyNamesEscaped.Nonbsp, ref builder, escapeName: false);
-            nonew.AddAsProperty(JsonPropertyNamesEscaped.Nonew, ref builder, escapeName: false);
-            nonstandard.AddAsProperty(JsonPropertyNamesEscaped.Nonstandard, ref builder, escapeName: false);
-            noreturnawait.AddAsProperty(JsonPropertyNamesEscaped.Noreturnawait, ref builder, escapeName: false);
-            notypeof.AddAsProperty(JsonPropertyNamesEscaped.Notypeof, ref builder, escapeName: false);
-            noyield.AddAsProperty(JsonPropertyNamesEscaped.Noyield, ref builder, escapeName: false);
-            overrides.AddAsProperty(JsonPropertyNamesEscaped.Overrides, ref builder, escapeName: false);
-            phantom.AddAsProperty(JsonPropertyNamesEscaped.Phantom, ref builder, escapeName: false);
-            plusplus.AddAsProperty(JsonPropertyNamesEscaped.Plusplus, ref builder, escapeName: false);
-            proto.AddAsProperty(JsonPropertyNamesEscaped.Proto, ref builder, escapeName: false);
-            prototypejs.AddAsProperty(JsonPropertyNamesEscaped.Prototypejs, ref builder, escapeName: false);
-            regexpu.AddAsProperty(JsonPropertyNamesEscaped.Regexpu, ref builder, escapeName: false);
-            rhino.AddAsProperty(JsonPropertyNamesEscaped.Rhino, ref builder, escapeName: false);
-            scripturl.AddAsProperty(JsonPropertyNamesEscaped.Scripturl, ref builder, escapeName: false);
-            shadow.AddAsProperty(JsonPropertyNamesEscaped.Shadow, ref builder, escapeName: false);
-            shelljs.AddAsProperty(JsonPropertyNamesEscaped.Shelljs, ref builder, escapeName: false);
-            singleGroups.AddAsProperty(JsonPropertyNamesEscaped.SingleGroups, ref builder, escapeName: false);
-            strict.AddAsProperty(JsonPropertyNamesEscaped.Strict, ref builder, escapeName: false);
-            supernew.AddAsProperty(JsonPropertyNamesEscaped.Supernew, ref builder, escapeName: false);
-            trailingcomma.AddAsProperty(JsonPropertyNamesEscaped.Trailingcomma, ref builder, escapeName: false);
-            typed.AddAsProperty(JsonPropertyNamesEscaped.Typed, ref builder, escapeName: false);
-            undef.AddAsProperty(JsonPropertyNamesEscaped.Undef, ref builder, escapeName: false);
-            unused.AddAsProperty(JsonPropertyNamesEscaped.Unused, ref builder, escapeName: false);
-            validthis.AddAsProperty(JsonPropertyNamesEscaped.Validthis, ref builder, escapeName: false);
-            varstmt.AddAsProperty(JsonPropertyNamesEscaped.Varstmt, ref builder, escapeName: false);
-            withstmt.AddAsProperty(JsonPropertyNamesEscaped.Withstmt, ref builder, escapeName: false);
-            worker.AddAsProperty(JsonPropertyNamesEscaped.Worker, ref builder, escapeName: false);
-            wsh.AddAsProperty(JsonPropertyNamesEscaped.Wsh, ref builder, escapeName: false);
-            yui.AddAsProperty(JsonPropertyNamesEscaped.Yui, ref builder, escapeName: false);
+            asi.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Asi, ref builder);
+            bitwise.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Bitwise, ref builder);
+            boss.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Boss, ref builder);
+            browser.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Browser, ref builder);
+            browserify.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Browserify, ref builder);
+            couch.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Couch, ref builder);
+            curly.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Curly, ref builder);
+            debug.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DebugValue, ref builder);
+            devel.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Devel, ref builder);
+            dojo.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Dojo, ref builder);
+            elision.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Elision, ref builder);
+            eqeqeq.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Eqeqeq, ref builder);
+            eqnull.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Eqnull, ref builder);
+            esversion.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Esversion, ref builder);
+            evil.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Evil, ref builder);
+            expr.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Expr, ref builder);
+            extends.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Extends, ref builder);
+            forin.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Forin, ref builder);
+            freeze.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.FreezeValue, ref builder);
+            funcscope.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Funcscope, ref builder);
+            futurehostile.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Futurehostile, ref builder);
+            globals.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Globals, ref builder);
+            iterator.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Iterator, ref builder);
+            jasmine.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Jasmine, ref builder);
+            jquery.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Jquery, ref builder);
+            lastsemic.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Lastsemic, ref builder);
+            latedef.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Latedef, ref builder);
+            leanswitch.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Leanswitch, ref builder);
+            loopfunc.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Loopfunc, ref builder);
+            maxcomplexity.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Maxcomplexity, ref builder);
+            maxdepth.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Maxdepth, ref builder);
+            maxerr.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Maxerr, ref builder);
+            maxparams.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Maxparams, ref builder);
+            maxstatements.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Maxstatements, ref builder);
+            mocha.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Mocha, ref builder);
+            module.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Module, ref builder);
+            mootools.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Mootools, ref builder);
+            moz.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Moz, ref builder);
+            noarg.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Noarg, ref builder);
+            nocomma.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Nocomma, ref builder);
+            node.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Node, ref builder);
+            nonbsp.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Nonbsp, ref builder);
+            nonew.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Nonew, ref builder);
+            nonstandard.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Nonstandard, ref builder);
+            noreturnawait.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Noreturnawait, ref builder);
+            notypeof.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Notypeof, ref builder);
+            noyield.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Noyield, ref builder);
+            overrides.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Overrides, ref builder);
+            phantom.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Phantom, ref builder);
+            plusplus.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Plusplus, ref builder);
+            proto.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Proto, ref builder);
+            prototypejs.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Prototypejs, ref builder);
+            regexpu.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Regexpu, ref builder);
+            rhino.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Rhino, ref builder);
+            scripturl.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Scripturl, ref builder);
+            shadow.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Shadow, ref builder);
+            shelljs.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Shelljs, ref builder);
+            singleGroups.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SingleGroups, ref builder);
+            strict.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Strict, ref builder);
+            supernew.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Supernew, ref builder);
+            trailingcomma.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Trailingcomma, ref builder);
+            typed.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Typed, ref builder);
+            undef.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Undef, ref builder);
+            unused.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Unused, ref builder);
+            validthis.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Validthis, ref builder);
+            varstmt.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Varstmt, ref builder);
+            withstmt.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Withstmt, ref builder);
+            worker.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Worker, ref builder);
+            wsh.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Wsh, ref builder);
+            yui.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Yui, ref builder);
         }
 
         /// <summary>

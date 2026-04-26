@@ -888,6 +888,30 @@ public readonly partial struct CspellSchema
                 }
             }
 
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.JsonElement:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                        break;
+                    case Kind.CostMapDefInsDelBuilder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _costMapDefInsDelBuilderInstance!, static (in b, ref o) => Corvus.CspellBenchmark.Current.CspellSchema.CostMapDefInsDel.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.CostMapDefReplaceBuilder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _costMapDefReplaceBuilderInstance!, static (in b, ref o) => Corvus.CspellBenchmark.Current.CspellSchema.CostMapDefReplace.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.CostMapDefSwapBuilder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _costMapDefSwapBuilderInstance!, static (in b, ref o) => Corvus.CspellBenchmark.Current.CspellSchema.CostMapDefSwap.Builder.BuildValue(b, ref o));
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
             internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
             {
                 switch(_kind)
@@ -1014,6 +1038,30 @@ public readonly partial struct CspellSchema
                         break;
                     case Kind.CostMapDefSwapBuilder:
                         valueBuilder.AddProperty(utf8Name, BuildWithContext.Create(_context, _costMapDefSwapBuilderInstance!), static (in b, ref o) => Corvus.CspellBenchmark.Current.CspellSchema.CostMapDefSwap.Builder.BuildValue(b.Context, b.Build, ref o), escapeName, nameRequiresUnescaping);
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.Source:
+                        _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                        break;
+                    case Kind.CostMapDefInsDelBuilder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _costMapDefInsDelBuilderInstance!), static (in b, ref o) => Corvus.CspellBenchmark.Current.CspellSchema.CostMapDefInsDel.Builder.BuildValue(b.Context, b.Build, ref o));
+                        break;
+                    case Kind.CostMapDefReplaceBuilder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _costMapDefReplaceBuilderInstance!), static (in b, ref o) => Corvus.CspellBenchmark.Current.CspellSchema.CostMapDefReplace.Builder.BuildValue(b.Context, b.Build, ref o));
+                        break;
+                    case Kind.CostMapDefSwapBuilder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _costMapDefSwapBuilderInstance!), static (in b, ref o) => Corvus.CspellBenchmark.Current.CspellSchema.CostMapDefSwap.Builder.BuildValue(b.Context, b.Build, ref o));
                         break;
                     default:
                         Debug.Fail("Unexpected Kind");

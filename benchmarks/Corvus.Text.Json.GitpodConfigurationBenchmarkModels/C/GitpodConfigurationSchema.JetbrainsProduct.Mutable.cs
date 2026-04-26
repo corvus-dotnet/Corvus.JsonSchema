@@ -284,7 +284,7 @@ public readonly partial struct GitpodConfigurationSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Plugins, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Plugins, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -320,7 +320,7 @@ public readonly partial struct GitpodConfigurationSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Plugins, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Plugins, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -365,7 +365,7 @@ public readonly partial struct GitpodConfigurationSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Prebuilds, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Prebuilds, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -401,7 +401,7 @@ public readonly partial struct GitpodConfigurationSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Prebuilds, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Prebuilds, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -446,7 +446,7 @@ public readonly partial struct GitpodConfigurationSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Vmoptions, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Vmoptions, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -653,6 +653,24 @@ public readonly partial struct GitpodConfigurationSchema
                 }
             }
 
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.JsonElement:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                        break;
+                    case Kind.Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
             internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
             {
                 switch(_kind)
@@ -754,6 +772,24 @@ public readonly partial struct GitpodConfigurationSchema
                 }
             }
 
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.Source:
+                        _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                        break;
+                    case Kind.Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
             internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
             {
                 switch(_kind)
@@ -836,9 +872,9 @@ public readonly partial struct GitpodConfigurationSchema
                 in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.JetbrainsProduct.EnableWarmingUpOfJetBrainsBackendInPrebuilds.Source prebuilds = default,
                 in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source vmoptions = default)
             {
-                plugins.AddAsProperty(JsonPropertyNamesEscaped.Plugins, ref builder, escapeName: false);
-                prebuilds.AddAsProperty(JsonPropertyNamesEscaped.Prebuilds, ref builder, escapeName: false);
-                vmoptions.AddAsProperty(JsonPropertyNamesEscaped.Vmoptions, ref builder, escapeName: false);
+                plugins.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Plugins, ref builder);
+                prebuilds.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Prebuilds, ref builder);
+                vmoptions.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Vmoptions, ref builder);
             }
 
             /// <summary>
@@ -865,9 +901,9 @@ public readonly partial struct GitpodConfigurationSchema
             where TContext : allows ref struct
             #endif
             {
-                plugins.AddAsProperty(JsonPropertyNamesEscaped.Plugins, ref builder, escapeName: false);
-                prebuilds.AddAsProperty(JsonPropertyNamesEscaped.Prebuilds, ref builder, escapeName: false);
-                vmoptions.AddAsProperty(JsonPropertyNamesEscaped.Vmoptions, ref builder, escapeName: false);
+                plugins.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Plugins, ref builder);
+                prebuilds.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Prebuilds, ref builder);
+                vmoptions.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Vmoptions, ref builder);
             }
 
             /// <summary>

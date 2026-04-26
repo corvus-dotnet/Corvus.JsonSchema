@@ -62,14 +62,14 @@ public readonly partial struct OpenapiSchema
                     {
                         context.AddLocalEvaluatedProperty(propertyCount);
                         JsonSchemaContext childContext =
-                            Corvus.OpenapiBenchmark.Current.JsonUriNotAsserted.JsonSchema.PushChildContextUnescaped(
+                            Corvus.OpenapiBenchmark.Current.JsonUri.JsonSchema.PushChildContextUnescaped(
                                 parentDocument,
                                 parentDocumentIndex,
                                 ref context,
                                 JsonPropertyNames.OpenIdConnectUrlUtf8,
                                 evaluationPath: OpenIdConnectUrlSchemaEvaluationPath);
 
-                        Corvus.OpenapiBenchmark.Current.JsonUriNotAsserted.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext);
+                        Corvus.OpenapiBenchmark.Current.JsonUri.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext);
                         context.CommitChildContext(childContext.IsMatch, ref childContext);
 
                         if (!context.HasCollector && !context.IsMatch)
@@ -99,17 +99,17 @@ public readonly partial struct OpenapiSchema
                     /// <summary>
                     /// Gets a provider for the schema location from which this type was generated.
                     /// </summary>
-                    public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("https://spec.openapis.org/oas/3.1/schema/2022-10-07#/$defs/security-scheme/$defs/type-oidc/then"u8, buffer, out written);
+                    public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/$defs/security-scheme/$defs/type-oidc/then"u8, buffer, out written);
 
                     /// <summary>
                     /// Gets the schema location from which this type was generated.
                     /// </summary>
-                    public const string SchemaLocation = "https://spec.openapis.org/oas/3.1/schema/2022-10-07#/$defs/security-scheme/$defs/type-oidc/then";
+                    public const string SchemaLocation = "/$defs/security-scheme/$defs/type-oidc/then";
 
                     /// <summary>
                     /// Gets the schema location from which this type was generated as a UTF-8 string.
                     /// </summary>
-                    public static ReadOnlySpan<byte> SchemaLocationUtf8 => "https://spec.openapis.org/oas/3.1/schema/2022-10-07#/$defs/security-scheme/$defs/type-oidc/then"u8;
+                    public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/$defs/security-scheme/$defs/type-oidc/then"u8;
 
                     /// <summary>
                     /// Applies the JSON schema semantics defined by this type to the instance determined by the given document and index.

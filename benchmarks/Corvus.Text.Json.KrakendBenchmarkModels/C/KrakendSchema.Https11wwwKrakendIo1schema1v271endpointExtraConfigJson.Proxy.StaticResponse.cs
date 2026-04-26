@@ -132,11 +132,11 @@ public readonly partial struct KrakendSchema
                 /// See: https://www.krakend.io/docs/endpoints/static-proxy/
                 /// </para>
                 /// </remarks>
-                public Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271endpointExtraConfigJson.Proxy.StaticResponse.Data DataValue
+                public Corvus.KrakendBenchmark.Current.JsonObject Data
                 {
                     get
                     {
-                        if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.DataValueUtf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271endpointExtraConfigJson.Proxy.StaticResponse.Data value))
+                        if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.DataUtf8, out Corvus.KrakendBenchmark.Current.JsonObject value))
                         {
                             return value;
                         }
@@ -595,9 +595,9 @@ public readonly partial struct KrakendSchema
                 public static class JsonPropertyNames
                 {
                     /// <summary>
-                    /// Gets the JSON property name for <see cref="DataValue"/>.
+                    /// Gets the JSON property name for <see cref="Data"/>.
                     /// </summary>
-                    public const string DataValue = "data";
+                    public const string Data = "data";
 
                     /// <summary>
                     /// Gets the JSON property name for <see cref="StrategyValue"/>.
@@ -605,9 +605,9 @@ public readonly partial struct KrakendSchema
                     public const string StrategyValue = "strategy";
 
                     /// <summary>
-                    /// Gets the JSON property name for <see cref="DataValue"/>.
+                    /// Gets the JSON property name for <see cref="Data"/>.
                     /// </summary>
-                    public static ReadOnlySpan<byte> DataValueUtf8 => "data"u8;
+                    public static ReadOnlySpan<byte> DataUtf8 => "data"u8;
 
                     /// <summary>
                     /// Gets the JSON property name for <see cref="StrategyValue"/>.
@@ -621,14 +621,31 @@ public readonly partial struct KrakendSchema
                 private static class JsonPropertyNamesEscaped
                 {
                     /// <summary>
-                    /// Gets the escaped UTF-8 JSON property name for <see cref="DataValue"/>.
+                    /// Gets the escaped UTF-8 JSON property name for <see cref="Data"/>.
                     /// </summary>
-                    public static ReadOnlySpan<byte> DataValue => "data"u8;
+                    public static ReadOnlySpan<byte> Data => "data"u8;
 
                     /// <summary>
                     /// Gets the escaped UTF-8 JSON property name for <see cref="StrategyValue"/>.
                     /// </summary>
                     public static ReadOnlySpan<byte> StrategyValue => "strategy"u8;
+                }
+
+                /// <summary>
+                /// Provides pre-baked property name blobs for fast builder property storage.
+                /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
+                /// </summary>
+                private static class JsonPropertyNamesPrebaked
+                {
+                    /// <summary>
+                    /// Gets the pre-baked property name blob for <see cref="Data"/>.
+                    /// </summary>
+                    public static ReadOnlySpan<byte> Data => [0x65, 0x00, 0x00, 0x00, 0x22, 0x64, 0x61, 0x74, 0x61, 0x22];
+
+                    /// <summary>
+                    /// Gets the pre-baked property name blob for <see cref="StrategyValue"/>.
+                    /// </summary>
+                    public static ReadOnlySpan<byte> StrategyValue => [0xA5, 0x00, 0x00, 0x00, 0x22, 0x73, 0x74, 0x72, 0x61, 0x74, 0x65, 0x67, 0x79, 0x22];
                 }
             }
         }

@@ -676,6 +676,33 @@ public readonly partial struct LazygitSchema
                 /// </summary>
                 public static ReadOnlySpan<byte> ToggleSelectHunk => "toggleSelectHunk"u8;
             }
+
+            /// <summary>
+            /// Provides pre-baked property name blobs for fast builder property storage.
+            /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
+            /// </summary>
+            private static class JsonPropertyNamesPrebaked
+            {
+                /// <summary>
+                /// Gets the pre-baked property name blob for <see cref="PickBothHunks"/>.
+                /// </summary>
+                public static ReadOnlySpan<byte> PickBothHunks => [0xF5, 0x00, 0x00, 0x00, 0x22, 0x70, 0x69, 0x63, 0x6B, 0x42, 0x6F, 0x74, 0x68, 0x48, 0x75, 0x6E, 0x6B, 0x73, 0x22];
+
+                /// <summary>
+                /// Gets the pre-baked property name blob for <see cref="ToggleDragSelect"/>.
+                /// </summary>
+                public static ReadOnlySpan<byte> ToggleDragSelect => [0x25, 0x01, 0x00, 0x00, 0x22, 0x74, 0x6F, 0x67, 0x67, 0x6C, 0x65, 0x44, 0x72, 0x61, 0x67, 0x53, 0x65, 0x6C, 0x65, 0x63, 0x74, 0x22];
+
+                /// <summary>
+                /// Gets the pre-baked property name blob for <see cref="ToggleDragSelectAlt"/>.
+                /// </summary>
+                public static ReadOnlySpan<byte> ToggleDragSelectAlt => [0x65, 0x01, 0x00, 0x00, 0x22, 0x74, 0x6F, 0x67, 0x67, 0x6C, 0x65, 0x44, 0x72, 0x61, 0x67, 0x53, 0x65, 0x6C, 0x65, 0x63, 0x74, 0x2D, 0x61, 0x6C, 0x74, 0x22];
+
+                /// <summary>
+                /// Gets the pre-baked property name blob for <see cref="ToggleSelectHunk"/>.
+                /// </summary>
+                public static ReadOnlySpan<byte> ToggleSelectHunk => [0x25, 0x01, 0x00, 0x00, 0x22, 0x74, 0x6F, 0x67, 0x67, 0x6C, 0x65, 0x53, 0x65, 0x6C, 0x65, 0x63, 0x74, 0x48, 0x75, 0x6E, 0x6B, 0x22];
+            }
         }
     }
 }

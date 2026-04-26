@@ -727,11 +727,11 @@ public readonly partial struct KrakendSchema
             /// See: https://www.krakend.io/docs/service-settings/router-options/
             /// </para>
             /// </remarks>
-            public Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271routerJson.RemoteIpHeaders.Mutable RemoteIpHeadersValue
+            public Corvus.KrakendBenchmark.Current.JsonArray.Mutable RemoteIpHeaders
             {
                 get
                 {
-                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.RemoteIpHeadersValueUtf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271routerJson.RemoteIpHeaders.Mutable value))
+                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.RemoteIpHeadersUtf8, out Corvus.KrakendBenchmark.Current.JsonArray.Mutable value))
                     {
                         return value;
                     }
@@ -802,11 +802,11 @@ public readonly partial struct KrakendSchema
             /// See: https://www.krakend.io/docs/service-settings/router-options/
             /// </para>
             /// </remarks>
-            public Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271routerJson.TrustedProxies.Mutable TrustedProxiesValue
+            public Corvus.KrakendBenchmark.Current.JsonArray.Mutable TrustedProxies
             {
                 get
                 {
-                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TrustedProxiesValueUtf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271routerJson.TrustedProxies.Mutable value))
+                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TrustedProxiesUtf8, out Corvus.KrakendBenchmark.Current.JsonArray.Mutable value))
                     {
                         return value;
                     }
@@ -924,7 +924,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.AppEngine, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AppEngine, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -969,7 +969,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.AutoOptions, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AutoOptions, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1014,7 +1014,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.DecompressGzipValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DecompressGzipValue, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1059,7 +1059,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.DisableAccessLogValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DisableAccessLogValue, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1104,7 +1104,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.DisableGzip, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DisableGzip, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1149,7 +1149,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.DisableHandleMethodNotAllowed, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DisableHandleMethodNotAllowed, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1194,7 +1194,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.DisableHealthValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DisableHealthValue, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1239,7 +1239,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.DisablePathDecoding, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DisablePathDecoding, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1284,7 +1284,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.DisableRedirectFixedPath, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DisableRedirectFixedPath, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1329,7 +1329,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.DisableRedirectTrailingSlash, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DisableRedirectTrailingSlash, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1374,7 +1374,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.ErrorBody, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ErrorBody, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1410,7 +1410,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.ErrorBody, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ErrorBody, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1455,7 +1455,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.ForwardedByClientIpValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ForwardedByClientIpValue, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1500,7 +1500,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.HealthPath, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.HealthPath, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1545,7 +1545,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.HideVersionHeaderValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.HideVersionHeaderValue, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1590,7 +1590,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.LoggerSkipPaths, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.LoggerSkipPaths, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1626,7 +1626,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.LoggerSkipPaths, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.LoggerSkipPaths, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1671,7 +1671,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.MaxMultipartMemory, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MaxMultipartMemory, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1716,7 +1716,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.MaxPayload, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MaxPayload, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1740,19 +1740,19 @@ public readonly partial struct KrakendSchema
             /// Set the <c>remote_ip_headers</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetRemoteIpHeadersValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271routerJson.RemoteIpHeaders.Source value)
+            public void SetRemoteIpHeaders(in Corvus.KrakendBenchmark.Current.JsonArray.Source value)
             {
                 CheckValidInstance();
 
                 if (value.IsUndefined)
                 {
-                    JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.RemoteIpHeadersValueUtf8);
+                    JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.RemoteIpHeadersUtf8);
                     _documentVersion = _parent.Version;
                     return;
                 }
 
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.RemoteIpHeadersValueUtf8, out IJsonDocument? elementParent, out int elementIdx))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.RemoteIpHeadersUtf8, out IJsonDocument? elementParent, out int elementIdx))
                 {
                     // We are going to replace just the value
                     value.AddAsItem(ref cvb);
@@ -1761,7 +1761,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.RemoteIpHeadersValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.RemoteIpHeaders, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1773,7 +1773,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>remote_ip_headers</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetRemoteIpHeadersValue<TContext>(in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271routerJson.RemoteIpHeaders.Source<TContext> value)
+            public void SetRemoteIpHeaders<TContext>(in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> value)
 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
 #endif
@@ -1782,13 +1782,13 @@ public readonly partial struct KrakendSchema
 
                 if (value.IsUndefined)
                 {
-                    JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.RemoteIpHeadersValueUtf8);
+                    JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.RemoteIpHeadersUtf8);
                     _documentVersion = _parent.Version;
                     return;
                 }
 
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.RemoteIpHeadersValueUtf8, out IJsonDocument? elementParent, out int elementIdx))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.RemoteIpHeadersUtf8, out IJsonDocument? elementParent, out int elementIdx))
                 {
                     // We are going to replace just the value
                     value.AddAsItem(ref cvb);
@@ -1797,7 +1797,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.RemoteIpHeadersValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.RemoteIpHeaders, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1809,10 +1809,10 @@ public readonly partial struct KrakendSchema
             /// Remove the <c>remote_ip_headers</c> property, if present.
             /// </summary>
             /// <returns><see langword="true"/> if the property was found and removed; otherwise, <see langword="false"/>.</returns>
-            public bool RemoveRemoteIpHeadersValue()
+            public bool RemoveRemoteIpHeaders()
             {
                 CheckValidInstance();
-                bool result = JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.RemoteIpHeadersValueUtf8);
+                bool result = JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.RemoteIpHeadersUtf8);
                 _documentVersion = _parent.Version;
                 return result;
             }
@@ -1842,7 +1842,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.RemoveExtraSlashValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.RemoveExtraSlashValue, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1887,7 +1887,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.ReturnErrorMsg, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ReturnErrorMsg, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1911,19 +1911,19 @@ public readonly partial struct KrakendSchema
             /// Set the <c>trusted_proxies</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetTrustedProxiesValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271routerJson.TrustedProxies.Source value)
+            public void SetTrustedProxies(in Corvus.KrakendBenchmark.Current.JsonArray.Source value)
             {
                 CheckValidInstance();
 
                 if (value.IsUndefined)
                 {
-                    JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.TrustedProxiesValueUtf8);
+                    JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.TrustedProxiesUtf8);
                     _documentVersion = _parent.Version;
                     return;
                 }
 
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TrustedProxiesValueUtf8, out IJsonDocument? elementParent, out int elementIdx))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TrustedProxiesUtf8, out IJsonDocument? elementParent, out int elementIdx))
                 {
                     // We are going to replace just the value
                     value.AddAsItem(ref cvb);
@@ -1932,7 +1932,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.TrustedProxiesValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TrustedProxies, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1944,7 +1944,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>trusted_proxies</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetTrustedProxiesValue<TContext>(in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271routerJson.TrustedProxies.Source<TContext> value)
+            public void SetTrustedProxies<TContext>(in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> value)
 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
 #endif
@@ -1953,13 +1953,13 @@ public readonly partial struct KrakendSchema
 
                 if (value.IsUndefined)
                 {
-                    JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.TrustedProxiesValueUtf8);
+                    JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.TrustedProxiesUtf8);
                     _documentVersion = _parent.Version;
                     return;
                 }
 
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TrustedProxiesValueUtf8, out IJsonDocument? elementParent, out int elementIdx))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TrustedProxiesUtf8, out IJsonDocument? elementParent, out int elementIdx))
                 {
                     // We are going to replace just the value
                     value.AddAsItem(ref cvb);
@@ -1968,7 +1968,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.TrustedProxiesValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TrustedProxies, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1980,10 +1980,10 @@ public readonly partial struct KrakendSchema
             /// Remove the <c>trusted_proxies</c> property, if present.
             /// </summary>
             /// <returns><see langword="true"/> if the property was found and removed; otherwise, <see langword="false"/>.</returns>
-            public bool RemoveTrustedProxiesValue()
+            public bool RemoveTrustedProxies()
             {
                 CheckValidInstance();
-                bool result = JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.TrustedProxiesValueUtf8);
+                bool result = JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.TrustedProxiesUtf8);
                 _documentVersion = _parent.Version;
                 return result;
             }
@@ -2013,7 +2013,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.UseH2c, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.UseH2c, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -2755,6 +2755,27 @@ public readonly partial struct KrakendSchema
                 }
             }
 
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.JsonElement:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                        break;
+                    case Kind.ObjectBuilder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => ObjectBuilder.BuildValue(b, ref o));
+                        break;
+                    case Kind.ArrayBuilder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _arrayBuilder!, static (in b, ref o) => ArrayBuilder.BuildValue(b, ref o));
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
             internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
             {
                 switch(_kind)
@@ -2865,6 +2886,27 @@ public readonly partial struct KrakendSchema
                         break;
                     case Kind.ArrayBuilder:
                         valueBuilder.AddProperty(utf8Name, BuildWithContext.Create(_context, _arrayBuilder!), static (in b, ref o) => ArrayBuilder.BuildValue(b.Context, b.Build, ref o), escapeName, nameRequiresUnescaping);
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.Source:
+                        _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                        break;
+                    case Kind.ObjectBuilder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => ObjectBuilder.BuildValue(b.Context, b.Build, ref o));
+                        break;
+                    case Kind.ArrayBuilder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _arrayBuilder!), static (in b, ref o) => ArrayBuilder.BuildValue(b.Context, b.Build, ref o));
                         break;
                     default:
                         Debug.Fail("Unexpected Kind");
@@ -3026,34 +3068,34 @@ public readonly partial struct KrakendSchema
                 in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271routerJson.JsonStringArray.Source loggerSkipPaths = default,
                 in Corvus.KrakendBenchmark.Current.JsonInteger.Source maxMultipartMemory = default,
                 in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271routerJson.MaximumPayload.Source maxPayload = default,
-                in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271routerJson.RemoteIpHeaders.Source remoteIpHeaders = default,
+                in Corvus.KrakendBenchmark.Current.JsonArray.Source remoteIpHeaders = default,
                 in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271routerJson.RemoveExtraSlash.Source removeExtraSlash = default,
                 in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271routerJson.ReturningTheGatewayErrorMessage.Source returnErrorMsg = default,
-                in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271routerJson.TrustedProxies.Source trustedProxies = default,
+                in Corvus.KrakendBenchmark.Current.JsonArray.Source trustedProxies = default,
                 in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271routerJson.EnableH2c.Source useH2c = default)
             {
-                appEngine.AddAsProperty(JsonPropertyNamesEscaped.AppEngine, ref builder, escapeName: false);
-                autoOptions.AddAsProperty(JsonPropertyNamesEscaped.AutoOptions, ref builder, escapeName: false);
-                decompressGzip.AddAsProperty(JsonPropertyNamesEscaped.DecompressGzipValue, ref builder, escapeName: false);
-                disableAccessLog.AddAsProperty(JsonPropertyNamesEscaped.DisableAccessLogValue, ref builder, escapeName: false);
-                disableGzip.AddAsProperty(JsonPropertyNamesEscaped.DisableGzip, ref builder, escapeName: false);
-                disableHandleMethodNotAllowed.AddAsProperty(JsonPropertyNamesEscaped.DisableHandleMethodNotAllowed, ref builder, escapeName: false);
-                disableHealth.AddAsProperty(JsonPropertyNamesEscaped.DisableHealthValue, ref builder, escapeName: false);
-                disablePathDecoding.AddAsProperty(JsonPropertyNamesEscaped.DisablePathDecoding, ref builder, escapeName: false);
-                disableRedirectFixedPath.AddAsProperty(JsonPropertyNamesEscaped.DisableRedirectFixedPath, ref builder, escapeName: false);
-                disableRedirectTrailingSlash.AddAsProperty(JsonPropertyNamesEscaped.DisableRedirectTrailingSlash, ref builder, escapeName: false);
-                errorBody.AddAsProperty(JsonPropertyNamesEscaped.ErrorBody, ref builder, escapeName: false);
-                forwardedByClientIp.AddAsProperty(JsonPropertyNamesEscaped.ForwardedByClientIpValue, ref builder, escapeName: false);
-                healthPath.AddAsProperty(JsonPropertyNamesEscaped.HealthPath, ref builder, escapeName: false);
-                hideVersionHeader.AddAsProperty(JsonPropertyNamesEscaped.HideVersionHeaderValue, ref builder, escapeName: false);
-                loggerSkipPaths.AddAsProperty(JsonPropertyNamesEscaped.LoggerSkipPaths, ref builder, escapeName: false);
-                maxMultipartMemory.AddAsProperty(JsonPropertyNamesEscaped.MaxMultipartMemory, ref builder, escapeName: false);
-                maxPayload.AddAsProperty(JsonPropertyNamesEscaped.MaxPayload, ref builder, escapeName: false);
-                remoteIpHeaders.AddAsProperty(JsonPropertyNamesEscaped.RemoteIpHeadersValue, ref builder, escapeName: false);
-                removeExtraSlash.AddAsProperty(JsonPropertyNamesEscaped.RemoveExtraSlashValue, ref builder, escapeName: false);
-                returnErrorMsg.AddAsProperty(JsonPropertyNamesEscaped.ReturnErrorMsg, ref builder, escapeName: false);
-                trustedProxies.AddAsProperty(JsonPropertyNamesEscaped.TrustedProxiesValue, ref builder, escapeName: false);
-                useH2c.AddAsProperty(JsonPropertyNamesEscaped.UseH2c, ref builder, escapeName: false);
+                appEngine.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AppEngine, ref builder);
+                autoOptions.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AutoOptions, ref builder);
+                decompressGzip.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DecompressGzipValue, ref builder);
+                disableAccessLog.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DisableAccessLogValue, ref builder);
+                disableGzip.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DisableGzip, ref builder);
+                disableHandleMethodNotAllowed.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DisableHandleMethodNotAllowed, ref builder);
+                disableHealth.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DisableHealthValue, ref builder);
+                disablePathDecoding.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DisablePathDecoding, ref builder);
+                disableRedirectFixedPath.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DisableRedirectFixedPath, ref builder);
+                disableRedirectTrailingSlash.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DisableRedirectTrailingSlash, ref builder);
+                errorBody.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ErrorBody, ref builder);
+                forwardedByClientIp.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ForwardedByClientIpValue, ref builder);
+                healthPath.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.HealthPath, ref builder);
+                hideVersionHeader.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.HideVersionHeaderValue, ref builder);
+                loggerSkipPaths.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.LoggerSkipPaths, ref builder);
+                maxMultipartMemory.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MaxMultipartMemory, ref builder);
+                maxPayload.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MaxPayload, ref builder);
+                remoteIpHeaders.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.RemoteIpHeaders, ref builder);
+                removeExtraSlash.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.RemoveExtraSlashValue, ref builder);
+                returnErrorMsg.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ReturnErrorMsg, ref builder);
+                trustedProxies.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TrustedProxies, ref builder);
+                useH2c.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.UseH2c, ref builder);
             }
 
             /// <summary>
@@ -3077,10 +3119,10 @@ public readonly partial struct KrakendSchema
                 in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271routerJson.JsonStringArray.Source loggerSkipPaths = default,
                 in Corvus.KrakendBenchmark.Current.JsonInteger.Source maxMultipartMemory = default,
                 in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271routerJson.MaximumPayload.Source maxPayload = default,
-                in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271routerJson.RemoteIpHeaders.Source remoteIpHeaders = default,
+                in Corvus.KrakendBenchmark.Current.JsonArray.Source remoteIpHeaders = default,
                 in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271routerJson.RemoveExtraSlash.Source removeExtraSlash = default,
                 in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271routerJson.ReturningTheGatewayErrorMessage.Source returnErrorMsg = default,
-                in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271routerJson.TrustedProxies.Source trustedProxies = default,
+                in Corvus.KrakendBenchmark.Current.JsonArray.Source trustedProxies = default,
                 in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271routerJson.EnableH2c.Source useH2c = default)
             {
                 Create(ref _builder, appEngine, autoOptions, decompressGzip, disableAccessLog, disableGzip, disableHandleMethodNotAllowed, disableHealth, disablePathDecoding, disableRedirectFixedPath, disableRedirectTrailingSlash, errorBody, forwardedByClientIp, healthPath, hideVersionHeader, loggerSkipPaths, maxMultipartMemory, maxPayload, remoteIpHeaders, removeExtraSlash, returnErrorMsg, trustedProxies, useH2c);
@@ -3109,37 +3151,37 @@ public readonly partial struct KrakendSchema
                 in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271routerJson.JsonStringArray.Source<TContext> loggerSkipPaths = default,
                 in Corvus.KrakendBenchmark.Current.JsonInteger.Source maxMultipartMemory = default,
                 in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271routerJson.MaximumPayload.Source maxPayload = default,
-                in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271routerJson.RemoteIpHeaders.Source<TContext> remoteIpHeaders = default,
+                in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> remoteIpHeaders = default,
                 in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271routerJson.RemoveExtraSlash.Source removeExtraSlash = default,
                 in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271routerJson.ReturningTheGatewayErrorMessage.Source returnErrorMsg = default,
-                in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271routerJson.TrustedProxies.Source<TContext> trustedProxies = default,
+                in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> trustedProxies = default,
                 in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271routerJson.EnableH2c.Source useH2c = default)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif
             {
-                appEngine.AddAsProperty(JsonPropertyNamesEscaped.AppEngine, ref builder, escapeName: false);
-                autoOptions.AddAsProperty(JsonPropertyNamesEscaped.AutoOptions, ref builder, escapeName: false);
-                decompressGzip.AddAsProperty(JsonPropertyNamesEscaped.DecompressGzipValue, ref builder, escapeName: false);
-                disableAccessLog.AddAsProperty(JsonPropertyNamesEscaped.DisableAccessLogValue, ref builder, escapeName: false);
-                disableGzip.AddAsProperty(JsonPropertyNamesEscaped.DisableGzip, ref builder, escapeName: false);
-                disableHandleMethodNotAllowed.AddAsProperty(JsonPropertyNamesEscaped.DisableHandleMethodNotAllowed, ref builder, escapeName: false);
-                disableHealth.AddAsProperty(JsonPropertyNamesEscaped.DisableHealthValue, ref builder, escapeName: false);
-                disablePathDecoding.AddAsProperty(JsonPropertyNamesEscaped.DisablePathDecoding, ref builder, escapeName: false);
-                disableRedirectFixedPath.AddAsProperty(JsonPropertyNamesEscaped.DisableRedirectFixedPath, ref builder, escapeName: false);
-                disableRedirectTrailingSlash.AddAsProperty(JsonPropertyNamesEscaped.DisableRedirectTrailingSlash, ref builder, escapeName: false);
-                errorBody.AddAsProperty(JsonPropertyNamesEscaped.ErrorBody, ref builder, escapeName: false);
-                forwardedByClientIp.AddAsProperty(JsonPropertyNamesEscaped.ForwardedByClientIpValue, ref builder, escapeName: false);
-                healthPath.AddAsProperty(JsonPropertyNamesEscaped.HealthPath, ref builder, escapeName: false);
-                hideVersionHeader.AddAsProperty(JsonPropertyNamesEscaped.HideVersionHeaderValue, ref builder, escapeName: false);
-                loggerSkipPaths.AddAsProperty(JsonPropertyNamesEscaped.LoggerSkipPaths, ref builder, escapeName: false);
-                maxMultipartMemory.AddAsProperty(JsonPropertyNamesEscaped.MaxMultipartMemory, ref builder, escapeName: false);
-                maxPayload.AddAsProperty(JsonPropertyNamesEscaped.MaxPayload, ref builder, escapeName: false);
-                remoteIpHeaders.AddAsProperty(JsonPropertyNamesEscaped.RemoteIpHeadersValue, ref builder, escapeName: false);
-                removeExtraSlash.AddAsProperty(JsonPropertyNamesEscaped.RemoveExtraSlashValue, ref builder, escapeName: false);
-                returnErrorMsg.AddAsProperty(JsonPropertyNamesEscaped.ReturnErrorMsg, ref builder, escapeName: false);
-                trustedProxies.AddAsProperty(JsonPropertyNamesEscaped.TrustedProxiesValue, ref builder, escapeName: false);
-                useH2c.AddAsProperty(JsonPropertyNamesEscaped.UseH2c, ref builder, escapeName: false);
+                appEngine.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AppEngine, ref builder);
+                autoOptions.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AutoOptions, ref builder);
+                decompressGzip.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DecompressGzipValue, ref builder);
+                disableAccessLog.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DisableAccessLogValue, ref builder);
+                disableGzip.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DisableGzip, ref builder);
+                disableHandleMethodNotAllowed.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DisableHandleMethodNotAllowed, ref builder);
+                disableHealth.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DisableHealthValue, ref builder);
+                disablePathDecoding.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DisablePathDecoding, ref builder);
+                disableRedirectFixedPath.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DisableRedirectFixedPath, ref builder);
+                disableRedirectTrailingSlash.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DisableRedirectTrailingSlash, ref builder);
+                errorBody.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ErrorBody, ref builder);
+                forwardedByClientIp.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ForwardedByClientIpValue, ref builder);
+                healthPath.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.HealthPath, ref builder);
+                hideVersionHeader.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.HideVersionHeaderValue, ref builder);
+                loggerSkipPaths.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.LoggerSkipPaths, ref builder);
+                maxMultipartMemory.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MaxMultipartMemory, ref builder);
+                maxPayload.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MaxPayload, ref builder);
+                remoteIpHeaders.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.RemoteIpHeaders, ref builder);
+                removeExtraSlash.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.RemoveExtraSlashValue, ref builder);
+                returnErrorMsg.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ReturnErrorMsg, ref builder);
+                trustedProxies.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TrustedProxies, ref builder);
+                useH2c.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.UseH2c, ref builder);
             }
 
             /// <summary>
@@ -3164,10 +3206,10 @@ public readonly partial struct KrakendSchema
                 in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271routerJson.JsonStringArray.Source<TContext> loggerSkipPaths = default,
                 in Corvus.KrakendBenchmark.Current.JsonInteger.Source maxMultipartMemory = default,
                 in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271routerJson.MaximumPayload.Source maxPayload = default,
-                in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271routerJson.RemoteIpHeaders.Source<TContext> remoteIpHeaders = default,
+                in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> remoteIpHeaders = default,
                 in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271routerJson.RemoveExtraSlash.Source removeExtraSlash = default,
                 in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271routerJson.ReturningTheGatewayErrorMessage.Source returnErrorMsg = default,
-                in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271routerJson.TrustedProxies.Source<TContext> trustedProxies = default,
+                in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> trustedProxies = default,
                 in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271routerJson.EnableH2c.Source useH2c = default)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
@@ -3397,7 +3439,7 @@ public readonly partial struct KrakendSchema
         /// <param name="useH2c">The value of the property.</param>
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
         /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-        public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source appEngine = default, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source autoOptions = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271routerJson.DecompressGzip.Source decompressGzip = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271routerJson.DisableAccessLog.Source disableAccessLog = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271routerJson.DisableGzipCompression.Source disableGzip = default, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source disableHandleMethodNotAllowed = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271routerJson.DisableHealth.Source disableHealth = default, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source disablePathDecoding = default, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source disableRedirectFixedPath = default, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source disableRedirectTrailingSlash = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271routerJson.CustomErrorBody.Source errorBody = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271routerJson.ForwardedByClientIp.Source forwardedByClientIp = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271routerJson.HealthEndpointPath.Source healthPath = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271routerJson.HideVersionHeader.Source hideVersionHeader = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271routerJson.JsonStringArray.Source loggerSkipPaths = default, in Corvus.KrakendBenchmark.Current.JsonInteger.Source maxMultipartMemory = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271routerJson.MaximumPayload.Source maxPayload = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271routerJson.RemoteIpHeaders.Source remoteIpHeaders = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271routerJson.RemoveExtraSlash.Source removeExtraSlash = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271routerJson.ReturningTheGatewayErrorMessage.Source returnErrorMsg = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271routerJson.TrustedProxies.Source trustedProxies = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271routerJson.EnableH2c.Source useH2c = default, int initialCapacity = 30)
+        public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source appEngine = default, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source autoOptions = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271routerJson.DecompressGzip.Source decompressGzip = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271routerJson.DisableAccessLog.Source disableAccessLog = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271routerJson.DisableGzipCompression.Source disableGzip = default, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source disableHandleMethodNotAllowed = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271routerJson.DisableHealth.Source disableHealth = default, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source disablePathDecoding = default, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source disableRedirectFixedPath = default, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source disableRedirectTrailingSlash = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271routerJson.CustomErrorBody.Source errorBody = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271routerJson.ForwardedByClientIp.Source forwardedByClientIp = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271routerJson.HealthEndpointPath.Source healthPath = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271routerJson.HideVersionHeader.Source hideVersionHeader = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271routerJson.JsonStringArray.Source loggerSkipPaths = default, in Corvus.KrakendBenchmark.Current.JsonInteger.Source maxMultipartMemory = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271routerJson.MaximumPayload.Source maxPayload = default, in Corvus.KrakendBenchmark.Current.JsonArray.Source remoteIpHeaders = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271routerJson.RemoveExtraSlash.Source removeExtraSlash = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271routerJson.ReturningTheGatewayErrorMessage.Source returnErrorMsg = default, in Corvus.KrakendBenchmark.Current.JsonArray.Source trustedProxies = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271routerJson.EnableH2c.Source useH2c = default, int initialCapacity = 30)
         {
             JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
             ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
@@ -3440,7 +3482,7 @@ public readonly partial struct KrakendSchema
         /// <param name="useH2c">The value of the property.</param>
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
         /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-        public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source appEngine = default, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source autoOptions = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271routerJson.DecompressGzip.Source decompressGzip = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271routerJson.DisableAccessLog.Source disableAccessLog = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271routerJson.DisableGzipCompression.Source disableGzip = default, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source disableHandleMethodNotAllowed = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271routerJson.DisableHealth.Source disableHealth = default, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source disablePathDecoding = default, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source disableRedirectFixedPath = default, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source disableRedirectTrailingSlash = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271routerJson.CustomErrorBody.Source<TContext> errorBody = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271routerJson.ForwardedByClientIp.Source forwardedByClientIp = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271routerJson.HealthEndpointPath.Source healthPath = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271routerJson.HideVersionHeader.Source hideVersionHeader = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271routerJson.JsonStringArray.Source<TContext> loggerSkipPaths = default, in Corvus.KrakendBenchmark.Current.JsonInteger.Source maxMultipartMemory = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271routerJson.MaximumPayload.Source maxPayload = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271routerJson.RemoteIpHeaders.Source<TContext> remoteIpHeaders = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271routerJson.RemoveExtraSlash.Source removeExtraSlash = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271routerJson.ReturningTheGatewayErrorMessage.Source returnErrorMsg = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271routerJson.TrustedProxies.Source<TContext> trustedProxies = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271routerJson.EnableH2c.Source useH2c = default, int initialCapacity = 30)
+        public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source appEngine = default, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source autoOptions = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271routerJson.DecompressGzip.Source decompressGzip = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271routerJson.DisableAccessLog.Source disableAccessLog = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271routerJson.DisableGzipCompression.Source disableGzip = default, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source disableHandleMethodNotAllowed = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271routerJson.DisableHealth.Source disableHealth = default, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source disablePathDecoding = default, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source disableRedirectFixedPath = default, in Corvus.KrakendBenchmark.Current.JsonBoolean.Source disableRedirectTrailingSlash = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271routerJson.CustomErrorBody.Source<TContext> errorBody = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271routerJson.ForwardedByClientIp.Source forwardedByClientIp = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271routerJson.HealthEndpointPath.Source healthPath = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271routerJson.HideVersionHeader.Source hideVersionHeader = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271routerJson.JsonStringArray.Source<TContext> loggerSkipPaths = default, in Corvus.KrakendBenchmark.Current.JsonInteger.Source maxMultipartMemory = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271routerJson.MaximumPayload.Source maxPayload = default, in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> remoteIpHeaders = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271routerJson.RemoveExtraSlash.Source removeExtraSlash = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271routerJson.ReturningTheGatewayErrorMessage.Source returnErrorMsg = default, in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> trustedProxies = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271routerJson.EnableH2c.Source useH2c = default, int initialCapacity = 30)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif

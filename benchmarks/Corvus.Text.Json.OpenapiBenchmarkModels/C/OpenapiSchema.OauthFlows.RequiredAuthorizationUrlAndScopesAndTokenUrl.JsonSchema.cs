@@ -72,14 +72,14 @@ public readonly partial struct OpenapiSchema
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext =
-                        Corvus.OpenapiBenchmark.Current.JsonUriNotAsserted.JsonSchema.PushChildContextUnescaped(
+                        Corvus.OpenapiBenchmark.Current.JsonUri.JsonSchema.PushChildContextUnescaped(
                             parentDocument,
                             parentDocumentIndex,
                             ref context,
                             JsonPropertyNames.AuthorizationUrlUtf8,
                             evaluationPath: AuthorizationUrlSchemaEvaluationPath);
 
-                    Corvus.OpenapiBenchmark.Current.JsonUriNotAsserted.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext);
+                    Corvus.OpenapiBenchmark.Current.JsonUri.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext);
                     context.CommitChildContext(childContext.IsMatch, ref childContext);
 
                     if (!context.HasCollector && !context.IsMatch)
@@ -94,14 +94,14 @@ public readonly partial struct OpenapiSchema
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext1 =
-                        Corvus.OpenapiBenchmark.Current.JsonUriNotAsserted.JsonSchema.PushChildContextUnescaped(
+                        Corvus.OpenapiBenchmark.Current.JsonUri.JsonSchema.PushChildContextUnescaped(
                             parentDocument,
                             parentDocumentIndex,
                             ref context,
                             JsonPropertyNames.RefreshUrlUtf8,
                             evaluationPath: RefreshUrlSchemaEvaluationPath);
 
-                    Corvus.OpenapiBenchmark.Current.JsonUriNotAsserted.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext1);
+                    Corvus.OpenapiBenchmark.Current.JsonUri.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext1);
                     context.CommitChildContext(childContext1.IsMatch, ref childContext1);
                 }
 
@@ -131,14 +131,14 @@ public readonly partial struct OpenapiSchema
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext3 =
-                        Corvus.OpenapiBenchmark.Current.JsonUriNotAsserted.JsonSchema.PushChildContextUnescaped(
+                        Corvus.OpenapiBenchmark.Current.JsonUri.JsonSchema.PushChildContextUnescaped(
                             parentDocument,
                             parentDocumentIndex,
                             ref context,
                             JsonPropertyNames.TokenUrlUtf8,
                             evaluationPath: TokenUrlSchemaEvaluationPath);
 
-                    Corvus.OpenapiBenchmark.Current.JsonUriNotAsserted.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext3);
+                    Corvus.OpenapiBenchmark.Current.JsonUri.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext3);
                     context.CommitChildContext(childContext3.IsMatch, ref childContext3);
 
                     if (!context.HasCollector && !context.IsMatch)
@@ -175,17 +175,17 @@ public readonly partial struct OpenapiSchema
                 /// <summary>
                 /// Gets a provider for the schema location from which this type was generated.
                 /// </summary>
-                public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("https://spec.openapis.org/oas/3.1/schema/2022-10-07#/$defs/oauth-flows/$defs/authorization-code"u8, buffer, out written);
+                public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/$defs/oauth-flows/$defs/authorization-code"u8, buffer, out written);
 
                 /// <summary>
                 /// Gets the schema location from which this type was generated.
                 /// </summary>
-                public const string SchemaLocation = "https://spec.openapis.org/oas/3.1/schema/2022-10-07#/$defs/oauth-flows/$defs/authorization-code";
+                public const string SchemaLocation = "/$defs/oauth-flows/$defs/authorization-code";
 
                 /// <summary>
                 /// Gets the schema location from which this type was generated as a UTF-8 string.
                 /// </summary>
-                public static ReadOnlySpan<byte> SchemaLocationUtf8 => "https://spec.openapis.org/oas/3.1/schema/2022-10-07#/$defs/oauth-flows/$defs/authorization-code"u8;
+                public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/$defs/oauth-flows/$defs/authorization-code"u8;
                 private static readonly JsonSchemaPathProvider Ref0SchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/$ref"u8, buffer, out written);
 
                 /// <summary>

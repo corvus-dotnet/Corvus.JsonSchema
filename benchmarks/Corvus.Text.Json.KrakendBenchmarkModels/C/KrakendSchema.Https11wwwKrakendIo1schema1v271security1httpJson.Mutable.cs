@@ -420,11 +420,11 @@ public readonly partial struct KrakendSchema
             /// See: https://www.krakend.io/docs/service-settings/security/
             /// </para>
             /// </remarks>
-            public Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.SslHost.Mutable HostProxyHeaders
+            public Corvus.KrakendBenchmark.Current.JsonArray.Mutable HostProxyHeaders
             {
                 get
                 {
-                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.HostProxyHeadersUtf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.SslHost.Mutable value))
+                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.HostProxyHeadersUtf8, out Corvus.KrakendBenchmark.Current.JsonArray.Mutable value))
                     {
                         return value;
                     }
@@ -520,11 +520,11 @@ public readonly partial struct KrakendSchema
             /// See: https://www.krakend.io/docs/service-settings/security/
             /// </para>
             /// </remarks>
-            public Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.Https11wwwKrakendIo1schema1v271security1httpJsonSslHost.Mutable SslHostValue
+            public Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.SslHost.Mutable SslHostValue
             {
                 get
                 {
-                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SslHostValueUtf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.Https11wwwKrakendIo1schema1v271security1httpJsonSslHost.Mutable value))
+                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SslHostValueUtf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.SslHost.Mutable value))
                     {
                         return value;
                     }
@@ -545,11 +545,11 @@ public readonly partial struct KrakendSchema
             /// See: https://www.krakend.io/docs/service-settings/security/
             /// </para>
             /// </remarks>
-            public Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.SslProxyHeaders.Mutable SslProxyHeadersValue
+            public Corvus.KrakendBenchmark.Current.JsonObject.Mutable SslProxyHeaders
             {
                 get
                 {
-                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SslProxyHeadersValueUtf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.SslProxyHeaders.Mutable value))
+                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SslProxyHeadersUtf8, out Corvus.KrakendBenchmark.Current.JsonObject.Mutable value))
                     {
                         return value;
                     }
@@ -687,7 +687,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.AllowedHostsValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AllowedHostsValue, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -723,7 +723,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.AllowedHostsValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AllowedHostsValue, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -768,7 +768,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.AllowedHostsAreRegex, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AllowedHostsAreRegex, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -813,7 +813,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.BrowserXssFilter, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.BrowserXssFilter, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -858,7 +858,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.ContentSecurityPolicy, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ContentSecurityPolicy, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -903,7 +903,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.ContentTypeNosniff, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ContentTypeNosniff, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -948,7 +948,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.CustomFrameOptionsValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CustomFrameOptionsValue, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -993,7 +993,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.ForceStsHeaderValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ForceStsHeaderValue, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1038,7 +1038,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.FrameDeny, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.FrameDeny, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1062,7 +1062,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>host_proxy_headers</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetHostProxyHeaders(in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.SslHost.Source value)
+            public void SetHostProxyHeaders(in Corvus.KrakendBenchmark.Current.JsonArray.Source value)
             {
                 CheckValidInstance();
 
@@ -1083,7 +1083,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.HostProxyHeaders, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.HostProxyHeaders, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1095,7 +1095,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>host_proxy_headers</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetHostProxyHeaders<TContext>(in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.SslHost.Source<TContext> value)
+            public void SetHostProxyHeaders<TContext>(in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> value)
 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
 #endif
@@ -1119,7 +1119,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.HostProxyHeaders, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.HostProxyHeaders, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1164,7 +1164,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.HpkpPublicKey, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.HpkpPublicKey, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1209,7 +1209,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.IsDevelopment, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IsDevelopment, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1254,7 +1254,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.ReferrerPolicyValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ReferrerPolicyValue, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1278,7 +1278,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>ssl_host</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetSslHostValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.Https11wwwKrakendIo1schema1v271security1httpJsonSslHost.Source value)
+            public void SetSslHostValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.SslHost.Source value)
             {
                 CheckValidInstance();
 
@@ -1299,7 +1299,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.SslHostValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SslHostValue, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1323,19 +1323,19 @@ public readonly partial struct KrakendSchema
             /// Set the <c>ssl_proxy_headers</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetSslProxyHeadersValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.SslProxyHeaders.Source value)
+            public void SetSslProxyHeaders(in Corvus.KrakendBenchmark.Current.JsonObject.Source value)
             {
                 CheckValidInstance();
 
                 if (value.IsUndefined)
                 {
-                    JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.SslProxyHeadersValueUtf8);
+                    JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.SslProxyHeadersUtf8);
                     _documentVersion = _parent.Version;
                     return;
                 }
 
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SslProxyHeadersValueUtf8, out IJsonDocument? elementParent, out int elementIdx))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SslProxyHeadersUtf8, out IJsonDocument? elementParent, out int elementIdx))
                 {
                     // We are going to replace just the value
                     value.AddAsItem(ref cvb);
@@ -1344,7 +1344,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.SslProxyHeadersValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SslProxyHeaders, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1356,7 +1356,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>ssl_proxy_headers</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetSslProxyHeadersValue<TContext>(in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.SslProxyHeaders.Source<TContext> value)
+            public void SetSslProxyHeaders<TContext>(in Corvus.KrakendBenchmark.Current.JsonObject.Source<TContext> value)
 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
 #endif
@@ -1365,13 +1365,13 @@ public readonly partial struct KrakendSchema
 
                 if (value.IsUndefined)
                 {
-                    JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.SslProxyHeadersValueUtf8);
+                    JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.SslProxyHeadersUtf8);
                     _documentVersion = _parent.Version;
                     return;
                 }
 
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SslProxyHeadersValueUtf8, out IJsonDocument? elementParent, out int elementIdx))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SslProxyHeadersUtf8, out IJsonDocument? elementParent, out int elementIdx))
                 {
                     // We are going to replace just the value
                     value.AddAsItem(ref cvb);
@@ -1380,7 +1380,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.SslProxyHeadersValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SslProxyHeaders, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1392,10 +1392,10 @@ public readonly partial struct KrakendSchema
             /// Remove the <c>ssl_proxy_headers</c> property, if present.
             /// </summary>
             /// <returns><see langword="true"/> if the property was found and removed; otherwise, <see langword="false"/>.</returns>
-            public bool RemoveSslProxyHeadersValue()
+            public bool RemoveSslProxyHeaders()
             {
                 CheckValidInstance();
-                bool result = JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.SslProxyHeadersValueUtf8);
+                bool result = JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.SslProxyHeadersUtf8);
                 _documentVersion = _parent.Version;
                 return result;
             }
@@ -1425,7 +1425,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.SslRedirectValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SslRedirectValue, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1470,7 +1470,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.StsIncludeSubdomains, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.StsIncludeSubdomains, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1515,7 +1515,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.StsSeconds, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.StsSeconds, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1898,6 +1898,24 @@ public readonly partial struct KrakendSchema
                 }
             }
 
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.JsonElement:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                        break;
+                    case Kind.Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
             internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
             {
                 switch(_kind)
@@ -1999,6 +2017,24 @@ public readonly partial struct KrakendSchema
                 }
             }
 
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.Source:
+                        _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                        break;
+                    case Kind.Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
             internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
             {
                 switch(_kind)
@@ -2085,33 +2121,33 @@ public readonly partial struct KrakendSchema
                 in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.ClickjackingProtectionFrameOptionsValue.Source customFrameOptionsValue = default,
                 in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.ForceStsHeader.Source forceStsHeader = default,
                 in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.ClickjackingProtection.Source frameDeny = default,
-                in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.SslHost.Source hostProxyHeaders = default,
+                in Corvus.KrakendBenchmark.Current.JsonArray.Source hostProxyHeaders = default,
                 in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.HttpPublicKeyPinningHpkp.Source hpkpPublicKey = default,
                 in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.DevelopmentFlag.Source isDevelopment = default,
                 in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.ReferrerPolicy.Source referrerPolicy = default,
-                in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.Https11wwwKrakendIo1schema1v271security1httpJsonSslHost.Source sslHost = default,
-                in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.SslProxyHeaders.Source sslProxyHeaders = default,
+                in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.SslHost.Source sslHost = default,
+                in Corvus.KrakendBenchmark.Current.JsonObject.Source sslProxyHeaders = default,
                 in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.SslRedirect.Source sslRedirect = default,
                 in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.StrictTransportSecurityIncludeSubdomains.Source stsIncludeSubdomains = default,
                 in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.HttpStrictTransportSecurityHstsSeconds.Source stsSeconds = default)
             {
-                allowedHosts.AddAsProperty(JsonPropertyNamesEscaped.AllowedHostsValue, ref builder, escapeName: false);
-                allowedHostsAreRegex.AddAsProperty(JsonPropertyNamesEscaped.AllowedHostsAreRegex, ref builder, escapeName: false);
-                browserXssFilter.AddAsProperty(JsonPropertyNamesEscaped.BrowserXssFilter, ref builder, escapeName: false);
-                contentSecurityPolicy.AddAsProperty(JsonPropertyNamesEscaped.ContentSecurityPolicy, ref builder, escapeName: false);
-                contentTypeNosniff.AddAsProperty(JsonPropertyNamesEscaped.ContentTypeNosniff, ref builder, escapeName: false);
-                customFrameOptionsValue.AddAsProperty(JsonPropertyNamesEscaped.CustomFrameOptionsValue, ref builder, escapeName: false);
-                forceStsHeader.AddAsProperty(JsonPropertyNamesEscaped.ForceStsHeaderValue, ref builder, escapeName: false);
-                frameDeny.AddAsProperty(JsonPropertyNamesEscaped.FrameDeny, ref builder, escapeName: false);
-                hostProxyHeaders.AddAsProperty(JsonPropertyNamesEscaped.HostProxyHeaders, ref builder, escapeName: false);
-                hpkpPublicKey.AddAsProperty(JsonPropertyNamesEscaped.HpkpPublicKey, ref builder, escapeName: false);
-                isDevelopment.AddAsProperty(JsonPropertyNamesEscaped.IsDevelopment, ref builder, escapeName: false);
-                referrerPolicy.AddAsProperty(JsonPropertyNamesEscaped.ReferrerPolicyValue, ref builder, escapeName: false);
-                sslHost.AddAsProperty(JsonPropertyNamesEscaped.SslHostValue, ref builder, escapeName: false);
-                sslProxyHeaders.AddAsProperty(JsonPropertyNamesEscaped.SslProxyHeadersValue, ref builder, escapeName: false);
-                sslRedirect.AddAsProperty(JsonPropertyNamesEscaped.SslRedirectValue, ref builder, escapeName: false);
-                stsIncludeSubdomains.AddAsProperty(JsonPropertyNamesEscaped.StsIncludeSubdomains, ref builder, escapeName: false);
-                stsSeconds.AddAsProperty(JsonPropertyNamesEscaped.StsSeconds, ref builder, escapeName: false);
+                allowedHosts.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AllowedHostsValue, ref builder);
+                allowedHostsAreRegex.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AllowedHostsAreRegex, ref builder);
+                browserXssFilter.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.BrowserXssFilter, ref builder);
+                contentSecurityPolicy.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ContentSecurityPolicy, ref builder);
+                contentTypeNosniff.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ContentTypeNosniff, ref builder);
+                customFrameOptionsValue.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CustomFrameOptionsValue, ref builder);
+                forceStsHeader.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ForceStsHeaderValue, ref builder);
+                frameDeny.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.FrameDeny, ref builder);
+                hostProxyHeaders.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.HostProxyHeaders, ref builder);
+                hpkpPublicKey.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.HpkpPublicKey, ref builder);
+                isDevelopment.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IsDevelopment, ref builder);
+                referrerPolicy.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ReferrerPolicyValue, ref builder);
+                sslHost.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SslHostValue, ref builder);
+                sslProxyHeaders.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SslProxyHeaders, ref builder);
+                sslRedirect.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SslRedirectValue, ref builder);
+                stsIncludeSubdomains.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.StsIncludeSubdomains, ref builder);
+                stsSeconds.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.StsSeconds, ref builder);
             }
 
             /// <summary>
@@ -2126,12 +2162,12 @@ public readonly partial struct KrakendSchema
                 in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.ClickjackingProtectionFrameOptionsValue.Source customFrameOptionsValue = default,
                 in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.ForceStsHeader.Source forceStsHeader = default,
                 in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.ClickjackingProtection.Source frameDeny = default,
-                in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.SslHost.Source hostProxyHeaders = default,
+                in Corvus.KrakendBenchmark.Current.JsonArray.Source hostProxyHeaders = default,
                 in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.HttpPublicKeyPinningHpkp.Source hpkpPublicKey = default,
                 in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.DevelopmentFlag.Source isDevelopment = default,
                 in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.ReferrerPolicy.Source referrerPolicy = default,
-                in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.Https11wwwKrakendIo1schema1v271security1httpJsonSslHost.Source sslHost = default,
-                in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.SslProxyHeaders.Source sslProxyHeaders = default,
+                in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.SslHost.Source sslHost = default,
+                in Corvus.KrakendBenchmark.Current.JsonObject.Source sslProxyHeaders = default,
                 in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.SslRedirect.Source sslRedirect = default,
                 in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.StrictTransportSecurityIncludeSubdomains.Source stsIncludeSubdomains = default,
                 in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.HttpStrictTransportSecurityHstsSeconds.Source stsSeconds = default)
@@ -2153,12 +2189,12 @@ public readonly partial struct KrakendSchema
                 in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.ClickjackingProtectionFrameOptionsValue.Source customFrameOptionsValue = default,
                 in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.ForceStsHeader.Source forceStsHeader = default,
                 in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.ClickjackingProtection.Source frameDeny = default,
-                in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.SslHost.Source<TContext> hostProxyHeaders = default,
+                in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> hostProxyHeaders = default,
                 in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.HttpPublicKeyPinningHpkp.Source hpkpPublicKey = default,
                 in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.DevelopmentFlag.Source isDevelopment = default,
                 in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.ReferrerPolicy.Source referrerPolicy = default,
-                in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.Https11wwwKrakendIo1schema1v271security1httpJsonSslHost.Source sslHost = default,
-                in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.SslProxyHeaders.Source<TContext> sslProxyHeaders = default,
+                in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.SslHost.Source sslHost = default,
+                in Corvus.KrakendBenchmark.Current.JsonObject.Source<TContext> sslProxyHeaders = default,
                 in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.SslRedirect.Source sslRedirect = default,
                 in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.StrictTransportSecurityIncludeSubdomains.Source stsIncludeSubdomains = default,
                 in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.HttpStrictTransportSecurityHstsSeconds.Source stsSeconds = default)
@@ -2166,23 +2202,23 @@ public readonly partial struct KrakendSchema
             where TContext : allows ref struct
             #endif
             {
-                allowedHosts.AddAsProperty(JsonPropertyNamesEscaped.AllowedHostsValue, ref builder, escapeName: false);
-                allowedHostsAreRegex.AddAsProperty(JsonPropertyNamesEscaped.AllowedHostsAreRegex, ref builder, escapeName: false);
-                browserXssFilter.AddAsProperty(JsonPropertyNamesEscaped.BrowserXssFilter, ref builder, escapeName: false);
-                contentSecurityPolicy.AddAsProperty(JsonPropertyNamesEscaped.ContentSecurityPolicy, ref builder, escapeName: false);
-                contentTypeNosniff.AddAsProperty(JsonPropertyNamesEscaped.ContentTypeNosniff, ref builder, escapeName: false);
-                customFrameOptionsValue.AddAsProperty(JsonPropertyNamesEscaped.CustomFrameOptionsValue, ref builder, escapeName: false);
-                forceStsHeader.AddAsProperty(JsonPropertyNamesEscaped.ForceStsHeaderValue, ref builder, escapeName: false);
-                frameDeny.AddAsProperty(JsonPropertyNamesEscaped.FrameDeny, ref builder, escapeName: false);
-                hostProxyHeaders.AddAsProperty(JsonPropertyNamesEscaped.HostProxyHeaders, ref builder, escapeName: false);
-                hpkpPublicKey.AddAsProperty(JsonPropertyNamesEscaped.HpkpPublicKey, ref builder, escapeName: false);
-                isDevelopment.AddAsProperty(JsonPropertyNamesEscaped.IsDevelopment, ref builder, escapeName: false);
-                referrerPolicy.AddAsProperty(JsonPropertyNamesEscaped.ReferrerPolicyValue, ref builder, escapeName: false);
-                sslHost.AddAsProperty(JsonPropertyNamesEscaped.SslHostValue, ref builder, escapeName: false);
-                sslProxyHeaders.AddAsProperty(JsonPropertyNamesEscaped.SslProxyHeadersValue, ref builder, escapeName: false);
-                sslRedirect.AddAsProperty(JsonPropertyNamesEscaped.SslRedirectValue, ref builder, escapeName: false);
-                stsIncludeSubdomains.AddAsProperty(JsonPropertyNamesEscaped.StsIncludeSubdomains, ref builder, escapeName: false);
-                stsSeconds.AddAsProperty(JsonPropertyNamesEscaped.StsSeconds, ref builder, escapeName: false);
+                allowedHosts.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AllowedHostsValue, ref builder);
+                allowedHostsAreRegex.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AllowedHostsAreRegex, ref builder);
+                browserXssFilter.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.BrowserXssFilter, ref builder);
+                contentSecurityPolicy.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ContentSecurityPolicy, ref builder);
+                contentTypeNosniff.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ContentTypeNosniff, ref builder);
+                customFrameOptionsValue.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CustomFrameOptionsValue, ref builder);
+                forceStsHeader.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ForceStsHeaderValue, ref builder);
+                frameDeny.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.FrameDeny, ref builder);
+                hostProxyHeaders.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.HostProxyHeaders, ref builder);
+                hpkpPublicKey.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.HpkpPublicKey, ref builder);
+                isDevelopment.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IsDevelopment, ref builder);
+                referrerPolicy.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ReferrerPolicyValue, ref builder);
+                sslHost.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SslHostValue, ref builder);
+                sslProxyHeaders.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SslProxyHeaders, ref builder);
+                sslRedirect.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SslRedirectValue, ref builder);
+                stsIncludeSubdomains.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.StsIncludeSubdomains, ref builder);
+                stsSeconds.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.StsSeconds, ref builder);
             }
 
             /// <summary>
@@ -2198,12 +2234,12 @@ public readonly partial struct KrakendSchema
                 in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.ClickjackingProtectionFrameOptionsValue.Source customFrameOptionsValue = default,
                 in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.ForceStsHeader.Source forceStsHeader = default,
                 in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.ClickjackingProtection.Source frameDeny = default,
-                in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.SslHost.Source<TContext> hostProxyHeaders = default,
+                in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> hostProxyHeaders = default,
                 in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.HttpPublicKeyPinningHpkp.Source hpkpPublicKey = default,
                 in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.DevelopmentFlag.Source isDevelopment = default,
                 in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.ReferrerPolicy.Source referrerPolicy = default,
-                in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.Https11wwwKrakendIo1schema1v271security1httpJsonSslHost.Source sslHost = default,
-                in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.SslProxyHeaders.Source<TContext> sslProxyHeaders = default,
+                in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.SslHost.Source sslHost = default,
+                in Corvus.KrakendBenchmark.Current.JsonObject.Source<TContext> sslProxyHeaders = default,
                 in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.SslRedirect.Source sslRedirect = default,
                 in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.StrictTransportSecurityIncludeSubdomains.Source stsIncludeSubdomains = default,
                 in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.HttpStrictTransportSecurityHstsSeconds.Source stsSeconds = default)
@@ -2386,7 +2422,7 @@ public readonly partial struct KrakendSchema
         /// <param name="stsSeconds">The value of the property.</param>
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
         /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-        public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.AllowedHosts.Source allowedHosts = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.HostsAreRegexps.Source allowedHostsAreRegex = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.BrowserXssFilterEntity.Source browserXssFilter = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.ContentSecurityPolicyCsp.Source contentSecurityPolicy = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.Nosniff.Source contentTypeNosniff = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.ClickjackingProtectionFrameOptionsValue.Source customFrameOptionsValue = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.ForceStsHeader.Source forceStsHeader = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.ClickjackingProtection.Source frameDeny = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.SslHost.Source hostProxyHeaders = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.HttpPublicKeyPinningHpkp.Source hpkpPublicKey = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.DevelopmentFlag.Source isDevelopment = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.ReferrerPolicy.Source referrerPolicy = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.Https11wwwKrakendIo1schema1v271security1httpJsonSslHost.Source sslHost = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.SslProxyHeaders.Source sslProxyHeaders = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.SslRedirect.Source sslRedirect = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.StrictTransportSecurityIncludeSubdomains.Source stsIncludeSubdomains = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.HttpStrictTransportSecurityHstsSeconds.Source stsSeconds = default, int initialCapacity = 30)
+        public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.AllowedHosts.Source allowedHosts = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.HostsAreRegexps.Source allowedHostsAreRegex = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.BrowserXssFilterEntity.Source browserXssFilter = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.ContentSecurityPolicyCsp.Source contentSecurityPolicy = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.Nosniff.Source contentTypeNosniff = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.ClickjackingProtectionFrameOptionsValue.Source customFrameOptionsValue = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.ForceStsHeader.Source forceStsHeader = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.ClickjackingProtection.Source frameDeny = default, in Corvus.KrakendBenchmark.Current.JsonArray.Source hostProxyHeaders = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.HttpPublicKeyPinningHpkp.Source hpkpPublicKey = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.DevelopmentFlag.Source isDevelopment = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.ReferrerPolicy.Source referrerPolicy = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.SslHost.Source sslHost = default, in Corvus.KrakendBenchmark.Current.JsonObject.Source sslProxyHeaders = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.SslRedirect.Source sslRedirect = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.StrictTransportSecurityIncludeSubdomains.Source stsIncludeSubdomains = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.HttpStrictTransportSecurityHstsSeconds.Source stsSeconds = default, int initialCapacity = 30)
         {
             JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
             ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
@@ -2424,7 +2460,7 @@ public readonly partial struct KrakendSchema
         /// <param name="stsSeconds">The value of the property.</param>
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
         /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-        public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.AllowedHosts.Source<TContext> allowedHosts = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.HostsAreRegexps.Source allowedHostsAreRegex = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.BrowserXssFilterEntity.Source browserXssFilter = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.ContentSecurityPolicyCsp.Source contentSecurityPolicy = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.Nosniff.Source contentTypeNosniff = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.ClickjackingProtectionFrameOptionsValue.Source customFrameOptionsValue = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.ForceStsHeader.Source forceStsHeader = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.ClickjackingProtection.Source frameDeny = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.SslHost.Source<TContext> hostProxyHeaders = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.HttpPublicKeyPinningHpkp.Source hpkpPublicKey = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.DevelopmentFlag.Source isDevelopment = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.ReferrerPolicy.Source referrerPolicy = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.Https11wwwKrakendIo1schema1v271security1httpJsonSslHost.Source sslHost = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.SslProxyHeaders.Source<TContext> sslProxyHeaders = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.SslRedirect.Source sslRedirect = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.StrictTransportSecurityIncludeSubdomains.Source stsIncludeSubdomains = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.HttpStrictTransportSecurityHstsSeconds.Source stsSeconds = default, int initialCapacity = 30)
+        public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.AllowedHosts.Source<TContext> allowedHosts = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.HostsAreRegexps.Source allowedHostsAreRegex = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.BrowserXssFilterEntity.Source browserXssFilter = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.ContentSecurityPolicyCsp.Source contentSecurityPolicy = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.Nosniff.Source contentTypeNosniff = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.ClickjackingProtectionFrameOptionsValue.Source customFrameOptionsValue = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.ForceStsHeader.Source forceStsHeader = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.ClickjackingProtection.Source frameDeny = default, in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> hostProxyHeaders = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.HttpPublicKeyPinningHpkp.Source hpkpPublicKey = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.DevelopmentFlag.Source isDevelopment = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.ReferrerPolicy.Source referrerPolicy = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.SslHost.Source sslHost = default, in Corvus.KrakendBenchmark.Current.JsonObject.Source<TContext> sslProxyHeaders = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.SslRedirect.Source sslRedirect = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.StrictTransportSecurityIncludeSubdomains.Source stsIncludeSubdomains = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271security1httpJson.HttpStrictTransportSecurityHstsSeconds.Source stsSeconds = default, int initialCapacity = 30)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif

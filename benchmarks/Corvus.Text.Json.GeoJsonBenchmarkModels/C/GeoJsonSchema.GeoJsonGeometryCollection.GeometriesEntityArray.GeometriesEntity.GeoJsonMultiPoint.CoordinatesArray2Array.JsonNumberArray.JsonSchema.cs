@@ -63,17 +63,17 @@ public readonly partial struct GeoJsonSchema
                                 /// <summary>
                                 /// Gets a provider for the schema location from which this type was generated.
                                 /// </summary>
-                                public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("https://geojson.org/schema/GeoJSON.json#/oneOf/6/properties/geometries/items/oneOf/3/properties/coordinates/items"u8, buffer, out written);
+                                public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/oneOf/6/properties/geometries/items/oneOf/3/properties/coordinates/items"u8, buffer, out written);
 
                                 /// <summary>
                                 /// Gets the schema location from which this type was generated.
                                 /// </summary>
-                                public const string SchemaLocation = "https://geojson.org/schema/GeoJSON.json#/oneOf/6/properties/geometries/items/oneOf/3/properties/coordinates/items";
+                                public const string SchemaLocation = "/oneOf/6/properties/geometries/items/oneOf/3/properties/coordinates/items";
 
                                 /// <summary>
                                 /// Gets the schema location from which this type was generated as a UTF-8 string.
                                 /// </summary>
-                                public static ReadOnlySpan<byte> SchemaLocationUtf8 => "https://geojson.org/schema/GeoJSON.json#/oneOf/6/properties/geometries/items/oneOf/3/properties/coordinates/items"u8;
+                                public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/oneOf/6/properties/geometries/items/oneOf/3/properties/coordinates/items"u8;
 
                                 /// <summary>
                                 /// Applies the JSON schema semantics defined by this type to the instance determined by the given document and index.

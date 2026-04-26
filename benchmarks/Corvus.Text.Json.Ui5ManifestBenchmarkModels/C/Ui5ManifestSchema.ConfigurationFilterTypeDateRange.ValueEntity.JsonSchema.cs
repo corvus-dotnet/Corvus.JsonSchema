@@ -65,14 +65,14 @@ public readonly partial struct Ui5ManifestSchema
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext1 =
-                        Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ConfigurationFilterTypeDateRange.ValueEntity.ValuesArray.JsonSchema.PushChildContextUnescaped(
+                        Corvus.Ui5ManifestBenchmark.Current.JsonArray.JsonSchema.PushChildContextUnescaped(
                             parentDocument,
                             parentDocumentIndex,
                             ref context,
                             JsonPropertyNames.ValuesUtf8,
                             evaluationPath: ValuesSchemaEvaluationPath);
 
-                    Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ConfigurationFilterTypeDateRange.ValueEntity.ValuesArray.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext1);
+                    Corvus.Ui5ManifestBenchmark.Current.JsonArray.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext1);
                     context.CommitChildContext(childContext1.IsMatch, ref childContext1);
                 }
 
@@ -100,17 +100,17 @@ public readonly partial struct Ui5ManifestSchema
                 /// <summary>
                 /// Gets a provider for the schema location from which this type was generated.
                 /// </summary>
-                public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("ui5-manifest-schema.json#/definitions/Configuration.FilterType.DateRange/properties/value"u8, buffer, out written);
+                public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/definitions/Configuration.FilterType.DateRange/properties/value"u8, buffer, out written);
 
                 /// <summary>
                 /// Gets the schema location from which this type was generated.
                 /// </summary>
-                public const string SchemaLocation = "ui5-manifest-schema.json#/definitions/Configuration.FilterType.DateRange/properties/value";
+                public const string SchemaLocation = "/definitions/Configuration.FilterType.DateRange/properties/value";
 
                 /// <summary>
                 /// Gets the schema location from which this type was generated as a UTF-8 string.
                 /// </summary>
-                public static ReadOnlySpan<byte> SchemaLocationUtf8 => "ui5-manifest-schema.json#/definitions/Configuration.FilterType.DateRange/properties/value"u8;
+                public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/definitions/Configuration.FilterType.DateRange/properties/value"u8;
 
                 /// <summary>
                 /// Applies the JSON schema semantics defined by this type to the instance determined by the given document and index.

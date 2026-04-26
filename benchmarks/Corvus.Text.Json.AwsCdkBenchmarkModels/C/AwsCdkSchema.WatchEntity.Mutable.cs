@@ -362,7 +362,7 @@ public readonly partial struct AwsCdkSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Exclude, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Exclude, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -398,7 +398,7 @@ public readonly partial struct AwsCdkSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Exclude, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Exclude, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -443,7 +443,7 @@ public readonly partial struct AwsCdkSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Include, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Include, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -479,7 +479,7 @@ public readonly partial struct AwsCdkSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Include, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Include, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -862,6 +862,24 @@ public readonly partial struct AwsCdkSchema
                 }
             }
 
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.JsonElement:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                        break;
+                    case Kind.Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
             internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
             {
                 switch(_kind)
@@ -963,6 +981,24 @@ public readonly partial struct AwsCdkSchema
                 }
             }
 
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.Source:
+                        _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                        break;
+                    case Kind.Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
             internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
             {
                 switch(_kind)
@@ -1044,8 +1080,8 @@ public readonly partial struct AwsCdkSchema
                 in Corvus.AwsCdkBenchmark.Current.AwsCdkSchema.WatchEntity.JsonStringArray.Source exclude = default,
                 in Corvus.AwsCdkBenchmark.Current.AwsCdkSchema.WatchEntity.IncludeJsoArray.Source include = default)
             {
-                exclude.AddAsProperty(JsonPropertyNamesEscaped.Exclude, ref builder, escapeName: false);
-                include.AddAsProperty(JsonPropertyNamesEscaped.Include, ref builder, escapeName: false);
+                exclude.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Exclude, ref builder);
+                include.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Include, ref builder);
             }
 
             /// <summary>
@@ -1068,8 +1104,8 @@ public readonly partial struct AwsCdkSchema
             where TContext : allows ref struct
             #endif
             {
-                exclude.AddAsProperty(JsonPropertyNamesEscaped.Exclude, ref builder, escapeName: false);
-                include.AddAsProperty(JsonPropertyNamesEscaped.Include, ref builder, escapeName: false);
+                exclude.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Exclude, ref builder);
+                include.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Include, ref builder);
             }
 
             /// <summary>

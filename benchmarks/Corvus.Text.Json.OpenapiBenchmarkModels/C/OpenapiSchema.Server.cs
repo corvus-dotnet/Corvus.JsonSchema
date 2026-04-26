@@ -128,11 +128,11 @@ public readonly partial struct OpenapiSchema
         /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
         /// </para>
         /// </remarks>
-        public Corvus.OpenapiBenchmark.Current.JsonUriReferenceNotAsserted Url
+        public Corvus.OpenapiBenchmark.Current.JsonUriReference Url
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.UrlUtf8, out Corvus.OpenapiBenchmark.Current.JsonUriReferenceNotAsserted value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.UrlUtf8, out Corvus.OpenapiBenchmark.Current.JsonUriReference value))
                 {
                     return value;
                 }
@@ -663,6 +663,28 @@ public readonly partial struct OpenapiSchema
             /// Gets the escaped UTF-8 JSON property name for <see cref="Variables"/>.
             /// </summary>
             public static ReadOnlySpan<byte> Variables => "variables"u8;
+        }
+
+        /// <summary>
+        /// Provides pre-baked property name blobs for fast builder property storage.
+        /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
+        /// </summary>
+        private static class JsonPropertyNamesPrebaked
+        {
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Description"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Description => [0xD5, 0x00, 0x00, 0x00, 0x22, 0x64, 0x65, 0x73, 0x63, 0x72, 0x69, 0x70, 0x74, 0x69, 0x6F, 0x6E, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Url"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Url => [0x55, 0x00, 0x00, 0x00, 0x22, 0x75, 0x72, 0x6C, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Variables"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Variables => [0xB5, 0x00, 0x00, 0x00, 0x22, 0x76, 0x61, 0x72, 0x69, 0x61, 0x62, 0x6C, 0x65, 0x73, 0x22];
         }
     }
 }

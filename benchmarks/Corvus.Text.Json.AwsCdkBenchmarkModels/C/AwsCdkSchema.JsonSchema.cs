@@ -67,14 +67,14 @@ public readonly partial struct AwsCdkSchema
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext2 =
-                Corvus.AwsCdkBenchmark.Current.AwsCdkSchema.ContextEntity.JsonSchema.PushChildContextUnescaped(
+                Corvus.AwsCdkBenchmark.Current.JsonObject.JsonSchema.PushChildContextUnescaped(
                     parentDocument,
                     parentDocumentIndex,
                     ref context,
                     JsonPropertyNames.ContextUtf8,
                     evaluationPath: ContextSchemaEvaluationPath);
 
-            Corvus.AwsCdkBenchmark.Current.AwsCdkSchema.ContextEntity.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext2);
+            Corvus.AwsCdkBenchmark.Current.JsonObject.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext2);
             context.CommitChildContext(childContext2.IsMatch, ref childContext2);
         }
 
@@ -133,17 +133,17 @@ public readonly partial struct AwsCdkSchema
         /// <summary>
         /// Gets a provider for the schema location from which this type was generated.
         /// </summary>
-        public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("aws-cdk-schema.json"u8, buffer, out written);
+        public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath(""u8, buffer, out written);
 
         /// <summary>
         /// Gets the schema location from which this type was generated.
         /// </summary>
-        public const string SchemaLocation = "aws-cdk-schema.json";
+        public const string SchemaLocation = "";
 
         /// <summary>
         /// Gets the schema location from which this type was generated as a UTF-8 string.
         /// </summary>
-        public static ReadOnlySpan<byte> SchemaLocationUtf8 => "aws-cdk-schema.json"u8;
+        public static ReadOnlySpan<byte> SchemaLocationUtf8 => ""u8;
 
         /// <summary>
         /// Applies the JSON schema semantics defined by this type to the instance determined by the given document and index.

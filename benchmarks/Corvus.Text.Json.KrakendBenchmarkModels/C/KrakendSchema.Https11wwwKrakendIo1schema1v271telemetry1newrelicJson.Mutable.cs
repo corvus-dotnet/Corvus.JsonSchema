@@ -251,11 +251,11 @@ public readonly partial struct KrakendSchema
             /// See: https://www.krakend.io/docs/enterprise/telemetry/newrelic/
             /// </para>
             /// </remarks>
-            public Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271telemetry1newrelicJson.HeadersToPass.Mutable HeadersToPassValue
+            public Corvus.KrakendBenchmark.Current.JsonArray.Mutable HeadersToPass
             {
                 get
                 {
-                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.HeadersToPassValueUtf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271telemetry1newrelicJson.HeadersToPass.Mutable value))
+                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.HeadersToPassUtf8, out Corvus.KrakendBenchmark.Current.JsonArray.Mutable value))
                     {
                         return value;
                     }
@@ -346,7 +346,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.DebugValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DebugValue, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -370,19 +370,19 @@ public readonly partial struct KrakendSchema
             /// Set the <c>headers_to_pass</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetHeadersToPassValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271telemetry1newrelicJson.HeadersToPass.Source value)
+            public void SetHeadersToPass(in Corvus.KrakendBenchmark.Current.JsonArray.Source value)
             {
                 CheckValidInstance();
 
                 if (value.IsUndefined)
                 {
-                    JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.HeadersToPassValueUtf8);
+                    JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.HeadersToPassUtf8);
                     _documentVersion = _parent.Version;
                     return;
                 }
 
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.HeadersToPassValueUtf8, out IJsonDocument? elementParent, out int elementIdx))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.HeadersToPassUtf8, out IJsonDocument? elementParent, out int elementIdx))
                 {
                     // We are going to replace just the value
                     value.AddAsItem(ref cvb);
@@ -391,7 +391,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.HeadersToPassValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.HeadersToPass, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -403,7 +403,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>headers_to_pass</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetHeadersToPassValue<TContext>(in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271telemetry1newrelicJson.HeadersToPass.Source<TContext> value)
+            public void SetHeadersToPass<TContext>(in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> value)
 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
 #endif
@@ -412,13 +412,13 @@ public readonly partial struct KrakendSchema
 
                 if (value.IsUndefined)
                 {
-                    JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.HeadersToPassValueUtf8);
+                    JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.HeadersToPassUtf8);
                     _documentVersion = _parent.Version;
                     return;
                 }
 
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.HeadersToPassValueUtf8, out IJsonDocument? elementParent, out int elementIdx))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.HeadersToPassUtf8, out IJsonDocument? elementParent, out int elementIdx))
                 {
                     // We are going to replace just the value
                     value.AddAsItem(ref cvb);
@@ -427,7 +427,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.HeadersToPassValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.HeadersToPass, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -439,10 +439,10 @@ public readonly partial struct KrakendSchema
             /// Remove the <c>headers_to_pass</c> property, if present.
             /// </summary>
             /// <returns><see langword="true"/> if the property was found and removed; otherwise, <see langword="false"/>.</returns>
-            public bool RemoveHeadersToPassValue()
+            public bool RemoveHeadersToPass()
             {
                 CheckValidInstance();
-                bool result = JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.HeadersToPassValueUtf8);
+                bool result = JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.HeadersToPassUtf8);
                 _documentVersion = _parent.Version;
                 return result;
             }
@@ -470,7 +470,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.License, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.License, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -841,6 +841,24 @@ public readonly partial struct KrakendSchema
                 }
             }
 
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.JsonElement:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                        break;
+                    case Kind.Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
             internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
             {
                 switch(_kind)
@@ -942,6 +960,24 @@ public readonly partial struct KrakendSchema
                 }
             }
 
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.Source:
+                        _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                        break;
+                    case Kind.Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
             internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
             {
                 switch(_kind)
@@ -1022,11 +1058,11 @@ public readonly partial struct KrakendSchema
                 ref ComplexValueBuilder builder,
                 in Corvus.KrakendBenchmark.Current.JsonString.Source license,
                 in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271telemetry1newrelicJson.EnableDebug.Source debug = default,
-                in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271telemetry1newrelicJson.HeadersToPass.Source headersToPass = default)
+                in Corvus.KrakendBenchmark.Current.JsonArray.Source headersToPass = default)
             {
-                license.AddAsProperty(JsonPropertyNamesEscaped.License, ref builder, escapeName: false);
-                debug.AddAsProperty(JsonPropertyNamesEscaped.DebugValue, ref builder, escapeName: false);
-                headersToPass.AddAsProperty(JsonPropertyNamesEscaped.HeadersToPassValue, ref builder, escapeName: false);
+                license.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.License, ref builder);
+                debug.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DebugValue, ref builder);
+                headersToPass.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.HeadersToPass, ref builder);
             }
 
             /// <summary>
@@ -1035,7 +1071,7 @@ public readonly partial struct KrakendSchema
             public void Create(
                 in Corvus.KrakendBenchmark.Current.JsonString.Source license,
                 in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271telemetry1newrelicJson.EnableDebug.Source debug = default,
-                in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271telemetry1newrelicJson.HeadersToPass.Source headersToPass = default)
+                in Corvus.KrakendBenchmark.Current.JsonArray.Source headersToPass = default)
             {
                 Create(ref _builder, license, debug, headersToPass);
             }
@@ -1048,14 +1084,14 @@ public readonly partial struct KrakendSchema
                 ref ComplexValueBuilder builder,
                 in Corvus.KrakendBenchmark.Current.JsonString.Source license,
                 in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271telemetry1newrelicJson.EnableDebug.Source debug = default,
-                in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271telemetry1newrelicJson.HeadersToPass.Source<TContext> headersToPass = default)
+                in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> headersToPass = default)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif
             {
-                license.AddAsProperty(JsonPropertyNamesEscaped.License, ref builder, escapeName: false);
-                debug.AddAsProperty(JsonPropertyNamesEscaped.DebugValue, ref builder, escapeName: false);
-                headersToPass.AddAsProperty(JsonPropertyNamesEscaped.HeadersToPassValue, ref builder, escapeName: false);
+                license.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.License, ref builder);
+                debug.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DebugValue, ref builder);
+                headersToPass.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.HeadersToPass, ref builder);
             }
 
             /// <summary>
@@ -1065,7 +1101,7 @@ public readonly partial struct KrakendSchema
                 in TContext context,
                 in Corvus.KrakendBenchmark.Current.JsonString.Source license,
                 in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271telemetry1newrelicJson.EnableDebug.Source debug = default,
-                in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271telemetry1newrelicJson.HeadersToPass.Source<TContext> headersToPass = default)
+                in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> headersToPass = default)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif
@@ -1231,7 +1267,7 @@ public readonly partial struct KrakendSchema
         /// <param name="headersToPass">The value of the property.</param>
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
         /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-        public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.KrakendBenchmark.Current.JsonString.Source license, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271telemetry1newrelicJson.EnableDebug.Source debug = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271telemetry1newrelicJson.HeadersToPass.Source headersToPass = default, int initialCapacity = 30)
+        public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.KrakendBenchmark.Current.JsonString.Source license, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271telemetry1newrelicJson.EnableDebug.Source debug = default, in Corvus.KrakendBenchmark.Current.JsonArray.Source headersToPass = default, int initialCapacity = 30)
         {
             JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
             ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
@@ -1255,7 +1291,7 @@ public readonly partial struct KrakendSchema
         /// <param name="headersToPass">The value of the property.</param>
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
         /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-        public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.KrakendBenchmark.Current.JsonString.Source license, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271telemetry1newrelicJson.EnableDebug.Source debug = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271telemetry1newrelicJson.HeadersToPass.Source<TContext> headersToPass = default, int initialCapacity = 30)
+        public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.KrakendBenchmark.Current.JsonString.Source license, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271telemetry1newrelicJson.EnableDebug.Source debug = default, in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> headersToPass = default, int initialCapacity = 30)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif

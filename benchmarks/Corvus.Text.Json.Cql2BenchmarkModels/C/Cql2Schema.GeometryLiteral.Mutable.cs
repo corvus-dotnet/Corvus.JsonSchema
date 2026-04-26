@@ -1230,6 +1230,42 @@ public readonly partial struct Cql2Schema
                 }
             }
 
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.JsonElement:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                        break;
+                    case Kind.GeometrycollectionBuilder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _geometrycollectionBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.Geometrycollection.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.LinestringBuilder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _linestringBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.Linestring.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.MultilinestringBuilder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _multilinestringBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.Multilinestring.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.MultipointBuilder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _multipointBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.Multipoint.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.MultipolygonBuilder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _multipolygonBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.Multipolygon.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.PointBuilder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _pointBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.Point.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.PolygonBuilder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _polygonBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.Polygon.Builder.BuildValue(b, ref o));
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
             internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
             {
                 switch(_kind)
@@ -1420,6 +1456,42 @@ public readonly partial struct Cql2Schema
                         break;
                     case Kind.PolygonBuilder:
                         valueBuilder.AddProperty(utf8Name, BuildWithContext.Create(_context, _polygonBuilderInstance!), static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.Polygon.Builder.BuildValue(b.Context, b.Build, ref o), escapeName, nameRequiresUnescaping);
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.Source:
+                        _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                        break;
+                    case Kind.GeometrycollectionBuilder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _geometrycollectionBuilderInstance!), static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.Geometrycollection.Builder.BuildValue(b.Context, b.Build, ref o));
+                        break;
+                    case Kind.LinestringBuilder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _linestringBuilderInstance!), static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.Linestring.Builder.BuildValue(b.Context, b.Build, ref o));
+                        break;
+                    case Kind.MultilinestringBuilder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _multilinestringBuilderInstance!), static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.Multilinestring.Builder.BuildValue(b.Context, b.Build, ref o));
+                        break;
+                    case Kind.MultipointBuilder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _multipointBuilderInstance!), static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.Multipoint.Builder.BuildValue(b.Context, b.Build, ref o));
+                        break;
+                    case Kind.MultipolygonBuilder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _multipolygonBuilderInstance!), static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.Multipolygon.Builder.BuildValue(b.Context, b.Build, ref o));
+                        break;
+                    case Kind.PointBuilder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _pointBuilderInstance!), static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.Point.Builder.BuildValue(b.Context, b.Build, ref o));
+                        break;
+                    case Kind.PolygonBuilder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _polygonBuilderInstance!), static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.Polygon.Builder.BuildValue(b.Context, b.Build, ref o));
                         break;
                     default:
                         Debug.Fail("Unexpected Kind");

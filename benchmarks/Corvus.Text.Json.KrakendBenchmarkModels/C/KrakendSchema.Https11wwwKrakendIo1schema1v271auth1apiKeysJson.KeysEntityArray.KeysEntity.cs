@@ -632,6 +632,23 @@ public readonly partial struct KrakendSchema
                     /// </summary>
                     public static ReadOnlySpan<byte> Roles => "roles"u8;
                 }
+
+                /// <summary>
+                /// Provides pre-baked property name blobs for fast builder property storage.
+                /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
+                /// </summary>
+                private static class JsonPropertyNamesPrebaked
+                {
+                    /// <summary>
+                    /// Gets the pre-baked property name blob for <see cref="Key"/>.
+                    /// </summary>
+                    public static ReadOnlySpan<byte> Key => [0x55, 0x00, 0x00, 0x00, 0x22, 0x6B, 0x65, 0x79, 0x22];
+
+                    /// <summary>
+                    /// Gets the pre-baked property name blob for <see cref="Roles"/>.
+                    /// </summary>
+                    public static ReadOnlySpan<byte> Roles => [0x75, 0x00, 0x00, 0x00, 0x22, 0x72, 0x6F, 0x6C, 0x65, 0x73, 0x22];
+                }
             }
         }
     }

@@ -539,7 +539,7 @@ public readonly partial struct VercelSchema
                         else
                         {
                             // We are going to insert the new value
-                            value.AddAsProperty(JsonPropertyNamesEscaped.CaseSensitive, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                            value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CaseSensitive, ref cvb);
                             int endIndex = _idx + _parent.GetDbSize(_idx, false);
                             _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                         }
@@ -584,7 +584,7 @@ public readonly partial struct VercelSchema
                         else
                         {
                             // We are going to insert the new value
-                            value.AddAsProperty(JsonPropertyNamesEscaped.Check, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                            value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Check, ref cvb);
                             int endIndex = _idx + _parent.GetDbSize(_idx, false);
                             _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                         }
@@ -629,7 +629,7 @@ public readonly partial struct VercelSchema
                         else
                         {
                             // We are going to insert the new value
-                            value.AddAsProperty(JsonPropertyNamesEscaped.Continue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                            value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Continue, ref cvb);
                             int endIndex = _idx + _parent.GetDbSize(_idx, false);
                             _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                         }
@@ -674,7 +674,7 @@ public readonly partial struct VercelSchema
                         else
                         {
                             // We are going to insert the new value
-                            value.AddAsProperty(JsonPropertyNamesEscaped.Dest, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                            value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Dest, ref cvb);
                             int endIndex = _idx + _parent.GetDbSize(_idx, false);
                             _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                         }
@@ -719,7 +719,7 @@ public readonly partial struct VercelSchema
                         else
                         {
                             // We are going to insert the new value
-                            value.AddAsProperty(JsonPropertyNamesEscaped.Has, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                            value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Has, ref cvb);
                             int endIndex = _idx + _parent.GetDbSize(_idx, false);
                             _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                         }
@@ -755,7 +755,7 @@ public readonly partial struct VercelSchema
                         else
                         {
                             // We are going to insert the new value
-                            value.AddAsProperty(JsonPropertyNamesEscaped.Has, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                            value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Has, ref cvb);
                             int endIndex = _idx + _parent.GetDbSize(_idx, false);
                             _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                         }
@@ -800,7 +800,7 @@ public readonly partial struct VercelSchema
                         else
                         {
                             // We are going to insert the new value
-                            value.AddAsProperty(JsonPropertyNamesEscaped.Headers, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                            value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Headers, ref cvb);
                             int endIndex = _idx + _parent.GetDbSize(_idx, false);
                             _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                         }
@@ -836,7 +836,7 @@ public readonly partial struct VercelSchema
                         else
                         {
                             // We are going to insert the new value
-                            value.AddAsProperty(JsonPropertyNamesEscaped.Headers, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                            value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Headers, ref cvb);
                             int endIndex = _idx + _parent.GetDbSize(_idx, false);
                             _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                         }
@@ -881,7 +881,7 @@ public readonly partial struct VercelSchema
                         else
                         {
                             // We are going to insert the new value
-                            value.AddAsProperty(JsonPropertyNamesEscaped.Important, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                            value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Important, ref cvb);
                             int endIndex = _idx + _parent.GetDbSize(_idx, false);
                             _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                         }
@@ -926,7 +926,7 @@ public readonly partial struct VercelSchema
                         else
                         {
                             // We are going to insert the new value
-                            value.AddAsProperty(JsonPropertyNamesEscaped.IsInternal, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                            value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IsInternal, ref cvb);
                             int endIndex = _idx + _parent.GetDbSize(_idx, false);
                             _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                         }
@@ -971,7 +971,7 @@ public readonly partial struct VercelSchema
                         else
                         {
                             // We are going to insert the new value
-                            value.AddAsProperty(JsonPropertyNamesEscaped.Locale, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                            value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Locale, ref cvb);
                             int endIndex = _idx + _parent.GetDbSize(_idx, false);
                             _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                         }
@@ -1007,7 +1007,7 @@ public readonly partial struct VercelSchema
                         else
                         {
                             // We are going to insert the new value
-                            value.AddAsProperty(JsonPropertyNamesEscaped.Locale, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                            value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Locale, ref cvb);
                             int endIndex = _idx + _parent.GetDbSize(_idx, false);
                             _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                         }
@@ -1052,7 +1052,7 @@ public readonly partial struct VercelSchema
                         else
                         {
                             // We are going to insert the new value
-                            value.AddAsProperty(JsonPropertyNamesEscaped.Methods, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                            value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Methods, ref cvb);
                             int endIndex = _idx + _parent.GetDbSize(_idx, false);
                             _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                         }
@@ -1088,7 +1088,7 @@ public readonly partial struct VercelSchema
                         else
                         {
                             // We are going to insert the new value
-                            value.AddAsProperty(JsonPropertyNamesEscaped.Methods, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                            value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Methods, ref cvb);
                             int endIndex = _idx + _parent.GetDbSize(_idx, false);
                             _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                         }
@@ -1133,7 +1133,7 @@ public readonly partial struct VercelSchema
                         else
                         {
                             // We are going to insert the new value
-                            value.AddAsProperty(JsonPropertyNamesEscaped.Middleware, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                            value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Middleware, ref cvb);
                             int endIndex = _idx + _parent.GetDbSize(_idx, false);
                             _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                         }
@@ -1178,7 +1178,7 @@ public readonly partial struct VercelSchema
                         else
                         {
                             // We are going to insert the new value
-                            value.AddAsProperty(JsonPropertyNamesEscaped.MiddlewarePath, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                            value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MiddlewarePath, ref cvb);
                             int endIndex = _idx + _parent.GetDbSize(_idx, false);
                             _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                         }
@@ -1223,7 +1223,7 @@ public readonly partial struct VercelSchema
                         else
                         {
                             // We are going to insert the new value
-                            value.AddAsProperty(JsonPropertyNamesEscaped.MiddlewareRawSrc, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                            value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MiddlewareRawSrc, ref cvb);
                             int endIndex = _idx + _parent.GetDbSize(_idx, false);
                             _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                         }
@@ -1259,7 +1259,7 @@ public readonly partial struct VercelSchema
                         else
                         {
                             // We are going to insert the new value
-                            value.AddAsProperty(JsonPropertyNamesEscaped.MiddlewareRawSrc, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                            value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MiddlewareRawSrc, ref cvb);
                             int endIndex = _idx + _parent.GetDbSize(_idx, false);
                             _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                         }
@@ -1304,7 +1304,7 @@ public readonly partial struct VercelSchema
                         else
                         {
                             // We are going to insert the new value
-                            value.AddAsProperty(JsonPropertyNamesEscaped.Missing, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                            value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Missing, ref cvb);
                             int endIndex = _idx + _parent.GetDbSize(_idx, false);
                             _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                         }
@@ -1340,7 +1340,7 @@ public readonly partial struct VercelSchema
                         else
                         {
                             // We are going to insert the new value
-                            value.AddAsProperty(JsonPropertyNamesEscaped.Missing, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                            value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Missing, ref cvb);
                             int endIndex = _idx + _parent.GetDbSize(_idx, false);
                             _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                         }
@@ -1385,7 +1385,7 @@ public readonly partial struct VercelSchema
                         else
                         {
                             // We are going to insert the new value
-                            value.AddAsProperty(JsonPropertyNamesEscaped.Override, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                            value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Override, ref cvb);
                             int endIndex = _idx + _parent.GetDbSize(_idx, false);
                             _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                         }
@@ -1428,7 +1428,7 @@ public readonly partial struct VercelSchema
                         else
                         {
                             // We are going to insert the new value
-                            value.AddAsProperty(JsonPropertyNamesEscaped.Src, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                            value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Src, ref cvb);
                             int endIndex = _idx + _parent.GetDbSize(_idx, false);
                             _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                         }
@@ -1461,7 +1461,7 @@ public readonly partial struct VercelSchema
                         else
                         {
                             // We are going to insert the new value
-                            value.AddAsProperty(JsonPropertyNamesEscaped.Status, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                            value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Status, ref cvb);
                             int endIndex = _idx + _parent.GetDbSize(_idx, false);
                             _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                         }
@@ -1506,7 +1506,7 @@ public readonly partial struct VercelSchema
                         else
                         {
                             // We are going to insert the new value
-                            value.AddAsProperty(JsonPropertyNamesEscaped.User, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                            value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.User, ref cvb);
                             int endIndex = _idx + _parent.GetDbSize(_idx, false);
                             _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                         }
@@ -1713,6 +1713,24 @@ public readonly partial struct VercelSchema
                         }
                     }
 
+                    internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+                    {
+                        switch(_kind)
+                        {
+                            case Kind.Unknown:
+                                break;
+                            case Kind.JsonElement:
+                                valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                                break;
+                            case Kind.Builder:
+                                valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
+                                break;
+                            default:
+                                Debug.Fail("Unexpected Kind");
+                                break;
+                        }
+                    }
+
                     internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
                     {
                         switch(_kind)
@@ -1807,6 +1825,24 @@ public readonly partial struct VercelSchema
                                 break;
                             case Kind.Builder:
                                 valueBuilder.AddProperty(utf8Name, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o), escapeName, nameRequiresUnescaping);
+                                break;
+                            default:
+                                Debug.Fail("Unexpected Kind");
+                                break;
+                        }
+                    }
+
+                    internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+                    {
+                        switch(_kind)
+                        {
+                            case Kind.Unknown:
+                                break;
+                            case Kind.Source:
+                                _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                                break;
+                            case Kind.Builder:
+                                valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                                 break;
                             default:
                                 Debug.Fail("Unexpected Kind");
@@ -1911,24 +1947,24 @@ public readonly partial struct VercelSchema
                         in Corvus.VercelBenchmark.Current.VercelSchema.RoutesEntityArray.RoutesEntity.RequiredSrc.StatusEntity.Source status = default,
                         in Corvus.VercelBenchmark.Current.JsonBoolean.Source user = default)
                     {
-                        src.AddAsProperty(JsonPropertyNamesEscaped.Src, ref builder, escapeName: false);
-                        caseSensitive.AddAsProperty(JsonPropertyNamesEscaped.CaseSensitive, ref builder, escapeName: false);
-                        check.AddAsProperty(JsonPropertyNamesEscaped.Check, ref builder, escapeName: false);
-                        continueValue.AddAsProperty(JsonPropertyNamesEscaped.Continue, ref builder, escapeName: false);
-                        dest.AddAsProperty(JsonPropertyNamesEscaped.Dest, ref builder, escapeName: false);
-                        has.AddAsProperty(JsonPropertyNamesEscaped.Has, ref builder, escapeName: false);
-                        headers.AddAsProperty(JsonPropertyNamesEscaped.Headers, ref builder, escapeName: false);
-                        important.AddAsProperty(JsonPropertyNamesEscaped.Important, ref builder, escapeName: false);
-                        isInternal.AddAsProperty(JsonPropertyNamesEscaped.IsInternal, ref builder, escapeName: false);
-                        locale.AddAsProperty(JsonPropertyNamesEscaped.Locale, ref builder, escapeName: false);
-                        methods.AddAsProperty(JsonPropertyNamesEscaped.Methods, ref builder, escapeName: false);
-                        middleware.AddAsProperty(JsonPropertyNamesEscaped.Middleware, ref builder, escapeName: false);
-                        middlewarePath.AddAsProperty(JsonPropertyNamesEscaped.MiddlewarePath, ref builder, escapeName: false);
-                        middlewareRawSrc.AddAsProperty(JsonPropertyNamesEscaped.MiddlewareRawSrc, ref builder, escapeName: false);
-                        missing.AddAsProperty(JsonPropertyNamesEscaped.Missing, ref builder, escapeName: false);
-                        overrideValue.AddAsProperty(JsonPropertyNamesEscaped.Override, ref builder, escapeName: false);
-                        status.AddAsProperty(JsonPropertyNamesEscaped.Status, ref builder, escapeName: false);
-                        user.AddAsProperty(JsonPropertyNamesEscaped.User, ref builder, escapeName: false);
+                        src.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Src, ref builder);
+                        caseSensitive.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CaseSensitive, ref builder);
+                        check.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Check, ref builder);
+                        continueValue.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Continue, ref builder);
+                        dest.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Dest, ref builder);
+                        has.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Has, ref builder);
+                        headers.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Headers, ref builder);
+                        important.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Important, ref builder);
+                        isInternal.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IsInternal, ref builder);
+                        locale.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Locale, ref builder);
+                        methods.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Methods, ref builder);
+                        middleware.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Middleware, ref builder);
+                        middlewarePath.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MiddlewarePath, ref builder);
+                        middlewareRawSrc.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MiddlewareRawSrc, ref builder);
+                        missing.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Missing, ref builder);
+                        overrideValue.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Override, ref builder);
+                        status.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Status, ref builder);
+                        user.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.User, ref builder);
                     }
 
                     /// <summary>
@@ -1985,24 +2021,24 @@ public readonly partial struct VercelSchema
                     where TContext : allows ref struct
                     #endif
                     {
-                        src.AddAsProperty(JsonPropertyNamesEscaped.Src, ref builder, escapeName: false);
-                        caseSensitive.AddAsProperty(JsonPropertyNamesEscaped.CaseSensitive, ref builder, escapeName: false);
-                        check.AddAsProperty(JsonPropertyNamesEscaped.Check, ref builder, escapeName: false);
-                        continueValue.AddAsProperty(JsonPropertyNamesEscaped.Continue, ref builder, escapeName: false);
-                        dest.AddAsProperty(JsonPropertyNamesEscaped.Dest, ref builder, escapeName: false);
-                        has.AddAsProperty(JsonPropertyNamesEscaped.Has, ref builder, escapeName: false);
-                        headers.AddAsProperty(JsonPropertyNamesEscaped.Headers, ref builder, escapeName: false);
-                        important.AddAsProperty(JsonPropertyNamesEscaped.Important, ref builder, escapeName: false);
-                        isInternal.AddAsProperty(JsonPropertyNamesEscaped.IsInternal, ref builder, escapeName: false);
-                        locale.AddAsProperty(JsonPropertyNamesEscaped.Locale, ref builder, escapeName: false);
-                        methods.AddAsProperty(JsonPropertyNamesEscaped.Methods, ref builder, escapeName: false);
-                        middleware.AddAsProperty(JsonPropertyNamesEscaped.Middleware, ref builder, escapeName: false);
-                        middlewarePath.AddAsProperty(JsonPropertyNamesEscaped.MiddlewarePath, ref builder, escapeName: false);
-                        middlewareRawSrc.AddAsProperty(JsonPropertyNamesEscaped.MiddlewareRawSrc, ref builder, escapeName: false);
-                        missing.AddAsProperty(JsonPropertyNamesEscaped.Missing, ref builder, escapeName: false);
-                        overrideValue.AddAsProperty(JsonPropertyNamesEscaped.Override, ref builder, escapeName: false);
-                        status.AddAsProperty(JsonPropertyNamesEscaped.Status, ref builder, escapeName: false);
-                        user.AddAsProperty(JsonPropertyNamesEscaped.User, ref builder, escapeName: false);
+                        src.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Src, ref builder);
+                        caseSensitive.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CaseSensitive, ref builder);
+                        check.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Check, ref builder);
+                        continueValue.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Continue, ref builder);
+                        dest.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Dest, ref builder);
+                        has.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Has, ref builder);
+                        headers.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Headers, ref builder);
+                        important.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Important, ref builder);
+                        isInternal.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IsInternal, ref builder);
+                        locale.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Locale, ref builder);
+                        methods.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Methods, ref builder);
+                        middleware.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Middleware, ref builder);
+                        middlewarePath.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MiddlewarePath, ref builder);
+                        middlewareRawSrc.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MiddlewareRawSrc, ref builder);
+                        missing.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Missing, ref builder);
+                        overrideValue.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Override, ref builder);
+                        status.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Status, ref builder);
+                        user.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.User, ref builder);
                     }
 
                     /// <summary>

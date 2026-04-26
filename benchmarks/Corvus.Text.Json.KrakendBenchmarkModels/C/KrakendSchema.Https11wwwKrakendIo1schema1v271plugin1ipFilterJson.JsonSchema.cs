@@ -57,9 +57,9 @@ public readonly partial struct KrakendSchema
             private const uint RequiredBitMask0 =
                 RequiredBitForAllow | RequiredBitForCidr;
             private static readonly JsonSchemaPathProvider AllowSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/allow"u8, buffer, out written);
-            private static readonly JsonSchemaPathProvider CidrValueSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/CIDR"u8, buffer, out written);
-            private static readonly JsonSchemaPathProvider ClientIpHeadersValueSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/client_ip_headers"u8, buffer, out written);
-            private static readonly JsonSchemaPathProvider TrustedProxiesValueSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/trusted_proxies"u8, buffer, out written);
+            private static readonly JsonSchemaPathProvider CidrSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/CIDR"u8, buffer, out written);
+            private static readonly JsonSchemaPathProvider ClientIpHeadersSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/client_ip_headers"u8, buffer, out written);
+            private static readonly JsonSchemaPathProvider TrustedProxiesSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/trusted_proxies"u8, buffer, out written);
 
             private static void MatchAllow(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
             {
@@ -83,18 +83,18 @@ public readonly partial struct KrakendSchema
                 requiredBitBuffer[RequiredOffsetForAllow] |= RequiredBitForAllow;
             }
 
-            private static void MatchCidrValue(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+            private static void MatchCidr(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext1 =
-                    Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271plugin1ipFilterJson.Cidr.JsonSchema.PushChildContextUnescaped(
+                    Corvus.KrakendBenchmark.Current.JsonArray.JsonSchema.PushChildContextUnescaped(
                         parentDocument,
                         parentDocumentIndex,
                         ref context,
-                        JsonPropertyNames.CidrValueUtf8,
-                        evaluationPath: CidrValueSchemaEvaluationPath);
+                        JsonPropertyNames.CidrUtf8,
+                        evaluationPath: CidrSchemaEvaluationPath);
 
-                Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271plugin1ipFilterJson.Cidr.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext1);
+                Corvus.KrakendBenchmark.Current.JsonArray.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext1);
                 context.CommitChildContext(childContext1.IsMatch, ref childContext1);
 
                 if (!context.HasCollector && !context.IsMatch)
@@ -105,33 +105,33 @@ public readonly partial struct KrakendSchema
                 requiredBitBuffer[RequiredOffsetForCidr] |= RequiredBitForCidr;
             }
 
-            private static void MatchClientIpHeadersValue(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+            private static void MatchClientIpHeaders(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext2 =
-                    Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271plugin1ipFilterJson.ClientIpHeaders.JsonSchema.PushChildContextUnescaped(
+                    Corvus.KrakendBenchmark.Current.JsonArray.JsonSchema.PushChildContextUnescaped(
                         parentDocument,
                         parentDocumentIndex,
                         ref context,
-                        JsonPropertyNames.ClientIpHeadersValueUtf8,
-                        evaluationPath: ClientIpHeadersValueSchemaEvaluationPath);
+                        JsonPropertyNames.ClientIpHeadersUtf8,
+                        evaluationPath: ClientIpHeadersSchemaEvaluationPath);
 
-                Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271plugin1ipFilterJson.ClientIpHeaders.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext2);
+                Corvus.KrakendBenchmark.Current.JsonArray.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext2);
                 context.CommitChildContext(childContext2.IsMatch, ref childContext2);
             }
 
-            private static void MatchTrustedProxiesValue(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+            private static void MatchTrustedProxies(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext3 =
-                    Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271plugin1ipFilterJson.TrustedProxies.JsonSchema.PushChildContextUnescaped(
+                    Corvus.KrakendBenchmark.Current.JsonArray.JsonSchema.PushChildContextUnescaped(
                         parentDocument,
                         parentDocumentIndex,
                         ref context,
-                        JsonPropertyNames.TrustedProxiesValueUtf8,
-                        evaluationPath: TrustedProxiesValueSchemaEvaluationPath);
+                        JsonPropertyNames.TrustedProxiesUtf8,
+                        evaluationPath: TrustedProxiesSchemaEvaluationPath);
 
-                Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271plugin1ipFilterJson.TrustedProxies.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext3);
+                Corvus.KrakendBenchmark.Current.JsonArray.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext3);
                 context.CommitChildContext(childContext3.IsMatch, ref childContext3);
             }
 
@@ -139,9 +139,9 @@ public readonly partial struct KrakendSchema
             {
                 return new PropertySchemaMatchers<Corvus.KrakendBenchmark.Current.PropertiesValidationHandler_NamedPropertyValidator>([
                     (static () => JsonPropertyNames.AllowUtf8, MatchAllow),
-                    (static () => JsonPropertyNames.CidrValueUtf8, MatchCidrValue),
-                    (static () => JsonPropertyNames.ClientIpHeadersValueUtf8, MatchClientIpHeadersValue),
-                    (static () => JsonPropertyNames.TrustedProxiesValueUtf8, MatchTrustedProxiesValue),
+                    (static () => JsonPropertyNames.CidrUtf8, MatchCidr),
+                    (static () => JsonPropertyNames.ClientIpHeadersUtf8, MatchClientIpHeaders),
+                    (static () => JsonPropertyNames.TrustedProxiesUtf8, MatchTrustedProxies),
                 ]);
             }
 
@@ -168,17 +168,17 @@ public readonly partial struct KrakendSchema
             /// <summary>
             /// Gets a provider for the schema location from which this type was generated.
             /// </summary>
-            public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("krakend-schema.json#/definitions/https:~1~1www.krakend.io~1schema~1v2.7~1plugin~1ip-filter.json"u8, buffer, out written);
+            public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/definitions/https:~1~1www.krakend.io~1schema~1v2.7~1plugin~1ip-filter.json"u8, buffer, out written);
 
             /// <summary>
             /// Gets the schema location from which this type was generated.
             /// </summary>
-            public const string SchemaLocation = "krakend-schema.json#/definitions/https:~1~1www.krakend.io~1schema~1v2.7~1plugin~1ip-filter.json";
+            public const string SchemaLocation = "/definitions/https:~1~1www.krakend.io~1schema~1v2.7~1plugin~1ip-filter.json";
 
             /// <summary>
             /// Gets the schema location from which this type was generated as a UTF-8 string.
             /// </summary>
-            public static ReadOnlySpan<byte> SchemaLocationUtf8 => "krakend-schema.json#/definitions/https:~1~1www.krakend.io~1schema~1v2.7~1plugin~1ip-filter.json"u8;
+            public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/definitions/https:~1~1www.krakend.io~1schema~1v2.7~1plugin~1ip-filter.json"u8;
 
             /// <summary>
             /// Applies the JSON schema semantics defined by this type to the instance determined by the given document and index.

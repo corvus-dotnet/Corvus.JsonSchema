@@ -325,7 +325,7 @@ public readonly partial struct LazygitSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.OrderValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.OrderValue, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -370,7 +370,7 @@ public readonly partial struct LazygitSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.ShowGraphValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ShowGraphValue, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -415,7 +415,7 @@ public readonly partial struct LazygitSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.ShowWholeGraphValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ShowWholeGraphValue, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -622,6 +622,24 @@ public readonly partial struct LazygitSchema
                     }
                 }
 
+                internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+                {
+                    switch(_kind)
+                    {
+                        case Kind.Unknown:
+                            break;
+                        case Kind.JsonElement:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                            break;
+                        case Kind.Builder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
+                            break;
+                        default:
+                            Debug.Fail("Unexpected Kind");
+                            break;
+                    }
+                }
+
                 internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
                 {
                     switch(_kind)
@@ -723,6 +741,24 @@ public readonly partial struct LazygitSchema
                     }
                 }
 
+                internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+                {
+                    switch(_kind)
+                    {
+                        case Kind.Unknown:
+                            break;
+                        case Kind.Source:
+                            _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                            break;
+                        case Kind.Builder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
+                            break;
+                        default:
+                            Debug.Fail("Unexpected Kind");
+                            break;
+                    }
+                }
+
                 internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
                 {
                     switch(_kind)
@@ -805,9 +841,9 @@ public readonly partial struct LazygitSchema
                     in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Log.ShowGraph.Source showGraph = default,
                     in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.Log.ShowWholeGraph.Source showWholeGraph = default)
                 {
-                    order.AddAsProperty(JsonPropertyNamesEscaped.OrderValue, ref builder, escapeName: false);
-                    showGraph.AddAsProperty(JsonPropertyNamesEscaped.ShowGraphValue, ref builder, escapeName: false);
-                    showWholeGraph.AddAsProperty(JsonPropertyNamesEscaped.ShowWholeGraphValue, ref builder, escapeName: false);
+                    order.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.OrderValue, ref builder);
+                    showGraph.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ShowGraphValue, ref builder);
+                    showWholeGraph.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ShowWholeGraphValue, ref builder);
                 }
 
                 /// <summary>

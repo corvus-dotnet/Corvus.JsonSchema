@@ -346,7 +346,7 @@ public readonly partial struct OmnisharpSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.LocationPaths, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.LocationPaths, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -382,7 +382,7 @@ public readonly partial struct OmnisharpSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.LocationPaths, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.LocationPaths, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -765,6 +765,24 @@ public readonly partial struct OmnisharpSchema
                 }
             }
 
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.JsonElement:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                        break;
+                    case Kind.Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
             internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
             {
                 switch(_kind)
@@ -866,6 +884,24 @@ public readonly partial struct OmnisharpSchema
                 }
             }
 
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.Source:
+                        _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                        break;
+                    case Kind.Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
             internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
             {
                 switch(_kind)
@@ -944,7 +980,7 @@ public readonly partial struct OmnisharpSchema
             /// </summary>
             internal static void Create(ref ComplexValueBuilder builder, in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.PluginsEntity.JsonStringArray.Source locationPaths = default)
             {
-                locationPaths.AddAsProperty(JsonPropertyNamesEscaped.LocationPaths, ref builder, escapeName: false);
+                locationPaths.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.LocationPaths, ref builder);
             }
 
             /// <summary>
@@ -966,7 +1002,7 @@ public readonly partial struct OmnisharpSchema
             where TContext : allows ref struct
             #endif
             {
-                locationPaths.AddAsProperty(JsonPropertyNamesEscaped.LocationPaths, ref builder, escapeName: false);
+                locationPaths.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.LocationPaths, ref builder);
             }
 
             /// <summary>

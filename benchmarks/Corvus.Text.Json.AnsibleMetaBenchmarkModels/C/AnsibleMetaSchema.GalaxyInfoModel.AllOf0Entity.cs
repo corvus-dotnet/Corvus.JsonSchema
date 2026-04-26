@@ -818,6 +818,33 @@ public readonly partial struct AnsibleMetaSchema
                 /// </summary>
                 public static ReadOnlySpan<byte> MinAnsibleVersion => "min_ansible_version"u8;
             }
+
+            /// <summary>
+            /// Provides pre-baked property name blobs for fast builder property storage.
+            /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
+            /// </summary>
+            private static class JsonPropertyNamesPrebaked
+            {
+                /// <summary>
+                /// Gets the pre-baked property name blob for <see cref="Author"/>.
+                /// </summary>
+                public static ReadOnlySpan<byte> Author => [0x85, 0x00, 0x00, 0x00, 0x22, 0x61, 0x75, 0x74, 0x68, 0x6F, 0x72, 0x22];
+
+                /// <summary>
+                /// Gets the pre-baked property name blob for <see cref="Description"/>.
+                /// </summary>
+                public static ReadOnlySpan<byte> Description => [0xD5, 0x00, 0x00, 0x00, 0x22, 0x64, 0x65, 0x73, 0x63, 0x72, 0x69, 0x70, 0x74, 0x69, 0x6F, 0x6E, 0x22];
+
+                /// <summary>
+                /// Gets the pre-baked property name blob for <see cref="License"/>.
+                /// </summary>
+                public static ReadOnlySpan<byte> License => [0x95, 0x00, 0x00, 0x00, 0x22, 0x6C, 0x69, 0x63, 0x65, 0x6E, 0x73, 0x65, 0x22];
+
+                /// <summary>
+                /// Gets the pre-baked property name blob for <see cref="MinAnsibleVersion"/>.
+                /// </summary>
+                public static ReadOnlySpan<byte> MinAnsibleVersion => [0x55, 0x01, 0x00, 0x00, 0x22, 0x6D, 0x69, 0x6E, 0x5F, 0x61, 0x6E, 0x73, 0x69, 0x62, 0x6C, 0x65, 0x5F, 0x76, 0x65, 0x72, 0x73, 0x69, 0x6F, 0x6E, 0x22];
+            }
         }
     }
 }

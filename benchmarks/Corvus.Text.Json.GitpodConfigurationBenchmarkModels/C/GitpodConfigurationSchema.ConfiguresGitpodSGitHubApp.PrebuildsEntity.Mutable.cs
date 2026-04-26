@@ -534,7 +534,7 @@ public readonly partial struct GitpodConfigurationSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.AddBadge, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AddBadge, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -579,7 +579,7 @@ public readonly partial struct GitpodConfigurationSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.AddCheck, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AddCheck, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -624,7 +624,7 @@ public readonly partial struct GitpodConfigurationSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.AddLabel, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AddLabel, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -669,7 +669,7 @@ public readonly partial struct GitpodConfigurationSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.Branches, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Branches, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -714,7 +714,7 @@ public readonly partial struct GitpodConfigurationSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.Master, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Master, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -759,7 +759,7 @@ public readonly partial struct GitpodConfigurationSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.PullRequests, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PullRequests, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -804,7 +804,7 @@ public readonly partial struct GitpodConfigurationSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.PullRequestsFromForks, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PullRequestsFromForks, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -1200,6 +1200,30 @@ public readonly partial struct GitpodConfigurationSchema
                     }
                 }
 
+                internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+                {
+                    switch(_kind)
+                    {
+                        case Kind.Unknown:
+                            break;
+                        case Kind.JsonElement:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                            break;
+                        case Kind.True:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, true);
+                            break;
+                        case Kind.False:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, false);
+                            break;
+                        case Kind.Builder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
+                            break;
+                        default:
+                            Debug.Fail("Unexpected Kind");
+                            break;
+                    }
+                }
+
                 internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
                 {
                     switch(_kind)
@@ -1319,6 +1343,24 @@ public readonly partial struct GitpodConfigurationSchema
                     }
                 }
 
+                internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+                {
+                    switch(_kind)
+                    {
+                        case Kind.Unknown:
+                            break;
+                        case Kind.Source:
+                            _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                            break;
+                        case Kind.Builder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
+                            break;
+                        default:
+                            Debug.Fail("Unexpected Kind");
+                            break;
+                    }
+                }
+
                 internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
                 {
                     switch(_kind)
@@ -1405,13 +1447,13 @@ public readonly partial struct GitpodConfigurationSchema
                     in Corvus.GitpodConfigurationBenchmark.Current.JsonBoolean.Source pullRequests = default,
                     in Corvus.GitpodConfigurationBenchmark.Current.JsonBoolean.Source pullRequestsFromForks = default)
                 {
-                    addBadge.AddAsProperty(JsonPropertyNamesEscaped.AddBadge, ref builder, escapeName: false);
-                    addCheck.AddAsProperty(JsonPropertyNamesEscaped.AddCheck, ref builder, escapeName: false);
-                    addLabel.AddAsProperty(JsonPropertyNamesEscaped.AddLabel, ref builder, escapeName: false);
-                    branches.AddAsProperty(JsonPropertyNamesEscaped.Branches, ref builder, escapeName: false);
-                    master.AddAsProperty(JsonPropertyNamesEscaped.Master, ref builder, escapeName: false);
-                    pullRequests.AddAsProperty(JsonPropertyNamesEscaped.PullRequests, ref builder, escapeName: false);
-                    pullRequestsFromForks.AddAsProperty(JsonPropertyNamesEscaped.PullRequestsFromForks, ref builder, escapeName: false);
+                    addBadge.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AddBadge, ref builder);
+                    addCheck.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AddCheck, ref builder);
+                    addLabel.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AddLabel, ref builder);
+                    branches.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Branches, ref builder);
+                    master.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Master, ref builder);
+                    pullRequests.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PullRequests, ref builder);
+                    pullRequestsFromForks.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PullRequestsFromForks, ref builder);
                 }
 
                 /// <summary>

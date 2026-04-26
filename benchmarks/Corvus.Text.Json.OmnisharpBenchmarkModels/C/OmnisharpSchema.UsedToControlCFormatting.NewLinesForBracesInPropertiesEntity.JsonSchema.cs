@@ -56,17 +56,17 @@ public readonly partial struct OmnisharpSchema
                 /// <summary>
                 /// Gets a provider for the schema location from which this type was generated.
                 /// </summary>
-                public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("https://json.schemastore.org/omnisharp.json#/properties/FormattingOptions/properties/NewLinesForBracesInProperties"u8, buffer, out written);
+                public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/properties/FormattingOptions/properties/NewLinesForBracesInProperties"u8, buffer, out written);
 
                 /// <summary>
                 /// Gets the schema location from which this type was generated.
                 /// </summary>
-                public const string SchemaLocation = "https://json.schemastore.org/omnisharp.json#/properties/FormattingOptions/properties/NewLinesForBracesInProperties";
+                public const string SchemaLocation = "/properties/FormattingOptions/properties/NewLinesForBracesInProperties";
 
                 /// <summary>
                 /// Gets the schema location from which this type was generated as a UTF-8 string.
                 /// </summary>
-                public static ReadOnlySpan<byte> SchemaLocationUtf8 => "https://json.schemastore.org/omnisharp.json#/properties/FormattingOptions/properties/NewLinesForBracesInProperties"u8;
+                public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/properties/FormattingOptions/properties/NewLinesForBracesInProperties"u8;
 
                 /// <summary>
                 /// Applies the JSON schema semantics defined by this type to the instance determined by the given document and index.

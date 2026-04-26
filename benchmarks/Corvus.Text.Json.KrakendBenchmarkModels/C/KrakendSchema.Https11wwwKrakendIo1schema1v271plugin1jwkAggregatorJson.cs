@@ -147,11 +147,11 @@ public readonly partial struct KrakendSchema
         /// See: https://www.krakend.io/docs/enterprise/authentication/multiple-identity-providers/
         /// </para>
         /// </remarks>
-        public Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271plugin1jwkAggregatorJson.Origins OriginsValue
+        public Corvus.KrakendBenchmark.Current.JsonArray Origins
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.OriginsValueUtf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271plugin1jwkAggregatorJson.Origins value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.OriginsUtf8, out Corvus.KrakendBenchmark.Current.JsonArray value))
                 {
                     return value;
                 }
@@ -615,9 +615,9 @@ public readonly partial struct KrakendSchema
             public const string Cache = "cache";
 
             /// <summary>
-            /// Gets the JSON property name for <see cref="OriginsValue"/>.
+            /// Gets the JSON property name for <see cref="Origins"/>.
             /// </summary>
-            public const string OriginsValue = "origins";
+            public const string Origins = "origins";
 
             /// <summary>
             /// Gets the JSON property name for <see cref="Port"/>.
@@ -630,9 +630,9 @@ public readonly partial struct KrakendSchema
             public static ReadOnlySpan<byte> CacheUtf8 => "cache"u8;
 
             /// <summary>
-            /// Gets the JSON property name for <see cref="OriginsValue"/>.
+            /// Gets the JSON property name for <see cref="Origins"/>.
             /// </summary>
-            public static ReadOnlySpan<byte> OriginsValueUtf8 => "origins"u8;
+            public static ReadOnlySpan<byte> OriginsUtf8 => "origins"u8;
 
             /// <summary>
             /// Gets the JSON property name for <see cref="Port"/>.
@@ -651,14 +651,36 @@ public readonly partial struct KrakendSchema
             public static ReadOnlySpan<byte> Cache => "cache"u8;
 
             /// <summary>
-            /// Gets the escaped UTF-8 JSON property name for <see cref="OriginsValue"/>.
+            /// Gets the escaped UTF-8 JSON property name for <see cref="Origins"/>.
             /// </summary>
-            public static ReadOnlySpan<byte> OriginsValue => "origins"u8;
+            public static ReadOnlySpan<byte> Origins => "origins"u8;
 
             /// <summary>
             /// Gets the escaped UTF-8 JSON property name for <see cref="Port"/>.
             /// </summary>
             public static ReadOnlySpan<byte> Port => "port"u8;
+        }
+
+        /// <summary>
+        /// Provides pre-baked property name blobs for fast builder property storage.
+        /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
+        /// </summary>
+        private static class JsonPropertyNamesPrebaked
+        {
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Cache"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Cache => [0x75, 0x00, 0x00, 0x00, 0x22, 0x63, 0x61, 0x63, 0x68, 0x65, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Origins"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Origins => [0x95, 0x00, 0x00, 0x00, 0x22, 0x6F, 0x72, 0x69, 0x67, 0x69, 0x6E, 0x73, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Port"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Port => [0x65, 0x00, 0x00, 0x00, 0x22, 0x70, 0x6F, 0x72, 0x74, 0x22];
         }
     }
 }

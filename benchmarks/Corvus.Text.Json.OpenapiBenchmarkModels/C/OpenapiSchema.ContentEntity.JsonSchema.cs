@@ -41,17 +41,17 @@ public readonly partial struct OpenapiSchema
             /// <summary>
             /// Gets a provider for the schema location from which this type was generated.
             /// </summary>
-            public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("https://spec.openapis.org/oas/3.1/schema/2022-10-07?dynamicScope=D%3A%2Fsource%2Fcorvus-dotnet%2FCorvus.JsonSchema%2Fbenchmarks%2FCorvus.Text.Json.OpenapiBenchmarkModels%2Fopenapi-schema.json#/$defs/parameter/properties/content"u8, buffer, out written);
+            public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/$defs/parameter/properties/content"u8, buffer, out written);
 
             /// <summary>
             /// Gets the schema location from which this type was generated.
             /// </summary>
-            public const string SchemaLocation = "https://spec.openapis.org/oas/3.1/schema/2022-10-07?dynamicScope=D%3A%2Fsource%2Fcorvus-dotnet%2FCorvus.JsonSchema%2Fbenchmarks%2FCorvus.Text.Json.OpenapiBenchmarkModels%2Fopenapi-schema.json#/$defs/parameter/properties/content";
+            public const string SchemaLocation = "/$defs/parameter/properties/content";
 
             /// <summary>
             /// Gets the schema location from which this type was generated as a UTF-8 string.
             /// </summary>
-            public static ReadOnlySpan<byte> SchemaLocationUtf8 => "https://spec.openapis.org/oas/3.1/schema/2022-10-07?dynamicScope=D%3A%2Fsource%2Fcorvus-dotnet%2FCorvus.JsonSchema%2Fbenchmarks%2FCorvus.Text.Json.OpenapiBenchmarkModels%2Fopenapi-schema.json#/$defs/parameter/properties/content"u8;
+            public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/$defs/parameter/properties/content"u8;
             private static readonly JsonSchemaPathProvider Ref0SchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/$ref"u8, buffer, out written);
 
             /// <summary>

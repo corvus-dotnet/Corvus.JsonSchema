@@ -41,17 +41,17 @@ public readonly partial struct Cql2Schema
                 /// <summary>
                 /// Gets a provider for the schema location from which this type was generated.
                 /// </summary>
-                public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("cql2-schema.json#/$defs/functionRef/properties/op"u8, buffer, out written);
+                public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/$defs/functionRef/properties/op"u8, buffer, out written);
 
                 /// <summary>
                 /// Gets the schema location from which this type was generated.
                 /// </summary>
-                public const string SchemaLocation = "cql2-schema.json#/$defs/functionRef/properties/op";
+                public const string SchemaLocation = "/$defs/functionRef/properties/op";
 
                 /// <summary>
                 /// Gets the schema location from which this type was generated as a UTF-8 string.
                 /// </summary>
-                public static ReadOnlySpan<byte> SchemaLocationUtf8 => "cql2-schema.json#/$defs/functionRef/properties/op"u8;
+                public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/$defs/functionRef/properties/op"u8;
                 private static readonly JsonSchemaPathProvider NotSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/not"u8, buffer, out written);
 
                 /// <summary>

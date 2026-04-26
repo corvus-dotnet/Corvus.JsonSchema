@@ -330,11 +330,11 @@ public readonly partial struct KrakendSchema
             /// See: https://www.krakend.io/docs/enterprise/authentication/gcp/
             /// </para>
             /// </remarks>
-            public Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271auth1gcpJson.JsonCredentialsFile.Mutable CredentialsJson
+            public Corvus.KrakendBenchmark.Current.JsonObject.Mutable CredentialsJson
             {
                 get
                 {
-                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CredentialsJsonUtf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271auth1gcpJson.JsonCredentialsFile.Mutable value))
+                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CredentialsJsonUtf8, out Corvus.KrakendBenchmark.Current.JsonObject.Mutable value))
                     {
                         return value;
                     }
@@ -355,11 +355,11 @@ public readonly partial struct KrakendSchema
             /// See: https://www.krakend.io/docs/enterprise/authentication/gcp/
             /// </para>
             /// </remarks>
-            public Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271auth1gcpJson.CustomClaims.Mutable CustomClaimsValue
+            public Corvus.KrakendBenchmark.Current.JsonObject.Mutable CustomClaims
             {
                 get
                 {
-                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CustomClaimsValueUtf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271auth1gcpJson.CustomClaims.Mutable value))
+                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CustomClaimsUtf8, out Corvus.KrakendBenchmark.Current.JsonObject.Mutable value))
                     {
                         return value;
                     }
@@ -422,7 +422,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Audience, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Audience, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -467,7 +467,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.CredentialsFile, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CredentialsFile, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -491,7 +491,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>credentials_json</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetCredentialsJson(in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271auth1gcpJson.JsonCredentialsFile.Source value)
+            public void SetCredentialsJson(in Corvus.KrakendBenchmark.Current.JsonObject.Source value)
             {
                 CheckValidInstance();
 
@@ -512,7 +512,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.CredentialsJson, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CredentialsJson, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -524,7 +524,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>credentials_json</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetCredentialsJson<TContext>(in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271auth1gcpJson.JsonCredentialsFile.Source<TContext> value)
+            public void SetCredentialsJson<TContext>(in Corvus.KrakendBenchmark.Current.JsonObject.Source<TContext> value)
 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
 #endif
@@ -548,7 +548,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.CredentialsJson, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CredentialsJson, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -572,19 +572,19 @@ public readonly partial struct KrakendSchema
             /// Set the <c>custom_claims</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetCustomClaimsValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271auth1gcpJson.CustomClaims.Source value)
+            public void SetCustomClaims(in Corvus.KrakendBenchmark.Current.JsonObject.Source value)
             {
                 CheckValidInstance();
 
                 if (value.IsUndefined)
                 {
-                    JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.CustomClaimsValueUtf8);
+                    JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.CustomClaimsUtf8);
                     _documentVersion = _parent.Version;
                     return;
                 }
 
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CustomClaimsValueUtf8, out IJsonDocument? elementParent, out int elementIdx))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CustomClaimsUtf8, out IJsonDocument? elementParent, out int elementIdx))
                 {
                     // We are going to replace just the value
                     value.AddAsItem(ref cvb);
@@ -593,7 +593,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.CustomClaimsValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CustomClaims, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -605,7 +605,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>custom_claims</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetCustomClaimsValue<TContext>(in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271auth1gcpJson.CustomClaims.Source<TContext> value)
+            public void SetCustomClaims<TContext>(in Corvus.KrakendBenchmark.Current.JsonObject.Source<TContext> value)
 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
 #endif
@@ -614,13 +614,13 @@ public readonly partial struct KrakendSchema
 
                 if (value.IsUndefined)
                 {
-                    JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.CustomClaimsValueUtf8);
+                    JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.CustomClaimsUtf8);
                     _documentVersion = _parent.Version;
                     return;
                 }
 
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CustomClaimsValueUtf8, out IJsonDocument? elementParent, out int elementIdx))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.CustomClaimsUtf8, out IJsonDocument? elementParent, out int elementIdx))
                 {
                     // We are going to replace just the value
                     value.AddAsItem(ref cvb);
@@ -629,7 +629,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.CustomClaimsValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CustomClaims, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -641,10 +641,10 @@ public readonly partial struct KrakendSchema
             /// Remove the <c>custom_claims</c> property, if present.
             /// </summary>
             /// <returns><see langword="true"/> if the property was found and removed; otherwise, <see langword="false"/>.</returns>
-            public bool RemoveCustomClaimsValue()
+            public bool RemoveCustomClaims()
             {
                 CheckValidInstance();
-                bool result = JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.CustomClaimsValueUtf8);
+                bool result = JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.CustomClaimsUtf8);
                 _documentVersion = _parent.Version;
                 return result;
             }
@@ -1192,6 +1192,24 @@ public readonly partial struct KrakendSchema
                 }
             }
 
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.JsonElement:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                        break;
+                    case Kind.Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
             internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
             {
                 switch(_kind)
@@ -1296,6 +1314,24 @@ public readonly partial struct KrakendSchema
                 }
             }
 
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.Source:
+                        _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                        break;
+                    case Kind.Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
             internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
             {
                 switch(_kind)
@@ -1376,13 +1412,13 @@ public readonly partial struct KrakendSchema
                 ref ComplexValueBuilder builder,
                 in Corvus.KrakendBenchmark.Current.JsonString.Source audience = default,
                 in Corvus.KrakendBenchmark.Current.JsonString.Source credentialsFile = default,
-                in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271auth1gcpJson.JsonCredentialsFile.Source credentialsJson = default,
-                in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271auth1gcpJson.CustomClaims.Source customClaims = default)
+                in Corvus.KrakendBenchmark.Current.JsonObject.Source credentialsJson = default,
+                in Corvus.KrakendBenchmark.Current.JsonObject.Source customClaims = default)
             {
-                audience.AddAsProperty(JsonPropertyNamesEscaped.Audience, ref builder, escapeName: false);
-                credentialsFile.AddAsProperty(JsonPropertyNamesEscaped.CredentialsFile, ref builder, escapeName: false);
-                credentialsJson.AddAsProperty(JsonPropertyNamesEscaped.CredentialsJson, ref builder, escapeName: false);
-                customClaims.AddAsProperty(JsonPropertyNamesEscaped.CustomClaimsValue, ref builder, escapeName: false);
+                audience.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Audience, ref builder);
+                credentialsFile.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CredentialsFile, ref builder);
+                credentialsJson.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CredentialsJson, ref builder);
+                customClaims.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CustomClaims, ref builder);
             }
 
             /// <summary>
@@ -1391,8 +1427,8 @@ public readonly partial struct KrakendSchema
             public void Create(
                 in Corvus.KrakendBenchmark.Current.JsonString.Source audience = default,
                 in Corvus.KrakendBenchmark.Current.JsonString.Source credentialsFile = default,
-                in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271auth1gcpJson.JsonCredentialsFile.Source credentialsJson = default,
-                in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271auth1gcpJson.CustomClaims.Source customClaims = default)
+                in Corvus.KrakendBenchmark.Current.JsonObject.Source credentialsJson = default,
+                in Corvus.KrakendBenchmark.Current.JsonObject.Source customClaims = default)
             {
                 Create(ref _builder, audience, credentialsFile, credentialsJson, customClaims);
             }
@@ -1405,16 +1441,16 @@ public readonly partial struct KrakendSchema
                 ref ComplexValueBuilder builder,
                 in Corvus.KrakendBenchmark.Current.JsonString.Source audience = default,
                 in Corvus.KrakendBenchmark.Current.JsonString.Source credentialsFile = default,
-                in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271auth1gcpJson.JsonCredentialsFile.Source<TContext> credentialsJson = default,
-                in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271auth1gcpJson.CustomClaims.Source<TContext> customClaims = default)
+                in Corvus.KrakendBenchmark.Current.JsonObject.Source<TContext> credentialsJson = default,
+                in Corvus.KrakendBenchmark.Current.JsonObject.Source<TContext> customClaims = default)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif
             {
-                audience.AddAsProperty(JsonPropertyNamesEscaped.Audience, ref builder, escapeName: false);
-                credentialsFile.AddAsProperty(JsonPropertyNamesEscaped.CredentialsFile, ref builder, escapeName: false);
-                credentialsJson.AddAsProperty(JsonPropertyNamesEscaped.CredentialsJson, ref builder, escapeName: false);
-                customClaims.AddAsProperty(JsonPropertyNamesEscaped.CustomClaimsValue, ref builder, escapeName: false);
+                audience.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Audience, ref builder);
+                credentialsFile.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CredentialsFile, ref builder);
+                credentialsJson.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CredentialsJson, ref builder);
+                customClaims.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CustomClaims, ref builder);
             }
 
             /// <summary>
@@ -1424,8 +1460,8 @@ public readonly partial struct KrakendSchema
                 in TContext context,
                 in Corvus.KrakendBenchmark.Current.JsonString.Source audience = default,
                 in Corvus.KrakendBenchmark.Current.JsonString.Source credentialsFile = default,
-                in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271auth1gcpJson.JsonCredentialsFile.Source<TContext> credentialsJson = default,
-                in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271auth1gcpJson.CustomClaims.Source<TContext> customClaims = default)
+                in Corvus.KrakendBenchmark.Current.JsonObject.Source<TContext> credentialsJson = default,
+                in Corvus.KrakendBenchmark.Current.JsonObject.Source<TContext> customClaims = default)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif
@@ -1820,7 +1856,7 @@ public readonly partial struct KrakendSchema
         /// <param name="customClaims">The value of the property.</param>
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
         /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-        public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.KrakendBenchmark.Current.JsonString.Source audience = default, in Corvus.KrakendBenchmark.Current.JsonString.Source credentialsFile = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271auth1gcpJson.JsonCredentialsFile.Source credentialsJson = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271auth1gcpJson.CustomClaims.Source customClaims = default, int initialCapacity = 30)
+        public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.KrakendBenchmark.Current.JsonString.Source audience = default, in Corvus.KrakendBenchmark.Current.JsonString.Source credentialsFile = default, in Corvus.KrakendBenchmark.Current.JsonObject.Source credentialsJson = default, in Corvus.KrakendBenchmark.Current.JsonObject.Source customClaims = default, int initialCapacity = 30)
         {
             JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
             ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
@@ -1845,7 +1881,7 @@ public readonly partial struct KrakendSchema
         /// <param name="customClaims">The value of the property.</param>
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
         /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-        public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.KrakendBenchmark.Current.JsonString.Source audience = default, in Corvus.KrakendBenchmark.Current.JsonString.Source credentialsFile = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271auth1gcpJson.JsonCredentialsFile.Source<TContext> credentialsJson = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271auth1gcpJson.CustomClaims.Source<TContext> customClaims = default, int initialCapacity = 30)
+        public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.KrakendBenchmark.Current.JsonString.Source audience = default, in Corvus.KrakendBenchmark.Current.JsonString.Source credentialsFile = default, in Corvus.KrakendBenchmark.Current.JsonObject.Source<TContext> credentialsJson = default, in Corvus.KrakendBenchmark.Current.JsonObject.Source<TContext> customClaims = default, int initialCapacity = 30)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif

@@ -51,7 +51,7 @@ public readonly partial struct KrakendSchema
             private const uint RequiredBitMask0 =
                 RequiredBitForLicense;
             private static readonly JsonSchemaPathProvider DebugValueSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/debug"u8, buffer, out written);
-            private static readonly JsonSchemaPathProvider HeadersToPassValueSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/headers_to_pass"u8, buffer, out written);
+            private static readonly JsonSchemaPathProvider HeadersToPassSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/headers_to_pass"u8, buffer, out written);
             private static readonly JsonSchemaPathProvider LicenseSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/license"u8, buffer, out written);
 
             private static void MatchDebugValue(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
@@ -69,18 +69,18 @@ public readonly partial struct KrakendSchema
                 context.CommitChildContext(childContext.IsMatch, ref childContext);
             }
 
-            private static void MatchHeadersToPassValue(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+            private static void MatchHeadersToPass(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext1 =
-                    Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271telemetry1newrelicJson.HeadersToPass.JsonSchema.PushChildContextUnescaped(
+                    Corvus.KrakendBenchmark.Current.JsonArray.JsonSchema.PushChildContextUnescaped(
                         parentDocument,
                         parentDocumentIndex,
                         ref context,
-                        JsonPropertyNames.HeadersToPassValueUtf8,
-                        evaluationPath: HeadersToPassValueSchemaEvaluationPath);
+                        JsonPropertyNames.HeadersToPassUtf8,
+                        evaluationPath: HeadersToPassSchemaEvaluationPath);
 
-                Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271telemetry1newrelicJson.HeadersToPass.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext1);
+                Corvus.KrakendBenchmark.Current.JsonArray.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext1);
                 context.CommitChildContext(childContext1.IsMatch, ref childContext1);
             }
 
@@ -110,7 +110,7 @@ public readonly partial struct KrakendSchema
             {
                 return new PropertySchemaMatchers<Corvus.KrakendBenchmark.Current.PropertiesValidationHandler_NamedPropertyValidator>([
                     (static () => JsonPropertyNames.DebugValueUtf8, MatchDebugValue),
-                    (static () => JsonPropertyNames.HeadersToPassValueUtf8, MatchHeadersToPassValue),
+                    (static () => JsonPropertyNames.HeadersToPassUtf8, MatchHeadersToPass),
                     (static () => JsonPropertyNames.LicenseUtf8, MatchLicense),
                 ]);
             }
@@ -138,17 +138,17 @@ public readonly partial struct KrakendSchema
             /// <summary>
             /// Gets a provider for the schema location from which this type was generated.
             /// </summary>
-            public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("krakend-schema.json#/definitions/https:~1~1www.krakend.io~1schema~1v2.7~1telemetry~1newrelic.json"u8, buffer, out written);
+            public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/definitions/https:~1~1www.krakend.io~1schema~1v2.7~1telemetry~1newrelic.json"u8, buffer, out written);
 
             /// <summary>
             /// Gets the schema location from which this type was generated.
             /// </summary>
-            public const string SchemaLocation = "krakend-schema.json#/definitions/https:~1~1www.krakend.io~1schema~1v2.7~1telemetry~1newrelic.json";
+            public const string SchemaLocation = "/definitions/https:~1~1www.krakend.io~1schema~1v2.7~1telemetry~1newrelic.json";
 
             /// <summary>
             /// Gets the schema location from which this type was generated as a UTF-8 string.
             /// </summary>
-            public static ReadOnlySpan<byte> SchemaLocationUtf8 => "krakend-schema.json#/definitions/https:~1~1www.krakend.io~1schema~1v2.7~1telemetry~1newrelic.json"u8;
+            public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/definitions/https:~1~1www.krakend.io~1schema~1v2.7~1telemetry~1newrelic.json"u8;
 
             /// <summary>
             /// Applies the JSON schema semantics defined by this type to the instance determined by the given document and index.

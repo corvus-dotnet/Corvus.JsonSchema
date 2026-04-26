@@ -588,7 +588,7 @@ public readonly partial struct OmnisharpSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Configuration, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Configuration, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -633,7 +633,7 @@ public readonly partial struct OmnisharpSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.CscToolExe, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CscToolExe, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -678,7 +678,7 @@ public readonly partial struct OmnisharpSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.CscToolPath, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CscToolPath, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -723,7 +723,7 @@ public readonly partial struct OmnisharpSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Enabled, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Enabled, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -768,7 +768,7 @@ public readonly partial struct OmnisharpSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.EnablePackageAutoRestore, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.EnablePackageAutoRestore, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -813,7 +813,7 @@ public readonly partial struct OmnisharpSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.LoadProjectsOnDemand, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.LoadProjectsOnDemand, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -858,7 +858,7 @@ public readonly partial struct OmnisharpSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.MsBuildExtensionsPath, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MsBuildExtensionsPath, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -903,7 +903,7 @@ public readonly partial struct OmnisharpSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.MsBuildSdKsPath, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MsBuildSdKsPath, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -948,7 +948,7 @@ public readonly partial struct OmnisharpSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Platform, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Platform, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -993,7 +993,7 @@ public readonly partial struct OmnisharpSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.RoslynTargetsPath, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.RoslynTargetsPath, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1038,7 +1038,7 @@ public readonly partial struct OmnisharpSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.TargetFrameworkRootPath, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TargetFrameworkRootPath, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1083,7 +1083,7 @@ public readonly partial struct OmnisharpSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.ToolsVersion, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ToolsVersion, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1128,7 +1128,7 @@ public readonly partial struct OmnisharpSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.VisualStudioVersion, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.VisualStudioVersion, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1511,6 +1511,24 @@ public readonly partial struct OmnisharpSchema
                 }
             }
 
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.JsonElement:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                        break;
+                    case Kind.Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
             internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
             {
                 switch(_kind)
@@ -1612,6 +1630,24 @@ public readonly partial struct OmnisharpSchema
                 }
             }
 
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.Source:
+                        _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                        break;
+                    case Kind.Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
             internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
             {
                 switch(_kind)
@@ -1704,19 +1740,19 @@ public readonly partial struct OmnisharpSchema
                 in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.ToolsVersionEntity.Source toolsVersion = default,
                 in Corvus.OmnisharpBenchmark.Current.OmnisharpSchema.UsedToConfigureMsBuildSolutionsAndProjects.VisualStudioVersionEntity.Source visualStudioVersion = default)
             {
-                configuration.AddAsProperty(JsonPropertyNamesEscaped.Configuration, ref builder, escapeName: false);
-                cscToolExe.AddAsProperty(JsonPropertyNamesEscaped.CscToolExe, ref builder, escapeName: false);
-                cscToolPath.AddAsProperty(JsonPropertyNamesEscaped.CscToolPath, ref builder, escapeName: false);
-                enabled.AddAsProperty(JsonPropertyNamesEscaped.Enabled, ref builder, escapeName: false);
-                enablePackageAutoRestore.AddAsProperty(JsonPropertyNamesEscaped.EnablePackageAutoRestore, ref builder, escapeName: false);
-                loadProjectsOnDemand.AddAsProperty(JsonPropertyNamesEscaped.LoadProjectsOnDemand, ref builder, escapeName: false);
-                mSBuildExtensionsPath.AddAsProperty(JsonPropertyNamesEscaped.MsBuildExtensionsPath, ref builder, escapeName: false);
-                mSBuildSdKsPath.AddAsProperty(JsonPropertyNamesEscaped.MsBuildSdKsPath, ref builder, escapeName: false);
-                platform.AddAsProperty(JsonPropertyNamesEscaped.Platform, ref builder, escapeName: false);
-                roslynTargetsPath.AddAsProperty(JsonPropertyNamesEscaped.RoslynTargetsPath, ref builder, escapeName: false);
-                targetFrameworkRootPath.AddAsProperty(JsonPropertyNamesEscaped.TargetFrameworkRootPath, ref builder, escapeName: false);
-                toolsVersion.AddAsProperty(JsonPropertyNamesEscaped.ToolsVersion, ref builder, escapeName: false);
-                visualStudioVersion.AddAsProperty(JsonPropertyNamesEscaped.VisualStudioVersion, ref builder, escapeName: false);
+                configuration.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Configuration, ref builder);
+                cscToolExe.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CscToolExe, ref builder);
+                cscToolPath.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CscToolPath, ref builder);
+                enabled.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Enabled, ref builder);
+                enablePackageAutoRestore.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.EnablePackageAutoRestore, ref builder);
+                loadProjectsOnDemand.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.LoadProjectsOnDemand, ref builder);
+                mSBuildExtensionsPath.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MsBuildExtensionsPath, ref builder);
+                mSBuildSdKsPath.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MsBuildSdKsPath, ref builder);
+                platform.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Platform, ref builder);
+                roslynTargetsPath.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.RoslynTargetsPath, ref builder);
+                targetFrameworkRootPath.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TargetFrameworkRootPath, ref builder);
+                toolsVersion.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ToolsVersion, ref builder);
+                visualStudioVersion.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.VisualStudioVersion, ref builder);
             }
 
             /// <summary>

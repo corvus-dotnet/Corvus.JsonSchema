@@ -921,7 +921,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.AuthApiKeys, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AuthApiKeys, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -957,7 +957,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.AuthApiKeys, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AuthApiKeys, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1002,7 +1002,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.AuthBasic, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AuthBasic, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1038,7 +1038,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.AuthBasic, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AuthBasic, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1083,7 +1083,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.AuthRevoker, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AuthRevoker, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1119,7 +1119,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.AuthRevoker, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AuthRevoker, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1164,7 +1164,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.AuthValidator, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AuthValidator, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1200,7 +1200,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.AuthValidator, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AuthValidator, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1245,7 +1245,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.DocumentationOpenapi, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DocumentationOpenapi, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1281,7 +1281,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.DocumentationOpenapi, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DocumentationOpenapi, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1326,7 +1326,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.GithubComLetgoappKrakendInflux, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.GithubComLetgoappKrakendInflux, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1362,7 +1362,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.GithubComLetgoappKrakendInflux, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.GithubComLetgoappKrakendInflux, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1407,7 +1407,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Grpc, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Grpc, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1443,7 +1443,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Grpc, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Grpc, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1488,7 +1488,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.ModifierLuaEndpoint, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ModifierLuaEndpoint, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1524,7 +1524,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.ModifierLuaEndpoint, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ModifierLuaEndpoint, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1569,7 +1569,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.ModifierResponseHeaders, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ModifierResponseHeaders, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1605,7 +1605,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.ModifierResponseHeaders, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ModifierResponseHeaders, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1650,7 +1650,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.PluginHttpServer, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PluginHttpServer, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1686,7 +1686,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.PluginHttpServer, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PluginHttpServer, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1731,7 +1731,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.QosRatelimitService, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.QosRatelimitService, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1767,7 +1767,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.QosRatelimitService, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.QosRatelimitService, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1812,7 +1812,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.QosRatelimitTiered, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.QosRatelimitTiered, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1848,7 +1848,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.QosRatelimitTiered, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.QosRatelimitTiered, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1893,7 +1893,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Router, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Router, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1929,7 +1929,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Router, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Router, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1974,7 +1974,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.SecurityBotDetector, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SecurityBotDetector, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -2010,7 +2010,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.SecurityBotDetector, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SecurityBotDetector, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -2055,7 +2055,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.SecurityCors, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SecurityCors, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -2091,7 +2091,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.SecurityCors, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SecurityCors, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -2136,7 +2136,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.SecurityHttp, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SecurityHttp, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -2172,7 +2172,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.SecurityHttp, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SecurityHttp, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -2217,7 +2217,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.ServerStaticFilesystem, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ServerStaticFilesystem, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -2253,7 +2253,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.ServerStaticFilesystem, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ServerStaticFilesystem, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -2298,7 +2298,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.ServerVirtualhost, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ServerVirtualhost, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -2334,7 +2334,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.ServerVirtualhost, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ServerVirtualhost, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -2379,7 +2379,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.TelemetryGelf, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TelemetryGelf, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -2415,7 +2415,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.TelemetryGelf, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TelemetryGelf, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -2460,7 +2460,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.TelemetryInflux, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TelemetryInflux, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -2496,7 +2496,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.TelemetryInflux, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TelemetryInflux, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -2541,7 +2541,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.TelemetryLogging, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TelemetryLogging, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -2577,7 +2577,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.TelemetryLogging, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TelemetryLogging, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -2622,7 +2622,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.TelemetryLogstash, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TelemetryLogstash, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -2658,7 +2658,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.TelemetryLogstash, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TelemetryLogstash, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -2703,7 +2703,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.TelemetryMetrics, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TelemetryMetrics, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -2739,7 +2739,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.TelemetryMetrics, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TelemetryMetrics, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -2784,7 +2784,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.TelemetryMoesif, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TelemetryMoesif, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -2820,7 +2820,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.TelemetryMoesif, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TelemetryMoesif, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -2865,7 +2865,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.TelemetryNewrelic, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TelemetryNewrelic, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -2901,7 +2901,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.TelemetryNewrelic, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TelemetryNewrelic, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -2946,7 +2946,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.TelemetryOpencensus, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TelemetryOpencensus, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -2982,7 +2982,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.TelemetryOpencensus, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TelemetryOpencensus, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -3027,7 +3027,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.TelemetryOpentelemetry, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TelemetryOpentelemetry, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -3063,7 +3063,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.TelemetryOpentelemetry, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TelemetryOpentelemetry, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -3108,7 +3108,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.TelemetryOpentelemetrySecurity, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TelemetryOpentelemetrySecurity, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -3144,7 +3144,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.TelemetryOpentelemetrySecurity, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TelemetryOpentelemetrySecurity, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -3527,6 +3527,24 @@ public readonly partial struct KrakendSchema
                 }
             }
 
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.JsonElement:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                        break;
+                    case Kind.Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
             internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
             {
                 switch(_kind)
@@ -3621,6 +3639,24 @@ public readonly partial struct KrakendSchema
                         break;
                     case Kind.Builder:
                         valueBuilder.AddProperty(utf8Name, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o), escapeName, nameRequiresUnescaping);
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.Source:
+                        _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                        break;
+                    case Kind.Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                         break;
                     default:
                         Debug.Fail("Unexpected Kind");
@@ -3735,34 +3771,34 @@ public readonly partial struct KrakendSchema
                 in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271telemetry1opentelemetryJson.Source telemetryOpentelemetry = default,
                 in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271telemetry1opentelemetrySecurityJson.Source telemetryOpentelemetrySecurity = default)
             {
-                authApiKeys.AddAsProperty(JsonPropertyNamesEscaped.AuthApiKeys, ref builder, escapeName: false);
-                authBasic.AddAsProperty(JsonPropertyNamesEscaped.AuthBasic, ref builder, escapeName: false);
-                authRevoker.AddAsProperty(JsonPropertyNamesEscaped.AuthRevoker, ref builder, escapeName: false);
-                authValidator.AddAsProperty(JsonPropertyNamesEscaped.AuthValidator, ref builder, escapeName: false);
-                documentationOpenapi.AddAsProperty(JsonPropertyNamesEscaped.DocumentationOpenapi, ref builder, escapeName: false);
-                githubComLetgoappKrakendInflux.AddAsProperty(JsonPropertyNamesEscaped.GithubComLetgoappKrakendInflux, ref builder, escapeName: false);
-                grpc.AddAsProperty(JsonPropertyNamesEscaped.Grpc, ref builder, escapeName: false);
-                modifierLuaEndpoint.AddAsProperty(JsonPropertyNamesEscaped.ModifierLuaEndpoint, ref builder, escapeName: false);
-                modifierResponseHeaders.AddAsProperty(JsonPropertyNamesEscaped.ModifierResponseHeaders, ref builder, escapeName: false);
-                pluginHttpServer.AddAsProperty(JsonPropertyNamesEscaped.PluginHttpServer, ref builder, escapeName: false);
-                qosRatelimitService.AddAsProperty(JsonPropertyNamesEscaped.QosRatelimitService, ref builder, escapeName: false);
-                qosRatelimitTiered.AddAsProperty(JsonPropertyNamesEscaped.QosRatelimitTiered, ref builder, escapeName: false);
-                router.AddAsProperty(JsonPropertyNamesEscaped.Router, ref builder, escapeName: false);
-                securityBotDetector.AddAsProperty(JsonPropertyNamesEscaped.SecurityBotDetector, ref builder, escapeName: false);
-                securityCors.AddAsProperty(JsonPropertyNamesEscaped.SecurityCors, ref builder, escapeName: false);
-                securityHttp.AddAsProperty(JsonPropertyNamesEscaped.SecurityHttp, ref builder, escapeName: false);
-                serverStaticFilesystem.AddAsProperty(JsonPropertyNamesEscaped.ServerStaticFilesystem, ref builder, escapeName: false);
-                serverVirtualhost.AddAsProperty(JsonPropertyNamesEscaped.ServerVirtualhost, ref builder, escapeName: false);
-                telemetryGelf.AddAsProperty(JsonPropertyNamesEscaped.TelemetryGelf, ref builder, escapeName: false);
-                telemetryInflux.AddAsProperty(JsonPropertyNamesEscaped.TelemetryInflux, ref builder, escapeName: false);
-                telemetryLogging.AddAsProperty(JsonPropertyNamesEscaped.TelemetryLogging, ref builder, escapeName: false);
-                telemetryLogstash.AddAsProperty(JsonPropertyNamesEscaped.TelemetryLogstash, ref builder, escapeName: false);
-                telemetryMetrics.AddAsProperty(JsonPropertyNamesEscaped.TelemetryMetrics, ref builder, escapeName: false);
-                telemetryMoesif.AddAsProperty(JsonPropertyNamesEscaped.TelemetryMoesif, ref builder, escapeName: false);
-                telemetryNewrelic.AddAsProperty(JsonPropertyNamesEscaped.TelemetryNewrelic, ref builder, escapeName: false);
-                telemetryOpencensus.AddAsProperty(JsonPropertyNamesEscaped.TelemetryOpencensus, ref builder, escapeName: false);
-                telemetryOpentelemetry.AddAsProperty(JsonPropertyNamesEscaped.TelemetryOpentelemetry, ref builder, escapeName: false);
-                telemetryOpentelemetrySecurity.AddAsProperty(JsonPropertyNamesEscaped.TelemetryOpentelemetrySecurity, ref builder, escapeName: false);
+                authApiKeys.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AuthApiKeys, ref builder);
+                authBasic.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AuthBasic, ref builder);
+                authRevoker.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AuthRevoker, ref builder);
+                authValidator.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AuthValidator, ref builder);
+                documentationOpenapi.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DocumentationOpenapi, ref builder);
+                githubComLetgoappKrakendInflux.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.GithubComLetgoappKrakendInflux, ref builder);
+                grpc.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Grpc, ref builder);
+                modifierLuaEndpoint.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ModifierLuaEndpoint, ref builder);
+                modifierResponseHeaders.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ModifierResponseHeaders, ref builder);
+                pluginHttpServer.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PluginHttpServer, ref builder);
+                qosRatelimitService.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.QosRatelimitService, ref builder);
+                qosRatelimitTiered.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.QosRatelimitTiered, ref builder);
+                router.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Router, ref builder);
+                securityBotDetector.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SecurityBotDetector, ref builder);
+                securityCors.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SecurityCors, ref builder);
+                securityHttp.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SecurityHttp, ref builder);
+                serverStaticFilesystem.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ServerStaticFilesystem, ref builder);
+                serverVirtualhost.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ServerVirtualhost, ref builder);
+                telemetryGelf.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TelemetryGelf, ref builder);
+                telemetryInflux.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TelemetryInflux, ref builder);
+                telemetryLogging.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TelemetryLogging, ref builder);
+                telemetryLogstash.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TelemetryLogstash, ref builder);
+                telemetryMetrics.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TelemetryMetrics, ref builder);
+                telemetryMoesif.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TelemetryMoesif, ref builder);
+                telemetryNewrelic.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TelemetryNewrelic, ref builder);
+                telemetryOpencensus.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TelemetryOpencensus, ref builder);
+                telemetryOpentelemetry.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TelemetryOpentelemetry, ref builder);
+                telemetryOpentelemetrySecurity.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TelemetryOpentelemetrySecurity, ref builder);
             }
 
             /// <summary>
@@ -3839,34 +3875,34 @@ public readonly partial struct KrakendSchema
             where TContext : allows ref struct
             #endif
             {
-                authApiKeys.AddAsProperty(JsonPropertyNamesEscaped.AuthApiKeys, ref builder, escapeName: false);
-                authBasic.AddAsProperty(JsonPropertyNamesEscaped.AuthBasic, ref builder, escapeName: false);
-                authRevoker.AddAsProperty(JsonPropertyNamesEscaped.AuthRevoker, ref builder, escapeName: false);
-                authValidator.AddAsProperty(JsonPropertyNamesEscaped.AuthValidator, ref builder, escapeName: false);
-                documentationOpenapi.AddAsProperty(JsonPropertyNamesEscaped.DocumentationOpenapi, ref builder, escapeName: false);
-                githubComLetgoappKrakendInflux.AddAsProperty(JsonPropertyNamesEscaped.GithubComLetgoappKrakendInflux, ref builder, escapeName: false);
-                grpc.AddAsProperty(JsonPropertyNamesEscaped.Grpc, ref builder, escapeName: false);
-                modifierLuaEndpoint.AddAsProperty(JsonPropertyNamesEscaped.ModifierLuaEndpoint, ref builder, escapeName: false);
-                modifierResponseHeaders.AddAsProperty(JsonPropertyNamesEscaped.ModifierResponseHeaders, ref builder, escapeName: false);
-                pluginHttpServer.AddAsProperty(JsonPropertyNamesEscaped.PluginHttpServer, ref builder, escapeName: false);
-                qosRatelimitService.AddAsProperty(JsonPropertyNamesEscaped.QosRatelimitService, ref builder, escapeName: false);
-                qosRatelimitTiered.AddAsProperty(JsonPropertyNamesEscaped.QosRatelimitTiered, ref builder, escapeName: false);
-                router.AddAsProperty(JsonPropertyNamesEscaped.Router, ref builder, escapeName: false);
-                securityBotDetector.AddAsProperty(JsonPropertyNamesEscaped.SecurityBotDetector, ref builder, escapeName: false);
-                securityCors.AddAsProperty(JsonPropertyNamesEscaped.SecurityCors, ref builder, escapeName: false);
-                securityHttp.AddAsProperty(JsonPropertyNamesEscaped.SecurityHttp, ref builder, escapeName: false);
-                serverStaticFilesystem.AddAsProperty(JsonPropertyNamesEscaped.ServerStaticFilesystem, ref builder, escapeName: false);
-                serverVirtualhost.AddAsProperty(JsonPropertyNamesEscaped.ServerVirtualhost, ref builder, escapeName: false);
-                telemetryGelf.AddAsProperty(JsonPropertyNamesEscaped.TelemetryGelf, ref builder, escapeName: false);
-                telemetryInflux.AddAsProperty(JsonPropertyNamesEscaped.TelemetryInflux, ref builder, escapeName: false);
-                telemetryLogging.AddAsProperty(JsonPropertyNamesEscaped.TelemetryLogging, ref builder, escapeName: false);
-                telemetryLogstash.AddAsProperty(JsonPropertyNamesEscaped.TelemetryLogstash, ref builder, escapeName: false);
-                telemetryMetrics.AddAsProperty(JsonPropertyNamesEscaped.TelemetryMetrics, ref builder, escapeName: false);
-                telemetryMoesif.AddAsProperty(JsonPropertyNamesEscaped.TelemetryMoesif, ref builder, escapeName: false);
-                telemetryNewrelic.AddAsProperty(JsonPropertyNamesEscaped.TelemetryNewrelic, ref builder, escapeName: false);
-                telemetryOpencensus.AddAsProperty(JsonPropertyNamesEscaped.TelemetryOpencensus, ref builder, escapeName: false);
-                telemetryOpentelemetry.AddAsProperty(JsonPropertyNamesEscaped.TelemetryOpentelemetry, ref builder, escapeName: false);
-                telemetryOpentelemetrySecurity.AddAsProperty(JsonPropertyNamesEscaped.TelemetryOpentelemetrySecurity, ref builder, escapeName: false);
+                authApiKeys.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AuthApiKeys, ref builder);
+                authBasic.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AuthBasic, ref builder);
+                authRevoker.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AuthRevoker, ref builder);
+                authValidator.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AuthValidator, ref builder);
+                documentationOpenapi.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DocumentationOpenapi, ref builder);
+                githubComLetgoappKrakendInflux.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.GithubComLetgoappKrakendInflux, ref builder);
+                grpc.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Grpc, ref builder);
+                modifierLuaEndpoint.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ModifierLuaEndpoint, ref builder);
+                modifierResponseHeaders.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ModifierResponseHeaders, ref builder);
+                pluginHttpServer.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PluginHttpServer, ref builder);
+                qosRatelimitService.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.QosRatelimitService, ref builder);
+                qosRatelimitTiered.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.QosRatelimitTiered, ref builder);
+                router.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Router, ref builder);
+                securityBotDetector.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SecurityBotDetector, ref builder);
+                securityCors.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SecurityCors, ref builder);
+                securityHttp.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SecurityHttp, ref builder);
+                serverStaticFilesystem.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ServerStaticFilesystem, ref builder);
+                serverVirtualhost.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ServerVirtualhost, ref builder);
+                telemetryGelf.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TelemetryGelf, ref builder);
+                telemetryInflux.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TelemetryInflux, ref builder);
+                telemetryLogging.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TelemetryLogging, ref builder);
+                telemetryLogstash.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TelemetryLogstash, ref builder);
+                telemetryMetrics.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TelemetryMetrics, ref builder);
+                telemetryMoesif.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TelemetryMoesif, ref builder);
+                telemetryNewrelic.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TelemetryNewrelic, ref builder);
+                telemetryOpencensus.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TelemetryOpencensus, ref builder);
+                telemetryOpentelemetry.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TelemetryOpentelemetry, ref builder);
+                telemetryOpentelemetrySecurity.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TelemetryOpentelemetrySecurity, ref builder);
             }
 
             /// <summary>

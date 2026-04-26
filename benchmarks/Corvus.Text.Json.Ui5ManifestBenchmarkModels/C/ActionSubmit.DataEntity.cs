@@ -207,24 +207,6 @@ public readonly partial struct ActionSubmit
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         private JsonTokenType TokenType => _parent?.GetJsonTokenType(_idx) ?? JsonTokenType.None;
 
-        /// <summary>
-        /// Conversion to <see cref="Corvus.Ui5ManifestBenchmark.Current.ActionSubmit.DataEntity.AnyOf1Entity"/>.
-        /// </summary>
-        /// <param name="value">The value from which to convert.</param>
-        public static explicit operator Corvus.Ui5ManifestBenchmark.Current.ActionSubmit.DataEntity.AnyOf1Entity(DataEntity value)
-        {
-            return Corvus.Ui5ManifestBenchmark.Current.ActionSubmit.DataEntity.AnyOf1Entity.From(value);
-        }
-
-        /// <summary>
-        /// Conversion from <see cref="Corvus.Ui5ManifestBenchmark.Current.ActionSubmit.DataEntity.AnyOf1Entity"/>.
-        /// </summary>
-        /// <param name="value">The value from which to convert.</param>
-        public static implicit operator DataEntity(Corvus.Ui5ManifestBenchmark.Current.ActionSubmit.DataEntity.AnyOf1Entity value)
-        {
-            return From(value);
-        }
-
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static explicit operator string(DataEntity value) => value._parent.GetString(value._idx, JsonTokenType.String) ?? throw new FormatException();
 
@@ -697,15 +679,15 @@ public readonly partial struct ActionSubmit
         }
 
         /// <summary>
-        /// Gets the value as a <see cref="Corvus.Ui5ManifestBenchmark.Current.ActionSubmit.DataEntity.AnyOf1Entity" />.
+        /// Gets the value as a <see cref="Corvus.Ui5ManifestBenchmark.Current.JsonObject" />.
         /// </summary>
         /// <param name="result">The result of the conversions.</param>
         /// <returns><see langword="true" /> if the conversion was valid.</returns>
-        public bool TryGetAsAnyOf1Entity(out Corvus.Ui5ManifestBenchmark.Current.ActionSubmit.DataEntity.AnyOf1Entity result)
+        public bool TryGetAsJsonObject(out Corvus.Ui5ManifestBenchmark.Current.JsonObject result)
         {
-            if (Corvus.Ui5ManifestBenchmark.Current.ActionSubmit.DataEntity.AnyOf1Entity.JsonSchema.Evaluate(_parent, _idx))
+            if (Corvus.Ui5ManifestBenchmark.Current.JsonObject.JsonSchema.Evaluate(_parent, _idx))
             {
-                result = Corvus.Ui5ManifestBenchmark.Current.ActionSubmit.DataEntity.AnyOf1Entity.From(this);
+                result = Corvus.Ui5ManifestBenchmark.Current.JsonObject.From(this);
                 return true;
             }
 
@@ -720,13 +702,13 @@ public readonly partial struct ActionSubmit
         /// <typeparam name="TResult">The result of calling the match function.</typeparam>
         /// <param name="context">The context to pass to the match function.</param>
         /// <param name="matchJsonString">Match a <see cref="Corvus.Ui5ManifestBenchmark.Current.JsonString"/>.</param>
-        /// <param name="matchAnyOf1Entity">Match a <see cref="Corvus.Ui5ManifestBenchmark.Current.ActionSubmit.DataEntity.AnyOf1Entity"/>.</param>
+        /// <param name="matchJsonObject">Match a <see cref="Corvus.Ui5ManifestBenchmark.Current.JsonObject"/>.</param>
         /// <param name="defaultMatch">Match any other value.</param>
         /// <returns>An instance of the value returned by the match function.</returns>
         public TResult Match<TContext, TResult>(
             in TContext context,
             Matcher<Corvus.Ui5ManifestBenchmark.Current.JsonString, TContext, TResult> matchJsonString,
-            Matcher<Corvus.Ui5ManifestBenchmark.Current.ActionSubmit.DataEntity.AnyOf1Entity, TContext, TResult> matchAnyOf1Entity,
+            Matcher<Corvus.Ui5ManifestBenchmark.Current.JsonObject, TContext, TResult> matchJsonObject,
             Matcher<Corvus.Ui5ManifestBenchmark.Current.ActionSubmit.DataEntity, TContext, TResult> defaultMatch)
 #if NET9_0_OR_GREATER
         where TContext : allows ref struct
@@ -737,9 +719,9 @@ public readonly partial struct ActionSubmit
                 return matchJsonString(Corvus.Ui5ManifestBenchmark.Current.JsonString.From(this), context);
             }
 
-            if (Corvus.Ui5ManifestBenchmark.Current.ActionSubmit.DataEntity.AnyOf1Entity.JsonSchema.Evaluate(_parent, _idx))
+            if (Corvus.Ui5ManifestBenchmark.Current.JsonObject.JsonSchema.Evaluate(_parent, _idx))
             {
-                return matchAnyOf1Entity(Corvus.Ui5ManifestBenchmark.Current.ActionSubmit.DataEntity.AnyOf1Entity.From(this), context);
+                return matchJsonObject(Corvus.Ui5ManifestBenchmark.Current.JsonObject.From(this), context);
             }
 
             return defaultMatch(this, context);
@@ -750,12 +732,12 @@ public readonly partial struct ActionSubmit
         /// </summary>
         /// <typeparam name="TResult">The result of calling the match function.</typeparam>
         /// <param name="matchJsonString">Match a <see cref="Corvus.Ui5ManifestBenchmark.Current.JsonString"/>.</param>
-        /// <param name="matchAnyOf1Entity">Match a <see cref="Corvus.Ui5ManifestBenchmark.Current.ActionSubmit.DataEntity.AnyOf1Entity"/>.</param>
+        /// <param name="matchJsonObject">Match a <see cref="Corvus.Ui5ManifestBenchmark.Current.JsonObject"/>.</param>
         /// <param name="defaultMatch">Match any other value.</param>
         /// <returns>An instance of the value returned by the match function.</returns>
         public TResult Match<TResult>(
             Matcher<Corvus.Ui5ManifestBenchmark.Current.JsonString, TResult> matchJsonString,
-            Matcher<Corvus.Ui5ManifestBenchmark.Current.ActionSubmit.DataEntity.AnyOf1Entity, TResult> matchAnyOf1Entity,
+            Matcher<Corvus.Ui5ManifestBenchmark.Current.JsonObject, TResult> matchJsonObject,
             Matcher<Corvus.Ui5ManifestBenchmark.Current.ActionSubmit.DataEntity, TResult> defaultMatch)
         {
             if (Corvus.Ui5ManifestBenchmark.Current.JsonString.JsonSchema.Evaluate(_parent, _idx))
@@ -763,9 +745,9 @@ public readonly partial struct ActionSubmit
                 return matchJsonString(Corvus.Ui5ManifestBenchmark.Current.JsonString.From(this));
             }
 
-            if (Corvus.Ui5ManifestBenchmark.Current.ActionSubmit.DataEntity.AnyOf1Entity.JsonSchema.Evaluate(_parent, _idx))
+            if (Corvus.Ui5ManifestBenchmark.Current.JsonObject.JsonSchema.Evaluate(_parent, _idx))
             {
-                return matchAnyOf1Entity(Corvus.Ui5ManifestBenchmark.Current.ActionSubmit.DataEntity.AnyOf1Entity.From(this));
+                return matchJsonObject(Corvus.Ui5ManifestBenchmark.Current.JsonObject.From(this));
             }
 
             return defaultMatch(this);

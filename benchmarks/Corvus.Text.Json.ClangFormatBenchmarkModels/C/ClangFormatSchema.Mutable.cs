@@ -1866,11 +1866,11 @@ public readonly partial struct ClangFormatSchema
         /// clang-format 8\r\r The JavaScriptQuoteStyle to use for JavaScript strings.
         /// </para>
         /// </remarks>
-        public Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.JavaImportGroupArray.Mutable JavaImportGroup
+        public Corvus.ClangFormatBenchmark.Current.JsonArray.Mutable JavaImportGroup
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.JavaImportGroupUtf8, out Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.JavaImportGroupArray.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.JavaImportGroupUtf8, out Corvus.ClangFormatBenchmark.Current.JsonArray.Mutable value))
                 {
                     return value;
                 }
@@ -3498,7 +3498,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.AccessModifierOffset, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AccessModifierOffset, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -3543,7 +3543,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.AlignAfterOpenBracket, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AlignAfterOpenBracket, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -3588,7 +3588,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.AlignArrayOfStructures, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AlignArrayOfStructures, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -3633,7 +3633,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.AlignConsecutiveAssignments, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AlignConsecutiveAssignments, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -3669,7 +3669,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.AlignConsecutiveAssignments, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AlignConsecutiveAssignments, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -3714,7 +3714,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.AlignConsecutiveBitFields, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AlignConsecutiveBitFields, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -3750,7 +3750,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.AlignConsecutiveBitFields, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AlignConsecutiveBitFields, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -3795,7 +3795,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.AlignConsecutiveDeclarations, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AlignConsecutiveDeclarations, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -3831,7 +3831,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.AlignConsecutiveDeclarations, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AlignConsecutiveDeclarations, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -3876,7 +3876,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.AlignConsecutiveMacros, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AlignConsecutiveMacros, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -3912,7 +3912,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.AlignConsecutiveMacros, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AlignConsecutiveMacros, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -3957,7 +3957,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.AlignEscapedNewlines, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AlignEscapedNewlines, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -4002,7 +4002,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.AlignOperands, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AlignOperands, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -4047,7 +4047,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.AlignTrailingComments, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AlignTrailingComments, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -4083,7 +4083,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.AlignTrailingComments, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AlignTrailingComments, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -4128,7 +4128,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.AllowAllArgumentsOnNextLine, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AllowAllArgumentsOnNextLine, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -4173,7 +4173,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.AllowAllConstructorInitializersOnNextLine, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AllowAllConstructorInitializersOnNextLine, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -4218,7 +4218,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.AllowAllParametersOfDeclarationOnNextLine, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AllowAllParametersOfDeclarationOnNextLine, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -4263,7 +4263,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.AllowShortBlocksOnASingleLine, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AllowShortBlocksOnASingleLine, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -4308,7 +4308,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.AllowShortCaseLabelsOnASingleLine, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AllowShortCaseLabelsOnASingleLine, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -4353,7 +4353,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.AllowShortEnumsOnASingleLine, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AllowShortEnumsOnASingleLine, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -4398,7 +4398,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.AllowShortFunctionsOnASingleLine, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AllowShortFunctionsOnASingleLine, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -4443,7 +4443,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.AllowShortIfStatementsOnASingleLine, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AllowShortIfStatementsOnASingleLine, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -4488,7 +4488,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.AllowShortLambdasOnASingleLine, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AllowShortLambdasOnASingleLine, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -4533,7 +4533,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.AllowShortLoopsOnASingleLine, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AllowShortLoopsOnASingleLine, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -4578,7 +4578,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.AlwaysBreakAfterDefinitionReturnType, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AlwaysBreakAfterDefinitionReturnType, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -4623,7 +4623,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.AlwaysBreakAfterReturnType, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AlwaysBreakAfterReturnType, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -4668,7 +4668,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.AlwaysBreakBeforeMultilineStrings, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AlwaysBreakBeforeMultilineStrings, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -4713,7 +4713,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.AlwaysBreakTemplateDeclarations, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AlwaysBreakTemplateDeclarations, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -4758,7 +4758,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.AttributeMacros, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AttributeMacros, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -4794,7 +4794,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.AttributeMacros, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AttributeMacros, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -4839,7 +4839,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.BasedOnStyle, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.BasedOnStyle, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -4884,7 +4884,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.BinPackArguments, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.BinPackArguments, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -4929,7 +4929,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.BinPackParameters, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.BinPackParameters, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -4974,7 +4974,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.BitFieldColonSpacing, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.BitFieldColonSpacing, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -5019,7 +5019,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.BraceWrapping, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.BraceWrapping, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -5055,7 +5055,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.BraceWrapping, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.BraceWrapping, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -5100,7 +5100,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.BreakAfterAttributes, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.BreakAfterAttributes, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -5145,7 +5145,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.BreakAfterJavaFieldAnnotations, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.BreakAfterJavaFieldAnnotations, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -5190,7 +5190,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.BreakArrays, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.BreakArrays, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -5235,7 +5235,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.BreakBeforeBinaryOperators, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.BreakBeforeBinaryOperators, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -5280,7 +5280,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.BreakBeforeBraces, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.BreakBeforeBraces, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -5325,7 +5325,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.BreakBeforeConceptDeclarations, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.BreakBeforeConceptDeclarations, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -5370,7 +5370,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.BreakBeforeInheritanceComma, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.BreakBeforeInheritanceComma, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -5415,7 +5415,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.BreakBeforeInlineAsmColon, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.BreakBeforeInlineAsmColon, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -5460,7 +5460,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.BreakBeforeTernaryOperators, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.BreakBeforeTernaryOperators, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -5505,7 +5505,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.BreakConstructorInitializers, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.BreakConstructorInitializers, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -5550,7 +5550,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.BreakConstructorInitializersBeforeComma, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.BreakConstructorInitializersBeforeComma, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -5595,7 +5595,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.BreakInheritanceList, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.BreakInheritanceList, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -5640,7 +5640,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.BreakStringLiterals, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.BreakStringLiterals, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -5685,7 +5685,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.ColumnLimit, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ColumnLimit, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -5730,7 +5730,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.CommentPragmas, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CommentPragmas, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -5775,7 +5775,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.CompactNamespaces, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CompactNamespaces, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -5820,7 +5820,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.ConstructorInitializerAllOnOneLineOrOnePerLine, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ConstructorInitializerAllOnOneLineOrOnePerLine, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -5865,7 +5865,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.ConstructorInitializerIndentWidth, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ConstructorInitializerIndentWidth, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -5910,7 +5910,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.ContinuationIndentWidth, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ContinuationIndentWidth, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -5955,7 +5955,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Cpp11BracedListStyle, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Cpp11BracedListStyle, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -6000,7 +6000,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.DeriveLineEnding, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DeriveLineEnding, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -6045,7 +6045,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.DerivePointerAlignment, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DerivePointerAlignment, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -6090,7 +6090,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.DisableFormat, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DisableFormat, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -6135,7 +6135,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.EmptyLineAfterAccessModifier, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.EmptyLineAfterAccessModifier, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -6180,7 +6180,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.EmptyLineBeforeAccessModifier, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.EmptyLineBeforeAccessModifier, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -6225,7 +6225,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.ExperimentalAutoDetectBinPacking, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ExperimentalAutoDetectBinPacking, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -6270,7 +6270,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.FixNamespaceComments, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.FixNamespaceComments, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -6315,7 +6315,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.ForEachMacros, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ForEachMacros, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -6351,7 +6351,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.ForEachMacros, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ForEachMacros, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -6396,7 +6396,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.IfMacros, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IfMacros, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -6432,7 +6432,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.IfMacros, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IfMacros, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -6477,7 +6477,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.IncludeBlocks, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IncludeBlocks, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -6522,7 +6522,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.IncludeCategories, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IncludeCategories, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -6558,7 +6558,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.IncludeCategories, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IncludeCategories, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -6603,7 +6603,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.IncludeIsMainRegex, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IncludeIsMainRegex, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -6648,7 +6648,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.IncludeIsMainSourceRegex, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IncludeIsMainSourceRegex, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -6693,7 +6693,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.IndentAccessModifiers, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IndentAccessModifiers, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -6738,7 +6738,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.IndentCaseBlocks, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IndentCaseBlocks, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -6783,7 +6783,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.IndentCaseLabels, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IndentCaseLabels, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -6828,7 +6828,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.IndentExternBlock, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IndentExternBlock, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -6873,7 +6873,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.IndentGotoLabels, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IndentGotoLabels, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -6918,7 +6918,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.IndentPpDirectives, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IndentPpDirectives, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -6963,7 +6963,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.IndentRequires, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IndentRequires, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -7008,7 +7008,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.IndentRequiresClause, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IndentRequiresClause, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -7053,7 +7053,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.IndentWidth, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IndentWidth, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -7098,7 +7098,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.IndentWrappedFunctionNames, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IndentWrappedFunctionNames, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -7143,7 +7143,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.InsertBraces, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.InsertBraces, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -7188,7 +7188,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.InsertNewlineAtEof, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.InsertNewlineAtEof, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -7233,7 +7233,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.InsertTrailingCommas, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.InsertTrailingCommas, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -7278,7 +7278,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.IntegerLiteralSeparator, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IntegerLiteralSeparator, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -7314,7 +7314,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.IntegerLiteralSeparator, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IntegerLiteralSeparator, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -7338,7 +7338,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>JavaImportGroup</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetJavaImportGroup(in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.JavaImportGroupArray.Source value)
+        public void SetJavaImportGroup(in Corvus.ClangFormatBenchmark.Current.JsonArray.Source value)
         {
             CheckValidInstance();
 
@@ -7359,7 +7359,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.JavaImportGroup, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.JavaImportGroup, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -7371,7 +7371,7 @@ public readonly partial struct ClangFormatSchema
         /// Set the <c>JavaImportGroup</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetJavaImportGroup<TContext>(in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.JavaImportGroupArray.Source<TContext> value)
+        public void SetJavaImportGroup<TContext>(in Corvus.ClangFormatBenchmark.Current.JsonArray.Source<TContext> value)
 #if NET9_0_OR_GREATER
             where TContext : allows ref struct
 #endif
@@ -7395,7 +7395,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.JavaImportGroup, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.JavaImportGroup, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -7440,7 +7440,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.JavaScriptQuotes, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.JavaScriptQuotes, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -7485,7 +7485,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.JavaScriptWrapImports, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.JavaScriptWrapImports, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -7530,7 +7530,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.KeepEmptyLinesAtTheStartOfBlocks, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.KeepEmptyLinesAtTheStartOfBlocks, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -7575,7 +7575,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.LambdaBodyIndentation, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.LambdaBodyIndentation, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -7620,7 +7620,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Language, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Language, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -7665,7 +7665,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.LineEnding, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.LineEnding, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -7710,7 +7710,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.MacroBlockBegin, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MacroBlockBegin, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -7755,7 +7755,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.MacroBlockEnd, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MacroBlockEnd, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -7800,7 +7800,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.MaxEmptyLinesToKeep, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MaxEmptyLinesToKeep, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -7845,7 +7845,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.NamespaceIndentation, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.NamespaceIndentation, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -7890,7 +7890,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.NamespaceMacros, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.NamespaceMacros, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -7926,7 +7926,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.NamespaceMacros, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.NamespaceMacros, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -7971,7 +7971,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.ObjCBinPackProtocolList, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ObjCBinPackProtocolList, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -8016,7 +8016,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.ObjCBlockIndentWidth, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ObjCBlockIndentWidth, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -8061,7 +8061,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.ObjCBreakBeforeNestedBlockParam, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ObjCBreakBeforeNestedBlockParam, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -8106,7 +8106,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.ObjCSpaceAfterProperty, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ObjCSpaceAfterProperty, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -8151,7 +8151,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.ObjCSpaceBeforeProtocolList, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ObjCSpaceBeforeProtocolList, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -8196,7 +8196,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.PackConstructorInitializers, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PackConstructorInitializers, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -8241,7 +8241,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.PenaltyBreakAssignment, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PenaltyBreakAssignment, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -8286,7 +8286,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.PenaltyBreakBeforeFirstCallParameter, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PenaltyBreakBeforeFirstCallParameter, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -8331,7 +8331,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.PenaltyBreakComment, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PenaltyBreakComment, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -8376,7 +8376,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.PenaltyBreakFirstLessLess, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PenaltyBreakFirstLessLess, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -8421,7 +8421,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.PenaltyBreakOpenParenthesis, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PenaltyBreakOpenParenthesis, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -8466,7 +8466,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.PenaltyBreakString, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PenaltyBreakString, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -8511,7 +8511,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.PenaltyBreakTemplateDeclaration, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PenaltyBreakTemplateDeclaration, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -8556,7 +8556,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.PenaltyExcessCharacter, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PenaltyExcessCharacter, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -8601,7 +8601,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.PenaltyIndentedWhitespace, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PenaltyIndentedWhitespace, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -8646,7 +8646,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.PenaltyReturnTypeOnItsOwnLine, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PenaltyReturnTypeOnItsOwnLine, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -8691,7 +8691,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.PointerAlignment, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PointerAlignment, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -8736,7 +8736,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.PpIndentWidth, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PpIndentWidth, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -8781,7 +8781,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.QualifierAlignment, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.QualifierAlignment, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -8826,7 +8826,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.QualifierOrder, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.QualifierOrder, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -8862,7 +8862,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.QualifierOrder, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.QualifierOrder, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -8907,7 +8907,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.RawStringFormats, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.RawStringFormats, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -8943,7 +8943,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.RawStringFormats, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.RawStringFormats, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -8988,7 +8988,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.ReferenceAlignment, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ReferenceAlignment, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -9033,7 +9033,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.ReflowComments, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ReflowComments, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -9078,7 +9078,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.RemoveBracesLlvm, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.RemoveBracesLlvm, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -9123,7 +9123,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.RemoveSemicolon, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.RemoveSemicolon, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -9168,7 +9168,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.RequiresClausePosition, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.RequiresClausePosition, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -9213,7 +9213,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.RequiresExpressionIndentation, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.RequiresExpressionIndentation, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -9258,7 +9258,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.SeparateDefinitionBlocks, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SeparateDefinitionBlocks, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -9303,7 +9303,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.ShortNamespaceLines, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ShortNamespaceLines, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -9348,7 +9348,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.SortIncludes, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SortIncludes, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -9393,7 +9393,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.SortJavaStaticImport, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SortJavaStaticImport, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -9438,7 +9438,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.SortUsingDeclarations, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SortUsingDeclarations, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -9483,7 +9483,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.SpaceAfterCStyleCast, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SpaceAfterCStyleCast, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -9528,7 +9528,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.SpaceAfterLogicalNot, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SpaceAfterLogicalNot, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -9573,7 +9573,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.SpaceAfterTemplateKeyword, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SpaceAfterTemplateKeyword, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -9618,7 +9618,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.SpaceAroundPointerQualifiers, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SpaceAroundPointerQualifiers, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -9663,7 +9663,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.SpaceBeforeAssignmentOperators, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SpaceBeforeAssignmentOperators, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -9708,7 +9708,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.SpaceBeforeCaseColon, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SpaceBeforeCaseColon, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -9753,7 +9753,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.SpaceBeforeCpp11BracedList, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SpaceBeforeCpp11BracedList, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -9798,7 +9798,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.SpaceBeforeCtorInitializerColon, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SpaceBeforeCtorInitializerColon, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -9843,7 +9843,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.SpaceBeforeInheritanceColon, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SpaceBeforeInheritanceColon, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -9888,7 +9888,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.SpaceBeforeParens, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SpaceBeforeParens, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -9933,7 +9933,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.SpaceBeforeParensOptions, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SpaceBeforeParensOptions, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -9969,7 +9969,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.SpaceBeforeParensOptions, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SpaceBeforeParensOptions, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -10014,7 +10014,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.SpaceBeforeRangeBasedForLoopColon, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SpaceBeforeRangeBasedForLoopColon, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -10059,7 +10059,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.SpaceBeforeSquareBrackets, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SpaceBeforeSquareBrackets, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -10104,7 +10104,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.SpaceInEmptyBlock, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SpaceInEmptyBlock, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -10149,7 +10149,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.SpaceInEmptyParentheses, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SpaceInEmptyParentheses, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -10194,7 +10194,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.SpacesBeforeTrailingComments, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SpacesBeforeTrailingComments, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -10239,7 +10239,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.SpacesInAngles, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SpacesInAngles, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -10284,7 +10284,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.SpacesInConditionalStatement, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SpacesInConditionalStatement, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -10329,7 +10329,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.SpacesInContainerLiterals, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SpacesInContainerLiterals, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -10374,7 +10374,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.SpacesInCStyleCastParentheses, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SpacesInCStyleCastParentheses, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -10419,7 +10419,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.SpacesInLineCommentPrefix, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SpacesInLineCommentPrefix, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -10455,7 +10455,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.SpacesInLineCommentPrefix, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SpacesInLineCommentPrefix, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -10500,7 +10500,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.SpacesInParentheses, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SpacesInParentheses, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -10545,7 +10545,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.SpacesInSquareBrackets, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SpacesInSquareBrackets, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -10590,7 +10590,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Standard, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Standard, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -10635,7 +10635,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.StatementAttributeLikeMacros, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.StatementAttributeLikeMacros, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -10671,7 +10671,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.StatementAttributeLikeMacros, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.StatementAttributeLikeMacros, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -10716,7 +10716,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.StatementMacros, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.StatementMacros, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -10752,7 +10752,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.StatementMacros, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.StatementMacros, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -10797,7 +10797,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.TabWidth, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TabWidth, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -10842,7 +10842,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.TypenameMacros, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TypenameMacros, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -10878,7 +10878,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.TypenameMacros, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TypenameMacros, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -10923,7 +10923,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.UseCrlf, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.UseCrlf, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -10968,7 +10968,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.UseTab, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.UseTab, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -11013,7 +11013,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.WhitespaceSensitiveMacros, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.WhitespaceSensitiveMacros, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -11049,7 +11049,7 @@ public readonly partial struct ClangFormatSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.WhitespaceSensitiveMacros, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.WhitespaceSensitiveMacros, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -11432,6 +11432,24 @@ public readonly partial struct ClangFormatSchema
             }
         }
 
+        internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+        {
+            switch(_kind)
+            {
+                case Kind.Unknown:
+                    break;
+                case Kind.JsonElement:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                    break;
+                case Kind.Builder:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
+                    break;
+                default:
+                    Debug.Fail("Unexpected Kind");
+                    break;
+            }
+        }
+
         internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
         {
             switch(_kind)
@@ -11526,6 +11544,24 @@ public readonly partial struct ClangFormatSchema
                     break;
                 case Kind.Builder:
                     valueBuilder.AddProperty(utf8Name, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o), escapeName, nameRequiresUnescaping);
+                    break;
+                default:
+                    Debug.Fail("Unexpected Kind");
+                    break;
+            }
+        }
+
+        internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+        {
+            switch(_kind)
+            {
+                case Kind.Unknown:
+                    break;
+                case Kind.Source:
+                    _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                    break;
+                case Kind.Builder:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                     break;
                 default:
                     Debug.Fail("Unexpected Kind");
@@ -11688,7 +11724,7 @@ public readonly partial struct ClangFormatSchema
             in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source insertNewlineAtEof = default,
             in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.InsertTrailingCommasEntity.Source insertTrailingCommas = default,
             in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.IntegerLiteralSeparatorEntity.Source integerLiteralSeparator = default,
-            in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.JavaImportGroupArray.Source javaImportGroup = default,
+            in Corvus.ClangFormatBenchmark.Current.JsonArray.Source javaImportGroup = default,
             in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.JavaScriptQuotesEntity.Source javaScriptQuotes = default,
             in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source javaScriptWrapImports = default,
             in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source keepEmptyLinesAtTheStartOfBlocks = default,
@@ -11764,158 +11800,158 @@ public readonly partial struct ClangFormatSchema
             in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.UseTabEntity.Source useTab = default,
             in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.WhitespaceArray.Source whitespaceSensitiveMacros = default)
         {
-            accessModifierOffset.AddAsProperty(JsonPropertyNamesEscaped.AccessModifierOffset, ref builder, escapeName: false);
-            alignAfterOpenBracket.AddAsProperty(JsonPropertyNamesEscaped.AlignAfterOpenBracket, ref builder, escapeName: false);
-            alignArrayOfStructures.AddAsProperty(JsonPropertyNamesEscaped.AlignArrayOfStructures, ref builder, escapeName: false);
-            alignConsecutiveAssignments.AddAsProperty(JsonPropertyNamesEscaped.AlignConsecutiveAssignments, ref builder, escapeName: false);
-            alignConsecutiveBitFields.AddAsProperty(JsonPropertyNamesEscaped.AlignConsecutiveBitFields, ref builder, escapeName: false);
-            alignConsecutiveDeclarations.AddAsProperty(JsonPropertyNamesEscaped.AlignConsecutiveDeclarations, ref builder, escapeName: false);
-            alignConsecutiveMacros.AddAsProperty(JsonPropertyNamesEscaped.AlignConsecutiveMacros, ref builder, escapeName: false);
-            alignEscapedNewlines.AddAsProperty(JsonPropertyNamesEscaped.AlignEscapedNewlines, ref builder, escapeName: false);
-            alignOperands.AddAsProperty(JsonPropertyNamesEscaped.AlignOperands, ref builder, escapeName: false);
-            alignTrailingComments.AddAsProperty(JsonPropertyNamesEscaped.AlignTrailingComments, ref builder, escapeName: false);
-            allowAllArgumentsOnNextLine.AddAsProperty(JsonPropertyNamesEscaped.AllowAllArgumentsOnNextLine, ref builder, escapeName: false);
-            allowAllConstructorInitializersOnNextLine.AddAsProperty(JsonPropertyNamesEscaped.AllowAllConstructorInitializersOnNextLine, ref builder, escapeName: false);
-            allowAllParametersOfDeclarationOnNextLine.AddAsProperty(JsonPropertyNamesEscaped.AllowAllParametersOfDeclarationOnNextLine, ref builder, escapeName: false);
-            allowShortBlocksOnASingleLine.AddAsProperty(JsonPropertyNamesEscaped.AllowShortBlocksOnASingleLine, ref builder, escapeName: false);
-            allowShortCaseLabelsOnASingleLine.AddAsProperty(JsonPropertyNamesEscaped.AllowShortCaseLabelsOnASingleLine, ref builder, escapeName: false);
-            allowShortEnumsOnASingleLine.AddAsProperty(JsonPropertyNamesEscaped.AllowShortEnumsOnASingleLine, ref builder, escapeName: false);
-            allowShortFunctionsOnASingleLine.AddAsProperty(JsonPropertyNamesEscaped.AllowShortFunctionsOnASingleLine, ref builder, escapeName: false);
-            allowShortIfStatementsOnASingleLine.AddAsProperty(JsonPropertyNamesEscaped.AllowShortIfStatementsOnASingleLine, ref builder, escapeName: false);
-            allowShortLambdasOnASingleLine.AddAsProperty(JsonPropertyNamesEscaped.AllowShortLambdasOnASingleLine, ref builder, escapeName: false);
-            allowShortLoopsOnASingleLine.AddAsProperty(JsonPropertyNamesEscaped.AllowShortLoopsOnASingleLine, ref builder, escapeName: false);
-            alwaysBreakAfterDefinitionReturnType.AddAsProperty(JsonPropertyNamesEscaped.AlwaysBreakAfterDefinitionReturnType, ref builder, escapeName: false);
-            alwaysBreakAfterReturnType.AddAsProperty(JsonPropertyNamesEscaped.AlwaysBreakAfterReturnType, ref builder, escapeName: false);
-            alwaysBreakBeforeMultilineStrings.AddAsProperty(JsonPropertyNamesEscaped.AlwaysBreakBeforeMultilineStrings, ref builder, escapeName: false);
-            alwaysBreakTemplateDeclarations.AddAsProperty(JsonPropertyNamesEscaped.AlwaysBreakTemplateDeclarations, ref builder, escapeName: false);
-            attributeMacros.AddAsProperty(JsonPropertyNamesEscaped.AttributeMacros, ref builder, escapeName: false);
-            basedOnStyle.AddAsProperty(JsonPropertyNamesEscaped.BasedOnStyle, ref builder, escapeName: false);
-            binPackArguments.AddAsProperty(JsonPropertyNamesEscaped.BinPackArguments, ref builder, escapeName: false);
-            binPackParameters.AddAsProperty(JsonPropertyNamesEscaped.BinPackParameters, ref builder, escapeName: false);
-            bitFieldColonSpacing.AddAsProperty(JsonPropertyNamesEscaped.BitFieldColonSpacing, ref builder, escapeName: false);
-            braceWrapping.AddAsProperty(JsonPropertyNamesEscaped.BraceWrapping, ref builder, escapeName: false);
-            breakAfterAttributes.AddAsProperty(JsonPropertyNamesEscaped.BreakAfterAttributes, ref builder, escapeName: false);
-            breakAfterJavaFieldAnnotations.AddAsProperty(JsonPropertyNamesEscaped.BreakAfterJavaFieldAnnotations, ref builder, escapeName: false);
-            breakArrays.AddAsProperty(JsonPropertyNamesEscaped.BreakArrays, ref builder, escapeName: false);
-            breakBeforeBinaryOperators.AddAsProperty(JsonPropertyNamesEscaped.BreakBeforeBinaryOperators, ref builder, escapeName: false);
-            breakBeforeBraces.AddAsProperty(JsonPropertyNamesEscaped.BreakBeforeBraces, ref builder, escapeName: false);
-            breakBeforeConceptDeclarations.AddAsProperty(JsonPropertyNamesEscaped.BreakBeforeConceptDeclarations, ref builder, escapeName: false);
-            breakBeforeInheritanceComma.AddAsProperty(JsonPropertyNamesEscaped.BreakBeforeInheritanceComma, ref builder, escapeName: false);
-            breakBeforeInlineAsmColon.AddAsProperty(JsonPropertyNamesEscaped.BreakBeforeInlineAsmColon, ref builder, escapeName: false);
-            breakBeforeTernaryOperators.AddAsProperty(JsonPropertyNamesEscaped.BreakBeforeTernaryOperators, ref builder, escapeName: false);
-            breakConstructorInitializers.AddAsProperty(JsonPropertyNamesEscaped.BreakConstructorInitializers, ref builder, escapeName: false);
-            breakConstructorInitializersBeforeComma.AddAsProperty(JsonPropertyNamesEscaped.BreakConstructorInitializersBeforeComma, ref builder, escapeName: false);
-            breakInheritanceList.AddAsProperty(JsonPropertyNamesEscaped.BreakInheritanceList, ref builder, escapeName: false);
-            breakStringLiterals.AddAsProperty(JsonPropertyNamesEscaped.BreakStringLiterals, ref builder, escapeName: false);
-            columnLimit.AddAsProperty(JsonPropertyNamesEscaped.ColumnLimit, ref builder, escapeName: false);
-            commentPragmas.AddAsProperty(JsonPropertyNamesEscaped.CommentPragmas, ref builder, escapeName: false);
-            compactNamespaces.AddAsProperty(JsonPropertyNamesEscaped.CompactNamespaces, ref builder, escapeName: false);
-            constructorInitializerAllOnOneLineOrOnePerLine.AddAsProperty(JsonPropertyNamesEscaped.ConstructorInitializerAllOnOneLineOrOnePerLine, ref builder, escapeName: false);
-            constructorInitializerIndentWidth.AddAsProperty(JsonPropertyNamesEscaped.ConstructorInitializerIndentWidth, ref builder, escapeName: false);
-            continuationIndentWidth.AddAsProperty(JsonPropertyNamesEscaped.ContinuationIndentWidth, ref builder, escapeName: false);
-            cpp11BracedListStyle.AddAsProperty(JsonPropertyNamesEscaped.Cpp11BracedListStyle, ref builder, escapeName: false);
-            deriveLineEnding.AddAsProperty(JsonPropertyNamesEscaped.DeriveLineEnding, ref builder, escapeName: false);
-            derivePointerAlignment.AddAsProperty(JsonPropertyNamesEscaped.DerivePointerAlignment, ref builder, escapeName: false);
-            disableFormat.AddAsProperty(JsonPropertyNamesEscaped.DisableFormat, ref builder, escapeName: false);
-            emptyLineAfterAccessModifier.AddAsProperty(JsonPropertyNamesEscaped.EmptyLineAfterAccessModifier, ref builder, escapeName: false);
-            emptyLineBeforeAccessModifier.AddAsProperty(JsonPropertyNamesEscaped.EmptyLineBeforeAccessModifier, ref builder, escapeName: false);
-            experimentalAutoDetectBinPacking.AddAsProperty(JsonPropertyNamesEscaped.ExperimentalAutoDetectBinPacking, ref builder, escapeName: false);
-            fixNamespaceComments.AddAsProperty(JsonPropertyNamesEscaped.FixNamespaceComments, ref builder, escapeName: false);
-            forEachMacros.AddAsProperty(JsonPropertyNamesEscaped.ForEachMacros, ref builder, escapeName: false);
-            ifMacros.AddAsProperty(JsonPropertyNamesEscaped.IfMacros, ref builder, escapeName: false);
-            includeBlocks.AddAsProperty(JsonPropertyNamesEscaped.IncludeBlocks, ref builder, escapeName: false);
-            includeCategories.AddAsProperty(JsonPropertyNamesEscaped.IncludeCategories, ref builder, escapeName: false);
-            includeIsMainRegex.AddAsProperty(JsonPropertyNamesEscaped.IncludeIsMainRegex, ref builder, escapeName: false);
-            includeIsMainSourceRegex.AddAsProperty(JsonPropertyNamesEscaped.IncludeIsMainSourceRegex, ref builder, escapeName: false);
-            indentAccessModifiers.AddAsProperty(JsonPropertyNamesEscaped.IndentAccessModifiers, ref builder, escapeName: false);
-            indentCaseBlocks.AddAsProperty(JsonPropertyNamesEscaped.IndentCaseBlocks, ref builder, escapeName: false);
-            indentCaseLabels.AddAsProperty(JsonPropertyNamesEscaped.IndentCaseLabels, ref builder, escapeName: false);
-            indentExternBlock.AddAsProperty(JsonPropertyNamesEscaped.IndentExternBlock, ref builder, escapeName: false);
-            indentGotoLabels.AddAsProperty(JsonPropertyNamesEscaped.IndentGotoLabels, ref builder, escapeName: false);
-            indentPpDirectives.AddAsProperty(JsonPropertyNamesEscaped.IndentPpDirectives, ref builder, escapeName: false);
-            indentRequires.AddAsProperty(JsonPropertyNamesEscaped.IndentRequires, ref builder, escapeName: false);
-            indentRequiresClause.AddAsProperty(JsonPropertyNamesEscaped.IndentRequiresClause, ref builder, escapeName: false);
-            indentWidth.AddAsProperty(JsonPropertyNamesEscaped.IndentWidth, ref builder, escapeName: false);
-            indentWrappedFunctionNames.AddAsProperty(JsonPropertyNamesEscaped.IndentWrappedFunctionNames, ref builder, escapeName: false);
-            insertBraces.AddAsProperty(JsonPropertyNamesEscaped.InsertBraces, ref builder, escapeName: false);
-            insertNewlineAtEof.AddAsProperty(JsonPropertyNamesEscaped.InsertNewlineAtEof, ref builder, escapeName: false);
-            insertTrailingCommas.AddAsProperty(JsonPropertyNamesEscaped.InsertTrailingCommas, ref builder, escapeName: false);
-            integerLiteralSeparator.AddAsProperty(JsonPropertyNamesEscaped.IntegerLiteralSeparator, ref builder, escapeName: false);
-            javaImportGroup.AddAsProperty(JsonPropertyNamesEscaped.JavaImportGroup, ref builder, escapeName: false);
-            javaScriptQuotes.AddAsProperty(JsonPropertyNamesEscaped.JavaScriptQuotes, ref builder, escapeName: false);
-            javaScriptWrapImports.AddAsProperty(JsonPropertyNamesEscaped.JavaScriptWrapImports, ref builder, escapeName: false);
-            keepEmptyLinesAtTheStartOfBlocks.AddAsProperty(JsonPropertyNamesEscaped.KeepEmptyLinesAtTheStartOfBlocks, ref builder, escapeName: false);
-            lambdaBodyIndentation.AddAsProperty(JsonPropertyNamesEscaped.LambdaBodyIndentation, ref builder, escapeName: false);
-            language.AddAsProperty(JsonPropertyNamesEscaped.Language, ref builder, escapeName: false);
-            lineEnding.AddAsProperty(JsonPropertyNamesEscaped.LineEnding, ref builder, escapeName: false);
-            macroBlockBegin.AddAsProperty(JsonPropertyNamesEscaped.MacroBlockBegin, ref builder, escapeName: false);
-            macroBlockEnd.AddAsProperty(JsonPropertyNamesEscaped.MacroBlockEnd, ref builder, escapeName: false);
-            maxEmptyLinesToKeep.AddAsProperty(JsonPropertyNamesEscaped.MaxEmptyLinesToKeep, ref builder, escapeName: false);
-            namespaceIndentation.AddAsProperty(JsonPropertyNamesEscaped.NamespaceIndentation, ref builder, escapeName: false);
-            namespaceMacros.AddAsProperty(JsonPropertyNamesEscaped.NamespaceMacros, ref builder, escapeName: false);
-            objCBinPackProtocolList.AddAsProperty(JsonPropertyNamesEscaped.ObjCBinPackProtocolList, ref builder, escapeName: false);
-            objCBlockIndentWidth.AddAsProperty(JsonPropertyNamesEscaped.ObjCBlockIndentWidth, ref builder, escapeName: false);
-            objCBreakBeforeNestedBlockParam.AddAsProperty(JsonPropertyNamesEscaped.ObjCBreakBeforeNestedBlockParam, ref builder, escapeName: false);
-            objCSpaceAfterProperty.AddAsProperty(JsonPropertyNamesEscaped.ObjCSpaceAfterProperty, ref builder, escapeName: false);
-            objCSpaceBeforeProtocolList.AddAsProperty(JsonPropertyNamesEscaped.ObjCSpaceBeforeProtocolList, ref builder, escapeName: false);
-            packConstructorInitializers.AddAsProperty(JsonPropertyNamesEscaped.PackConstructorInitializers, ref builder, escapeName: false);
-            penaltyBreakAssignment.AddAsProperty(JsonPropertyNamesEscaped.PenaltyBreakAssignment, ref builder, escapeName: false);
-            penaltyBreakBeforeFirstCallParameter.AddAsProperty(JsonPropertyNamesEscaped.PenaltyBreakBeforeFirstCallParameter, ref builder, escapeName: false);
-            penaltyBreakComment.AddAsProperty(JsonPropertyNamesEscaped.PenaltyBreakComment, ref builder, escapeName: false);
-            penaltyBreakFirstLessLess.AddAsProperty(JsonPropertyNamesEscaped.PenaltyBreakFirstLessLess, ref builder, escapeName: false);
-            penaltyBreakOpenParenthesis.AddAsProperty(JsonPropertyNamesEscaped.PenaltyBreakOpenParenthesis, ref builder, escapeName: false);
-            penaltyBreakString.AddAsProperty(JsonPropertyNamesEscaped.PenaltyBreakString, ref builder, escapeName: false);
-            penaltyBreakTemplateDeclaration.AddAsProperty(JsonPropertyNamesEscaped.PenaltyBreakTemplateDeclaration, ref builder, escapeName: false);
-            penaltyExcessCharacter.AddAsProperty(JsonPropertyNamesEscaped.PenaltyExcessCharacter, ref builder, escapeName: false);
-            penaltyIndentedWhitespace.AddAsProperty(JsonPropertyNamesEscaped.PenaltyIndentedWhitespace, ref builder, escapeName: false);
-            penaltyReturnTypeOnItsOwnLine.AddAsProperty(JsonPropertyNamesEscaped.PenaltyReturnTypeOnItsOwnLine, ref builder, escapeName: false);
-            pointerAlignment.AddAsProperty(JsonPropertyNamesEscaped.PointerAlignment, ref builder, escapeName: false);
-            pPIndentWidth.AddAsProperty(JsonPropertyNamesEscaped.PpIndentWidth, ref builder, escapeName: false);
-            qualifierAlignment.AddAsProperty(JsonPropertyNamesEscaped.QualifierAlignment, ref builder, escapeName: false);
-            qualifierOrder.AddAsProperty(JsonPropertyNamesEscaped.QualifierOrder, ref builder, escapeName: false);
-            rawStringFormats.AddAsProperty(JsonPropertyNamesEscaped.RawStringFormats, ref builder, escapeName: false);
-            referenceAlignment.AddAsProperty(JsonPropertyNamesEscaped.ReferenceAlignment, ref builder, escapeName: false);
-            reflowComments.AddAsProperty(JsonPropertyNamesEscaped.ReflowComments, ref builder, escapeName: false);
-            removeBracesLlvm.AddAsProperty(JsonPropertyNamesEscaped.RemoveBracesLlvm, ref builder, escapeName: false);
-            removeSemicolon.AddAsProperty(JsonPropertyNamesEscaped.RemoveSemicolon, ref builder, escapeName: false);
-            requiresClausePosition.AddAsProperty(JsonPropertyNamesEscaped.RequiresClausePosition, ref builder, escapeName: false);
-            requiresExpressionIndentation.AddAsProperty(JsonPropertyNamesEscaped.RequiresExpressionIndentation, ref builder, escapeName: false);
-            separateDefinitionBlocks.AddAsProperty(JsonPropertyNamesEscaped.SeparateDefinitionBlocks, ref builder, escapeName: false);
-            shortNamespaceLines.AddAsProperty(JsonPropertyNamesEscaped.ShortNamespaceLines, ref builder, escapeName: false);
-            sortIncludes.AddAsProperty(JsonPropertyNamesEscaped.SortIncludes, ref builder, escapeName: false);
-            sortJavaStaticImport.AddAsProperty(JsonPropertyNamesEscaped.SortJavaStaticImport, ref builder, escapeName: false);
-            sortUsingDeclarations.AddAsProperty(JsonPropertyNamesEscaped.SortUsingDeclarations, ref builder, escapeName: false);
-            spaceAfterCStyleCast.AddAsProperty(JsonPropertyNamesEscaped.SpaceAfterCStyleCast, ref builder, escapeName: false);
-            spaceAfterLogicalNot.AddAsProperty(JsonPropertyNamesEscaped.SpaceAfterLogicalNot, ref builder, escapeName: false);
-            spaceAfterTemplateKeyword.AddAsProperty(JsonPropertyNamesEscaped.SpaceAfterTemplateKeyword, ref builder, escapeName: false);
-            spaceAroundPointerQualifiers.AddAsProperty(JsonPropertyNamesEscaped.SpaceAroundPointerQualifiers, ref builder, escapeName: false);
-            spaceBeforeAssignmentOperators.AddAsProperty(JsonPropertyNamesEscaped.SpaceBeforeAssignmentOperators, ref builder, escapeName: false);
-            spaceBeforeCaseColon.AddAsProperty(JsonPropertyNamesEscaped.SpaceBeforeCaseColon, ref builder, escapeName: false);
-            spaceBeforeCpp11BracedList.AddAsProperty(JsonPropertyNamesEscaped.SpaceBeforeCpp11BracedList, ref builder, escapeName: false);
-            spaceBeforeCtorInitializerColon.AddAsProperty(JsonPropertyNamesEscaped.SpaceBeforeCtorInitializerColon, ref builder, escapeName: false);
-            spaceBeforeInheritanceColon.AddAsProperty(JsonPropertyNamesEscaped.SpaceBeforeInheritanceColon, ref builder, escapeName: false);
-            spaceBeforeParens.AddAsProperty(JsonPropertyNamesEscaped.SpaceBeforeParens, ref builder, escapeName: false);
-            spaceBeforeParensOptions.AddAsProperty(JsonPropertyNamesEscaped.SpaceBeforeParensOptions, ref builder, escapeName: false);
-            spaceBeforeRangeBasedForLoopColon.AddAsProperty(JsonPropertyNamesEscaped.SpaceBeforeRangeBasedForLoopColon, ref builder, escapeName: false);
-            spaceBeforeSquareBrackets.AddAsProperty(JsonPropertyNamesEscaped.SpaceBeforeSquareBrackets, ref builder, escapeName: false);
-            spaceInEmptyBlock.AddAsProperty(JsonPropertyNamesEscaped.SpaceInEmptyBlock, ref builder, escapeName: false);
-            spaceInEmptyParentheses.AddAsProperty(JsonPropertyNamesEscaped.SpaceInEmptyParentheses, ref builder, escapeName: false);
-            spacesBeforeTrailingComments.AddAsProperty(JsonPropertyNamesEscaped.SpacesBeforeTrailingComments, ref builder, escapeName: false);
-            spacesInAngles.AddAsProperty(JsonPropertyNamesEscaped.SpacesInAngles, ref builder, escapeName: false);
-            spacesInConditionalStatement.AddAsProperty(JsonPropertyNamesEscaped.SpacesInConditionalStatement, ref builder, escapeName: false);
-            spacesInContainerLiterals.AddAsProperty(JsonPropertyNamesEscaped.SpacesInContainerLiterals, ref builder, escapeName: false);
-            spacesInCStyleCastParentheses.AddAsProperty(JsonPropertyNamesEscaped.SpacesInCStyleCastParentheses, ref builder, escapeName: false);
-            spacesInLineCommentPrefix.AddAsProperty(JsonPropertyNamesEscaped.SpacesInLineCommentPrefix, ref builder, escapeName: false);
-            spacesInParentheses.AddAsProperty(JsonPropertyNamesEscaped.SpacesInParentheses, ref builder, escapeName: false);
-            spacesInSquareBrackets.AddAsProperty(JsonPropertyNamesEscaped.SpacesInSquareBrackets, ref builder, escapeName: false);
-            standard.AddAsProperty(JsonPropertyNamesEscaped.Standard, ref builder, escapeName: false);
-            statementAttributeLikeMacros.AddAsProperty(JsonPropertyNamesEscaped.StatementAttributeLikeMacros, ref builder, escapeName: false);
-            statementMacros.AddAsProperty(JsonPropertyNamesEscaped.StatementMacros, ref builder, escapeName: false);
-            tabWidth.AddAsProperty(JsonPropertyNamesEscaped.TabWidth, ref builder, escapeName: false);
-            typenameMacros.AddAsProperty(JsonPropertyNamesEscaped.TypenameMacros, ref builder, escapeName: false);
-            useCrlf.AddAsProperty(JsonPropertyNamesEscaped.UseCrlf, ref builder, escapeName: false);
-            useTab.AddAsProperty(JsonPropertyNamesEscaped.UseTab, ref builder, escapeName: false);
-            whitespaceSensitiveMacros.AddAsProperty(JsonPropertyNamesEscaped.WhitespaceSensitiveMacros, ref builder, escapeName: false);
+            accessModifierOffset.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AccessModifierOffset, ref builder);
+            alignAfterOpenBracket.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AlignAfterOpenBracket, ref builder);
+            alignArrayOfStructures.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AlignArrayOfStructures, ref builder);
+            alignConsecutiveAssignments.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AlignConsecutiveAssignments, ref builder);
+            alignConsecutiveBitFields.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AlignConsecutiveBitFields, ref builder);
+            alignConsecutiveDeclarations.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AlignConsecutiveDeclarations, ref builder);
+            alignConsecutiveMacros.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AlignConsecutiveMacros, ref builder);
+            alignEscapedNewlines.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AlignEscapedNewlines, ref builder);
+            alignOperands.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AlignOperands, ref builder);
+            alignTrailingComments.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AlignTrailingComments, ref builder);
+            allowAllArgumentsOnNextLine.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AllowAllArgumentsOnNextLine, ref builder);
+            allowAllConstructorInitializersOnNextLine.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AllowAllConstructorInitializersOnNextLine, ref builder);
+            allowAllParametersOfDeclarationOnNextLine.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AllowAllParametersOfDeclarationOnNextLine, ref builder);
+            allowShortBlocksOnASingleLine.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AllowShortBlocksOnASingleLine, ref builder);
+            allowShortCaseLabelsOnASingleLine.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AllowShortCaseLabelsOnASingleLine, ref builder);
+            allowShortEnumsOnASingleLine.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AllowShortEnumsOnASingleLine, ref builder);
+            allowShortFunctionsOnASingleLine.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AllowShortFunctionsOnASingleLine, ref builder);
+            allowShortIfStatementsOnASingleLine.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AllowShortIfStatementsOnASingleLine, ref builder);
+            allowShortLambdasOnASingleLine.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AllowShortLambdasOnASingleLine, ref builder);
+            allowShortLoopsOnASingleLine.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AllowShortLoopsOnASingleLine, ref builder);
+            alwaysBreakAfterDefinitionReturnType.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AlwaysBreakAfterDefinitionReturnType, ref builder);
+            alwaysBreakAfterReturnType.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AlwaysBreakAfterReturnType, ref builder);
+            alwaysBreakBeforeMultilineStrings.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AlwaysBreakBeforeMultilineStrings, ref builder);
+            alwaysBreakTemplateDeclarations.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AlwaysBreakTemplateDeclarations, ref builder);
+            attributeMacros.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AttributeMacros, ref builder);
+            basedOnStyle.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.BasedOnStyle, ref builder);
+            binPackArguments.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.BinPackArguments, ref builder);
+            binPackParameters.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.BinPackParameters, ref builder);
+            bitFieldColonSpacing.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.BitFieldColonSpacing, ref builder);
+            braceWrapping.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.BraceWrapping, ref builder);
+            breakAfterAttributes.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.BreakAfterAttributes, ref builder);
+            breakAfterJavaFieldAnnotations.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.BreakAfterJavaFieldAnnotations, ref builder);
+            breakArrays.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.BreakArrays, ref builder);
+            breakBeforeBinaryOperators.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.BreakBeforeBinaryOperators, ref builder);
+            breakBeforeBraces.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.BreakBeforeBraces, ref builder);
+            breakBeforeConceptDeclarations.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.BreakBeforeConceptDeclarations, ref builder);
+            breakBeforeInheritanceComma.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.BreakBeforeInheritanceComma, ref builder);
+            breakBeforeInlineAsmColon.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.BreakBeforeInlineAsmColon, ref builder);
+            breakBeforeTernaryOperators.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.BreakBeforeTernaryOperators, ref builder);
+            breakConstructorInitializers.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.BreakConstructorInitializers, ref builder);
+            breakConstructorInitializersBeforeComma.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.BreakConstructorInitializersBeforeComma, ref builder);
+            breakInheritanceList.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.BreakInheritanceList, ref builder);
+            breakStringLiterals.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.BreakStringLiterals, ref builder);
+            columnLimit.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ColumnLimit, ref builder);
+            commentPragmas.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CommentPragmas, ref builder);
+            compactNamespaces.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CompactNamespaces, ref builder);
+            constructorInitializerAllOnOneLineOrOnePerLine.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ConstructorInitializerAllOnOneLineOrOnePerLine, ref builder);
+            constructorInitializerIndentWidth.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ConstructorInitializerIndentWidth, ref builder);
+            continuationIndentWidth.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ContinuationIndentWidth, ref builder);
+            cpp11BracedListStyle.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Cpp11BracedListStyle, ref builder);
+            deriveLineEnding.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DeriveLineEnding, ref builder);
+            derivePointerAlignment.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DerivePointerAlignment, ref builder);
+            disableFormat.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DisableFormat, ref builder);
+            emptyLineAfterAccessModifier.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.EmptyLineAfterAccessModifier, ref builder);
+            emptyLineBeforeAccessModifier.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.EmptyLineBeforeAccessModifier, ref builder);
+            experimentalAutoDetectBinPacking.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ExperimentalAutoDetectBinPacking, ref builder);
+            fixNamespaceComments.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.FixNamespaceComments, ref builder);
+            forEachMacros.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ForEachMacros, ref builder);
+            ifMacros.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IfMacros, ref builder);
+            includeBlocks.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IncludeBlocks, ref builder);
+            includeCategories.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IncludeCategories, ref builder);
+            includeIsMainRegex.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IncludeIsMainRegex, ref builder);
+            includeIsMainSourceRegex.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IncludeIsMainSourceRegex, ref builder);
+            indentAccessModifiers.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IndentAccessModifiers, ref builder);
+            indentCaseBlocks.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IndentCaseBlocks, ref builder);
+            indentCaseLabels.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IndentCaseLabels, ref builder);
+            indentExternBlock.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IndentExternBlock, ref builder);
+            indentGotoLabels.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IndentGotoLabels, ref builder);
+            indentPpDirectives.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IndentPpDirectives, ref builder);
+            indentRequires.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IndentRequires, ref builder);
+            indentRequiresClause.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IndentRequiresClause, ref builder);
+            indentWidth.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IndentWidth, ref builder);
+            indentWrappedFunctionNames.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IndentWrappedFunctionNames, ref builder);
+            insertBraces.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.InsertBraces, ref builder);
+            insertNewlineAtEof.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.InsertNewlineAtEof, ref builder);
+            insertTrailingCommas.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.InsertTrailingCommas, ref builder);
+            integerLiteralSeparator.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IntegerLiteralSeparator, ref builder);
+            javaImportGroup.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.JavaImportGroup, ref builder);
+            javaScriptQuotes.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.JavaScriptQuotes, ref builder);
+            javaScriptWrapImports.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.JavaScriptWrapImports, ref builder);
+            keepEmptyLinesAtTheStartOfBlocks.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.KeepEmptyLinesAtTheStartOfBlocks, ref builder);
+            lambdaBodyIndentation.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.LambdaBodyIndentation, ref builder);
+            language.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Language, ref builder);
+            lineEnding.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.LineEnding, ref builder);
+            macroBlockBegin.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MacroBlockBegin, ref builder);
+            macroBlockEnd.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MacroBlockEnd, ref builder);
+            maxEmptyLinesToKeep.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MaxEmptyLinesToKeep, ref builder);
+            namespaceIndentation.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.NamespaceIndentation, ref builder);
+            namespaceMacros.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.NamespaceMacros, ref builder);
+            objCBinPackProtocolList.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ObjCBinPackProtocolList, ref builder);
+            objCBlockIndentWidth.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ObjCBlockIndentWidth, ref builder);
+            objCBreakBeforeNestedBlockParam.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ObjCBreakBeforeNestedBlockParam, ref builder);
+            objCSpaceAfterProperty.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ObjCSpaceAfterProperty, ref builder);
+            objCSpaceBeforeProtocolList.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ObjCSpaceBeforeProtocolList, ref builder);
+            packConstructorInitializers.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PackConstructorInitializers, ref builder);
+            penaltyBreakAssignment.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PenaltyBreakAssignment, ref builder);
+            penaltyBreakBeforeFirstCallParameter.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PenaltyBreakBeforeFirstCallParameter, ref builder);
+            penaltyBreakComment.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PenaltyBreakComment, ref builder);
+            penaltyBreakFirstLessLess.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PenaltyBreakFirstLessLess, ref builder);
+            penaltyBreakOpenParenthesis.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PenaltyBreakOpenParenthesis, ref builder);
+            penaltyBreakString.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PenaltyBreakString, ref builder);
+            penaltyBreakTemplateDeclaration.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PenaltyBreakTemplateDeclaration, ref builder);
+            penaltyExcessCharacter.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PenaltyExcessCharacter, ref builder);
+            penaltyIndentedWhitespace.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PenaltyIndentedWhitespace, ref builder);
+            penaltyReturnTypeOnItsOwnLine.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PenaltyReturnTypeOnItsOwnLine, ref builder);
+            pointerAlignment.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PointerAlignment, ref builder);
+            pPIndentWidth.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PpIndentWidth, ref builder);
+            qualifierAlignment.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.QualifierAlignment, ref builder);
+            qualifierOrder.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.QualifierOrder, ref builder);
+            rawStringFormats.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.RawStringFormats, ref builder);
+            referenceAlignment.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ReferenceAlignment, ref builder);
+            reflowComments.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ReflowComments, ref builder);
+            removeBracesLlvm.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.RemoveBracesLlvm, ref builder);
+            removeSemicolon.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.RemoveSemicolon, ref builder);
+            requiresClausePosition.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.RequiresClausePosition, ref builder);
+            requiresExpressionIndentation.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.RequiresExpressionIndentation, ref builder);
+            separateDefinitionBlocks.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SeparateDefinitionBlocks, ref builder);
+            shortNamespaceLines.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ShortNamespaceLines, ref builder);
+            sortIncludes.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SortIncludes, ref builder);
+            sortJavaStaticImport.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SortJavaStaticImport, ref builder);
+            sortUsingDeclarations.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SortUsingDeclarations, ref builder);
+            spaceAfterCStyleCast.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SpaceAfterCStyleCast, ref builder);
+            spaceAfterLogicalNot.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SpaceAfterLogicalNot, ref builder);
+            spaceAfterTemplateKeyword.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SpaceAfterTemplateKeyword, ref builder);
+            spaceAroundPointerQualifiers.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SpaceAroundPointerQualifiers, ref builder);
+            spaceBeforeAssignmentOperators.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SpaceBeforeAssignmentOperators, ref builder);
+            spaceBeforeCaseColon.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SpaceBeforeCaseColon, ref builder);
+            spaceBeforeCpp11BracedList.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SpaceBeforeCpp11BracedList, ref builder);
+            spaceBeforeCtorInitializerColon.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SpaceBeforeCtorInitializerColon, ref builder);
+            spaceBeforeInheritanceColon.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SpaceBeforeInheritanceColon, ref builder);
+            spaceBeforeParens.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SpaceBeforeParens, ref builder);
+            spaceBeforeParensOptions.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SpaceBeforeParensOptions, ref builder);
+            spaceBeforeRangeBasedForLoopColon.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SpaceBeforeRangeBasedForLoopColon, ref builder);
+            spaceBeforeSquareBrackets.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SpaceBeforeSquareBrackets, ref builder);
+            spaceInEmptyBlock.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SpaceInEmptyBlock, ref builder);
+            spaceInEmptyParentheses.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SpaceInEmptyParentheses, ref builder);
+            spacesBeforeTrailingComments.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SpacesBeforeTrailingComments, ref builder);
+            spacesInAngles.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SpacesInAngles, ref builder);
+            spacesInConditionalStatement.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SpacesInConditionalStatement, ref builder);
+            spacesInContainerLiterals.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SpacesInContainerLiterals, ref builder);
+            spacesInCStyleCastParentheses.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SpacesInCStyleCastParentheses, ref builder);
+            spacesInLineCommentPrefix.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SpacesInLineCommentPrefix, ref builder);
+            spacesInParentheses.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SpacesInParentheses, ref builder);
+            spacesInSquareBrackets.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SpacesInSquareBrackets, ref builder);
+            standard.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Standard, ref builder);
+            statementAttributeLikeMacros.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.StatementAttributeLikeMacros, ref builder);
+            statementMacros.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.StatementMacros, ref builder);
+            tabWidth.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TabWidth, ref builder);
+            typenameMacros.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TypenameMacros, ref builder);
+            useCrlf.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.UseCrlf, ref builder);
+            useTab.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.UseTab, ref builder);
+            whitespaceSensitiveMacros.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.WhitespaceSensitiveMacros, ref builder);
         }
 
         /// <summary>
@@ -11999,7 +12035,7 @@ public readonly partial struct ClangFormatSchema
             in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source insertNewlineAtEof = default,
             in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.InsertTrailingCommasEntity.Source insertTrailingCommas = default,
             in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.IntegerLiteralSeparatorEntity.Source integerLiteralSeparator = default,
-            in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.JavaImportGroupArray.Source javaImportGroup = default,
+            in Corvus.ClangFormatBenchmark.Current.JsonArray.Source javaImportGroup = default,
             in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.JavaScriptQuotesEntity.Source javaScriptQuotes = default,
             in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source javaScriptWrapImports = default,
             in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source keepEmptyLinesAtTheStartOfBlocks = default,
@@ -12161,7 +12197,7 @@ public readonly partial struct ClangFormatSchema
             in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source insertNewlineAtEof = default,
             in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.InsertTrailingCommasEntity.Source insertTrailingCommas = default,
             in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.IntegerLiteralSeparatorEntity.Source<TContext> integerLiteralSeparator = default,
-            in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.JavaImportGroupArray.Source<TContext> javaImportGroup = default,
+            in Corvus.ClangFormatBenchmark.Current.JsonArray.Source<TContext> javaImportGroup = default,
             in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.JavaScriptQuotesEntity.Source javaScriptQuotes = default,
             in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source javaScriptWrapImports = default,
             in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source keepEmptyLinesAtTheStartOfBlocks = default,
@@ -12240,158 +12276,158 @@ public readonly partial struct ClangFormatSchema
         where TContext : allows ref struct
         #endif
         {
-            accessModifierOffset.AddAsProperty(JsonPropertyNamesEscaped.AccessModifierOffset, ref builder, escapeName: false);
-            alignAfterOpenBracket.AddAsProperty(JsonPropertyNamesEscaped.AlignAfterOpenBracket, ref builder, escapeName: false);
-            alignArrayOfStructures.AddAsProperty(JsonPropertyNamesEscaped.AlignArrayOfStructures, ref builder, escapeName: false);
-            alignConsecutiveAssignments.AddAsProperty(JsonPropertyNamesEscaped.AlignConsecutiveAssignments, ref builder, escapeName: false);
-            alignConsecutiveBitFields.AddAsProperty(JsonPropertyNamesEscaped.AlignConsecutiveBitFields, ref builder, escapeName: false);
-            alignConsecutiveDeclarations.AddAsProperty(JsonPropertyNamesEscaped.AlignConsecutiveDeclarations, ref builder, escapeName: false);
-            alignConsecutiveMacros.AddAsProperty(JsonPropertyNamesEscaped.AlignConsecutiveMacros, ref builder, escapeName: false);
-            alignEscapedNewlines.AddAsProperty(JsonPropertyNamesEscaped.AlignEscapedNewlines, ref builder, escapeName: false);
-            alignOperands.AddAsProperty(JsonPropertyNamesEscaped.AlignOperands, ref builder, escapeName: false);
-            alignTrailingComments.AddAsProperty(JsonPropertyNamesEscaped.AlignTrailingComments, ref builder, escapeName: false);
-            allowAllArgumentsOnNextLine.AddAsProperty(JsonPropertyNamesEscaped.AllowAllArgumentsOnNextLine, ref builder, escapeName: false);
-            allowAllConstructorInitializersOnNextLine.AddAsProperty(JsonPropertyNamesEscaped.AllowAllConstructorInitializersOnNextLine, ref builder, escapeName: false);
-            allowAllParametersOfDeclarationOnNextLine.AddAsProperty(JsonPropertyNamesEscaped.AllowAllParametersOfDeclarationOnNextLine, ref builder, escapeName: false);
-            allowShortBlocksOnASingleLine.AddAsProperty(JsonPropertyNamesEscaped.AllowShortBlocksOnASingleLine, ref builder, escapeName: false);
-            allowShortCaseLabelsOnASingleLine.AddAsProperty(JsonPropertyNamesEscaped.AllowShortCaseLabelsOnASingleLine, ref builder, escapeName: false);
-            allowShortEnumsOnASingleLine.AddAsProperty(JsonPropertyNamesEscaped.AllowShortEnumsOnASingleLine, ref builder, escapeName: false);
-            allowShortFunctionsOnASingleLine.AddAsProperty(JsonPropertyNamesEscaped.AllowShortFunctionsOnASingleLine, ref builder, escapeName: false);
-            allowShortIfStatementsOnASingleLine.AddAsProperty(JsonPropertyNamesEscaped.AllowShortIfStatementsOnASingleLine, ref builder, escapeName: false);
-            allowShortLambdasOnASingleLine.AddAsProperty(JsonPropertyNamesEscaped.AllowShortLambdasOnASingleLine, ref builder, escapeName: false);
-            allowShortLoopsOnASingleLine.AddAsProperty(JsonPropertyNamesEscaped.AllowShortLoopsOnASingleLine, ref builder, escapeName: false);
-            alwaysBreakAfterDefinitionReturnType.AddAsProperty(JsonPropertyNamesEscaped.AlwaysBreakAfterDefinitionReturnType, ref builder, escapeName: false);
-            alwaysBreakAfterReturnType.AddAsProperty(JsonPropertyNamesEscaped.AlwaysBreakAfterReturnType, ref builder, escapeName: false);
-            alwaysBreakBeforeMultilineStrings.AddAsProperty(JsonPropertyNamesEscaped.AlwaysBreakBeforeMultilineStrings, ref builder, escapeName: false);
-            alwaysBreakTemplateDeclarations.AddAsProperty(JsonPropertyNamesEscaped.AlwaysBreakTemplateDeclarations, ref builder, escapeName: false);
-            attributeMacros.AddAsProperty(JsonPropertyNamesEscaped.AttributeMacros, ref builder, escapeName: false);
-            basedOnStyle.AddAsProperty(JsonPropertyNamesEscaped.BasedOnStyle, ref builder, escapeName: false);
-            binPackArguments.AddAsProperty(JsonPropertyNamesEscaped.BinPackArguments, ref builder, escapeName: false);
-            binPackParameters.AddAsProperty(JsonPropertyNamesEscaped.BinPackParameters, ref builder, escapeName: false);
-            bitFieldColonSpacing.AddAsProperty(JsonPropertyNamesEscaped.BitFieldColonSpacing, ref builder, escapeName: false);
-            braceWrapping.AddAsProperty(JsonPropertyNamesEscaped.BraceWrapping, ref builder, escapeName: false);
-            breakAfterAttributes.AddAsProperty(JsonPropertyNamesEscaped.BreakAfterAttributes, ref builder, escapeName: false);
-            breakAfterJavaFieldAnnotations.AddAsProperty(JsonPropertyNamesEscaped.BreakAfterJavaFieldAnnotations, ref builder, escapeName: false);
-            breakArrays.AddAsProperty(JsonPropertyNamesEscaped.BreakArrays, ref builder, escapeName: false);
-            breakBeforeBinaryOperators.AddAsProperty(JsonPropertyNamesEscaped.BreakBeforeBinaryOperators, ref builder, escapeName: false);
-            breakBeforeBraces.AddAsProperty(JsonPropertyNamesEscaped.BreakBeforeBraces, ref builder, escapeName: false);
-            breakBeforeConceptDeclarations.AddAsProperty(JsonPropertyNamesEscaped.BreakBeforeConceptDeclarations, ref builder, escapeName: false);
-            breakBeforeInheritanceComma.AddAsProperty(JsonPropertyNamesEscaped.BreakBeforeInheritanceComma, ref builder, escapeName: false);
-            breakBeforeInlineAsmColon.AddAsProperty(JsonPropertyNamesEscaped.BreakBeforeInlineAsmColon, ref builder, escapeName: false);
-            breakBeforeTernaryOperators.AddAsProperty(JsonPropertyNamesEscaped.BreakBeforeTernaryOperators, ref builder, escapeName: false);
-            breakConstructorInitializers.AddAsProperty(JsonPropertyNamesEscaped.BreakConstructorInitializers, ref builder, escapeName: false);
-            breakConstructorInitializersBeforeComma.AddAsProperty(JsonPropertyNamesEscaped.BreakConstructorInitializersBeforeComma, ref builder, escapeName: false);
-            breakInheritanceList.AddAsProperty(JsonPropertyNamesEscaped.BreakInheritanceList, ref builder, escapeName: false);
-            breakStringLiterals.AddAsProperty(JsonPropertyNamesEscaped.BreakStringLiterals, ref builder, escapeName: false);
-            columnLimit.AddAsProperty(JsonPropertyNamesEscaped.ColumnLimit, ref builder, escapeName: false);
-            commentPragmas.AddAsProperty(JsonPropertyNamesEscaped.CommentPragmas, ref builder, escapeName: false);
-            compactNamespaces.AddAsProperty(JsonPropertyNamesEscaped.CompactNamespaces, ref builder, escapeName: false);
-            constructorInitializerAllOnOneLineOrOnePerLine.AddAsProperty(JsonPropertyNamesEscaped.ConstructorInitializerAllOnOneLineOrOnePerLine, ref builder, escapeName: false);
-            constructorInitializerIndentWidth.AddAsProperty(JsonPropertyNamesEscaped.ConstructorInitializerIndentWidth, ref builder, escapeName: false);
-            continuationIndentWidth.AddAsProperty(JsonPropertyNamesEscaped.ContinuationIndentWidth, ref builder, escapeName: false);
-            cpp11BracedListStyle.AddAsProperty(JsonPropertyNamesEscaped.Cpp11BracedListStyle, ref builder, escapeName: false);
-            deriveLineEnding.AddAsProperty(JsonPropertyNamesEscaped.DeriveLineEnding, ref builder, escapeName: false);
-            derivePointerAlignment.AddAsProperty(JsonPropertyNamesEscaped.DerivePointerAlignment, ref builder, escapeName: false);
-            disableFormat.AddAsProperty(JsonPropertyNamesEscaped.DisableFormat, ref builder, escapeName: false);
-            emptyLineAfterAccessModifier.AddAsProperty(JsonPropertyNamesEscaped.EmptyLineAfterAccessModifier, ref builder, escapeName: false);
-            emptyLineBeforeAccessModifier.AddAsProperty(JsonPropertyNamesEscaped.EmptyLineBeforeAccessModifier, ref builder, escapeName: false);
-            experimentalAutoDetectBinPacking.AddAsProperty(JsonPropertyNamesEscaped.ExperimentalAutoDetectBinPacking, ref builder, escapeName: false);
-            fixNamespaceComments.AddAsProperty(JsonPropertyNamesEscaped.FixNamespaceComments, ref builder, escapeName: false);
-            forEachMacros.AddAsProperty(JsonPropertyNamesEscaped.ForEachMacros, ref builder, escapeName: false);
-            ifMacros.AddAsProperty(JsonPropertyNamesEscaped.IfMacros, ref builder, escapeName: false);
-            includeBlocks.AddAsProperty(JsonPropertyNamesEscaped.IncludeBlocks, ref builder, escapeName: false);
-            includeCategories.AddAsProperty(JsonPropertyNamesEscaped.IncludeCategories, ref builder, escapeName: false);
-            includeIsMainRegex.AddAsProperty(JsonPropertyNamesEscaped.IncludeIsMainRegex, ref builder, escapeName: false);
-            includeIsMainSourceRegex.AddAsProperty(JsonPropertyNamesEscaped.IncludeIsMainSourceRegex, ref builder, escapeName: false);
-            indentAccessModifiers.AddAsProperty(JsonPropertyNamesEscaped.IndentAccessModifiers, ref builder, escapeName: false);
-            indentCaseBlocks.AddAsProperty(JsonPropertyNamesEscaped.IndentCaseBlocks, ref builder, escapeName: false);
-            indentCaseLabels.AddAsProperty(JsonPropertyNamesEscaped.IndentCaseLabels, ref builder, escapeName: false);
-            indentExternBlock.AddAsProperty(JsonPropertyNamesEscaped.IndentExternBlock, ref builder, escapeName: false);
-            indentGotoLabels.AddAsProperty(JsonPropertyNamesEscaped.IndentGotoLabels, ref builder, escapeName: false);
-            indentPpDirectives.AddAsProperty(JsonPropertyNamesEscaped.IndentPpDirectives, ref builder, escapeName: false);
-            indentRequires.AddAsProperty(JsonPropertyNamesEscaped.IndentRequires, ref builder, escapeName: false);
-            indentRequiresClause.AddAsProperty(JsonPropertyNamesEscaped.IndentRequiresClause, ref builder, escapeName: false);
-            indentWidth.AddAsProperty(JsonPropertyNamesEscaped.IndentWidth, ref builder, escapeName: false);
-            indentWrappedFunctionNames.AddAsProperty(JsonPropertyNamesEscaped.IndentWrappedFunctionNames, ref builder, escapeName: false);
-            insertBraces.AddAsProperty(JsonPropertyNamesEscaped.InsertBraces, ref builder, escapeName: false);
-            insertNewlineAtEof.AddAsProperty(JsonPropertyNamesEscaped.InsertNewlineAtEof, ref builder, escapeName: false);
-            insertTrailingCommas.AddAsProperty(JsonPropertyNamesEscaped.InsertTrailingCommas, ref builder, escapeName: false);
-            integerLiteralSeparator.AddAsProperty(JsonPropertyNamesEscaped.IntegerLiteralSeparator, ref builder, escapeName: false);
-            javaImportGroup.AddAsProperty(JsonPropertyNamesEscaped.JavaImportGroup, ref builder, escapeName: false);
-            javaScriptQuotes.AddAsProperty(JsonPropertyNamesEscaped.JavaScriptQuotes, ref builder, escapeName: false);
-            javaScriptWrapImports.AddAsProperty(JsonPropertyNamesEscaped.JavaScriptWrapImports, ref builder, escapeName: false);
-            keepEmptyLinesAtTheStartOfBlocks.AddAsProperty(JsonPropertyNamesEscaped.KeepEmptyLinesAtTheStartOfBlocks, ref builder, escapeName: false);
-            lambdaBodyIndentation.AddAsProperty(JsonPropertyNamesEscaped.LambdaBodyIndentation, ref builder, escapeName: false);
-            language.AddAsProperty(JsonPropertyNamesEscaped.Language, ref builder, escapeName: false);
-            lineEnding.AddAsProperty(JsonPropertyNamesEscaped.LineEnding, ref builder, escapeName: false);
-            macroBlockBegin.AddAsProperty(JsonPropertyNamesEscaped.MacroBlockBegin, ref builder, escapeName: false);
-            macroBlockEnd.AddAsProperty(JsonPropertyNamesEscaped.MacroBlockEnd, ref builder, escapeName: false);
-            maxEmptyLinesToKeep.AddAsProperty(JsonPropertyNamesEscaped.MaxEmptyLinesToKeep, ref builder, escapeName: false);
-            namespaceIndentation.AddAsProperty(JsonPropertyNamesEscaped.NamespaceIndentation, ref builder, escapeName: false);
-            namespaceMacros.AddAsProperty(JsonPropertyNamesEscaped.NamespaceMacros, ref builder, escapeName: false);
-            objCBinPackProtocolList.AddAsProperty(JsonPropertyNamesEscaped.ObjCBinPackProtocolList, ref builder, escapeName: false);
-            objCBlockIndentWidth.AddAsProperty(JsonPropertyNamesEscaped.ObjCBlockIndentWidth, ref builder, escapeName: false);
-            objCBreakBeforeNestedBlockParam.AddAsProperty(JsonPropertyNamesEscaped.ObjCBreakBeforeNestedBlockParam, ref builder, escapeName: false);
-            objCSpaceAfterProperty.AddAsProperty(JsonPropertyNamesEscaped.ObjCSpaceAfterProperty, ref builder, escapeName: false);
-            objCSpaceBeforeProtocolList.AddAsProperty(JsonPropertyNamesEscaped.ObjCSpaceBeforeProtocolList, ref builder, escapeName: false);
-            packConstructorInitializers.AddAsProperty(JsonPropertyNamesEscaped.PackConstructorInitializers, ref builder, escapeName: false);
-            penaltyBreakAssignment.AddAsProperty(JsonPropertyNamesEscaped.PenaltyBreakAssignment, ref builder, escapeName: false);
-            penaltyBreakBeforeFirstCallParameter.AddAsProperty(JsonPropertyNamesEscaped.PenaltyBreakBeforeFirstCallParameter, ref builder, escapeName: false);
-            penaltyBreakComment.AddAsProperty(JsonPropertyNamesEscaped.PenaltyBreakComment, ref builder, escapeName: false);
-            penaltyBreakFirstLessLess.AddAsProperty(JsonPropertyNamesEscaped.PenaltyBreakFirstLessLess, ref builder, escapeName: false);
-            penaltyBreakOpenParenthesis.AddAsProperty(JsonPropertyNamesEscaped.PenaltyBreakOpenParenthesis, ref builder, escapeName: false);
-            penaltyBreakString.AddAsProperty(JsonPropertyNamesEscaped.PenaltyBreakString, ref builder, escapeName: false);
-            penaltyBreakTemplateDeclaration.AddAsProperty(JsonPropertyNamesEscaped.PenaltyBreakTemplateDeclaration, ref builder, escapeName: false);
-            penaltyExcessCharacter.AddAsProperty(JsonPropertyNamesEscaped.PenaltyExcessCharacter, ref builder, escapeName: false);
-            penaltyIndentedWhitespace.AddAsProperty(JsonPropertyNamesEscaped.PenaltyIndentedWhitespace, ref builder, escapeName: false);
-            penaltyReturnTypeOnItsOwnLine.AddAsProperty(JsonPropertyNamesEscaped.PenaltyReturnTypeOnItsOwnLine, ref builder, escapeName: false);
-            pointerAlignment.AddAsProperty(JsonPropertyNamesEscaped.PointerAlignment, ref builder, escapeName: false);
-            pPIndentWidth.AddAsProperty(JsonPropertyNamesEscaped.PpIndentWidth, ref builder, escapeName: false);
-            qualifierAlignment.AddAsProperty(JsonPropertyNamesEscaped.QualifierAlignment, ref builder, escapeName: false);
-            qualifierOrder.AddAsProperty(JsonPropertyNamesEscaped.QualifierOrder, ref builder, escapeName: false);
-            rawStringFormats.AddAsProperty(JsonPropertyNamesEscaped.RawStringFormats, ref builder, escapeName: false);
-            referenceAlignment.AddAsProperty(JsonPropertyNamesEscaped.ReferenceAlignment, ref builder, escapeName: false);
-            reflowComments.AddAsProperty(JsonPropertyNamesEscaped.ReflowComments, ref builder, escapeName: false);
-            removeBracesLlvm.AddAsProperty(JsonPropertyNamesEscaped.RemoveBracesLlvm, ref builder, escapeName: false);
-            removeSemicolon.AddAsProperty(JsonPropertyNamesEscaped.RemoveSemicolon, ref builder, escapeName: false);
-            requiresClausePosition.AddAsProperty(JsonPropertyNamesEscaped.RequiresClausePosition, ref builder, escapeName: false);
-            requiresExpressionIndentation.AddAsProperty(JsonPropertyNamesEscaped.RequiresExpressionIndentation, ref builder, escapeName: false);
-            separateDefinitionBlocks.AddAsProperty(JsonPropertyNamesEscaped.SeparateDefinitionBlocks, ref builder, escapeName: false);
-            shortNamespaceLines.AddAsProperty(JsonPropertyNamesEscaped.ShortNamespaceLines, ref builder, escapeName: false);
-            sortIncludes.AddAsProperty(JsonPropertyNamesEscaped.SortIncludes, ref builder, escapeName: false);
-            sortJavaStaticImport.AddAsProperty(JsonPropertyNamesEscaped.SortJavaStaticImport, ref builder, escapeName: false);
-            sortUsingDeclarations.AddAsProperty(JsonPropertyNamesEscaped.SortUsingDeclarations, ref builder, escapeName: false);
-            spaceAfterCStyleCast.AddAsProperty(JsonPropertyNamesEscaped.SpaceAfterCStyleCast, ref builder, escapeName: false);
-            spaceAfterLogicalNot.AddAsProperty(JsonPropertyNamesEscaped.SpaceAfterLogicalNot, ref builder, escapeName: false);
-            spaceAfterTemplateKeyword.AddAsProperty(JsonPropertyNamesEscaped.SpaceAfterTemplateKeyword, ref builder, escapeName: false);
-            spaceAroundPointerQualifiers.AddAsProperty(JsonPropertyNamesEscaped.SpaceAroundPointerQualifiers, ref builder, escapeName: false);
-            spaceBeforeAssignmentOperators.AddAsProperty(JsonPropertyNamesEscaped.SpaceBeforeAssignmentOperators, ref builder, escapeName: false);
-            spaceBeforeCaseColon.AddAsProperty(JsonPropertyNamesEscaped.SpaceBeforeCaseColon, ref builder, escapeName: false);
-            spaceBeforeCpp11BracedList.AddAsProperty(JsonPropertyNamesEscaped.SpaceBeforeCpp11BracedList, ref builder, escapeName: false);
-            spaceBeforeCtorInitializerColon.AddAsProperty(JsonPropertyNamesEscaped.SpaceBeforeCtorInitializerColon, ref builder, escapeName: false);
-            spaceBeforeInheritanceColon.AddAsProperty(JsonPropertyNamesEscaped.SpaceBeforeInheritanceColon, ref builder, escapeName: false);
-            spaceBeforeParens.AddAsProperty(JsonPropertyNamesEscaped.SpaceBeforeParens, ref builder, escapeName: false);
-            spaceBeforeParensOptions.AddAsProperty(JsonPropertyNamesEscaped.SpaceBeforeParensOptions, ref builder, escapeName: false);
-            spaceBeforeRangeBasedForLoopColon.AddAsProperty(JsonPropertyNamesEscaped.SpaceBeforeRangeBasedForLoopColon, ref builder, escapeName: false);
-            spaceBeforeSquareBrackets.AddAsProperty(JsonPropertyNamesEscaped.SpaceBeforeSquareBrackets, ref builder, escapeName: false);
-            spaceInEmptyBlock.AddAsProperty(JsonPropertyNamesEscaped.SpaceInEmptyBlock, ref builder, escapeName: false);
-            spaceInEmptyParentheses.AddAsProperty(JsonPropertyNamesEscaped.SpaceInEmptyParentheses, ref builder, escapeName: false);
-            spacesBeforeTrailingComments.AddAsProperty(JsonPropertyNamesEscaped.SpacesBeforeTrailingComments, ref builder, escapeName: false);
-            spacesInAngles.AddAsProperty(JsonPropertyNamesEscaped.SpacesInAngles, ref builder, escapeName: false);
-            spacesInConditionalStatement.AddAsProperty(JsonPropertyNamesEscaped.SpacesInConditionalStatement, ref builder, escapeName: false);
-            spacesInContainerLiterals.AddAsProperty(JsonPropertyNamesEscaped.SpacesInContainerLiterals, ref builder, escapeName: false);
-            spacesInCStyleCastParentheses.AddAsProperty(JsonPropertyNamesEscaped.SpacesInCStyleCastParentheses, ref builder, escapeName: false);
-            spacesInLineCommentPrefix.AddAsProperty(JsonPropertyNamesEscaped.SpacesInLineCommentPrefix, ref builder, escapeName: false);
-            spacesInParentheses.AddAsProperty(JsonPropertyNamesEscaped.SpacesInParentheses, ref builder, escapeName: false);
-            spacesInSquareBrackets.AddAsProperty(JsonPropertyNamesEscaped.SpacesInSquareBrackets, ref builder, escapeName: false);
-            standard.AddAsProperty(JsonPropertyNamesEscaped.Standard, ref builder, escapeName: false);
-            statementAttributeLikeMacros.AddAsProperty(JsonPropertyNamesEscaped.StatementAttributeLikeMacros, ref builder, escapeName: false);
-            statementMacros.AddAsProperty(JsonPropertyNamesEscaped.StatementMacros, ref builder, escapeName: false);
-            tabWidth.AddAsProperty(JsonPropertyNamesEscaped.TabWidth, ref builder, escapeName: false);
-            typenameMacros.AddAsProperty(JsonPropertyNamesEscaped.TypenameMacros, ref builder, escapeName: false);
-            useCrlf.AddAsProperty(JsonPropertyNamesEscaped.UseCrlf, ref builder, escapeName: false);
-            useTab.AddAsProperty(JsonPropertyNamesEscaped.UseTab, ref builder, escapeName: false);
-            whitespaceSensitiveMacros.AddAsProperty(JsonPropertyNamesEscaped.WhitespaceSensitiveMacros, ref builder, escapeName: false);
+            accessModifierOffset.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AccessModifierOffset, ref builder);
+            alignAfterOpenBracket.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AlignAfterOpenBracket, ref builder);
+            alignArrayOfStructures.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AlignArrayOfStructures, ref builder);
+            alignConsecutiveAssignments.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AlignConsecutiveAssignments, ref builder);
+            alignConsecutiveBitFields.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AlignConsecutiveBitFields, ref builder);
+            alignConsecutiveDeclarations.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AlignConsecutiveDeclarations, ref builder);
+            alignConsecutiveMacros.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AlignConsecutiveMacros, ref builder);
+            alignEscapedNewlines.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AlignEscapedNewlines, ref builder);
+            alignOperands.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AlignOperands, ref builder);
+            alignTrailingComments.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AlignTrailingComments, ref builder);
+            allowAllArgumentsOnNextLine.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AllowAllArgumentsOnNextLine, ref builder);
+            allowAllConstructorInitializersOnNextLine.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AllowAllConstructorInitializersOnNextLine, ref builder);
+            allowAllParametersOfDeclarationOnNextLine.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AllowAllParametersOfDeclarationOnNextLine, ref builder);
+            allowShortBlocksOnASingleLine.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AllowShortBlocksOnASingleLine, ref builder);
+            allowShortCaseLabelsOnASingleLine.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AllowShortCaseLabelsOnASingleLine, ref builder);
+            allowShortEnumsOnASingleLine.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AllowShortEnumsOnASingleLine, ref builder);
+            allowShortFunctionsOnASingleLine.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AllowShortFunctionsOnASingleLine, ref builder);
+            allowShortIfStatementsOnASingleLine.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AllowShortIfStatementsOnASingleLine, ref builder);
+            allowShortLambdasOnASingleLine.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AllowShortLambdasOnASingleLine, ref builder);
+            allowShortLoopsOnASingleLine.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AllowShortLoopsOnASingleLine, ref builder);
+            alwaysBreakAfterDefinitionReturnType.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AlwaysBreakAfterDefinitionReturnType, ref builder);
+            alwaysBreakAfterReturnType.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AlwaysBreakAfterReturnType, ref builder);
+            alwaysBreakBeforeMultilineStrings.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AlwaysBreakBeforeMultilineStrings, ref builder);
+            alwaysBreakTemplateDeclarations.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AlwaysBreakTemplateDeclarations, ref builder);
+            attributeMacros.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AttributeMacros, ref builder);
+            basedOnStyle.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.BasedOnStyle, ref builder);
+            binPackArguments.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.BinPackArguments, ref builder);
+            binPackParameters.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.BinPackParameters, ref builder);
+            bitFieldColonSpacing.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.BitFieldColonSpacing, ref builder);
+            braceWrapping.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.BraceWrapping, ref builder);
+            breakAfterAttributes.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.BreakAfterAttributes, ref builder);
+            breakAfterJavaFieldAnnotations.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.BreakAfterJavaFieldAnnotations, ref builder);
+            breakArrays.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.BreakArrays, ref builder);
+            breakBeforeBinaryOperators.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.BreakBeforeBinaryOperators, ref builder);
+            breakBeforeBraces.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.BreakBeforeBraces, ref builder);
+            breakBeforeConceptDeclarations.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.BreakBeforeConceptDeclarations, ref builder);
+            breakBeforeInheritanceComma.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.BreakBeforeInheritanceComma, ref builder);
+            breakBeforeInlineAsmColon.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.BreakBeforeInlineAsmColon, ref builder);
+            breakBeforeTernaryOperators.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.BreakBeforeTernaryOperators, ref builder);
+            breakConstructorInitializers.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.BreakConstructorInitializers, ref builder);
+            breakConstructorInitializersBeforeComma.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.BreakConstructorInitializersBeforeComma, ref builder);
+            breakInheritanceList.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.BreakInheritanceList, ref builder);
+            breakStringLiterals.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.BreakStringLiterals, ref builder);
+            columnLimit.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ColumnLimit, ref builder);
+            commentPragmas.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CommentPragmas, ref builder);
+            compactNamespaces.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CompactNamespaces, ref builder);
+            constructorInitializerAllOnOneLineOrOnePerLine.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ConstructorInitializerAllOnOneLineOrOnePerLine, ref builder);
+            constructorInitializerIndentWidth.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ConstructorInitializerIndentWidth, ref builder);
+            continuationIndentWidth.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ContinuationIndentWidth, ref builder);
+            cpp11BracedListStyle.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Cpp11BracedListStyle, ref builder);
+            deriveLineEnding.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DeriveLineEnding, ref builder);
+            derivePointerAlignment.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DerivePointerAlignment, ref builder);
+            disableFormat.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DisableFormat, ref builder);
+            emptyLineAfterAccessModifier.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.EmptyLineAfterAccessModifier, ref builder);
+            emptyLineBeforeAccessModifier.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.EmptyLineBeforeAccessModifier, ref builder);
+            experimentalAutoDetectBinPacking.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ExperimentalAutoDetectBinPacking, ref builder);
+            fixNamespaceComments.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.FixNamespaceComments, ref builder);
+            forEachMacros.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ForEachMacros, ref builder);
+            ifMacros.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IfMacros, ref builder);
+            includeBlocks.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IncludeBlocks, ref builder);
+            includeCategories.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IncludeCategories, ref builder);
+            includeIsMainRegex.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IncludeIsMainRegex, ref builder);
+            includeIsMainSourceRegex.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IncludeIsMainSourceRegex, ref builder);
+            indentAccessModifiers.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IndentAccessModifiers, ref builder);
+            indentCaseBlocks.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IndentCaseBlocks, ref builder);
+            indentCaseLabels.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IndentCaseLabels, ref builder);
+            indentExternBlock.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IndentExternBlock, ref builder);
+            indentGotoLabels.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IndentGotoLabels, ref builder);
+            indentPpDirectives.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IndentPpDirectives, ref builder);
+            indentRequires.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IndentRequires, ref builder);
+            indentRequiresClause.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IndentRequiresClause, ref builder);
+            indentWidth.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IndentWidth, ref builder);
+            indentWrappedFunctionNames.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IndentWrappedFunctionNames, ref builder);
+            insertBraces.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.InsertBraces, ref builder);
+            insertNewlineAtEof.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.InsertNewlineAtEof, ref builder);
+            insertTrailingCommas.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.InsertTrailingCommas, ref builder);
+            integerLiteralSeparator.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IntegerLiteralSeparator, ref builder);
+            javaImportGroup.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.JavaImportGroup, ref builder);
+            javaScriptQuotes.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.JavaScriptQuotes, ref builder);
+            javaScriptWrapImports.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.JavaScriptWrapImports, ref builder);
+            keepEmptyLinesAtTheStartOfBlocks.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.KeepEmptyLinesAtTheStartOfBlocks, ref builder);
+            lambdaBodyIndentation.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.LambdaBodyIndentation, ref builder);
+            language.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Language, ref builder);
+            lineEnding.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.LineEnding, ref builder);
+            macroBlockBegin.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MacroBlockBegin, ref builder);
+            macroBlockEnd.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MacroBlockEnd, ref builder);
+            maxEmptyLinesToKeep.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MaxEmptyLinesToKeep, ref builder);
+            namespaceIndentation.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.NamespaceIndentation, ref builder);
+            namespaceMacros.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.NamespaceMacros, ref builder);
+            objCBinPackProtocolList.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ObjCBinPackProtocolList, ref builder);
+            objCBlockIndentWidth.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ObjCBlockIndentWidth, ref builder);
+            objCBreakBeforeNestedBlockParam.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ObjCBreakBeforeNestedBlockParam, ref builder);
+            objCSpaceAfterProperty.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ObjCSpaceAfterProperty, ref builder);
+            objCSpaceBeforeProtocolList.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ObjCSpaceBeforeProtocolList, ref builder);
+            packConstructorInitializers.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PackConstructorInitializers, ref builder);
+            penaltyBreakAssignment.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PenaltyBreakAssignment, ref builder);
+            penaltyBreakBeforeFirstCallParameter.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PenaltyBreakBeforeFirstCallParameter, ref builder);
+            penaltyBreakComment.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PenaltyBreakComment, ref builder);
+            penaltyBreakFirstLessLess.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PenaltyBreakFirstLessLess, ref builder);
+            penaltyBreakOpenParenthesis.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PenaltyBreakOpenParenthesis, ref builder);
+            penaltyBreakString.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PenaltyBreakString, ref builder);
+            penaltyBreakTemplateDeclaration.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PenaltyBreakTemplateDeclaration, ref builder);
+            penaltyExcessCharacter.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PenaltyExcessCharacter, ref builder);
+            penaltyIndentedWhitespace.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PenaltyIndentedWhitespace, ref builder);
+            penaltyReturnTypeOnItsOwnLine.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PenaltyReturnTypeOnItsOwnLine, ref builder);
+            pointerAlignment.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PointerAlignment, ref builder);
+            pPIndentWidth.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PpIndentWidth, ref builder);
+            qualifierAlignment.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.QualifierAlignment, ref builder);
+            qualifierOrder.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.QualifierOrder, ref builder);
+            rawStringFormats.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.RawStringFormats, ref builder);
+            referenceAlignment.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ReferenceAlignment, ref builder);
+            reflowComments.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ReflowComments, ref builder);
+            removeBracesLlvm.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.RemoveBracesLlvm, ref builder);
+            removeSemicolon.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.RemoveSemicolon, ref builder);
+            requiresClausePosition.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.RequiresClausePosition, ref builder);
+            requiresExpressionIndentation.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.RequiresExpressionIndentation, ref builder);
+            separateDefinitionBlocks.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SeparateDefinitionBlocks, ref builder);
+            shortNamespaceLines.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ShortNamespaceLines, ref builder);
+            sortIncludes.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SortIncludes, ref builder);
+            sortJavaStaticImport.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SortJavaStaticImport, ref builder);
+            sortUsingDeclarations.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SortUsingDeclarations, ref builder);
+            spaceAfterCStyleCast.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SpaceAfterCStyleCast, ref builder);
+            spaceAfterLogicalNot.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SpaceAfterLogicalNot, ref builder);
+            spaceAfterTemplateKeyword.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SpaceAfterTemplateKeyword, ref builder);
+            spaceAroundPointerQualifiers.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SpaceAroundPointerQualifiers, ref builder);
+            spaceBeforeAssignmentOperators.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SpaceBeforeAssignmentOperators, ref builder);
+            spaceBeforeCaseColon.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SpaceBeforeCaseColon, ref builder);
+            spaceBeforeCpp11BracedList.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SpaceBeforeCpp11BracedList, ref builder);
+            spaceBeforeCtorInitializerColon.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SpaceBeforeCtorInitializerColon, ref builder);
+            spaceBeforeInheritanceColon.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SpaceBeforeInheritanceColon, ref builder);
+            spaceBeforeParens.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SpaceBeforeParens, ref builder);
+            spaceBeforeParensOptions.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SpaceBeforeParensOptions, ref builder);
+            spaceBeforeRangeBasedForLoopColon.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SpaceBeforeRangeBasedForLoopColon, ref builder);
+            spaceBeforeSquareBrackets.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SpaceBeforeSquareBrackets, ref builder);
+            spaceInEmptyBlock.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SpaceInEmptyBlock, ref builder);
+            spaceInEmptyParentheses.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SpaceInEmptyParentheses, ref builder);
+            spacesBeforeTrailingComments.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SpacesBeforeTrailingComments, ref builder);
+            spacesInAngles.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SpacesInAngles, ref builder);
+            spacesInConditionalStatement.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SpacesInConditionalStatement, ref builder);
+            spacesInContainerLiterals.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SpacesInContainerLiterals, ref builder);
+            spacesInCStyleCastParentheses.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SpacesInCStyleCastParentheses, ref builder);
+            spacesInLineCommentPrefix.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SpacesInLineCommentPrefix, ref builder);
+            spacesInParentheses.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SpacesInParentheses, ref builder);
+            spacesInSquareBrackets.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SpacesInSquareBrackets, ref builder);
+            standard.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Standard, ref builder);
+            statementAttributeLikeMacros.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.StatementAttributeLikeMacros, ref builder);
+            statementMacros.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.StatementMacros, ref builder);
+            tabWidth.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TabWidth, ref builder);
+            typenameMacros.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TypenameMacros, ref builder);
+            useCrlf.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.UseCrlf, ref builder);
+            useTab.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.UseTab, ref builder);
+            whitespaceSensitiveMacros.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.WhitespaceSensitiveMacros, ref builder);
         }
 
         /// <summary>
@@ -12476,7 +12512,7 @@ public readonly partial struct ClangFormatSchema
             in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source insertNewlineAtEof = default,
             in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.InsertTrailingCommasEntity.Source insertTrailingCommas = default,
             in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.IntegerLiteralSeparatorEntity.Source<TContext> integerLiteralSeparator = default,
-            in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.JavaImportGroupArray.Source<TContext> javaImportGroup = default,
+            in Corvus.ClangFormatBenchmark.Current.JsonArray.Source<TContext> javaImportGroup = default,
             in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.JavaScriptQuotesEntity.Source javaScriptQuotes = default,
             in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source javaScriptWrapImports = default,
             in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source keepEmptyLinesAtTheStartOfBlocks = default,
@@ -12865,7 +12901,7 @@ public readonly partial struct ClangFormatSchema
     /// <param name="whitespaceSensitiveMacros">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.ClangFormatBenchmark.Current.JsonInteger.Source accessModifierOffset = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignAfterOpenBracketEntity.Source alignAfterOpenBracket = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignArrayOfStructuresEntity.Source alignArrayOfStructures = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignConsecutiveAssignmentsEntity.Source alignConsecutiveAssignments = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignConsecutiveBitFieldsEntity.Source alignConsecutiveBitFields = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignConsecutiveDeclarationsEntity.Source alignConsecutiveDeclarations = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignConsecutiveMacrosEntity.Source alignConsecutiveMacros = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignEscapedNewlinesEntity.Source alignEscapedNewlines = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignOperandsEntity.Source alignOperands = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignTrailingCommentsEntity.Source alignTrailingComments = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source allowAllArgumentsOnNextLine = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source allowAllConstructorInitializersOnNextLine = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source allowAllParametersOfDeclarationOnNextLine = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AllowShortBlocksOnASingleLineEntity.Source allowShortBlocksOnASingleLine = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source allowShortCaseLabelsOnASingleLine = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source allowShortEnumsOnASingleLine = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AllowShortFunctionsOnASingleLineEntity.Source allowShortFunctionsOnASingleLine = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AllowShortIfStatementsOnASingleLineEntity.Source allowShortIfStatementsOnASingleLine = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AllowShortLambdasOnASingleLineEntity.Source allowShortLambdasOnASingleLine = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source allowShortLoopsOnASingleLine = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlwaysBreakAfterDefinitionReturnTypeEntity.Source alwaysBreakAfterDefinitionReturnType = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlwaysBreakAfterReturnTypeEntity.Source alwaysBreakAfterReturnType = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source alwaysBreakBeforeMultilineStrings = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlwaysBreakTemplateDeclarationsEntity.Source alwaysBreakTemplateDeclarations = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.JsonStringArray.Source attributeMacros = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.BasedOnStyleEntity.Source basedOnStyle = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source binPackArguments = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source binPackParameters = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.BitFieldColonSpacingEntity.Source bitFieldColonSpacing = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.BraceWrappingEntity.Source braceWrapping = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.BreakAfterAttributesEntity.Source breakAfterAttributes = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source breakAfterJavaFieldAnnotations = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source breakArrays = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClangFormat36TheWayToWrapBinaryOperators.Source breakBeforeBinaryOperators = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClangFormat37TheBraceBreakingStyleToUse.Source breakBeforeBraces = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.BreakBeforeConceptDeclarationsEntity.Source breakBeforeConceptDeclarations = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source breakBeforeInheritanceComma = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClangFormat16TheInlineAsmColonStyleToUse.Source breakBeforeInlineAsmColon = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source breakBeforeTernaryOperators = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClangFormat5TheConstructorInitializersStyleToUse.Source breakConstructorInitializers = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source breakConstructorInitializersBeforeComma = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClangFormat7TheInheritanceListStyleToUse.Source breakInheritanceList = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source breakStringLiterals = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClangFormat37TheColumnLimit.Source columnLimit = default, in Corvus.ClangFormatBenchmark.Current.JsonString.Source commentPragmas = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source compactNamespaces = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source constructorInitializerAllOnOneLineOrOnePerLine = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ConstructorInitializerIndentWidthEntity.Source constructorInitializerIndentWidth = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClangFormat37IndentWidthForLineContinuations.Source continuationIndentWidth = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source cpp11BracedListStyle = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source deriveLineEnding = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source derivePointerAlignment = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source disableFormat = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.EmptyLineAfterAccessModifierEntity.Source emptyLineAfterAccessModifier = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.EmptyLineBeforeAccessModifierEntity.Source emptyLineBeforeAccessModifier = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source experimentalAutoDetectBinPacking = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source fixNamespaceComments = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ForEachMacArray.Source forEachMacros = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.IfMacrosJsArray.Source ifMacros = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.IncludeBlocksEntity.Source includeBlocks = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.RequiredPriorityAndRegexArray.Source includeCategories = default, in Corvus.ClangFormatBenchmark.Current.JsonString.Source includeIsMainRegex = default, in Corvus.ClangFormatBenchmark.Current.JsonString.Source includeIsMainSourceRegex = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source indentAccessModifiers = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source indentCaseBlocks = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source indentCaseLabels = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.IndentExternBlockEntity.Source indentExternBlock = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source indentGotoLabels = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.IndentPpDirectivesEntity.Source indentPpDirectives = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source indentRequires = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source indentRequiresClause = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.IndentWidthEntity.Source indentWidth = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source indentWrappedFunctionNames = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source insertBraces = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source insertNewlineAtEof = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.InsertTrailingCommasEntity.Source insertTrailingCommas = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.IntegerLiteralSeparatorEntity.Source integerLiteralSeparator = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.JavaImportGroupArray.Source javaImportGroup = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.JavaScriptQuotesEntity.Source javaScriptQuotes = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source javaScriptWrapImports = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source keepEmptyLinesAtTheStartOfBlocks = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.LambdaBodyIndentationEntity.Source lambdaBodyIndentation = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.LanguageEntity.Source language = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClangFormat16LineEndingStyleNOrRNToUse.Source lineEnding = default, in Corvus.ClangFormatBenchmark.Current.JsonString.Source macroBlockBegin = default, in Corvus.ClangFormatBenchmark.Current.JsonString.Source macroBlockEnd = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.MaxEmptyLinesToKeepEntity.Source maxEmptyLinesToKeep = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClnagFormat37TheIndentationUsedForNamespaces.Source namespaceIndentation = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.NamespaceMArray.Source namespaceMacros = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ObjCBinPackProtocolListEntity.Source objCBinPackProtocolList = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ObjCBlockIndentWidthEntity.Source objCBlockIndentWidth = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source objCBreakBeforeNestedBlockParam = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source objCSpaceAfterProperty = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source objCSpaceBeforeProtocolList = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.PackConstructorInitializersEntity.Source packConstructorInitializers = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.PenaltyBreakAssignmentEntity.Source penaltyBreakAssignment = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.PenaltyBreakBeforeFirstCallParameterEntity.Source penaltyBreakBeforeFirstCallParameter = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.PenaltyBreakCommentEntity.Source penaltyBreakComment = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.PenaltyBreakFirstLessLessEntity.Source penaltyBreakFirstLessLess = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClangFormat14ThePenaltyForBreakingAfter.Source penaltyBreakOpenParenthesis = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.PenaltyBreakStringEntity.Source penaltyBreakString = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.PenaltyBreakTemplateDeclarationEntity.Source penaltyBreakTemplateDeclaration = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.PenaltyExcessCharacterEntity.Source penaltyExcessCharacter = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.PenaltyIndentedWhitespaceEntity.Source penaltyIndentedWhitespace = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.PenaltyReturnTypeOnItsOwnLineEntity.Source penaltyReturnTypeOnItsOwnLine = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClangFormat37PointerAndReferenceAlignmentStyle.Source pointerAlignment = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.PpIndentWidthEntity.Source pPIndentWidth = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.QualifierAlignmentEntity.Source qualifierAlignment = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.QualifierOrderArrayQualifierOrderEntityArray.Source qualifierOrder = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.RawStringFormatsEntityArray.Source rawStringFormats = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ReferenceAlignmentEntity.Source referenceAlignment = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source reflowComments = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source removeBracesLlvm = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source removeSemicolon = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClangFormat15ThePositionOfTheRequiresClause.Source requiresClausePosition = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.RequiresExpressionIndentationEntity.Source requiresExpressionIndentation = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.SeparateDefinitionBlocksEntity.Source separateDefinitionBlocks = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ShortNamespaceLinesEntity.Source shortNamespaceLines = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.SortIncludesEntity.Source sortIncludes = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.SortJavaStaticImportEntity.Source sortJavaStaticImport = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.SortUsingDeclarationsEntity.Source sortUsingDeclarations = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source spaceAfterCStyleCast = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source spaceAfterLogicalNot = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source spaceAfterTemplateKeyword = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.SpaceAroundPointerQualifiersEntity.Source spaceAroundPointerQualifiers = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source spaceBeforeAssignmentOperators = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source spaceBeforeCaseColon = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source spaceBeforeCpp11BracedList = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source spaceBeforeCtorInitializerColon = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source spaceBeforeInheritanceColon = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.SpaceBeforeParensEntity.Source spaceBeforeParens = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.SpaceBeforeParensOptionsEntity.Source spaceBeforeParensOptions = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source spaceBeforeRangeBasedForLoopColon = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source spaceBeforeSquareBrackets = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source spaceInEmptyBlock = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source spaceInEmptyParentheses = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.SpacesBeforeTrailingCommentsEntity.Source spacesBeforeTrailingComments = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.SpacesInAnglesEntity.Source spacesInAngles = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source spacesInConditionalStatement = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source spacesInContainerLiterals = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source spacesInCStyleCastParentheses = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.SpacesInLineCommentPrefixEntity.Source spacesInLineCommentPrefix = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source spacesInParentheses = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source spacesInSquareBrackets = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.StandardEntity.Source standard = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.StatementAArray.Source statementAttributeLikeMacros = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.StatementMArray.Source statementMacros = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClangFormat37TheNumberOfColumnsUsedForTabStops.Source tabWidth = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.TypenameMaArray.Source typenameMacros = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source useCrlf = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.UseTabEntity.Source useTab = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.WhitespaceArray.Source whitespaceSensitiveMacros = default, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.ClangFormatBenchmark.Current.JsonInteger.Source accessModifierOffset = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignAfterOpenBracketEntity.Source alignAfterOpenBracket = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignArrayOfStructuresEntity.Source alignArrayOfStructures = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignConsecutiveAssignmentsEntity.Source alignConsecutiveAssignments = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignConsecutiveBitFieldsEntity.Source alignConsecutiveBitFields = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignConsecutiveDeclarationsEntity.Source alignConsecutiveDeclarations = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignConsecutiveMacrosEntity.Source alignConsecutiveMacros = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignEscapedNewlinesEntity.Source alignEscapedNewlines = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignOperandsEntity.Source alignOperands = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignTrailingCommentsEntity.Source alignTrailingComments = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source allowAllArgumentsOnNextLine = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source allowAllConstructorInitializersOnNextLine = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source allowAllParametersOfDeclarationOnNextLine = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AllowShortBlocksOnASingleLineEntity.Source allowShortBlocksOnASingleLine = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source allowShortCaseLabelsOnASingleLine = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source allowShortEnumsOnASingleLine = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AllowShortFunctionsOnASingleLineEntity.Source allowShortFunctionsOnASingleLine = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AllowShortIfStatementsOnASingleLineEntity.Source allowShortIfStatementsOnASingleLine = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AllowShortLambdasOnASingleLineEntity.Source allowShortLambdasOnASingleLine = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source allowShortLoopsOnASingleLine = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlwaysBreakAfterDefinitionReturnTypeEntity.Source alwaysBreakAfterDefinitionReturnType = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlwaysBreakAfterReturnTypeEntity.Source alwaysBreakAfterReturnType = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source alwaysBreakBeforeMultilineStrings = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlwaysBreakTemplateDeclarationsEntity.Source alwaysBreakTemplateDeclarations = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.JsonStringArray.Source attributeMacros = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.BasedOnStyleEntity.Source basedOnStyle = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source binPackArguments = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source binPackParameters = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.BitFieldColonSpacingEntity.Source bitFieldColonSpacing = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.BraceWrappingEntity.Source braceWrapping = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.BreakAfterAttributesEntity.Source breakAfterAttributes = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source breakAfterJavaFieldAnnotations = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source breakArrays = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClangFormat36TheWayToWrapBinaryOperators.Source breakBeforeBinaryOperators = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClangFormat37TheBraceBreakingStyleToUse.Source breakBeforeBraces = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.BreakBeforeConceptDeclarationsEntity.Source breakBeforeConceptDeclarations = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source breakBeforeInheritanceComma = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClangFormat16TheInlineAsmColonStyleToUse.Source breakBeforeInlineAsmColon = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source breakBeforeTernaryOperators = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClangFormat5TheConstructorInitializersStyleToUse.Source breakConstructorInitializers = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source breakConstructorInitializersBeforeComma = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClangFormat7TheInheritanceListStyleToUse.Source breakInheritanceList = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source breakStringLiterals = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClangFormat37TheColumnLimit.Source columnLimit = default, in Corvus.ClangFormatBenchmark.Current.JsonString.Source commentPragmas = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source compactNamespaces = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source constructorInitializerAllOnOneLineOrOnePerLine = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ConstructorInitializerIndentWidthEntity.Source constructorInitializerIndentWidth = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClangFormat37IndentWidthForLineContinuations.Source continuationIndentWidth = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source cpp11BracedListStyle = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source deriveLineEnding = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source derivePointerAlignment = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source disableFormat = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.EmptyLineAfterAccessModifierEntity.Source emptyLineAfterAccessModifier = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.EmptyLineBeforeAccessModifierEntity.Source emptyLineBeforeAccessModifier = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source experimentalAutoDetectBinPacking = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source fixNamespaceComments = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ForEachMacArray.Source forEachMacros = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.IfMacrosJsArray.Source ifMacros = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.IncludeBlocksEntity.Source includeBlocks = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.RequiredPriorityAndRegexArray.Source includeCategories = default, in Corvus.ClangFormatBenchmark.Current.JsonString.Source includeIsMainRegex = default, in Corvus.ClangFormatBenchmark.Current.JsonString.Source includeIsMainSourceRegex = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source indentAccessModifiers = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source indentCaseBlocks = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source indentCaseLabels = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.IndentExternBlockEntity.Source indentExternBlock = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source indentGotoLabels = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.IndentPpDirectivesEntity.Source indentPpDirectives = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source indentRequires = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source indentRequiresClause = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.IndentWidthEntity.Source indentWidth = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source indentWrappedFunctionNames = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source insertBraces = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source insertNewlineAtEof = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.InsertTrailingCommasEntity.Source insertTrailingCommas = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.IntegerLiteralSeparatorEntity.Source integerLiteralSeparator = default, in Corvus.ClangFormatBenchmark.Current.JsonArray.Source javaImportGroup = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.JavaScriptQuotesEntity.Source javaScriptQuotes = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source javaScriptWrapImports = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source keepEmptyLinesAtTheStartOfBlocks = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.LambdaBodyIndentationEntity.Source lambdaBodyIndentation = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.LanguageEntity.Source language = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClangFormat16LineEndingStyleNOrRNToUse.Source lineEnding = default, in Corvus.ClangFormatBenchmark.Current.JsonString.Source macroBlockBegin = default, in Corvus.ClangFormatBenchmark.Current.JsonString.Source macroBlockEnd = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.MaxEmptyLinesToKeepEntity.Source maxEmptyLinesToKeep = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClnagFormat37TheIndentationUsedForNamespaces.Source namespaceIndentation = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.NamespaceMArray.Source namespaceMacros = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ObjCBinPackProtocolListEntity.Source objCBinPackProtocolList = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ObjCBlockIndentWidthEntity.Source objCBlockIndentWidth = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source objCBreakBeforeNestedBlockParam = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source objCSpaceAfterProperty = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source objCSpaceBeforeProtocolList = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.PackConstructorInitializersEntity.Source packConstructorInitializers = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.PenaltyBreakAssignmentEntity.Source penaltyBreakAssignment = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.PenaltyBreakBeforeFirstCallParameterEntity.Source penaltyBreakBeforeFirstCallParameter = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.PenaltyBreakCommentEntity.Source penaltyBreakComment = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.PenaltyBreakFirstLessLessEntity.Source penaltyBreakFirstLessLess = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClangFormat14ThePenaltyForBreakingAfter.Source penaltyBreakOpenParenthesis = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.PenaltyBreakStringEntity.Source penaltyBreakString = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.PenaltyBreakTemplateDeclarationEntity.Source penaltyBreakTemplateDeclaration = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.PenaltyExcessCharacterEntity.Source penaltyExcessCharacter = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.PenaltyIndentedWhitespaceEntity.Source penaltyIndentedWhitespace = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.PenaltyReturnTypeOnItsOwnLineEntity.Source penaltyReturnTypeOnItsOwnLine = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClangFormat37PointerAndReferenceAlignmentStyle.Source pointerAlignment = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.PpIndentWidthEntity.Source pPIndentWidth = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.QualifierAlignmentEntity.Source qualifierAlignment = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.QualifierOrderArrayQualifierOrderEntityArray.Source qualifierOrder = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.RawStringFormatsEntityArray.Source rawStringFormats = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ReferenceAlignmentEntity.Source referenceAlignment = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source reflowComments = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source removeBracesLlvm = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source removeSemicolon = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClangFormat15ThePositionOfTheRequiresClause.Source requiresClausePosition = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.RequiresExpressionIndentationEntity.Source requiresExpressionIndentation = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.SeparateDefinitionBlocksEntity.Source separateDefinitionBlocks = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ShortNamespaceLinesEntity.Source shortNamespaceLines = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.SortIncludesEntity.Source sortIncludes = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.SortJavaStaticImportEntity.Source sortJavaStaticImport = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.SortUsingDeclarationsEntity.Source sortUsingDeclarations = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source spaceAfterCStyleCast = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source spaceAfterLogicalNot = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source spaceAfterTemplateKeyword = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.SpaceAroundPointerQualifiersEntity.Source spaceAroundPointerQualifiers = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source spaceBeforeAssignmentOperators = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source spaceBeforeCaseColon = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source spaceBeforeCpp11BracedList = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source spaceBeforeCtorInitializerColon = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source spaceBeforeInheritanceColon = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.SpaceBeforeParensEntity.Source spaceBeforeParens = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.SpaceBeforeParensOptionsEntity.Source spaceBeforeParensOptions = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source spaceBeforeRangeBasedForLoopColon = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source spaceBeforeSquareBrackets = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source spaceInEmptyBlock = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source spaceInEmptyParentheses = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.SpacesBeforeTrailingCommentsEntity.Source spacesBeforeTrailingComments = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.SpacesInAnglesEntity.Source spacesInAngles = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source spacesInConditionalStatement = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source spacesInContainerLiterals = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source spacesInCStyleCastParentheses = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.SpacesInLineCommentPrefixEntity.Source spacesInLineCommentPrefix = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source spacesInParentheses = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source spacesInSquareBrackets = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.StandardEntity.Source standard = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.StatementAArray.Source statementAttributeLikeMacros = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.StatementMArray.Source statementMacros = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClangFormat37TheNumberOfColumnsUsedForTabStops.Source tabWidth = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.TypenameMaArray.Source typenameMacros = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source useCrlf = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.UseTabEntity.Source useTab = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.WhitespaceArray.Source whitespaceSensitiveMacros = default, int initialCapacity = 30)
     {
         JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
@@ -13038,7 +13074,7 @@ public readonly partial struct ClangFormatSchema
     /// <param name="whitespaceSensitiveMacros">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.ClangFormatBenchmark.Current.JsonInteger.Source accessModifierOffset = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignAfterOpenBracketEntity.Source alignAfterOpenBracket = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignArrayOfStructuresEntity.Source alignArrayOfStructures = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignConsecutiveAssignmentsEntity.Source<TContext> alignConsecutiveAssignments = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignConsecutiveBitFieldsEntity.Source<TContext> alignConsecutiveBitFields = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignConsecutiveDeclarationsEntity.Source<TContext> alignConsecutiveDeclarations = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignConsecutiveMacrosEntity.Source<TContext> alignConsecutiveMacros = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignEscapedNewlinesEntity.Source alignEscapedNewlines = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignOperandsEntity.Source alignOperands = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignTrailingCommentsEntity.Source<TContext> alignTrailingComments = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source allowAllArgumentsOnNextLine = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source allowAllConstructorInitializersOnNextLine = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source allowAllParametersOfDeclarationOnNextLine = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AllowShortBlocksOnASingleLineEntity.Source allowShortBlocksOnASingleLine = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source allowShortCaseLabelsOnASingleLine = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source allowShortEnumsOnASingleLine = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AllowShortFunctionsOnASingleLineEntity.Source allowShortFunctionsOnASingleLine = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AllowShortIfStatementsOnASingleLineEntity.Source allowShortIfStatementsOnASingleLine = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AllowShortLambdasOnASingleLineEntity.Source allowShortLambdasOnASingleLine = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source allowShortLoopsOnASingleLine = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlwaysBreakAfterDefinitionReturnTypeEntity.Source alwaysBreakAfterDefinitionReturnType = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlwaysBreakAfterReturnTypeEntity.Source alwaysBreakAfterReturnType = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source alwaysBreakBeforeMultilineStrings = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlwaysBreakTemplateDeclarationsEntity.Source alwaysBreakTemplateDeclarations = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.JsonStringArray.Source<TContext> attributeMacros = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.BasedOnStyleEntity.Source basedOnStyle = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source binPackArguments = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source binPackParameters = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.BitFieldColonSpacingEntity.Source bitFieldColonSpacing = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.BraceWrappingEntity.Source<TContext> braceWrapping = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.BreakAfterAttributesEntity.Source breakAfterAttributes = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source breakAfterJavaFieldAnnotations = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source breakArrays = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClangFormat36TheWayToWrapBinaryOperators.Source breakBeforeBinaryOperators = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClangFormat37TheBraceBreakingStyleToUse.Source breakBeforeBraces = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.BreakBeforeConceptDeclarationsEntity.Source breakBeforeConceptDeclarations = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source breakBeforeInheritanceComma = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClangFormat16TheInlineAsmColonStyleToUse.Source breakBeforeInlineAsmColon = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source breakBeforeTernaryOperators = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClangFormat5TheConstructorInitializersStyleToUse.Source breakConstructorInitializers = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source breakConstructorInitializersBeforeComma = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClangFormat7TheInheritanceListStyleToUse.Source breakInheritanceList = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source breakStringLiterals = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClangFormat37TheColumnLimit.Source columnLimit = default, in Corvus.ClangFormatBenchmark.Current.JsonString.Source commentPragmas = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source compactNamespaces = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source constructorInitializerAllOnOneLineOrOnePerLine = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ConstructorInitializerIndentWidthEntity.Source constructorInitializerIndentWidth = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClangFormat37IndentWidthForLineContinuations.Source continuationIndentWidth = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source cpp11BracedListStyle = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source deriveLineEnding = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source derivePointerAlignment = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source disableFormat = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.EmptyLineAfterAccessModifierEntity.Source emptyLineAfterAccessModifier = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.EmptyLineBeforeAccessModifierEntity.Source emptyLineBeforeAccessModifier = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source experimentalAutoDetectBinPacking = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source fixNamespaceComments = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ForEachMacArray.Source<TContext> forEachMacros = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.IfMacrosJsArray.Source<TContext> ifMacros = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.IncludeBlocksEntity.Source includeBlocks = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.RequiredPriorityAndRegexArray.Source<TContext> includeCategories = default, in Corvus.ClangFormatBenchmark.Current.JsonString.Source includeIsMainRegex = default, in Corvus.ClangFormatBenchmark.Current.JsonString.Source includeIsMainSourceRegex = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source indentAccessModifiers = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source indentCaseBlocks = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source indentCaseLabels = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.IndentExternBlockEntity.Source indentExternBlock = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source indentGotoLabels = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.IndentPpDirectivesEntity.Source indentPpDirectives = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source indentRequires = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source indentRequiresClause = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.IndentWidthEntity.Source indentWidth = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source indentWrappedFunctionNames = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source insertBraces = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source insertNewlineAtEof = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.InsertTrailingCommasEntity.Source insertTrailingCommas = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.IntegerLiteralSeparatorEntity.Source<TContext> integerLiteralSeparator = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.JavaImportGroupArray.Source<TContext> javaImportGroup = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.JavaScriptQuotesEntity.Source javaScriptQuotes = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source javaScriptWrapImports = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source keepEmptyLinesAtTheStartOfBlocks = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.LambdaBodyIndentationEntity.Source lambdaBodyIndentation = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.LanguageEntity.Source language = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClangFormat16LineEndingStyleNOrRNToUse.Source lineEnding = default, in Corvus.ClangFormatBenchmark.Current.JsonString.Source macroBlockBegin = default, in Corvus.ClangFormatBenchmark.Current.JsonString.Source macroBlockEnd = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.MaxEmptyLinesToKeepEntity.Source maxEmptyLinesToKeep = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClnagFormat37TheIndentationUsedForNamespaces.Source namespaceIndentation = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.NamespaceMArray.Source<TContext> namespaceMacros = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ObjCBinPackProtocolListEntity.Source objCBinPackProtocolList = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ObjCBlockIndentWidthEntity.Source objCBlockIndentWidth = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source objCBreakBeforeNestedBlockParam = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source objCSpaceAfterProperty = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source objCSpaceBeforeProtocolList = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.PackConstructorInitializersEntity.Source packConstructorInitializers = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.PenaltyBreakAssignmentEntity.Source penaltyBreakAssignment = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.PenaltyBreakBeforeFirstCallParameterEntity.Source penaltyBreakBeforeFirstCallParameter = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.PenaltyBreakCommentEntity.Source penaltyBreakComment = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.PenaltyBreakFirstLessLessEntity.Source penaltyBreakFirstLessLess = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClangFormat14ThePenaltyForBreakingAfter.Source penaltyBreakOpenParenthesis = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.PenaltyBreakStringEntity.Source penaltyBreakString = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.PenaltyBreakTemplateDeclarationEntity.Source penaltyBreakTemplateDeclaration = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.PenaltyExcessCharacterEntity.Source penaltyExcessCharacter = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.PenaltyIndentedWhitespaceEntity.Source penaltyIndentedWhitespace = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.PenaltyReturnTypeOnItsOwnLineEntity.Source penaltyReturnTypeOnItsOwnLine = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClangFormat37PointerAndReferenceAlignmentStyle.Source pointerAlignment = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.PpIndentWidthEntity.Source pPIndentWidth = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.QualifierAlignmentEntity.Source qualifierAlignment = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.QualifierOrderArrayQualifierOrderEntityArray.Source<TContext> qualifierOrder = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.RawStringFormatsEntityArray.Source<TContext> rawStringFormats = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ReferenceAlignmentEntity.Source referenceAlignment = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source reflowComments = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source removeBracesLlvm = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source removeSemicolon = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClangFormat15ThePositionOfTheRequiresClause.Source requiresClausePosition = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.RequiresExpressionIndentationEntity.Source requiresExpressionIndentation = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.SeparateDefinitionBlocksEntity.Source separateDefinitionBlocks = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ShortNamespaceLinesEntity.Source shortNamespaceLines = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.SortIncludesEntity.Source sortIncludes = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.SortJavaStaticImportEntity.Source sortJavaStaticImport = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.SortUsingDeclarationsEntity.Source sortUsingDeclarations = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source spaceAfterCStyleCast = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source spaceAfterLogicalNot = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source spaceAfterTemplateKeyword = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.SpaceAroundPointerQualifiersEntity.Source spaceAroundPointerQualifiers = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source spaceBeforeAssignmentOperators = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source spaceBeforeCaseColon = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source spaceBeforeCpp11BracedList = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source spaceBeforeCtorInitializerColon = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source spaceBeforeInheritanceColon = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.SpaceBeforeParensEntity.Source spaceBeforeParens = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.SpaceBeforeParensOptionsEntity.Source<TContext> spaceBeforeParensOptions = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source spaceBeforeRangeBasedForLoopColon = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source spaceBeforeSquareBrackets = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source spaceInEmptyBlock = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source spaceInEmptyParentheses = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.SpacesBeforeTrailingCommentsEntity.Source spacesBeforeTrailingComments = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.SpacesInAnglesEntity.Source spacesInAngles = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source spacesInConditionalStatement = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source spacesInContainerLiterals = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source spacesInCStyleCastParentheses = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.SpacesInLineCommentPrefixEntity.Source<TContext> spacesInLineCommentPrefix = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source spacesInParentheses = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source spacesInSquareBrackets = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.StandardEntity.Source standard = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.StatementAArray.Source<TContext> statementAttributeLikeMacros = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.StatementMArray.Source<TContext> statementMacros = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClangFormat37TheNumberOfColumnsUsedForTabStops.Source tabWidth = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.TypenameMaArray.Source<TContext> typenameMacros = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source useCrlf = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.UseTabEntity.Source useTab = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.WhitespaceArray.Source<TContext> whitespaceSensitiveMacros = default, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.ClangFormatBenchmark.Current.JsonInteger.Source accessModifierOffset = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignAfterOpenBracketEntity.Source alignAfterOpenBracket = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignArrayOfStructuresEntity.Source alignArrayOfStructures = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignConsecutiveAssignmentsEntity.Source<TContext> alignConsecutiveAssignments = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignConsecutiveBitFieldsEntity.Source<TContext> alignConsecutiveBitFields = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignConsecutiveDeclarationsEntity.Source<TContext> alignConsecutiveDeclarations = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignConsecutiveMacrosEntity.Source<TContext> alignConsecutiveMacros = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignEscapedNewlinesEntity.Source alignEscapedNewlines = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignOperandsEntity.Source alignOperands = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignTrailingCommentsEntity.Source<TContext> alignTrailingComments = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source allowAllArgumentsOnNextLine = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source allowAllConstructorInitializersOnNextLine = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source allowAllParametersOfDeclarationOnNextLine = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AllowShortBlocksOnASingleLineEntity.Source allowShortBlocksOnASingleLine = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source allowShortCaseLabelsOnASingleLine = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source allowShortEnumsOnASingleLine = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AllowShortFunctionsOnASingleLineEntity.Source allowShortFunctionsOnASingleLine = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AllowShortIfStatementsOnASingleLineEntity.Source allowShortIfStatementsOnASingleLine = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AllowShortLambdasOnASingleLineEntity.Source allowShortLambdasOnASingleLine = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source allowShortLoopsOnASingleLine = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlwaysBreakAfterDefinitionReturnTypeEntity.Source alwaysBreakAfterDefinitionReturnType = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlwaysBreakAfterReturnTypeEntity.Source alwaysBreakAfterReturnType = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source alwaysBreakBeforeMultilineStrings = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlwaysBreakTemplateDeclarationsEntity.Source alwaysBreakTemplateDeclarations = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.JsonStringArray.Source<TContext> attributeMacros = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.BasedOnStyleEntity.Source basedOnStyle = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source binPackArguments = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source binPackParameters = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.BitFieldColonSpacingEntity.Source bitFieldColonSpacing = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.BraceWrappingEntity.Source<TContext> braceWrapping = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.BreakAfterAttributesEntity.Source breakAfterAttributes = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source breakAfterJavaFieldAnnotations = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source breakArrays = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClangFormat36TheWayToWrapBinaryOperators.Source breakBeforeBinaryOperators = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClangFormat37TheBraceBreakingStyleToUse.Source breakBeforeBraces = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.BreakBeforeConceptDeclarationsEntity.Source breakBeforeConceptDeclarations = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source breakBeforeInheritanceComma = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClangFormat16TheInlineAsmColonStyleToUse.Source breakBeforeInlineAsmColon = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source breakBeforeTernaryOperators = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClangFormat5TheConstructorInitializersStyleToUse.Source breakConstructorInitializers = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source breakConstructorInitializersBeforeComma = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClangFormat7TheInheritanceListStyleToUse.Source breakInheritanceList = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source breakStringLiterals = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClangFormat37TheColumnLimit.Source columnLimit = default, in Corvus.ClangFormatBenchmark.Current.JsonString.Source commentPragmas = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source compactNamespaces = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source constructorInitializerAllOnOneLineOrOnePerLine = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ConstructorInitializerIndentWidthEntity.Source constructorInitializerIndentWidth = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClangFormat37IndentWidthForLineContinuations.Source continuationIndentWidth = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source cpp11BracedListStyle = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source deriveLineEnding = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source derivePointerAlignment = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source disableFormat = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.EmptyLineAfterAccessModifierEntity.Source emptyLineAfterAccessModifier = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.EmptyLineBeforeAccessModifierEntity.Source emptyLineBeforeAccessModifier = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source experimentalAutoDetectBinPacking = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source fixNamespaceComments = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ForEachMacArray.Source<TContext> forEachMacros = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.IfMacrosJsArray.Source<TContext> ifMacros = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.IncludeBlocksEntity.Source includeBlocks = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.RequiredPriorityAndRegexArray.Source<TContext> includeCategories = default, in Corvus.ClangFormatBenchmark.Current.JsonString.Source includeIsMainRegex = default, in Corvus.ClangFormatBenchmark.Current.JsonString.Source includeIsMainSourceRegex = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source indentAccessModifiers = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source indentCaseBlocks = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source indentCaseLabels = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.IndentExternBlockEntity.Source indentExternBlock = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source indentGotoLabels = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.IndentPpDirectivesEntity.Source indentPpDirectives = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source indentRequires = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source indentRequiresClause = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.IndentWidthEntity.Source indentWidth = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source indentWrappedFunctionNames = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source insertBraces = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source insertNewlineAtEof = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.InsertTrailingCommasEntity.Source insertTrailingCommas = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.IntegerLiteralSeparatorEntity.Source<TContext> integerLiteralSeparator = default, in Corvus.ClangFormatBenchmark.Current.JsonArray.Source<TContext> javaImportGroup = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.JavaScriptQuotesEntity.Source javaScriptQuotes = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source javaScriptWrapImports = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source keepEmptyLinesAtTheStartOfBlocks = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.LambdaBodyIndentationEntity.Source lambdaBodyIndentation = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.LanguageEntity.Source language = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClangFormat16LineEndingStyleNOrRNToUse.Source lineEnding = default, in Corvus.ClangFormatBenchmark.Current.JsonString.Source macroBlockBegin = default, in Corvus.ClangFormatBenchmark.Current.JsonString.Source macroBlockEnd = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.MaxEmptyLinesToKeepEntity.Source maxEmptyLinesToKeep = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClnagFormat37TheIndentationUsedForNamespaces.Source namespaceIndentation = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.NamespaceMArray.Source<TContext> namespaceMacros = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ObjCBinPackProtocolListEntity.Source objCBinPackProtocolList = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ObjCBlockIndentWidthEntity.Source objCBlockIndentWidth = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source objCBreakBeforeNestedBlockParam = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source objCSpaceAfterProperty = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source objCSpaceBeforeProtocolList = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.PackConstructorInitializersEntity.Source packConstructorInitializers = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.PenaltyBreakAssignmentEntity.Source penaltyBreakAssignment = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.PenaltyBreakBeforeFirstCallParameterEntity.Source penaltyBreakBeforeFirstCallParameter = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.PenaltyBreakCommentEntity.Source penaltyBreakComment = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.PenaltyBreakFirstLessLessEntity.Source penaltyBreakFirstLessLess = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClangFormat14ThePenaltyForBreakingAfter.Source penaltyBreakOpenParenthesis = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.PenaltyBreakStringEntity.Source penaltyBreakString = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.PenaltyBreakTemplateDeclarationEntity.Source penaltyBreakTemplateDeclaration = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.PenaltyExcessCharacterEntity.Source penaltyExcessCharacter = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.PenaltyIndentedWhitespaceEntity.Source penaltyIndentedWhitespace = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.PenaltyReturnTypeOnItsOwnLineEntity.Source penaltyReturnTypeOnItsOwnLine = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClangFormat37PointerAndReferenceAlignmentStyle.Source pointerAlignment = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.PpIndentWidthEntity.Source pPIndentWidth = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.QualifierAlignmentEntity.Source qualifierAlignment = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.QualifierOrderArrayQualifierOrderEntityArray.Source<TContext> qualifierOrder = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.RawStringFormatsEntityArray.Source<TContext> rawStringFormats = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ReferenceAlignmentEntity.Source referenceAlignment = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source reflowComments = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source removeBracesLlvm = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source removeSemicolon = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClangFormat15ThePositionOfTheRequiresClause.Source requiresClausePosition = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.RequiresExpressionIndentationEntity.Source requiresExpressionIndentation = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.SeparateDefinitionBlocksEntity.Source separateDefinitionBlocks = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ShortNamespaceLinesEntity.Source shortNamespaceLines = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.SortIncludesEntity.Source sortIncludes = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.SortJavaStaticImportEntity.Source sortJavaStaticImport = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.SortUsingDeclarationsEntity.Source sortUsingDeclarations = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source spaceAfterCStyleCast = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source spaceAfterLogicalNot = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source spaceAfterTemplateKeyword = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.SpaceAroundPointerQualifiersEntity.Source spaceAroundPointerQualifiers = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source spaceBeforeAssignmentOperators = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source spaceBeforeCaseColon = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source spaceBeforeCpp11BracedList = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source spaceBeforeCtorInitializerColon = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source spaceBeforeInheritanceColon = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.SpaceBeforeParensEntity.Source spaceBeforeParens = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.SpaceBeforeParensOptionsEntity.Source<TContext> spaceBeforeParensOptions = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source spaceBeforeRangeBasedForLoopColon = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source spaceBeforeSquareBrackets = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source spaceInEmptyBlock = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source spaceInEmptyParentheses = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.SpacesBeforeTrailingCommentsEntity.Source spacesBeforeTrailingComments = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.SpacesInAnglesEntity.Source spacesInAngles = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source spacesInConditionalStatement = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source spacesInContainerLiterals = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source spacesInCStyleCastParentheses = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.SpacesInLineCommentPrefixEntity.Source<TContext> spacesInLineCommentPrefix = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source spacesInParentheses = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source spacesInSquareBrackets = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.StandardEntity.Source standard = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.StatementAArray.Source<TContext> statementAttributeLikeMacros = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.StatementMArray.Source<TContext> statementMacros = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.ClangFormat37TheNumberOfColumnsUsedForTabStops.Source tabWidth = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.TypenameMaArray.Source<TContext> typenameMacros = default, in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source useCrlf = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.UseTabEntity.Source useTab = default, in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.WhitespaceArray.Source<TContext> whitespaceSensitiveMacros = default, int initialCapacity = 30)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif

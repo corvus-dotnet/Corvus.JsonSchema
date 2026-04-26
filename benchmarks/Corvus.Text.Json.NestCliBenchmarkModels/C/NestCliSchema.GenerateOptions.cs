@@ -608,5 +608,27 @@ public readonly partial struct NestCliSchema
             /// </summary>
             public static ReadOnlySpan<byte> Spec => "spec"u8;
         }
+
+        /// <summary>
+        /// Provides pre-baked property name blobs for fast builder property storage.
+        /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
+        /// </summary>
+        private static class JsonPropertyNamesPrebaked
+        {
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="BaseDir"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> BaseDir => [0x95, 0x00, 0x00, 0x00, 0x22, 0x62, 0x61, 0x73, 0x65, 0x44, 0x69, 0x72, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Flat"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Flat => [0x65, 0x00, 0x00, 0x00, 0x22, 0x66, 0x6C, 0x61, 0x74, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Spec"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Spec => [0x65, 0x00, 0x00, 0x00, 0x22, 0x73, 0x70, 0x65, 0x63, 0x22];
+        }
     }
 }

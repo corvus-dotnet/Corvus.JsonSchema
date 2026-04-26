@@ -466,11 +466,11 @@ public readonly partial struct KrakendSchema
             /// See: https://www.krakend.io/docs/authorization/revoking-tokens/
             /// </para>
             /// </remarks>
-            public Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271auth1revokerJson.TokenKeys.Mutable TokenKeysValue
+            public Corvus.KrakendBenchmark.Current.JsonArray.Mutable TokenKeys
             {
                 get
                 {
-                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TokenKeysValueUtf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271auth1revokerJson.TokenKeys.Mutable value))
+                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TokenKeysUtf8, out Corvus.KrakendBenchmark.Current.JsonArray.Mutable value))
                     {
                         return value;
                     }
@@ -559,7 +559,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.HashName, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.HashName, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -590,7 +590,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.N, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.N, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -621,7 +621,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.P, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.P, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -652,7 +652,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Port, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Port, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -685,7 +685,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.RevokeServerApiKey, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.RevokeServerApiKey, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -730,7 +730,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.RevokeServerMaxRetriesValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.RevokeServerMaxRetriesValue, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -775,7 +775,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.RevokeServerMaxWorkers, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.RevokeServerMaxWorkers, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -820,7 +820,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.RevokeServerPingInterval, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.RevokeServerPingInterval, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -865,7 +865,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.RevokeServerPingUrl, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.RevokeServerPingUrl, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -889,7 +889,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>token_keys</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetTokenKeysValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271auth1revokerJson.TokenKeys.Source value)
+            public void SetTokenKeys(in Corvus.KrakendBenchmark.Current.JsonArray.Source value)
             {
                 CheckValidInstance();
 
@@ -899,7 +899,7 @@ public readonly partial struct KrakendSchema
                 }
 
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TokenKeysValueUtf8, out IJsonDocument? elementParent, out int elementIdx))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TokenKeysUtf8, out IJsonDocument? elementParent, out int elementIdx))
                 {
                     // We are going to replace just the value
                     value.AddAsItem(ref cvb);
@@ -908,7 +908,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.TokenKeysValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TokenKeys, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -920,7 +920,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>token_keys</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetTokenKeysValue<TContext>(in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271auth1revokerJson.TokenKeys.Source<TContext> value)
+            public void SetTokenKeys<TContext>(in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> value)
 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
 #endif
@@ -933,7 +933,7 @@ public readonly partial struct KrakendSchema
                 }
 
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TokenKeysValueUtf8, out IJsonDocument? elementParent, out int elementIdx))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TokenKeysUtf8, out IJsonDocument? elementParent, out int elementIdx))
                 {
                     // We are going to replace just the value
                     value.AddAsItem(ref cvb);
@@ -942,7 +942,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.TokenKeysValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TokenKeys, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -973,7 +973,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Ttl, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Ttl, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1344,6 +1344,24 @@ public readonly partial struct KrakendSchema
                 }
             }
 
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.JsonElement:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                        break;
+                    case Kind.Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
             internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
             {
                 switch(_kind)
@@ -1445,6 +1463,24 @@ public readonly partial struct KrakendSchema
                 }
             }
 
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.Source:
+                        _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                        break;
+                    case Kind.Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
             internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
             {
                 switch(_kind)
@@ -1527,7 +1563,7 @@ public readonly partial struct KrakendSchema
                 in Corvus.KrakendBenchmark.Current.JsonInteger.Source n,
                 in Corvus.KrakendBenchmark.Current.JsonNumber.Source p,
                 in Corvus.KrakendBenchmark.Current.JsonInteger.Source port,
-                in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271auth1revokerJson.TokenKeys.Source tokenKeys,
+                in Corvus.KrakendBenchmark.Current.JsonArray.Source tokenKeys,
                 in Corvus.KrakendBenchmark.Current.JsonInteger.Source tTl,
                 in Corvus.KrakendBenchmark.Current.JsonString.Source revokeServerApiKey = default,
                 in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271auth1revokerJson.RevokeServerMaxRetries.Source revokeServerMaxRetries = default,
@@ -1535,17 +1571,17 @@ public readonly partial struct KrakendSchema
                 in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source revokeServerPingInterval = default,
                 in Corvus.KrakendBenchmark.Current.JsonString.Source revokeServerPingUrl = default)
             {
-                hashName.AddAsProperty(JsonPropertyNamesEscaped.HashName, ref builder, escapeName: false);
-                n.AddAsProperty(JsonPropertyNamesEscaped.N, ref builder, escapeName: false);
-                p.AddAsProperty(JsonPropertyNamesEscaped.P, ref builder, escapeName: false);
-                port.AddAsProperty(JsonPropertyNamesEscaped.Port, ref builder, escapeName: false);
-                tokenKeys.AddAsProperty(JsonPropertyNamesEscaped.TokenKeysValue, ref builder, escapeName: false);
-                tTl.AddAsProperty(JsonPropertyNamesEscaped.Ttl, ref builder, escapeName: false);
-                revokeServerApiKey.AddAsProperty(JsonPropertyNamesEscaped.RevokeServerApiKey, ref builder, escapeName: false);
-                revokeServerMaxRetries.AddAsProperty(JsonPropertyNamesEscaped.RevokeServerMaxRetriesValue, ref builder, escapeName: false);
-                revokeServerMaxWorkers.AddAsProperty(JsonPropertyNamesEscaped.RevokeServerMaxWorkers, ref builder, escapeName: false);
-                revokeServerPingInterval.AddAsProperty(JsonPropertyNamesEscaped.RevokeServerPingInterval, ref builder, escapeName: false);
-                revokeServerPingUrl.AddAsProperty(JsonPropertyNamesEscaped.RevokeServerPingUrl, ref builder, escapeName: false);
+                hashName.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.HashName, ref builder);
+                n.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.N, ref builder);
+                p.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.P, ref builder);
+                port.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Port, ref builder);
+                tokenKeys.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TokenKeys, ref builder);
+                tTl.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Ttl, ref builder);
+                revokeServerApiKey.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.RevokeServerApiKey, ref builder);
+                revokeServerMaxRetries.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.RevokeServerMaxRetriesValue, ref builder);
+                revokeServerMaxWorkers.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.RevokeServerMaxWorkers, ref builder);
+                revokeServerPingInterval.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.RevokeServerPingInterval, ref builder);
+                revokeServerPingUrl.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.RevokeServerPingUrl, ref builder);
             }
 
             /// <summary>
@@ -1556,7 +1592,7 @@ public readonly partial struct KrakendSchema
                 in Corvus.KrakendBenchmark.Current.JsonInteger.Source n,
                 in Corvus.KrakendBenchmark.Current.JsonNumber.Source p,
                 in Corvus.KrakendBenchmark.Current.JsonInteger.Source port,
-                in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271auth1revokerJson.TokenKeys.Source tokenKeys,
+                in Corvus.KrakendBenchmark.Current.JsonArray.Source tokenKeys,
                 in Corvus.KrakendBenchmark.Current.JsonInteger.Source tTl,
                 in Corvus.KrakendBenchmark.Current.JsonString.Source revokeServerApiKey = default,
                 in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271auth1revokerJson.RevokeServerMaxRetries.Source revokeServerMaxRetries = default,
@@ -1577,7 +1613,7 @@ public readonly partial struct KrakendSchema
                 in Corvus.KrakendBenchmark.Current.JsonInteger.Source n,
                 in Corvus.KrakendBenchmark.Current.JsonNumber.Source p,
                 in Corvus.KrakendBenchmark.Current.JsonInteger.Source port,
-                in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271auth1revokerJson.TokenKeys.Source<TContext> tokenKeys,
+                in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> tokenKeys,
                 in Corvus.KrakendBenchmark.Current.JsonInteger.Source tTl,
                 in Corvus.KrakendBenchmark.Current.JsonString.Source revokeServerApiKey = default,
                 in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271auth1revokerJson.RevokeServerMaxRetries.Source revokeServerMaxRetries = default,
@@ -1588,17 +1624,17 @@ public readonly partial struct KrakendSchema
             where TContext : allows ref struct
             #endif
             {
-                hashName.AddAsProperty(JsonPropertyNamesEscaped.HashName, ref builder, escapeName: false);
-                n.AddAsProperty(JsonPropertyNamesEscaped.N, ref builder, escapeName: false);
-                p.AddAsProperty(JsonPropertyNamesEscaped.P, ref builder, escapeName: false);
-                port.AddAsProperty(JsonPropertyNamesEscaped.Port, ref builder, escapeName: false);
-                tokenKeys.AddAsProperty(JsonPropertyNamesEscaped.TokenKeysValue, ref builder, escapeName: false);
-                tTl.AddAsProperty(JsonPropertyNamesEscaped.Ttl, ref builder, escapeName: false);
-                revokeServerApiKey.AddAsProperty(JsonPropertyNamesEscaped.RevokeServerApiKey, ref builder, escapeName: false);
-                revokeServerMaxRetries.AddAsProperty(JsonPropertyNamesEscaped.RevokeServerMaxRetriesValue, ref builder, escapeName: false);
-                revokeServerMaxWorkers.AddAsProperty(JsonPropertyNamesEscaped.RevokeServerMaxWorkers, ref builder, escapeName: false);
-                revokeServerPingInterval.AddAsProperty(JsonPropertyNamesEscaped.RevokeServerPingInterval, ref builder, escapeName: false);
-                revokeServerPingUrl.AddAsProperty(JsonPropertyNamesEscaped.RevokeServerPingUrl, ref builder, escapeName: false);
+                hashName.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.HashName, ref builder);
+                n.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.N, ref builder);
+                p.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.P, ref builder);
+                port.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Port, ref builder);
+                tokenKeys.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TokenKeys, ref builder);
+                tTl.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Ttl, ref builder);
+                revokeServerApiKey.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.RevokeServerApiKey, ref builder);
+                revokeServerMaxRetries.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.RevokeServerMaxRetriesValue, ref builder);
+                revokeServerMaxWorkers.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.RevokeServerMaxWorkers, ref builder);
+                revokeServerPingInterval.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.RevokeServerPingInterval, ref builder);
+                revokeServerPingUrl.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.RevokeServerPingUrl, ref builder);
             }
 
             /// <summary>
@@ -1610,7 +1646,7 @@ public readonly partial struct KrakendSchema
                 in Corvus.KrakendBenchmark.Current.JsonInteger.Source n,
                 in Corvus.KrakendBenchmark.Current.JsonNumber.Source p,
                 in Corvus.KrakendBenchmark.Current.JsonInteger.Source port,
-                in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271auth1revokerJson.TokenKeys.Source<TContext> tokenKeys,
+                in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> tokenKeys,
                 in Corvus.KrakendBenchmark.Current.JsonInteger.Source tTl,
                 in Corvus.KrakendBenchmark.Current.JsonString.Source revokeServerApiKey = default,
                 in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271auth1revokerJson.RevokeServerMaxRetries.Source revokeServerMaxRetries = default,
@@ -1790,7 +1826,7 @@ public readonly partial struct KrakendSchema
         /// <param name="revokeServerPingUrl">The value of the property.</param>
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
         /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-        public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271auth1revokerJson.HashFunctionName.Source hashName, in Corvus.KrakendBenchmark.Current.JsonInteger.Source n, in Corvus.KrakendBenchmark.Current.JsonNumber.Source p, in Corvus.KrakendBenchmark.Current.JsonInteger.Source port, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271auth1revokerJson.TokenKeys.Source tokenKeys, in Corvus.KrakendBenchmark.Current.JsonInteger.Source tTl, in Corvus.KrakendBenchmark.Current.JsonString.Source revokeServerApiKey = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271auth1revokerJson.RevokeServerMaxRetries.Source revokeServerMaxRetries = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271auth1revokerJson.MaxWorkers.Source revokeServerMaxWorkers = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source revokeServerPingInterval = default, in Corvus.KrakendBenchmark.Current.JsonString.Source revokeServerPingUrl = default, int initialCapacity = 30)
+        public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271auth1revokerJson.HashFunctionName.Source hashName, in Corvus.KrakendBenchmark.Current.JsonInteger.Source n, in Corvus.KrakendBenchmark.Current.JsonNumber.Source p, in Corvus.KrakendBenchmark.Current.JsonInteger.Source port, in Corvus.KrakendBenchmark.Current.JsonArray.Source tokenKeys, in Corvus.KrakendBenchmark.Current.JsonInteger.Source tTl, in Corvus.KrakendBenchmark.Current.JsonString.Source revokeServerApiKey = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271auth1revokerJson.RevokeServerMaxRetries.Source revokeServerMaxRetries = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271auth1revokerJson.MaxWorkers.Source revokeServerMaxWorkers = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source revokeServerPingInterval = default, in Corvus.KrakendBenchmark.Current.JsonString.Source revokeServerPingUrl = default, int initialCapacity = 30)
         {
             JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
             ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
@@ -1822,7 +1858,7 @@ public readonly partial struct KrakendSchema
         /// <param name="revokeServerPingUrl">The value of the property.</param>
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
         /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-        public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271auth1revokerJson.HashFunctionName.Source hashName, in Corvus.KrakendBenchmark.Current.JsonInteger.Source n, in Corvus.KrakendBenchmark.Current.JsonNumber.Source p, in Corvus.KrakendBenchmark.Current.JsonInteger.Source port, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271auth1revokerJson.TokenKeys.Source<TContext> tokenKeys, in Corvus.KrakendBenchmark.Current.JsonInteger.Source tTl, in Corvus.KrakendBenchmark.Current.JsonString.Source revokeServerApiKey = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271auth1revokerJson.RevokeServerMaxRetries.Source revokeServerMaxRetries = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271auth1revokerJson.MaxWorkers.Source revokeServerMaxWorkers = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source revokeServerPingInterval = default, in Corvus.KrakendBenchmark.Current.JsonString.Source revokeServerPingUrl = default, int initialCapacity = 30)
+        public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271auth1revokerJson.HashFunctionName.Source hashName, in Corvus.KrakendBenchmark.Current.JsonInteger.Source n, in Corvus.KrakendBenchmark.Current.JsonNumber.Source p, in Corvus.KrakendBenchmark.Current.JsonInteger.Source port, in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> tokenKeys, in Corvus.KrakendBenchmark.Current.JsonInteger.Source tTl, in Corvus.KrakendBenchmark.Current.JsonString.Source revokeServerApiKey = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271auth1revokerJson.RevokeServerMaxRetries.Source revokeServerMaxRetries = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271auth1revokerJson.MaxWorkers.Source revokeServerMaxWorkers = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source revokeServerPingInterval = default, in Corvus.KrakendBenchmark.Current.JsonString.Source revokeServerPingUrl = default, int initialCapacity = 30)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif

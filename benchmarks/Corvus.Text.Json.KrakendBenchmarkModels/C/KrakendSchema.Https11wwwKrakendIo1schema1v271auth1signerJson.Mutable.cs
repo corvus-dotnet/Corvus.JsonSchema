@@ -387,11 +387,11 @@ public readonly partial struct KrakendSchema
             /// See: https://www.krakend.io/docs/authorization/jwt-signing/
             /// </para>
             /// </remarks>
-            public Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271auth1signerJson.JwkFingerprints.Mutable JwkFingerprintsValue
+            public Corvus.KrakendBenchmark.Current.JsonArray.Mutable JwkFingerprints
             {
                 get
                 {
-                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.JwkFingerprintsValueUtf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271auth1signerJson.JwkFingerprints.Mutable value))
+                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.JwkFingerprintsUtf8, out Corvus.KrakendBenchmark.Current.JsonArray.Mutable value))
                     {
                         return value;
                     }
@@ -490,11 +490,11 @@ public readonly partial struct KrakendSchema
             /// See: https://www.krakend.io/docs/authorization/jwt-signing/
             /// </para>
             /// </remarks>
-            public Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271auth1signerJson.KeysToSign.Mutable KeysToSignValue
+            public Corvus.KrakendBenchmark.Current.JsonArray.Mutable KeysToSign
             {
                 get
                 {
-                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.KeysToSignValueUtf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271auth1signerJson.KeysToSign.Mutable value))
+                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.KeysToSignUtf8, out Corvus.KrakendBenchmark.Current.JsonArray.Mutable value))
                     {
                         return value;
                     }
@@ -636,7 +636,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Alg, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Alg, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -669,7 +669,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.CipherSuites, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CipherSuites, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -705,7 +705,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.CipherSuites, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CipherSuites, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -750,7 +750,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.CypherKey, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CypherKey, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -795,7 +795,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.DisableJwkSecurityValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DisableJwkSecurityValue, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -840,7 +840,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Full, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Full, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -864,19 +864,19 @@ public readonly partial struct KrakendSchema
             /// Set the <c>jwk_fingerprints</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetJwkFingerprintsValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271auth1signerJson.JwkFingerprints.Source value)
+            public void SetJwkFingerprints(in Corvus.KrakendBenchmark.Current.JsonArray.Source value)
             {
                 CheckValidInstance();
 
                 if (value.IsUndefined)
                 {
-                    JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.JwkFingerprintsValueUtf8);
+                    JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.JwkFingerprintsUtf8);
                     _documentVersion = _parent.Version;
                     return;
                 }
 
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.JwkFingerprintsValueUtf8, out IJsonDocument? elementParent, out int elementIdx))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.JwkFingerprintsUtf8, out IJsonDocument? elementParent, out int elementIdx))
                 {
                     // We are going to replace just the value
                     value.AddAsItem(ref cvb);
@@ -885,7 +885,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.JwkFingerprintsValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.JwkFingerprints, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -897,7 +897,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>jwk_fingerprints</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetJwkFingerprintsValue<TContext>(in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271auth1signerJson.JwkFingerprints.Source<TContext> value)
+            public void SetJwkFingerprints<TContext>(in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> value)
 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
 #endif
@@ -906,13 +906,13 @@ public readonly partial struct KrakendSchema
 
                 if (value.IsUndefined)
                 {
-                    JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.JwkFingerprintsValueUtf8);
+                    JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.JwkFingerprintsUtf8);
                     _documentVersion = _parent.Version;
                     return;
                 }
 
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.JwkFingerprintsValueUtf8, out IJsonDocument? elementParent, out int elementIdx))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.JwkFingerprintsUtf8, out IJsonDocument? elementParent, out int elementIdx))
                 {
                     // We are going to replace just the value
                     value.AddAsItem(ref cvb);
@@ -921,7 +921,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.JwkFingerprintsValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.JwkFingerprints, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -933,10 +933,10 @@ public readonly partial struct KrakendSchema
             /// Remove the <c>jwk_fingerprints</c> property, if present.
             /// </summary>
             /// <returns><see langword="true"/> if the property was found and removed; otherwise, <see langword="false"/>.</returns>
-            public bool RemoveJwkFingerprintsValue()
+            public bool RemoveJwkFingerprints()
             {
                 CheckValidInstance();
-                bool result = JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.JwkFingerprintsValueUtf8);
+                bool result = JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.JwkFingerprintsUtf8);
                 _documentVersion = _parent.Version;
                 return result;
             }
@@ -966,7 +966,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.JwkLocalCa, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.JwkLocalCa, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1011,7 +1011,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.JwkLocalPath, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.JwkLocalPath, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1056,7 +1056,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.JwkUrl, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.JwkUrl, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1080,7 +1080,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>keys_to_sign</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetKeysToSignValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271auth1signerJson.KeysToSign.Source value)
+            public void SetKeysToSign(in Corvus.KrakendBenchmark.Current.JsonArray.Source value)
             {
                 CheckValidInstance();
 
@@ -1090,7 +1090,7 @@ public readonly partial struct KrakendSchema
                 }
 
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.KeysToSignValueUtf8, out IJsonDocument? elementParent, out int elementIdx))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.KeysToSignUtf8, out IJsonDocument? elementParent, out int elementIdx))
                 {
                     // We are going to replace just the value
                     value.AddAsItem(ref cvb);
@@ -1099,7 +1099,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.KeysToSignValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.KeysToSign, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1111,7 +1111,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>keys_to_sign</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetKeysToSignValue<TContext>(in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271auth1signerJson.KeysToSign.Source<TContext> value)
+            public void SetKeysToSign<TContext>(in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> value)
 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
 #endif
@@ -1124,7 +1124,7 @@ public readonly partial struct KrakendSchema
                 }
 
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.KeysToSignValueUtf8, out IJsonDocument? elementParent, out int elementIdx))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.KeysToSignUtf8, out IJsonDocument? elementParent, out int elementIdx))
                 {
                     // We are going to replace just the value
                     value.AddAsItem(ref cvb);
@@ -1133,7 +1133,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.KeysToSignValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.KeysToSign, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1164,7 +1164,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Kid, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Kid, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1197,7 +1197,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Leeway, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Leeway, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1242,7 +1242,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.SecretUrl, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SecretUrl, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1755,6 +1755,24 @@ public readonly partial struct KrakendSchema
                 }
             }
 
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.JsonElement:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                        break;
+                    case Kind.Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
             internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
             {
                 switch(_kind)
@@ -1858,6 +1876,24 @@ public readonly partial struct KrakendSchema
                 }
             }
 
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.Source:
+                        _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                        break;
+                    case Kind.Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
             internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
             {
                 switch(_kind)
@@ -1937,32 +1973,32 @@ public readonly partial struct KrakendSchema
             internal static void Create(
                 ref ComplexValueBuilder builder,
                 in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271auth1signerJson.Algorithm.Source alg,
-                in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271auth1signerJson.KeysToSign.Source keysToSign,
+                in Corvus.KrakendBenchmark.Current.JsonArray.Source keysToSign,
                 in Corvus.KrakendBenchmark.Current.JsonString.Source kid,
                 in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271auth1signerJson.ObjectInArrayArray.Source cipherSuites = default,
                 in Corvus.KrakendBenchmark.Current.JsonString.Source cypherKey = default,
                 in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271auth1signerJson.DisableJwkSecurity.Source disableJwkSecurity = default,
                 in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271auth1signerJson.FullFormat.Source full = default,
-                in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271auth1signerJson.JwkFingerprints.Source jwkFingerprints = default,
+                in Corvus.KrakendBenchmark.Current.JsonArray.Source jwkFingerprints = default,
                 in Corvus.KrakendBenchmark.Current.JsonString.Source jwkLocalCa = default,
                 in Corvus.KrakendBenchmark.Current.JsonString.Source jwkLocalPath = default,
                 in Corvus.KrakendBenchmark.Current.JsonString.Source jwkUrl = default,
                 in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source leeway = default,
                 in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271auth1signerJson.SecretSUrl.Source secretUrl = default)
             {
-                alg.AddAsProperty(JsonPropertyNamesEscaped.Alg, ref builder, escapeName: false);
-                keysToSign.AddAsProperty(JsonPropertyNamesEscaped.KeysToSignValue, ref builder, escapeName: false);
-                kid.AddAsProperty(JsonPropertyNamesEscaped.Kid, ref builder, escapeName: false);
-                cipherSuites.AddAsProperty(JsonPropertyNamesEscaped.CipherSuites, ref builder, escapeName: false);
-                cypherKey.AddAsProperty(JsonPropertyNamesEscaped.CypherKey, ref builder, escapeName: false);
-                disableJwkSecurity.AddAsProperty(JsonPropertyNamesEscaped.DisableJwkSecurityValue, ref builder, escapeName: false);
-                full.AddAsProperty(JsonPropertyNamesEscaped.Full, ref builder, escapeName: false);
-                jwkFingerprints.AddAsProperty(JsonPropertyNamesEscaped.JwkFingerprintsValue, ref builder, escapeName: false);
-                jwkLocalCa.AddAsProperty(JsonPropertyNamesEscaped.JwkLocalCa, ref builder, escapeName: false);
-                jwkLocalPath.AddAsProperty(JsonPropertyNamesEscaped.JwkLocalPath, ref builder, escapeName: false);
-                jwkUrl.AddAsProperty(JsonPropertyNamesEscaped.JwkUrl, ref builder, escapeName: false);
-                leeway.AddAsProperty(JsonPropertyNamesEscaped.Leeway, ref builder, escapeName: false);
-                secretUrl.AddAsProperty(JsonPropertyNamesEscaped.SecretUrl, ref builder, escapeName: false);
+                alg.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Alg, ref builder);
+                keysToSign.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.KeysToSign, ref builder);
+                kid.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Kid, ref builder);
+                cipherSuites.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CipherSuites, ref builder);
+                cypherKey.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CypherKey, ref builder);
+                disableJwkSecurity.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DisableJwkSecurityValue, ref builder);
+                full.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Full, ref builder);
+                jwkFingerprints.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.JwkFingerprints, ref builder);
+                jwkLocalCa.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.JwkLocalCa, ref builder);
+                jwkLocalPath.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.JwkLocalPath, ref builder);
+                jwkUrl.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.JwkUrl, ref builder);
+                leeway.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Leeway, ref builder);
+                secretUrl.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SecretUrl, ref builder);
             }
 
             /// <summary>
@@ -1970,13 +2006,13 @@ public readonly partial struct KrakendSchema
             /// </summary>
             public void Create(
                 in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271auth1signerJson.Algorithm.Source alg,
-                in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271auth1signerJson.KeysToSign.Source keysToSign,
+                in Corvus.KrakendBenchmark.Current.JsonArray.Source keysToSign,
                 in Corvus.KrakendBenchmark.Current.JsonString.Source kid,
                 in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271auth1signerJson.ObjectInArrayArray.Source cipherSuites = default,
                 in Corvus.KrakendBenchmark.Current.JsonString.Source cypherKey = default,
                 in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271auth1signerJson.DisableJwkSecurity.Source disableJwkSecurity = default,
                 in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271auth1signerJson.FullFormat.Source full = default,
-                in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271auth1signerJson.JwkFingerprints.Source jwkFingerprints = default,
+                in Corvus.KrakendBenchmark.Current.JsonArray.Source jwkFingerprints = default,
                 in Corvus.KrakendBenchmark.Current.JsonString.Source jwkLocalCa = default,
                 in Corvus.KrakendBenchmark.Current.JsonString.Source jwkLocalPath = default,
                 in Corvus.KrakendBenchmark.Current.JsonString.Source jwkUrl = default,
@@ -1993,13 +2029,13 @@ public readonly partial struct KrakendSchema
                 in TContext context,
                 ref ComplexValueBuilder builder,
                 in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271auth1signerJson.Algorithm.Source alg,
-                in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271auth1signerJson.KeysToSign.Source<TContext> keysToSign,
+                in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> keysToSign,
                 in Corvus.KrakendBenchmark.Current.JsonString.Source kid,
                 in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271auth1signerJson.ObjectInArrayArray.Source<TContext> cipherSuites = default,
                 in Corvus.KrakendBenchmark.Current.JsonString.Source cypherKey = default,
                 in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271auth1signerJson.DisableJwkSecurity.Source disableJwkSecurity = default,
                 in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271auth1signerJson.FullFormat.Source full = default,
-                in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271auth1signerJson.JwkFingerprints.Source<TContext> jwkFingerprints = default,
+                in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> jwkFingerprints = default,
                 in Corvus.KrakendBenchmark.Current.JsonString.Source jwkLocalCa = default,
                 in Corvus.KrakendBenchmark.Current.JsonString.Source jwkLocalPath = default,
                 in Corvus.KrakendBenchmark.Current.JsonString.Source jwkUrl = default,
@@ -2009,19 +2045,19 @@ public readonly partial struct KrakendSchema
             where TContext : allows ref struct
             #endif
             {
-                alg.AddAsProperty(JsonPropertyNamesEscaped.Alg, ref builder, escapeName: false);
-                keysToSign.AddAsProperty(JsonPropertyNamesEscaped.KeysToSignValue, ref builder, escapeName: false);
-                kid.AddAsProperty(JsonPropertyNamesEscaped.Kid, ref builder, escapeName: false);
-                cipherSuites.AddAsProperty(JsonPropertyNamesEscaped.CipherSuites, ref builder, escapeName: false);
-                cypherKey.AddAsProperty(JsonPropertyNamesEscaped.CypherKey, ref builder, escapeName: false);
-                disableJwkSecurity.AddAsProperty(JsonPropertyNamesEscaped.DisableJwkSecurityValue, ref builder, escapeName: false);
-                full.AddAsProperty(JsonPropertyNamesEscaped.Full, ref builder, escapeName: false);
-                jwkFingerprints.AddAsProperty(JsonPropertyNamesEscaped.JwkFingerprintsValue, ref builder, escapeName: false);
-                jwkLocalCa.AddAsProperty(JsonPropertyNamesEscaped.JwkLocalCa, ref builder, escapeName: false);
-                jwkLocalPath.AddAsProperty(JsonPropertyNamesEscaped.JwkLocalPath, ref builder, escapeName: false);
-                jwkUrl.AddAsProperty(JsonPropertyNamesEscaped.JwkUrl, ref builder, escapeName: false);
-                leeway.AddAsProperty(JsonPropertyNamesEscaped.Leeway, ref builder, escapeName: false);
-                secretUrl.AddAsProperty(JsonPropertyNamesEscaped.SecretUrl, ref builder, escapeName: false);
+                alg.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Alg, ref builder);
+                keysToSign.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.KeysToSign, ref builder);
+                kid.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Kid, ref builder);
+                cipherSuites.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CipherSuites, ref builder);
+                cypherKey.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CypherKey, ref builder);
+                disableJwkSecurity.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DisableJwkSecurityValue, ref builder);
+                full.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Full, ref builder);
+                jwkFingerprints.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.JwkFingerprints, ref builder);
+                jwkLocalCa.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.JwkLocalCa, ref builder);
+                jwkLocalPath.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.JwkLocalPath, ref builder);
+                jwkUrl.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.JwkUrl, ref builder);
+                leeway.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Leeway, ref builder);
+                secretUrl.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SecretUrl, ref builder);
             }
 
             /// <summary>
@@ -2030,13 +2066,13 @@ public readonly partial struct KrakendSchema
             public void Create<TContext>(
                 in TContext context,
                 in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271auth1signerJson.Algorithm.Source alg,
-                in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271auth1signerJson.KeysToSign.Source<TContext> keysToSign,
+                in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> keysToSign,
                 in Corvus.KrakendBenchmark.Current.JsonString.Source kid,
                 in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271auth1signerJson.ObjectInArrayArray.Source<TContext> cipherSuites = default,
                 in Corvus.KrakendBenchmark.Current.JsonString.Source cypherKey = default,
                 in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271auth1signerJson.DisableJwkSecurity.Source disableJwkSecurity = default,
                 in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271auth1signerJson.FullFormat.Source full = default,
-                in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271auth1signerJson.JwkFingerprints.Source<TContext> jwkFingerprints = default,
+                in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> jwkFingerprints = default,
                 in Corvus.KrakendBenchmark.Current.JsonString.Source jwkLocalCa = default,
                 in Corvus.KrakendBenchmark.Current.JsonString.Source jwkLocalPath = default,
                 in Corvus.KrakendBenchmark.Current.JsonString.Source jwkUrl = default,
@@ -2387,7 +2423,7 @@ public readonly partial struct KrakendSchema
         /// <param name="secretUrl">The value of the property.</param>
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
         /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-        public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271auth1signerJson.Algorithm.Source alg, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271auth1signerJson.KeysToSign.Source keysToSign, in Corvus.KrakendBenchmark.Current.JsonString.Source kid, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271auth1signerJson.ObjectInArrayArray.Source cipherSuites = default, in Corvus.KrakendBenchmark.Current.JsonString.Source cypherKey = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271auth1signerJson.DisableJwkSecurity.Source disableJwkSecurity = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271auth1signerJson.FullFormat.Source full = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271auth1signerJson.JwkFingerprints.Source jwkFingerprints = default, in Corvus.KrakendBenchmark.Current.JsonString.Source jwkLocalCa = default, in Corvus.KrakendBenchmark.Current.JsonString.Source jwkLocalPath = default, in Corvus.KrakendBenchmark.Current.JsonString.Source jwkUrl = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source leeway = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271auth1signerJson.SecretSUrl.Source secretUrl = default, int initialCapacity = 30)
+        public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271auth1signerJson.Algorithm.Source alg, in Corvus.KrakendBenchmark.Current.JsonArray.Source keysToSign, in Corvus.KrakendBenchmark.Current.JsonString.Source kid, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271auth1signerJson.ObjectInArrayArray.Source cipherSuites = default, in Corvus.KrakendBenchmark.Current.JsonString.Source cypherKey = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271auth1signerJson.DisableJwkSecurity.Source disableJwkSecurity = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271auth1signerJson.FullFormat.Source full = default, in Corvus.KrakendBenchmark.Current.JsonArray.Source jwkFingerprints = default, in Corvus.KrakendBenchmark.Current.JsonString.Source jwkLocalCa = default, in Corvus.KrakendBenchmark.Current.JsonString.Source jwkLocalPath = default, in Corvus.KrakendBenchmark.Current.JsonString.Source jwkUrl = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source leeway = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271auth1signerJson.SecretSUrl.Source secretUrl = default, int initialCapacity = 30)
         {
             JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
             ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
@@ -2421,7 +2457,7 @@ public readonly partial struct KrakendSchema
         /// <param name="secretUrl">The value of the property.</param>
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
         /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-        public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271auth1signerJson.Algorithm.Source alg, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271auth1signerJson.KeysToSign.Source<TContext> keysToSign, in Corvus.KrakendBenchmark.Current.JsonString.Source kid, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271auth1signerJson.ObjectInArrayArray.Source<TContext> cipherSuites = default, in Corvus.KrakendBenchmark.Current.JsonString.Source cypherKey = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271auth1signerJson.DisableJwkSecurity.Source disableJwkSecurity = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271auth1signerJson.FullFormat.Source full = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271auth1signerJson.JwkFingerprints.Source<TContext> jwkFingerprints = default, in Corvus.KrakendBenchmark.Current.JsonString.Source jwkLocalCa = default, in Corvus.KrakendBenchmark.Current.JsonString.Source jwkLocalPath = default, in Corvus.KrakendBenchmark.Current.JsonString.Source jwkUrl = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source leeway = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271auth1signerJson.SecretSUrl.Source secretUrl = default, int initialCapacity = 30)
+        public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271auth1signerJson.Algorithm.Source alg, in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> keysToSign, in Corvus.KrakendBenchmark.Current.JsonString.Source kid, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271auth1signerJson.ObjectInArrayArray.Source<TContext> cipherSuites = default, in Corvus.KrakendBenchmark.Current.JsonString.Source cypherKey = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271auth1signerJson.DisableJwkSecurity.Source disableJwkSecurity = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271auth1signerJson.FullFormat.Source full = default, in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> jwkFingerprints = default, in Corvus.KrakendBenchmark.Current.JsonString.Source jwkLocalCa = default, in Corvus.KrakendBenchmark.Current.JsonString.Source jwkLocalPath = default, in Corvus.KrakendBenchmark.Current.JsonString.Source jwkUrl = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source leeway = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271auth1signerJson.SecretSUrl.Source secretUrl = default, int initialCapacity = 30)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif

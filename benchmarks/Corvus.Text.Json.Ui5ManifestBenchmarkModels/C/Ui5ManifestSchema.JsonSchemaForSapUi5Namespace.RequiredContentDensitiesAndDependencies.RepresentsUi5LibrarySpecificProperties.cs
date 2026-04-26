@@ -88,11 +88,11 @@ public readonly partial struct Ui5ManifestSchema
                 /// Represents the content of a library. Content are controls, elements, types and interfaces.
                 /// </para>
                 /// </remarks>
-                public Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.RepresentsUi5LibrarySpecificProperties.ContentEntity Content
+                public Corvus.Ui5ManifestBenchmark.Current.JsonObject Content
                 {
                     get
                     {
-                        if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ContentUtf8, out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.RepresentsUi5LibrarySpecificProperties.ContentEntity value))
+                        if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ContentUtf8, out Corvus.Ui5ManifestBenchmark.Current.JsonObject value))
                         {
                             return value;
                         }
@@ -614,6 +614,28 @@ public readonly partial struct Ui5ManifestSchema
                     /// Gets the escaped UTF-8 JSON property name for <see cref="I18n"/>.
                     /// </summary>
                     public static ReadOnlySpan<byte> I18n => "i18n"u8;
+                }
+
+                /// <summary>
+                /// Provides pre-baked property name blobs for fast builder property storage.
+                /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
+                /// </summary>
+                private static class JsonPropertyNamesPrebaked
+                {
+                    /// <summary>
+                    /// Gets the pre-baked property name blob for <see cref="Content"/>.
+                    /// </summary>
+                    public static ReadOnlySpan<byte> Content => [0x95, 0x00, 0x00, 0x00, 0x22, 0x63, 0x6F, 0x6E, 0x74, 0x65, 0x6E, 0x74, 0x22];
+
+                    /// <summary>
+                    /// Gets the pre-baked property name blob for <see cref="Css"/>.
+                    /// </summary>
+                    public static ReadOnlySpan<byte> Css => [0x55, 0x00, 0x00, 0x00, 0x22, 0x63, 0x73, 0x73, 0x22];
+
+                    /// <summary>
+                    /// Gets the pre-baked property name blob for <see cref="I18n"/>.
+                    /// </summary>
+                    public static ReadOnlySpan<byte> I18n => [0x65, 0x00, 0x00, 0x00, 0x22, 0x69, 0x31, 0x38, 0x6E, 0x22];
                 }
             }
         }

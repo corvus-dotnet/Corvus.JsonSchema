@@ -514,11 +514,11 @@ public readonly partial struct CypressSchema
         /// Any values to be set as environment variables. See https://on.cypress.io/environment-variables
         /// </para>
         /// </remarks>
-        public Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.EnvEntity.Mutable Env
+        public Corvus.CypressBenchmark.Current.JsonObject.Mutable Env
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.EnvUtf8, out Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.EnvEntity.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.EnvUtf8, out Corvus.CypressBenchmark.Current.JsonObject.Mutable value))
                 {
                     return value;
                 }
@@ -1431,7 +1431,7 @@ public readonly partial struct CypressSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.AnimationDistanceThreshold, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AnimationDistanceThreshold, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1476,7 +1476,7 @@ public readonly partial struct CypressSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.BaseUrl, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.BaseUrl, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1521,7 +1521,7 @@ public readonly partial struct CypressSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.BlockHosts, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.BlockHosts, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1557,7 +1557,7 @@ public readonly partial struct CypressSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.BlockHosts, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.BlockHosts, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1602,7 +1602,7 @@ public readonly partial struct CypressSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.ChromeWebSecurity, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ChromeWebSecurity, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1647,7 +1647,7 @@ public readonly partial struct CypressSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.ClientCertificates, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ClientCertificates, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1683,7 +1683,7 @@ public readonly partial struct CypressSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.ClientCertificates, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ClientCertificates, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1728,7 +1728,7 @@ public readonly partial struct CypressSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Component, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Component, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1764,7 +1764,7 @@ public readonly partial struct CypressSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Component, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Component, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1809,7 +1809,7 @@ public readonly partial struct CypressSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.ComponentFolder, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ComponentFolder, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1854,7 +1854,7 @@ public readonly partial struct CypressSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.DefaultCommandTimeout, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DefaultCommandTimeout, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1899,7 +1899,7 @@ public readonly partial struct CypressSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.DownloadsFolder, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DownloadsFolder, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1944,7 +1944,7 @@ public readonly partial struct CypressSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.E2e, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.E2e, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1980,7 +1980,7 @@ public readonly partial struct CypressSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.E2e, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.E2e, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -2004,7 +2004,7 @@ public readonly partial struct CypressSchema
         /// Set the <c>env</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetEnv(in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.EnvEntity.Source value)
+        public void SetEnv(in Corvus.CypressBenchmark.Current.JsonObject.Source value)
         {
             CheckValidInstance();
 
@@ -2025,7 +2025,7 @@ public readonly partial struct CypressSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Env, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Env, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -2037,7 +2037,7 @@ public readonly partial struct CypressSchema
         /// Set the <c>env</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetEnv<TContext>(in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.EnvEntity.Source<TContext> value)
+        public void SetEnv<TContext>(in Corvus.CypressBenchmark.Current.JsonObject.Source<TContext> value)
 #if NET9_0_OR_GREATER
             where TContext : allows ref struct
 #endif
@@ -2061,7 +2061,7 @@ public readonly partial struct CypressSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Env, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Env, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -2106,7 +2106,7 @@ public readonly partial struct CypressSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.ExecTimeout, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ExecTimeout, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -2151,7 +2151,7 @@ public readonly partial struct CypressSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.ExperimentalFetchPolyfill, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ExperimentalFetchPolyfill, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -2196,7 +2196,7 @@ public readonly partial struct CypressSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.ExperimentalInteractiveRunEvents, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ExperimentalInteractiveRunEvents, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -2241,7 +2241,7 @@ public readonly partial struct CypressSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.ExperimentalSessionSupport, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ExperimentalSessionSupport, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -2286,7 +2286,7 @@ public readonly partial struct CypressSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.ExperimentalSourceRewriting, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ExperimentalSourceRewriting, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -2331,7 +2331,7 @@ public readonly partial struct CypressSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.ExperimentalStudio, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ExperimentalStudio, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -2376,7 +2376,7 @@ public readonly partial struct CypressSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.FileServerFolder, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.FileServerFolder, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -2421,7 +2421,7 @@ public readonly partial struct CypressSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.FixturesFolder, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.FixturesFolder, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -2466,7 +2466,7 @@ public readonly partial struct CypressSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.IgnoreTestFiles, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IgnoreTestFiles, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -2502,7 +2502,7 @@ public readonly partial struct CypressSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.IgnoreTestFiles, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IgnoreTestFiles, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -2547,7 +2547,7 @@ public readonly partial struct CypressSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.IncludeShadowDom, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IncludeShadowDom, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -2592,7 +2592,7 @@ public readonly partial struct CypressSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.IntegrationFolder, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IntegrationFolder, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -2637,7 +2637,7 @@ public readonly partial struct CypressSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.ModifyObstructiveCode, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ModifyObstructiveCode, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -2682,7 +2682,7 @@ public readonly partial struct CypressSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.NodeVersion, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.NodeVersion, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -2727,7 +2727,7 @@ public readonly partial struct CypressSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.NumTestsKeptInMemory, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.NumTestsKeptInMemory, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -2772,7 +2772,7 @@ public readonly partial struct CypressSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.PageLoadTimeout, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PageLoadTimeout, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -2817,7 +2817,7 @@ public readonly partial struct CypressSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.PluginsFile, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PluginsFile, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -2862,7 +2862,7 @@ public readonly partial struct CypressSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Port, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Port, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -2907,7 +2907,7 @@ public readonly partial struct CypressSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.ProjectId, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ProjectId, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -2952,7 +2952,7 @@ public readonly partial struct CypressSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Reporter, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Reporter, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -2997,7 +2997,7 @@ public readonly partial struct CypressSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.ReporterOptions, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ReporterOptions, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -3033,7 +3033,7 @@ public readonly partial struct CypressSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.ReporterOptions, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ReporterOptions, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -3078,7 +3078,7 @@ public readonly partial struct CypressSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.RequestTimeout, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.RequestTimeout, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -3123,7 +3123,7 @@ public readonly partial struct CypressSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.ResponseTimeout, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ResponseTimeout, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -3168,7 +3168,7 @@ public readonly partial struct CypressSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Retries, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Retries, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -3204,7 +3204,7 @@ public readonly partial struct CypressSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Retries, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Retries, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -3249,7 +3249,7 @@ public readonly partial struct CypressSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.ScreenshotOnRunFailure, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ScreenshotOnRunFailure, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -3294,7 +3294,7 @@ public readonly partial struct CypressSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.ScreenshotsFolder, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ScreenshotsFolder, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -3339,7 +3339,7 @@ public readonly partial struct CypressSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.ScrollBehavior, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ScrollBehavior, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -3384,7 +3384,7 @@ public readonly partial struct CypressSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.SlowTestThreshold, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SlowTestThreshold, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -3429,7 +3429,7 @@ public readonly partial struct CypressSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.SupportFile, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SupportFile, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -3474,7 +3474,7 @@ public readonly partial struct CypressSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.TaskTimeout, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TaskTimeout, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -3519,7 +3519,7 @@ public readonly partial struct CypressSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.TestFiles, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TestFiles, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -3555,7 +3555,7 @@ public readonly partial struct CypressSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.TestFiles, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TestFiles, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -3600,7 +3600,7 @@ public readonly partial struct CypressSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.TrashAssetsBeforeRuns, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TrashAssetsBeforeRuns, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -3645,7 +3645,7 @@ public readonly partial struct CypressSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.UserAgent, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.UserAgent, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -3690,7 +3690,7 @@ public readonly partial struct CypressSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Video, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Video, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -3735,7 +3735,7 @@ public readonly partial struct CypressSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.VideoCompression, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.VideoCompression, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -3780,7 +3780,7 @@ public readonly partial struct CypressSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.VideosFolder, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.VideosFolder, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -3825,7 +3825,7 @@ public readonly partial struct CypressSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.VideoUploadOnPasses, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.VideoUploadOnPasses, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -3870,7 +3870,7 @@ public readonly partial struct CypressSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.ViewportHeight, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ViewportHeight, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -3915,7 +3915,7 @@ public readonly partial struct CypressSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.ViewportWidth, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ViewportWidth, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -3960,7 +3960,7 @@ public readonly partial struct CypressSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.WaitForAnimations, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.WaitForAnimations, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -4005,7 +4005,7 @@ public readonly partial struct CypressSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.WatchForFileChanges, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.WatchForFileChanges, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -4516,6 +4516,24 @@ public readonly partial struct CypressSchema
             }
         }
 
+        internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+        {
+            switch(_kind)
+            {
+                case Kind.Unknown:
+                    break;
+                case Kind.JsonElement:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                    break;
+                case Kind.Builder:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
+                    break;
+                default:
+                    Debug.Fail("Unexpected Kind");
+                    break;
+            }
+        }
+
         internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
         {
             switch(_kind)
@@ -4617,6 +4635,24 @@ public readonly partial struct CypressSchema
             }
         }
 
+        internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+        {
+            switch(_kind)
+            {
+                case Kind.Unknown:
+                    break;
+                case Kind.Source:
+                    _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                    break;
+                case Kind.Builder:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
+                    break;
+                default:
+                    Debug.Fail("Unexpected Kind");
+                    break;
+            }
+        }
+
         internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
         {
             switch(_kind)
@@ -4705,7 +4741,7 @@ public readonly partial struct CypressSchema
             in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.DefaultCommandTimeoutEntity.Source defaultCommandTimeout = default,
             in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.PathToFolderWhereFilesDownloadedDuringATestAreSaved.Source downloadsFolder = default,
             in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.Source e2e = default,
-            in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.EnvEntity.Source env = default,
+            in Corvus.CypressBenchmark.Current.JsonObject.Source env = default,
             in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ExecTimeoutEntity.Source execTimeout = default,
             in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ExperimentalFetchPolyfillEntity.Source experimentalFetchPolyfill = default,
             in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ExperimentalInteractiveRunEventsEntity.Source experimentalInteractiveRunEvents = default,
@@ -4747,57 +4783,57 @@ public readonly partial struct CypressSchema
             in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.WaitForAnimationsEntity.Source waitForAnimations = default,
             in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.WatchForFileChangesEntity.Source watchForFileChanges = default)
         {
-            animationDistanceThreshold.AddAsProperty(JsonPropertyNamesEscaped.AnimationDistanceThreshold, ref builder, escapeName: false);
-            baseUrl.AddAsProperty(JsonPropertyNamesEscaped.BaseUrl, ref builder, escapeName: false);
-            blockHosts.AddAsProperty(JsonPropertyNamesEscaped.BlockHosts, ref builder, escapeName: false);
-            chromeWebSecurity.AddAsProperty(JsonPropertyNamesEscaped.ChromeWebSecurity, ref builder, escapeName: false);
-            clientCertificates.AddAsProperty(JsonPropertyNamesEscaped.ClientCertificates, ref builder, escapeName: false);
-            component.AddAsProperty(JsonPropertyNamesEscaped.Component, ref builder, escapeName: false);
-            componentFolder.AddAsProperty(JsonPropertyNamesEscaped.ComponentFolder, ref builder, escapeName: false);
-            defaultCommandTimeout.AddAsProperty(JsonPropertyNamesEscaped.DefaultCommandTimeout, ref builder, escapeName: false);
-            downloadsFolder.AddAsProperty(JsonPropertyNamesEscaped.DownloadsFolder, ref builder, escapeName: false);
-            e2e.AddAsProperty(JsonPropertyNamesEscaped.E2e, ref builder, escapeName: false);
-            env.AddAsProperty(JsonPropertyNamesEscaped.Env, ref builder, escapeName: false);
-            execTimeout.AddAsProperty(JsonPropertyNamesEscaped.ExecTimeout, ref builder, escapeName: false);
-            experimentalFetchPolyfill.AddAsProperty(JsonPropertyNamesEscaped.ExperimentalFetchPolyfill, ref builder, escapeName: false);
-            experimentalInteractiveRunEvents.AddAsProperty(JsonPropertyNamesEscaped.ExperimentalInteractiveRunEvents, ref builder, escapeName: false);
-            experimentalSessionSupport.AddAsProperty(JsonPropertyNamesEscaped.ExperimentalSessionSupport, ref builder, escapeName: false);
-            experimentalSourceRewriting.AddAsProperty(JsonPropertyNamesEscaped.ExperimentalSourceRewriting, ref builder, escapeName: false);
-            experimentalStudio.AddAsProperty(JsonPropertyNamesEscaped.ExperimentalStudio, ref builder, escapeName: false);
-            fileServerFolder.AddAsProperty(JsonPropertyNamesEscaped.FileServerFolder, ref builder, escapeName: false);
-            fixturesFolder.AddAsProperty(JsonPropertyNamesEscaped.FixturesFolder, ref builder, escapeName: false);
-            ignoreTestFiles.AddAsProperty(JsonPropertyNamesEscaped.IgnoreTestFiles, ref builder, escapeName: false);
-            includeShadowDom.AddAsProperty(JsonPropertyNamesEscaped.IncludeShadowDom, ref builder, escapeName: false);
-            integrationFolder.AddAsProperty(JsonPropertyNamesEscaped.IntegrationFolder, ref builder, escapeName: false);
-            modifyObstructiveCode.AddAsProperty(JsonPropertyNamesEscaped.ModifyObstructiveCode, ref builder, escapeName: false);
-            nodeVersion.AddAsProperty(JsonPropertyNamesEscaped.NodeVersion, ref builder, escapeName: false);
-            numTestsKeptInMemory.AddAsProperty(JsonPropertyNamesEscaped.NumTestsKeptInMemory, ref builder, escapeName: false);
-            pageLoadTimeout.AddAsProperty(JsonPropertyNamesEscaped.PageLoadTimeout, ref builder, escapeName: false);
-            pluginsFile.AddAsProperty(JsonPropertyNamesEscaped.PluginsFile, ref builder, escapeName: false);
-            port.AddAsProperty(JsonPropertyNamesEscaped.Port, ref builder, escapeName: false);
-            projectId.AddAsProperty(JsonPropertyNamesEscaped.ProjectId, ref builder, escapeName: false);
-            reporter.AddAsProperty(JsonPropertyNamesEscaped.Reporter, ref builder, escapeName: false);
-            reporterOptions.AddAsProperty(JsonPropertyNamesEscaped.ReporterOptions, ref builder, escapeName: false);
-            requestTimeout.AddAsProperty(JsonPropertyNamesEscaped.RequestTimeout, ref builder, escapeName: false);
-            responseTimeout.AddAsProperty(JsonPropertyNamesEscaped.ResponseTimeout, ref builder, escapeName: false);
-            retries.AddAsProperty(JsonPropertyNamesEscaped.Retries, ref builder, escapeName: false);
-            screenshotOnRunFailure.AddAsProperty(JsonPropertyNamesEscaped.ScreenshotOnRunFailure, ref builder, escapeName: false);
-            screenshotsFolder.AddAsProperty(JsonPropertyNamesEscaped.ScreenshotsFolder, ref builder, escapeName: false);
-            scrollBehavior.AddAsProperty(JsonPropertyNamesEscaped.ScrollBehavior, ref builder, escapeName: false);
-            slowTestThreshold.AddAsProperty(JsonPropertyNamesEscaped.SlowTestThreshold, ref builder, escapeName: false);
-            supportFile.AddAsProperty(JsonPropertyNamesEscaped.SupportFile, ref builder, escapeName: false);
-            taskTimeout.AddAsProperty(JsonPropertyNamesEscaped.TaskTimeout, ref builder, escapeName: false);
-            testFiles.AddAsProperty(JsonPropertyNamesEscaped.TestFiles, ref builder, escapeName: false);
-            trashAssetsBeforeRuns.AddAsProperty(JsonPropertyNamesEscaped.TrashAssetsBeforeRuns, ref builder, escapeName: false);
-            userAgent.AddAsProperty(JsonPropertyNamesEscaped.UserAgent, ref builder, escapeName: false);
-            video.AddAsProperty(JsonPropertyNamesEscaped.Video, ref builder, escapeName: false);
-            videoCompression.AddAsProperty(JsonPropertyNamesEscaped.VideoCompression, ref builder, escapeName: false);
-            videosFolder.AddAsProperty(JsonPropertyNamesEscaped.VideosFolder, ref builder, escapeName: false);
-            videoUploadOnPasses.AddAsProperty(JsonPropertyNamesEscaped.VideoUploadOnPasses, ref builder, escapeName: false);
-            viewportHeight.AddAsProperty(JsonPropertyNamesEscaped.ViewportHeight, ref builder, escapeName: false);
-            viewportWidth.AddAsProperty(JsonPropertyNamesEscaped.ViewportWidth, ref builder, escapeName: false);
-            waitForAnimations.AddAsProperty(JsonPropertyNamesEscaped.WaitForAnimations, ref builder, escapeName: false);
-            watchForFileChanges.AddAsProperty(JsonPropertyNamesEscaped.WatchForFileChanges, ref builder, escapeName: false);
+            animationDistanceThreshold.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AnimationDistanceThreshold, ref builder);
+            baseUrl.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.BaseUrl, ref builder);
+            blockHosts.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.BlockHosts, ref builder);
+            chromeWebSecurity.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ChromeWebSecurity, ref builder);
+            clientCertificates.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ClientCertificates, ref builder);
+            component.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Component, ref builder);
+            componentFolder.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ComponentFolder, ref builder);
+            defaultCommandTimeout.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DefaultCommandTimeout, ref builder);
+            downloadsFolder.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DownloadsFolder, ref builder);
+            e2e.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.E2e, ref builder);
+            env.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Env, ref builder);
+            execTimeout.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ExecTimeout, ref builder);
+            experimentalFetchPolyfill.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ExperimentalFetchPolyfill, ref builder);
+            experimentalInteractiveRunEvents.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ExperimentalInteractiveRunEvents, ref builder);
+            experimentalSessionSupport.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ExperimentalSessionSupport, ref builder);
+            experimentalSourceRewriting.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ExperimentalSourceRewriting, ref builder);
+            experimentalStudio.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ExperimentalStudio, ref builder);
+            fileServerFolder.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.FileServerFolder, ref builder);
+            fixturesFolder.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.FixturesFolder, ref builder);
+            ignoreTestFiles.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IgnoreTestFiles, ref builder);
+            includeShadowDom.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IncludeShadowDom, ref builder);
+            integrationFolder.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IntegrationFolder, ref builder);
+            modifyObstructiveCode.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ModifyObstructiveCode, ref builder);
+            nodeVersion.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.NodeVersion, ref builder);
+            numTestsKeptInMemory.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.NumTestsKeptInMemory, ref builder);
+            pageLoadTimeout.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PageLoadTimeout, ref builder);
+            pluginsFile.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PluginsFile, ref builder);
+            port.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Port, ref builder);
+            projectId.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ProjectId, ref builder);
+            reporter.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Reporter, ref builder);
+            reporterOptions.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ReporterOptions, ref builder);
+            requestTimeout.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.RequestTimeout, ref builder);
+            responseTimeout.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ResponseTimeout, ref builder);
+            retries.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Retries, ref builder);
+            screenshotOnRunFailure.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ScreenshotOnRunFailure, ref builder);
+            screenshotsFolder.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ScreenshotsFolder, ref builder);
+            scrollBehavior.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ScrollBehavior, ref builder);
+            slowTestThreshold.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SlowTestThreshold, ref builder);
+            supportFile.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SupportFile, ref builder);
+            taskTimeout.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TaskTimeout, ref builder);
+            testFiles.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TestFiles, ref builder);
+            trashAssetsBeforeRuns.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TrashAssetsBeforeRuns, ref builder);
+            userAgent.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.UserAgent, ref builder);
+            video.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Video, ref builder);
+            videoCompression.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.VideoCompression, ref builder);
+            videosFolder.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.VideosFolder, ref builder);
+            videoUploadOnPasses.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.VideoUploadOnPasses, ref builder);
+            viewportHeight.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ViewportHeight, ref builder);
+            viewportWidth.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ViewportWidth, ref builder);
+            waitForAnimations.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.WaitForAnimations, ref builder);
+            watchForFileChanges.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.WatchForFileChanges, ref builder);
         }
 
         /// <summary>
@@ -4814,7 +4850,7 @@ public readonly partial struct CypressSchema
             in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.DefaultCommandTimeoutEntity.Source defaultCommandTimeout = default,
             in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.PathToFolderWhereFilesDownloadedDuringATestAreSaved.Source downloadsFolder = default,
             in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.Source e2e = default,
-            in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.EnvEntity.Source env = default,
+            in Corvus.CypressBenchmark.Current.JsonObject.Source env = default,
             in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ExecTimeoutEntity.Source execTimeout = default,
             in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ExperimentalFetchPolyfillEntity.Source experimentalFetchPolyfill = default,
             in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ExperimentalInteractiveRunEventsEntity.Source experimentalInteractiveRunEvents = default,
@@ -4875,7 +4911,7 @@ public readonly partial struct CypressSchema
             in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.DefaultCommandTimeoutEntity.Source defaultCommandTimeout = default,
             in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.PathToFolderWhereFilesDownloadedDuringATestAreSaved.Source downloadsFolder = default,
             in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.Source<TContext> e2e = default,
-            in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.EnvEntity.Source<TContext> env = default,
+            in Corvus.CypressBenchmark.Current.JsonObject.Source<TContext> env = default,
             in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ExecTimeoutEntity.Source execTimeout = default,
             in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ExperimentalFetchPolyfillEntity.Source experimentalFetchPolyfill = default,
             in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ExperimentalInteractiveRunEventsEntity.Source experimentalInteractiveRunEvents = default,
@@ -4920,57 +4956,57 @@ public readonly partial struct CypressSchema
         where TContext : allows ref struct
         #endif
         {
-            animationDistanceThreshold.AddAsProperty(JsonPropertyNamesEscaped.AnimationDistanceThreshold, ref builder, escapeName: false);
-            baseUrl.AddAsProperty(JsonPropertyNamesEscaped.BaseUrl, ref builder, escapeName: false);
-            blockHosts.AddAsProperty(JsonPropertyNamesEscaped.BlockHosts, ref builder, escapeName: false);
-            chromeWebSecurity.AddAsProperty(JsonPropertyNamesEscaped.ChromeWebSecurity, ref builder, escapeName: false);
-            clientCertificates.AddAsProperty(JsonPropertyNamesEscaped.ClientCertificates, ref builder, escapeName: false);
-            component.AddAsProperty(JsonPropertyNamesEscaped.Component, ref builder, escapeName: false);
-            componentFolder.AddAsProperty(JsonPropertyNamesEscaped.ComponentFolder, ref builder, escapeName: false);
-            defaultCommandTimeout.AddAsProperty(JsonPropertyNamesEscaped.DefaultCommandTimeout, ref builder, escapeName: false);
-            downloadsFolder.AddAsProperty(JsonPropertyNamesEscaped.DownloadsFolder, ref builder, escapeName: false);
-            e2e.AddAsProperty(JsonPropertyNamesEscaped.E2e, ref builder, escapeName: false);
-            env.AddAsProperty(JsonPropertyNamesEscaped.Env, ref builder, escapeName: false);
-            execTimeout.AddAsProperty(JsonPropertyNamesEscaped.ExecTimeout, ref builder, escapeName: false);
-            experimentalFetchPolyfill.AddAsProperty(JsonPropertyNamesEscaped.ExperimentalFetchPolyfill, ref builder, escapeName: false);
-            experimentalInteractiveRunEvents.AddAsProperty(JsonPropertyNamesEscaped.ExperimentalInteractiveRunEvents, ref builder, escapeName: false);
-            experimentalSessionSupport.AddAsProperty(JsonPropertyNamesEscaped.ExperimentalSessionSupport, ref builder, escapeName: false);
-            experimentalSourceRewriting.AddAsProperty(JsonPropertyNamesEscaped.ExperimentalSourceRewriting, ref builder, escapeName: false);
-            experimentalStudio.AddAsProperty(JsonPropertyNamesEscaped.ExperimentalStudio, ref builder, escapeName: false);
-            fileServerFolder.AddAsProperty(JsonPropertyNamesEscaped.FileServerFolder, ref builder, escapeName: false);
-            fixturesFolder.AddAsProperty(JsonPropertyNamesEscaped.FixturesFolder, ref builder, escapeName: false);
-            ignoreTestFiles.AddAsProperty(JsonPropertyNamesEscaped.IgnoreTestFiles, ref builder, escapeName: false);
-            includeShadowDom.AddAsProperty(JsonPropertyNamesEscaped.IncludeShadowDom, ref builder, escapeName: false);
-            integrationFolder.AddAsProperty(JsonPropertyNamesEscaped.IntegrationFolder, ref builder, escapeName: false);
-            modifyObstructiveCode.AddAsProperty(JsonPropertyNamesEscaped.ModifyObstructiveCode, ref builder, escapeName: false);
-            nodeVersion.AddAsProperty(JsonPropertyNamesEscaped.NodeVersion, ref builder, escapeName: false);
-            numTestsKeptInMemory.AddAsProperty(JsonPropertyNamesEscaped.NumTestsKeptInMemory, ref builder, escapeName: false);
-            pageLoadTimeout.AddAsProperty(JsonPropertyNamesEscaped.PageLoadTimeout, ref builder, escapeName: false);
-            pluginsFile.AddAsProperty(JsonPropertyNamesEscaped.PluginsFile, ref builder, escapeName: false);
-            port.AddAsProperty(JsonPropertyNamesEscaped.Port, ref builder, escapeName: false);
-            projectId.AddAsProperty(JsonPropertyNamesEscaped.ProjectId, ref builder, escapeName: false);
-            reporter.AddAsProperty(JsonPropertyNamesEscaped.Reporter, ref builder, escapeName: false);
-            reporterOptions.AddAsProperty(JsonPropertyNamesEscaped.ReporterOptions, ref builder, escapeName: false);
-            requestTimeout.AddAsProperty(JsonPropertyNamesEscaped.RequestTimeout, ref builder, escapeName: false);
-            responseTimeout.AddAsProperty(JsonPropertyNamesEscaped.ResponseTimeout, ref builder, escapeName: false);
-            retries.AddAsProperty(JsonPropertyNamesEscaped.Retries, ref builder, escapeName: false);
-            screenshotOnRunFailure.AddAsProperty(JsonPropertyNamesEscaped.ScreenshotOnRunFailure, ref builder, escapeName: false);
-            screenshotsFolder.AddAsProperty(JsonPropertyNamesEscaped.ScreenshotsFolder, ref builder, escapeName: false);
-            scrollBehavior.AddAsProperty(JsonPropertyNamesEscaped.ScrollBehavior, ref builder, escapeName: false);
-            slowTestThreshold.AddAsProperty(JsonPropertyNamesEscaped.SlowTestThreshold, ref builder, escapeName: false);
-            supportFile.AddAsProperty(JsonPropertyNamesEscaped.SupportFile, ref builder, escapeName: false);
-            taskTimeout.AddAsProperty(JsonPropertyNamesEscaped.TaskTimeout, ref builder, escapeName: false);
-            testFiles.AddAsProperty(JsonPropertyNamesEscaped.TestFiles, ref builder, escapeName: false);
-            trashAssetsBeforeRuns.AddAsProperty(JsonPropertyNamesEscaped.TrashAssetsBeforeRuns, ref builder, escapeName: false);
-            userAgent.AddAsProperty(JsonPropertyNamesEscaped.UserAgent, ref builder, escapeName: false);
-            video.AddAsProperty(JsonPropertyNamesEscaped.Video, ref builder, escapeName: false);
-            videoCompression.AddAsProperty(JsonPropertyNamesEscaped.VideoCompression, ref builder, escapeName: false);
-            videosFolder.AddAsProperty(JsonPropertyNamesEscaped.VideosFolder, ref builder, escapeName: false);
-            videoUploadOnPasses.AddAsProperty(JsonPropertyNamesEscaped.VideoUploadOnPasses, ref builder, escapeName: false);
-            viewportHeight.AddAsProperty(JsonPropertyNamesEscaped.ViewportHeight, ref builder, escapeName: false);
-            viewportWidth.AddAsProperty(JsonPropertyNamesEscaped.ViewportWidth, ref builder, escapeName: false);
-            waitForAnimations.AddAsProperty(JsonPropertyNamesEscaped.WaitForAnimations, ref builder, escapeName: false);
-            watchForFileChanges.AddAsProperty(JsonPropertyNamesEscaped.WatchForFileChanges, ref builder, escapeName: false);
+            animationDistanceThreshold.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AnimationDistanceThreshold, ref builder);
+            baseUrl.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.BaseUrl, ref builder);
+            blockHosts.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.BlockHosts, ref builder);
+            chromeWebSecurity.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ChromeWebSecurity, ref builder);
+            clientCertificates.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ClientCertificates, ref builder);
+            component.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Component, ref builder);
+            componentFolder.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ComponentFolder, ref builder);
+            defaultCommandTimeout.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DefaultCommandTimeout, ref builder);
+            downloadsFolder.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DownloadsFolder, ref builder);
+            e2e.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.E2e, ref builder);
+            env.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Env, ref builder);
+            execTimeout.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ExecTimeout, ref builder);
+            experimentalFetchPolyfill.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ExperimentalFetchPolyfill, ref builder);
+            experimentalInteractiveRunEvents.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ExperimentalInteractiveRunEvents, ref builder);
+            experimentalSessionSupport.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ExperimentalSessionSupport, ref builder);
+            experimentalSourceRewriting.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ExperimentalSourceRewriting, ref builder);
+            experimentalStudio.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ExperimentalStudio, ref builder);
+            fileServerFolder.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.FileServerFolder, ref builder);
+            fixturesFolder.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.FixturesFolder, ref builder);
+            ignoreTestFiles.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IgnoreTestFiles, ref builder);
+            includeShadowDom.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IncludeShadowDom, ref builder);
+            integrationFolder.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IntegrationFolder, ref builder);
+            modifyObstructiveCode.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ModifyObstructiveCode, ref builder);
+            nodeVersion.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.NodeVersion, ref builder);
+            numTestsKeptInMemory.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.NumTestsKeptInMemory, ref builder);
+            pageLoadTimeout.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PageLoadTimeout, ref builder);
+            pluginsFile.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PluginsFile, ref builder);
+            port.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Port, ref builder);
+            projectId.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ProjectId, ref builder);
+            reporter.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Reporter, ref builder);
+            reporterOptions.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ReporterOptions, ref builder);
+            requestTimeout.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.RequestTimeout, ref builder);
+            responseTimeout.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ResponseTimeout, ref builder);
+            retries.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Retries, ref builder);
+            screenshotOnRunFailure.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ScreenshotOnRunFailure, ref builder);
+            screenshotsFolder.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ScreenshotsFolder, ref builder);
+            scrollBehavior.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ScrollBehavior, ref builder);
+            slowTestThreshold.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SlowTestThreshold, ref builder);
+            supportFile.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SupportFile, ref builder);
+            taskTimeout.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TaskTimeout, ref builder);
+            testFiles.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TestFiles, ref builder);
+            trashAssetsBeforeRuns.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TrashAssetsBeforeRuns, ref builder);
+            userAgent.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.UserAgent, ref builder);
+            video.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Video, ref builder);
+            videoCompression.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.VideoCompression, ref builder);
+            videosFolder.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.VideosFolder, ref builder);
+            videoUploadOnPasses.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.VideoUploadOnPasses, ref builder);
+            viewportHeight.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ViewportHeight, ref builder);
+            viewportWidth.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ViewportWidth, ref builder);
+            waitForAnimations.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.WaitForAnimations, ref builder);
+            watchForFileChanges.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.WatchForFileChanges, ref builder);
         }
 
         /// <summary>
@@ -4988,7 +5024,7 @@ public readonly partial struct CypressSchema
             in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.DefaultCommandTimeoutEntity.Source defaultCommandTimeout = default,
             in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.PathToFolderWhereFilesDownloadedDuringATestAreSaved.Source downloadsFolder = default,
             in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.Source<TContext> e2e = default,
-            in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.EnvEntity.Source<TContext> env = default,
+            in Corvus.CypressBenchmark.Current.JsonObject.Source<TContext> env = default,
             in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ExecTimeoutEntity.Source execTimeout = default,
             in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ExperimentalFetchPolyfillEntity.Source experimentalFetchPolyfill = default,
             in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ExperimentalInteractiveRunEventsEntity.Source experimentalInteractiveRunEvents = default,
@@ -5242,7 +5278,7 @@ public readonly partial struct CypressSchema
     /// <param name="watchForFileChanges">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.AnimationDistanceThresholdEntity.Source animationDistanceThreshold = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.BaseUrlEntity.Source baseUrl = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.BlockHostsArray.Source blockHosts = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ChromeWebSecurityEntity.Source chromeWebSecurity = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.RequiredCertsAndUrlArray.Source clientCertificates = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.Source component = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ComponentFolderEntity.Source componentFolder = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.DefaultCommandTimeoutEntity.Source defaultCommandTimeout = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.PathToFolderWhereFilesDownloadedDuringATestAreSaved.Source downloadsFolder = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.Source e2e = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.EnvEntity.Source env = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ExecTimeoutEntity.Source execTimeout = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ExperimentalFetchPolyfillEntity.Source experimentalFetchPolyfill = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ExperimentalInteractiveRunEventsEntity.Source experimentalInteractiveRunEvents = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ExperimentalSessionSupportEntity.Source experimentalSessionSupport = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ExperimentalSourceRewritingEntity.Source experimentalSourceRewriting = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ExperimentalStudioEntity.Source experimentalStudio = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.FileServerFolderEntity.Source fileServerFolder = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.FixturesFolderEntity.Source fixturesFolder = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.IgnoreTestFilesArray.Source ignoreTestFiles = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.IncludeShadowDomEntity.Source includeShadowDom = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.PathToFolderContainingIntegrationTestFiles.Source integrationFolder = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ModifyObstructiveCodeEntity.Source modifyObstructiveCode = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.NodeVersionEntity.Source nodeVersion = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.NumTestsKeptInMemoryEntity.Source numTestsKeptInMemory = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.PageLoadTimeoutEntity.Source pageLoadTimeout = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.PathToPluginsFilePassFalseToDisable.Source pluginsFile = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.PortEntity.Source port = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ProjectIdEntity.Source projectId = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ReporterEntity.Source reporter = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ReporterOptionsEntity.Source reporterOptions = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.RequestTimeoutEntity.Source requestTimeout = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ResponseTimeoutEntity.Source responseTimeout = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.RetriesEntity.Source retries = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ScreenshotOnRunFailureEntity.Source screenshotOnRunFailure = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ScreenshotsFolderEntity.Source screenshotsFolder = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ScrollBehaviorEntity.Source scrollBehavior = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.SlowTestThresholdEntity.Source slowTestThreshold = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.SupportFileEntity.Source supportFile = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.TaskTimeoutEntity.Source taskTimeout = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.TestFilesArray.Source testFiles = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.TrashAssetsBeforeRunsEntity.Source trashAssetsBeforeRuns = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.UserAgentEntity.Source userAgent = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.VideoEntity.Source video = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.VideoCompressionEntity.Source videoCompression = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.PathToFolderWhereVideosWillBeSavedDuringCypressRun.Source videosFolder = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.VideoUploadOnPassesEntity.Source videoUploadOnPasses = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ViewportHeightEntity.Source viewportHeight = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ViewportWidthEntity.Source viewportWidth = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.WaitForAnimationsEntity.Source waitForAnimations = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.WatchForFileChangesEntity.Source watchForFileChanges = default, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.AnimationDistanceThresholdEntity.Source animationDistanceThreshold = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.BaseUrlEntity.Source baseUrl = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.BlockHostsArray.Source blockHosts = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ChromeWebSecurityEntity.Source chromeWebSecurity = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.RequiredCertsAndUrlArray.Source clientCertificates = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.Source component = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ComponentFolderEntity.Source componentFolder = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.DefaultCommandTimeoutEntity.Source defaultCommandTimeout = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.PathToFolderWhereFilesDownloadedDuringATestAreSaved.Source downloadsFolder = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.Source e2e = default, in Corvus.CypressBenchmark.Current.JsonObject.Source env = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ExecTimeoutEntity.Source execTimeout = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ExperimentalFetchPolyfillEntity.Source experimentalFetchPolyfill = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ExperimentalInteractiveRunEventsEntity.Source experimentalInteractiveRunEvents = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ExperimentalSessionSupportEntity.Source experimentalSessionSupport = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ExperimentalSourceRewritingEntity.Source experimentalSourceRewriting = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ExperimentalStudioEntity.Source experimentalStudio = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.FileServerFolderEntity.Source fileServerFolder = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.FixturesFolderEntity.Source fixturesFolder = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.IgnoreTestFilesArray.Source ignoreTestFiles = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.IncludeShadowDomEntity.Source includeShadowDom = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.PathToFolderContainingIntegrationTestFiles.Source integrationFolder = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ModifyObstructiveCodeEntity.Source modifyObstructiveCode = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.NodeVersionEntity.Source nodeVersion = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.NumTestsKeptInMemoryEntity.Source numTestsKeptInMemory = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.PageLoadTimeoutEntity.Source pageLoadTimeout = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.PathToPluginsFilePassFalseToDisable.Source pluginsFile = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.PortEntity.Source port = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ProjectIdEntity.Source projectId = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ReporterEntity.Source reporter = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ReporterOptionsEntity.Source reporterOptions = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.RequestTimeoutEntity.Source requestTimeout = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ResponseTimeoutEntity.Source responseTimeout = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.RetriesEntity.Source retries = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ScreenshotOnRunFailureEntity.Source screenshotOnRunFailure = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ScreenshotsFolderEntity.Source screenshotsFolder = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ScrollBehaviorEntity.Source scrollBehavior = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.SlowTestThresholdEntity.Source slowTestThreshold = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.SupportFileEntity.Source supportFile = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.TaskTimeoutEntity.Source taskTimeout = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.TestFilesArray.Source testFiles = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.TrashAssetsBeforeRunsEntity.Source trashAssetsBeforeRuns = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.UserAgentEntity.Source userAgent = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.VideoEntity.Source video = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.VideoCompressionEntity.Source videoCompression = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.PathToFolderWhereVideosWillBeSavedDuringCypressRun.Source videosFolder = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.VideoUploadOnPassesEntity.Source videoUploadOnPasses = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ViewportHeightEntity.Source viewportHeight = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ViewportWidthEntity.Source viewportWidth = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.WaitForAnimationsEntity.Source waitForAnimations = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.WatchForFileChangesEntity.Source watchForFileChanges = default, int initialCapacity = 30)
     {
         JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
@@ -5314,7 +5350,7 @@ public readonly partial struct CypressSchema
     /// <param name="watchForFileChanges">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.AnimationDistanceThresholdEntity.Source animationDistanceThreshold = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.BaseUrlEntity.Source baseUrl = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.BlockHostsArray.Source<TContext> blockHosts = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ChromeWebSecurityEntity.Source chromeWebSecurity = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.RequiredCertsAndUrlArray.Source<TContext> clientCertificates = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.Source<TContext> component = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ComponentFolderEntity.Source componentFolder = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.DefaultCommandTimeoutEntity.Source defaultCommandTimeout = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.PathToFolderWhereFilesDownloadedDuringATestAreSaved.Source downloadsFolder = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.Source<TContext> e2e = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.EnvEntity.Source<TContext> env = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ExecTimeoutEntity.Source execTimeout = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ExperimentalFetchPolyfillEntity.Source experimentalFetchPolyfill = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ExperimentalInteractiveRunEventsEntity.Source experimentalInteractiveRunEvents = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ExperimentalSessionSupportEntity.Source experimentalSessionSupport = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ExperimentalSourceRewritingEntity.Source experimentalSourceRewriting = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ExperimentalStudioEntity.Source experimentalStudio = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.FileServerFolderEntity.Source fileServerFolder = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.FixturesFolderEntity.Source fixturesFolder = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.IgnoreTestFilesArray.Source<TContext> ignoreTestFiles = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.IncludeShadowDomEntity.Source includeShadowDom = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.PathToFolderContainingIntegrationTestFiles.Source integrationFolder = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ModifyObstructiveCodeEntity.Source modifyObstructiveCode = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.NodeVersionEntity.Source nodeVersion = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.NumTestsKeptInMemoryEntity.Source numTestsKeptInMemory = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.PageLoadTimeoutEntity.Source pageLoadTimeout = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.PathToPluginsFilePassFalseToDisable.Source pluginsFile = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.PortEntity.Source port = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ProjectIdEntity.Source projectId = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ReporterEntity.Source reporter = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ReporterOptionsEntity.Source<TContext> reporterOptions = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.RequestTimeoutEntity.Source requestTimeout = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ResponseTimeoutEntity.Source responseTimeout = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.RetriesEntity.Source<TContext> retries = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ScreenshotOnRunFailureEntity.Source screenshotOnRunFailure = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ScreenshotsFolderEntity.Source screenshotsFolder = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ScrollBehaviorEntity.Source scrollBehavior = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.SlowTestThresholdEntity.Source slowTestThreshold = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.SupportFileEntity.Source supportFile = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.TaskTimeoutEntity.Source taskTimeout = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.TestFilesArray.Source<TContext> testFiles = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.TrashAssetsBeforeRunsEntity.Source trashAssetsBeforeRuns = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.UserAgentEntity.Source userAgent = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.VideoEntity.Source video = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.VideoCompressionEntity.Source videoCompression = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.PathToFolderWhereVideosWillBeSavedDuringCypressRun.Source videosFolder = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.VideoUploadOnPassesEntity.Source videoUploadOnPasses = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ViewportHeightEntity.Source viewportHeight = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ViewportWidthEntity.Source viewportWidth = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.WaitForAnimationsEntity.Source waitForAnimations = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.WatchForFileChangesEntity.Source watchForFileChanges = default, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.AnimationDistanceThresholdEntity.Source animationDistanceThreshold = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.BaseUrlEntity.Source baseUrl = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.BlockHostsArray.Source<TContext> blockHosts = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ChromeWebSecurityEntity.Source chromeWebSecurity = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.RequiredCertsAndUrlArray.Source<TContext> clientCertificates = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.Source<TContext> component = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ComponentFolderEntity.Source componentFolder = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.DefaultCommandTimeoutEntity.Source defaultCommandTimeout = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.PathToFolderWhereFilesDownloadedDuringATestAreSaved.Source downloadsFolder = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.Source<TContext> e2e = default, in Corvus.CypressBenchmark.Current.JsonObject.Source<TContext> env = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ExecTimeoutEntity.Source execTimeout = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ExperimentalFetchPolyfillEntity.Source experimentalFetchPolyfill = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ExperimentalInteractiveRunEventsEntity.Source experimentalInteractiveRunEvents = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ExperimentalSessionSupportEntity.Source experimentalSessionSupport = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ExperimentalSourceRewritingEntity.Source experimentalSourceRewriting = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ExperimentalStudioEntity.Source experimentalStudio = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.FileServerFolderEntity.Source fileServerFolder = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.FixturesFolderEntity.Source fixturesFolder = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.IgnoreTestFilesArray.Source<TContext> ignoreTestFiles = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.IncludeShadowDomEntity.Source includeShadowDom = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.PathToFolderContainingIntegrationTestFiles.Source integrationFolder = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ModifyObstructiveCodeEntity.Source modifyObstructiveCode = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.NodeVersionEntity.Source nodeVersion = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.NumTestsKeptInMemoryEntity.Source numTestsKeptInMemory = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.PageLoadTimeoutEntity.Source pageLoadTimeout = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.PathToPluginsFilePassFalseToDisable.Source pluginsFile = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.PortEntity.Source port = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ProjectIdEntity.Source projectId = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ReporterEntity.Source reporter = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ReporterOptionsEntity.Source<TContext> reporterOptions = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.RequestTimeoutEntity.Source requestTimeout = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ResponseTimeoutEntity.Source responseTimeout = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.RetriesEntity.Source<TContext> retries = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ScreenshotOnRunFailureEntity.Source screenshotOnRunFailure = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ScreenshotsFolderEntity.Source screenshotsFolder = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ScrollBehaviorEntity.Source scrollBehavior = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.SlowTestThresholdEntity.Source slowTestThreshold = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.SupportFileEntity.Source supportFile = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.TaskTimeoutEntity.Source taskTimeout = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.TestFilesArray.Source<TContext> testFiles = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.TrashAssetsBeforeRunsEntity.Source trashAssetsBeforeRuns = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.UserAgentEntity.Source userAgent = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.VideoEntity.Source video = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.VideoCompressionEntity.Source videoCompression = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.PathToFolderWhereVideosWillBeSavedDuringCypressRun.Source videosFolder = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.VideoUploadOnPassesEntity.Source videoUploadOnPasses = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ViewportHeightEntity.Source viewportHeight = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.ViewportWidthEntity.Source viewportWidth = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.WaitForAnimationsEntity.Source waitForAnimations = default, in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.WatchForFileChangesEntity.Source watchForFileChanges = default, int initialCapacity = 30)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif

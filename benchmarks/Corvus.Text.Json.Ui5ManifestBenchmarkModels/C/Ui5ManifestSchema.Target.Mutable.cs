@@ -426,11 +426,11 @@ public readonly partial struct Ui5ManifestSchema
             /// Represents the transition parameters that are passed to the event handlers
             /// </para>
             /// </remarks>
-            public Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Target.TransitionParametersEntity.Mutable TransitionParameters
+            public Corvus.Ui5ManifestBenchmark.Current.JsonObject.Mutable TransitionParameters
             {
                 get
                 {
-                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TransitionParametersUtf8, out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Target.TransitionParametersEntity.Mutable value))
+                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TransitionParametersUtf8, out Corvus.Ui5ManifestBenchmark.Current.JsonObject.Mutable value))
                     {
                         return value;
                     }
@@ -545,7 +545,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.ClearControlAggregation, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ClearControlAggregation, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -590,7 +590,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.ControlAggregation, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ControlAggregation, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -635,7 +635,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.ControlId, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ControlId, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -680,7 +680,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Parent, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Parent, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -725,7 +725,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.TargetParent, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TargetParent, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -770,7 +770,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Title, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Title, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -815,7 +815,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Transition, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Transition, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -839,7 +839,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>transitionParameters</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetTransitionParameters(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Target.TransitionParametersEntity.Source value)
+            public void SetTransitionParameters(in Corvus.Ui5ManifestBenchmark.Current.JsonObject.Source value)
             {
                 CheckValidInstance();
 
@@ -860,7 +860,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.TransitionParameters, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TransitionParameters, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -872,7 +872,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>transitionParameters</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetTransitionParameters<TContext>(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Target.TransitionParametersEntity.Source<TContext> value)
+            public void SetTransitionParameters<TContext>(in Corvus.Ui5ManifestBenchmark.Current.JsonObject.Source<TContext> value)
 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
 #endif
@@ -896,7 +896,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.TransitionParameters, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TransitionParameters, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -941,7 +941,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.ViewLevel, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ViewLevel, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -986,7 +986,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.ViewType, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ViewType, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1369,6 +1369,24 @@ public readonly partial struct Ui5ManifestSchema
                 }
             }
 
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.JsonElement:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                        break;
+                    case Kind.Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
             internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
             {
                 switch(_kind)
@@ -1470,6 +1488,24 @@ public readonly partial struct Ui5ManifestSchema
                 }
             }
 
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.Source:
+                        _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                        break;
+                    case Kind.Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
             internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
             {
                 switch(_kind)
@@ -1555,20 +1591,20 @@ public readonly partial struct Ui5ManifestSchema
                 in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source targetParent = default,
                 in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source title = default,
                 in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Target.TransitionEntity.Source transition = default,
-                in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Target.TransitionParametersEntity.Source transitionParameters = default,
+                in Corvus.Ui5ManifestBenchmark.Current.JsonObject.Source transitionParameters = default,
                 in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Target.ViewLevelEntity.Source viewLevel = default,
                 in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Target.RepresentsTheTypeOfViewThatIsGoingToBeCreated.Source viewType = default)
             {
-                clearControlAggregation.AddAsProperty(JsonPropertyNamesEscaped.ClearControlAggregation, ref builder, escapeName: false);
-                controlAggregation.AddAsProperty(JsonPropertyNamesEscaped.ControlAggregation, ref builder, escapeName: false);
-                controlId.AddAsProperty(JsonPropertyNamesEscaped.ControlId, ref builder, escapeName: false);
-                parent.AddAsProperty(JsonPropertyNamesEscaped.Parent, ref builder, escapeName: false);
-                targetParent.AddAsProperty(JsonPropertyNamesEscaped.TargetParent, ref builder, escapeName: false);
-                title.AddAsProperty(JsonPropertyNamesEscaped.Title, ref builder, escapeName: false);
-                transition.AddAsProperty(JsonPropertyNamesEscaped.Transition, ref builder, escapeName: false);
-                transitionParameters.AddAsProperty(JsonPropertyNamesEscaped.TransitionParameters, ref builder, escapeName: false);
-                viewLevel.AddAsProperty(JsonPropertyNamesEscaped.ViewLevel, ref builder, escapeName: false);
-                viewType.AddAsProperty(JsonPropertyNamesEscaped.ViewType, ref builder, escapeName: false);
+                clearControlAggregation.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ClearControlAggregation, ref builder);
+                controlAggregation.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ControlAggregation, ref builder);
+                controlId.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ControlId, ref builder);
+                parent.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Parent, ref builder);
+                targetParent.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TargetParent, ref builder);
+                title.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Title, ref builder);
+                transition.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Transition, ref builder);
+                transitionParameters.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TransitionParameters, ref builder);
+                viewLevel.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ViewLevel, ref builder);
+                viewType.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ViewType, ref builder);
             }
 
             /// <summary>
@@ -1582,7 +1618,7 @@ public readonly partial struct Ui5ManifestSchema
                 in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source targetParent = default,
                 in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source title = default,
                 in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Target.TransitionEntity.Source transition = default,
-                in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Target.TransitionParametersEntity.Source transitionParameters = default,
+                in Corvus.Ui5ManifestBenchmark.Current.JsonObject.Source transitionParameters = default,
                 in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Target.ViewLevelEntity.Source viewLevel = default,
                 in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Target.RepresentsTheTypeOfViewThatIsGoingToBeCreated.Source viewType = default)
             {
@@ -1602,23 +1638,23 @@ public readonly partial struct Ui5ManifestSchema
                 in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source targetParent = default,
                 in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source title = default,
                 in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Target.TransitionEntity.Source transition = default,
-                in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Target.TransitionParametersEntity.Source<TContext> transitionParameters = default,
+                in Corvus.Ui5ManifestBenchmark.Current.JsonObject.Source<TContext> transitionParameters = default,
                 in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Target.ViewLevelEntity.Source viewLevel = default,
                 in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Target.RepresentsTheTypeOfViewThatIsGoingToBeCreated.Source viewType = default)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif
             {
-                clearControlAggregation.AddAsProperty(JsonPropertyNamesEscaped.ClearControlAggregation, ref builder, escapeName: false);
-                controlAggregation.AddAsProperty(JsonPropertyNamesEscaped.ControlAggregation, ref builder, escapeName: false);
-                controlId.AddAsProperty(JsonPropertyNamesEscaped.ControlId, ref builder, escapeName: false);
-                parent.AddAsProperty(JsonPropertyNamesEscaped.Parent, ref builder, escapeName: false);
-                targetParent.AddAsProperty(JsonPropertyNamesEscaped.TargetParent, ref builder, escapeName: false);
-                title.AddAsProperty(JsonPropertyNamesEscaped.Title, ref builder, escapeName: false);
-                transition.AddAsProperty(JsonPropertyNamesEscaped.Transition, ref builder, escapeName: false);
-                transitionParameters.AddAsProperty(JsonPropertyNamesEscaped.TransitionParameters, ref builder, escapeName: false);
-                viewLevel.AddAsProperty(JsonPropertyNamesEscaped.ViewLevel, ref builder, escapeName: false);
-                viewType.AddAsProperty(JsonPropertyNamesEscaped.ViewType, ref builder, escapeName: false);
+                clearControlAggregation.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ClearControlAggregation, ref builder);
+                controlAggregation.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ControlAggregation, ref builder);
+                controlId.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ControlId, ref builder);
+                parent.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Parent, ref builder);
+                targetParent.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TargetParent, ref builder);
+                title.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Title, ref builder);
+                transition.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Transition, ref builder);
+                transitionParameters.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TransitionParameters, ref builder);
+                viewLevel.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ViewLevel, ref builder);
+                viewType.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ViewType, ref builder);
             }
 
             /// <summary>
@@ -1633,7 +1669,7 @@ public readonly partial struct Ui5ManifestSchema
                 in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source targetParent = default,
                 in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source title = default,
                 in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Target.TransitionEntity.Source transition = default,
-                in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Target.TransitionParametersEntity.Source<TContext> transitionParameters = default,
+                in Corvus.Ui5ManifestBenchmark.Current.JsonObject.Source<TContext> transitionParameters = default,
                 in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Target.ViewLevelEntity.Source viewLevel = default,
                 in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Target.RepresentsTheTypeOfViewThatIsGoingToBeCreated.Source viewType = default)
             #if NET9_0_OR_GREATER
@@ -1808,7 +1844,7 @@ public readonly partial struct Ui5ManifestSchema
         /// <param name="viewType">The value of the property.</param>
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
         /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-        public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source clearControlAggregation = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source controlAggregation = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source controlId = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source parent = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source targetParent = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source title = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Target.TransitionEntity.Source transition = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Target.TransitionParametersEntity.Source transitionParameters = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Target.ViewLevelEntity.Source viewLevel = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Target.RepresentsTheTypeOfViewThatIsGoingToBeCreated.Source viewType = default, int initialCapacity = 30)
+        public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source clearControlAggregation = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source controlAggregation = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source controlId = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source parent = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source targetParent = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source title = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Target.TransitionEntity.Source transition = default, in Corvus.Ui5ManifestBenchmark.Current.JsonObject.Source transitionParameters = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Target.ViewLevelEntity.Source viewLevel = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Target.RepresentsTheTypeOfViewThatIsGoingToBeCreated.Source viewType = default, int initialCapacity = 30)
         {
             JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
             ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
@@ -1839,7 +1875,7 @@ public readonly partial struct Ui5ManifestSchema
         /// <param name="viewType">The value of the property.</param>
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
         /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-        public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source clearControlAggregation = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source controlAggregation = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source controlId = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source parent = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source targetParent = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source title = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Target.TransitionEntity.Source transition = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Target.TransitionParametersEntity.Source<TContext> transitionParameters = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Target.ViewLevelEntity.Source viewLevel = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Target.RepresentsTheTypeOfViewThatIsGoingToBeCreated.Source viewType = default, int initialCapacity = 30)
+        public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.Source clearControlAggregation = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source controlAggregation = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source controlId = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source parent = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source targetParent = default, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source title = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Target.TransitionEntity.Source transition = default, in Corvus.Ui5ManifestBenchmark.Current.JsonObject.Source<TContext> transitionParameters = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Target.ViewLevelEntity.Source viewLevel = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Target.RepresentsTheTypeOfViewThatIsGoingToBeCreated.Source viewType = default, int initialCapacity = 30)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif

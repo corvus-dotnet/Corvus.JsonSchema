@@ -372,7 +372,7 @@ public readonly partial struct CypressSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Component, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Component, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -408,7 +408,7 @@ public readonly partial struct CypressSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Component, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Component, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -453,7 +453,7 @@ public readonly partial struct CypressSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.E2e, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.E2e, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -489,7 +489,7 @@ public readonly partial struct CypressSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.E2e, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.E2e, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -872,6 +872,24 @@ public readonly partial struct CypressSchema
                 }
             }
 
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.JsonElement:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                        break;
+                    case Kind.Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
             internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
             {
                 switch(_kind)
@@ -973,6 +991,24 @@ public readonly partial struct CypressSchema
                 }
             }
 
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.Source:
+                        _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                        break;
+                    case Kind.Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
             internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
             {
                 switch(_kind)
@@ -1054,8 +1090,8 @@ public readonly partial struct CypressSchema
                 in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.Source component = default,
                 in Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.Source e2e = default)
             {
-                component.AddAsProperty(JsonPropertyNamesEscaped.Component, ref builder, escapeName: false);
-                e2e.AddAsProperty(JsonPropertyNamesEscaped.E2e, ref builder, escapeName: false);
+                component.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Component, ref builder);
+                e2e.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.E2e, ref builder);
             }
 
             /// <summary>
@@ -1078,8 +1114,8 @@ public readonly partial struct CypressSchema
             where TContext : allows ref struct
             #endif
             {
-                component.AddAsProperty(JsonPropertyNamesEscaped.Component, ref builder, escapeName: false);
-                e2e.AddAsProperty(JsonPropertyNamesEscaped.E2e, ref builder, escapeName: false);
+                component.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Component, ref builder);
+                e2e.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.E2e, ref builder);
             }
 
             /// <summary>

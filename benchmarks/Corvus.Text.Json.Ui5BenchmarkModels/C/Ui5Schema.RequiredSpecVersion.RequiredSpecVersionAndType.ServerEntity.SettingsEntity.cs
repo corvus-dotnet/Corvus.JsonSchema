@@ -569,6 +569,23 @@ public readonly partial struct Ui5Schema
                         /// </summary>
                         public static ReadOnlySpan<byte> HttpsPort => "httpsPort"u8;
                     }
+
+                    /// <summary>
+                    /// Provides pre-baked property name blobs for fast builder property storage.
+                    /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
+                    /// </summary>
+                    private static class JsonPropertyNamesPrebaked
+                    {
+                        /// <summary>
+                        /// Gets the pre-baked property name blob for <see cref="HttpPort"/>.
+                        /// </summary>
+                        public static ReadOnlySpan<byte> HttpPort => [0xA5, 0x00, 0x00, 0x00, 0x22, 0x68, 0x74, 0x74, 0x70, 0x50, 0x6F, 0x72, 0x74, 0x22];
+
+                        /// <summary>
+                        /// Gets the pre-baked property name blob for <see cref="HttpsPort"/>.
+                        /// </summary>
+                        public static ReadOnlySpan<byte> HttpsPort => [0xB5, 0x00, 0x00, 0x00, 0x22, 0x68, 0x74, 0x74, 0x70, 0x73, 0x50, 0x6F, 0x72, 0x74, 0x22];
+                    }
                 }
             }
         }

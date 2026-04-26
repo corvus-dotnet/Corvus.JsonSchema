@@ -545,7 +545,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.AnnotationPath, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AnnotationPath, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -590,7 +590,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.ChartAnnotationPath, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ChartAnnotationPath, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -635,7 +635,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.ChartProperties, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ChartProperties, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -671,7 +671,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.ChartProperties, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ChartProperties, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -716,7 +716,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.ColorPalette, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ColorPalette, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -752,7 +752,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.ColorPalette, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ColorPalette, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -797,7 +797,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.DataPointAnnotationPath, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DataPointAnnotationPath, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -842,7 +842,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.DynamicSubtitleAnnotationPath, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DynamicSubtitleAnnotationPath, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -887,7 +887,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.IdentificationAnnotationPath, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IdentificationAnnotationPath, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -932,7 +932,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.PresentationAnnotationPath, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PresentationAnnotationPath, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -977,7 +977,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.SelectionAnnotationPath, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SelectionAnnotationPath, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1022,7 +1022,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Value, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Value, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1405,6 +1405,24 @@ public readonly partial struct Ui5ManifestSchema
                 }
             }
 
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.JsonElement:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                        break;
+                    case Kind.Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
             internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
             {
                 switch(_kind)
@@ -1506,6 +1524,24 @@ public readonly partial struct Ui5ManifestSchema
                 }
             }
 
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.Source:
+                        _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                        break;
+                    case Kind.Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
             internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
             {
                 switch(_kind)
@@ -1595,16 +1631,16 @@ public readonly partial struct Ui5ManifestSchema
                 in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TabSetting.RepresentsTheSelectionAnnotationPath.Source selectionAnnotationPath = default,
                 in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source value = default)
             {
-                annotationPath.AddAsProperty(JsonPropertyNamesEscaped.AnnotationPath, ref builder, escapeName: false);
-                chartAnnotationPath.AddAsProperty(JsonPropertyNamesEscaped.ChartAnnotationPath, ref builder, escapeName: false);
-                chartProperties.AddAsProperty(JsonPropertyNamesEscaped.ChartProperties, ref builder, escapeName: false);
-                colorPalette.AddAsProperty(JsonPropertyNamesEscaped.ColorPalette, ref builder, escapeName: false);
-                dataPointAnnotationPath.AddAsProperty(JsonPropertyNamesEscaped.DataPointAnnotationPath, ref builder, escapeName: false);
-                dynamicSubtitleAnnotationPath.AddAsProperty(JsonPropertyNamesEscaped.DynamicSubtitleAnnotationPath, ref builder, escapeName: false);
-                identificationAnnotationPath.AddAsProperty(JsonPropertyNamesEscaped.IdentificationAnnotationPath, ref builder, escapeName: false);
-                presentationAnnotationPath.AddAsProperty(JsonPropertyNamesEscaped.PresentationAnnotationPath, ref builder, escapeName: false);
-                selectionAnnotationPath.AddAsProperty(JsonPropertyNamesEscaped.SelectionAnnotationPath, ref builder, escapeName: false);
-                value.AddAsProperty(JsonPropertyNamesEscaped.Value, ref builder, escapeName: false);
+                annotationPath.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AnnotationPath, ref builder);
+                chartAnnotationPath.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ChartAnnotationPath, ref builder);
+                chartProperties.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ChartProperties, ref builder);
+                colorPalette.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ColorPalette, ref builder);
+                dataPointAnnotationPath.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DataPointAnnotationPath, ref builder);
+                dynamicSubtitleAnnotationPath.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DynamicSubtitleAnnotationPath, ref builder);
+                identificationAnnotationPath.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IdentificationAnnotationPath, ref builder);
+                presentationAnnotationPath.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PresentationAnnotationPath, ref builder);
+                selectionAnnotationPath.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SelectionAnnotationPath, ref builder);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Value, ref builder);
             }
 
             /// <summary>
@@ -1645,16 +1681,16 @@ public readonly partial struct Ui5ManifestSchema
             where TContext : allows ref struct
             #endif
             {
-                annotationPath.AddAsProperty(JsonPropertyNamesEscaped.AnnotationPath, ref builder, escapeName: false);
-                chartAnnotationPath.AddAsProperty(JsonPropertyNamesEscaped.ChartAnnotationPath, ref builder, escapeName: false);
-                chartProperties.AddAsProperty(JsonPropertyNamesEscaped.ChartProperties, ref builder, escapeName: false);
-                colorPalette.AddAsProperty(JsonPropertyNamesEscaped.ColorPalette, ref builder, escapeName: false);
-                dataPointAnnotationPath.AddAsProperty(JsonPropertyNamesEscaped.DataPointAnnotationPath, ref builder, escapeName: false);
-                dynamicSubtitleAnnotationPath.AddAsProperty(JsonPropertyNamesEscaped.DynamicSubtitleAnnotationPath, ref builder, escapeName: false);
-                identificationAnnotationPath.AddAsProperty(JsonPropertyNamesEscaped.IdentificationAnnotationPath, ref builder, escapeName: false);
-                presentationAnnotationPath.AddAsProperty(JsonPropertyNamesEscaped.PresentationAnnotationPath, ref builder, escapeName: false);
-                selectionAnnotationPath.AddAsProperty(JsonPropertyNamesEscaped.SelectionAnnotationPath, ref builder, escapeName: false);
-                value.AddAsProperty(JsonPropertyNamesEscaped.Value, ref builder, escapeName: false);
+                annotationPath.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AnnotationPath, ref builder);
+                chartAnnotationPath.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ChartAnnotationPath, ref builder);
+                chartProperties.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ChartProperties, ref builder);
+                colorPalette.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ColorPalette, ref builder);
+                dataPointAnnotationPath.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DataPointAnnotationPath, ref builder);
+                dynamicSubtitleAnnotationPath.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DynamicSubtitleAnnotationPath, ref builder);
+                identificationAnnotationPath.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IdentificationAnnotationPath, ref builder);
+                presentationAnnotationPath.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PresentationAnnotationPath, ref builder);
+                selectionAnnotationPath.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SelectionAnnotationPath, ref builder);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Value, ref builder);
             }
 
             /// <summary>

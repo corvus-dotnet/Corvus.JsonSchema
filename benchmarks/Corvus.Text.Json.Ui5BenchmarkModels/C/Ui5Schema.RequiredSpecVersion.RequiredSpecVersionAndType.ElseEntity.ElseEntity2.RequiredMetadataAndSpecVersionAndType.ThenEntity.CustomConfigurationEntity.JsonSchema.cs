@@ -73,17 +73,17 @@ public readonly partial struct Ui5Schema
                                     /// <summary>
                                     /// Gets a provider for the schema location from which this type was generated.
                                     /// </summary>
-                                    public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("ui5-schema.json#/then/then/else/else/then/then/properties/customConfiguration"u8, buffer, out written);
+                                    public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/then/then/else/else/then/then/properties/customConfiguration"u8, buffer, out written);
 
                                     /// <summary>
                                     /// Gets the schema location from which this type was generated.
                                     /// </summary>
-                                    public const string SchemaLocation = "ui5-schema.json#/then/then/else/else/then/then/properties/customConfiguration";
+                                    public const string SchemaLocation = "/then/then/else/else/then/then/properties/customConfiguration";
 
                                     /// <summary>
                                     /// Gets the schema location from which this type was generated as a UTF-8 string.
                                     /// </summary>
-                                    public static ReadOnlySpan<byte> SchemaLocationUtf8 => "ui5-schema.json#/then/then/else/else/then/then/properties/customConfiguration"u8;
+                                    public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/then/then/else/else/then/then/properties/customConfiguration"u8;
 
                                     /// <summary>
                                     /// Applies the JSON schema semantics defined by this type to the instance determined by the given document and index.

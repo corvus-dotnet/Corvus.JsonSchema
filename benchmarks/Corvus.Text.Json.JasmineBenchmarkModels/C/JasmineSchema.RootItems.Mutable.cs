@@ -399,7 +399,7 @@ public readonly partial struct JasmineSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Helpers, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Helpers, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -435,7 +435,7 @@ public readonly partial struct JasmineSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Helpers, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Helpers, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -478,7 +478,7 @@ public readonly partial struct JasmineSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.SpecDir, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SpecDir, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -509,7 +509,7 @@ public readonly partial struct JasmineSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.SpecFiles, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SpecFiles, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -543,7 +543,7 @@ public readonly partial struct JasmineSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.SpecFiles, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SpecFiles, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -914,6 +914,24 @@ public readonly partial struct JasmineSchema
                 }
             }
 
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.JsonElement:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                        break;
+                    case Kind.Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
             internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
             {
                 switch(_kind)
@@ -1015,6 +1033,24 @@ public readonly partial struct JasmineSchema
                 }
             }
 
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.Source:
+                        _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                        break;
+                    case Kind.Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
             internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
             {
                 switch(_kind)
@@ -1097,9 +1133,9 @@ public readonly partial struct JasmineSchema
                 in Corvus.JasmineBenchmark.Current.JasmineSchema.RootItems.SpecFilesJArray.Source specFiles,
                 in Corvus.JasmineBenchmark.Current.JasmineSchema.RootItems.JsonStringArray.Source helpers = default)
             {
-                specDir.AddAsProperty(JsonPropertyNamesEscaped.SpecDir, ref builder, escapeName: false);
-                specFiles.AddAsProperty(JsonPropertyNamesEscaped.SpecFiles, ref builder, escapeName: false);
-                helpers.AddAsProperty(JsonPropertyNamesEscaped.Helpers, ref builder, escapeName: false);
+                specDir.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SpecDir, ref builder);
+                specFiles.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SpecFiles, ref builder);
+                helpers.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Helpers, ref builder);
             }
 
             /// <summary>
@@ -1126,9 +1162,9 @@ public readonly partial struct JasmineSchema
             where TContext : allows ref struct
             #endif
             {
-                specDir.AddAsProperty(JsonPropertyNamesEscaped.SpecDir, ref builder, escapeName: false);
-                specFiles.AddAsProperty(JsonPropertyNamesEscaped.SpecFiles, ref builder, escapeName: false);
-                helpers.AddAsProperty(JsonPropertyNamesEscaped.Helpers, ref builder, escapeName: false);
+                specDir.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SpecDir, ref builder);
+                specFiles.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SpecFiles, ref builder);
+                helpers.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Helpers, ref builder);
             }
 
             /// <summary>

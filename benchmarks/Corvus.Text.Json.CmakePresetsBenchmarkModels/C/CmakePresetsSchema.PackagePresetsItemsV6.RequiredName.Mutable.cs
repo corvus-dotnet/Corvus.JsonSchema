@@ -737,7 +737,7 @@ public readonly partial struct CmakePresetsSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.Condition, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Condition, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -773,7 +773,7 @@ public readonly partial struct CmakePresetsSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.Condition, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Condition, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -818,7 +818,7 @@ public readonly partial struct CmakePresetsSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.ConfigFile, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ConfigFile, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -863,7 +863,7 @@ public readonly partial struct CmakePresetsSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.Configurations, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Configurations, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -899,7 +899,7 @@ public readonly partial struct CmakePresetsSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.Configurations, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Configurations, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -944,7 +944,7 @@ public readonly partial struct CmakePresetsSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.ConfigurePreset, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ConfigurePreset, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -989,7 +989,7 @@ public readonly partial struct CmakePresetsSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.Description, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Description, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -1034,7 +1034,7 @@ public readonly partial struct CmakePresetsSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.DisplayName, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DisplayName, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -1079,7 +1079,7 @@ public readonly partial struct CmakePresetsSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.Environment, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Environment, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -1115,7 +1115,7 @@ public readonly partial struct CmakePresetsSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.Environment, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Environment, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -1160,7 +1160,7 @@ public readonly partial struct CmakePresetsSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.Generators, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Generators, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -1196,7 +1196,7 @@ public readonly partial struct CmakePresetsSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.Generators, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Generators, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -1241,7 +1241,7 @@ public readonly partial struct CmakePresetsSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.Hidden, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Hidden, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -1286,7 +1286,7 @@ public readonly partial struct CmakePresetsSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.InheritConfigureEnvironment, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.InheritConfigureEnvironment, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -1331,7 +1331,7 @@ public readonly partial struct CmakePresetsSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.Inherits, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Inherits, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -1367,7 +1367,7 @@ public readonly partial struct CmakePresetsSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.Inherits, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Inherits, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -1410,7 +1410,7 @@ public readonly partial struct CmakePresetsSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.Name, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Name, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -1443,7 +1443,7 @@ public readonly partial struct CmakePresetsSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.Output, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Output, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -1479,7 +1479,7 @@ public readonly partial struct CmakePresetsSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.Output, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Output, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -1524,7 +1524,7 @@ public readonly partial struct CmakePresetsSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.PackageDirectory, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PackageDirectory, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -1569,7 +1569,7 @@ public readonly partial struct CmakePresetsSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.PackageName, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PackageName, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -1614,7 +1614,7 @@ public readonly partial struct CmakePresetsSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.PackageVersion, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PackageVersion, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -1659,7 +1659,7 @@ public readonly partial struct CmakePresetsSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.Variables, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Variables, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -1695,7 +1695,7 @@ public readonly partial struct CmakePresetsSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.Variables, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Variables, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -1740,7 +1740,7 @@ public readonly partial struct CmakePresetsSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.Vendor, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Vendor, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -1776,7 +1776,7 @@ public readonly partial struct CmakePresetsSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.Vendor, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Vendor, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -1821,7 +1821,7 @@ public readonly partial struct CmakePresetsSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.VendorName, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.VendorName, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -2204,6 +2204,24 @@ public readonly partial struct CmakePresetsSchema
                     }
                 }
 
+                internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+                {
+                    switch(_kind)
+                    {
+                        case Kind.Unknown:
+                            break;
+                        case Kind.JsonElement:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                            break;
+                        case Kind.Builder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
+                            break;
+                        default:
+                            Debug.Fail("Unexpected Kind");
+                            break;
+                    }
+                }
+
                 internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
                 {
                     switch(_kind)
@@ -2298,6 +2316,24 @@ public readonly partial struct CmakePresetsSchema
                             break;
                         case Kind.Builder:
                             valueBuilder.AddProperty(utf8Name, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o), escapeName, nameRequiresUnescaping);
+                            break;
+                        default:
+                            Debug.Fail("Unexpected Kind");
+                            break;
+                    }
+                }
+
+                internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+                {
+                    switch(_kind)
+                    {
+                        case Kind.Unknown:
+                            break;
+                        case Kind.Source:
+                            _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                            break;
+                        case Kind.Builder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                             break;
                         default:
                             Debug.Fail("Unexpected Kind");
@@ -2403,25 +2439,25 @@ public readonly partial struct CmakePresetsSchema
                     in Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.PackagePresetsItemsV6.RequiredName.VendorEntity.Source vendor = default,
                     in Corvus.CmakePresetsBenchmark.Current.JsonString.Source vendorName = default)
                 {
-                    name.AddAsProperty(JsonPropertyNamesEscaped.Name, ref builder, escapeName: false);
-                    condition.AddAsProperty(JsonPropertyNamesEscaped.Condition, ref builder, escapeName: false);
-                    configFile.AddAsProperty(JsonPropertyNamesEscaped.ConfigFile, ref builder, escapeName: false);
-                    configurations.AddAsProperty(JsonPropertyNamesEscaped.Configurations, ref builder, escapeName: false);
-                    configurePreset.AddAsProperty(JsonPropertyNamesEscaped.ConfigurePreset, ref builder, escapeName: false);
-                    description.AddAsProperty(JsonPropertyNamesEscaped.Description, ref builder, escapeName: false);
-                    displayName.AddAsProperty(JsonPropertyNamesEscaped.DisplayName, ref builder, escapeName: false);
-                    environment.AddAsProperty(JsonPropertyNamesEscaped.Environment, ref builder, escapeName: false);
-                    generators.AddAsProperty(JsonPropertyNamesEscaped.Generators, ref builder, escapeName: false);
-                    hidden.AddAsProperty(JsonPropertyNamesEscaped.Hidden, ref builder, escapeName: false);
-                    inheritConfigureEnvironment.AddAsProperty(JsonPropertyNamesEscaped.InheritConfigureEnvironment, ref builder, escapeName: false);
-                    inherits.AddAsProperty(JsonPropertyNamesEscaped.Inherits, ref builder, escapeName: false);
-                    output.AddAsProperty(JsonPropertyNamesEscaped.Output, ref builder, escapeName: false);
-                    packageDirectory.AddAsProperty(JsonPropertyNamesEscaped.PackageDirectory, ref builder, escapeName: false);
-                    packageName.AddAsProperty(JsonPropertyNamesEscaped.PackageName, ref builder, escapeName: false);
-                    packageVersion.AddAsProperty(JsonPropertyNamesEscaped.PackageVersion, ref builder, escapeName: false);
-                    variables.AddAsProperty(JsonPropertyNamesEscaped.Variables, ref builder, escapeName: false);
-                    vendor.AddAsProperty(JsonPropertyNamesEscaped.Vendor, ref builder, escapeName: false);
-                    vendorName.AddAsProperty(JsonPropertyNamesEscaped.VendorName, ref builder, escapeName: false);
+                    name.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Name, ref builder);
+                    condition.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Condition, ref builder);
+                    configFile.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ConfigFile, ref builder);
+                    configurations.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Configurations, ref builder);
+                    configurePreset.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ConfigurePreset, ref builder);
+                    description.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Description, ref builder);
+                    displayName.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DisplayName, ref builder);
+                    environment.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Environment, ref builder);
+                    generators.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Generators, ref builder);
+                    hidden.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Hidden, ref builder);
+                    inheritConfigureEnvironment.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.InheritConfigureEnvironment, ref builder);
+                    inherits.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Inherits, ref builder);
+                    output.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Output, ref builder);
+                    packageDirectory.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PackageDirectory, ref builder);
+                    packageName.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PackageName, ref builder);
+                    packageVersion.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PackageVersion, ref builder);
+                    variables.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Variables, ref builder);
+                    vendor.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Vendor, ref builder);
+                    vendorName.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.VendorName, ref builder);
                 }
 
                 /// <summary>
@@ -2480,25 +2516,25 @@ public readonly partial struct CmakePresetsSchema
                 where TContext : allows ref struct
                 #endif
                 {
-                    name.AddAsProperty(JsonPropertyNamesEscaped.Name, ref builder, escapeName: false);
-                    condition.AddAsProperty(JsonPropertyNamesEscaped.Condition, ref builder, escapeName: false);
-                    configFile.AddAsProperty(JsonPropertyNamesEscaped.ConfigFile, ref builder, escapeName: false);
-                    configurations.AddAsProperty(JsonPropertyNamesEscaped.Configurations, ref builder, escapeName: false);
-                    configurePreset.AddAsProperty(JsonPropertyNamesEscaped.ConfigurePreset, ref builder, escapeName: false);
-                    description.AddAsProperty(JsonPropertyNamesEscaped.Description, ref builder, escapeName: false);
-                    displayName.AddAsProperty(JsonPropertyNamesEscaped.DisplayName, ref builder, escapeName: false);
-                    environment.AddAsProperty(JsonPropertyNamesEscaped.Environment, ref builder, escapeName: false);
-                    generators.AddAsProperty(JsonPropertyNamesEscaped.Generators, ref builder, escapeName: false);
-                    hidden.AddAsProperty(JsonPropertyNamesEscaped.Hidden, ref builder, escapeName: false);
-                    inheritConfigureEnvironment.AddAsProperty(JsonPropertyNamesEscaped.InheritConfigureEnvironment, ref builder, escapeName: false);
-                    inherits.AddAsProperty(JsonPropertyNamesEscaped.Inherits, ref builder, escapeName: false);
-                    output.AddAsProperty(JsonPropertyNamesEscaped.Output, ref builder, escapeName: false);
-                    packageDirectory.AddAsProperty(JsonPropertyNamesEscaped.PackageDirectory, ref builder, escapeName: false);
-                    packageName.AddAsProperty(JsonPropertyNamesEscaped.PackageName, ref builder, escapeName: false);
-                    packageVersion.AddAsProperty(JsonPropertyNamesEscaped.PackageVersion, ref builder, escapeName: false);
-                    variables.AddAsProperty(JsonPropertyNamesEscaped.Variables, ref builder, escapeName: false);
-                    vendor.AddAsProperty(JsonPropertyNamesEscaped.Vendor, ref builder, escapeName: false);
-                    vendorName.AddAsProperty(JsonPropertyNamesEscaped.VendorName, ref builder, escapeName: false);
+                    name.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Name, ref builder);
+                    condition.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Condition, ref builder);
+                    configFile.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ConfigFile, ref builder);
+                    configurations.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Configurations, ref builder);
+                    configurePreset.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ConfigurePreset, ref builder);
+                    description.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Description, ref builder);
+                    displayName.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DisplayName, ref builder);
+                    environment.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Environment, ref builder);
+                    generators.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Generators, ref builder);
+                    hidden.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Hidden, ref builder);
+                    inheritConfigureEnvironment.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.InheritConfigureEnvironment, ref builder);
+                    inherits.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Inherits, ref builder);
+                    output.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Output, ref builder);
+                    packageDirectory.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PackageDirectory, ref builder);
+                    packageName.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PackageName, ref builder);
+                    packageVersion.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PackageVersion, ref builder);
+                    variables.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Variables, ref builder);
+                    vendor.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Vendor, ref builder);
+                    vendorName.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.VendorName, ref builder);
                 }
 
                 /// <summary>

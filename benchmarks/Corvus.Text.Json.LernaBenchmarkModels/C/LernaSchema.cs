@@ -886,4 +886,51 @@ public readonly partial struct LernaSchema
         /// </summary>
         public static ReadOnlySpan<byte> Workspaces => "workspaces"u8;
     }
+
+    /// <summary>
+    /// Provides pre-baked property name blobs for fast builder property storage.
+    /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
+    /// </summary>
+    private static class JsonPropertyNamesPrebaked
+    {
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Command"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Command => [0x95, 0x00, 0x00, 0x00, 0x22, 0x63, 0x6F, 0x6D, 0x6D, 0x61, 0x6E, 0x64, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="IgnoreChanges"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> IgnoreChanges => [0xF5, 0x00, 0x00, 0x00, 0x22, 0x69, 0x67, 0x6E, 0x6F, 0x72, 0x65, 0x43, 0x68, 0x61, 0x6E, 0x67, 0x65, 0x73, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="NpmClient"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> NpmClient => [0xB5, 0x00, 0x00, 0x00, 0x22, 0x6E, 0x70, 0x6D, 0x43, 0x6C, 0x69, 0x65, 0x6E, 0x74, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="NpmClientArgs"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> NpmClientArgs => [0xF5, 0x00, 0x00, 0x00, 0x22, 0x6E, 0x70, 0x6D, 0x43, 0x6C, 0x69, 0x65, 0x6E, 0x74, 0x41, 0x72, 0x67, 0x73, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Packages"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Packages => [0xA5, 0x00, 0x00, 0x00, 0x22, 0x70, 0x61, 0x63, 0x6B, 0x61, 0x67, 0x65, 0x73, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="UseWorkspaces"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> UseWorkspaces => [0xF5, 0x00, 0x00, 0x00, 0x22, 0x75, 0x73, 0x65, 0x57, 0x6F, 0x72, 0x6B, 0x73, 0x70, 0x61, 0x63, 0x65, 0x73, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Version"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Version => [0x95, 0x00, 0x00, 0x00, 0x22, 0x76, 0x65, 0x72, 0x73, 0x69, 0x6F, 0x6E, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Workspaces"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Workspaces => [0xC5, 0x00, 0x00, 0x00, 0x22, 0x77, 0x6F, 0x72, 0x6B, 0x73, 0x70, 0x61, 0x63, 0x65, 0x73, 0x22];
+    }
 }

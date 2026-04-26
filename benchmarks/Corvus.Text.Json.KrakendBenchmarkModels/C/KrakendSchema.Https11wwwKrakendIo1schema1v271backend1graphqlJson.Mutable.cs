@@ -359,11 +359,11 @@ public readonly partial struct KrakendSchema
             /// See: https://www.krakend.io/docs/backends/graphql/
             /// </para>
             /// </remarks>
-            public Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271backend1graphqlJson.Variables.Mutable VariablesValue
+            public Corvus.KrakendBenchmark.Current.JsonObject.Mutable Variables
             {
                 get
                 {
-                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.VariablesValueUtf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271backend1graphqlJson.Variables.Mutable value))
+                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.VariablesUtf8, out Corvus.KrakendBenchmark.Current.JsonObject.Mutable value))
                     {
                         return value;
                     }
@@ -426,7 +426,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.OperationName, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.OperationName, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -471,7 +471,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Query, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Query, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -516,7 +516,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.QueryPath, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.QueryPath, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -561,7 +561,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Type, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Type, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -585,19 +585,19 @@ public readonly partial struct KrakendSchema
             /// Set the <c>variables</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetVariablesValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271backend1graphqlJson.Variables.Source value)
+            public void SetVariables(in Corvus.KrakendBenchmark.Current.JsonObject.Source value)
             {
                 CheckValidInstance();
 
                 if (value.IsUndefined)
                 {
-                    JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.VariablesValueUtf8);
+                    JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.VariablesUtf8);
                     _documentVersion = _parent.Version;
                     return;
                 }
 
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.VariablesValueUtf8, out IJsonDocument? elementParent, out int elementIdx))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.VariablesUtf8, out IJsonDocument? elementParent, out int elementIdx))
                 {
                     // We are going to replace just the value
                     value.AddAsItem(ref cvb);
@@ -606,7 +606,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.VariablesValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Variables, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -618,7 +618,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>variables</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetVariablesValue<TContext>(in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271backend1graphqlJson.Variables.Source<TContext> value)
+            public void SetVariables<TContext>(in Corvus.KrakendBenchmark.Current.JsonObject.Source<TContext> value)
 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
 #endif
@@ -627,13 +627,13 @@ public readonly partial struct KrakendSchema
 
                 if (value.IsUndefined)
                 {
-                    JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.VariablesValueUtf8);
+                    JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.VariablesUtf8);
                     _documentVersion = _parent.Version;
                     return;
                 }
 
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.VariablesValueUtf8, out IJsonDocument? elementParent, out int elementIdx))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.VariablesUtf8, out IJsonDocument? elementParent, out int elementIdx))
                 {
                     // We are going to replace just the value
                     value.AddAsItem(ref cvb);
@@ -642,7 +642,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.VariablesValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Variables, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -654,10 +654,10 @@ public readonly partial struct KrakendSchema
             /// Remove the <c>variables</c> property, if present.
             /// </summary>
             /// <returns><see langword="true"/> if the property was found and removed; otherwise, <see langword="false"/>.</returns>
-            public bool RemoveVariablesValue()
+            public bool RemoveVariables()
             {
                 CheckValidInstance();
-                bool result = JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.VariablesValueUtf8);
+                bool result = JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.VariablesUtf8);
                 _documentVersion = _parent.Version;
                 return result;
             }
@@ -1155,6 +1155,24 @@ public readonly partial struct KrakendSchema
                 }
             }
 
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.JsonElement:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                        break;
+                    case Kind.Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
             internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
             {
                 switch(_kind)
@@ -1258,6 +1276,24 @@ public readonly partial struct KrakendSchema
                 }
             }
 
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.Source:
+                        _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                        break;
+                    case Kind.Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
             internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
             {
                 switch(_kind)
@@ -1340,13 +1376,13 @@ public readonly partial struct KrakendSchema
                 in Corvus.KrakendBenchmark.Current.JsonString.Source query = default,
                 in Corvus.KrakendBenchmark.Current.JsonString.Source queryPath = default,
                 in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271backend1graphqlJson.QueryType.Source type = default,
-                in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271backend1graphqlJson.Variables.Source variables = default)
+                in Corvus.KrakendBenchmark.Current.JsonObject.Source variables = default)
             {
-                operationName.AddAsProperty(JsonPropertyNamesEscaped.OperationName, ref builder, escapeName: false);
-                query.AddAsProperty(JsonPropertyNamesEscaped.Query, ref builder, escapeName: false);
-                queryPath.AddAsProperty(JsonPropertyNamesEscaped.QueryPath, ref builder, escapeName: false);
-                type.AddAsProperty(JsonPropertyNamesEscaped.Type, ref builder, escapeName: false);
-                variables.AddAsProperty(JsonPropertyNamesEscaped.VariablesValue, ref builder, escapeName: false);
+                operationName.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.OperationName, ref builder);
+                query.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Query, ref builder);
+                queryPath.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.QueryPath, ref builder);
+                type.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Type, ref builder);
+                variables.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Variables, ref builder);
             }
 
             /// <summary>
@@ -1357,7 +1393,7 @@ public readonly partial struct KrakendSchema
                 in Corvus.KrakendBenchmark.Current.JsonString.Source query = default,
                 in Corvus.KrakendBenchmark.Current.JsonString.Source queryPath = default,
                 in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271backend1graphqlJson.QueryType.Source type = default,
-                in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271backend1graphqlJson.Variables.Source variables = default)
+                in Corvus.KrakendBenchmark.Current.JsonObject.Source variables = default)
             {
                 Create(ref _builder, operationName, query, queryPath, type, variables);
             }
@@ -1372,16 +1408,16 @@ public readonly partial struct KrakendSchema
                 in Corvus.KrakendBenchmark.Current.JsonString.Source query = default,
                 in Corvus.KrakendBenchmark.Current.JsonString.Source queryPath = default,
                 in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271backend1graphqlJson.QueryType.Source type = default,
-                in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271backend1graphqlJson.Variables.Source<TContext> variables = default)
+                in Corvus.KrakendBenchmark.Current.JsonObject.Source<TContext> variables = default)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif
             {
-                operationName.AddAsProperty(JsonPropertyNamesEscaped.OperationName, ref builder, escapeName: false);
-                query.AddAsProperty(JsonPropertyNamesEscaped.Query, ref builder, escapeName: false);
-                queryPath.AddAsProperty(JsonPropertyNamesEscaped.QueryPath, ref builder, escapeName: false);
-                type.AddAsProperty(JsonPropertyNamesEscaped.Type, ref builder, escapeName: false);
-                variables.AddAsProperty(JsonPropertyNamesEscaped.VariablesValue, ref builder, escapeName: false);
+                operationName.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.OperationName, ref builder);
+                query.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Query, ref builder);
+                queryPath.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.QueryPath, ref builder);
+                type.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Type, ref builder);
+                variables.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Variables, ref builder);
             }
 
             /// <summary>
@@ -1393,7 +1429,7 @@ public readonly partial struct KrakendSchema
                 in Corvus.KrakendBenchmark.Current.JsonString.Source query = default,
                 in Corvus.KrakendBenchmark.Current.JsonString.Source queryPath = default,
                 in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271backend1graphqlJson.QueryType.Source type = default,
-                in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271backend1graphqlJson.Variables.Source<TContext> variables = default)
+                in Corvus.KrakendBenchmark.Current.JsonObject.Source<TContext> variables = default)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif
@@ -1713,7 +1749,7 @@ public readonly partial struct KrakendSchema
         /// <param name="variables">The value of the property.</param>
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
         /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-        public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.KrakendBenchmark.Current.JsonString.Source operationName = default, in Corvus.KrakendBenchmark.Current.JsonString.Source query = default, in Corvus.KrakendBenchmark.Current.JsonString.Source queryPath = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271backend1graphqlJson.QueryType.Source type = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271backend1graphqlJson.Variables.Source variables = default, int initialCapacity = 30)
+        public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.KrakendBenchmark.Current.JsonString.Source operationName = default, in Corvus.KrakendBenchmark.Current.JsonString.Source query = default, in Corvus.KrakendBenchmark.Current.JsonString.Source queryPath = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271backend1graphqlJson.QueryType.Source type = default, in Corvus.KrakendBenchmark.Current.JsonObject.Source variables = default, int initialCapacity = 30)
         {
             JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
             ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
@@ -1739,7 +1775,7 @@ public readonly partial struct KrakendSchema
         /// <param name="variables">The value of the property.</param>
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
         /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-        public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.KrakendBenchmark.Current.JsonString.Source operationName = default, in Corvus.KrakendBenchmark.Current.JsonString.Source query = default, in Corvus.KrakendBenchmark.Current.JsonString.Source queryPath = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271backend1graphqlJson.QueryType.Source type = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271backend1graphqlJson.Variables.Source<TContext> variables = default, int initialCapacity = 30)
+        public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.KrakendBenchmark.Current.JsonString.Source operationName = default, in Corvus.KrakendBenchmark.Current.JsonString.Source query = default, in Corvus.KrakendBenchmark.Current.JsonString.Source queryPath = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271backend1graphqlJson.QueryType.Source type = default, in Corvus.KrakendBenchmark.Current.JsonObject.Source<TContext> variables = default, int initialCapacity = 30)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif

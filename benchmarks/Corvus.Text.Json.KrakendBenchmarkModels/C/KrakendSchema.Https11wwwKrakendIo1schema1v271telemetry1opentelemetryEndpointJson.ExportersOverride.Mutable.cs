@@ -233,11 +233,11 @@ public readonly partial struct KrakendSchema
                 /// Overrides the metrics exporters used in this endpoint
                 /// </para>
                 /// </remarks>
-                public Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271telemetry1opentelemetryEndpointJson.ExportersOverride.MetricsExporters.Mutable MetricExporters
+                public Corvus.KrakendBenchmark.Current.JsonArray.Mutable MetricExporters
                 {
                     get
                     {
-                        if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.MetricExportersUtf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271telemetry1opentelemetryEndpointJson.ExportersOverride.MetricsExporters.Mutable value))
+                        if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.MetricExportersUtf8, out Corvus.KrakendBenchmark.Current.JsonArray.Mutable value))
                         {
                             return value;
                         }
@@ -280,11 +280,11 @@ public readonly partial struct KrakendSchema
                 /// Overrides the trace exporters used in this endpoint
                 /// </para>
                 /// </remarks>
-                public Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271telemetry1opentelemetryEndpointJson.ExportersOverride.TraceExporters.Mutable TraceExportersValue
+                public Corvus.KrakendBenchmark.Current.JsonArray.Mutable TraceExporters
                 {
                     get
                     {
-                        if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TraceExportersValueUtf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271telemetry1opentelemetryEndpointJson.ExportersOverride.TraceExporters.Mutable value))
+                        if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TraceExportersUtf8, out Corvus.KrakendBenchmark.Current.JsonArray.Mutable value))
                         {
                             return value;
                         }
@@ -351,7 +351,7 @@ public readonly partial struct KrakendSchema
                 /// Set the <c>metric_exporters</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetMetricExporters(in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271telemetry1opentelemetryEndpointJson.ExportersOverride.MetricsExporters.Source value)
+                public void SetMetricExporters(in Corvus.KrakendBenchmark.Current.JsonArray.Source value)
                 {
                     CheckValidInstance();
 
@@ -372,7 +372,7 @@ public readonly partial struct KrakendSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.MetricExporters, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MetricExporters, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -384,7 +384,7 @@ public readonly partial struct KrakendSchema
                 /// Set the <c>metric_exporters</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetMetricExporters<TContext>(in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271telemetry1opentelemetryEndpointJson.ExportersOverride.MetricsExporters.Source<TContext> value)
+                public void SetMetricExporters<TContext>(in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> value)
 #if NET9_0_OR_GREATER
                     where TContext : allows ref struct
 #endif
@@ -408,7 +408,7 @@ public readonly partial struct KrakendSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.MetricExporters, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MetricExporters, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -453,7 +453,7 @@ public readonly partial struct KrakendSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.MetricReportingPeriod, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MetricReportingPeriod, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -477,19 +477,19 @@ public readonly partial struct KrakendSchema
                 /// Set the <c>trace_exporters</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetTraceExportersValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271telemetry1opentelemetryEndpointJson.ExportersOverride.TraceExporters.Source value)
+                public void SetTraceExporters(in Corvus.KrakendBenchmark.Current.JsonArray.Source value)
                 {
                     CheckValidInstance();
 
                     if (value.IsUndefined)
                     {
-                        JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.TraceExportersValueUtf8);
+                        JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.TraceExportersUtf8);
                         _documentVersion = _parent.Version;
                         return;
                     }
 
                     ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
-                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TraceExportersValueUtf8, out IJsonDocument? elementParent, out int elementIdx))
+                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TraceExportersUtf8, out IJsonDocument? elementParent, out int elementIdx))
                     {
                         // We are going to replace just the value
                         value.AddAsItem(ref cvb);
@@ -498,7 +498,7 @@ public readonly partial struct KrakendSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.TraceExportersValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TraceExporters, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -510,7 +510,7 @@ public readonly partial struct KrakendSchema
                 /// Set the <c>trace_exporters</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetTraceExportersValue<TContext>(in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271telemetry1opentelemetryEndpointJson.ExportersOverride.TraceExporters.Source<TContext> value)
+                public void SetTraceExporters<TContext>(in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> value)
 #if NET9_0_OR_GREATER
                     where TContext : allows ref struct
 #endif
@@ -519,13 +519,13 @@ public readonly partial struct KrakendSchema
 
                     if (value.IsUndefined)
                     {
-                        JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.TraceExportersValueUtf8);
+                        JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.TraceExportersUtf8);
                         _documentVersion = _parent.Version;
                         return;
                     }
 
                     ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
-                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TraceExportersValueUtf8, out IJsonDocument? elementParent, out int elementIdx))
+                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TraceExportersUtf8, out IJsonDocument? elementParent, out int elementIdx))
                     {
                         // We are going to replace just the value
                         value.AddAsItem(ref cvb);
@@ -534,7 +534,7 @@ public readonly partial struct KrakendSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.TraceExportersValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TraceExporters, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -546,10 +546,10 @@ public readonly partial struct KrakendSchema
                 /// Remove the <c>trace_exporters</c> property, if present.
                 /// </summary>
                 /// <returns><see langword="true"/> if the property was found and removed; otherwise, <see langword="false"/>.</returns>
-                public bool RemoveTraceExportersValue()
+                public bool RemoveTraceExporters()
                 {
                     CheckValidInstance();
-                    bool result = JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.TraceExportersValueUtf8);
+                    bool result = JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.TraceExportersUtf8);
                     _documentVersion = _parent.Version;
                     return result;
                 }
@@ -579,7 +579,7 @@ public readonly partial struct KrakendSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.TraceSampleRateValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TraceSampleRateValue, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -962,6 +962,24 @@ public readonly partial struct KrakendSchema
                     }
                 }
 
+                internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+                {
+                    switch(_kind)
+                    {
+                        case Kind.Unknown:
+                            break;
+                        case Kind.JsonElement:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                            break;
+                        case Kind.Builder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
+                            break;
+                        default:
+                            Debug.Fail("Unexpected Kind");
+                            break;
+                    }
+                }
+
                 internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
                 {
                     switch(_kind)
@@ -1063,6 +1081,24 @@ public readonly partial struct KrakendSchema
                     }
                 }
 
+                internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+                {
+                    switch(_kind)
+                    {
+                        case Kind.Unknown:
+                            break;
+                        case Kind.Source:
+                            _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                            break;
+                        case Kind.Builder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
+                            break;
+                        default:
+                            Debug.Fail("Unexpected Kind");
+                            break;
+                    }
+                }
+
                 internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
                 {
                     switch(_kind)
@@ -1141,24 +1177,24 @@ public readonly partial struct KrakendSchema
                 /// </summary>
                 internal static void Create(
                     ref ComplexValueBuilder builder,
-                    in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271telemetry1opentelemetryEndpointJson.ExportersOverride.MetricsExporters.Source metricExporters = default,
+                    in Corvus.KrakendBenchmark.Current.JsonArray.Source metricExporters = default,
                     in Corvus.KrakendBenchmark.Current.JsonInteger.Source metricReportingPeriod = default,
-                    in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271telemetry1opentelemetryEndpointJson.ExportersOverride.TraceExporters.Source traceExporters = default,
+                    in Corvus.KrakendBenchmark.Current.JsonArray.Source traceExporters = default,
                     in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271telemetry1opentelemetryEndpointJson.ExportersOverride.TraceSampleRate.Source traceSampleRate = default)
                 {
-                    metricExporters.AddAsProperty(JsonPropertyNamesEscaped.MetricExporters, ref builder, escapeName: false);
-                    metricReportingPeriod.AddAsProperty(JsonPropertyNamesEscaped.MetricReportingPeriod, ref builder, escapeName: false);
-                    traceExporters.AddAsProperty(JsonPropertyNamesEscaped.TraceExportersValue, ref builder, escapeName: false);
-                    traceSampleRate.AddAsProperty(JsonPropertyNamesEscaped.TraceSampleRateValue, ref builder, escapeName: false);
+                    metricExporters.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MetricExporters, ref builder);
+                    metricReportingPeriod.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MetricReportingPeriod, ref builder);
+                    traceExporters.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TraceExporters, ref builder);
+                    traceSampleRate.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TraceSampleRateValue, ref builder);
                 }
 
                 /// <summary>
                 /// Creates an instance of a <see cref="ExportersOverride"/>.
                 /// </summary>
                 public void Create(
-                    in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271telemetry1opentelemetryEndpointJson.ExportersOverride.MetricsExporters.Source metricExporters = default,
+                    in Corvus.KrakendBenchmark.Current.JsonArray.Source metricExporters = default,
                     in Corvus.KrakendBenchmark.Current.JsonInteger.Source metricReportingPeriod = default,
-                    in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271telemetry1opentelemetryEndpointJson.ExportersOverride.TraceExporters.Source traceExporters = default,
+                    in Corvus.KrakendBenchmark.Current.JsonArray.Source traceExporters = default,
                     in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271telemetry1opentelemetryEndpointJson.ExportersOverride.TraceSampleRate.Source traceSampleRate = default)
                 {
                     Create(ref _builder, metricExporters, metricReportingPeriod, traceExporters, traceSampleRate);
@@ -1170,18 +1206,18 @@ public readonly partial struct KrakendSchema
                 internal static void Create<TContext>(
                     in TContext context,
                     ref ComplexValueBuilder builder,
-                    in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271telemetry1opentelemetryEndpointJson.ExportersOverride.MetricsExporters.Source<TContext> metricExporters = default,
+                    in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> metricExporters = default,
                     in Corvus.KrakendBenchmark.Current.JsonInteger.Source metricReportingPeriod = default,
-                    in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271telemetry1opentelemetryEndpointJson.ExportersOverride.TraceExporters.Source<TContext> traceExporters = default,
+                    in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> traceExporters = default,
                     in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271telemetry1opentelemetryEndpointJson.ExportersOverride.TraceSampleRate.Source traceSampleRate = default)
                 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
                 #endif
                 {
-                    metricExporters.AddAsProperty(JsonPropertyNamesEscaped.MetricExporters, ref builder, escapeName: false);
-                    metricReportingPeriod.AddAsProperty(JsonPropertyNamesEscaped.MetricReportingPeriod, ref builder, escapeName: false);
-                    traceExporters.AddAsProperty(JsonPropertyNamesEscaped.TraceExportersValue, ref builder, escapeName: false);
-                    traceSampleRate.AddAsProperty(JsonPropertyNamesEscaped.TraceSampleRateValue, ref builder, escapeName: false);
+                    metricExporters.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MetricExporters, ref builder);
+                    metricReportingPeriod.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MetricReportingPeriod, ref builder);
+                    traceExporters.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TraceExporters, ref builder);
+                    traceSampleRate.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TraceSampleRateValue, ref builder);
                 }
 
                 /// <summary>
@@ -1189,9 +1225,9 @@ public readonly partial struct KrakendSchema
                 /// </summary>
                 public void Create<TContext>(
                     in TContext context,
-                    in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271telemetry1opentelemetryEndpointJson.ExportersOverride.MetricsExporters.Source<TContext> metricExporters = default,
+                    in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> metricExporters = default,
                     in Corvus.KrakendBenchmark.Current.JsonInteger.Source metricReportingPeriod = default,
-                    in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271telemetry1opentelemetryEndpointJson.ExportersOverride.TraceExporters.Source<TContext> traceExporters = default,
+                    in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> traceExporters = default,
                     in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271telemetry1opentelemetryEndpointJson.ExportersOverride.TraceSampleRate.Source traceSampleRate = default)
                 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
@@ -1359,7 +1395,7 @@ public readonly partial struct KrakendSchema
             /// <param name="traceSampleRate">The value of the property.</param>
             /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
             /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-            public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271telemetry1opentelemetryEndpointJson.ExportersOverride.MetricsExporters.Source metricExporters = default, in Corvus.KrakendBenchmark.Current.JsonInteger.Source metricReportingPeriod = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271telemetry1opentelemetryEndpointJson.ExportersOverride.TraceExporters.Source traceExporters = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271telemetry1opentelemetryEndpointJson.ExportersOverride.TraceSampleRate.Source traceSampleRate = default, int initialCapacity = 30)
+            public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.KrakendBenchmark.Current.JsonArray.Source metricExporters = default, in Corvus.KrakendBenchmark.Current.JsonInteger.Source metricReportingPeriod = default, in Corvus.KrakendBenchmark.Current.JsonArray.Source traceExporters = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271telemetry1opentelemetryEndpointJson.ExportersOverride.TraceSampleRate.Source traceSampleRate = default, int initialCapacity = 30)
             {
                 JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
@@ -1384,7 +1420,7 @@ public readonly partial struct KrakendSchema
             /// <param name="traceSampleRate">The value of the property.</param>
             /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
             /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-            public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271telemetry1opentelemetryEndpointJson.ExportersOverride.MetricsExporters.Source<TContext> metricExporters = default, in Corvus.KrakendBenchmark.Current.JsonInteger.Source metricReportingPeriod = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271telemetry1opentelemetryEndpointJson.ExportersOverride.TraceExporters.Source<TContext> traceExporters = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271telemetry1opentelemetryEndpointJson.ExportersOverride.TraceSampleRate.Source traceSampleRate = default, int initialCapacity = 30)
+            public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> metricExporters = default, in Corvus.KrakendBenchmark.Current.JsonInteger.Source metricReportingPeriod = default, in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> traceExporters = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271telemetry1opentelemetryEndpointJson.ExportersOverride.TraceSampleRate.Source traceSampleRate = default, int initialCapacity = 30)
                 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
                 #endif

@@ -439,11 +439,11 @@ public readonly partial struct AnsibleMetaSchema
             /// Gets the (optional) <c>vars</c> property.
             /// Vars
             /// </summary>
-            public Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DependencyModel.Vars.Mutable VarsValue
+            public Corvus.AnsibleMetaBenchmark.Current.JsonObject.Mutable Vars
             {
                 get
                 {
-                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.VarsValueUtf8, out Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DependencyModel.Vars.Mutable value))
+                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.VarsUtf8, out Corvus.AnsibleMetaBenchmark.Current.JsonObject.Mutable value))
                     {
                         return value;
                     }
@@ -550,7 +550,7 @@ public readonly partial struct AnsibleMetaSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Become, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Become, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -595,7 +595,7 @@ public readonly partial struct AnsibleMetaSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Name, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Name, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -640,7 +640,7 @@ public readonly partial struct AnsibleMetaSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Role, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Role, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -685,7 +685,7 @@ public readonly partial struct AnsibleMetaSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.ScmValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ScmValue, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -730,7 +730,7 @@ public readonly partial struct AnsibleMetaSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Src, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Src, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -775,7 +775,7 @@ public readonly partial struct AnsibleMetaSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.TagsValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TagsValue, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -811,7 +811,7 @@ public readonly partial struct AnsibleMetaSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.TagsValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TagsValue, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -835,19 +835,19 @@ public readonly partial struct AnsibleMetaSchema
             /// Set the <c>vars</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetVarsValue(in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DependencyModel.Vars.Source value)
+            public void SetVars(in Corvus.AnsibleMetaBenchmark.Current.JsonObject.Source value)
             {
                 CheckValidInstance();
 
                 if (value.IsUndefined)
                 {
-                    JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.VarsValueUtf8);
+                    JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.VarsUtf8);
                     _documentVersion = _parent.Version;
                     return;
                 }
 
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.VarsValueUtf8, out IJsonDocument? elementParent, out int elementIdx))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.VarsUtf8, out IJsonDocument? elementParent, out int elementIdx))
                 {
                     // We are going to replace just the value
                     value.AddAsItem(ref cvb);
@@ -856,7 +856,7 @@ public readonly partial struct AnsibleMetaSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.VarsValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Vars, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -868,7 +868,7 @@ public readonly partial struct AnsibleMetaSchema
             /// Set the <c>vars</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetVarsValue<TContext>(in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DependencyModel.Vars.Source<TContext> value)
+            public void SetVars<TContext>(in Corvus.AnsibleMetaBenchmark.Current.JsonObject.Source<TContext> value)
 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
 #endif
@@ -877,13 +877,13 @@ public readonly partial struct AnsibleMetaSchema
 
                 if (value.IsUndefined)
                 {
-                    JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.VarsValueUtf8);
+                    JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.VarsUtf8);
                     _documentVersion = _parent.Version;
                     return;
                 }
 
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.VarsValueUtf8, out IJsonDocument? elementParent, out int elementIdx))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.VarsUtf8, out IJsonDocument? elementParent, out int elementIdx))
                 {
                     // We are going to replace just the value
                     value.AddAsItem(ref cvb);
@@ -892,7 +892,7 @@ public readonly partial struct AnsibleMetaSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.VarsValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Vars, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -904,10 +904,10 @@ public readonly partial struct AnsibleMetaSchema
             /// Remove the <c>vars</c> property, if present.
             /// </summary>
             /// <returns><see langword="true"/> if the property was found and removed; otherwise, <see langword="false"/>.</returns>
-            public bool RemoveVarsValue()
+            public bool RemoveVars()
             {
                 CheckValidInstance();
-                bool result = JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.VarsValueUtf8);
+                bool result = JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.VarsUtf8);
                 _documentVersion = _parent.Version;
                 return result;
             }
@@ -937,7 +937,7 @@ public readonly partial struct AnsibleMetaSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Version, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Version, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -982,7 +982,7 @@ public readonly partial struct AnsibleMetaSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.When, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.When, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1018,7 +1018,7 @@ public readonly partial struct AnsibleMetaSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.When, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.When, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1581,6 +1581,24 @@ public readonly partial struct AnsibleMetaSchema
                 }
             }
 
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.JsonElement:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                        break;
+                    case Kind.Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
             internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
             {
                 switch(_kind)
@@ -1685,6 +1703,24 @@ public readonly partial struct AnsibleMetaSchema
                 }
             }
 
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.Source:
+                        _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                        break;
+                    case Kind.Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
             internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
             {
                 switch(_kind)
@@ -1769,19 +1805,19 @@ public readonly partial struct AnsibleMetaSchema
                 in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DependencyModel.Scm.Source scm = default,
                 in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source src = default,
                 in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DependencyModel.Tags.Source tags = default,
-                in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DependencyModel.Vars.Source vars = default,
+                in Corvus.AnsibleMetaBenchmark.Current.JsonObject.Source vars = default,
                 in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source version = default,
                 in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.ComplexConditional.Source when = default)
             {
-                become.AddAsProperty(JsonPropertyNamesEscaped.Become, ref builder, escapeName: false);
-                name.AddAsProperty(JsonPropertyNamesEscaped.Name, ref builder, escapeName: false);
-                role.AddAsProperty(JsonPropertyNamesEscaped.Role, ref builder, escapeName: false);
-                scm.AddAsProperty(JsonPropertyNamesEscaped.ScmValue, ref builder, escapeName: false);
-                src.AddAsProperty(JsonPropertyNamesEscaped.Src, ref builder, escapeName: false);
-                tags.AddAsProperty(JsonPropertyNamesEscaped.TagsValue, ref builder, escapeName: false);
-                vars.AddAsProperty(JsonPropertyNamesEscaped.VarsValue, ref builder, escapeName: false);
-                version.AddAsProperty(JsonPropertyNamesEscaped.Version, ref builder, escapeName: false);
-                when.AddAsProperty(JsonPropertyNamesEscaped.When, ref builder, escapeName: false);
+                become.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Become, ref builder);
+                name.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Name, ref builder);
+                role.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Role, ref builder);
+                scm.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ScmValue, ref builder);
+                src.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Src, ref builder);
+                tags.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TagsValue, ref builder);
+                vars.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Vars, ref builder);
+                version.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Version, ref builder);
+                when.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.When, ref builder);
             }
 
             /// <summary>
@@ -1794,7 +1830,7 @@ public readonly partial struct AnsibleMetaSchema
                 in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DependencyModel.Scm.Source scm = default,
                 in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source src = default,
                 in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DependencyModel.Tags.Source tags = default,
-                in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DependencyModel.Vars.Source vars = default,
+                in Corvus.AnsibleMetaBenchmark.Current.JsonObject.Source vars = default,
                 in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source version = default,
                 in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.ComplexConditional.Source when = default)
             {
@@ -1813,22 +1849,22 @@ public readonly partial struct AnsibleMetaSchema
                 in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DependencyModel.Scm.Source scm = default,
                 in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source src = default,
                 in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DependencyModel.Tags.Source<TContext> tags = default,
-                in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DependencyModel.Vars.Source<TContext> vars = default,
+                in Corvus.AnsibleMetaBenchmark.Current.JsonObject.Source<TContext> vars = default,
                 in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source version = default,
                 in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.ComplexConditional.Source<TContext> when = default)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif
             {
-                become.AddAsProperty(JsonPropertyNamesEscaped.Become, ref builder, escapeName: false);
-                name.AddAsProperty(JsonPropertyNamesEscaped.Name, ref builder, escapeName: false);
-                role.AddAsProperty(JsonPropertyNamesEscaped.Role, ref builder, escapeName: false);
-                scm.AddAsProperty(JsonPropertyNamesEscaped.ScmValue, ref builder, escapeName: false);
-                src.AddAsProperty(JsonPropertyNamesEscaped.Src, ref builder, escapeName: false);
-                tags.AddAsProperty(JsonPropertyNamesEscaped.TagsValue, ref builder, escapeName: false);
-                vars.AddAsProperty(JsonPropertyNamesEscaped.VarsValue, ref builder, escapeName: false);
-                version.AddAsProperty(JsonPropertyNamesEscaped.Version, ref builder, escapeName: false);
-                when.AddAsProperty(JsonPropertyNamesEscaped.When, ref builder, escapeName: false);
+                become.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Become, ref builder);
+                name.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Name, ref builder);
+                role.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Role, ref builder);
+                scm.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ScmValue, ref builder);
+                src.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Src, ref builder);
+                tags.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TagsValue, ref builder);
+                vars.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Vars, ref builder);
+                version.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Version, ref builder);
+                when.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.When, ref builder);
             }
 
             /// <summary>
@@ -1842,7 +1878,7 @@ public readonly partial struct AnsibleMetaSchema
                 in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DependencyModel.Scm.Source scm = default,
                 in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source src = default,
                 in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DependencyModel.Tags.Source<TContext> tags = default,
-                in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DependencyModel.Vars.Source<TContext> vars = default,
+                in Corvus.AnsibleMetaBenchmark.Current.JsonObject.Source<TContext> vars = default,
                 in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source version = default,
                 in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.ComplexConditional.Source<TContext> when = default)
             #if NET9_0_OR_GREATER
@@ -2244,7 +2280,7 @@ public readonly partial struct AnsibleMetaSchema
         /// <param name="when">The value of the property.</param>
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
         /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-        public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.AnsibleMetaBenchmark.Current.JsonBoolean.Source become = default, in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source name = default, in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source role = default, in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DependencyModel.Scm.Source scm = default, in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source src = default, in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DependencyModel.Tags.Source tags = default, in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DependencyModel.Vars.Source vars = default, in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source version = default, in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.ComplexConditional.Source when = default, int initialCapacity = 30)
+        public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.AnsibleMetaBenchmark.Current.JsonBoolean.Source become = default, in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source name = default, in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source role = default, in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DependencyModel.Scm.Source scm = default, in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source src = default, in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DependencyModel.Tags.Source tags = default, in Corvus.AnsibleMetaBenchmark.Current.JsonObject.Source vars = default, in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source version = default, in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.ComplexConditional.Source when = default, int initialCapacity = 30)
         {
             JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
             ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
@@ -2274,7 +2310,7 @@ public readonly partial struct AnsibleMetaSchema
         /// <param name="when">The value of the property.</param>
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
         /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-        public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.AnsibleMetaBenchmark.Current.JsonBoolean.Source become = default, in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source name = default, in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source role = default, in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DependencyModel.Scm.Source scm = default, in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source src = default, in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DependencyModel.Tags.Source<TContext> tags = default, in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DependencyModel.Vars.Source<TContext> vars = default, in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source version = default, in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.ComplexConditional.Source<TContext> when = default, int initialCapacity = 30)
+        public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.AnsibleMetaBenchmark.Current.JsonBoolean.Source become = default, in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source name = default, in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source role = default, in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DependencyModel.Scm.Source scm = default, in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source src = default, in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DependencyModel.Tags.Source<TContext> tags = default, in Corvus.AnsibleMetaBenchmark.Current.JsonObject.Source<TContext> vars = default, in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source version = default, in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.ComplexConditional.Source<TContext> when = default, int initialCapacity = 30)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif

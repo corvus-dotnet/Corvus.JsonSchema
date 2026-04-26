@@ -227,11 +227,11 @@ public readonly partial struct GitpodConfigurationSchema
                 /// Environment variables to set.
                 /// </para>
                 /// </remarks>
-                public Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.TasksEntityArray.TasksEntity.EnvironmentVariablesToSet.Mutable Env
+                public Corvus.GitpodConfigurationBenchmark.Current.JsonObject.Mutable Env
                 {
                     get
                     {
-                        if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.EnvUtf8, out Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.TasksEntityArray.TasksEntity.EnvironmentVariablesToSet.Mutable value))
+                        if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.EnvUtf8, out Corvus.GitpodConfigurationBenchmark.Current.JsonObject.Mutable value))
                         {
                             return value;
                         }
@@ -399,7 +399,7 @@ public readonly partial struct GitpodConfigurationSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.Before, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Before, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -444,7 +444,7 @@ public readonly partial struct GitpodConfigurationSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.Command, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Command, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -468,7 +468,7 @@ public readonly partial struct GitpodConfigurationSchema
                 /// Set the <c>env</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetEnv(in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.TasksEntityArray.TasksEntity.EnvironmentVariablesToSet.Source value)
+                public void SetEnv(in Corvus.GitpodConfigurationBenchmark.Current.JsonObject.Source value)
                 {
                     CheckValidInstance();
 
@@ -489,7 +489,7 @@ public readonly partial struct GitpodConfigurationSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.Env, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Env, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -501,7 +501,7 @@ public readonly partial struct GitpodConfigurationSchema
                 /// Set the <c>env</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetEnv<TContext>(in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.TasksEntityArray.TasksEntity.EnvironmentVariablesToSet.Source<TContext> value)
+                public void SetEnv<TContext>(in Corvus.GitpodConfigurationBenchmark.Current.JsonObject.Source<TContext> value)
 #if NET9_0_OR_GREATER
                     where TContext : allows ref struct
 #endif
@@ -525,7 +525,7 @@ public readonly partial struct GitpodConfigurationSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.Env, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Env, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -570,7 +570,7 @@ public readonly partial struct GitpodConfigurationSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.Init, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Init, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -615,7 +615,7 @@ public readonly partial struct GitpodConfigurationSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.Name, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Name, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -660,7 +660,7 @@ public readonly partial struct GitpodConfigurationSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.OpenIn, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.OpenIn, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -705,7 +705,7 @@ public readonly partial struct GitpodConfigurationSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.OpenMode, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.OpenMode, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -750,7 +750,7 @@ public readonly partial struct GitpodConfigurationSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.Prebuild, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Prebuild, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -957,6 +957,24 @@ public readonly partial struct GitpodConfigurationSchema
                     }
                 }
 
+                internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+                {
+                    switch(_kind)
+                    {
+                        case Kind.Unknown:
+                            break;
+                        case Kind.JsonElement:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                            break;
+                        case Kind.Builder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
+                            break;
+                        default:
+                            Debug.Fail("Unexpected Kind");
+                            break;
+                    }
+                }
+
                 internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
                 {
                     switch(_kind)
@@ -1058,6 +1076,24 @@ public readonly partial struct GitpodConfigurationSchema
                     }
                 }
 
+                internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+                {
+                    switch(_kind)
+                    {
+                        case Kind.Unknown:
+                            break;
+                        case Kind.Source:
+                            _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                            break;
+                        case Kind.Builder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
+                            break;
+                        default:
+                            Debug.Fail("Unexpected Kind");
+                            break;
+                    }
+                }
+
                 internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
                 {
                     switch(_kind)
@@ -1138,21 +1174,21 @@ public readonly partial struct GitpodConfigurationSchema
                     ref ComplexValueBuilder builder,
                     in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source before = default,
                     in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source command = default,
-                    in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.TasksEntityArray.TasksEntity.EnvironmentVariablesToSet.Source env = default,
+                    in Corvus.GitpodConfigurationBenchmark.Current.JsonObject.Source env = default,
                     in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source init = default,
                     in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source name = default,
                     in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.TasksEntityArray.TasksEntity.OpenInEntity.Source openIn = default,
                     in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.TasksEntityArray.TasksEntity.TheOpeningModeDefaultIsTabAfter.Source openMode = default,
                     in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source prebuild = default)
                 {
-                    before.AddAsProperty(JsonPropertyNamesEscaped.Before, ref builder, escapeName: false);
-                    command.AddAsProperty(JsonPropertyNamesEscaped.Command, ref builder, escapeName: false);
-                    env.AddAsProperty(JsonPropertyNamesEscaped.Env, ref builder, escapeName: false);
-                    init.AddAsProperty(JsonPropertyNamesEscaped.Init, ref builder, escapeName: false);
-                    name.AddAsProperty(JsonPropertyNamesEscaped.Name, ref builder, escapeName: false);
-                    openIn.AddAsProperty(JsonPropertyNamesEscaped.OpenIn, ref builder, escapeName: false);
-                    openMode.AddAsProperty(JsonPropertyNamesEscaped.OpenMode, ref builder, escapeName: false);
-                    prebuild.AddAsProperty(JsonPropertyNamesEscaped.Prebuild, ref builder, escapeName: false);
+                    before.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Before, ref builder);
+                    command.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Command, ref builder);
+                    env.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Env, ref builder);
+                    init.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Init, ref builder);
+                    name.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Name, ref builder);
+                    openIn.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.OpenIn, ref builder);
+                    openMode.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.OpenMode, ref builder);
+                    prebuild.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Prebuild, ref builder);
                 }
 
                 /// <summary>
@@ -1161,7 +1197,7 @@ public readonly partial struct GitpodConfigurationSchema
                 public void Create(
                     in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source before = default,
                     in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source command = default,
-                    in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.TasksEntityArray.TasksEntity.EnvironmentVariablesToSet.Source env = default,
+                    in Corvus.GitpodConfigurationBenchmark.Current.JsonObject.Source env = default,
                     in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source init = default,
                     in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source name = default,
                     in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.TasksEntityArray.TasksEntity.OpenInEntity.Source openIn = default,
@@ -1179,7 +1215,7 @@ public readonly partial struct GitpodConfigurationSchema
                     ref ComplexValueBuilder builder,
                     in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source before = default,
                     in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source command = default,
-                    in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.TasksEntityArray.TasksEntity.EnvironmentVariablesToSet.Source<TContext> env = default,
+                    in Corvus.GitpodConfigurationBenchmark.Current.JsonObject.Source<TContext> env = default,
                     in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source init = default,
                     in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source name = default,
                     in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.TasksEntityArray.TasksEntity.OpenInEntity.Source openIn = default,
@@ -1189,14 +1225,14 @@ public readonly partial struct GitpodConfigurationSchema
                 where TContext : allows ref struct
                 #endif
                 {
-                    before.AddAsProperty(JsonPropertyNamesEscaped.Before, ref builder, escapeName: false);
-                    command.AddAsProperty(JsonPropertyNamesEscaped.Command, ref builder, escapeName: false);
-                    env.AddAsProperty(JsonPropertyNamesEscaped.Env, ref builder, escapeName: false);
-                    init.AddAsProperty(JsonPropertyNamesEscaped.Init, ref builder, escapeName: false);
-                    name.AddAsProperty(JsonPropertyNamesEscaped.Name, ref builder, escapeName: false);
-                    openIn.AddAsProperty(JsonPropertyNamesEscaped.OpenIn, ref builder, escapeName: false);
-                    openMode.AddAsProperty(JsonPropertyNamesEscaped.OpenMode, ref builder, escapeName: false);
-                    prebuild.AddAsProperty(JsonPropertyNamesEscaped.Prebuild, ref builder, escapeName: false);
+                    before.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Before, ref builder);
+                    command.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Command, ref builder);
+                    env.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Env, ref builder);
+                    init.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Init, ref builder);
+                    name.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Name, ref builder);
+                    openIn.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.OpenIn, ref builder);
+                    openMode.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.OpenMode, ref builder);
+                    prebuild.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Prebuild, ref builder);
                 }
 
                 /// <summary>
@@ -1206,7 +1242,7 @@ public readonly partial struct GitpodConfigurationSchema
                     in TContext context,
                     in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source before = default,
                     in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source command = default,
-                    in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.TasksEntityArray.TasksEntity.EnvironmentVariablesToSet.Source<TContext> env = default,
+                    in Corvus.GitpodConfigurationBenchmark.Current.JsonObject.Source<TContext> env = default,
                     in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source init = default,
                     in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source name = default,
                     in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.TasksEntityArray.TasksEntity.OpenInEntity.Source openIn = default,
@@ -1352,7 +1388,7 @@ public readonly partial struct GitpodConfigurationSchema
             /// <param name="prebuild">The value of the property.</param>
             /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
             /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-            public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source before = default, in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source command = default, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.TasksEntityArray.TasksEntity.EnvironmentVariablesToSet.Source env = default, in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source init = default, in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source name = default, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.TasksEntityArray.TasksEntity.OpenInEntity.Source openIn = default, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.TasksEntityArray.TasksEntity.TheOpeningModeDefaultIsTabAfter.Source openMode = default, in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source prebuild = default, int initialCapacity = 30)
+            public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source before = default, in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source command = default, in Corvus.GitpodConfigurationBenchmark.Current.JsonObject.Source env = default, in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source init = default, in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source name = default, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.TasksEntityArray.TasksEntity.OpenInEntity.Source openIn = default, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.TasksEntityArray.TasksEntity.TheOpeningModeDefaultIsTabAfter.Source openMode = default, in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source prebuild = default, int initialCapacity = 30)
             {
                 JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
@@ -1381,7 +1417,7 @@ public readonly partial struct GitpodConfigurationSchema
             /// <param name="prebuild">The value of the property.</param>
             /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
             /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-            public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source before = default, in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source command = default, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.TasksEntityArray.TasksEntity.EnvironmentVariablesToSet.Source<TContext> env = default, in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source init = default, in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source name = default, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.TasksEntityArray.TasksEntity.OpenInEntity.Source openIn = default, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.TasksEntityArray.TasksEntity.TheOpeningModeDefaultIsTabAfter.Source openMode = default, in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source prebuild = default, int initialCapacity = 30)
+            public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source before = default, in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source command = default, in Corvus.GitpodConfigurationBenchmark.Current.JsonObject.Source<TContext> env = default, in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source init = default, in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source name = default, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.TasksEntityArray.TasksEntity.OpenInEntity.Source openIn = default, in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.TasksEntityArray.TasksEntity.TheOpeningModeDefaultIsTabAfter.Source openMode = default, in Corvus.GitpodConfigurationBenchmark.Current.JsonString.Source prebuild = default, int initialCapacity = 30)
                 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
                 #endif

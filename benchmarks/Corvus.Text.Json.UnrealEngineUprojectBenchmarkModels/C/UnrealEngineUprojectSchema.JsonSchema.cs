@@ -212,14 +212,14 @@ public readonly partial struct UnrealEngineUprojectSchema
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext9 =
-                Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PostBuildStepsEntity.JsonSchema.PushChildContextUnescaped(
+                Corvus.UnrealEngineUprojectBenchmark.Current.JsonObject.JsonSchema.PushChildContextUnescaped(
                     parentDocument,
                     parentDocumentIndex,
                     ref context,
                     JsonPropertyNames.PostBuildStepsUtf8,
                     evaluationPath: PostBuildStepsSchemaEvaluationPath);
 
-            Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PostBuildStepsEntity.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext9);
+            Corvus.UnrealEngineUprojectBenchmark.Current.JsonObject.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext9);
             context.CommitChildContext(childContext9.IsMatch, ref childContext9);
         }
 
@@ -227,14 +227,14 @@ public readonly partial struct UnrealEngineUprojectSchema
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext10 =
-                Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PreBuildStepsEntity.JsonSchema.PushChildContextUnescaped(
+                Corvus.UnrealEngineUprojectBenchmark.Current.JsonObject.JsonSchema.PushChildContextUnescaped(
                     parentDocument,
                     parentDocumentIndex,
                     ref context,
                     JsonPropertyNames.PreBuildStepsUtf8,
                     evaluationPath: PreBuildStepsSchemaEvaluationPath);
 
-            Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PreBuildStepsEntity.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext10);
+            Corvus.UnrealEngineUprojectBenchmark.Current.JsonObject.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext10);
             context.CommitChildContext(childContext10.IsMatch, ref childContext10);
         }
 
@@ -287,17 +287,17 @@ public readonly partial struct UnrealEngineUprojectSchema
         /// <summary>
         /// Gets a provider for the schema location from which this type was generated.
         /// </summary>
-        public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("unreal-engine-uproject-schema.json"u8, buffer, out written);
+        public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath(""u8, buffer, out written);
 
         /// <summary>
         /// Gets the schema location from which this type was generated.
         /// </summary>
-        public const string SchemaLocation = "unreal-engine-uproject-schema.json";
+        public const string SchemaLocation = "";
 
         /// <summary>
         /// Gets the schema location from which this type was generated as a UTF-8 string.
         /// </summary>
-        public static ReadOnlySpan<byte> SchemaLocationUtf8 => "unreal-engine-uproject-schema.json"u8;
+        public static ReadOnlySpan<byte> SchemaLocationUtf8 => ""u8;
 
         /// <summary>
         /// Applies the JSON schema semantics defined by this type to the instance determined by the given document and index.

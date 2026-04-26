@@ -83,17 +83,17 @@ public readonly partial struct Ui5Schema
         /// <summary>
         /// Gets a provider for the schema location from which this type was generated.
         /// </summary>
-        public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("ui5-schema.json"u8, buffer, out written);
+        public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath(""u8, buffer, out written);
 
         /// <summary>
         /// Gets the schema location from which this type was generated.
         /// </summary>
-        public const string SchemaLocation = "ui5-schema.json";
+        public const string SchemaLocation = "";
 
         /// <summary>
         /// Gets the schema location from which this type was generated as a UTF-8 string.
         /// </summary>
-        public static ReadOnlySpan<byte> SchemaLocationUtf8 => "ui5-schema.json"u8;
+        public static ReadOnlySpan<byte> SchemaLocationUtf8 => ""u8;
         private static readonly JsonSchemaPathProvider IfSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/if"u8, buffer, out written);
         private static readonly JsonSchemaPathProvider ThenSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/then"u8, buffer, out written);
         private static readonly JsonSchemaPathProvider ElseSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/else"u8, buffer, out written);

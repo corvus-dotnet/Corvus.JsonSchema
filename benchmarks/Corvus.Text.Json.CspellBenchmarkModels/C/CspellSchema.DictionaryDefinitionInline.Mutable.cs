@@ -873,6 +873,30 @@ public readonly partial struct CspellSchema
                 }
             }
 
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.JsonElement:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                        break;
+                    case Kind.DictionaryDefinitionInlineFlagWordsBuilder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _dictionaryDefinitionInlineFlagWordsBuilderInstance!, static (in b, ref o) => Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineFlagWords.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.DictionaryDefinitionInlineIgnoreWordsBuilder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _dictionaryDefinitionInlineIgnoreWordsBuilderInstance!, static (in b, ref o) => Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineIgnoreWords.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.DictionaryDefinitionInlineWordsBuilder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _dictionaryDefinitionInlineWordsBuilderInstance!, static (in b, ref o) => Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineWords.Builder.BuildValue(b, ref o));
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
             internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
             {
                 switch(_kind)
@@ -999,6 +1023,30 @@ public readonly partial struct CspellSchema
                         break;
                     case Kind.DictionaryDefinitionInlineWordsBuilder:
                         valueBuilder.AddProperty(utf8Name, BuildWithContext.Create(_context, _dictionaryDefinitionInlineWordsBuilderInstance!), static (in b, ref o) => Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineWords.Builder.BuildValue(b.Context, b.Build, ref o), escapeName, nameRequiresUnescaping);
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.Source:
+                        _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                        break;
+                    case Kind.DictionaryDefinitionInlineFlagWordsBuilder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _dictionaryDefinitionInlineFlagWordsBuilderInstance!), static (in b, ref o) => Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineFlagWords.Builder.BuildValue(b.Context, b.Build, ref o));
+                        break;
+                    case Kind.DictionaryDefinitionInlineIgnoreWordsBuilder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _dictionaryDefinitionInlineIgnoreWordsBuilderInstance!), static (in b, ref o) => Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineIgnoreWords.Builder.BuildValue(b.Context, b.Build, ref o));
+                        break;
+                    case Kind.DictionaryDefinitionInlineWordsBuilder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _dictionaryDefinitionInlineWordsBuilderInstance!), static (in b, ref o) => Corvus.CspellBenchmark.Current.CspellSchema.DictionaryDefinitionInlineWords.Builder.BuildValue(b.Context, b.Build, ref o));
                         break;
                     default:
                         Debug.Fail("Unexpected Kind");

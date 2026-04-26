@@ -672,5 +672,37 @@ public readonly partial struct Ui5ManifestSchema
             /// </summary>
             public static ReadOnlySpan<byte> Value => "value"u8;
         }
+
+        /// <summary>
+        /// Provides pre-baked property name blobs for fast builder property storage.
+        /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
+        /// </summary>
+        private static class JsonPropertyNamesPrebaked
+        {
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="DataType"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> DataType => [0xA5, 0x00, 0x00, 0x00, 0x22, 0x64, 0x61, 0x74, 0x61, 0x54, 0x79, 0x70, 0x65, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="DisplayValue"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> DisplayValue => [0xE5, 0x00, 0x00, 0x00, 0x22, 0x64, 0x69, 0x73, 0x70, 0x6C, 0x61, 0x79, 0x56, 0x61, 0x6C, 0x75, 0x65, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Label"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Label => [0x75, 0x00, 0x00, 0x00, 0x22, 0x6C, 0x61, 0x62, 0x65, 0x6C, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Name"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Name => [0x65, 0x00, 0x00, 0x00, 0x22, 0x6E, 0x61, 0x6D, 0x65, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Value"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Value => [0x75, 0x00, 0x00, 0x00, 0x22, 0x76, 0x61, 0x6C, 0x75, 0x65, 0x22];
+        }
     }
 }

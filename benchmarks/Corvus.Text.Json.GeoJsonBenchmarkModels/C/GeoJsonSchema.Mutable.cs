@@ -1378,6 +1378,48 @@ public readonly partial struct GeoJsonSchema
             }
         }
 
+        internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+        {
+            switch(_kind)
+            {
+                case Kind.Unknown:
+                    break;
+                case Kind.JsonElement:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                    break;
+                case Kind.GeoJsonFeatureBuilder:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, _geoJsonFeatureBuilderInstance!, static (in b, ref o) => Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.Builder.BuildValue(b, ref o));
+                    break;
+                case Kind.GeoJsonFeatureCollectionBuilder:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, _geoJsonFeatureCollectionBuilderInstance!, static (in b, ref o) => Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeatureCollection.Builder.BuildValue(b, ref o));
+                    break;
+                case Kind.GeoJsonGeometryCollectionBuilder:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, _geoJsonGeometryCollectionBuilderInstance!, static (in b, ref o) => Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonGeometryCollection.Builder.BuildValue(b, ref o));
+                    break;
+                case Kind.GeoJsonLineStringBuilder:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, _geoJsonLineStringBuilderInstance!, static (in b, ref o) => Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonLineString.Builder.BuildValue(b, ref o));
+                    break;
+                case Kind.GeoJsonMultiLineStringBuilder:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, _geoJsonMultiLineStringBuilderInstance!, static (in b, ref o) => Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonMultiLineString.Builder.BuildValue(b, ref o));
+                    break;
+                case Kind.GeoJsonMultiPointBuilder:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, _geoJsonMultiPointBuilderInstance!, static (in b, ref o) => Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonMultiPoint.Builder.BuildValue(b, ref o));
+                    break;
+                case Kind.GeoJsonMultiPolygonBuilder:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, _geoJsonMultiPolygonBuilderInstance!, static (in b, ref o) => Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonMultiPolygon.Builder.BuildValue(b, ref o));
+                    break;
+                case Kind.GeoJsonPointBuilder:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, _geoJsonPointBuilderInstance!, static (in b, ref o) => Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonPoint.Builder.BuildValue(b, ref o));
+                    break;
+                case Kind.GeoJsonPolygonBuilder:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, _geoJsonPolygonBuilderInstance!, static (in b, ref o) => Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonPolygon.Builder.BuildValue(b, ref o));
+                    break;
+                default:
+                    Debug.Fail("Unexpected Kind");
+                    break;
+            }
+        }
+
         internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
         {
             switch(_kind)
@@ -1600,6 +1642,48 @@ public readonly partial struct GeoJsonSchema
                     break;
                 case Kind.GeoJsonPolygonBuilder:
                     valueBuilder.AddProperty(utf8Name, BuildWithContext.Create(_context, _geoJsonPolygonBuilderInstance!), static (in b, ref o) => Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonPolygon.Builder.BuildValue(b.Context, b.Build, ref o), escapeName, nameRequiresUnescaping);
+                    break;
+                default:
+                    Debug.Fail("Unexpected Kind");
+                    break;
+            }
+        }
+
+        internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+        {
+            switch(_kind)
+            {
+                case Kind.Unknown:
+                    break;
+                case Kind.Source:
+                    _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                    break;
+                case Kind.GeoJsonFeatureBuilder:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _geoJsonFeatureBuilderInstance!), static (in b, ref o) => Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.Builder.BuildValue(b.Context, b.Build, ref o));
+                    break;
+                case Kind.GeoJsonFeatureCollectionBuilder:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _geoJsonFeatureCollectionBuilderInstance!), static (in b, ref o) => Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeatureCollection.Builder.BuildValue(b.Context, b.Build, ref o));
+                    break;
+                case Kind.GeoJsonGeometryCollectionBuilder:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _geoJsonGeometryCollectionBuilderInstance!), static (in b, ref o) => Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonGeometryCollection.Builder.BuildValue(b.Context, b.Build, ref o));
+                    break;
+                case Kind.GeoJsonLineStringBuilder:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _geoJsonLineStringBuilderInstance!), static (in b, ref o) => Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonLineString.Builder.BuildValue(b.Context, b.Build, ref o));
+                    break;
+                case Kind.GeoJsonMultiLineStringBuilder:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _geoJsonMultiLineStringBuilderInstance!), static (in b, ref o) => Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonMultiLineString.Builder.BuildValue(b.Context, b.Build, ref o));
+                    break;
+                case Kind.GeoJsonMultiPointBuilder:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _geoJsonMultiPointBuilderInstance!), static (in b, ref o) => Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonMultiPoint.Builder.BuildValue(b.Context, b.Build, ref o));
+                    break;
+                case Kind.GeoJsonMultiPolygonBuilder:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _geoJsonMultiPolygonBuilderInstance!), static (in b, ref o) => Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonMultiPolygon.Builder.BuildValue(b.Context, b.Build, ref o));
+                    break;
+                case Kind.GeoJsonPointBuilder:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _geoJsonPointBuilderInstance!), static (in b, ref o) => Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonPoint.Builder.BuildValue(b.Context, b.Build, ref o));
+                    break;
+                case Kind.GeoJsonPolygonBuilder:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _geoJsonPolygonBuilderInstance!), static (in b, ref o) => Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonPolygon.Builder.BuildValue(b.Context, b.Build, ref o));
                     break;
                 default:
                     Debug.Fail("Unexpected Kind");

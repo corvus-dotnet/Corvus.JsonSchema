@@ -54,21 +54,21 @@ public readonly partial struct KrakendSchema
             {
                 private static readonly JsonSchemaPathProvider MetricExportersSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/metric_exporters"u8, buffer, out written);
                 private static readonly JsonSchemaPathProvider MetricReportingPeriodSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/metric_reporting_period"u8, buffer, out written);
-                private static readonly JsonSchemaPathProvider TraceExportersValueSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/trace_exporters"u8, buffer, out written);
+                private static readonly JsonSchemaPathProvider TraceExportersSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/trace_exporters"u8, buffer, out written);
                 private static readonly JsonSchemaPathProvider TraceSampleRateValueSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/trace_sample_rate"u8, buffer, out written);
 
                 private static void MatchMetricExporters(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext =
-                        Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271telemetry1opentelemetryEndpointJson.ExportersOverride.MetricsExporters.JsonSchema.PushChildContextUnescaped(
+                        Corvus.KrakendBenchmark.Current.JsonArray.JsonSchema.PushChildContextUnescaped(
                             parentDocument,
                             parentDocumentIndex,
                             ref context,
                             JsonPropertyNames.MetricExportersUtf8,
                             evaluationPath: MetricExportersSchemaEvaluationPath);
 
-                    Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271telemetry1opentelemetryEndpointJson.ExportersOverride.MetricsExporters.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext);
+                    Corvus.KrakendBenchmark.Current.JsonArray.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext);
                     context.CommitChildContext(childContext.IsMatch, ref childContext);
                 }
 
@@ -87,18 +87,18 @@ public readonly partial struct KrakendSchema
                     context.CommitChildContext(childContext1.IsMatch, ref childContext1);
                 }
 
-                private static void MatchTraceExportersValue(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+                private static void MatchTraceExporters(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext2 =
-                        Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271telemetry1opentelemetryEndpointJson.ExportersOverride.TraceExporters.JsonSchema.PushChildContextUnescaped(
+                        Corvus.KrakendBenchmark.Current.JsonArray.JsonSchema.PushChildContextUnescaped(
                             parentDocument,
                             parentDocumentIndex,
                             ref context,
-                            JsonPropertyNames.TraceExportersValueUtf8,
-                            evaluationPath: TraceExportersValueSchemaEvaluationPath);
+                            JsonPropertyNames.TraceExportersUtf8,
+                            evaluationPath: TraceExportersSchemaEvaluationPath);
 
-                    Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271telemetry1opentelemetryEndpointJson.ExportersOverride.TraceExporters.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext2);
+                    Corvus.KrakendBenchmark.Current.JsonArray.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext2);
                     context.CommitChildContext(childContext2.IsMatch, ref childContext2);
                 }
 
@@ -122,7 +122,7 @@ public readonly partial struct KrakendSchema
                     return new PropertySchemaMatchers<Corvus.KrakendBenchmark.Current.PropertiesValidationHandler_NamedPropertyValidator1>([
                         (static () => JsonPropertyNames.MetricExportersUtf8, MatchMetricExporters),
                         (static () => JsonPropertyNames.MetricReportingPeriodUtf8, MatchMetricReportingPeriod),
-                        (static () => JsonPropertyNames.TraceExportersValueUtf8, MatchTraceExportersValue),
+                        (static () => JsonPropertyNames.TraceExportersUtf8, MatchTraceExporters),
                         (static () => JsonPropertyNames.TraceSampleRateValueUtf8, MatchTraceSampleRateValue),
                     ]);
                 }
@@ -150,17 +150,17 @@ public readonly partial struct KrakendSchema
                 /// <summary>
                 /// Gets a provider for the schema location from which this type was generated.
                 /// </summary>
-                public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("krakend-schema.json#/definitions/https:~1~1www.krakend.io~1schema~1v2.7~1telemetry~1opentelemetry-endpoint.json/properties/exporters_override"u8, buffer, out written);
+                public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/definitions/https:~1~1www.krakend.io~1schema~1v2.7~1telemetry~1opentelemetry-endpoint.json/properties/exporters_override"u8, buffer, out written);
 
                 /// <summary>
                 /// Gets the schema location from which this type was generated.
                 /// </summary>
-                public const string SchemaLocation = "krakend-schema.json#/definitions/https:~1~1www.krakend.io~1schema~1v2.7~1telemetry~1opentelemetry-endpoint.json/properties/exporters_override";
+                public const string SchemaLocation = "/definitions/https:~1~1www.krakend.io~1schema~1v2.7~1telemetry~1opentelemetry-endpoint.json/properties/exporters_override";
 
                 /// <summary>
                 /// Gets the schema location from which this type was generated as a UTF-8 string.
                 /// </summary>
-                public static ReadOnlySpan<byte> SchemaLocationUtf8 => "krakend-schema.json#/definitions/https:~1~1www.krakend.io~1schema~1v2.7~1telemetry~1opentelemetry-endpoint.json/properties/exporters_override"u8;
+                public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/definitions/https:~1~1www.krakend.io~1schema~1v2.7~1telemetry~1opentelemetry-endpoint.json/properties/exporters_override"u8;
 
                 /// <summary>
                 /// Applies the JSON schema semantics defined by this type to the instance determined by the given document and index.

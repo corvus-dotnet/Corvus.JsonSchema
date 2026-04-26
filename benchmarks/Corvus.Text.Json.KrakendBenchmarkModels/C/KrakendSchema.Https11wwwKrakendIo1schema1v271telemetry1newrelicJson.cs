@@ -144,11 +144,11 @@ public readonly partial struct KrakendSchema
         /// See: https://www.krakend.io/docs/enterprise/telemetry/newrelic/
         /// </para>
         /// </remarks>
-        public Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271telemetry1newrelicJson.HeadersToPass HeadersToPassValue
+        public Corvus.KrakendBenchmark.Current.JsonArray HeadersToPass
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.HeadersToPassValueUtf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271telemetry1newrelicJson.HeadersToPass value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.HeadersToPassUtf8, out Corvus.KrakendBenchmark.Current.JsonArray value))
                 {
                     return value;
                 }
@@ -612,9 +612,9 @@ public readonly partial struct KrakendSchema
             public const string DebugValue = "debug";
 
             /// <summary>
-            /// Gets the JSON property name for <see cref="HeadersToPassValue"/>.
+            /// Gets the JSON property name for <see cref="HeadersToPass"/>.
             /// </summary>
-            public const string HeadersToPassValue = "headers_to_pass";
+            public const string HeadersToPass = "headers_to_pass";
 
             /// <summary>
             /// Gets the JSON property name for <see cref="License"/>.
@@ -627,9 +627,9 @@ public readonly partial struct KrakendSchema
             public static ReadOnlySpan<byte> DebugValueUtf8 => "debug"u8;
 
             /// <summary>
-            /// Gets the JSON property name for <see cref="HeadersToPassValue"/>.
+            /// Gets the JSON property name for <see cref="HeadersToPass"/>.
             /// </summary>
-            public static ReadOnlySpan<byte> HeadersToPassValueUtf8 => "headers_to_pass"u8;
+            public static ReadOnlySpan<byte> HeadersToPassUtf8 => "headers_to_pass"u8;
 
             /// <summary>
             /// Gets the JSON property name for <see cref="License"/>.
@@ -648,14 +648,36 @@ public readonly partial struct KrakendSchema
             public static ReadOnlySpan<byte> DebugValue => "debug"u8;
 
             /// <summary>
-            /// Gets the escaped UTF-8 JSON property name for <see cref="HeadersToPassValue"/>.
+            /// Gets the escaped UTF-8 JSON property name for <see cref="HeadersToPass"/>.
             /// </summary>
-            public static ReadOnlySpan<byte> HeadersToPassValue => "headers_to_pass"u8;
+            public static ReadOnlySpan<byte> HeadersToPass => "headers_to_pass"u8;
 
             /// <summary>
             /// Gets the escaped UTF-8 JSON property name for <see cref="License"/>.
             /// </summary>
             public static ReadOnlySpan<byte> License => "license"u8;
+        }
+
+        /// <summary>
+        /// Provides pre-baked property name blobs for fast builder property storage.
+        /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
+        /// </summary>
+        private static class JsonPropertyNamesPrebaked
+        {
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="DebugValue"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> DebugValue => [0x75, 0x00, 0x00, 0x00, 0x22, 0x64, 0x65, 0x62, 0x75, 0x67, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="HeadersToPass"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> HeadersToPass => [0x15, 0x01, 0x00, 0x00, 0x22, 0x68, 0x65, 0x61, 0x64, 0x65, 0x72, 0x73, 0x5F, 0x74, 0x6F, 0x5F, 0x70, 0x61, 0x73, 0x73, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="License"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> License => [0x95, 0x00, 0x00, 0x00, 0x22, 0x6C, 0x69, 0x63, 0x65, 0x6E, 0x73, 0x65, 0x22];
         }
     }
 }

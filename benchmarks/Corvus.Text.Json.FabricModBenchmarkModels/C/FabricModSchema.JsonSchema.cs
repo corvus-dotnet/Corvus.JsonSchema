@@ -164,14 +164,14 @@ public readonly partial struct FabricModSchema
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext6 =
-                Corvus.FabricModBenchmark.Current.FabricModSchema.AMapOfNamespaceIdValueForCustomDataFields.JsonSchema.PushChildContextUnescaped(
+                Corvus.FabricModBenchmark.Current.JsonObject.JsonSchema.PushChildContextUnescaped(
                     parentDocument,
                     parentDocumentIndex,
                     ref context,
                     JsonPropertyNames.CustomUtf8,
                     evaluationPath: CustomSchemaEvaluationPath);
 
-            Corvus.FabricModBenchmark.Current.FabricModSchema.AMapOfNamespaceIdValueForCustomDataFields.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext6);
+            Corvus.FabricModBenchmark.Current.JsonObject.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext6);
             context.CommitChildContext(childContext6.IsMatch, ref childContext6);
         }
 
@@ -463,17 +463,17 @@ public readonly partial struct FabricModSchema
         /// <summary>
         /// Gets a provider for the schema location from which this type was generated.
         /// </summary>
-        public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("fabric-mod-schema.json"u8, buffer, out written);
+        public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath(""u8, buffer, out written);
 
         /// <summary>
         /// Gets the schema location from which this type was generated.
         /// </summary>
-        public const string SchemaLocation = "fabric-mod-schema.json";
+        public const string SchemaLocation = "";
 
         /// <summary>
         /// Gets the schema location from which this type was generated as a UTF-8 string.
         /// </summary>
-        public static ReadOnlySpan<byte> SchemaLocationUtf8 => "fabric-mod-schema.json"u8;
+        public static ReadOnlySpan<byte> SchemaLocationUtf8 => ""u8;
 
         /// <summary>
         /// Applies the JSON schema semantics defined by this type to the instance determined by the given document and index.

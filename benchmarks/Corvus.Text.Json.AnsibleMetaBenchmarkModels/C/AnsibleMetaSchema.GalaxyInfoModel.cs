@@ -317,11 +317,11 @@ public readonly partial struct AnsibleMetaSchema
         /// <summary>
         /// Gets the (optional) <c>video_links</c> property.
         /// </summary>
-        public Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GalaxyInfoModel.VideoLinksArray VideoLinks
+        public Corvus.AnsibleMetaBenchmark.Current.JsonArray VideoLinks
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.VideoLinksUtf8, out Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GalaxyInfoModel.VideoLinksArray value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.VideoLinksUtf8, out Corvus.AnsibleMetaBenchmark.Current.JsonArray value))
                 {
                     return value;
                 }
@@ -1126,6 +1126,88 @@ public readonly partial struct AnsibleMetaSchema
             /// Gets the escaped UTF-8 JSON property name for <see cref="VideoLinks"/>.
             /// </summary>
             public static ReadOnlySpan<byte> VideoLinks => "video_links"u8;
+        }
+
+        /// <summary>
+        /// Provides pre-baked property name blobs for fast builder property storage.
+        /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
+        /// </summary>
+        private static class JsonPropertyNamesPrebaked
+        {
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Author"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Author => [0x85, 0x00, 0x00, 0x00, 0x22, 0x61, 0x75, 0x74, 0x68, 0x6F, 0x72, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="CloudPlatforms"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> CloudPlatforms => [0x15, 0x01, 0x00, 0x00, 0x22, 0x63, 0x6C, 0x6F, 0x75, 0x64, 0x5F, 0x70, 0x6C, 0x61, 0x74, 0x66, 0x6F, 0x72, 0x6D, 0x73, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Company"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Company => [0x95, 0x00, 0x00, 0x00, 0x22, 0x63, 0x6F, 0x6D, 0x70, 0x61, 0x6E, 0x79, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Description"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Description => [0xD5, 0x00, 0x00, 0x00, 0x22, 0x64, 0x65, 0x73, 0x63, 0x72, 0x69, 0x70, 0x74, 0x69, 0x6F, 0x6E, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="GalaxyTags"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> GalaxyTags => [0xD5, 0x00, 0x00, 0x00, 0x22, 0x67, 0x61, 0x6C, 0x61, 0x78, 0x79, 0x5F, 0x74, 0x61, 0x67, 0x73, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="GithubBranch"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> GithubBranch => [0xF5, 0x00, 0x00, 0x00, 0x22, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x5F, 0x62, 0x72, 0x61, 0x6E, 0x63, 0x68, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="IssueTrackerUrl"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> IssueTrackerUrl => [0x35, 0x01, 0x00, 0x00, 0x22, 0x69, 0x73, 0x73, 0x75, 0x65, 0x5F, 0x74, 0x72, 0x61, 0x63, 0x6B, 0x65, 0x72, 0x5F, 0x75, 0x72, 0x6C, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="License"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> License => [0x95, 0x00, 0x00, 0x00, 0x22, 0x6C, 0x69, 0x63, 0x65, 0x6E, 0x73, 0x65, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="MinAnsibleContainerVersion"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> MinAnsibleContainerVersion => [0xF5, 0x01, 0x00, 0x00, 0x22, 0x6D, 0x69, 0x6E, 0x5F, 0x61, 0x6E, 0x73, 0x69, 0x62, 0x6C, 0x65, 0x5F, 0x63, 0x6F, 0x6E, 0x74, 0x61, 0x69, 0x6E, 0x65, 0x72, 0x5F, 0x76, 0x65, 0x72, 0x73, 0x69, 0x6F, 0x6E, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="MinAnsibleVersion"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> MinAnsibleVersion => [0x55, 0x01, 0x00, 0x00, 0x22, 0x6D, 0x69, 0x6E, 0x5F, 0x61, 0x6E, 0x73, 0x69, 0x62, 0x6C, 0x65, 0x5F, 0x76, 0x65, 0x72, 0x73, 0x69, 0x6F, 0x6E, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Namespace"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Namespace => [0xB5, 0x00, 0x00, 0x00, 0x22, 0x6E, 0x61, 0x6D, 0x65, 0x73, 0x70, 0x61, 0x63, 0x65, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="PlatformsValue"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> PlatformsValue => [0xB5, 0x00, 0x00, 0x00, 0x22, 0x70, 0x6C, 0x61, 0x74, 0x66, 0x6F, 0x72, 0x6D, 0x73, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="RoleNameValue"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> RoleNameValue => [0xB5, 0x00, 0x00, 0x00, 0x22, 0x72, 0x6F, 0x6C, 0x65, 0x5F, 0x6E, 0x61, 0x6D, 0x65, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Standalone"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Standalone => [0xC5, 0x00, 0x00, 0x00, 0x22, 0x73, 0x74, 0x61, 0x6E, 0x64, 0x61, 0x6C, 0x6F, 0x6E, 0x65, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="VideoLinks"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> VideoLinks => [0xD5, 0x00, 0x00, 0x00, 0x22, 0x76, 0x69, 0x64, 0x65, 0x6F, 0x5F, 0x6C, 0x69, 0x6E, 0x6B, 0x73, 0x22];
         }
     }
 }

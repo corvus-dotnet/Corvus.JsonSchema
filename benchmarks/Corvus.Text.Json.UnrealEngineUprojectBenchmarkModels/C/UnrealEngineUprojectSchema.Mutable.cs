@@ -369,11 +369,11 @@ public readonly partial struct UnrealEngineUprojectSchema
         /// Custom steps to execute after building targets in this project.
         /// </para>
         /// </remarks>
-        public Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PostBuildStepsEntity.Mutable PostBuildSteps
+        public Corvus.UnrealEngineUprojectBenchmark.Current.JsonObject.Mutable PostBuildSteps
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.PostBuildStepsUtf8, out Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PostBuildStepsEntity.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.PostBuildStepsUtf8, out Corvus.UnrealEngineUprojectBenchmark.Current.JsonObject.Mutable value))
                 {
                     return value;
                 }
@@ -390,11 +390,11 @@ public readonly partial struct UnrealEngineUprojectSchema
         /// Custom steps to execute before building targets in this project.
         /// </para>
         /// </remarks>
-        public Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PreBuildStepsEntity.Mutable PreBuildSteps
+        public Corvus.UnrealEngineUprojectBenchmark.Current.JsonObject.Mutable PreBuildSteps
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.PreBuildStepsUtf8, out Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PreBuildStepsEntity.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.PreBuildStepsUtf8, out Corvus.UnrealEngineUprojectBenchmark.Current.JsonObject.Mutable value))
                 {
                     return value;
                 }
@@ -478,7 +478,7 @@ public readonly partial struct UnrealEngineUprojectSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Category, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Category, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -523,7 +523,7 @@ public readonly partial struct UnrealEngineUprojectSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Description, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Description, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -568,7 +568,7 @@ public readonly partial struct UnrealEngineUprojectSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.DisableEnginePluginsByDefault, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DisableEnginePluginsByDefault, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -611,7 +611,7 @@ public readonly partial struct UnrealEngineUprojectSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.EngineAssociation, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.EngineAssociation, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -644,7 +644,7 @@ public readonly partial struct UnrealEngineUprojectSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.EpicSampleNameHash, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.EpicSampleNameHash, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -687,7 +687,7 @@ public readonly partial struct UnrealEngineUprojectSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.FileVersion, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.FileVersion, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -720,7 +720,7 @@ public readonly partial struct UnrealEngineUprojectSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.IsEnterpriseProject, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IsEnterpriseProject, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -765,7 +765,7 @@ public readonly partial struct UnrealEngineUprojectSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Modules, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Modules, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -801,7 +801,7 @@ public readonly partial struct UnrealEngineUprojectSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Modules, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Modules, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -846,7 +846,7 @@ public readonly partial struct UnrealEngineUprojectSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Plugins, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Plugins, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -882,7 +882,7 @@ public readonly partial struct UnrealEngineUprojectSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Plugins, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Plugins, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -906,7 +906,7 @@ public readonly partial struct UnrealEngineUprojectSchema
         /// Set the <c>PostBuildSteps</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetPostBuildSteps(in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PostBuildStepsEntity.Source value)
+        public void SetPostBuildSteps(in Corvus.UnrealEngineUprojectBenchmark.Current.JsonObject.Source value)
         {
             CheckValidInstance();
 
@@ -927,7 +927,7 @@ public readonly partial struct UnrealEngineUprojectSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.PostBuildSteps, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PostBuildSteps, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -939,7 +939,7 @@ public readonly partial struct UnrealEngineUprojectSchema
         /// Set the <c>PostBuildSteps</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetPostBuildSteps<TContext>(in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PostBuildStepsEntity.Source<TContext> value)
+        public void SetPostBuildSteps<TContext>(in Corvus.UnrealEngineUprojectBenchmark.Current.JsonObject.Source<TContext> value)
 #if NET9_0_OR_GREATER
             where TContext : allows ref struct
 #endif
@@ -963,7 +963,7 @@ public readonly partial struct UnrealEngineUprojectSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.PostBuildSteps, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PostBuildSteps, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -987,7 +987,7 @@ public readonly partial struct UnrealEngineUprojectSchema
         /// Set the <c>PreBuildSteps</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetPreBuildSteps(in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PreBuildStepsEntity.Source value)
+        public void SetPreBuildSteps(in Corvus.UnrealEngineUprojectBenchmark.Current.JsonObject.Source value)
         {
             CheckValidInstance();
 
@@ -1008,7 +1008,7 @@ public readonly partial struct UnrealEngineUprojectSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.PreBuildSteps, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PreBuildSteps, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1020,7 +1020,7 @@ public readonly partial struct UnrealEngineUprojectSchema
         /// Set the <c>PreBuildSteps</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetPreBuildSteps<TContext>(in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PreBuildStepsEntity.Source<TContext> value)
+        public void SetPreBuildSteps<TContext>(in Corvus.UnrealEngineUprojectBenchmark.Current.JsonObject.Source<TContext> value)
 #if NET9_0_OR_GREATER
             where TContext : allows ref struct
 #endif
@@ -1044,7 +1044,7 @@ public readonly partial struct UnrealEngineUprojectSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.PreBuildSteps, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PreBuildSteps, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1089,7 +1089,7 @@ public readonly partial struct UnrealEngineUprojectSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.TargetPlatforms, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TargetPlatforms, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1125,7 +1125,7 @@ public readonly partial struct UnrealEngineUprojectSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.TargetPlatforms, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TargetPlatforms, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1332,6 +1332,24 @@ public readonly partial struct UnrealEngineUprojectSchema
             }
         }
 
+        internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+        {
+            switch(_kind)
+            {
+                case Kind.Unknown:
+                    break;
+                case Kind.JsonElement:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                    break;
+                case Kind.Builder:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
+                    break;
+                default:
+                    Debug.Fail("Unexpected Kind");
+                    break;
+            }
+        }
+
         internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
         {
             switch(_kind)
@@ -1433,6 +1451,24 @@ public readonly partial struct UnrealEngineUprojectSchema
             }
         }
 
+        internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+        {
+            switch(_kind)
+            {
+                case Kind.Unknown:
+                    break;
+                case Kind.Source:
+                    _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                    break;
+                case Kind.Builder:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
+                    break;
+                default:
+                    Debug.Fail("Unexpected Kind");
+                    break;
+            }
+        }
+
         internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
         {
             switch(_kind)
@@ -1520,22 +1556,22 @@ public readonly partial struct UnrealEngineUprojectSchema
             in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.IndicatesIfThisProjectIsAnEnterpriseProject.Source isEnterpriseProject = default,
             in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptorArray.Source modules = default,
             in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptorArray.Source plugins = default,
-            in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PostBuildStepsEntity.Source postBuildSteps = default,
-            in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PreBuildStepsEntity.Source preBuildSteps = default,
+            in Corvus.UnrealEngineUprojectBenchmark.Current.JsonObject.Source postBuildSteps = default,
+            in Corvus.UnrealEngineUprojectBenchmark.Current.JsonObject.Source preBuildSteps = default,
             in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.JsonStringArray.Source targetPlatforms = default)
         {
-            engineAssociation.AddAsProperty(JsonPropertyNamesEscaped.EngineAssociation, ref builder, escapeName: false);
-            fileVersion.AddAsProperty(JsonPropertyNamesEscaped.FileVersion, ref builder, escapeName: false);
-            category.AddAsProperty(JsonPropertyNamesEscaped.Category, ref builder, escapeName: false);
-            description.AddAsProperty(JsonPropertyNamesEscaped.Description, ref builder, escapeName: false);
-            disableEnginePluginsByDefault.AddAsProperty(JsonPropertyNamesEscaped.DisableEnginePluginsByDefault, ref builder, escapeName: false);
-            epicSampleNameHash.AddAsProperty(JsonPropertyNamesEscaped.EpicSampleNameHash, ref builder, escapeName: false);
-            isEnterpriseProject.AddAsProperty(JsonPropertyNamesEscaped.IsEnterpriseProject, ref builder, escapeName: false);
-            modules.AddAsProperty(JsonPropertyNamesEscaped.Modules, ref builder, escapeName: false);
-            plugins.AddAsProperty(JsonPropertyNamesEscaped.Plugins, ref builder, escapeName: false);
-            postBuildSteps.AddAsProperty(JsonPropertyNamesEscaped.PostBuildSteps, ref builder, escapeName: false);
-            preBuildSteps.AddAsProperty(JsonPropertyNamesEscaped.PreBuildSteps, ref builder, escapeName: false);
-            targetPlatforms.AddAsProperty(JsonPropertyNamesEscaped.TargetPlatforms, ref builder, escapeName: false);
+            engineAssociation.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.EngineAssociation, ref builder);
+            fileVersion.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.FileVersion, ref builder);
+            category.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Category, ref builder);
+            description.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Description, ref builder);
+            disableEnginePluginsByDefault.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DisableEnginePluginsByDefault, ref builder);
+            epicSampleNameHash.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.EpicSampleNameHash, ref builder);
+            isEnterpriseProject.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IsEnterpriseProject, ref builder);
+            modules.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Modules, ref builder);
+            plugins.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Plugins, ref builder);
+            postBuildSteps.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PostBuildSteps, ref builder);
+            preBuildSteps.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PreBuildSteps, ref builder);
+            targetPlatforms.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TargetPlatforms, ref builder);
         }
 
         /// <summary>
@@ -1551,8 +1587,8 @@ public readonly partial struct UnrealEngineUprojectSchema
             in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.IndicatesIfThisProjectIsAnEnterpriseProject.Source isEnterpriseProject = default,
             in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptorArray.Source modules = default,
             in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptorArray.Source plugins = default,
-            in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PostBuildStepsEntity.Source postBuildSteps = default,
-            in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PreBuildStepsEntity.Source preBuildSteps = default,
+            in Corvus.UnrealEngineUprojectBenchmark.Current.JsonObject.Source postBuildSteps = default,
+            in Corvus.UnrealEngineUprojectBenchmark.Current.JsonObject.Source preBuildSteps = default,
             in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.JsonStringArray.Source targetPlatforms = default)
         {
             Create(ref _builder, engineAssociation, fileVersion, category, description, disableEnginePluginsByDefault, epicSampleNameHash, isEnterpriseProject, modules, plugins, postBuildSteps, preBuildSteps, targetPlatforms);
@@ -1573,25 +1609,25 @@ public readonly partial struct UnrealEngineUprojectSchema
             in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.IndicatesIfThisProjectIsAnEnterpriseProject.Source isEnterpriseProject = default,
             in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptorArray.Source<TContext> modules = default,
             in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptorArray.Source<TContext> plugins = default,
-            in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PostBuildStepsEntity.Source<TContext> postBuildSteps = default,
-            in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PreBuildStepsEntity.Source<TContext> preBuildSteps = default,
+            in Corvus.UnrealEngineUprojectBenchmark.Current.JsonObject.Source<TContext> postBuildSteps = default,
+            in Corvus.UnrealEngineUprojectBenchmark.Current.JsonObject.Source<TContext> preBuildSteps = default,
             in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.JsonStringArray.Source<TContext> targetPlatforms = default)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif
         {
-            engineAssociation.AddAsProperty(JsonPropertyNamesEscaped.EngineAssociation, ref builder, escapeName: false);
-            fileVersion.AddAsProperty(JsonPropertyNamesEscaped.FileVersion, ref builder, escapeName: false);
-            category.AddAsProperty(JsonPropertyNamesEscaped.Category, ref builder, escapeName: false);
-            description.AddAsProperty(JsonPropertyNamesEscaped.Description, ref builder, escapeName: false);
-            disableEnginePluginsByDefault.AddAsProperty(JsonPropertyNamesEscaped.DisableEnginePluginsByDefault, ref builder, escapeName: false);
-            epicSampleNameHash.AddAsProperty(JsonPropertyNamesEscaped.EpicSampleNameHash, ref builder, escapeName: false);
-            isEnterpriseProject.AddAsProperty(JsonPropertyNamesEscaped.IsEnterpriseProject, ref builder, escapeName: false);
-            modules.AddAsProperty(JsonPropertyNamesEscaped.Modules, ref builder, escapeName: false);
-            plugins.AddAsProperty(JsonPropertyNamesEscaped.Plugins, ref builder, escapeName: false);
-            postBuildSteps.AddAsProperty(JsonPropertyNamesEscaped.PostBuildSteps, ref builder, escapeName: false);
-            preBuildSteps.AddAsProperty(JsonPropertyNamesEscaped.PreBuildSteps, ref builder, escapeName: false);
-            targetPlatforms.AddAsProperty(JsonPropertyNamesEscaped.TargetPlatforms, ref builder, escapeName: false);
+            engineAssociation.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.EngineAssociation, ref builder);
+            fileVersion.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.FileVersion, ref builder);
+            category.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Category, ref builder);
+            description.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Description, ref builder);
+            disableEnginePluginsByDefault.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DisableEnginePluginsByDefault, ref builder);
+            epicSampleNameHash.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.EpicSampleNameHash, ref builder);
+            isEnterpriseProject.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IsEnterpriseProject, ref builder);
+            modules.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Modules, ref builder);
+            plugins.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Plugins, ref builder);
+            postBuildSteps.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PostBuildSteps, ref builder);
+            preBuildSteps.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PreBuildSteps, ref builder);
+            targetPlatforms.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TargetPlatforms, ref builder);
         }
 
         /// <summary>
@@ -1608,8 +1644,8 @@ public readonly partial struct UnrealEngineUprojectSchema
             in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.IndicatesIfThisProjectIsAnEnterpriseProject.Source isEnterpriseProject = default,
             in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptorArray.Source<TContext> modules = default,
             in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptorArray.Source<TContext> plugins = default,
-            in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PostBuildStepsEntity.Source<TContext> postBuildSteps = default,
-            in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PreBuildStepsEntity.Source<TContext> preBuildSteps = default,
+            in Corvus.UnrealEngineUprojectBenchmark.Current.JsonObject.Source<TContext> postBuildSteps = default,
+            in Corvus.UnrealEngineUprojectBenchmark.Current.JsonObject.Source<TContext> preBuildSteps = default,
             in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.JsonStringArray.Source<TContext> targetPlatforms = default)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
@@ -1755,7 +1791,7 @@ public readonly partial struct UnrealEngineUprojectSchema
     /// <param name="targetPlatforms">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.EngineAssociationEntity.Source engineAssociation, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.DescriptorVersionNumber.Source fileVersion, in Corvus.UnrealEngineUprojectBenchmark.Current.JsonString.Source category = default, in Corvus.UnrealEngineUprojectBenchmark.Current.JsonString.Source description = default, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.DisableEnginePluginsByDefaultEntity.Source disableEnginePluginsByDefault = default, in Corvus.UnrealEngineUprojectBenchmark.Current.JsonNumber.Source epicSampleNameHash = default, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.IndicatesIfThisProjectIsAnEnterpriseProject.Source isEnterpriseProject = default, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptorArray.Source modules = default, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptorArray.Source plugins = default, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PostBuildStepsEntity.Source postBuildSteps = default, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PreBuildStepsEntity.Source preBuildSteps = default, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.JsonStringArray.Source targetPlatforms = default, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.EngineAssociationEntity.Source engineAssociation, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.DescriptorVersionNumber.Source fileVersion, in Corvus.UnrealEngineUprojectBenchmark.Current.JsonString.Source category = default, in Corvus.UnrealEngineUprojectBenchmark.Current.JsonString.Source description = default, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.DisableEnginePluginsByDefaultEntity.Source disableEnginePluginsByDefault = default, in Corvus.UnrealEngineUprojectBenchmark.Current.JsonNumber.Source epicSampleNameHash = default, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.IndicatesIfThisProjectIsAnEnterpriseProject.Source isEnterpriseProject = default, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptorArray.Source modules = default, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptorArray.Source plugins = default, in Corvus.UnrealEngineUprojectBenchmark.Current.JsonObject.Source postBuildSteps = default, in Corvus.UnrealEngineUprojectBenchmark.Current.JsonObject.Source preBuildSteps = default, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.JsonStringArray.Source targetPlatforms = default, int initialCapacity = 30)
     {
         JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
@@ -1788,7 +1824,7 @@ public readonly partial struct UnrealEngineUprojectSchema
     /// <param name="targetPlatforms">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.EngineAssociationEntity.Source engineAssociation, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.DescriptorVersionNumber.Source fileVersion, in Corvus.UnrealEngineUprojectBenchmark.Current.JsonString.Source category = default, in Corvus.UnrealEngineUprojectBenchmark.Current.JsonString.Source description = default, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.DisableEnginePluginsByDefaultEntity.Source disableEnginePluginsByDefault = default, in Corvus.UnrealEngineUprojectBenchmark.Current.JsonNumber.Source epicSampleNameHash = default, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.IndicatesIfThisProjectIsAnEnterpriseProject.Source isEnterpriseProject = default, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptorArray.Source<TContext> modules = default, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptorArray.Source<TContext> plugins = default, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PostBuildStepsEntity.Source<TContext> postBuildSteps = default, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PreBuildStepsEntity.Source<TContext> preBuildSteps = default, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.JsonStringArray.Source<TContext> targetPlatforms = default, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.EngineAssociationEntity.Source engineAssociation, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.DescriptorVersionNumber.Source fileVersion, in Corvus.UnrealEngineUprojectBenchmark.Current.JsonString.Source category = default, in Corvus.UnrealEngineUprojectBenchmark.Current.JsonString.Source description = default, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.DisableEnginePluginsByDefaultEntity.Source disableEnginePluginsByDefault = default, in Corvus.UnrealEngineUprojectBenchmark.Current.JsonNumber.Source epicSampleNameHash = default, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.IndicatesIfThisProjectIsAnEnterpriseProject.Source isEnterpriseProject = default, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.ModuleDescriptorArray.Source<TContext> modules = default, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.PluginReferenceDescriptorArray.Source<TContext> plugins = default, in Corvus.UnrealEngineUprojectBenchmark.Current.JsonObject.Source<TContext> postBuildSteps = default, in Corvus.UnrealEngineUprojectBenchmark.Current.JsonObject.Source<TContext> preBuildSteps = default, in Corvus.UnrealEngineUprojectBenchmark.Current.UnrealEngineUprojectSchema.JsonStringArray.Source<TContext> targetPlatforms = default, int initialCapacity = 30)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif

@@ -303,11 +303,11 @@ public readonly partial struct KrakendSchema
             /// See: https://www.krakend.io/docs/enterprise/endpoints/serve-static-content/
             /// </para>
             /// </remarks>
-            public Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271server1staticFilesystemJson.SkipPaths.Mutable Skip
+            public Corvus.KrakendBenchmark.Current.JsonArray.Mutable Skip
             {
                 get
                 {
-                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SkipUtf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271server1staticFilesystemJson.SkipPaths.Mutable value))
+                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SkipUtf8, out Corvus.KrakendBenchmark.Current.JsonArray.Mutable value))
                     {
                         return value;
                     }
@@ -370,7 +370,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.DirectoryListing, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DirectoryListing, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -413,7 +413,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Path, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Path, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -444,7 +444,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Prefix, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Prefix, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -456,7 +456,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>skip</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetSkip(in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271server1staticFilesystemJson.SkipPaths.Source value)
+            public void SetSkip(in Corvus.KrakendBenchmark.Current.JsonArray.Source value)
             {
                 CheckValidInstance();
 
@@ -477,7 +477,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Skip, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Skip, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -489,7 +489,7 @@ public readonly partial struct KrakendSchema
             /// Set the <c>skip</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetSkip<TContext>(in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271server1staticFilesystemJson.SkipPaths.Source<TContext> value)
+            public void SetSkip<TContext>(in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> value)
 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
 #endif
@@ -513,7 +513,7 @@ public readonly partial struct KrakendSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Skip, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Skip, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -896,6 +896,24 @@ public readonly partial struct KrakendSchema
                 }
             }
 
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.JsonElement:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                        break;
+                    case Kind.Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
             internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
             {
                 switch(_kind)
@@ -997,6 +1015,24 @@ public readonly partial struct KrakendSchema
                 }
             }
 
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.Source:
+                        _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                        break;
+                    case Kind.Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
             internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
             {
                 switch(_kind)
@@ -1078,12 +1114,12 @@ public readonly partial struct KrakendSchema
                 in Corvus.KrakendBenchmark.Current.JsonString.Source path,
                 in Corvus.KrakendBenchmark.Current.JsonString.Source prefix,
                 in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271server1staticFilesystemJson.WhetherToAllowDirectoryListingsOrNot.Source directoryListing = default,
-                in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271server1staticFilesystemJson.SkipPaths.Source skip = default)
+                in Corvus.KrakendBenchmark.Current.JsonArray.Source skip = default)
             {
-                path.AddAsProperty(JsonPropertyNamesEscaped.Path, ref builder, escapeName: false);
-                prefix.AddAsProperty(JsonPropertyNamesEscaped.Prefix, ref builder, escapeName: false);
-                directoryListing.AddAsProperty(JsonPropertyNamesEscaped.DirectoryListing, ref builder, escapeName: false);
-                skip.AddAsProperty(JsonPropertyNamesEscaped.Skip, ref builder, escapeName: false);
+                path.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Path, ref builder);
+                prefix.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Prefix, ref builder);
+                directoryListing.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DirectoryListing, ref builder);
+                skip.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Skip, ref builder);
             }
 
             /// <summary>
@@ -1093,7 +1129,7 @@ public readonly partial struct KrakendSchema
                 in Corvus.KrakendBenchmark.Current.JsonString.Source path,
                 in Corvus.KrakendBenchmark.Current.JsonString.Source prefix,
                 in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271server1staticFilesystemJson.WhetherToAllowDirectoryListingsOrNot.Source directoryListing = default,
-                in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271server1staticFilesystemJson.SkipPaths.Source skip = default)
+                in Corvus.KrakendBenchmark.Current.JsonArray.Source skip = default)
             {
                 Create(ref _builder, path, prefix, directoryListing, skip);
             }
@@ -1107,15 +1143,15 @@ public readonly partial struct KrakendSchema
                 in Corvus.KrakendBenchmark.Current.JsonString.Source path,
                 in Corvus.KrakendBenchmark.Current.JsonString.Source prefix,
                 in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271server1staticFilesystemJson.WhetherToAllowDirectoryListingsOrNot.Source directoryListing = default,
-                in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271server1staticFilesystemJson.SkipPaths.Source<TContext> skip = default)
+                in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> skip = default)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif
             {
-                path.AddAsProperty(JsonPropertyNamesEscaped.Path, ref builder, escapeName: false);
-                prefix.AddAsProperty(JsonPropertyNamesEscaped.Prefix, ref builder, escapeName: false);
-                directoryListing.AddAsProperty(JsonPropertyNamesEscaped.DirectoryListing, ref builder, escapeName: false);
-                skip.AddAsProperty(JsonPropertyNamesEscaped.Skip, ref builder, escapeName: false);
+                path.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Path, ref builder);
+                prefix.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Prefix, ref builder);
+                directoryListing.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DirectoryListing, ref builder);
+                skip.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Skip, ref builder);
             }
 
             /// <summary>
@@ -1126,7 +1162,7 @@ public readonly partial struct KrakendSchema
                 in Corvus.KrakendBenchmark.Current.JsonString.Source path,
                 in Corvus.KrakendBenchmark.Current.JsonString.Source prefix,
                 in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271server1staticFilesystemJson.WhetherToAllowDirectoryListingsOrNot.Source directoryListing = default,
-                in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271server1staticFilesystemJson.SkipPaths.Source<TContext> skip = default)
+                in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> skip = default)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif
@@ -1293,7 +1329,7 @@ public readonly partial struct KrakendSchema
         /// <param name="skip">The value of the property.</param>
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
         /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-        public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.KrakendBenchmark.Current.JsonString.Source path, in Corvus.KrakendBenchmark.Current.JsonString.Source prefix, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271server1staticFilesystemJson.WhetherToAllowDirectoryListingsOrNot.Source directoryListing = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271server1staticFilesystemJson.SkipPaths.Source skip = default, int initialCapacity = 30)
+        public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.KrakendBenchmark.Current.JsonString.Source path, in Corvus.KrakendBenchmark.Current.JsonString.Source prefix, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271server1staticFilesystemJson.WhetherToAllowDirectoryListingsOrNot.Source directoryListing = default, in Corvus.KrakendBenchmark.Current.JsonArray.Source skip = default, int initialCapacity = 30)
         {
             JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
             ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
@@ -1318,7 +1354,7 @@ public readonly partial struct KrakendSchema
         /// <param name="skip">The value of the property.</param>
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
         /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-        public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.KrakendBenchmark.Current.JsonString.Source path, in Corvus.KrakendBenchmark.Current.JsonString.Source prefix, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271server1staticFilesystemJson.WhetherToAllowDirectoryListingsOrNot.Source directoryListing = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271server1staticFilesystemJson.SkipPaths.Source<TContext> skip = default, int initialCapacity = 30)
+        public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.KrakendBenchmark.Current.JsonString.Source path, in Corvus.KrakendBenchmark.Current.JsonString.Source prefix, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271server1staticFilesystemJson.WhetherToAllowDirectoryListingsOrNot.Source directoryListing = default, in Corvus.KrakendBenchmark.Current.JsonArray.Source<TContext> skip = default, int initialCapacity = 30)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif

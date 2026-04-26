@@ -809,6 +809,27 @@ public readonly partial struct Ui5ManifestSchema
                 }
             }
 
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.JsonElement:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                        break;
+                    case Kind.HeaderTypeDefaultBuilder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _headerTypeDefaultBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeDefault.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.HeaderTypeNumericBuilder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _headerTypeNumericBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.Builder.BuildValue(b, ref o));
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
             internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
             {
                 switch(_kind)
@@ -919,6 +940,27 @@ public readonly partial struct Ui5ManifestSchema
                         break;
                     case Kind.HeaderTypeNumericBuilder:
                         valueBuilder.AddProperty(utf8Name, BuildWithContext.Create(_context, _headerTypeNumericBuilderInstance!), static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.Builder.BuildValue(b.Context, b.Build, ref o), escapeName, nameRequiresUnescaping);
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.Source:
+                        _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                        break;
+                    case Kind.HeaderTypeDefaultBuilder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _headerTypeDefaultBuilderInstance!), static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeDefault.Builder.BuildValue(b.Context, b.Build, ref o));
+                        break;
+                    case Kind.HeaderTypeNumericBuilder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _headerTypeNumericBuilderInstance!), static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.HeaderTypeNumeric.Builder.BuildValue(b.Context, b.Build, ref o));
                         break;
                     default:
                         Debug.Fail("Unexpected Kind");

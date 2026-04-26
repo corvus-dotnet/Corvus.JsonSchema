@@ -677,5 +677,17 @@ public readonly partial struct OpenapiSchema
             /// </summary>
             public static ReadOnlySpan<byte> Default => "default"u8;
         }
+
+        /// <summary>
+        /// Provides pre-baked property name blobs for fast builder property storage.
+        /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
+        /// </summary>
+        private static class JsonPropertyNamesPrebaked
+        {
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Default"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Default => [0x95, 0x00, 0x00, 0x00, 0x22, 0x64, 0x65, 0x66, 0x61, 0x75, 0x6C, 0x74, 0x22];
+        }
     }
 }

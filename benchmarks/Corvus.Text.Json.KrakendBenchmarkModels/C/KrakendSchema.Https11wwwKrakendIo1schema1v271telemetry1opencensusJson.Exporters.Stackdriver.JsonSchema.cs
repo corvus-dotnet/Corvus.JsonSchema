@@ -76,22 +76,22 @@ public readonly partial struct KrakendSchema
 
                     private const uint RequiredBitMask0 =
                         RequiredBitForDefaultLabels | RequiredBitForProjectId;
-                    private static readonly JsonSchemaPathProvider DefaultLabelsValueSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/default_labels"u8, buffer, out written);
+                    private static readonly JsonSchemaPathProvider DefaultLabelsSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/default_labels"u8, buffer, out written);
                     private static readonly JsonSchemaPathProvider MetricPrefixSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/metric_prefix"u8, buffer, out written);
                     private static readonly JsonSchemaPathProvider ProjectIdValueSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/project_id"u8, buffer, out written);
 
-                    private static void MatchDefaultLabelsValue(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+                    private static void MatchDefaultLabels(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
                     {
                         context.AddLocalEvaluatedProperty(propertyCount);
                         JsonSchemaContext childContext =
-                            Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271telemetry1opencensusJson.Exporters.Stackdriver.DefaultLabels.JsonSchema.PushChildContextUnescaped(
+                            Corvus.KrakendBenchmark.Current.JsonObject.JsonSchema.PushChildContextUnescaped(
                                 parentDocument,
                                 parentDocumentIndex,
                                 ref context,
-                                JsonPropertyNames.DefaultLabelsValueUtf8,
-                                evaluationPath: DefaultLabelsValueSchemaEvaluationPath);
+                                JsonPropertyNames.DefaultLabelsUtf8,
+                                evaluationPath: DefaultLabelsSchemaEvaluationPath);
 
-                        Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271telemetry1opencensusJson.Exporters.Stackdriver.DefaultLabels.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext);
+                        Corvus.KrakendBenchmark.Current.JsonObject.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext);
                         context.CommitChildContext(childContext.IsMatch, ref childContext);
 
                         if (!context.HasCollector && !context.IsMatch)
@@ -142,7 +142,7 @@ public readonly partial struct KrakendSchema
                     private static PropertySchemaMatchers<Corvus.KrakendBenchmark.Current.PropertiesValidationHandler_NamedPropertyValidator> MatchersBuilder()
                     {
                         return new PropertySchemaMatchers<Corvus.KrakendBenchmark.Current.PropertiesValidationHandler_NamedPropertyValidator>([
-                            (static () => JsonPropertyNames.DefaultLabelsValueUtf8, MatchDefaultLabelsValue),
+                            (static () => JsonPropertyNames.DefaultLabelsUtf8, MatchDefaultLabels),
                             (static () => JsonPropertyNames.MetricPrefixUtf8, MatchMetricPrefix),
                             (static () => JsonPropertyNames.ProjectIdValueUtf8, MatchProjectIdValue),
                         ]);
@@ -171,17 +171,17 @@ public readonly partial struct KrakendSchema
                     /// <summary>
                     /// Gets a provider for the schema location from which this type was generated.
                     /// </summary>
-                    public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("krakend-schema.json#/definitions/https:~1~1www.krakend.io~1schema~1v2.7~1telemetry~1opencensus.json/properties/exporters/properties/stackdriver"u8, buffer, out written);
+                    public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/definitions/https:~1~1www.krakend.io~1schema~1v2.7~1telemetry~1opencensus.json/properties/exporters/properties/stackdriver"u8, buffer, out written);
 
                     /// <summary>
                     /// Gets the schema location from which this type was generated.
                     /// </summary>
-                    public const string SchemaLocation = "krakend-schema.json#/definitions/https:~1~1www.krakend.io~1schema~1v2.7~1telemetry~1opencensus.json/properties/exporters/properties/stackdriver";
+                    public const string SchemaLocation = "/definitions/https:~1~1www.krakend.io~1schema~1v2.7~1telemetry~1opencensus.json/properties/exporters/properties/stackdriver";
 
                     /// <summary>
                     /// Gets the schema location from which this type was generated as a UTF-8 string.
                     /// </summary>
-                    public static ReadOnlySpan<byte> SchemaLocationUtf8 => "krakend-schema.json#/definitions/https:~1~1www.krakend.io~1schema~1v2.7~1telemetry~1opencensus.json/properties/exporters/properties/stackdriver"u8;
+                    public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/definitions/https:~1~1www.krakend.io~1schema~1v2.7~1telemetry~1opencensus.json/properties/exporters/properties/stackdriver"u8;
 
                     /// <summary>
                     /// Applies the JSON schema semantics defined by this type to the instance determined by the given document and index.

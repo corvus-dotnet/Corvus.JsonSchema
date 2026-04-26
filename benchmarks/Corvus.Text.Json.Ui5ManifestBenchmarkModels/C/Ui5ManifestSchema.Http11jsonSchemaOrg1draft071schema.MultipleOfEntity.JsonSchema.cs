@@ -51,17 +51,17 @@ public readonly partial struct Ui5ManifestSchema
                 /// <summary>
                 /// Gets a provider for the schema location from which this type was generated.
                 /// </summary>
-                public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("http://json-schema.org/draft-07/schema#/properties/multipleOf"u8, buffer, out written);
+                public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/definitions/http:~1~1json-schema.org~1draft-07~1schema/properties/multipleOf"u8, buffer, out written);
 
                 /// <summary>
                 /// Gets the schema location from which this type was generated.
                 /// </summary>
-                public const string SchemaLocation = "http://json-schema.org/draft-07/schema#/properties/multipleOf";
+                public const string SchemaLocation = "/definitions/http:~1~1json-schema.org~1draft-07~1schema/properties/multipleOf";
 
                 /// <summary>
                 /// Gets the schema location from which this type was generated as a UTF-8 string.
                 /// </summary>
-                public static ReadOnlySpan<byte> SchemaLocationUtf8 => "http://json-schema.org/draft-07/schema#/properties/multipleOf"u8;
+                public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/definitions/http:~1~1json-schema.org~1draft-07~1schema/properties/multipleOf"u8;
 
                 /// <summary>
                 /// Applies the JSON schema semantics defined by this type to the instance determined by the given document and index.

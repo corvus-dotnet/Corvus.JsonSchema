@@ -633,6 +633,18 @@ public readonly partial struct KrakendSchema
                                     /// </summary>
                                     public static ReadOnlySpan<byte> AuthValidator => "auth/validator"u8;
                                 }
+
+                                /// <summary>
+                                /// Provides pre-baked property name blobs for fast builder property storage.
+                                /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
+                                /// </summary>
+                                private static class JsonPropertyNamesPrebaked
+                                {
+                                    /// <summary>
+                                    /// Gets the pre-baked property name blob for <see cref="AuthValidator"/>.
+                                    /// </summary>
+                                    public static ReadOnlySpan<byte> AuthValidator => [0x05, 0x01, 0x00, 0x00, 0x22, 0x61, 0x75, 0x74, 0x68, 0x2F, 0x76, 0x61, 0x6C, 0x69, 0x64, 0x61, 0x74, 0x6F, 0x72, 0x22];
+                                }
                             }
                         }
                     }
