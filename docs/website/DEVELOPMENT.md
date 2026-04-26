@@ -18,6 +18,8 @@ npm install
 
 ## Quick Start
 
+***NOTE**: Building the web site requires the GitHub CLI to be installed and logged-in. Currently, it also uses the Vellum Static Site Generator tool which is not yet publicly available. In the meantime, if you need to rebuild the website please open an issue.*
+
 ### Full build (from scratch)
 
 ```powershell
