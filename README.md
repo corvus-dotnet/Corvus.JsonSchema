@@ -8,7 +8,7 @@ High-performance, source-generated, strongly-typed C# models from JSON Schema �
 
 - **Source Generation** — Generate strongly-typed C# from JSON Schema at build time with the Roslyn incremental source generator, or ahead of time with the `corvusjson` CLI tool.
 - **Schema Validation** — Full JSON Schema draft 4, 6, 7, 2019-09, and 2020-12 validation. Over 10× faster than other .NET JSON Schema validators.
-- **Pooled Memory** — `ParsedJsonDocument<T>` uses `ArrayPool<byte>` for minimal GC impact. Just 136B per-document vs 1,528B for `JsonNode` — 91% less memory.
+- **Pooled Memory** — `ParsedJsonDocument<T>` uses `ArrayPool<byte>` for minimal GC impact. Just 136 bytes per-document allocation.
 - **Mutable Documents** — `JsonDocumentBuilder<T>` and `JsonWorkspace` provide a builder pattern for creating and modifying JSON with pooled workspace memory.
 - **Extended Types** — `BigNumber` for arbitrary-precision decimals, `BigInteger` for large integers, plus NodaTime integration for `date`, `date-time`, `time`, and `duration` formats.
 - **Pattern Matching** — Type-safe `Match()` for `oneOf`/`anyOf` discriminated unions with exhaustive dispatch.
@@ -102,8 +102,8 @@ For the source generator, add as an analyzer reference:
 - .NET Standard 2.0, 2.1
 
 ### V4 engine (Corvus.Json)
-- .NET 10.0, 8.0
-- .NET Standard 2.0
+- .NET 10.0, 9.0, 8.0
+- .NET Standard 2.0, 2.1
 
 > **Note:** .NET 8.0 is not supported on the V5 engine. The V4 engine will drop .NET 8.0 support in November 2026 when it reaches end-of-life.
 
