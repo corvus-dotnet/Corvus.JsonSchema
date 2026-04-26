@@ -501,7 +501,7 @@ public readonly partial struct OpenapiSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.ComponentsValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ComponentsValue, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -537,7 +537,7 @@ public readonly partial struct OpenapiSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.ComponentsValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ComponentsValue, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -582,7 +582,7 @@ public readonly partial struct OpenapiSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.ExternalDocs, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ExternalDocs, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -618,7 +618,7 @@ public readonly partial struct OpenapiSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.ExternalDocs, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ExternalDocs, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -661,7 +661,7 @@ public readonly partial struct OpenapiSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.InfoValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.InfoValue, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -695,7 +695,7 @@ public readonly partial struct OpenapiSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.InfoValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.InfoValue, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -728,7 +728,7 @@ public readonly partial struct OpenapiSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.JsonSchemaDialect, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.JsonSchemaDialect, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -771,7 +771,7 @@ public readonly partial struct OpenapiSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Openapi, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Openapi, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -804,7 +804,7 @@ public readonly partial struct OpenapiSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.PathsValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PathsValue, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -840,7 +840,7 @@ public readonly partial struct OpenapiSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.PathsValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PathsValue, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -885,7 +885,7 @@ public readonly partial struct OpenapiSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Security, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Security, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -921,7 +921,7 @@ public readonly partial struct OpenapiSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Security, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Security, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -966,7 +966,7 @@ public readonly partial struct OpenapiSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Servers, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Servers, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1002,7 +1002,7 @@ public readonly partial struct OpenapiSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Servers, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Servers, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1047,7 +1047,7 @@ public readonly partial struct OpenapiSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Tags, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Tags, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1083,7 +1083,7 @@ public readonly partial struct OpenapiSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Tags, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Tags, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1128,7 +1128,7 @@ public readonly partial struct OpenapiSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Webhooks, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Webhooks, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1164,7 +1164,7 @@ public readonly partial struct OpenapiSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Webhooks, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Webhooks, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1762,6 +1762,24 @@ public readonly partial struct OpenapiSchema
             }
         }
 
+        internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+        {
+            switch(_kind)
+            {
+                case Kind.Unknown:
+                    break;
+                case Kind.JsonElement:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                    break;
+                case Kind.Builder:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
+                    break;
+                default:
+                    Debug.Fail("Unexpected Kind");
+                    break;
+            }
+        }
+
         internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
         {
             switch(_kind)
@@ -1866,6 +1884,24 @@ public readonly partial struct OpenapiSchema
             }
         }
 
+        internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+        {
+            switch(_kind)
+            {
+                case Kind.Unknown:
+                    break;
+                case Kind.Source:
+                    _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                    break;
+                case Kind.Builder:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
+                    break;
+                default:
+                    Debug.Fail("Unexpected Kind");
+                    break;
+            }
+        }
+
         internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
         {
             switch(_kind)
@@ -1955,16 +1991,16 @@ public readonly partial struct OpenapiSchema
             in Corvus.OpenapiBenchmark.Current.OpenapiSchema.TagArray.Source tags = default,
             in Corvus.OpenapiBenchmark.Current.OpenapiSchema.WebhooksEntity.Source webhooks = default)
         {
-            info.AddAsProperty(JsonPropertyNamesEscaped.InfoValue, ref builder, escapeName: false);
-            openapi.AddAsProperty(JsonPropertyNamesEscaped.Openapi, ref builder, escapeName: false);
-            components.AddAsProperty(JsonPropertyNamesEscaped.ComponentsValue, ref builder, escapeName: false);
-            externalDocs.AddAsProperty(JsonPropertyNamesEscaped.ExternalDocs, ref builder, escapeName: false);
-            jsonSchemaDialect.AddAsProperty(JsonPropertyNamesEscaped.JsonSchemaDialect, ref builder, escapeName: false);
-            paths.AddAsProperty(JsonPropertyNamesEscaped.PathsValue, ref builder, escapeName: false);
-            security.AddAsProperty(JsonPropertyNamesEscaped.Security, ref builder, escapeName: false);
-            servers.AddAsProperty(JsonPropertyNamesEscaped.Servers, ref builder, escapeName: false);
-            tags.AddAsProperty(JsonPropertyNamesEscaped.Tags, ref builder, escapeName: false);
-            webhooks.AddAsProperty(JsonPropertyNamesEscaped.Webhooks, ref builder, escapeName: false);
+            info.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.InfoValue, ref builder);
+            openapi.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Openapi, ref builder);
+            components.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ComponentsValue, ref builder);
+            externalDocs.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ExternalDocs, ref builder);
+            jsonSchemaDialect.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.JsonSchemaDialect, ref builder);
+            paths.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PathsValue, ref builder);
+            security.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Security, ref builder);
+            servers.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Servers, ref builder);
+            tags.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Tags, ref builder);
+            webhooks.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Webhooks, ref builder);
         }
 
         /// <summary>
@@ -2005,16 +2041,16 @@ public readonly partial struct OpenapiSchema
         where TContext : allows ref struct
         #endif
         {
-            info.AddAsProperty(JsonPropertyNamesEscaped.InfoValue, ref builder, escapeName: false);
-            openapi.AddAsProperty(JsonPropertyNamesEscaped.Openapi, ref builder, escapeName: false);
-            components.AddAsProperty(JsonPropertyNamesEscaped.ComponentsValue, ref builder, escapeName: false);
-            externalDocs.AddAsProperty(JsonPropertyNamesEscaped.ExternalDocs, ref builder, escapeName: false);
-            jsonSchemaDialect.AddAsProperty(JsonPropertyNamesEscaped.JsonSchemaDialect, ref builder, escapeName: false);
-            paths.AddAsProperty(JsonPropertyNamesEscaped.PathsValue, ref builder, escapeName: false);
-            security.AddAsProperty(JsonPropertyNamesEscaped.Security, ref builder, escapeName: false);
-            servers.AddAsProperty(JsonPropertyNamesEscaped.Servers, ref builder, escapeName: false);
-            tags.AddAsProperty(JsonPropertyNamesEscaped.Tags, ref builder, escapeName: false);
-            webhooks.AddAsProperty(JsonPropertyNamesEscaped.Webhooks, ref builder, escapeName: false);
+            info.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.InfoValue, ref builder);
+            openapi.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Openapi, ref builder);
+            components.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ComponentsValue, ref builder);
+            externalDocs.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ExternalDocs, ref builder);
+            jsonSchemaDialect.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.JsonSchemaDialect, ref builder);
+            paths.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PathsValue, ref builder);
+            security.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Security, ref builder);
+            servers.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Servers, ref builder);
+            tags.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Tags, ref builder);
+            webhooks.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Webhooks, ref builder);
         }
 
         /// <summary>

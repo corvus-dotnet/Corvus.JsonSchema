@@ -182,11 +182,11 @@ public readonly partial struct Ui5ManifestSchema
             /// The artifacts manifest
             /// </para>
             /// </remarks>
-            public Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Contentitem.WrapsTheChildManifest.TheArtifactsManifest SapArtifact
+            public Corvus.Ui5ManifestBenchmark.Current.JsonObject SapArtifact
             {
                 get
                 {
-                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SapArtifactUtf8, out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Contentitem.WrapsTheChildManifest.TheArtifactsManifest value))
+                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SapArtifactUtf8, out Corvus.Ui5ManifestBenchmark.Current.JsonObject value))
                     {
                         return value;
                     }
@@ -646,6 +646,18 @@ public readonly partial struct Ui5ManifestSchema
                 /// Gets the escaped UTF-8 JSON property name for <see cref="SapArtifact"/>.
                 /// </summary>
                 public static ReadOnlySpan<byte> SapArtifact => "sap.artifact"u8;
+            }
+
+            /// <summary>
+            /// Provides pre-baked property name blobs for fast builder property storage.
+            /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
+            /// </summary>
+            private static class JsonPropertyNamesPrebaked
+            {
+                /// <summary>
+                /// Gets the pre-baked property name blob for <see cref="SapArtifact"/>.
+                /// </summary>
+                public static ReadOnlySpan<byte> SapArtifact => [0xE5, 0x00, 0x00, 0x00, 0x22, 0x73, 0x61, 0x70, 0x2E, 0x61, 0x72, 0x74, 0x69, 0x66, 0x61, 0x63, 0x74, 0x22];
             }
         }
     }

@@ -780,5 +780,52 @@ public readonly partial struct Ui5ManifestSchema
             /// </summary>
             public static ReadOnlySpan<byte> Validate => "validate"u8;
         }
+
+        /// <summary>
+        /// Provides pre-baked property name blobs for fast builder property storage.
+        /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
+        /// </summary>
+        private static class JsonPropertyNamesPrebaked
+        {
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="MaxLength"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> MaxLength => [0xB5, 0x00, 0x00, 0x00, 0x22, 0x6D, 0x61, 0x78, 0x4C, 0x65, 0x6E, 0x67, 0x74, 0x68, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Message"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Message => [0x95, 0x00, 0x00, 0x00, 0x22, 0x6D, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="MinLength"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> MinLength => [0xB5, 0x00, 0x00, 0x00, 0x22, 0x6D, 0x69, 0x6E, 0x4C, 0x65, 0x6E, 0x67, 0x74, 0x68, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Pattern"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Pattern => [0x95, 0x00, 0x00, 0x00, 0x22, 0x70, 0x61, 0x74, 0x74, 0x65, 0x72, 0x6E, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Required"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Required => [0xA5, 0x00, 0x00, 0x00, 0x22, 0x72, 0x65, 0x71, 0x75, 0x69, 0x72, 0x65, 0x64, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="RestrictToPredefinedOptions"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> RestrictToPredefinedOptions => [0xD5, 0x01, 0x00, 0x00, 0x22, 0x72, 0x65, 0x73, 0x74, 0x72, 0x69, 0x63, 0x74, 0x54, 0x6F, 0x50, 0x72, 0x65, 0x64, 0x65, 0x66, 0x69, 0x6E, 0x65, 0x64, 0x4F, 0x70, 0x74, 0x69, 0x6F, 0x6E, 0x73, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Type"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Type => [0x65, 0x00, 0x00, 0x00, 0x22, 0x74, 0x79, 0x70, 0x65, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Validate"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Validate => [0xA5, 0x00, 0x00, 0x00, 0x22, 0x76, 0x61, 0x6C, 0x69, 0x64, 0x61, 0x74, 0x65, 0x22];
+        }
     }
 }

@@ -639,4 +639,31 @@ public readonly partial struct TokenExchangeResource
         /// </summary>
         public static ReadOnlySpan<byte> UriValue => "uri"u8;
     }
+
+    /// <summary>
+    /// Provides pre-baked property name blobs for fast builder property storage.
+    /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
+    /// </summary>
+    private static class JsonPropertyNamesPrebaked
+    {
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Id"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Id => [0x45, 0x00, 0x00, 0x00, 0x22, 0x69, 0x64, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="ProviderId"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> ProviderId => [0xC5, 0x00, 0x00, 0x00, 0x22, 0x70, 0x72, 0x6F, 0x76, 0x69, 0x64, 0x65, 0x72, 0x49, 0x64, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Type"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Type => [0x65, 0x00, 0x00, 0x00, 0x22, 0x74, 0x79, 0x70, 0x65, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="UriValue"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> UriValue => [0x55, 0x00, 0x00, 0x00, 0x22, 0x75, 0x72, 0x69, 0x22];
+    }
 }

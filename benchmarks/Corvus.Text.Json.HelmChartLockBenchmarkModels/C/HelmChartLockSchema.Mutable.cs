@@ -288,7 +288,7 @@ public readonly partial struct HelmChartLockSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Dependencies, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Dependencies, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -322,7 +322,7 @@ public readonly partial struct HelmChartLockSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Dependencies, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Dependencies, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -353,7 +353,7 @@ public readonly partial struct HelmChartLockSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Digest, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Digest, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -384,7 +384,7 @@ public readonly partial struct HelmChartLockSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Generated, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Generated, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -579,6 +579,24 @@ public readonly partial struct HelmChartLockSchema
             }
         }
 
+        internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+        {
+            switch(_kind)
+            {
+                case Kind.Unknown:
+                    break;
+                case Kind.JsonElement:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                    break;
+                case Kind.Builder:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
+                    break;
+                default:
+                    Debug.Fail("Unexpected Kind");
+                    break;
+            }
+        }
+
         internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
         {
             switch(_kind)
@@ -680,6 +698,24 @@ public readonly partial struct HelmChartLockSchema
             }
         }
 
+        internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+        {
+            switch(_kind)
+            {
+                case Kind.Unknown:
+                    break;
+                case Kind.Source:
+                    _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                    break;
+                case Kind.Builder:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
+                    break;
+                default:
+                    Debug.Fail("Unexpected Kind");
+                    break;
+            }
+        }
+
         internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
         {
             switch(_kind)
@@ -762,9 +798,9 @@ public readonly partial struct HelmChartLockSchema
             in Corvus.HelmChartLockBenchmark.Current.JsonString.Source digest,
             in Corvus.HelmChartLockBenchmark.Current.JsonDateTime.Source generated)
         {
-            dependencies.AddAsProperty(JsonPropertyNamesEscaped.Dependencies, ref builder, escapeName: false);
-            digest.AddAsProperty(JsonPropertyNamesEscaped.Digest, ref builder, escapeName: false);
-            generated.AddAsProperty(JsonPropertyNamesEscaped.Generated, ref builder, escapeName: false);
+            dependencies.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Dependencies, ref builder);
+            digest.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Digest, ref builder);
+            generated.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Generated, ref builder);
         }
 
         /// <summary>
@@ -791,9 +827,9 @@ public readonly partial struct HelmChartLockSchema
         where TContext : allows ref struct
         #endif
         {
-            dependencies.AddAsProperty(JsonPropertyNamesEscaped.Dependencies, ref builder, escapeName: false);
-            digest.AddAsProperty(JsonPropertyNamesEscaped.Digest, ref builder, escapeName: false);
-            generated.AddAsProperty(JsonPropertyNamesEscaped.Generated, ref builder, escapeName: false);
+            dependencies.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Dependencies, ref builder);
+            digest.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Digest, ref builder);
+            generated.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Generated, ref builder);
         }
 
         /// <summary>

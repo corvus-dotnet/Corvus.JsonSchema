@@ -113,17 +113,17 @@ public readonly partial struct Ui5ManifestSchema
                 /// <summary>
                 /// Gets a provider for the schema location from which this type was generated.
                 /// </summary>
-                public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("ui5-manifest-schema.json#/definitions/routing/properties/config"u8, buffer, out written);
+                public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/definitions/routing/properties/config"u8, buffer, out written);
 
                 /// <summary>
                 /// Gets the schema location from which this type was generated.
                 /// </summary>
-                public const string SchemaLocation = "ui5-manifest-schema.json#/definitions/routing/properties/config";
+                public const string SchemaLocation = "/definitions/routing/properties/config";
 
                 /// <summary>
                 /// Gets the schema location from which this type was generated as a UTF-8 string.
                 /// </summary>
-                public static ReadOnlySpan<byte> SchemaLocationUtf8 => "ui5-manifest-schema.json#/definitions/routing/properties/config"u8;
+                public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/definitions/routing/properties/config"u8;
                 private static readonly JsonSchemaPathProvider AllOf0SchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/allOf/0"u8, buffer, out written);
                 private static readonly JsonSchemaPathProvider AllOf1SchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/allOf/1/$ref"u8, buffer, out written);
 
@@ -351,14 +351,14 @@ public readonly partial struct Ui5ManifestSchema
                                         context.AddAppliedEvaluatedProperty(objectValidation_propertyCount);
 
                                         JsonSchemaContext hoistedChildContext12 =
-                                            Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Target.TransitionParametersEntity.JsonSchema.PushChildContextUnescaped(
+                                            Corvus.Ui5ManifestBenchmark.Current.JsonObject.JsonSchema.PushChildContextUnescaped(
                                                 parentDocument,
                                                 objectValidation_currentIndex,
                                                 ref hoistedAllOf1_context,
                                                 "transitionParameters"u8,
                                                 evaluationPath: HoistedAllOf1TransitionParametersSchemaEvaluationPath);
 
-                                        Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Target.TransitionParametersEntity.JsonSchema.Evaluate(parentDocument, objectValidation_currentIndex, ref hoistedChildContext12);
+                                        Corvus.Ui5ManifestBenchmark.Current.JsonObject.JsonSchema.Evaluate(parentDocument, objectValidation_currentIndex, ref hoistedChildContext12);
                                         hoistedAllOf1_context.CommitChildContext(hoistedChildContext12.IsMatch, ref hoistedChildContext12);
                                         break;
                                     case 13:

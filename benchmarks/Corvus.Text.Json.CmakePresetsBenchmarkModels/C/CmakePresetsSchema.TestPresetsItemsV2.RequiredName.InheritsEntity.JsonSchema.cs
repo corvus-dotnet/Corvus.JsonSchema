@@ -56,17 +56,17 @@ public readonly partial struct CmakePresetsSchema
                     /// <summary>
                     /// Gets a provider for the schema location from which this type was generated.
                     /// </summary>
-                    public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("cmake-presets-schema.json#/definitions/testPresetsItemsV2/items/properties/inherits"u8, buffer, out written);
+                    public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/definitions/testPresetsItemsV2/items/properties/inherits"u8, buffer, out written);
 
                     /// <summary>
                     /// Gets the schema location from which this type was generated.
                     /// </summary>
-                    public const string SchemaLocation = "cmake-presets-schema.json#/definitions/testPresetsItemsV2/items/properties/inherits";
+                    public const string SchemaLocation = "/definitions/testPresetsItemsV2/items/properties/inherits";
 
                     /// <summary>
                     /// Gets the schema location from which this type was generated as a UTF-8 string.
                     /// </summary>
-                    public static ReadOnlySpan<byte> SchemaLocationUtf8 => "cmake-presets-schema.json#/definitions/testPresetsItemsV2/items/properties/inherits"u8;
+                    public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/definitions/testPresetsItemsV2/items/properties/inherits"u8;
                     private static readonly JsonSchemaPathProvider AnyOf0SchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/anyOf/0"u8, buffer, out written);
                     private static readonly JsonSchemaPathProvider AnyOf1SchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/anyOf/1"u8, buffer, out written);
 

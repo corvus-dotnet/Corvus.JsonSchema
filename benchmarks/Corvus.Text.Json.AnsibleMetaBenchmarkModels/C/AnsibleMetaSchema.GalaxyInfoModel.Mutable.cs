@@ -460,11 +460,11 @@ public readonly partial struct AnsibleMetaSchema
             /// <summary>
             /// Gets the (optional) <c>video_links</c> property.
             /// </summary>
-            public Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GalaxyInfoModel.VideoLinksArray.Mutable VideoLinks
+            public Corvus.AnsibleMetaBenchmark.Current.JsonArray.Mutable VideoLinks
             {
                 get
                 {
-                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.VideoLinksUtf8, out Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GalaxyInfoModel.VideoLinksArray.Mutable value))
+                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.VideoLinksUtf8, out Corvus.AnsibleMetaBenchmark.Current.JsonArray.Mutable value))
                     {
                         return value;
                     }
@@ -527,7 +527,7 @@ public readonly partial struct AnsibleMetaSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Author, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Author, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -572,7 +572,7 @@ public readonly partial struct AnsibleMetaSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.CloudPlatforms, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CloudPlatforms, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -608,7 +608,7 @@ public readonly partial struct AnsibleMetaSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.CloudPlatforms, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CloudPlatforms, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -653,7 +653,7 @@ public readonly partial struct AnsibleMetaSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Company, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Company, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -698,7 +698,7 @@ public readonly partial struct AnsibleMetaSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Description, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Description, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -743,7 +743,7 @@ public readonly partial struct AnsibleMetaSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.GalaxyTags, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.GalaxyTags, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -779,7 +779,7 @@ public readonly partial struct AnsibleMetaSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.GalaxyTags, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.GalaxyTags, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -824,7 +824,7 @@ public readonly partial struct AnsibleMetaSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.GithubBranch, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.GithubBranch, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -869,7 +869,7 @@ public readonly partial struct AnsibleMetaSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.IssueTrackerUrl, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IssueTrackerUrl, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -914,7 +914,7 @@ public readonly partial struct AnsibleMetaSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.License, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.License, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -959,7 +959,7 @@ public readonly partial struct AnsibleMetaSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.MinAnsibleContainerVersion, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MinAnsibleContainerVersion, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1004,7 +1004,7 @@ public readonly partial struct AnsibleMetaSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.MinAnsibleVersion, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MinAnsibleVersion, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1049,7 +1049,7 @@ public readonly partial struct AnsibleMetaSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Namespace, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Namespace, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1094,7 +1094,7 @@ public readonly partial struct AnsibleMetaSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.PlatformsValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PlatformsValue, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1130,7 +1130,7 @@ public readonly partial struct AnsibleMetaSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.PlatformsValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PlatformsValue, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1175,7 +1175,7 @@ public readonly partial struct AnsibleMetaSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.RoleNameValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.RoleNameValue, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1220,7 +1220,7 @@ public readonly partial struct AnsibleMetaSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Standalone, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Standalone, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1244,7 +1244,7 @@ public readonly partial struct AnsibleMetaSchema
             /// Set the <c>video_links</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetVideoLinks(in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GalaxyInfoModel.VideoLinksArray.Source value)
+            public void SetVideoLinks(in Corvus.AnsibleMetaBenchmark.Current.JsonArray.Source value)
             {
                 CheckValidInstance();
 
@@ -1265,7 +1265,7 @@ public readonly partial struct AnsibleMetaSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.VideoLinks, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.VideoLinks, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1277,7 +1277,7 @@ public readonly partial struct AnsibleMetaSchema
             /// Set the <c>video_links</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetVideoLinks<TContext>(in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GalaxyInfoModel.VideoLinksArray.Source<TContext> value)
+            public void SetVideoLinks<TContext>(in Corvus.AnsibleMetaBenchmark.Current.JsonArray.Source<TContext> value)
 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
 #endif
@@ -1301,7 +1301,7 @@ public readonly partial struct AnsibleMetaSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.VideoLinks, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.VideoLinks, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1653,6 +1653,24 @@ public readonly partial struct AnsibleMetaSchema
                 }
             }
 
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.JsonElement:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                        break;
+                    case Kind.Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
             internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
             {
                 switch(_kind)
@@ -1754,6 +1772,24 @@ public readonly partial struct AnsibleMetaSchema
                 }
             }
 
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.Source:
+                        _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                        break;
+                    case Kind.Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
             internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
             {
                 switch(_kind)
@@ -1846,23 +1882,23 @@ public readonly partial struct AnsibleMetaSchema
                 in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.Platforms.Source platforms = default,
                 in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GalaxyInfoModel.RoleName.Source roleName = default,
                 in Corvus.AnsibleMetaBenchmark.Current.JsonBoolean.Source standalone = default,
-                in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GalaxyInfoModel.VideoLinksArray.Source videoLinks = default)
+                in Corvus.AnsibleMetaBenchmark.Current.JsonArray.Source videoLinks = default)
             {
-                author.AddAsProperty(JsonPropertyNamesEscaped.Author, ref builder, escapeName: false);
-                cloudPlatforms.AddAsProperty(JsonPropertyNamesEscaped.CloudPlatforms, ref builder, escapeName: false);
-                company.AddAsProperty(JsonPropertyNamesEscaped.Company, ref builder, escapeName: false);
-                description.AddAsProperty(JsonPropertyNamesEscaped.Description, ref builder, escapeName: false);
-                galaxyTags.AddAsProperty(JsonPropertyNamesEscaped.GalaxyTags, ref builder, escapeName: false);
-                githubBranch.AddAsProperty(JsonPropertyNamesEscaped.GithubBranch, ref builder, escapeName: false);
-                issueTrackerUrl.AddAsProperty(JsonPropertyNamesEscaped.IssueTrackerUrl, ref builder, escapeName: false);
-                license.AddAsProperty(JsonPropertyNamesEscaped.License, ref builder, escapeName: false);
-                minAnsibleContainerVersion.AddAsProperty(JsonPropertyNamesEscaped.MinAnsibleContainerVersion, ref builder, escapeName: false);
-                minAnsibleVersion.AddAsProperty(JsonPropertyNamesEscaped.MinAnsibleVersion, ref builder, escapeName: false);
-                namespaceValue.AddAsProperty(JsonPropertyNamesEscaped.Namespace, ref builder, escapeName: false);
-                platforms.AddAsProperty(JsonPropertyNamesEscaped.PlatformsValue, ref builder, escapeName: false);
-                roleName.AddAsProperty(JsonPropertyNamesEscaped.RoleNameValue, ref builder, escapeName: false);
-                standalone.AddAsProperty(JsonPropertyNamesEscaped.Standalone, ref builder, escapeName: false);
-                videoLinks.AddAsProperty(JsonPropertyNamesEscaped.VideoLinks, ref builder, escapeName: false);
+                author.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Author, ref builder);
+                cloudPlatforms.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CloudPlatforms, ref builder);
+                company.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Company, ref builder);
+                description.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Description, ref builder);
+                galaxyTags.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.GalaxyTags, ref builder);
+                githubBranch.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.GithubBranch, ref builder);
+                issueTrackerUrl.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IssueTrackerUrl, ref builder);
+                license.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.License, ref builder);
+                minAnsibleContainerVersion.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MinAnsibleContainerVersion, ref builder);
+                minAnsibleVersion.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MinAnsibleVersion, ref builder);
+                namespaceValue.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Namespace, ref builder);
+                platforms.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PlatformsValue, ref builder);
+                roleName.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.RoleNameValue, ref builder);
+                standalone.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Standalone, ref builder);
+                videoLinks.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.VideoLinks, ref builder);
             }
 
             /// <summary>
@@ -1883,7 +1919,7 @@ public readonly partial struct AnsibleMetaSchema
                 in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.Platforms.Source platforms = default,
                 in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GalaxyInfoModel.RoleName.Source roleName = default,
                 in Corvus.AnsibleMetaBenchmark.Current.JsonBoolean.Source standalone = default,
-                in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GalaxyInfoModel.VideoLinksArray.Source videoLinks = default)
+                in Corvus.AnsibleMetaBenchmark.Current.JsonArray.Source videoLinks = default)
             {
                 Create(ref _builder, author, cloudPlatforms, company, description, galaxyTags, githubBranch, issueTrackerUrl, license, minAnsibleContainerVersion, minAnsibleVersion, namespaceValue, platforms, roleName, standalone, videoLinks);
             }
@@ -1908,26 +1944,26 @@ public readonly partial struct AnsibleMetaSchema
                 in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.Platforms.Source<TContext> platforms = default,
                 in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GalaxyInfoModel.RoleName.Source roleName = default,
                 in Corvus.AnsibleMetaBenchmark.Current.JsonBoolean.Source standalone = default,
-                in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GalaxyInfoModel.VideoLinksArray.Source<TContext> videoLinks = default)
+                in Corvus.AnsibleMetaBenchmark.Current.JsonArray.Source<TContext> videoLinks = default)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif
             {
-                author.AddAsProperty(JsonPropertyNamesEscaped.Author, ref builder, escapeName: false);
-                cloudPlatforms.AddAsProperty(JsonPropertyNamesEscaped.CloudPlatforms, ref builder, escapeName: false);
-                company.AddAsProperty(JsonPropertyNamesEscaped.Company, ref builder, escapeName: false);
-                description.AddAsProperty(JsonPropertyNamesEscaped.Description, ref builder, escapeName: false);
-                galaxyTags.AddAsProperty(JsonPropertyNamesEscaped.GalaxyTags, ref builder, escapeName: false);
-                githubBranch.AddAsProperty(JsonPropertyNamesEscaped.GithubBranch, ref builder, escapeName: false);
-                issueTrackerUrl.AddAsProperty(JsonPropertyNamesEscaped.IssueTrackerUrl, ref builder, escapeName: false);
-                license.AddAsProperty(JsonPropertyNamesEscaped.License, ref builder, escapeName: false);
-                minAnsibleContainerVersion.AddAsProperty(JsonPropertyNamesEscaped.MinAnsibleContainerVersion, ref builder, escapeName: false);
-                minAnsibleVersion.AddAsProperty(JsonPropertyNamesEscaped.MinAnsibleVersion, ref builder, escapeName: false);
-                namespaceValue.AddAsProperty(JsonPropertyNamesEscaped.Namespace, ref builder, escapeName: false);
-                platforms.AddAsProperty(JsonPropertyNamesEscaped.PlatformsValue, ref builder, escapeName: false);
-                roleName.AddAsProperty(JsonPropertyNamesEscaped.RoleNameValue, ref builder, escapeName: false);
-                standalone.AddAsProperty(JsonPropertyNamesEscaped.Standalone, ref builder, escapeName: false);
-                videoLinks.AddAsProperty(JsonPropertyNamesEscaped.VideoLinks, ref builder, escapeName: false);
+                author.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Author, ref builder);
+                cloudPlatforms.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CloudPlatforms, ref builder);
+                company.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Company, ref builder);
+                description.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Description, ref builder);
+                galaxyTags.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.GalaxyTags, ref builder);
+                githubBranch.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.GithubBranch, ref builder);
+                issueTrackerUrl.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IssueTrackerUrl, ref builder);
+                license.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.License, ref builder);
+                minAnsibleContainerVersion.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MinAnsibleContainerVersion, ref builder);
+                minAnsibleVersion.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MinAnsibleVersion, ref builder);
+                namespaceValue.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Namespace, ref builder);
+                platforms.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PlatformsValue, ref builder);
+                roleName.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.RoleNameValue, ref builder);
+                standalone.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Standalone, ref builder);
+                videoLinks.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.VideoLinks, ref builder);
             }
 
             /// <summary>
@@ -1949,7 +1985,7 @@ public readonly partial struct AnsibleMetaSchema
                 in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.Platforms.Source<TContext> platforms = default,
                 in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GalaxyInfoModel.RoleName.Source roleName = default,
                 in Corvus.AnsibleMetaBenchmark.Current.JsonBoolean.Source standalone = default,
-                in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GalaxyInfoModel.VideoLinksArray.Source<TContext> videoLinks = default)
+                in Corvus.AnsibleMetaBenchmark.Current.JsonArray.Source<TContext> videoLinks = default)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif
@@ -2097,7 +2133,7 @@ public readonly partial struct AnsibleMetaSchema
         /// <param name="videoLinks">The value of the property.</param>
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
         /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-        public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source author = default, in Corvus.Text.Json.JsonElement.Source cloudPlatforms = default, in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source company = default, in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source description = default, in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GalaxyInfoModel.JsonStringArray.Source galaxyTags = default, in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source githubBranch = default, in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source issueTrackerUrl = default, in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source license = default, in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source minAnsibleContainerVersion = default, in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source minAnsibleVersion = default, in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GalaxyInfoModel.NamespaceName.Source namespaceValue = default, in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.Platforms.Source platforms = default, in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GalaxyInfoModel.RoleName.Source roleName = default, in Corvus.AnsibleMetaBenchmark.Current.JsonBoolean.Source standalone = default, in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GalaxyInfoModel.VideoLinksArray.Source videoLinks = default, int initialCapacity = 30)
+        public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source author = default, in Corvus.Text.Json.JsonElement.Source cloudPlatforms = default, in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source company = default, in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source description = default, in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GalaxyInfoModel.JsonStringArray.Source galaxyTags = default, in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source githubBranch = default, in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source issueTrackerUrl = default, in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source license = default, in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source minAnsibleContainerVersion = default, in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source minAnsibleVersion = default, in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GalaxyInfoModel.NamespaceName.Source namespaceValue = default, in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.Platforms.Source platforms = default, in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GalaxyInfoModel.RoleName.Source roleName = default, in Corvus.AnsibleMetaBenchmark.Current.JsonBoolean.Source standalone = default, in Corvus.AnsibleMetaBenchmark.Current.JsonArray.Source videoLinks = default, int initialCapacity = 30)
         {
             JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
             ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
@@ -2133,7 +2169,7 @@ public readonly partial struct AnsibleMetaSchema
         /// <param name="videoLinks">The value of the property.</param>
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
         /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-        public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source author = default, in Corvus.Text.Json.JsonElement.Source<TContext> cloudPlatforms = default, in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source company = default, in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source description = default, in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GalaxyInfoModel.JsonStringArray.Source<TContext> galaxyTags = default, in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source githubBranch = default, in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source issueTrackerUrl = default, in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source license = default, in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source minAnsibleContainerVersion = default, in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source minAnsibleVersion = default, in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GalaxyInfoModel.NamespaceName.Source namespaceValue = default, in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.Platforms.Source<TContext> platforms = default, in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GalaxyInfoModel.RoleName.Source roleName = default, in Corvus.AnsibleMetaBenchmark.Current.JsonBoolean.Source standalone = default, in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GalaxyInfoModel.VideoLinksArray.Source<TContext> videoLinks = default, int initialCapacity = 30)
+        public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source author = default, in Corvus.Text.Json.JsonElement.Source<TContext> cloudPlatforms = default, in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source company = default, in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source description = default, in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GalaxyInfoModel.JsonStringArray.Source<TContext> galaxyTags = default, in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source githubBranch = default, in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source issueTrackerUrl = default, in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source license = default, in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source minAnsibleContainerVersion = default, in Corvus.AnsibleMetaBenchmark.Current.JsonString.Source minAnsibleVersion = default, in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GalaxyInfoModel.NamespaceName.Source namespaceValue = default, in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.Platforms.Source<TContext> platforms = default, in Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GalaxyInfoModel.RoleName.Source roleName = default, in Corvus.AnsibleMetaBenchmark.Current.JsonBoolean.Source standalone = default, in Corvus.AnsibleMetaBenchmark.Current.JsonArray.Source<TContext> videoLinks = default, int initialCapacity = 30)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif

@@ -402,7 +402,7 @@ public readonly partial struct DependabotSchema
                             else
                             {
                                 // We are going to insert the new value
-                                value.AddAsProperty(JsonPropertyNamesEscaped.MatchValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MatchValue, ref cvb);
                                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                             }
@@ -438,7 +438,7 @@ public readonly partial struct DependabotSchema
                             else
                             {
                                 // We are going to insert the new value
-                                value.AddAsProperty(JsonPropertyNamesEscaped.MatchValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MatchValue, ref cvb);
                                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                             }
@@ -1180,6 +1180,27 @@ public readonly partial struct DependabotSchema
                             }
                         }
 
+                        internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+                        {
+                            switch(_kind)
+                            {
+                                case Kind.Unknown:
+                                    break;
+                                case Kind.JsonElement:
+                                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                                    break;
+                                case Kind.ObjectBuilder:
+                                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => ObjectBuilder.BuildValue(b, ref o));
+                                    break;
+                                case Kind.ArrayBuilder:
+                                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, _arrayBuilder!, static (in b, ref o) => ArrayBuilder.BuildValue(b, ref o));
+                                    break;
+                                default:
+                                    Debug.Fail("Unexpected Kind");
+                                    break;
+                            }
+                        }
+
                         internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
                         {
                             switch(_kind)
@@ -1290,6 +1311,27 @@ public readonly partial struct DependabotSchema
                                     break;
                                 case Kind.ArrayBuilder:
                                     valueBuilder.AddProperty(utf8Name, BuildWithContext.Create(_context, _arrayBuilder!), static (in b, ref o) => ArrayBuilder.BuildValue(b.Context, b.Build, ref o), escapeName, nameRequiresUnescaping);
+                                    break;
+                                default:
+                                    Debug.Fail("Unexpected Kind");
+                                    break;
+                            }
+                        }
+
+                        internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+                        {
+                            switch(_kind)
+                            {
+                                case Kind.Unknown:
+                                    break;
+                                case Kind.Source:
+                                    _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                                    break;
+                                case Kind.ObjectBuilder:
+                                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => ObjectBuilder.BuildValue(b.Context, b.Build, ref o));
+                                    break;
+                                case Kind.ArrayBuilder:
+                                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _arrayBuilder!), static (in b, ref o) => ArrayBuilder.BuildValue(b.Context, b.Build, ref o));
                                     break;
                                 default:
                                     Debug.Fail("Unexpected Kind");
@@ -1434,7 +1476,7 @@ public readonly partial struct DependabotSchema
                         /// </summary>
                         internal static void Create(ref ComplexValueBuilder builder, in Corvus.DependabotBenchmark.Current.DependabotSchema.RequiredDirectoryAndPackageManagerAndUpdateScheduleArray.RequiredDirectoryAndPackageManagerAndUpdateSchedule.IgnoredUpdatesEntityArray.IgnoredUpdatesEntity.MatchEntity.Source match = default)
                         {
-                            match.AddAsProperty(JsonPropertyNamesEscaped.MatchValue, ref builder, escapeName: false);
+                            match.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MatchValue, ref builder);
                         }
 
                         /// <summary>
@@ -1456,7 +1498,7 @@ public readonly partial struct DependabotSchema
                         where TContext : allows ref struct
                         #endif
                         {
-                            match.AddAsProperty(JsonPropertyNamesEscaped.MatchValue, ref builder, escapeName: false);
+                            match.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MatchValue, ref builder);
                         }
 
                         /// <summary>

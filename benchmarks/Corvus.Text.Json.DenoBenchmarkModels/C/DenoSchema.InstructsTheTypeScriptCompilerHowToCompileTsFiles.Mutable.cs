@@ -970,7 +970,7 @@ public readonly partial struct DenoSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.AllowJs, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AllowJs, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1015,7 +1015,7 @@ public readonly partial struct DenoSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.AllowUnreachableCode, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AllowUnreachableCode, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1060,7 +1060,7 @@ public readonly partial struct DenoSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.AllowUnusedLabels, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AllowUnusedLabels, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1105,7 +1105,7 @@ public readonly partial struct DenoSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.CheckJs, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CheckJs, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1150,7 +1150,7 @@ public readonly partial struct DenoSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.ExactOptionalPropertyTypes, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ExactOptionalPropertyTypes, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1195,7 +1195,7 @@ public readonly partial struct DenoSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.ExperimentalDecorators, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ExperimentalDecorators, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1240,7 +1240,7 @@ public readonly partial struct DenoSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Jsx, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Jsx, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1285,7 +1285,7 @@ public readonly partial struct DenoSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.JsxFactory, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.JsxFactory, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1330,7 +1330,7 @@ public readonly partial struct DenoSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.JsxFragmentFactory, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.JsxFragmentFactory, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1375,7 +1375,7 @@ public readonly partial struct DenoSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.JsxImportSource, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.JsxImportSource, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1420,7 +1420,7 @@ public readonly partial struct DenoSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.KeyofStringsOnly, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.KeyofStringsOnly, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1465,7 +1465,7 @@ public readonly partial struct DenoSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Lib, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Lib, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1501,7 +1501,7 @@ public readonly partial struct DenoSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Lib, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Lib, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1546,7 +1546,7 @@ public readonly partial struct DenoSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.NoErrorTruncation, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.NoErrorTruncation, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1591,7 +1591,7 @@ public readonly partial struct DenoSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.NoFallthroughCasesInSwitch, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.NoFallthroughCasesInSwitch, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1636,7 +1636,7 @@ public readonly partial struct DenoSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.NoImplicitAny, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.NoImplicitAny, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1681,7 +1681,7 @@ public readonly partial struct DenoSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.NoImplicitOverride, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.NoImplicitOverride, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1726,7 +1726,7 @@ public readonly partial struct DenoSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.NoImplicitReturns, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.NoImplicitReturns, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1771,7 +1771,7 @@ public readonly partial struct DenoSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.NoImplicitThis, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.NoImplicitThis, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1816,7 +1816,7 @@ public readonly partial struct DenoSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.NoImplicitUseStrict, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.NoImplicitUseStrict, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1861,7 +1861,7 @@ public readonly partial struct DenoSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.NoStrictGenericChecks, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.NoStrictGenericChecks, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1906,7 +1906,7 @@ public readonly partial struct DenoSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.NoUncheckedIndexedAccess, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.NoUncheckedIndexedAccess, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1951,7 +1951,7 @@ public readonly partial struct DenoSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.NoUnusedLocals, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.NoUnusedLocals, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1996,7 +1996,7 @@ public readonly partial struct DenoSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.NoUnusedParameters, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.NoUnusedParameters, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -2041,7 +2041,7 @@ public readonly partial struct DenoSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Strict, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Strict, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -2086,7 +2086,7 @@ public readonly partial struct DenoSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.StrictBindCallApply, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.StrictBindCallApply, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -2131,7 +2131,7 @@ public readonly partial struct DenoSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.StrictFunctionTypes, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.StrictFunctionTypes, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -2176,7 +2176,7 @@ public readonly partial struct DenoSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.StrictNullChecks, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.StrictNullChecks, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -2221,7 +2221,7 @@ public readonly partial struct DenoSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.StrictPropertyInitialization, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.StrictPropertyInitialization, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -2266,7 +2266,7 @@ public readonly partial struct DenoSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.SuppressExcessPropertyErrors, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SuppressExcessPropertyErrors, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -2311,7 +2311,7 @@ public readonly partial struct DenoSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.SuppressImplicitAnyIndexErrors, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SuppressImplicitAnyIndexErrors, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -2694,6 +2694,24 @@ public readonly partial struct DenoSchema
                 }
             }
 
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.JsonElement:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                        break;
+                    case Kind.Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
             internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
             {
                 switch(_kind)
@@ -2788,6 +2806,24 @@ public readonly partial struct DenoSchema
                         break;
                     case Kind.Builder:
                         valueBuilder.AddProperty(utf8Name, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o), escapeName, nameRequiresUnescaping);
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.Source:
+                        _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                        break;
+                    case Kind.Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                         break;
                     default:
                         Debug.Fail("Unexpected Kind");
@@ -2904,36 +2940,36 @@ public readonly partial struct DenoSchema
                 in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SuppressExcessPropertyErrorsEntity.Source suppressExcessPropertyErrors = default,
                 in Corvus.DenoBenchmark.Current.DenoSchema.InstructsTheTypeScriptCompilerHowToCompileTsFiles.SuppressImplicitAnyIndexErrorsEntity.Source suppressImplicitAnyIndexErrors = default)
             {
-                allowJs.AddAsProperty(JsonPropertyNamesEscaped.AllowJs, ref builder, escapeName: false);
-                allowUnreachableCode.AddAsProperty(JsonPropertyNamesEscaped.AllowUnreachableCode, ref builder, escapeName: false);
-                allowUnusedLabels.AddAsProperty(JsonPropertyNamesEscaped.AllowUnusedLabels, ref builder, escapeName: false);
-                checkJs.AddAsProperty(JsonPropertyNamesEscaped.CheckJs, ref builder, escapeName: false);
-                exactOptionalPropertyTypes.AddAsProperty(JsonPropertyNamesEscaped.ExactOptionalPropertyTypes, ref builder, escapeName: false);
-                experimentalDecorators.AddAsProperty(JsonPropertyNamesEscaped.ExperimentalDecorators, ref builder, escapeName: false);
-                jsx.AddAsProperty(JsonPropertyNamesEscaped.Jsx, ref builder, escapeName: false);
-                jsxFactory.AddAsProperty(JsonPropertyNamesEscaped.JsxFactory, ref builder, escapeName: false);
-                jsxFragmentFactory.AddAsProperty(JsonPropertyNamesEscaped.JsxFragmentFactory, ref builder, escapeName: false);
-                jsxImportSource.AddAsProperty(JsonPropertyNamesEscaped.JsxImportSource, ref builder, escapeName: false);
-                keyofStringsOnly.AddAsProperty(JsonPropertyNamesEscaped.KeyofStringsOnly, ref builder, escapeName: false);
-                lib.AddAsProperty(JsonPropertyNamesEscaped.Lib, ref builder, escapeName: false);
-                noErrorTruncation.AddAsProperty(JsonPropertyNamesEscaped.NoErrorTruncation, ref builder, escapeName: false);
-                noFallthroughCasesInSwitch.AddAsProperty(JsonPropertyNamesEscaped.NoFallthroughCasesInSwitch, ref builder, escapeName: false);
-                noImplicitAny.AddAsProperty(JsonPropertyNamesEscaped.NoImplicitAny, ref builder, escapeName: false);
-                noImplicitOverride.AddAsProperty(JsonPropertyNamesEscaped.NoImplicitOverride, ref builder, escapeName: false);
-                noImplicitReturns.AddAsProperty(JsonPropertyNamesEscaped.NoImplicitReturns, ref builder, escapeName: false);
-                noImplicitThis.AddAsProperty(JsonPropertyNamesEscaped.NoImplicitThis, ref builder, escapeName: false);
-                noImplicitUseStrict.AddAsProperty(JsonPropertyNamesEscaped.NoImplicitUseStrict, ref builder, escapeName: false);
-                noStrictGenericChecks.AddAsProperty(JsonPropertyNamesEscaped.NoStrictGenericChecks, ref builder, escapeName: false);
-                noUncheckedIndexedAccess.AddAsProperty(JsonPropertyNamesEscaped.NoUncheckedIndexedAccess, ref builder, escapeName: false);
-                noUnusedLocals.AddAsProperty(JsonPropertyNamesEscaped.NoUnusedLocals, ref builder, escapeName: false);
-                noUnusedParameters.AddAsProperty(JsonPropertyNamesEscaped.NoUnusedParameters, ref builder, escapeName: false);
-                strict.AddAsProperty(JsonPropertyNamesEscaped.Strict, ref builder, escapeName: false);
-                strictBindCallApply.AddAsProperty(JsonPropertyNamesEscaped.StrictBindCallApply, ref builder, escapeName: false);
-                strictFunctionTypes.AddAsProperty(JsonPropertyNamesEscaped.StrictFunctionTypes, ref builder, escapeName: false);
-                strictNullChecks.AddAsProperty(JsonPropertyNamesEscaped.StrictNullChecks, ref builder, escapeName: false);
-                strictPropertyInitialization.AddAsProperty(JsonPropertyNamesEscaped.StrictPropertyInitialization, ref builder, escapeName: false);
-                suppressExcessPropertyErrors.AddAsProperty(JsonPropertyNamesEscaped.SuppressExcessPropertyErrors, ref builder, escapeName: false);
-                suppressImplicitAnyIndexErrors.AddAsProperty(JsonPropertyNamesEscaped.SuppressImplicitAnyIndexErrors, ref builder, escapeName: false);
+                allowJs.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AllowJs, ref builder);
+                allowUnreachableCode.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AllowUnreachableCode, ref builder);
+                allowUnusedLabels.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AllowUnusedLabels, ref builder);
+                checkJs.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CheckJs, ref builder);
+                exactOptionalPropertyTypes.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ExactOptionalPropertyTypes, ref builder);
+                experimentalDecorators.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ExperimentalDecorators, ref builder);
+                jsx.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Jsx, ref builder);
+                jsxFactory.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.JsxFactory, ref builder);
+                jsxFragmentFactory.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.JsxFragmentFactory, ref builder);
+                jsxImportSource.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.JsxImportSource, ref builder);
+                keyofStringsOnly.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.KeyofStringsOnly, ref builder);
+                lib.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Lib, ref builder);
+                noErrorTruncation.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.NoErrorTruncation, ref builder);
+                noFallthroughCasesInSwitch.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.NoFallthroughCasesInSwitch, ref builder);
+                noImplicitAny.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.NoImplicitAny, ref builder);
+                noImplicitOverride.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.NoImplicitOverride, ref builder);
+                noImplicitReturns.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.NoImplicitReturns, ref builder);
+                noImplicitThis.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.NoImplicitThis, ref builder);
+                noImplicitUseStrict.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.NoImplicitUseStrict, ref builder);
+                noStrictGenericChecks.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.NoStrictGenericChecks, ref builder);
+                noUncheckedIndexedAccess.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.NoUncheckedIndexedAccess, ref builder);
+                noUnusedLocals.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.NoUnusedLocals, ref builder);
+                noUnusedParameters.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.NoUnusedParameters, ref builder);
+                strict.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Strict, ref builder);
+                strictBindCallApply.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.StrictBindCallApply, ref builder);
+                strictFunctionTypes.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.StrictFunctionTypes, ref builder);
+                strictNullChecks.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.StrictNullChecks, ref builder);
+                strictPropertyInitialization.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.StrictPropertyInitialization, ref builder);
+                suppressExcessPropertyErrors.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SuppressExcessPropertyErrors, ref builder);
+                suppressImplicitAnyIndexErrors.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SuppressImplicitAnyIndexErrors, ref builder);
             }
 
             /// <summary>
@@ -3014,36 +3050,36 @@ public readonly partial struct DenoSchema
             where TContext : allows ref struct
             #endif
             {
-                allowJs.AddAsProperty(JsonPropertyNamesEscaped.AllowJs, ref builder, escapeName: false);
-                allowUnreachableCode.AddAsProperty(JsonPropertyNamesEscaped.AllowUnreachableCode, ref builder, escapeName: false);
-                allowUnusedLabels.AddAsProperty(JsonPropertyNamesEscaped.AllowUnusedLabels, ref builder, escapeName: false);
-                checkJs.AddAsProperty(JsonPropertyNamesEscaped.CheckJs, ref builder, escapeName: false);
-                exactOptionalPropertyTypes.AddAsProperty(JsonPropertyNamesEscaped.ExactOptionalPropertyTypes, ref builder, escapeName: false);
-                experimentalDecorators.AddAsProperty(JsonPropertyNamesEscaped.ExperimentalDecorators, ref builder, escapeName: false);
-                jsx.AddAsProperty(JsonPropertyNamesEscaped.Jsx, ref builder, escapeName: false);
-                jsxFactory.AddAsProperty(JsonPropertyNamesEscaped.JsxFactory, ref builder, escapeName: false);
-                jsxFragmentFactory.AddAsProperty(JsonPropertyNamesEscaped.JsxFragmentFactory, ref builder, escapeName: false);
-                jsxImportSource.AddAsProperty(JsonPropertyNamesEscaped.JsxImportSource, ref builder, escapeName: false);
-                keyofStringsOnly.AddAsProperty(JsonPropertyNamesEscaped.KeyofStringsOnly, ref builder, escapeName: false);
-                lib.AddAsProperty(JsonPropertyNamesEscaped.Lib, ref builder, escapeName: false);
-                noErrorTruncation.AddAsProperty(JsonPropertyNamesEscaped.NoErrorTruncation, ref builder, escapeName: false);
-                noFallthroughCasesInSwitch.AddAsProperty(JsonPropertyNamesEscaped.NoFallthroughCasesInSwitch, ref builder, escapeName: false);
-                noImplicitAny.AddAsProperty(JsonPropertyNamesEscaped.NoImplicitAny, ref builder, escapeName: false);
-                noImplicitOverride.AddAsProperty(JsonPropertyNamesEscaped.NoImplicitOverride, ref builder, escapeName: false);
-                noImplicitReturns.AddAsProperty(JsonPropertyNamesEscaped.NoImplicitReturns, ref builder, escapeName: false);
-                noImplicitThis.AddAsProperty(JsonPropertyNamesEscaped.NoImplicitThis, ref builder, escapeName: false);
-                noImplicitUseStrict.AddAsProperty(JsonPropertyNamesEscaped.NoImplicitUseStrict, ref builder, escapeName: false);
-                noStrictGenericChecks.AddAsProperty(JsonPropertyNamesEscaped.NoStrictGenericChecks, ref builder, escapeName: false);
-                noUncheckedIndexedAccess.AddAsProperty(JsonPropertyNamesEscaped.NoUncheckedIndexedAccess, ref builder, escapeName: false);
-                noUnusedLocals.AddAsProperty(JsonPropertyNamesEscaped.NoUnusedLocals, ref builder, escapeName: false);
-                noUnusedParameters.AddAsProperty(JsonPropertyNamesEscaped.NoUnusedParameters, ref builder, escapeName: false);
-                strict.AddAsProperty(JsonPropertyNamesEscaped.Strict, ref builder, escapeName: false);
-                strictBindCallApply.AddAsProperty(JsonPropertyNamesEscaped.StrictBindCallApply, ref builder, escapeName: false);
-                strictFunctionTypes.AddAsProperty(JsonPropertyNamesEscaped.StrictFunctionTypes, ref builder, escapeName: false);
-                strictNullChecks.AddAsProperty(JsonPropertyNamesEscaped.StrictNullChecks, ref builder, escapeName: false);
-                strictPropertyInitialization.AddAsProperty(JsonPropertyNamesEscaped.StrictPropertyInitialization, ref builder, escapeName: false);
-                suppressExcessPropertyErrors.AddAsProperty(JsonPropertyNamesEscaped.SuppressExcessPropertyErrors, ref builder, escapeName: false);
-                suppressImplicitAnyIndexErrors.AddAsProperty(JsonPropertyNamesEscaped.SuppressImplicitAnyIndexErrors, ref builder, escapeName: false);
+                allowJs.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AllowJs, ref builder);
+                allowUnreachableCode.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AllowUnreachableCode, ref builder);
+                allowUnusedLabels.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AllowUnusedLabels, ref builder);
+                checkJs.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CheckJs, ref builder);
+                exactOptionalPropertyTypes.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ExactOptionalPropertyTypes, ref builder);
+                experimentalDecorators.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ExperimentalDecorators, ref builder);
+                jsx.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Jsx, ref builder);
+                jsxFactory.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.JsxFactory, ref builder);
+                jsxFragmentFactory.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.JsxFragmentFactory, ref builder);
+                jsxImportSource.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.JsxImportSource, ref builder);
+                keyofStringsOnly.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.KeyofStringsOnly, ref builder);
+                lib.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Lib, ref builder);
+                noErrorTruncation.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.NoErrorTruncation, ref builder);
+                noFallthroughCasesInSwitch.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.NoFallthroughCasesInSwitch, ref builder);
+                noImplicitAny.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.NoImplicitAny, ref builder);
+                noImplicitOverride.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.NoImplicitOverride, ref builder);
+                noImplicitReturns.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.NoImplicitReturns, ref builder);
+                noImplicitThis.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.NoImplicitThis, ref builder);
+                noImplicitUseStrict.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.NoImplicitUseStrict, ref builder);
+                noStrictGenericChecks.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.NoStrictGenericChecks, ref builder);
+                noUncheckedIndexedAccess.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.NoUncheckedIndexedAccess, ref builder);
+                noUnusedLocals.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.NoUnusedLocals, ref builder);
+                noUnusedParameters.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.NoUnusedParameters, ref builder);
+                strict.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Strict, ref builder);
+                strictBindCallApply.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.StrictBindCallApply, ref builder);
+                strictFunctionTypes.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.StrictFunctionTypes, ref builder);
+                strictNullChecks.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.StrictNullChecks, ref builder);
+                strictPropertyInitialization.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.StrictPropertyInitialization, ref builder);
+                suppressExcessPropertyErrors.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SuppressExcessPropertyErrors, ref builder);
+                suppressImplicitAnyIndexErrors.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SuppressImplicitAnyIndexErrors, ref builder);
             }
 
             /// <summary>

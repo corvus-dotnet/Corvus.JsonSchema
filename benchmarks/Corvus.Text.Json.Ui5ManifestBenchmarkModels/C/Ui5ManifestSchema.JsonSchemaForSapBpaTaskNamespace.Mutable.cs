@@ -246,11 +246,11 @@ public readonly partial struct Ui5ManifestSchema
             /// Represents the inputs of the task ui
             /// </para>
             /// </remarks>
-            public Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Http11jsonSchemaOrg1draft071schema.Mutable Inputs
+            public Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Schema.Mutable Inputs
             {
                 get
                 {
-                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.InputsUtf8, out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Http11jsonSchemaOrg1draft071schema.Mutable value))
+                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.InputsUtf8, out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Schema.Mutable value))
                     {
                         return value;
                     }
@@ -292,11 +292,11 @@ public readonly partial struct Ui5ManifestSchema
             /// Represents the outputs of the task ui
             /// </para>
             /// </remarks>
-            public Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Http11jsonSchemaOrg1draft071schema.Mutable Outputs
+            public Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Schema.Mutable Outputs
             {
                 get
                 {
-                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.OutputsUtf8, out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Http11jsonSchemaOrg1draft071schema.Mutable value))
+                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.OutputsUtf8, out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Schema.Mutable value))
                     {
                         return value;
                     }
@@ -357,7 +357,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Version, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Version, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -388,7 +388,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Category, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Category, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -400,7 +400,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>inputs</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetInputs(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Http11jsonSchemaOrg1draft071schema.Source value)
+            public void SetInputs(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Schema.Source value)
             {
                 CheckValidInstance();
 
@@ -421,7 +421,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Inputs, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Inputs, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -433,7 +433,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>inputs</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetInputs<TContext>(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Http11jsonSchemaOrg1draft071schema.Source<TContext> value)
+            public void SetInputs<TContext>(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Schema.Source<TContext> value)
 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
 #endif
@@ -457,7 +457,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Inputs, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Inputs, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -500,7 +500,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Outcomes, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Outcomes, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -534,7 +534,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Outcomes, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Outcomes, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -546,7 +546,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>outputs</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetOutputs(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Http11jsonSchemaOrg1draft071schema.Source value)
+            public void SetOutputs(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Schema.Source value)
             {
                 CheckValidInstance();
 
@@ -567,7 +567,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Outputs, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Outputs, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -579,7 +579,7 @@ public readonly partial struct Ui5ManifestSchema
             /// Set the <c>outputs</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetOutputs<TContext>(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Http11jsonSchemaOrg1draft071schema.Source<TContext> value)
+            public void SetOutputs<TContext>(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Schema.Source<TContext> value)
 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
 #endif
@@ -603,7 +603,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Outputs, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Outputs, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -846,6 +846,24 @@ public readonly partial struct Ui5ManifestSchema
                 }
             }
 
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.JsonElement:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                        break;
+                    case Kind.Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
             internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
             {
                 switch(_kind)
@@ -948,6 +966,24 @@ public readonly partial struct Ui5ManifestSchema
                 }
             }
 
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.Source:
+                        _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                        break;
+                    case Kind.Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
             internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
             {
                 switch(_kind)
@@ -1029,14 +1065,14 @@ public readonly partial struct Ui5ManifestSchema
                 in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapBpaTaskNamespace.VersionEntity.Source version,
                 in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapBpaTaskNamespace.RepresentsTheCategoryOfTheTaskUi.Source category,
                 in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapBpaTaskNamespace.OutcomesEntityArray.Source outcomes,
-                in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Http11jsonSchemaOrg1draft071schema.Source inputs = default,
-                in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Http11jsonSchemaOrg1draft071schema.Source outputs = default)
+                in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Schema.Source inputs = default,
+                in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Schema.Source outputs = default)
             {
-                version.AddAsProperty(JsonPropertyNamesEscaped.Version, ref builder, escapeName: false);
-                category.AddAsProperty(JsonPropertyNamesEscaped.Category, ref builder, escapeName: false);
-                outcomes.AddAsProperty(JsonPropertyNamesEscaped.Outcomes, ref builder, escapeName: false);
-                inputs.AddAsProperty(JsonPropertyNamesEscaped.Inputs, ref builder, escapeName: false);
-                outputs.AddAsProperty(JsonPropertyNamesEscaped.Outputs, ref builder, escapeName: false);
+                version.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Version, ref builder);
+                category.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Category, ref builder);
+                outcomes.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Outcomes, ref builder);
+                inputs.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Inputs, ref builder);
+                outputs.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Outputs, ref builder);
             }
 
             /// <summary>
@@ -1046,8 +1082,8 @@ public readonly partial struct Ui5ManifestSchema
                 in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapBpaTaskNamespace.VersionEntity.Source version,
                 in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapBpaTaskNamespace.RepresentsTheCategoryOfTheTaskUi.Source category,
                 in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapBpaTaskNamespace.OutcomesEntityArray.Source outcomes,
-                in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Http11jsonSchemaOrg1draft071schema.Source inputs = default,
-                in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Http11jsonSchemaOrg1draft071schema.Source outputs = default)
+                in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Schema.Source inputs = default,
+                in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Schema.Source outputs = default)
             {
                 Create(ref _builder, version, category, outcomes, inputs, outputs);
             }
@@ -1061,17 +1097,17 @@ public readonly partial struct Ui5ManifestSchema
                 in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapBpaTaskNamespace.VersionEntity.Source version,
                 in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapBpaTaskNamespace.RepresentsTheCategoryOfTheTaskUi.Source category,
                 in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapBpaTaskNamespace.OutcomesEntityArray.Source<TContext> outcomes,
-                in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Http11jsonSchemaOrg1draft071schema.Source<TContext> inputs = default,
-                in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Http11jsonSchemaOrg1draft071schema.Source<TContext> outputs = default)
+                in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Schema.Source<TContext> inputs = default,
+                in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Schema.Source<TContext> outputs = default)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif
             {
-                version.AddAsProperty(JsonPropertyNamesEscaped.Version, ref builder, escapeName: false);
-                category.AddAsProperty(JsonPropertyNamesEscaped.Category, ref builder, escapeName: false);
-                outcomes.AddAsProperty(JsonPropertyNamesEscaped.Outcomes, ref builder, escapeName: false);
-                inputs.AddAsProperty(JsonPropertyNamesEscaped.Inputs, ref builder, escapeName: false);
-                outputs.AddAsProperty(JsonPropertyNamesEscaped.Outputs, ref builder, escapeName: false);
+                version.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Version, ref builder);
+                category.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Category, ref builder);
+                outcomes.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Outcomes, ref builder);
+                inputs.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Inputs, ref builder);
+                outputs.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Outputs, ref builder);
             }
 
             /// <summary>
@@ -1082,8 +1118,8 @@ public readonly partial struct Ui5ManifestSchema
                 in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapBpaTaskNamespace.VersionEntity.Source version,
                 in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapBpaTaskNamespace.RepresentsTheCategoryOfTheTaskUi.Source category,
                 in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapBpaTaskNamespace.OutcomesEntityArray.Source<TContext> outcomes,
-                in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Http11jsonSchemaOrg1draft071schema.Source<TContext> inputs = default,
-                in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Http11jsonSchemaOrg1draft071schema.Source<TContext> outputs = default)
+                in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Schema.Source<TContext> inputs = default,
+                in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Schema.Source<TContext> outputs = default)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif
@@ -1315,7 +1351,7 @@ public readonly partial struct Ui5ManifestSchema
         /// <param name="outputs">The value of the property.</param>
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
         /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-        public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapBpaTaskNamespace.VersionEntity.Source version, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapBpaTaskNamespace.RepresentsTheCategoryOfTheTaskUi.Source category, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapBpaTaskNamespace.OutcomesEntityArray.Source outcomes, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Http11jsonSchemaOrg1draft071schema.Source inputs = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Http11jsonSchemaOrg1draft071schema.Source outputs = default, int initialCapacity = 30)
+        public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapBpaTaskNamespace.VersionEntity.Source version, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapBpaTaskNamespace.RepresentsTheCategoryOfTheTaskUi.Source category, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapBpaTaskNamespace.OutcomesEntityArray.Source outcomes, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Schema.Source inputs = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Schema.Source outputs = default, int initialCapacity = 30)
         {
             JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
             ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
@@ -1341,7 +1377,7 @@ public readonly partial struct Ui5ManifestSchema
         /// <param name="outputs">The value of the property.</param>
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
         /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-        public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapBpaTaskNamespace.VersionEntity.Source version, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapBpaTaskNamespace.RepresentsTheCategoryOfTheTaskUi.Source category, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapBpaTaskNamespace.OutcomesEntityArray.Source<TContext> outcomes, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Http11jsonSchemaOrg1draft071schema.Source<TContext> inputs = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Http11jsonSchemaOrg1draft071schema.Source<TContext> outputs = default, int initialCapacity = 30)
+        public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapBpaTaskNamespace.VersionEntity.Source version, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapBpaTaskNamespace.RepresentsTheCategoryOfTheTaskUi.Source category, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapBpaTaskNamespace.OutcomesEntityArray.Source<TContext> outcomes, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Schema.Source<TContext> inputs = default, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Schema.Source<TContext> outputs = default, int initialCapacity = 30)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif

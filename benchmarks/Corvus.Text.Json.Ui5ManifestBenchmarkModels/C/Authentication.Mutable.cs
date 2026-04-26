@@ -328,7 +328,7 @@ public readonly partial struct Authentication
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Buttons, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Buttons, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -364,7 +364,7 @@ public readonly partial struct Authentication
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Buttons, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Buttons, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -409,7 +409,7 @@ public readonly partial struct Authentication
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.ConnectionName, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ConnectionName, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -454,7 +454,7 @@ public readonly partial struct Authentication
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Text, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Text, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -499,7 +499,7 @@ public readonly partial struct Authentication
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.TokenExchangeResource, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TokenExchangeResource, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -535,7 +535,7 @@ public readonly partial struct Authentication
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.TokenExchangeResource, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TokenExchangeResource, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -580,7 +580,7 @@ public readonly partial struct Authentication
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Type, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Type, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -787,6 +787,24 @@ public readonly partial struct Authentication
             }
         }
 
+        internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+        {
+            switch(_kind)
+            {
+                case Kind.Unknown:
+                    break;
+                case Kind.JsonElement:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                    break;
+                case Kind.Builder:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
+                    break;
+                default:
+                    Debug.Fail("Unexpected Kind");
+                    break;
+            }
+        }
+
         internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
         {
             switch(_kind)
@@ -888,6 +906,24 @@ public readonly partial struct Authentication
             }
         }
 
+        internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+        {
+            switch(_kind)
+            {
+                case Kind.Unknown:
+                    break;
+                case Kind.Source:
+                    _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                    break;
+                case Kind.Builder:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
+                    break;
+                default:
+                    Debug.Fail("Unexpected Kind");
+                    break;
+            }
+        }
+
         internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
         {
             switch(_kind)
@@ -972,11 +1008,11 @@ public readonly partial struct Authentication
             in Corvus.Ui5ManifestBenchmark.Current.TokenExchangeResource.Source tokenExchangeResource = default,
             in Corvus.Ui5ManifestBenchmark.Current.Authentication.MustBeAuthentication.Source type = default)
         {
-            buttons.AddAsProperty(JsonPropertyNamesEscaped.Buttons, ref builder, escapeName: false);
-            connectionName.AddAsProperty(JsonPropertyNamesEscaped.ConnectionName, ref builder, escapeName: false);
-            text.AddAsProperty(JsonPropertyNamesEscaped.Text, ref builder, escapeName: false);
-            tokenExchangeResource.AddAsProperty(JsonPropertyNamesEscaped.TokenExchangeResource, ref builder, escapeName: false);
-            type.AddAsProperty(JsonPropertyNamesEscaped.Type, ref builder, escapeName: false);
+            buttons.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Buttons, ref builder);
+            connectionName.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ConnectionName, ref builder);
+            text.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Text, ref builder);
+            tokenExchangeResource.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TokenExchangeResource, ref builder);
+            type.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Type, ref builder);
         }
 
         /// <summary>
@@ -1007,11 +1043,11 @@ public readonly partial struct Authentication
         where TContext : allows ref struct
         #endif
         {
-            buttons.AddAsProperty(JsonPropertyNamesEscaped.Buttons, ref builder, escapeName: false);
-            connectionName.AddAsProperty(JsonPropertyNamesEscaped.ConnectionName, ref builder, escapeName: false);
-            text.AddAsProperty(JsonPropertyNamesEscaped.Text, ref builder, escapeName: false);
-            tokenExchangeResource.AddAsProperty(JsonPropertyNamesEscaped.TokenExchangeResource, ref builder, escapeName: false);
-            type.AddAsProperty(JsonPropertyNamesEscaped.Type, ref builder, escapeName: false);
+            buttons.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Buttons, ref builder);
+            connectionName.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ConnectionName, ref builder);
+            text.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Text, ref builder);
+            tokenExchangeResource.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TokenExchangeResource, ref builder);
+            type.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Type, ref builder);
         }
 
         /// <summary>

@@ -681,6 +681,33 @@ public readonly partial struct CmakePresetsSchema
                                 /// </summary>
                                 public static ReadOnlySpan<byte> Stride => "stride"u8;
                             }
+
+                            /// <summary>
+                            /// Provides pre-baked property name blobs for fast builder property storage.
+                            /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
+                            /// </summary>
+                            private static class JsonPropertyNamesPrebaked
+                            {
+                                /// <summary>
+                                /// Gets the pre-baked property name blob for <see cref="End"/>.
+                                /// </summary>
+                                public static ReadOnlySpan<byte> End => [0x55, 0x00, 0x00, 0x00, 0x22, 0x65, 0x6E, 0x64, 0x22];
+
+                                /// <summary>
+                                /// Gets the pre-baked property name blob for <see cref="SpecificTests"/>.
+                                /// </summary>
+                                public static ReadOnlySpan<byte> SpecificTests => [0xF5, 0x00, 0x00, 0x00, 0x22, 0x73, 0x70, 0x65, 0x63, 0x69, 0x66, 0x69, 0x63, 0x54, 0x65, 0x73, 0x74, 0x73, 0x22];
+
+                                /// <summary>
+                                /// Gets the pre-baked property name blob for <see cref="Start"/>.
+                                /// </summary>
+                                public static ReadOnlySpan<byte> Start => [0x75, 0x00, 0x00, 0x00, 0x22, 0x73, 0x74, 0x61, 0x72, 0x74, 0x22];
+
+                                /// <summary>
+                                /// Gets the pre-baked property name blob for <see cref="Stride"/>.
+                                /// </summary>
+                                public static ReadOnlySpan<byte> Stride => [0x85, 0x00, 0x00, 0x00, 0x22, 0x73, 0x74, 0x72, 0x69, 0x64, 0x65, 0x22];
+                            }
                         }
                     }
                 }

@@ -80,24 +80,6 @@ public readonly partial struct Ui5ManifestSchema
                 private JsonTokenType TokenType => _parent?.GetJsonTokenType(_idx) ?? JsonTokenType.None;
 
                 /// <summary>
-                /// Conversion to <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ExperimentalChartConfiguration.OneOf0Entity"/>.
-                /// </summary>
-                /// <param name="value">The value from which to convert.</param>
-                public static explicit operator Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ExperimentalChartConfiguration.OneOf0Entity.Mutable(Mutable value)
-                {
-                    return Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ExperimentalChartConfiguration.OneOf0Entity.Mutable.From(value);
-                }
-
-                /// <summary>
-                /// Conversion from <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ExperimentalChartConfiguration.OneOf0Entity"/>.
-                /// </summary>
-                /// <param name="value">The value from which to convert.</param>
-                public static implicit operator Mutable(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ExperimentalChartConfiguration.OneOf0Entity.Mutable value)
-                {
-                    return From(value);
-                }
-
-                /// <summary>
                 /// Conversion to <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.SimpleBinding"/>.
                 /// </summary>
                 /// <param name="value">The value from which to convert.</param>
@@ -422,24 +404,6 @@ public readonly partial struct Ui5ManifestSchema
                     return _parent.TextEquals(_idx, text, isPropertyName: false);
                 }
 
-                /// <summary>
-                /// Apply a composed value.
-                /// </summary>
-                /// <remarks>
-                /// This will add or update any property values provided by the <paramref name="value"/>.
-                /// </remarks>
-                public void Apply(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ExperimentalChartConfiguration.OneOf0Entity value)
-                {
-                    CheckValidInstance();
-
-                    foreach (var property in value.EnumerateObject())
-                    {
-                        JsonElementHelpers.SetPropertyUnsafe(this, property);
-                    }
-
-                    _documentVersion = _parent.Version;
-                }
-
                 /// <inheritdoc/>
                 public void WriteTo(Utf8JsonWriter writer)
                 {
@@ -762,22 +726,22 @@ public readonly partial struct Ui5ManifestSchema
                 /// <typeparam name="TContext">The type of the immutable context to pass in to the match function.</typeparam>
                 /// <typeparam name="TResult">The result of calling the match function.</typeparam>
                 /// <param name="context">The context to pass to the match function.</param>
-                /// <param name="matchOneOf0Entity">Match a <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ExperimentalChartConfiguration.OneOf0Entity"/>.</param>
+                /// <param name="matchJsonObject">Match a <see cref="Corvus.Ui5ManifestBenchmark.Current.JsonObject"/>.</param>
                 /// <param name="matchSimpleBinding">Match a <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.SimpleBinding"/>.</param>
                 /// <param name="defaultMatch">Match any other value.</param>
                 /// <returns>An instance of the value returned by the match function.</returns>
                 public TResult Match<TContext, TResult>(
                     in TContext context,
-                    Matcher<Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ExperimentalChartConfiguration.OneOf0Entity, TContext, TResult> matchOneOf0Entity,
+                    Matcher<Corvus.Ui5ManifestBenchmark.Current.JsonObject, TContext, TResult> matchJsonObject,
                     Matcher<Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.SimpleBinding, TContext, TResult> matchSimpleBinding,
                     Matcher<Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ExperimentalChartConfiguration.Mutable, TContext, TResult> defaultMatch)
 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
 #endif
                 {
-                    if (Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ExperimentalChartConfiguration.OneOf0Entity.JsonSchema.Evaluate(_parent, _idx))
+                    if (Corvus.Ui5ManifestBenchmark.Current.JsonObject.JsonSchema.Evaluate(_parent, _idx))
                     {
-                        return matchOneOf0Entity(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ExperimentalChartConfiguration.OneOf0Entity.Mutable.From(this), context);
+                        return matchJsonObject(Corvus.Ui5ManifestBenchmark.Current.JsonObject.Mutable.From(this), context);
                     }
 
                     if (Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.SimpleBinding.JsonSchema.Evaluate(_parent, _idx))
@@ -792,18 +756,18 @@ public readonly partial struct Ui5ManifestSchema
                 /// Matches the value against the composed values, and returns the result of calling the provided match function for the first match found.
                 /// </summary>
                 /// <typeparam name="TResult">The result of calling the match function.</typeparam>
-                /// <param name="matchOneOf0Entity">Match a <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ExperimentalChartConfiguration.OneOf0Entity"/>.</param>
+                /// <param name="matchJsonObject">Match a <see cref="Corvus.Ui5ManifestBenchmark.Current.JsonObject"/>.</param>
                 /// <param name="matchSimpleBinding">Match a <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.SimpleBinding"/>.</param>
                 /// <param name="defaultMatch">Match any other value.</param>
                 /// <returns>An instance of the value returned by the match function.</returns>
                 public TResult Match<TResult>(
-                    Matcher<Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ExperimentalChartConfiguration.OneOf0Entity, TResult> matchOneOf0Entity,
+                    Matcher<Corvus.Ui5ManifestBenchmark.Current.JsonObject, TResult> matchJsonObject,
                     Matcher<Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.SimpleBinding, TResult> matchSimpleBinding,
                     Matcher<Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ExperimentalChartConfiguration.Mutable, TResult> defaultMatch)
                 {
-                    if (Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ExperimentalChartConfiguration.OneOf0Entity.JsonSchema.Evaluate(_parent, _idx))
+                    if (Corvus.Ui5ManifestBenchmark.Current.JsonObject.JsonSchema.Evaluate(_parent, _idx))
                     {
-                        return matchOneOf0Entity(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ExperimentalChartConfiguration.OneOf0Entity.Mutable.From(this));
+                        return matchJsonObject(Corvus.Ui5ManifestBenchmark.Current.JsonObject.Mutable.From(this));
                     }
 
                     if (Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.SimpleBinding.JsonSchema.Evaluate(_parent, _idx))
@@ -815,15 +779,15 @@ public readonly partial struct Ui5ManifestSchema
                 }
 
                 /// <summary>
-                /// Gets the value as a <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ExperimentalChartConfiguration.OneOf0Entity" />.
+                /// Gets the value as a <see cref="Corvus.Ui5ManifestBenchmark.Current.JsonObject" />.
                 /// </summary>
                 /// <param name="result">The result of the conversions.</param>
                 /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                public bool TryGetAsOneOf0Entity(out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ExperimentalChartConfiguration.OneOf0Entity result)
+                public bool TryGetAsJsonObject(out Corvus.Ui5ManifestBenchmark.Current.JsonObject result)
                 {
-                    if (Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ExperimentalChartConfiguration.OneOf0Entity.JsonSchema.Evaluate(_parent, _idx))
+                    if (Corvus.Ui5ManifestBenchmark.Current.JsonObject.JsonSchema.Evaluate(_parent, _idx))
                     {
-                        result = Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeAnalytical.ExperimentalChartConfiguration.OneOf0Entity.Mutable.From(this);
+                        result = Corvus.Ui5ManifestBenchmark.Current.JsonObject.Mutable.From(this);
                         return true;
                     }
 
@@ -939,6 +903,36 @@ public readonly partial struct Ui5ManifestSchema
                             break;
                         case Kind.Builder:
                             valueBuilder.AddProperty(utf8Name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
+                            break;
+                        default:
+                            Debug.Fail("Unexpected Kind");
+                            break;
+                    }
+                }
+
+                internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+                {
+                    switch(_kind)
+                    {
+                        case Kind.Unknown:
+                            break;
+                        case Kind.JsonElement:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                            break;
+                        case Kind.RawUtf8StringRequiresUnescaping:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, _utf8Backing, escapeValue: false, valueRequiresUnescaping: true);
+                            break;
+                        case Kind.RawUtf8StringNotRequiresUnescaping:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, _utf8Backing, escapeValue: false, valueRequiresUnescaping: false);
+                            break;
+                        case Kind.Utf8String:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, _utf8Backing, escapeValue: true, valueRequiresUnescaping: false);
+                            break;
+                        case Kind.Utf16String:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, _utf16Backing);
+                            break;
+                        case Kind.Builder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                             break;
                         default:
                             Debug.Fail("Unexpected Kind");
@@ -1076,6 +1070,24 @@ public readonly partial struct Ui5ManifestSchema
                             break;
                         case Kind.Builder:
                             valueBuilder.AddProperty(utf8Name, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o), escapeName, nameRequiresUnescaping);
+                            break;
+                        default:
+                            Debug.Fail("Unexpected Kind");
+                            break;
+                    }
+                }
+
+                internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+                {
+                    switch(_kind)
+                    {
+                        case Kind.Unknown:
+                            break;
+                        case Kind.Source:
+                            _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                            break;
+                        case Kind.Builder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                             break;
                         default:
                             Debug.Fail("Unexpected Kind");

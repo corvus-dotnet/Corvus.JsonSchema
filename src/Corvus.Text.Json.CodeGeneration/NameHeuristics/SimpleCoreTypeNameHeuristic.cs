@@ -48,6 +48,8 @@ internal sealed class SimpleCoreTypeNameHeuristic : IBuiltInTypeNameHeuristic
         [CoreTypes.Integer] = "Integer",
         [CoreTypes.Boolean] = "Boolean",
         [CoreTypes.Null] = "Null",
+        [CoreTypes.Array] = "Array",
+        [CoreTypes.Object] = "Object",
     };
 
     private readonly ConcurrentDictionary<string, TypeDeclaration> firstSeen = new();

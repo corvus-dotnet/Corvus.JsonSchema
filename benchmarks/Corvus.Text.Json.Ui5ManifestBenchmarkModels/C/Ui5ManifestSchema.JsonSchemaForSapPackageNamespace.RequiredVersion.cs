@@ -689,6 +689,23 @@ public readonly partial struct Ui5ManifestSchema
                 /// </summary>
                 public static ReadOnlySpan<byte> Version => "version"u8;
             }
+
+            /// <summary>
+            /// Provides pre-baked property name blobs for fast builder property storage.
+            /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
+            /// </summary>
+            private static class JsonPropertyNamesPrebaked
+            {
+                /// <summary>
+                /// Gets the pre-baked property name blob for <see cref="UpgradeNotification"/>.
+                /// </summary>
+                public static ReadOnlySpan<byte> UpgradeNotification => [0x55, 0x01, 0x00, 0x00, 0x22, 0x75, 0x70, 0x67, 0x72, 0x61, 0x64, 0x65, 0x4E, 0x6F, 0x74, 0x69, 0x66, 0x69, 0x63, 0x61, 0x74, 0x69, 0x6F, 0x6E, 0x22];
+
+                /// <summary>
+                /// Gets the pre-baked property name blob for <see cref="Version"/>.
+                /// </summary>
+                public static ReadOnlySpan<byte> Version => [0x95, 0x00, 0x00, 0x00, 0x22, 0x76, 0x65, 0x72, 0x73, 0x69, 0x6F, 0x6E, 0x22];
+            }
         }
     }
 }

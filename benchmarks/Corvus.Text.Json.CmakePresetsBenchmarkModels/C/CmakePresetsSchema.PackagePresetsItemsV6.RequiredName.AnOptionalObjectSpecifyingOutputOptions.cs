@@ -584,6 +584,23 @@ public readonly partial struct CmakePresetsSchema
                     /// </summary>
                     public static ReadOnlySpan<byte> Verbose => "verbose"u8;
                 }
+
+                /// <summary>
+                /// Provides pre-baked property name blobs for fast builder property storage.
+                /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
+                /// </summary>
+                private static class JsonPropertyNamesPrebaked
+                {
+                    /// <summary>
+                    /// Gets the pre-baked property name blob for <see cref="DebugValue"/>.
+                    /// </summary>
+                    public static ReadOnlySpan<byte> DebugValue => [0x75, 0x00, 0x00, 0x00, 0x22, 0x64, 0x65, 0x62, 0x75, 0x67, 0x22];
+
+                    /// <summary>
+                    /// Gets the pre-baked property name blob for <see cref="Verbose"/>.
+                    /// </summary>
+                    public static ReadOnlySpan<byte> Verbose => [0x95, 0x00, 0x00, 0x00, 0x22, 0x76, 0x65, 0x72, 0x62, 0x6F, 0x73, 0x65, 0x22];
+                }
             }
         }
     }

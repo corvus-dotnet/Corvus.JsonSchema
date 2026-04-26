@@ -52,7 +52,7 @@ public readonly partial struct AnsibleMetaSchema
             private static readonly JsonSchemaPathProvider ScmValueSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/scm"u8, buffer, out written);
             private static readonly JsonSchemaPathProvider SrcSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/src"u8, buffer, out written);
             private static readonly JsonSchemaPathProvider TagsValueSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/tags"u8, buffer, out written);
-            private static readonly JsonSchemaPathProvider VarsValueSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/vars"u8, buffer, out written);
+            private static readonly JsonSchemaPathProvider VarsSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/vars"u8, buffer, out written);
             private static readonly JsonSchemaPathProvider VersionSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/version"u8, buffer, out written);
             private static readonly JsonSchemaPathProvider WhenSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/when/$ref"u8, buffer, out written);
 
@@ -146,18 +146,18 @@ public readonly partial struct AnsibleMetaSchema
                 context.CommitChildContext(childContext5.IsMatch, ref childContext5);
             }
 
-            private static void MatchVarsValue(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+            private static void MatchVars(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext6 =
-                    Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DependencyModel.Vars.JsonSchema.PushChildContextUnescaped(
+                    Corvus.AnsibleMetaBenchmark.Current.JsonObject.JsonSchema.PushChildContextUnescaped(
                         parentDocument,
                         parentDocumentIndex,
                         ref context,
-                        JsonPropertyNames.VarsValueUtf8,
-                        evaluationPath: VarsValueSchemaEvaluationPath);
+                        JsonPropertyNames.VarsUtf8,
+                        evaluationPath: VarsSchemaEvaluationPath);
 
-                Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DependencyModel.Vars.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext6);
+                Corvus.AnsibleMetaBenchmark.Current.JsonObject.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext6);
                 context.CommitChildContext(childContext6.IsMatch, ref childContext6);
             }
 
@@ -200,7 +200,7 @@ public readonly partial struct AnsibleMetaSchema
                     (static () => JsonPropertyNames.ScmValueUtf8, MatchScmValue),
                     (static () => JsonPropertyNames.SrcUtf8, MatchSrc),
                     (static () => JsonPropertyNames.TagsValueUtf8, MatchTagsValue),
-                    (static () => JsonPropertyNames.VarsValueUtf8, MatchVarsValue),
+                    (static () => JsonPropertyNames.VarsUtf8, MatchVars),
                     (static () => JsonPropertyNames.VersionUtf8, MatchVersion),
                     (static () => JsonPropertyNames.WhenUtf8, MatchWhen),
                 ]);
@@ -222,17 +222,17 @@ public readonly partial struct AnsibleMetaSchema
             /// <summary>
             /// Gets a provider for the schema location from which this type was generated.
             /// </summary>
-            public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("https://raw.githubusercontent.com/ansible/ansible-lint/main/src/ansiblelint/schemas/meta.json#/definitions/DependencyModel"u8, buffer, out written);
+            public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/definitions/DependencyModel"u8, buffer, out written);
 
             /// <summary>
             /// Gets the schema location from which this type was generated.
             /// </summary>
-            public const string SchemaLocation = "https://raw.githubusercontent.com/ansible/ansible-lint/main/src/ansiblelint/schemas/meta.json#/definitions/DependencyModel";
+            public const string SchemaLocation = "/definitions/DependencyModel";
 
             /// <summary>
             /// Gets the schema location from which this type was generated as a UTF-8 string.
             /// </summary>
-            public static ReadOnlySpan<byte> SchemaLocationUtf8 => "https://raw.githubusercontent.com/ansible/ansible-lint/main/src/ansiblelint/schemas/meta.json#/definitions/DependencyModel"u8;
+            public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/definitions/DependencyModel"u8;
             private static readonly JsonSchemaPathProvider AnyOf0SchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/anyOf/0"u8, buffer, out written);
             private static readonly JsonSchemaPathProvider AnyOf1SchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/anyOf/1"u8, buffer, out written);
             private static readonly JsonSchemaPathProvider AnyOf2SchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/anyOf/2"u8, buffer, out written);

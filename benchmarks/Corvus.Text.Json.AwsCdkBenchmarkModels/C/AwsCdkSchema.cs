@@ -188,11 +188,11 @@ public readonly partial struct AwsCdkSchema
     /// <summary>
     /// Gets the (optional) <c>context</c> property.
     /// </summary>
-    public Corvus.AwsCdkBenchmark.Current.AwsCdkSchema.ContextEntity Context
+    public Corvus.AwsCdkBenchmark.Current.JsonObject Context
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ContextUtf8, out Corvus.AwsCdkBenchmark.Current.AwsCdkSchema.ContextEntity value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ContextUtf8, out Corvus.AwsCdkBenchmark.Current.JsonObject value))
             {
                 return value;
             }
@@ -744,5 +744,37 @@ public readonly partial struct AwsCdkSchema
         /// Gets the escaped UTF-8 JSON property name for <see cref="Watch"/>.
         /// </summary>
         public static ReadOnlySpan<byte> Watch => "watch"u8;
+    }
+
+    /// <summary>
+    /// Provides pre-baked property name blobs for fast builder property storage.
+    /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
+    /// </summary>
+    private static class JsonPropertyNamesPrebaked
+    {
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="App"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> App => [0x55, 0x00, 0x00, 0x00, 0x22, 0x61, 0x70, 0x70, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="BuildValue"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> BuildValue => [0x75, 0x00, 0x00, 0x00, 0x22, 0x62, 0x75, 0x69, 0x6C, 0x64, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Context"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Context => [0x95, 0x00, 0x00, 0x00, 0x22, 0x63, 0x6F, 0x6E, 0x74, 0x65, 0x78, 0x74, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="VersionReporting"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> VersionReporting => [0x25, 0x01, 0x00, 0x00, 0x22, 0x76, 0x65, 0x72, 0x73, 0x69, 0x6F, 0x6E, 0x52, 0x65, 0x70, 0x6F, 0x72, 0x74, 0x69, 0x6E, 0x67, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Watch"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Watch => [0x75, 0x00, 0x00, 0x00, 0x22, 0x77, 0x61, 0x74, 0x63, 0x68, 0x22];
     }
 }

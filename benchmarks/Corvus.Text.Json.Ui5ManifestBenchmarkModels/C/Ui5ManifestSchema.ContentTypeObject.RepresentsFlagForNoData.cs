@@ -283,42 +283,6 @@ public readonly partial struct Ui5ManifestSchema
             private JsonTokenType TokenType => _parent?.GetJsonTokenType(_idx) ?? JsonTokenType.None;
 
             /// <summary>
-            /// Conversion to <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObject.RepresentsFlagForNoData.OneOf1Entity"/>.
-            /// </summary>
-            /// <param name="value">The value from which to convert.</param>
-            public static explicit operator Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObject.RepresentsFlagForNoData.OneOf1Entity(RepresentsFlagForNoData value)
-            {
-                return Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObject.RepresentsFlagForNoData.OneOf1Entity.From(value);
-            }
-
-            /// <summary>
-            /// Conversion from <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObject.RepresentsFlagForNoData.OneOf1Entity"/>.
-            /// </summary>
-            /// <param name="value">The value from which to convert.</param>
-            public static implicit operator RepresentsFlagForNoData(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObject.RepresentsFlagForNoData.OneOf1Entity value)
-            {
-                return From(value);
-            }
-
-            /// <summary>
-            /// Conversion to <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObject.RepresentsFlagForNoData.OneOf2Array"/>.
-            /// </summary>
-            /// <param name="value">The value from which to convert.</param>
-            public static explicit operator Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObject.RepresentsFlagForNoData.OneOf2Array(RepresentsFlagForNoData value)
-            {
-                return Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObject.RepresentsFlagForNoData.OneOf2Array.From(value);
-            }
-
-            /// <summary>
-            /// Conversion from <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObject.RepresentsFlagForNoData.OneOf2Array"/>.
-            /// </summary>
-            /// <param name="value">The value from which to convert.</param>
-            public static implicit operator RepresentsFlagForNoData(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObject.RepresentsFlagForNoData.OneOf2Array value)
-            {
-                return From(value);
-            }
-
-            /// <summary>
             /// Conversion to <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.SimpleBinding"/>.
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
@@ -824,15 +788,15 @@ public readonly partial struct Ui5ManifestSchema
             }
 
             /// <summary>
-            /// Gets the value as a <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObject.RepresentsFlagForNoData.OneOf1Entity" />.
+            /// Gets the value as a <see cref="Corvus.Ui5ManifestBenchmark.Current.JsonObject" />.
             /// </summary>
             /// <param name="result">The result of the conversions.</param>
             /// <returns><see langword="true" /> if the conversion was valid.</returns>
-            public bool TryGetAsOneOf1Entity(out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObject.RepresentsFlagForNoData.OneOf1Entity result)
+            public bool TryGetAsJsonObject(out Corvus.Ui5ManifestBenchmark.Current.JsonObject result)
             {
-                if (Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObject.RepresentsFlagForNoData.OneOf1Entity.JsonSchema.Evaluate(_parent, _idx))
+                if (Corvus.Ui5ManifestBenchmark.Current.JsonObject.JsonSchema.Evaluate(_parent, _idx))
                 {
-                    result = Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObject.RepresentsFlagForNoData.OneOf1Entity.From(this);
+                    result = Corvus.Ui5ManifestBenchmark.Current.JsonObject.From(this);
                     return true;
                 }
 
@@ -841,15 +805,15 @@ public readonly partial struct Ui5ManifestSchema
             }
 
             /// <summary>
-            /// Gets the value as a <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObject.RepresentsFlagForNoData.OneOf2Array" />.
+            /// Gets the value as a <see cref="Corvus.Ui5ManifestBenchmark.Current.JsonArray" />.
             /// </summary>
             /// <param name="result">The result of the conversions.</param>
             /// <returns><see langword="true" /> if the conversion was valid.</returns>
-            public bool TryGetAsOneOf2Array(out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObject.RepresentsFlagForNoData.OneOf2Array result)
+            public bool TryGetAsJsonArray(out Corvus.Ui5ManifestBenchmark.Current.JsonArray result)
             {
-                if (Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObject.RepresentsFlagForNoData.OneOf2Array.JsonSchema.Evaluate(_parent, _idx))
+                if (Corvus.Ui5ManifestBenchmark.Current.JsonArray.JsonSchema.Evaluate(_parent, _idx))
                 {
-                    result = Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObject.RepresentsFlagForNoData.OneOf2Array.From(this);
+                    result = Corvus.Ui5ManifestBenchmark.Current.JsonArray.From(this);
                     return true;
                 }
 
@@ -881,16 +845,16 @@ public readonly partial struct Ui5ManifestSchema
             /// <typeparam name="TResult">The result of calling the match function.</typeparam>
             /// <param name="context">The context to pass to the match function.</param>
             /// <param name="matchJsonBoolean">Match a <see cref="Corvus.Ui5ManifestBenchmark.Current.JsonBoolean"/>.</param>
-            /// <param name="matchOneOf1Entity">Match a <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObject.RepresentsFlagForNoData.OneOf1Entity"/>.</param>
-            /// <param name="matchOneOf2Array">Match a <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObject.RepresentsFlagForNoData.OneOf2Array"/>.</param>
+            /// <param name="matchJsonObject">Match a <see cref="Corvus.Ui5ManifestBenchmark.Current.JsonObject"/>.</param>
+            /// <param name="matchJsonArray">Match a <see cref="Corvus.Ui5ManifestBenchmark.Current.JsonArray"/>.</param>
             /// <param name="matchSimpleBinding">Match a <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.SimpleBinding"/>.</param>
             /// <param name="defaultMatch">Match any other value.</param>
             /// <returns>An instance of the value returned by the match function.</returns>
             public TResult Match<TContext, TResult>(
                 in TContext context,
                 Matcher<Corvus.Ui5ManifestBenchmark.Current.JsonBoolean, TContext, TResult> matchJsonBoolean,
-                Matcher<Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObject.RepresentsFlagForNoData.OneOf1Entity, TContext, TResult> matchOneOf1Entity,
-                Matcher<Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObject.RepresentsFlagForNoData.OneOf2Array, TContext, TResult> matchOneOf2Array,
+                Matcher<Corvus.Ui5ManifestBenchmark.Current.JsonObject, TContext, TResult> matchJsonObject,
+                Matcher<Corvus.Ui5ManifestBenchmark.Current.JsonArray, TContext, TResult> matchJsonArray,
                 Matcher<Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.SimpleBinding, TContext, TResult> matchSimpleBinding,
                 Matcher<Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObject.RepresentsFlagForNoData, TContext, TResult> defaultMatch)
 #if NET9_0_OR_GREATER
@@ -902,14 +866,14 @@ public readonly partial struct Ui5ManifestSchema
                     return matchJsonBoolean(Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.From(this), context);
                 }
 
-                if (Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObject.RepresentsFlagForNoData.OneOf1Entity.JsonSchema.Evaluate(_parent, _idx))
+                if (Corvus.Ui5ManifestBenchmark.Current.JsonObject.JsonSchema.Evaluate(_parent, _idx))
                 {
-                    return matchOneOf1Entity(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObject.RepresentsFlagForNoData.OneOf1Entity.From(this), context);
+                    return matchJsonObject(Corvus.Ui5ManifestBenchmark.Current.JsonObject.From(this), context);
                 }
 
-                if (Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObject.RepresentsFlagForNoData.OneOf2Array.JsonSchema.Evaluate(_parent, _idx))
+                if (Corvus.Ui5ManifestBenchmark.Current.JsonArray.JsonSchema.Evaluate(_parent, _idx))
                 {
-                    return matchOneOf2Array(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObject.RepresentsFlagForNoData.OneOf2Array.From(this), context);
+                    return matchJsonArray(Corvus.Ui5ManifestBenchmark.Current.JsonArray.From(this), context);
                 }
 
                 if (Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.SimpleBinding.JsonSchema.Evaluate(_parent, _idx))
@@ -925,15 +889,15 @@ public readonly partial struct Ui5ManifestSchema
             /// </summary>
             /// <typeparam name="TResult">The result of calling the match function.</typeparam>
             /// <param name="matchJsonBoolean">Match a <see cref="Corvus.Ui5ManifestBenchmark.Current.JsonBoolean"/>.</param>
-            /// <param name="matchOneOf1Entity">Match a <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObject.RepresentsFlagForNoData.OneOf1Entity"/>.</param>
-            /// <param name="matchOneOf2Array">Match a <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObject.RepresentsFlagForNoData.OneOf2Array"/>.</param>
+            /// <param name="matchJsonObject">Match a <see cref="Corvus.Ui5ManifestBenchmark.Current.JsonObject"/>.</param>
+            /// <param name="matchJsonArray">Match a <see cref="Corvus.Ui5ManifestBenchmark.Current.JsonArray"/>.</param>
             /// <param name="matchSimpleBinding">Match a <see cref="Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.SimpleBinding"/>.</param>
             /// <param name="defaultMatch">Match any other value.</param>
             /// <returns>An instance of the value returned by the match function.</returns>
             public TResult Match<TResult>(
                 Matcher<Corvus.Ui5ManifestBenchmark.Current.JsonBoolean, TResult> matchJsonBoolean,
-                Matcher<Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObject.RepresentsFlagForNoData.OneOf1Entity, TResult> matchOneOf1Entity,
-                Matcher<Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObject.RepresentsFlagForNoData.OneOf2Array, TResult> matchOneOf2Array,
+                Matcher<Corvus.Ui5ManifestBenchmark.Current.JsonObject, TResult> matchJsonObject,
+                Matcher<Corvus.Ui5ManifestBenchmark.Current.JsonArray, TResult> matchJsonArray,
                 Matcher<Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.SimpleBinding, TResult> matchSimpleBinding,
                 Matcher<Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObject.RepresentsFlagForNoData, TResult> defaultMatch)
             {
@@ -942,14 +906,14 @@ public readonly partial struct Ui5ManifestSchema
                     return matchJsonBoolean(Corvus.Ui5ManifestBenchmark.Current.JsonBoolean.From(this));
                 }
 
-                if (Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObject.RepresentsFlagForNoData.OneOf1Entity.JsonSchema.Evaluate(_parent, _idx))
+                if (Corvus.Ui5ManifestBenchmark.Current.JsonObject.JsonSchema.Evaluate(_parent, _idx))
                 {
-                    return matchOneOf1Entity(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObject.RepresentsFlagForNoData.OneOf1Entity.From(this));
+                    return matchJsonObject(Corvus.Ui5ManifestBenchmark.Current.JsonObject.From(this));
                 }
 
-                if (Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObject.RepresentsFlagForNoData.OneOf2Array.JsonSchema.Evaluate(_parent, _idx))
+                if (Corvus.Ui5ManifestBenchmark.Current.JsonArray.JsonSchema.Evaluate(_parent, _idx))
                 {
-                    return matchOneOf2Array(Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObject.RepresentsFlagForNoData.OneOf2Array.From(this));
+                    return matchJsonArray(Corvus.Ui5ManifestBenchmark.Current.JsonArray.From(this));
                 }
 
                 if (Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.SimpleBinding.JsonSchema.Evaluate(_parent, _idx))

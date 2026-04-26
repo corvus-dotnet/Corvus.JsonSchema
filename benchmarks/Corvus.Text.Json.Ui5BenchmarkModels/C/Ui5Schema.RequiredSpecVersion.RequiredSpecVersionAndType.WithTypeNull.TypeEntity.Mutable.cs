@@ -395,6 +395,24 @@ public readonly partial struct Ui5Schema
                             }
                         }
 
+                        internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+                        {
+                            switch(_kind)
+                            {
+                                case Kind.Unknown:
+                                    break;
+                                case Kind.JsonElement:
+                                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                                    break;
+                                case Kind.Null:
+                                    valueBuilder.AddPrebakedPropertyNullValue(prebakedPropertyName);
+                                    break;
+                                default:
+                                    Debug.Fail("Unexpected Kind");
+                                    break;
+                            }
+                        }
+
                         internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
                         {
                             switch(_kind)

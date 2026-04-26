@@ -668,5 +668,22 @@ public readonly partial struct CypressSchema
             /// </summary>
             public static ReadOnlySpan<byte> E2e => "e2e"u8;
         }
+
+        /// <summary>
+        /// Provides pre-baked property name blobs for fast builder property storage.
+        /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
+        /// </summary>
+        private static class JsonPropertyNamesPrebaked
+        {
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Component"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Component => [0xB5, 0x00, 0x00, 0x00, 0x22, 0x63, 0x6F, 0x6D, 0x70, 0x6F, 0x6E, 0x65, 0x6E, 0x74, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="E2e"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> E2e => [0x55, 0x00, 0x00, 0x00, 0x22, 0x65, 0x32, 0x65, 0x22];
+        }
     }
 }

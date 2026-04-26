@@ -120,11 +120,11 @@ public readonly partial struct GitpodConfigurationSchema
             /// Environment variables to set.
             /// </para>
             /// </remarks>
-            public Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.TasksEntityArray.TasksEntity.EnvironmentVariablesToSet Env
+            public Corvus.GitpodConfigurationBenchmark.Current.JsonObject Env
             {
                 get
                 {
-                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.EnvUtf8, out Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.TasksEntityArray.TasksEntity.EnvironmentVariablesToSet value))
+                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.EnvUtf8, out Corvus.GitpodConfigurationBenchmark.Current.JsonObject value))
                     {
                         return value;
                     }
@@ -784,6 +784,53 @@ public readonly partial struct GitpodConfigurationSchema
                 /// Gets the escaped UTF-8 JSON property name for <see cref="Prebuild"/>.
                 /// </summary>
                 public static ReadOnlySpan<byte> Prebuild => "prebuild"u8;
+            }
+
+            /// <summary>
+            /// Provides pre-baked property name blobs for fast builder property storage.
+            /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
+            /// </summary>
+            private static class JsonPropertyNamesPrebaked
+            {
+                /// <summary>
+                /// Gets the pre-baked property name blob for <see cref="Before"/>.
+                /// </summary>
+                public static ReadOnlySpan<byte> Before => [0x85, 0x00, 0x00, 0x00, 0x22, 0x62, 0x65, 0x66, 0x6F, 0x72, 0x65, 0x22];
+
+                /// <summary>
+                /// Gets the pre-baked property name blob for <see cref="Command"/>.
+                /// </summary>
+                public static ReadOnlySpan<byte> Command => [0x95, 0x00, 0x00, 0x00, 0x22, 0x63, 0x6F, 0x6D, 0x6D, 0x61, 0x6E, 0x64, 0x22];
+
+                /// <summary>
+                /// Gets the pre-baked property name blob for <see cref="Env"/>.
+                /// </summary>
+                public static ReadOnlySpan<byte> Env => [0x55, 0x00, 0x00, 0x00, 0x22, 0x65, 0x6E, 0x76, 0x22];
+
+                /// <summary>
+                /// Gets the pre-baked property name blob for <see cref="Init"/>.
+                /// </summary>
+                public static ReadOnlySpan<byte> Init => [0x65, 0x00, 0x00, 0x00, 0x22, 0x69, 0x6E, 0x69, 0x74, 0x22];
+
+                /// <summary>
+                /// Gets the pre-baked property name blob for <see cref="Name"/>.
+                /// </summary>
+                public static ReadOnlySpan<byte> Name => [0x65, 0x00, 0x00, 0x00, 0x22, 0x6E, 0x61, 0x6D, 0x65, 0x22];
+
+                /// <summary>
+                /// Gets the pre-baked property name blob for <see cref="OpenIn"/>.
+                /// </summary>
+                public static ReadOnlySpan<byte> OpenIn => [0x85, 0x00, 0x00, 0x00, 0x22, 0x6F, 0x70, 0x65, 0x6E, 0x49, 0x6E, 0x22];
+
+                /// <summary>
+                /// Gets the pre-baked property name blob for <see cref="OpenMode"/>.
+                /// </summary>
+                public static ReadOnlySpan<byte> OpenMode => [0xA5, 0x00, 0x00, 0x00, 0x22, 0x6F, 0x70, 0x65, 0x6E, 0x4D, 0x6F, 0x64, 0x65, 0x22];
+
+                /// <summary>
+                /// Gets the pre-baked property name blob for <see cref="Prebuild"/>.
+                /// </summary>
+                public static ReadOnlySpan<byte> Prebuild => [0xA5, 0x00, 0x00, 0x00, 0x22, 0x70, 0x72, 0x65, 0x62, 0x75, 0x69, 0x6C, 0x64, 0x22];
             }
         }
     }

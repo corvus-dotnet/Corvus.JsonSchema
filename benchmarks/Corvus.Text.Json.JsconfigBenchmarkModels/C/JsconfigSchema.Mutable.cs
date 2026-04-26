@@ -643,7 +643,7 @@ public readonly partial struct JsconfigSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.BuildOptions, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.BuildOptions, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -679,7 +679,7 @@ public readonly partial struct JsconfigSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.BuildOptions, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.BuildOptions, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -724,7 +724,7 @@ public readonly partial struct JsconfigSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.CompileOnSave, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CompileOnSave, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -769,7 +769,7 @@ public readonly partial struct JsconfigSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.CompilerOptions, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CompilerOptions, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -805,7 +805,7 @@ public readonly partial struct JsconfigSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.CompilerOptions, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CompilerOptions, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -850,7 +850,7 @@ public readonly partial struct JsconfigSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Extends, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Extends, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -886,7 +886,7 @@ public readonly partial struct JsconfigSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Extends, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Extends, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -931,7 +931,7 @@ public readonly partial struct JsconfigSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.TypeAcquisition, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TypeAcquisition, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -967,7 +967,7 @@ public readonly partial struct JsconfigSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.TypeAcquisition, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TypeAcquisition, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1012,7 +1012,7 @@ public readonly partial struct JsconfigSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.WatchOptions, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.WatchOptions, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1048,7 +1048,7 @@ public readonly partial struct JsconfigSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.WatchOptions, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.WatchOptions, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1804,6 +1804,24 @@ public readonly partial struct JsconfigSchema
             }
         }
 
+        internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+        {
+            switch(_kind)
+            {
+                case Kind.Unknown:
+                    break;
+                case Kind.JsonElement:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                    break;
+                case Kind.Builder:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
+                    break;
+                default:
+                    Debug.Fail("Unexpected Kind");
+                    break;
+            }
+        }
+
         internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
         {
             switch(_kind)
@@ -1905,6 +1923,24 @@ public readonly partial struct JsconfigSchema
             }
         }
 
+        internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+        {
+            switch(_kind)
+            {
+                case Kind.Unknown:
+                    break;
+                case Kind.Source:
+                    _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                    break;
+                case Kind.Builder:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
+                    break;
+                default:
+                    Debug.Fail("Unexpected Kind");
+                    break;
+            }
+        }
+
         internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
         {
             switch(_kind)
@@ -1990,12 +2026,12 @@ public readonly partial struct JsconfigSchema
             in Corvus.JsconfigBenchmark.Current.JsconfigSchema.TypeAcquisitionDefinition.TypeAcquisitionEntity.Source typeAcquisition = default,
             in Corvus.JsconfigBenchmark.Current.JsconfigSchema.WatchOptionsDefinition.SettingsForTheWatchModeInTypeScript.Source watchOptions = default)
         {
-            buildOptions.AddAsProperty(JsonPropertyNamesEscaped.BuildOptions, ref builder, escapeName: false);
-            compileOnSave.AddAsProperty(JsonPropertyNamesEscaped.CompileOnSave, ref builder, escapeName: false);
-            compilerOptions.AddAsProperty(JsonPropertyNamesEscaped.CompilerOptions, ref builder, escapeName: false);
-            extends.AddAsProperty(JsonPropertyNamesEscaped.Extends, ref builder, escapeName: false);
-            typeAcquisition.AddAsProperty(JsonPropertyNamesEscaped.TypeAcquisition, ref builder, escapeName: false);
-            watchOptions.AddAsProperty(JsonPropertyNamesEscaped.WatchOptions, ref builder, escapeName: false);
+            buildOptions.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.BuildOptions, ref builder);
+            compileOnSave.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CompileOnSave, ref builder);
+            compilerOptions.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CompilerOptions, ref builder);
+            extends.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Extends, ref builder);
+            typeAcquisition.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TypeAcquisition, ref builder);
+            watchOptions.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.WatchOptions, ref builder);
         }
 
         /// <summary>
@@ -2028,12 +2064,12 @@ public readonly partial struct JsconfigSchema
         where TContext : allows ref struct
         #endif
         {
-            buildOptions.AddAsProperty(JsonPropertyNamesEscaped.BuildOptions, ref builder, escapeName: false);
-            compileOnSave.AddAsProperty(JsonPropertyNamesEscaped.CompileOnSave, ref builder, escapeName: false);
-            compilerOptions.AddAsProperty(JsonPropertyNamesEscaped.CompilerOptions, ref builder, escapeName: false);
-            extends.AddAsProperty(JsonPropertyNamesEscaped.Extends, ref builder, escapeName: false);
-            typeAcquisition.AddAsProperty(JsonPropertyNamesEscaped.TypeAcquisition, ref builder, escapeName: false);
-            watchOptions.AddAsProperty(JsonPropertyNamesEscaped.WatchOptions, ref builder, escapeName: false);
+            buildOptions.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.BuildOptions, ref builder);
+            compileOnSave.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CompileOnSave, ref builder);
+            compilerOptions.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CompilerOptions, ref builder);
+            extends.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Extends, ref builder);
+            typeAcquisition.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TypeAcquisition, ref builder);
+            watchOptions.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.WatchOptions, ref builder);
         }
 
         /// <summary>

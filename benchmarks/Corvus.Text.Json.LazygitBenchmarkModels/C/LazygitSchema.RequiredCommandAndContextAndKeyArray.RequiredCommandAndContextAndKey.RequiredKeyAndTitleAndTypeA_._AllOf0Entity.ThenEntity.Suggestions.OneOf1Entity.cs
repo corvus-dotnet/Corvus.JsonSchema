@@ -610,6 +610,18 @@ public readonly partial struct LazygitSchema
                                         /// </summary>
                                         public static ReadOnlySpan<byte> CommandValue => "command"u8;
                                     }
+
+                                    /// <summary>
+                                    /// Provides pre-baked property name blobs for fast builder property storage.
+                                    /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
+                                    /// </summary>
+                                    private static class JsonPropertyNamesPrebaked
+                                    {
+                                        /// <summary>
+                                        /// Gets the pre-baked property name blob for <see cref="CommandValue"/>.
+                                        /// </summary>
+                                        public static ReadOnlySpan<byte> CommandValue => [0x95, 0x00, 0x00, 0x00, 0x22, 0x63, 0x6F, 0x6D, 0x6D, 0x61, 0x6E, 0x64, 0x22];
+                                    }
                                 }
                             }
                         }

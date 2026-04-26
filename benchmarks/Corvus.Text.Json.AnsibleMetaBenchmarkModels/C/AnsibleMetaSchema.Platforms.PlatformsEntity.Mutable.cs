@@ -4174,6 +4174,156 @@ public readonly partial struct AnsibleMetaSchema
                     }
                 }
 
+                internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+                {
+                    switch(_kind)
+                    {
+                        case Kind.Unknown:
+                            break;
+                        case Kind.JsonElement:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                            break;
+                        case Kind.AixPlatformModelBuilder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, _aixPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AixPlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.AlpinePlatformModelBuilder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, _alpinePlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AlpinePlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.AmazonLinuxPlatformModelBuilder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, _amazonLinuxPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AmazonLinuxPlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.AmazonPlatformModelBuilder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, _amazonPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AmazonPlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.AosPlatformModelBuilder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, _aosPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AosPlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.ArchLinuxPlatformModelBuilder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, _archLinuxPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.ArchLinuxPlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.ClearLinuxPlatformModelBuilder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, _clearLinuxPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.ClearLinuxPlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.CumulusPlatformModelBuilder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, _cumulusPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.CumulusPlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.DebianPlatformModelBuilder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, _debianPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DebianPlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.DellOsPlatformModelBuilder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, _dellOsPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DellOsPlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.DevuanPlatformModelBuilder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, _devuanPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DevuanPlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.DragonFlyBsdPlatformModelBuilder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, _dragonFlyBsdPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DragonFlyBsdPlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.ElPlatformModelBuilder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, _elPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.ElPlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.EosPlatformModelBuilder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, _eosPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.EosPlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.FedoraPlatformModelBuilder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, _fedoraPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.FedoraPlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.FreeBsdPlatformModelBuilder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, _freeBsdPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.FreeBsdPlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.GenericBsdPlatformModelBuilder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, _genericBsdPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GenericBsdPlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.GenericLinuxPlatformModelBuilder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, _genericLinuxPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GenericLinuxPlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.GenericUnixPlatformModelBuilder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, _genericUnixPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GenericUnixPlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.GentooPlatformModelBuilder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, _gentooPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GentooPlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.HardenedBsdPlatformModelBuilder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, _hardenedBsdPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.HardenedBsdPlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.IosPlatformModelBuilder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, _iosPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.IosPlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.JunosPlatformModelBuilder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, _junosPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.JunosPlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.KaliPlatformModelBuilder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, _kaliPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.KaliPlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.MacOsPlatformModelBuilder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, _macOsPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.MacOsPlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.MacOsxPlatformModelBuilder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, _macOsxPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.MacOsxPlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.MageiaPlatformModelBuilder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, _mageiaPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.MageiaPlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.NetBsdPlatformModelBuilder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, _netBsdPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.NetBsdPlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.NxosPlatformModelBuilder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, _nxosPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.NxosPlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.OpenBsdPlatformModelBuilder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, _openBsdPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.OpenBsdPlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.OpensusePlatformModelBuilder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, _opensusePlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.OpensusePlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.OpenWrtPlatformModelBuilder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, _openWrtPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.OpenWrtPlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.OracleLinuxPlatformModelBuilder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, _oracleLinuxPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.OracleLinuxPlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.Os10PlatformModelBuilder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, _os10PlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.Os10PlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.PanOsPlatformModelBuilder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, _panOsPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.PanOsPlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.SlesPlatformModelBuilder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, _slesPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.SlesPlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.SmartOsPlatformModelBuilder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, _smartOsPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.SmartOsPlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.SolarisPlatformModelBuilder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, _solarisPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.SolarisPlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.SynologyPlatformModelBuilder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, _synologyPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.SynologyPlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.TmosPlatformModelBuilder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, _tmosPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.TmosPlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.UbuntuPlatformModelBuilder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, _ubuntuPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.UbuntuPlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.VCenterPlatformModelBuilder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, _vCenterPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.VCenterPlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.VoidLinuxPlatformModelBuilder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, _voidLinuxPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.VoidLinuxPlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.VSpherePlatformModelBuilder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, _vSpherePlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.VSpherePlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.WindowsPlatformModelBuilder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, _windowsPlatformModelBuilderInstance!, static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.WindowsPlatformModel.Builder.BuildValue(b, ref o));
+                            break;
+                        default:
+                            Debug.Fail("Unexpected Kind");
+                            break;
+                    }
+                }
+
                 internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
                 {
                     switch(_kind)
@@ -4972,6 +5122,156 @@ public readonly partial struct AnsibleMetaSchema
                             break;
                         case Kind.WindowsPlatformModelBuilder:
                             valueBuilder.AddProperty(utf8Name, BuildWithContext.Create(_context, _windowsPlatformModelBuilderInstance!), static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.WindowsPlatformModel.Builder.BuildValue(b.Context, b.Build, ref o), escapeName, nameRequiresUnescaping);
+                            break;
+                        default:
+                            Debug.Fail("Unexpected Kind");
+                            break;
+                    }
+                }
+
+                internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+                {
+                    switch(_kind)
+                    {
+                        case Kind.Unknown:
+                            break;
+                        case Kind.Source:
+                            _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                            break;
+                        case Kind.AixPlatformModelBuilder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _aixPlatformModelBuilderInstance!), static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AixPlatformModel.Builder.BuildValue(b.Context, b.Build, ref o));
+                            break;
+                        case Kind.AlpinePlatformModelBuilder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _alpinePlatformModelBuilderInstance!), static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AlpinePlatformModel.Builder.BuildValue(b.Context, b.Build, ref o));
+                            break;
+                        case Kind.AmazonLinuxPlatformModelBuilder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _amazonLinuxPlatformModelBuilderInstance!), static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AmazonLinuxPlatformModel.Builder.BuildValue(b.Context, b.Build, ref o));
+                            break;
+                        case Kind.AmazonPlatformModelBuilder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _amazonPlatformModelBuilderInstance!), static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AmazonPlatformModel.Builder.BuildValue(b.Context, b.Build, ref o));
+                            break;
+                        case Kind.AosPlatformModelBuilder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _aosPlatformModelBuilderInstance!), static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.AosPlatformModel.Builder.BuildValue(b.Context, b.Build, ref o));
+                            break;
+                        case Kind.ArchLinuxPlatformModelBuilder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _archLinuxPlatformModelBuilderInstance!), static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.ArchLinuxPlatformModel.Builder.BuildValue(b.Context, b.Build, ref o));
+                            break;
+                        case Kind.ClearLinuxPlatformModelBuilder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _clearLinuxPlatformModelBuilderInstance!), static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.ClearLinuxPlatformModel.Builder.BuildValue(b.Context, b.Build, ref o));
+                            break;
+                        case Kind.CumulusPlatformModelBuilder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _cumulusPlatformModelBuilderInstance!), static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.CumulusPlatformModel.Builder.BuildValue(b.Context, b.Build, ref o));
+                            break;
+                        case Kind.DebianPlatformModelBuilder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _debianPlatformModelBuilderInstance!), static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DebianPlatformModel.Builder.BuildValue(b.Context, b.Build, ref o));
+                            break;
+                        case Kind.DellOsPlatformModelBuilder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _dellOsPlatformModelBuilderInstance!), static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DellOsPlatformModel.Builder.BuildValue(b.Context, b.Build, ref o));
+                            break;
+                        case Kind.DevuanPlatformModelBuilder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _devuanPlatformModelBuilderInstance!), static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DevuanPlatformModel.Builder.BuildValue(b.Context, b.Build, ref o));
+                            break;
+                        case Kind.DragonFlyBsdPlatformModelBuilder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _dragonFlyBsdPlatformModelBuilderInstance!), static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DragonFlyBsdPlatformModel.Builder.BuildValue(b.Context, b.Build, ref o));
+                            break;
+                        case Kind.ElPlatformModelBuilder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _elPlatformModelBuilderInstance!), static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.ElPlatformModel.Builder.BuildValue(b.Context, b.Build, ref o));
+                            break;
+                        case Kind.EosPlatformModelBuilder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _eosPlatformModelBuilderInstance!), static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.EosPlatformModel.Builder.BuildValue(b.Context, b.Build, ref o));
+                            break;
+                        case Kind.FedoraPlatformModelBuilder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _fedoraPlatformModelBuilderInstance!), static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.FedoraPlatformModel.Builder.BuildValue(b.Context, b.Build, ref o));
+                            break;
+                        case Kind.FreeBsdPlatformModelBuilder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _freeBsdPlatformModelBuilderInstance!), static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.FreeBsdPlatformModel.Builder.BuildValue(b.Context, b.Build, ref o));
+                            break;
+                        case Kind.GenericBsdPlatformModelBuilder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _genericBsdPlatformModelBuilderInstance!), static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GenericBsdPlatformModel.Builder.BuildValue(b.Context, b.Build, ref o));
+                            break;
+                        case Kind.GenericLinuxPlatformModelBuilder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _genericLinuxPlatformModelBuilderInstance!), static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GenericLinuxPlatformModel.Builder.BuildValue(b.Context, b.Build, ref o));
+                            break;
+                        case Kind.GenericUnixPlatformModelBuilder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _genericUnixPlatformModelBuilderInstance!), static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GenericUnixPlatformModel.Builder.BuildValue(b.Context, b.Build, ref o));
+                            break;
+                        case Kind.GentooPlatformModelBuilder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _gentooPlatformModelBuilderInstance!), static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GentooPlatformModel.Builder.BuildValue(b.Context, b.Build, ref o));
+                            break;
+                        case Kind.HardenedBsdPlatformModelBuilder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _hardenedBsdPlatformModelBuilderInstance!), static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.HardenedBsdPlatformModel.Builder.BuildValue(b.Context, b.Build, ref o));
+                            break;
+                        case Kind.IosPlatformModelBuilder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _iosPlatformModelBuilderInstance!), static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.IosPlatformModel.Builder.BuildValue(b.Context, b.Build, ref o));
+                            break;
+                        case Kind.JunosPlatformModelBuilder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _junosPlatformModelBuilderInstance!), static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.JunosPlatformModel.Builder.BuildValue(b.Context, b.Build, ref o));
+                            break;
+                        case Kind.KaliPlatformModelBuilder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _kaliPlatformModelBuilderInstance!), static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.KaliPlatformModel.Builder.BuildValue(b.Context, b.Build, ref o));
+                            break;
+                        case Kind.MacOsPlatformModelBuilder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _macOsPlatformModelBuilderInstance!), static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.MacOsPlatformModel.Builder.BuildValue(b.Context, b.Build, ref o));
+                            break;
+                        case Kind.MacOsxPlatformModelBuilder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _macOsxPlatformModelBuilderInstance!), static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.MacOsxPlatformModel.Builder.BuildValue(b.Context, b.Build, ref o));
+                            break;
+                        case Kind.MageiaPlatformModelBuilder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _mageiaPlatformModelBuilderInstance!), static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.MageiaPlatformModel.Builder.BuildValue(b.Context, b.Build, ref o));
+                            break;
+                        case Kind.NetBsdPlatformModelBuilder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _netBsdPlatformModelBuilderInstance!), static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.NetBsdPlatformModel.Builder.BuildValue(b.Context, b.Build, ref o));
+                            break;
+                        case Kind.NxosPlatformModelBuilder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _nxosPlatformModelBuilderInstance!), static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.NxosPlatformModel.Builder.BuildValue(b.Context, b.Build, ref o));
+                            break;
+                        case Kind.OpenBsdPlatformModelBuilder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _openBsdPlatformModelBuilderInstance!), static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.OpenBsdPlatformModel.Builder.BuildValue(b.Context, b.Build, ref o));
+                            break;
+                        case Kind.OpensusePlatformModelBuilder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _opensusePlatformModelBuilderInstance!), static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.OpensusePlatformModel.Builder.BuildValue(b.Context, b.Build, ref o));
+                            break;
+                        case Kind.OpenWrtPlatformModelBuilder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _openWrtPlatformModelBuilderInstance!), static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.OpenWrtPlatformModel.Builder.BuildValue(b.Context, b.Build, ref o));
+                            break;
+                        case Kind.OracleLinuxPlatformModelBuilder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _oracleLinuxPlatformModelBuilderInstance!), static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.OracleLinuxPlatformModel.Builder.BuildValue(b.Context, b.Build, ref o));
+                            break;
+                        case Kind.Os10PlatformModelBuilder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _os10PlatformModelBuilderInstance!), static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.Os10PlatformModel.Builder.BuildValue(b.Context, b.Build, ref o));
+                            break;
+                        case Kind.PanOsPlatformModelBuilder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _panOsPlatformModelBuilderInstance!), static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.PanOsPlatformModel.Builder.BuildValue(b.Context, b.Build, ref o));
+                            break;
+                        case Kind.SlesPlatformModelBuilder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _slesPlatformModelBuilderInstance!), static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.SlesPlatformModel.Builder.BuildValue(b.Context, b.Build, ref o));
+                            break;
+                        case Kind.SmartOsPlatformModelBuilder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _smartOsPlatformModelBuilderInstance!), static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.SmartOsPlatformModel.Builder.BuildValue(b.Context, b.Build, ref o));
+                            break;
+                        case Kind.SolarisPlatformModelBuilder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _solarisPlatformModelBuilderInstance!), static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.SolarisPlatformModel.Builder.BuildValue(b.Context, b.Build, ref o));
+                            break;
+                        case Kind.SynologyPlatformModelBuilder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _synologyPlatformModelBuilderInstance!), static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.SynologyPlatformModel.Builder.BuildValue(b.Context, b.Build, ref o));
+                            break;
+                        case Kind.TmosPlatformModelBuilder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _tmosPlatformModelBuilderInstance!), static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.TmosPlatformModel.Builder.BuildValue(b.Context, b.Build, ref o));
+                            break;
+                        case Kind.UbuntuPlatformModelBuilder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _ubuntuPlatformModelBuilderInstance!), static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.UbuntuPlatformModel.Builder.BuildValue(b.Context, b.Build, ref o));
+                            break;
+                        case Kind.VCenterPlatformModelBuilder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _vCenterPlatformModelBuilderInstance!), static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.VCenterPlatformModel.Builder.BuildValue(b.Context, b.Build, ref o));
+                            break;
+                        case Kind.VoidLinuxPlatformModelBuilder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _voidLinuxPlatformModelBuilderInstance!), static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.VoidLinuxPlatformModel.Builder.BuildValue(b.Context, b.Build, ref o));
+                            break;
+                        case Kind.VSpherePlatformModelBuilder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _vSpherePlatformModelBuilderInstance!), static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.VSpherePlatformModel.Builder.BuildValue(b.Context, b.Build, ref o));
+                            break;
+                        case Kind.WindowsPlatformModelBuilder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _windowsPlatformModelBuilderInstance!), static (in b, ref o) => Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.WindowsPlatformModel.Builder.BuildValue(b.Context, b.Build, ref o));
                             break;
                         default:
                             Debug.Fail("Unexpected Kind");

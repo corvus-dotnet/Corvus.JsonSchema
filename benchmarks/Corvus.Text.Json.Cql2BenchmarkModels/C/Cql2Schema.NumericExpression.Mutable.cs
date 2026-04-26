@@ -886,6 +886,10 @@ public readonly partial struct Cql2Schema
 
             private Source(double value) { SimpleTypesBacking.Initialize(ref _simpleTypeBacking, value, static (isAlsoArray, buffer, out written) => Utf8Formatter.TryFormat(isAlsoArray, buffer, out written)); _kind = Kind.NumericSimpleType; }
 
+            private Source(int value) { SimpleTypesBacking.Initialize(ref _simpleTypeBacking, value, static (isAlsoArray, buffer, out written) => Utf8Formatter.TryFormat(isAlsoArray, buffer, out written)); _kind = Kind.NumericSimpleType; }
+
+            private Source(long value) { SimpleTypesBacking.Initialize(ref _simpleTypeBacking, value, static (isAlsoArray, buffer, out written) => Utf8Formatter.TryFormat(isAlsoArray, buffer, out written)); _kind = Kind.NumericSimpleType; }
+
             public Source(Corvus.Cql2Benchmark.Current.Cql2Schema.ArithmeticExpression.Builder.Build value) {_arithmeticExpressionBuilderInstance = value; _kind = Kind.ArithmeticExpressionBuilder; }
 
             public static implicit operator Source(NumericExpression instance) => new(JsonElement.From(instance));
@@ -916,6 +920,30 @@ public readonly partial struct Cql2Schema
                         break;
                     case Kind.ArithmeticExpressionBuilder:
                         valueBuilder.AddProperty(utf8Name, _arithmeticExpressionBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.ArithmeticExpression.Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.JsonElement:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                        break;
+                    case Kind.NumericSimpleType:
+                        valueBuilder.AddPrebakedPropertyFormattedNumber(prebakedPropertyName, _simpleTypeBacking.Span());
+                        break;
+                    case Kind.FormattedNumber:
+                        valueBuilder.AddPrebakedPropertyFormattedNumber(prebakedPropertyName, _utf8Backing);
+                        break;
+                    case Kind.ArithmeticExpressionBuilder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _arithmeticExpressionBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.ArithmeticExpression.Builder.BuildValue(b, ref o));
                         break;
                     default:
                         Debug.Fail("Unexpected Kind");
@@ -1035,6 +1063,24 @@ public readonly partial struct Cql2Schema
                         break;
                     case Kind.ArithmeticExpressionBuilder:
                         valueBuilder.AddProperty(utf8Name, BuildWithContext.Create(_context, _arithmeticExpressionBuilderInstance!), static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.ArithmeticExpression.Builder.BuildValue(b.Context, b.Build, ref o), escapeName, nameRequiresUnescaping);
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.Source:
+                        _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                        break;
+                    case Kind.ArithmeticExpressionBuilder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _arithmeticExpressionBuilderInstance!), static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.ArithmeticExpression.Builder.BuildValue(b.Context, b.Build, ref o));
                         break;
                     default:
                         Debug.Fail("Unexpected Kind");

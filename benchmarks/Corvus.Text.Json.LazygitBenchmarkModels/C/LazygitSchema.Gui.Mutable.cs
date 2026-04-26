@@ -940,7 +940,7 @@ public readonly partial struct LazygitSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.AnimateExplosionValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AnimateExplosionValue, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -985,7 +985,7 @@ public readonly partial struct LazygitSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.AuthorColorsValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AuthorColorsValue, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1021,7 +1021,7 @@ public readonly partial struct LazygitSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.AuthorColorsValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AuthorColorsValue, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1066,7 +1066,7 @@ public readonly partial struct LazygitSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.BorderValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.BorderValue, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1111,7 +1111,7 @@ public readonly partial struct LazygitSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.BranchColorsValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.BranchColorsValue, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1147,7 +1147,7 @@ public readonly partial struct LazygitSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.BranchColorsValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.BranchColorsValue, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1192,7 +1192,7 @@ public readonly partial struct LazygitSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.CommandLogSizeValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CommandLogSizeValue, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1237,7 +1237,7 @@ public readonly partial struct LazygitSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.CommitLengthValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CommitLengthValue, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1273,7 +1273,7 @@ public readonly partial struct LazygitSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.CommitLengthValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CommitLengthValue, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1318,7 +1318,7 @@ public readonly partial struct LazygitSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.ExpandFocusedSidePanelValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ExpandFocusedSidePanelValue, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1363,7 +1363,7 @@ public readonly partial struct LazygitSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.LanguageValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.LanguageValue, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1408,7 +1408,7 @@ public readonly partial struct LazygitSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.MainPanelSplitModeValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MainPanelSplitModeValue, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1453,7 +1453,7 @@ public readonly partial struct LazygitSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.MouseEventsValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MouseEventsValue, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1498,7 +1498,7 @@ public readonly partial struct LazygitSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.NerdFontsVersionValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.NerdFontsVersionValue, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1543,7 +1543,7 @@ public readonly partial struct LazygitSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.ScrollHeightValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ScrollHeightValue, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1588,7 +1588,7 @@ public readonly partial struct LazygitSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.ScrollPastBottomValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ScrollPastBottomValue, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1633,7 +1633,7 @@ public readonly partial struct LazygitSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.ShortTimeFormatValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ShortTimeFormatValue, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1678,7 +1678,7 @@ public readonly partial struct LazygitSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.ShowBottomLineValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ShowBottomLineValue, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1723,7 +1723,7 @@ public readonly partial struct LazygitSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.ShowBranchCommitHashValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ShowBranchCommitHashValue, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1768,7 +1768,7 @@ public readonly partial struct LazygitSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.ShowCommandLogValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ShowCommandLogValue, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1813,7 +1813,7 @@ public readonly partial struct LazygitSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.ShowFileTreeValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ShowFileTreeValue, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1858,7 +1858,7 @@ public readonly partial struct LazygitSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.ShowListFooterValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ShowListFooterValue, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1903,7 +1903,7 @@ public readonly partial struct LazygitSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.ShowRandomTipValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ShowRandomTipValue, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1948,7 +1948,7 @@ public readonly partial struct LazygitSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.SidePanelWidthValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SidePanelWidthValue, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1993,7 +1993,7 @@ public readonly partial struct LazygitSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.SkipDiscardChangeWarningValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SkipDiscardChangeWarningValue, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -2038,7 +2038,7 @@ public readonly partial struct LazygitSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.SkipRewordInEditorWarningValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SkipRewordInEditorWarningValue, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -2083,7 +2083,7 @@ public readonly partial struct LazygitSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.SkipStashWarningValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SkipStashWarningValue, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -2128,7 +2128,7 @@ public readonly partial struct LazygitSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.SplitDiffValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SplitDiffValue, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -2173,7 +2173,7 @@ public readonly partial struct LazygitSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.ThemeValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ThemeValue, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -2209,7 +2209,7 @@ public readonly partial struct LazygitSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.ThemeValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ThemeValue, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -2254,7 +2254,7 @@ public readonly partial struct LazygitSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.TimeFormatValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TimeFormatValue, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -2299,7 +2299,7 @@ public readonly partial struct LazygitSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.WindowSizeValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.WindowSizeValue, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -2506,6 +2506,24 @@ public readonly partial struct LazygitSchema
                 }
             }
 
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.JsonElement:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                        break;
+                    case Kind.Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
             internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
             {
                 switch(_kind)
@@ -2600,6 +2618,24 @@ public readonly partial struct LazygitSchema
                         break;
                     case Kind.Builder:
                         valueBuilder.AddProperty(utf8Name, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o), escapeName, nameRequiresUnescaping);
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.Source:
+                        _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                        break;
+                    case Kind.Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                         break;
                     default:
                         Debug.Fail("Unexpected Kind");
@@ -2714,34 +2750,34 @@ public readonly partial struct LazygitSchema
                 in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.TimeFormat.Source timeFormat = default,
                 in Corvus.LazygitBenchmark.Current.LazygitSchema.Gui.WindowSize.Source windowSize = default)
             {
-                animateExplosion.AddAsProperty(JsonPropertyNamesEscaped.AnimateExplosionValue, ref builder, escapeName: false);
-                authorColors.AddAsProperty(JsonPropertyNamesEscaped.AuthorColorsValue, ref builder, escapeName: false);
-                border.AddAsProperty(JsonPropertyNamesEscaped.BorderValue, ref builder, escapeName: false);
-                branchColors.AddAsProperty(JsonPropertyNamesEscaped.BranchColorsValue, ref builder, escapeName: false);
-                commandLogSize.AddAsProperty(JsonPropertyNamesEscaped.CommandLogSizeValue, ref builder, escapeName: false);
-                commitLength.AddAsProperty(JsonPropertyNamesEscaped.CommitLengthValue, ref builder, escapeName: false);
-                expandFocusedSidePanel.AddAsProperty(JsonPropertyNamesEscaped.ExpandFocusedSidePanelValue, ref builder, escapeName: false);
-                language.AddAsProperty(JsonPropertyNamesEscaped.LanguageValue, ref builder, escapeName: false);
-                mainPanelSplitMode.AddAsProperty(JsonPropertyNamesEscaped.MainPanelSplitModeValue, ref builder, escapeName: false);
-                mouseEvents.AddAsProperty(JsonPropertyNamesEscaped.MouseEventsValue, ref builder, escapeName: false);
-                nerdFontsVersion.AddAsProperty(JsonPropertyNamesEscaped.NerdFontsVersionValue, ref builder, escapeName: false);
-                scrollHeight.AddAsProperty(JsonPropertyNamesEscaped.ScrollHeightValue, ref builder, escapeName: false);
-                scrollPastBottom.AddAsProperty(JsonPropertyNamesEscaped.ScrollPastBottomValue, ref builder, escapeName: false);
-                shortTimeFormat.AddAsProperty(JsonPropertyNamesEscaped.ShortTimeFormatValue, ref builder, escapeName: false);
-                showBottomLine.AddAsProperty(JsonPropertyNamesEscaped.ShowBottomLineValue, ref builder, escapeName: false);
-                showBranchCommitHash.AddAsProperty(JsonPropertyNamesEscaped.ShowBranchCommitHashValue, ref builder, escapeName: false);
-                showCommandLog.AddAsProperty(JsonPropertyNamesEscaped.ShowCommandLogValue, ref builder, escapeName: false);
-                showFileTree.AddAsProperty(JsonPropertyNamesEscaped.ShowFileTreeValue, ref builder, escapeName: false);
-                showListFooter.AddAsProperty(JsonPropertyNamesEscaped.ShowListFooterValue, ref builder, escapeName: false);
-                showRandomTip.AddAsProperty(JsonPropertyNamesEscaped.ShowRandomTipValue, ref builder, escapeName: false);
-                sidePanelWidth.AddAsProperty(JsonPropertyNamesEscaped.SidePanelWidthValue, ref builder, escapeName: false);
-                skipDiscardChangeWarning.AddAsProperty(JsonPropertyNamesEscaped.SkipDiscardChangeWarningValue, ref builder, escapeName: false);
-                skipRewordInEditorWarning.AddAsProperty(JsonPropertyNamesEscaped.SkipRewordInEditorWarningValue, ref builder, escapeName: false);
-                skipStashWarning.AddAsProperty(JsonPropertyNamesEscaped.SkipStashWarningValue, ref builder, escapeName: false);
-                splitDiff.AddAsProperty(JsonPropertyNamesEscaped.SplitDiffValue, ref builder, escapeName: false);
-                theme.AddAsProperty(JsonPropertyNamesEscaped.ThemeValue, ref builder, escapeName: false);
-                timeFormat.AddAsProperty(JsonPropertyNamesEscaped.TimeFormatValue, ref builder, escapeName: false);
-                windowSize.AddAsProperty(JsonPropertyNamesEscaped.WindowSizeValue, ref builder, escapeName: false);
+                animateExplosion.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AnimateExplosionValue, ref builder);
+                authorColors.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AuthorColorsValue, ref builder);
+                border.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.BorderValue, ref builder);
+                branchColors.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.BranchColorsValue, ref builder);
+                commandLogSize.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CommandLogSizeValue, ref builder);
+                commitLength.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CommitLengthValue, ref builder);
+                expandFocusedSidePanel.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ExpandFocusedSidePanelValue, ref builder);
+                language.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.LanguageValue, ref builder);
+                mainPanelSplitMode.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MainPanelSplitModeValue, ref builder);
+                mouseEvents.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MouseEventsValue, ref builder);
+                nerdFontsVersion.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.NerdFontsVersionValue, ref builder);
+                scrollHeight.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ScrollHeightValue, ref builder);
+                scrollPastBottom.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ScrollPastBottomValue, ref builder);
+                shortTimeFormat.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ShortTimeFormatValue, ref builder);
+                showBottomLine.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ShowBottomLineValue, ref builder);
+                showBranchCommitHash.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ShowBranchCommitHashValue, ref builder);
+                showCommandLog.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ShowCommandLogValue, ref builder);
+                showFileTree.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ShowFileTreeValue, ref builder);
+                showListFooter.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ShowListFooterValue, ref builder);
+                showRandomTip.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ShowRandomTipValue, ref builder);
+                sidePanelWidth.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SidePanelWidthValue, ref builder);
+                skipDiscardChangeWarning.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SkipDiscardChangeWarningValue, ref builder);
+                skipRewordInEditorWarning.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SkipRewordInEditorWarningValue, ref builder);
+                skipStashWarning.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SkipStashWarningValue, ref builder);
+                splitDiff.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SplitDiffValue, ref builder);
+                theme.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ThemeValue, ref builder);
+                timeFormat.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TimeFormatValue, ref builder);
+                windowSize.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.WindowSizeValue, ref builder);
             }
 
             /// <summary>
@@ -2818,34 +2854,34 @@ public readonly partial struct LazygitSchema
             where TContext : allows ref struct
             #endif
             {
-                animateExplosion.AddAsProperty(JsonPropertyNamesEscaped.AnimateExplosionValue, ref builder, escapeName: false);
-                authorColors.AddAsProperty(JsonPropertyNamesEscaped.AuthorColorsValue, ref builder, escapeName: false);
-                border.AddAsProperty(JsonPropertyNamesEscaped.BorderValue, ref builder, escapeName: false);
-                branchColors.AddAsProperty(JsonPropertyNamesEscaped.BranchColorsValue, ref builder, escapeName: false);
-                commandLogSize.AddAsProperty(JsonPropertyNamesEscaped.CommandLogSizeValue, ref builder, escapeName: false);
-                commitLength.AddAsProperty(JsonPropertyNamesEscaped.CommitLengthValue, ref builder, escapeName: false);
-                expandFocusedSidePanel.AddAsProperty(JsonPropertyNamesEscaped.ExpandFocusedSidePanelValue, ref builder, escapeName: false);
-                language.AddAsProperty(JsonPropertyNamesEscaped.LanguageValue, ref builder, escapeName: false);
-                mainPanelSplitMode.AddAsProperty(JsonPropertyNamesEscaped.MainPanelSplitModeValue, ref builder, escapeName: false);
-                mouseEvents.AddAsProperty(JsonPropertyNamesEscaped.MouseEventsValue, ref builder, escapeName: false);
-                nerdFontsVersion.AddAsProperty(JsonPropertyNamesEscaped.NerdFontsVersionValue, ref builder, escapeName: false);
-                scrollHeight.AddAsProperty(JsonPropertyNamesEscaped.ScrollHeightValue, ref builder, escapeName: false);
-                scrollPastBottom.AddAsProperty(JsonPropertyNamesEscaped.ScrollPastBottomValue, ref builder, escapeName: false);
-                shortTimeFormat.AddAsProperty(JsonPropertyNamesEscaped.ShortTimeFormatValue, ref builder, escapeName: false);
-                showBottomLine.AddAsProperty(JsonPropertyNamesEscaped.ShowBottomLineValue, ref builder, escapeName: false);
-                showBranchCommitHash.AddAsProperty(JsonPropertyNamesEscaped.ShowBranchCommitHashValue, ref builder, escapeName: false);
-                showCommandLog.AddAsProperty(JsonPropertyNamesEscaped.ShowCommandLogValue, ref builder, escapeName: false);
-                showFileTree.AddAsProperty(JsonPropertyNamesEscaped.ShowFileTreeValue, ref builder, escapeName: false);
-                showListFooter.AddAsProperty(JsonPropertyNamesEscaped.ShowListFooterValue, ref builder, escapeName: false);
-                showRandomTip.AddAsProperty(JsonPropertyNamesEscaped.ShowRandomTipValue, ref builder, escapeName: false);
-                sidePanelWidth.AddAsProperty(JsonPropertyNamesEscaped.SidePanelWidthValue, ref builder, escapeName: false);
-                skipDiscardChangeWarning.AddAsProperty(JsonPropertyNamesEscaped.SkipDiscardChangeWarningValue, ref builder, escapeName: false);
-                skipRewordInEditorWarning.AddAsProperty(JsonPropertyNamesEscaped.SkipRewordInEditorWarningValue, ref builder, escapeName: false);
-                skipStashWarning.AddAsProperty(JsonPropertyNamesEscaped.SkipStashWarningValue, ref builder, escapeName: false);
-                splitDiff.AddAsProperty(JsonPropertyNamesEscaped.SplitDiffValue, ref builder, escapeName: false);
-                theme.AddAsProperty(JsonPropertyNamesEscaped.ThemeValue, ref builder, escapeName: false);
-                timeFormat.AddAsProperty(JsonPropertyNamesEscaped.TimeFormatValue, ref builder, escapeName: false);
-                windowSize.AddAsProperty(JsonPropertyNamesEscaped.WindowSizeValue, ref builder, escapeName: false);
+                animateExplosion.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AnimateExplosionValue, ref builder);
+                authorColors.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AuthorColorsValue, ref builder);
+                border.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.BorderValue, ref builder);
+                branchColors.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.BranchColorsValue, ref builder);
+                commandLogSize.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CommandLogSizeValue, ref builder);
+                commitLength.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CommitLengthValue, ref builder);
+                expandFocusedSidePanel.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ExpandFocusedSidePanelValue, ref builder);
+                language.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.LanguageValue, ref builder);
+                mainPanelSplitMode.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MainPanelSplitModeValue, ref builder);
+                mouseEvents.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MouseEventsValue, ref builder);
+                nerdFontsVersion.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.NerdFontsVersionValue, ref builder);
+                scrollHeight.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ScrollHeightValue, ref builder);
+                scrollPastBottom.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ScrollPastBottomValue, ref builder);
+                shortTimeFormat.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ShortTimeFormatValue, ref builder);
+                showBottomLine.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ShowBottomLineValue, ref builder);
+                showBranchCommitHash.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ShowBranchCommitHashValue, ref builder);
+                showCommandLog.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ShowCommandLogValue, ref builder);
+                showFileTree.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ShowFileTreeValue, ref builder);
+                showListFooter.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ShowListFooterValue, ref builder);
+                showRandomTip.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ShowRandomTipValue, ref builder);
+                sidePanelWidth.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SidePanelWidthValue, ref builder);
+                skipDiscardChangeWarning.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SkipDiscardChangeWarningValue, ref builder);
+                skipRewordInEditorWarning.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SkipRewordInEditorWarningValue, ref builder);
+                skipStashWarning.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SkipStashWarningValue, ref builder);
+                splitDiff.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SplitDiffValue, ref builder);
+                theme.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ThemeValue, ref builder);
+                timeFormat.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TimeFormatValue, ref builder);
+                windowSize.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.WindowSizeValue, ref builder);
             }
 
             /// <summary>

@@ -419,7 +419,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.CustomDateRangeImplementation, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CustomDateRangeImplementation, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -464,7 +464,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.DefaultValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DefaultValue, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -500,7 +500,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.DefaultValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DefaultValue, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -545,7 +545,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Exclude, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Exclude, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -590,7 +590,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.SelectedValues, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SelectedValues, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -973,6 +973,24 @@ public readonly partial struct Ui5ManifestSchema
                 }
             }
 
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.JsonElement:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                        break;
+                    case Kind.Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
             internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
             {
                 switch(_kind)
@@ -1074,6 +1092,24 @@ public readonly partial struct Ui5ManifestSchema
                 }
             }
 
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.Source:
+                        _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                        break;
+                    case Kind.Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
             internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
             {
                 switch(_kind)
@@ -1157,10 +1193,10 @@ public readonly partial struct Ui5ManifestSchema
                 in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.FilterFieldName.FlagToExcludeValuesFromTheDatePicker.Source exclude = default,
                 in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source selectedValues = default)
             {
-                customDateRangeImplementation.AddAsProperty(JsonPropertyNamesEscaped.CustomDateRangeImplementation, ref builder, escapeName: false);
-                defaultValue.AddAsProperty(JsonPropertyNamesEscaped.DefaultValue, ref builder, escapeName: false);
-                exclude.AddAsProperty(JsonPropertyNamesEscaped.Exclude, ref builder, escapeName: false);
-                selectedValues.AddAsProperty(JsonPropertyNamesEscaped.SelectedValues, ref builder, escapeName: false);
+                customDateRangeImplementation.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CustomDateRangeImplementation, ref builder);
+                defaultValue.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DefaultValue, ref builder);
+                exclude.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Exclude, ref builder);
+                selectedValues.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SelectedValues, ref builder);
             }
 
             /// <summary>
@@ -1189,10 +1225,10 @@ public readonly partial struct Ui5ManifestSchema
             where TContext : allows ref struct
             #endif
             {
-                customDateRangeImplementation.AddAsProperty(JsonPropertyNamesEscaped.CustomDateRangeImplementation, ref builder, escapeName: false);
-                defaultValue.AddAsProperty(JsonPropertyNamesEscaped.DefaultValue, ref builder, escapeName: false);
-                exclude.AddAsProperty(JsonPropertyNamesEscaped.Exclude, ref builder, escapeName: false);
-                selectedValues.AddAsProperty(JsonPropertyNamesEscaped.SelectedValues, ref builder, escapeName: false);
+                customDateRangeImplementation.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CustomDateRangeImplementation, ref builder);
+                defaultValue.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DefaultValue, ref builder);
+                exclude.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Exclude, ref builder);
+                selectedValues.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SelectedValues, ref builder);
             }
 
             /// <summary>

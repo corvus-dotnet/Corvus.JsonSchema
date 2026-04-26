@@ -875,6 +875,27 @@ public readonly partial struct Ui5ManifestSchema
                                 }
                             }
 
+                            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+                            {
+                                switch(_kind)
+                                {
+                                    case Kind.Unknown:
+                                        break;
+                                    case Kind.JsonElement:
+                                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                                        break;
+                                    case Kind.RequiredIdAndNameBuilder:
+                                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _requiredIdAndNameBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.RoutingFlexEnabled.RepresentsTheDefinitionOfTargets.SSEntity.OneOf1Entity.AllOf1Entity.RequiredIdAndName.Builder.BuildValue(b, ref o));
+                                        break;
+                                    case Kind.RequiredIdAndTypeAndUsageBuilder:
+                                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _requiredIdAndTypeAndUsageBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.RoutingFlexEnabled.RepresentsTheDefinitionOfTargets.SSEntity.OneOf1Entity.AllOf1Entity.RequiredIdAndTypeAndUsage.Builder.BuildValue(b, ref o));
+                                        break;
+                                    default:
+                                        Debug.Fail("Unexpected Kind");
+                                        break;
+                                }
+                            }
+
                             internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
                             {
                                 switch(_kind)
@@ -985,6 +1006,27 @@ public readonly partial struct Ui5ManifestSchema
                                         break;
                                     case Kind.RequiredIdAndTypeAndUsageBuilder:
                                         valueBuilder.AddProperty(utf8Name, BuildWithContext.Create(_context, _requiredIdAndTypeAndUsageBuilderInstance!), static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.RoutingFlexEnabled.RepresentsTheDefinitionOfTargets.SSEntity.OneOf1Entity.AllOf1Entity.RequiredIdAndTypeAndUsage.Builder.BuildValue(b.Context, b.Build, ref o), escapeName, nameRequiresUnescaping);
+                                        break;
+                                    default:
+                                        Debug.Fail("Unexpected Kind");
+                                        break;
+                                }
+                            }
+
+                            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+                            {
+                                switch(_kind)
+                                {
+                                    case Kind.Unknown:
+                                        break;
+                                    case Kind.Source:
+                                        _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                                        break;
+                                    case Kind.RequiredIdAndNameBuilder:
+                                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _requiredIdAndNameBuilderInstance!), static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.RoutingFlexEnabled.RepresentsTheDefinitionOfTargets.SSEntity.OneOf1Entity.AllOf1Entity.RequiredIdAndName.Builder.BuildValue(b.Context, b.Build, ref o));
+                                        break;
+                                    case Kind.RequiredIdAndTypeAndUsageBuilder:
+                                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _requiredIdAndTypeAndUsageBuilderInstance!), static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.RoutingFlexEnabled.RepresentsTheDefinitionOfTargets.SSEntity.OneOf1Entity.AllOf1Entity.RequiredIdAndTypeAndUsage.Builder.BuildValue(b.Context, b.Build, ref o));
                                         break;
                                     default:
                                         Debug.Fail("Unexpected Kind");

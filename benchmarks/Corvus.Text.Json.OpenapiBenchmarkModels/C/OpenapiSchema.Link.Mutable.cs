@@ -316,11 +316,11 @@ public readonly partial struct OpenapiSchema
             /// <summary>
             /// Gets the (optional) <c>operationRef</c> property.
             /// </summary>
-            public Corvus.OpenapiBenchmark.Current.JsonUriReferenceNotAsserted.Mutable OperationRef
+            public Corvus.OpenapiBenchmark.Current.JsonUriReference.Mutable OperationRef
             {
                 get
                 {
-                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.OperationRefUtf8, out Corvus.OpenapiBenchmark.Current.JsonUriReferenceNotAsserted.Mutable value))
+                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.OperationRefUtf8, out Corvus.OpenapiBenchmark.Current.JsonUriReference.Mutable value))
                     {
                         return value;
                     }
@@ -415,7 +415,7 @@ public readonly partial struct OpenapiSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Body, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Body, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -451,7 +451,7 @@ public readonly partial struct OpenapiSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Body, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Body, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -496,7 +496,7 @@ public readonly partial struct OpenapiSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Description, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Description, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -541,7 +541,7 @@ public readonly partial struct OpenapiSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.OperationId, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.OperationId, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -565,7 +565,7 @@ public readonly partial struct OpenapiSchema
             /// Set the <c>operationRef</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetOperationRef(in Corvus.OpenapiBenchmark.Current.JsonUriReferenceNotAsserted.Source value)
+            public void SetOperationRef(in Corvus.OpenapiBenchmark.Current.JsonUriReference.Source value)
             {
                 CheckValidInstance();
 
@@ -586,7 +586,7 @@ public readonly partial struct OpenapiSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.OperationRef, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.OperationRef, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -631,7 +631,7 @@ public readonly partial struct OpenapiSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Parameters, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Parameters, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -667,7 +667,7 @@ public readonly partial struct OpenapiSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Parameters, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Parameters, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -712,7 +712,7 @@ public readonly partial struct OpenapiSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.RequestBody, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.RequestBody, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -748,7 +748,7 @@ public readonly partial struct OpenapiSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.RequestBody, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.RequestBody, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1296,6 +1296,24 @@ public readonly partial struct OpenapiSchema
                 }
             }
 
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.JsonElement:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                        break;
+                    case Kind.Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
             internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
             {
                 switch(_kind)
@@ -1399,6 +1417,24 @@ public readonly partial struct OpenapiSchema
                 }
             }
 
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.Source:
+                        _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                        break;
+                    case Kind.Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
             internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
             {
                 switch(_kind)
@@ -1480,16 +1516,16 @@ public readonly partial struct OpenapiSchema
                 in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Server.Source body = default,
                 in Corvus.OpenapiBenchmark.Current.JsonString.Source description = default,
                 in Corvus.OpenapiBenchmark.Current.JsonString.Source operationId = default,
-                in Corvus.OpenapiBenchmark.Current.JsonUriReferenceNotAsserted.Source operationRef = default,
+                in Corvus.OpenapiBenchmark.Current.JsonUriReference.Source operationRef = default,
                 in Corvus.OpenapiBenchmark.Current.OpenapiSchema.MapOfStrings.Source parameters = default,
                 in Corvus.Text.Json.JsonElement.Source requestBody = default)
             {
-                body.AddAsProperty(JsonPropertyNamesEscaped.Body, ref builder, escapeName: false);
-                description.AddAsProperty(JsonPropertyNamesEscaped.Description, ref builder, escapeName: false);
-                operationId.AddAsProperty(JsonPropertyNamesEscaped.OperationId, ref builder, escapeName: false);
-                operationRef.AddAsProperty(JsonPropertyNamesEscaped.OperationRef, ref builder, escapeName: false);
-                parameters.AddAsProperty(JsonPropertyNamesEscaped.Parameters, ref builder, escapeName: false);
-                requestBody.AddAsProperty(JsonPropertyNamesEscaped.RequestBody, ref builder, escapeName: false);
+                body.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Body, ref builder);
+                description.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Description, ref builder);
+                operationId.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.OperationId, ref builder);
+                operationRef.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.OperationRef, ref builder);
+                parameters.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Parameters, ref builder);
+                requestBody.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.RequestBody, ref builder);
             }
 
             /// <summary>
@@ -1499,7 +1535,7 @@ public readonly partial struct OpenapiSchema
                 in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Server.Source body = default,
                 in Corvus.OpenapiBenchmark.Current.JsonString.Source description = default,
                 in Corvus.OpenapiBenchmark.Current.JsonString.Source operationId = default,
-                in Corvus.OpenapiBenchmark.Current.JsonUriReferenceNotAsserted.Source operationRef = default,
+                in Corvus.OpenapiBenchmark.Current.JsonUriReference.Source operationRef = default,
                 in Corvus.OpenapiBenchmark.Current.OpenapiSchema.MapOfStrings.Source parameters = default,
                 in Corvus.Text.Json.JsonElement.Source requestBody = default)
             {
@@ -1515,19 +1551,19 @@ public readonly partial struct OpenapiSchema
                 in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Server.Source<TContext> body = default,
                 in Corvus.OpenapiBenchmark.Current.JsonString.Source description = default,
                 in Corvus.OpenapiBenchmark.Current.JsonString.Source operationId = default,
-                in Corvus.OpenapiBenchmark.Current.JsonUriReferenceNotAsserted.Source operationRef = default,
+                in Corvus.OpenapiBenchmark.Current.JsonUriReference.Source operationRef = default,
                 in Corvus.OpenapiBenchmark.Current.OpenapiSchema.MapOfStrings.Source<TContext> parameters = default,
                 in Corvus.Text.Json.JsonElement.Source<TContext> requestBody = default)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif
             {
-                body.AddAsProperty(JsonPropertyNamesEscaped.Body, ref builder, escapeName: false);
-                description.AddAsProperty(JsonPropertyNamesEscaped.Description, ref builder, escapeName: false);
-                operationId.AddAsProperty(JsonPropertyNamesEscaped.OperationId, ref builder, escapeName: false);
-                operationRef.AddAsProperty(JsonPropertyNamesEscaped.OperationRef, ref builder, escapeName: false);
-                parameters.AddAsProperty(JsonPropertyNamesEscaped.Parameters, ref builder, escapeName: false);
-                requestBody.AddAsProperty(JsonPropertyNamesEscaped.RequestBody, ref builder, escapeName: false);
+                body.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Body, ref builder);
+                description.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Description, ref builder);
+                operationId.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.OperationId, ref builder);
+                operationRef.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.OperationRef, ref builder);
+                parameters.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Parameters, ref builder);
+                requestBody.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.RequestBody, ref builder);
             }
 
             /// <summary>
@@ -1538,7 +1574,7 @@ public readonly partial struct OpenapiSchema
                 in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Server.Source<TContext> body = default,
                 in Corvus.OpenapiBenchmark.Current.JsonString.Source description = default,
                 in Corvus.OpenapiBenchmark.Current.JsonString.Source operationId = default,
-                in Corvus.OpenapiBenchmark.Current.JsonUriReferenceNotAsserted.Source operationRef = default,
+                in Corvus.OpenapiBenchmark.Current.JsonUriReference.Source operationRef = default,
                 in Corvus.OpenapiBenchmark.Current.OpenapiSchema.MapOfStrings.Source<TContext> parameters = default,
                 in Corvus.Text.Json.JsonElement.Source<TContext> requestBody = default)
             #if NET9_0_OR_GREATER
@@ -1861,7 +1897,7 @@ public readonly partial struct OpenapiSchema
         /// <param name="requestBody">The value of the property.</param>
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
         /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-        public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Server.Source body = default, in Corvus.OpenapiBenchmark.Current.JsonString.Source description = default, in Corvus.OpenapiBenchmark.Current.JsonString.Source operationId = default, in Corvus.OpenapiBenchmark.Current.JsonUriReferenceNotAsserted.Source operationRef = default, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.MapOfStrings.Source parameters = default, in Corvus.Text.Json.JsonElement.Source requestBody = default, int initialCapacity = 30)
+        public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Server.Source body = default, in Corvus.OpenapiBenchmark.Current.JsonString.Source description = default, in Corvus.OpenapiBenchmark.Current.JsonString.Source operationId = default, in Corvus.OpenapiBenchmark.Current.JsonUriReference.Source operationRef = default, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.MapOfStrings.Source parameters = default, in Corvus.Text.Json.JsonElement.Source requestBody = default, int initialCapacity = 30)
         {
             JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
             ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
@@ -1888,7 +1924,7 @@ public readonly partial struct OpenapiSchema
         /// <param name="requestBody">The value of the property.</param>
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
         /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-        public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Server.Source<TContext> body = default, in Corvus.OpenapiBenchmark.Current.JsonString.Source description = default, in Corvus.OpenapiBenchmark.Current.JsonString.Source operationId = default, in Corvus.OpenapiBenchmark.Current.JsonUriReferenceNotAsserted.Source operationRef = default, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.MapOfStrings.Source<TContext> parameters = default, in Corvus.Text.Json.JsonElement.Source<TContext> requestBody = default, int initialCapacity = 30)
+        public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.Server.Source<TContext> body = default, in Corvus.OpenapiBenchmark.Current.JsonString.Source description = default, in Corvus.OpenapiBenchmark.Current.JsonString.Source operationId = default, in Corvus.OpenapiBenchmark.Current.JsonUriReference.Source operationRef = default, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.MapOfStrings.Source<TContext> parameters = default, in Corvus.Text.Json.JsonElement.Source<TContext> requestBody = default, int initialCapacity = 30)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif

@@ -655,7 +655,7 @@ public readonly partial struct StaleSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.CloseComment, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CloseComment, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -700,7 +700,7 @@ public readonly partial struct StaleSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.DaysUntilClose, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DaysUntilClose, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -745,7 +745,7 @@ public readonly partial struct StaleSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.DaysUntilStale, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DaysUntilStale, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -790,7 +790,7 @@ public readonly partial struct StaleSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.ExemptAssignees, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ExemptAssignees, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -835,7 +835,7 @@ public readonly partial struct StaleSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.ExemptLabels, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ExemptLabels, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -871,7 +871,7 @@ public readonly partial struct StaleSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.ExemptLabels, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ExemptLabels, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -916,7 +916,7 @@ public readonly partial struct StaleSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.ExemptProjects, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ExemptProjects, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -961,7 +961,7 @@ public readonly partial struct StaleSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Issues, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Issues, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -997,7 +997,7 @@ public readonly partial struct StaleSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Issues, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Issues, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1042,7 +1042,7 @@ public readonly partial struct StaleSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.LimitPerRun, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.LimitPerRun, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1087,7 +1087,7 @@ public readonly partial struct StaleSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.MarkComment, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MarkComment, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1132,7 +1132,7 @@ public readonly partial struct StaleSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Only, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Only, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1177,7 +1177,7 @@ public readonly partial struct StaleSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.OnlyLabels, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.OnlyLabels, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1213,7 +1213,7 @@ public readonly partial struct StaleSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.OnlyLabels, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.OnlyLabels, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1258,7 +1258,7 @@ public readonly partial struct StaleSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Pulls, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Pulls, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1294,7 +1294,7 @@ public readonly partial struct StaleSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Pulls, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Pulls, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1339,7 +1339,7 @@ public readonly partial struct StaleSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.StaleLabel, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.StaleLabel, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1384,7 +1384,7 @@ public readonly partial struct StaleSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.UnmarkComment, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.UnmarkComment, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1802,6 +1802,24 @@ public readonly partial struct StaleSchema
             }
         }
 
+        internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+        {
+            switch(_kind)
+            {
+                case Kind.Unknown:
+                    break;
+                case Kind.JsonElement:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                    break;
+                case Kind.Builder:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
+                    break;
+                default:
+                    Debug.Fail("Unexpected Kind");
+                    break;
+            }
+        }
+
         internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
         {
             switch(_kind)
@@ -1903,6 +1921,24 @@ public readonly partial struct StaleSchema
             }
         }
 
+        internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+        {
+            switch(_kind)
+            {
+                case Kind.Unknown:
+                    break;
+                case Kind.Source:
+                    _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                    break;
+                case Kind.Builder:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
+                    break;
+                default:
+                    Debug.Fail("Unexpected Kind");
+                    break;
+            }
+        }
+
         internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
         {
             switch(_kind)
@@ -1996,20 +2032,20 @@ public readonly partial struct StaleSchema
             in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.StaleLabel.Source staleLabel = default,
             in Corvus.StaleBenchmark.Current.StaleSchema.Configuration.UnmarkComment.Source unmarkComment = default)
         {
-            closeComment.AddAsProperty(JsonPropertyNamesEscaped.CloseComment, ref builder, escapeName: false);
-            daysUntilClose.AddAsProperty(JsonPropertyNamesEscaped.DaysUntilClose, ref builder, escapeName: false);
-            daysUntilStale.AddAsProperty(JsonPropertyNamesEscaped.DaysUntilStale, ref builder, escapeName: false);
-            exemptAssignees.AddAsProperty(JsonPropertyNamesEscaped.ExemptAssignees, ref builder, escapeName: false);
-            exemptLabels.AddAsProperty(JsonPropertyNamesEscaped.ExemptLabels, ref builder, escapeName: false);
-            exemptProjects.AddAsProperty(JsonPropertyNamesEscaped.ExemptProjects, ref builder, escapeName: false);
-            issues.AddAsProperty(JsonPropertyNamesEscaped.Issues, ref builder, escapeName: false);
-            limitPerRun.AddAsProperty(JsonPropertyNamesEscaped.LimitPerRun, ref builder, escapeName: false);
-            markComment.AddAsProperty(JsonPropertyNamesEscaped.MarkComment, ref builder, escapeName: false);
-            only.AddAsProperty(JsonPropertyNamesEscaped.Only, ref builder, escapeName: false);
-            onlyLabels.AddAsProperty(JsonPropertyNamesEscaped.OnlyLabels, ref builder, escapeName: false);
-            pulls.AddAsProperty(JsonPropertyNamesEscaped.Pulls, ref builder, escapeName: false);
-            staleLabel.AddAsProperty(JsonPropertyNamesEscaped.StaleLabel, ref builder, escapeName: false);
-            unmarkComment.AddAsProperty(JsonPropertyNamesEscaped.UnmarkComment, ref builder, escapeName: false);
+            closeComment.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CloseComment, ref builder);
+            daysUntilClose.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DaysUntilClose, ref builder);
+            daysUntilStale.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DaysUntilStale, ref builder);
+            exemptAssignees.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ExemptAssignees, ref builder);
+            exemptLabels.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ExemptLabels, ref builder);
+            exemptProjects.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ExemptProjects, ref builder);
+            issues.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Issues, ref builder);
+            limitPerRun.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.LimitPerRun, ref builder);
+            markComment.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MarkComment, ref builder);
+            only.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Only, ref builder);
+            onlyLabels.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.OnlyLabels, ref builder);
+            pulls.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Pulls, ref builder);
+            staleLabel.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.StaleLabel, ref builder);
+            unmarkComment.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.UnmarkComment, ref builder);
         }
 
         /// <summary>
@@ -2058,20 +2094,20 @@ public readonly partial struct StaleSchema
         where TContext : allows ref struct
         #endif
         {
-            closeComment.AddAsProperty(JsonPropertyNamesEscaped.CloseComment, ref builder, escapeName: false);
-            daysUntilClose.AddAsProperty(JsonPropertyNamesEscaped.DaysUntilClose, ref builder, escapeName: false);
-            daysUntilStale.AddAsProperty(JsonPropertyNamesEscaped.DaysUntilStale, ref builder, escapeName: false);
-            exemptAssignees.AddAsProperty(JsonPropertyNamesEscaped.ExemptAssignees, ref builder, escapeName: false);
-            exemptLabels.AddAsProperty(JsonPropertyNamesEscaped.ExemptLabels, ref builder, escapeName: false);
-            exemptProjects.AddAsProperty(JsonPropertyNamesEscaped.ExemptProjects, ref builder, escapeName: false);
-            issues.AddAsProperty(JsonPropertyNamesEscaped.Issues, ref builder, escapeName: false);
-            limitPerRun.AddAsProperty(JsonPropertyNamesEscaped.LimitPerRun, ref builder, escapeName: false);
-            markComment.AddAsProperty(JsonPropertyNamesEscaped.MarkComment, ref builder, escapeName: false);
-            only.AddAsProperty(JsonPropertyNamesEscaped.Only, ref builder, escapeName: false);
-            onlyLabels.AddAsProperty(JsonPropertyNamesEscaped.OnlyLabels, ref builder, escapeName: false);
-            pulls.AddAsProperty(JsonPropertyNamesEscaped.Pulls, ref builder, escapeName: false);
-            staleLabel.AddAsProperty(JsonPropertyNamesEscaped.StaleLabel, ref builder, escapeName: false);
-            unmarkComment.AddAsProperty(JsonPropertyNamesEscaped.UnmarkComment, ref builder, escapeName: false);
+            closeComment.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CloseComment, ref builder);
+            daysUntilClose.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DaysUntilClose, ref builder);
+            daysUntilStale.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DaysUntilStale, ref builder);
+            exemptAssignees.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ExemptAssignees, ref builder);
+            exemptLabels.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ExemptLabels, ref builder);
+            exemptProjects.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ExemptProjects, ref builder);
+            issues.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Issues, ref builder);
+            limitPerRun.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.LimitPerRun, ref builder);
+            markComment.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MarkComment, ref builder);
+            only.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Only, ref builder);
+            onlyLabels.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.OnlyLabels, ref builder);
+            pulls.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Pulls, ref builder);
+            staleLabel.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.StaleLabel, ref builder);
+            unmarkComment.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.UnmarkComment, ref builder);
         }
 
         /// <summary>

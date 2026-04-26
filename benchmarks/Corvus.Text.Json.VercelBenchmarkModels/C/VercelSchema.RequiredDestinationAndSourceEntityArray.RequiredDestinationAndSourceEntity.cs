@@ -714,6 +714,43 @@ public readonly partial struct VercelSchema
                 /// </summary>
                 public static ReadOnlySpan<byte> StatusCode => "statusCode"u8;
             }
+
+            /// <summary>
+            /// Provides pre-baked property name blobs for fast builder property storage.
+            /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
+            /// </summary>
+            private static class JsonPropertyNamesPrebaked
+            {
+                /// <summary>
+                /// Gets the pre-baked property name blob for <see cref="Destination"/>.
+                /// </summary>
+                public static ReadOnlySpan<byte> Destination => [0xD5, 0x00, 0x00, 0x00, 0x22, 0x64, 0x65, 0x73, 0x74, 0x69, 0x6E, 0x61, 0x74, 0x69, 0x6F, 0x6E, 0x22];
+
+                /// <summary>
+                /// Gets the pre-baked property name blob for <see cref="Has"/>.
+                /// </summary>
+                public static ReadOnlySpan<byte> Has => [0x55, 0x00, 0x00, 0x00, 0x22, 0x68, 0x61, 0x73, 0x22];
+
+                /// <summary>
+                /// Gets the pre-baked property name blob for <see cref="Missing"/>.
+                /// </summary>
+                public static ReadOnlySpan<byte> Missing => [0x95, 0x00, 0x00, 0x00, 0x22, 0x6D, 0x69, 0x73, 0x73, 0x69, 0x6E, 0x67, 0x22];
+
+                /// <summary>
+                /// Gets the pre-baked property name blob for <see cref="Permanent"/>.
+                /// </summary>
+                public static ReadOnlySpan<byte> Permanent => [0xB5, 0x00, 0x00, 0x00, 0x22, 0x70, 0x65, 0x72, 0x6D, 0x61, 0x6E, 0x65, 0x6E, 0x74, 0x22];
+
+                /// <summary>
+                /// Gets the pre-baked property name blob for <see cref="SourceValue"/>.
+                /// </summary>
+                public static ReadOnlySpan<byte> SourceValue => [0x85, 0x00, 0x00, 0x00, 0x22, 0x73, 0x6F, 0x75, 0x72, 0x63, 0x65, 0x22];
+
+                /// <summary>
+                /// Gets the pre-baked property name blob for <see cref="StatusCode"/>.
+                /// </summary>
+                public static ReadOnlySpan<byte> StatusCode => [0xC5, 0x00, 0x00, 0x00, 0x22, 0x73, 0x74, 0x61, 0x74, 0x75, 0x73, 0x43, 0x6F, 0x64, 0x65, 0x22];
+            }
         }
     }
 }

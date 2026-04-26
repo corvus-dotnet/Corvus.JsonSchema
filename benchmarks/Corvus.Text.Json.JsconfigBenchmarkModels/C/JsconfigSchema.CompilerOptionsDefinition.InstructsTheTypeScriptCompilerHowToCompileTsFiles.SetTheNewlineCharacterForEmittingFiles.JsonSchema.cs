@@ -56,17 +56,17 @@ public readonly partial struct JsconfigSchema
                     /// <summary>
                     /// Gets a provider for the schema location from which this type was generated.
                     /// </summary>
-                    public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("https://json.schemastore.org/jsconfig.json#/definitions/compilerOptionsDefinition/properties/compilerOptions/properties/newLine"u8, buffer, out written);
+                    public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/definitions/compilerOptionsDefinition/properties/compilerOptions/properties/newLine"u8, buffer, out written);
 
                     /// <summary>
                     /// Gets the schema location from which this type was generated.
                     /// </summary>
-                    public const string SchemaLocation = "https://json.schemastore.org/jsconfig.json#/definitions/compilerOptionsDefinition/properties/compilerOptions/properties/newLine";
+                    public const string SchemaLocation = "/definitions/compilerOptionsDefinition/properties/compilerOptions/properties/newLine";
 
                     /// <summary>
                     /// Gets the schema location from which this type was generated as a UTF-8 string.
                     /// </summary>
-                    public static ReadOnlySpan<byte> SchemaLocationUtf8 => "https://json.schemastore.org/jsconfig.json#/definitions/compilerOptionsDefinition/properties/compilerOptions/properties/newLine"u8;
+                    public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/definitions/compilerOptionsDefinition/properties/compilerOptions/properties/newLine"u8;
                     private static readonly JsonSchemaPathProvider AnyOf0SchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/anyOf/0"u8, buffer, out written);
                     private static readonly JsonSchemaPathProvider AnyOf1SchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/anyOf/1"u8, buffer, out written);
 

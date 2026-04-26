@@ -927,6 +927,30 @@ public readonly partial struct NestCliSchema
                     }
                 }
 
+                internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+                {
+                    switch(_kind)
+                    {
+                        case Kind.Unknown:
+                            break;
+                        case Kind.JsonElement:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                            break;
+                        case Kind.GraphQlPluginOptionsBuilder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, _graphQlPluginOptionsBuilderInstance!, static (in b, ref o) => Corvus.NestCliBenchmark.Current.NestCliSchema.GraphQlPluginOptions.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.PluginOptionsBuilder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, _pluginOptionsBuilderInstance!, static (in b, ref o) => Corvus.NestCliBenchmark.Current.NestCliSchema.PluginOptions.Builder.BuildValue(b, ref o));
+                            break;
+                        case Kind.SwaggerPluginOptionsBuilder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, _swaggerPluginOptionsBuilderInstance!, static (in b, ref o) => Corvus.NestCliBenchmark.Current.NestCliSchema.SwaggerPluginOptions.Builder.BuildValue(b, ref o));
+                            break;
+                        default:
+                            Debug.Fail("Unexpected Kind");
+                            break;
+                    }
+                }
+
                 internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
                 {
                     switch(_kind)
@@ -1053,6 +1077,30 @@ public readonly partial struct NestCliSchema
                             break;
                         case Kind.SwaggerPluginOptionsBuilder:
                             valueBuilder.AddProperty(utf8Name, BuildWithContext.Create(_context, _swaggerPluginOptionsBuilderInstance!), static (in b, ref o) => Corvus.NestCliBenchmark.Current.NestCliSchema.SwaggerPluginOptions.Builder.BuildValue(b.Context, b.Build, ref o), escapeName, nameRequiresUnescaping);
+                            break;
+                        default:
+                            Debug.Fail("Unexpected Kind");
+                            break;
+                    }
+                }
+
+                internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+                {
+                    switch(_kind)
+                    {
+                        case Kind.Unknown:
+                            break;
+                        case Kind.Source:
+                            _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                            break;
+                        case Kind.GraphQlPluginOptionsBuilder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _graphQlPluginOptionsBuilderInstance!), static (in b, ref o) => Corvus.NestCliBenchmark.Current.NestCliSchema.GraphQlPluginOptions.Builder.BuildValue(b.Context, b.Build, ref o));
+                            break;
+                        case Kind.PluginOptionsBuilder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _pluginOptionsBuilderInstance!), static (in b, ref o) => Corvus.NestCliBenchmark.Current.NestCliSchema.PluginOptions.Builder.BuildValue(b.Context, b.Build, ref o));
+                            break;
+                        case Kind.SwaggerPluginOptionsBuilder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _swaggerPluginOptionsBuilderInstance!), static (in b, ref o) => Corvus.NestCliBenchmark.Current.NestCliSchema.SwaggerPluginOptions.Builder.BuildValue(b.Context, b.Build, ref o));
                             break;
                         default:
                             Debug.Fail("Unexpected Kind");

@@ -434,7 +434,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Color, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Color, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -479,7 +479,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.DisplayValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DisplayValue, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -524,7 +524,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.MaxValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MaxValue, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -569,7 +569,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.MinValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MinValue, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -614,7 +614,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Scale, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Scale, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -659,7 +659,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Target, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Target, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -704,7 +704,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Thresholds, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Thresholds, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -740,7 +740,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Thresholds, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Thresholds, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -783,7 +783,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Type, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Type, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -816,7 +816,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Value, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Value, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -861,7 +861,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Visible, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Visible, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1068,6 +1068,24 @@ public readonly partial struct Ui5ManifestSchema
                 }
             }
 
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.JsonElement:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                        break;
+                    case Kind.Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
             internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
             {
                 switch(_kind)
@@ -1169,6 +1187,24 @@ public readonly partial struct Ui5ManifestSchema
                 }
             }
 
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.Source:
+                        _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                        break;
+                    case Kind.Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
             internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
             {
                 switch(_kind)
@@ -1257,16 +1293,16 @@ public readonly partial struct Ui5ManifestSchema
                 in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartBullet.TheActualValueShownAsAColoredHorizontalBar.Source value = default,
                 in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Visibility.Source visible = default)
             {
-                builder.AddProperty(JsonPropertyNamesEscaped.Type, Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartBullet.RepresentsTheTypeOfTheMicrochart.ConstInstance);
-                color.AddAsProperty(JsonPropertyNamesEscaped.Color, ref builder, escapeName: false);
-                displayValue.AddAsProperty(JsonPropertyNamesEscaped.DisplayValue, ref builder, escapeName: false);
-                maxValue.AddAsProperty(JsonPropertyNamesEscaped.MaxValue, ref builder, escapeName: false);
-                minValue.AddAsProperty(JsonPropertyNamesEscaped.MinValue, ref builder, escapeName: false);
-                scale.AddAsProperty(JsonPropertyNamesEscaped.Scale, ref builder, escapeName: false);
-                target.AddAsProperty(JsonPropertyNamesEscaped.Target, ref builder, escapeName: false);
-                thresholds.AddAsProperty(JsonPropertyNamesEscaped.Thresholds, ref builder, escapeName: false);
-                value.AddAsProperty(JsonPropertyNamesEscaped.Value, ref builder, escapeName: false);
-                visible.AddAsProperty(JsonPropertyNamesEscaped.Visible, ref builder, escapeName: false);
+                builder.AddPrebakedProperty(JsonPropertyNamesPrebaked.Type, Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartBullet.RepresentsTheTypeOfTheMicrochart.ConstInstance);
+                color.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Color, ref builder);
+                displayValue.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DisplayValue, ref builder);
+                maxValue.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MaxValue, ref builder);
+                minValue.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MinValue, ref builder);
+                scale.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Scale, ref builder);
+                target.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Target, ref builder);
+                thresholds.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Thresholds, ref builder);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Value, ref builder);
+                visible.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Visible, ref builder);
             }
 
             /// <summary>
@@ -1305,16 +1341,16 @@ public readonly partial struct Ui5ManifestSchema
             where TContext : allows ref struct
             #endif
             {
-                builder.AddProperty(JsonPropertyNamesEscaped.Type, Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartBullet.RepresentsTheTypeOfTheMicrochart.ConstInstance);
-                color.AddAsProperty(JsonPropertyNamesEscaped.Color, ref builder, escapeName: false);
-                displayValue.AddAsProperty(JsonPropertyNamesEscaped.DisplayValue, ref builder, escapeName: false);
-                maxValue.AddAsProperty(JsonPropertyNamesEscaped.MaxValue, ref builder, escapeName: false);
-                minValue.AddAsProperty(JsonPropertyNamesEscaped.MinValue, ref builder, escapeName: false);
-                scale.AddAsProperty(JsonPropertyNamesEscaped.Scale, ref builder, escapeName: false);
-                target.AddAsProperty(JsonPropertyNamesEscaped.Target, ref builder, escapeName: false);
-                thresholds.AddAsProperty(JsonPropertyNamesEscaped.Thresholds, ref builder, escapeName: false);
-                value.AddAsProperty(JsonPropertyNamesEscaped.Value, ref builder, escapeName: false);
-                visible.AddAsProperty(JsonPropertyNamesEscaped.Visible, ref builder, escapeName: false);
+                builder.AddPrebakedProperty(JsonPropertyNamesPrebaked.Type, Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.MicrochartBullet.RepresentsTheTypeOfTheMicrochart.ConstInstance);
+                color.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Color, ref builder);
+                displayValue.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DisplayValue, ref builder);
+                maxValue.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MaxValue, ref builder);
+                minValue.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MinValue, ref builder);
+                scale.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Scale, ref builder);
+                target.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Target, ref builder);
+                thresholds.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Thresholds, ref builder);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Value, ref builder);
+                visible.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Visible, ref builder);
             }
 
             /// <summary>

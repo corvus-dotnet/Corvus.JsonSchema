@@ -822,5 +822,42 @@ public readonly partial struct ClangFormatSchema
             /// </summary>
             public static ReadOnlySpan<byte> HexMinDigits => "HexMinDigits"u8;
         }
+
+        /// <summary>
+        /// Provides pre-baked property name blobs for fast builder property storage.
+        /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
+        /// </summary>
+        private static class JsonPropertyNamesPrebaked
+        {
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Binary"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Binary => [0x85, 0x00, 0x00, 0x00, 0x22, 0x42, 0x69, 0x6E, 0x61, 0x72, 0x79, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="BinaryMinDigits"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> BinaryMinDigits => [0x15, 0x01, 0x00, 0x00, 0x22, 0x42, 0x69, 0x6E, 0x61, 0x72, 0x79, 0x4D, 0x69, 0x6E, 0x44, 0x69, 0x67, 0x69, 0x74, 0x73, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="DecimalValue"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> DecimalValue => [0x95, 0x00, 0x00, 0x00, 0x22, 0x44, 0x65, 0x63, 0x69, 0x6D, 0x61, 0x6C, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="DecimalMinDigits"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> DecimalMinDigits => [0x25, 0x01, 0x00, 0x00, 0x22, 0x44, 0x65, 0x63, 0x69, 0x6D, 0x61, 0x6C, 0x4D, 0x69, 0x6E, 0x44, 0x69, 0x67, 0x69, 0x74, 0x73, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Hex"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Hex => [0x55, 0x00, 0x00, 0x00, 0x22, 0x48, 0x65, 0x78, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="HexMinDigits"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> HexMinDigits => [0xE5, 0x00, 0x00, 0x00, 0x22, 0x48, 0x65, 0x78, 0x4D, 0x69, 0x6E, 0x44, 0x69, 0x67, 0x69, 0x74, 0x73, 0x22];
+        }
     }
 }

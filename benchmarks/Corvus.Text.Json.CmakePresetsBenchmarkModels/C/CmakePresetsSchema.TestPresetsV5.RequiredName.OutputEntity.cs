@@ -879,6 +879,73 @@ public readonly partial struct CmakePresetsSchema
                     /// </summary>
                     public static ReadOnlySpan<byte> Verbosity => "verbosity"u8;
                 }
+
+                /// <summary>
+                /// Provides pre-baked property name blobs for fast builder property storage.
+                /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
+                /// </summary>
+                private static class JsonPropertyNamesPrebaked
+                {
+                    /// <summary>
+                    /// Gets the pre-baked property name blob for <see cref="DebugValue"/>.
+                    /// </summary>
+                    public static ReadOnlySpan<byte> DebugValue => [0x75, 0x00, 0x00, 0x00, 0x22, 0x64, 0x65, 0x62, 0x75, 0x67, 0x22];
+
+                    /// <summary>
+                    /// Gets the pre-baked property name blob for <see cref="LabelSummary"/>.
+                    /// </summary>
+                    public static ReadOnlySpan<byte> LabelSummary => [0xE5, 0x00, 0x00, 0x00, 0x22, 0x6C, 0x61, 0x62, 0x65, 0x6C, 0x53, 0x75, 0x6D, 0x6D, 0x61, 0x72, 0x79, 0x22];
+
+                    /// <summary>
+                    /// Gets the pre-baked property name blob for <see cref="MaxFailedTestOutputSize"/>.
+                    /// </summary>
+                    public static ReadOnlySpan<byte> MaxFailedTestOutputSize => [0x95, 0x01, 0x00, 0x00, 0x22, 0x6D, 0x61, 0x78, 0x46, 0x61, 0x69, 0x6C, 0x65, 0x64, 0x54, 0x65, 0x73, 0x74, 0x4F, 0x75, 0x74, 0x70, 0x75, 0x74, 0x53, 0x69, 0x7A, 0x65, 0x22];
+
+                    /// <summary>
+                    /// Gets the pre-baked property name blob for <see cref="MaxPassedTestOutputSize"/>.
+                    /// </summary>
+                    public static ReadOnlySpan<byte> MaxPassedTestOutputSize => [0x95, 0x01, 0x00, 0x00, 0x22, 0x6D, 0x61, 0x78, 0x50, 0x61, 0x73, 0x73, 0x65, 0x64, 0x54, 0x65, 0x73, 0x74, 0x4F, 0x75, 0x74, 0x70, 0x75, 0x74, 0x53, 0x69, 0x7A, 0x65, 0x22];
+
+                    /// <summary>
+                    /// Gets the pre-baked property name blob for <see cref="MaxTestNameWidth"/>.
+                    /// </summary>
+                    public static ReadOnlySpan<byte> MaxTestNameWidth => [0x25, 0x01, 0x00, 0x00, 0x22, 0x6D, 0x61, 0x78, 0x54, 0x65, 0x73, 0x74, 0x4E, 0x61, 0x6D, 0x65, 0x57, 0x69, 0x64, 0x74, 0x68, 0x22];
+
+                    /// <summary>
+                    /// Gets the pre-baked property name blob for <see cref="OutputLogFile"/>.
+                    /// </summary>
+                    public static ReadOnlySpan<byte> OutputLogFile => [0xF5, 0x00, 0x00, 0x00, 0x22, 0x6F, 0x75, 0x74, 0x70, 0x75, 0x74, 0x4C, 0x6F, 0x67, 0x46, 0x69, 0x6C, 0x65, 0x22];
+
+                    /// <summary>
+                    /// Gets the pre-baked property name blob for <see cref="OutputOnFailure"/>.
+                    /// </summary>
+                    public static ReadOnlySpan<byte> OutputOnFailure => [0x15, 0x01, 0x00, 0x00, 0x22, 0x6F, 0x75, 0x74, 0x70, 0x75, 0x74, 0x4F, 0x6E, 0x46, 0x61, 0x69, 0x6C, 0x75, 0x72, 0x65, 0x22];
+
+                    /// <summary>
+                    /// Gets the pre-baked property name blob for <see cref="Quiet"/>.
+                    /// </summary>
+                    public static ReadOnlySpan<byte> Quiet => [0x75, 0x00, 0x00, 0x00, 0x22, 0x71, 0x75, 0x69, 0x65, 0x74, 0x22];
+
+                    /// <summary>
+                    /// Gets the pre-baked property name blob for <see cref="ShortProgress"/>.
+                    /// </summary>
+                    public static ReadOnlySpan<byte> ShortProgress => [0xF5, 0x00, 0x00, 0x00, 0x22, 0x73, 0x68, 0x6F, 0x72, 0x74, 0x50, 0x72, 0x6F, 0x67, 0x72, 0x65, 0x73, 0x73, 0x22];
+
+                    /// <summary>
+                    /// Gets the pre-baked property name blob for <see cref="SubprojectSummary"/>.
+                    /// </summary>
+                    public static ReadOnlySpan<byte> SubprojectSummary => [0x35, 0x01, 0x00, 0x00, 0x22, 0x73, 0x75, 0x62, 0x70, 0x72, 0x6F, 0x6A, 0x65, 0x63, 0x74, 0x53, 0x75, 0x6D, 0x6D, 0x61, 0x72, 0x79, 0x22];
+
+                    /// <summary>
+                    /// Gets the pre-baked property name blob for <see cref="TestOutputTruncation"/>.
+                    /// </summary>
+                    public static ReadOnlySpan<byte> TestOutputTruncation => [0x65, 0x01, 0x00, 0x00, 0x22, 0x74, 0x65, 0x73, 0x74, 0x4F, 0x75, 0x74, 0x70, 0x75, 0x74, 0x54, 0x72, 0x75, 0x6E, 0x63, 0x61, 0x74, 0x69, 0x6F, 0x6E, 0x22];
+
+                    /// <summary>
+                    /// Gets the pre-baked property name blob for <see cref="Verbosity"/>.
+                    /// </summary>
+                    public static ReadOnlySpan<byte> Verbosity => [0xB5, 0x00, 0x00, 0x00, 0x22, 0x76, 0x65, 0x72, 0x62, 0x6F, 0x73, 0x69, 0x74, 0x79, 0x22];
+                }
             }
         }
     }

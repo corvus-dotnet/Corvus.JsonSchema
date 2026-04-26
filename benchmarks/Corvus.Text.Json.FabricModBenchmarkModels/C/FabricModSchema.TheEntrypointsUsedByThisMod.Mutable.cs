@@ -461,7 +461,7 @@ public readonly partial struct FabricModSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Client, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Client, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -497,7 +497,7 @@ public readonly partial struct FabricModSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Client, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Client, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -542,7 +542,7 @@ public readonly partial struct FabricModSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.FabricDatagen, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.FabricDatagen, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -578,7 +578,7 @@ public readonly partial struct FabricModSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.FabricDatagen, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.FabricDatagen, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -623,7 +623,7 @@ public readonly partial struct FabricModSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.FabricGametest, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.FabricGametest, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -659,7 +659,7 @@ public readonly partial struct FabricModSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.FabricGametest, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.FabricGametest, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -704,7 +704,7 @@ public readonly partial struct FabricModSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Main, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Main, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -740,7 +740,7 @@ public readonly partial struct FabricModSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Main, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Main, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -785,7 +785,7 @@ public readonly partial struct FabricModSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.PreLaunch, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PreLaunch, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -821,7 +821,7 @@ public readonly partial struct FabricModSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.PreLaunch, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PreLaunch, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -866,7 +866,7 @@ public readonly partial struct FabricModSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Server, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Server, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -902,7 +902,7 @@ public readonly partial struct FabricModSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Server, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Server, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1285,6 +1285,24 @@ public readonly partial struct FabricModSchema
                 }
             }
 
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.JsonElement:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                        break;
+                    case Kind.Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
             internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
             {
                 switch(_kind)
@@ -1386,6 +1404,24 @@ public readonly partial struct FabricModSchema
                 }
             }
 
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.Source:
+                        _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                        break;
+                    case Kind.Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
             internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
             {
                 switch(_kind)
@@ -1471,12 +1507,12 @@ public readonly partial struct FabricModSchema
                 in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.PreLaunchEArray.Source preLaunch = default,
                 in Corvus.FabricModBenchmark.Current.FabricModSchema.TheEntrypointsUsedByThisMod.ServerEntrArray.Source server = default)
             {
-                client.AddAsProperty(JsonPropertyNamesEscaped.Client, ref builder, escapeName: false);
-                fabricDatagen.AddAsProperty(JsonPropertyNamesEscaped.FabricDatagen, ref builder, escapeName: false);
-                fabricGametest.AddAsProperty(JsonPropertyNamesEscaped.FabricGametest, ref builder, escapeName: false);
-                main.AddAsProperty(JsonPropertyNamesEscaped.Main, ref builder, escapeName: false);
-                preLaunch.AddAsProperty(JsonPropertyNamesEscaped.PreLaunch, ref builder, escapeName: false);
-                server.AddAsProperty(JsonPropertyNamesEscaped.Server, ref builder, escapeName: false);
+                client.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Client, ref builder);
+                fabricDatagen.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.FabricDatagen, ref builder);
+                fabricGametest.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.FabricGametest, ref builder);
+                main.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Main, ref builder);
+                preLaunch.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PreLaunch, ref builder);
+                server.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Server, ref builder);
             }
 
             /// <summary>
@@ -1509,12 +1545,12 @@ public readonly partial struct FabricModSchema
             where TContext : allows ref struct
             #endif
             {
-                client.AddAsProperty(JsonPropertyNamesEscaped.Client, ref builder, escapeName: false);
-                fabricDatagen.AddAsProperty(JsonPropertyNamesEscaped.FabricDatagen, ref builder, escapeName: false);
-                fabricGametest.AddAsProperty(JsonPropertyNamesEscaped.FabricGametest, ref builder, escapeName: false);
-                main.AddAsProperty(JsonPropertyNamesEscaped.Main, ref builder, escapeName: false);
-                preLaunch.AddAsProperty(JsonPropertyNamesEscaped.PreLaunch, ref builder, escapeName: false);
-                server.AddAsProperty(JsonPropertyNamesEscaped.Server, ref builder, escapeName: false);
+                client.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Client, ref builder);
+                fabricDatagen.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.FabricDatagen, ref builder);
+                fabricGametest.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.FabricGametest, ref builder);
+                main.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Main, ref builder);
+                preLaunch.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PreLaunch, ref builder);
+                server.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Server, ref builder);
             }
 
             /// <summary>

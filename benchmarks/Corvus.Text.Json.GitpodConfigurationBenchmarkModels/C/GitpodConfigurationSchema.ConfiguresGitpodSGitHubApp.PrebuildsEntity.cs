@@ -905,6 +905,48 @@ public readonly partial struct GitpodConfigurationSchema
                 /// </summary>
                 public static ReadOnlySpan<byte> PullRequestsFromForks => "pullRequestsFromForks"u8;
             }
+
+            /// <summary>
+            /// Provides pre-baked property name blobs for fast builder property storage.
+            /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
+            /// </summary>
+            private static class JsonPropertyNamesPrebaked
+            {
+                /// <summary>
+                /// Gets the pre-baked property name blob for <see cref="AddBadge"/>.
+                /// </summary>
+                public static ReadOnlySpan<byte> AddBadge => [0xA5, 0x00, 0x00, 0x00, 0x22, 0x61, 0x64, 0x64, 0x42, 0x61, 0x64, 0x67, 0x65, 0x22];
+
+                /// <summary>
+                /// Gets the pre-baked property name blob for <see cref="AddCheck"/>.
+                /// </summary>
+                public static ReadOnlySpan<byte> AddCheck => [0xA5, 0x00, 0x00, 0x00, 0x22, 0x61, 0x64, 0x64, 0x43, 0x68, 0x65, 0x63, 0x6B, 0x22];
+
+                /// <summary>
+                /// Gets the pre-baked property name blob for <see cref="AddLabel"/>.
+                /// </summary>
+                public static ReadOnlySpan<byte> AddLabel => [0xA5, 0x00, 0x00, 0x00, 0x22, 0x61, 0x64, 0x64, 0x4C, 0x61, 0x62, 0x65, 0x6C, 0x22];
+
+                /// <summary>
+                /// Gets the pre-baked property name blob for <see cref="Branches"/>.
+                /// </summary>
+                public static ReadOnlySpan<byte> Branches => [0xA5, 0x00, 0x00, 0x00, 0x22, 0x62, 0x72, 0x61, 0x6E, 0x63, 0x68, 0x65, 0x73, 0x22];
+
+                /// <summary>
+                /// Gets the pre-baked property name blob for <see cref="Master"/>.
+                /// </summary>
+                public static ReadOnlySpan<byte> Master => [0x85, 0x00, 0x00, 0x00, 0x22, 0x6D, 0x61, 0x73, 0x74, 0x65, 0x72, 0x22];
+
+                /// <summary>
+                /// Gets the pre-baked property name blob for <see cref="PullRequests"/>.
+                /// </summary>
+                public static ReadOnlySpan<byte> PullRequests => [0xE5, 0x00, 0x00, 0x00, 0x22, 0x70, 0x75, 0x6C, 0x6C, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x73, 0x22];
+
+                /// <summary>
+                /// Gets the pre-baked property name blob for <see cref="PullRequestsFromForks"/>.
+                /// </summary>
+                public static ReadOnlySpan<byte> PullRequestsFromForks => [0x75, 0x01, 0x00, 0x00, 0x22, 0x70, 0x75, 0x6C, 0x6C, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x73, 0x46, 0x72, 0x6F, 0x6D, 0x46, 0x6F, 0x72, 0x6B, 0x73, 0x22];
+            }
         }
     }
 }

@@ -43,17 +43,17 @@ public readonly partial struct JshintrcSchema
             /// <summary>
             /// Gets a provider for the schema location from which this type was generated.
             /// </summary>
-            public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("https://json.schemastore.org/jshintrc#/properties/overrides"u8, buffer, out written);
+            public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/properties/overrides"u8, buffer, out written);
 
             /// <summary>
             /// Gets the schema location from which this type was generated.
             /// </summary>
-            public const string SchemaLocation = "https://json.schemastore.org/jshintrc#/properties/overrides";
+            public const string SchemaLocation = "/properties/overrides";
 
             /// <summary>
             /// Gets the schema location from which this type was generated as a UTF-8 string.
             /// </summary>
-            public static ReadOnlySpan<byte> SchemaLocationUtf8 => "https://json.schemastore.org/jshintrc#/properties/overrides"u8;
+            public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/properties/overrides"u8;
 
             /// <summary>
             /// Applies the JSON schema semantics defined by this type to the instance determined by the given document and index.
@@ -94,14 +94,14 @@ public readonly partial struct JshintrcSchema
 
                         if (!context.HasLocalEvaluatedProperty(objectValidation_propertyCount))
                         {
-                            JsonSchemaContext childContext = Corvus.JshintrcBenchmark.Current.JshintrcSchema.OverridesEntity.ThePathPatternToApplyTheGivenOptionsTo.JsonSchema.PushChildContextUnescaped(
+                            JsonSchemaContext childContext = Corvus.JshintrcBenchmark.Current.JsonObject.JsonSchema.PushChildContextUnescaped(
                                 parentDocument,
                                 objectValidation_currentIndex,
                                 ref context,
                                 objectValidation_unescapedPropertyName.Span,
                                 evaluationPath: AdditionalPropertiesSchemaEvaluationPath);
 
-                            Corvus.JshintrcBenchmark.Current.JshintrcSchema.OverridesEntity.ThePathPatternToApplyTheGivenOptionsTo.JsonSchema.Evaluate(parentDocument, objectValidation_currentIndex, ref childContext);
+                            Corvus.JshintrcBenchmark.Current.JsonObject.JsonSchema.Evaluate(parentDocument, objectValidation_currentIndex, ref childContext);
 
                             if (!childContext.IsMatch)
                             {

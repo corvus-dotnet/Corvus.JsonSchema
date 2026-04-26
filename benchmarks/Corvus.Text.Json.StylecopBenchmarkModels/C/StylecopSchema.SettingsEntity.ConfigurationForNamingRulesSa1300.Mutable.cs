@@ -346,7 +346,7 @@ public readonly partial struct StylecopSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.AllowCommonHungarianPrefixes, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AllowCommonHungarianPrefixes, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -391,7 +391,7 @@ public readonly partial struct StylecopSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.AllowedHungarianPrefixes, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AllowedHungarianPrefixes, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -427,7 +427,7 @@ public readonly partial struct StylecopSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.AllowedHungarianPrefixes, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AllowedHungarianPrefixes, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -472,7 +472,7 @@ public readonly partial struct StylecopSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.AllowedNamespaceComponents, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AllowedNamespaceComponents, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -508,7 +508,7 @@ public readonly partial struct StylecopSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.AllowedNamespaceComponents, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AllowedNamespaceComponents, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -553,7 +553,7 @@ public readonly partial struct StylecopSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.IncludeInferredTupleElementNames, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IncludeInferredTupleElementNames, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -598,7 +598,7 @@ public readonly partial struct StylecopSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.TupleElementNameCasing, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TupleElementNameCasing, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -805,6 +805,24 @@ public readonly partial struct StylecopSchema
                     }
                 }
 
+                internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+                {
+                    switch(_kind)
+                    {
+                        case Kind.Unknown:
+                            break;
+                        case Kind.JsonElement:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                            break;
+                        case Kind.Builder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
+                            break;
+                        default:
+                            Debug.Fail("Unexpected Kind");
+                            break;
+                    }
+                }
+
                 internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
                 {
                     switch(_kind)
@@ -906,6 +924,24 @@ public readonly partial struct StylecopSchema
                     }
                 }
 
+                internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+                {
+                    switch(_kind)
+                    {
+                        case Kind.Unknown:
+                            break;
+                        case Kind.Source:
+                            _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                            break;
+                        case Kind.Builder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
+                            break;
+                        default:
+                            Debug.Fail("Unexpected Kind");
+                            break;
+                    }
+                }
+
                 internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
                 {
                     switch(_kind)
@@ -990,11 +1026,11 @@ public readonly partial struct StylecopSchema
                     in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForNamingRulesSa1300.IncludeInferredTupleElementNamesEntity.Source includeInferredTupleElementNames = default,
                     in Corvus.StylecopBenchmark.Current.StylecopSchema.SettingsEntity.ConfigurationForNamingRulesSa1300.SpecifiesTheCasingConventionUsedForTupleElementNames.Source tupleElementNameCasing = default)
                 {
-                    allowCommonHungarianPrefixes.AddAsProperty(JsonPropertyNamesEscaped.AllowCommonHungarianPrefixes, ref builder, escapeName: false);
-                    allowedHungarianPrefixes.AddAsProperty(JsonPropertyNamesEscaped.AllowedHungarianPrefixes, ref builder, escapeName: false);
-                    allowedNamespaceComponents.AddAsProperty(JsonPropertyNamesEscaped.AllowedNamespaceComponents, ref builder, escapeName: false);
-                    includeInferredTupleElementNames.AddAsProperty(JsonPropertyNamesEscaped.IncludeInferredTupleElementNames, ref builder, escapeName: false);
-                    tupleElementNameCasing.AddAsProperty(JsonPropertyNamesEscaped.TupleElementNameCasing, ref builder, escapeName: false);
+                    allowCommonHungarianPrefixes.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AllowCommonHungarianPrefixes, ref builder);
+                    allowedHungarianPrefixes.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AllowedHungarianPrefixes, ref builder);
+                    allowedNamespaceComponents.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AllowedNamespaceComponents, ref builder);
+                    includeInferredTupleElementNames.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IncludeInferredTupleElementNames, ref builder);
+                    tupleElementNameCasing.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TupleElementNameCasing, ref builder);
                 }
 
                 /// <summary>
@@ -1025,11 +1061,11 @@ public readonly partial struct StylecopSchema
                 where TContext : allows ref struct
                 #endif
                 {
-                    allowCommonHungarianPrefixes.AddAsProperty(JsonPropertyNamesEscaped.AllowCommonHungarianPrefixes, ref builder, escapeName: false);
-                    allowedHungarianPrefixes.AddAsProperty(JsonPropertyNamesEscaped.AllowedHungarianPrefixes, ref builder, escapeName: false);
-                    allowedNamespaceComponents.AddAsProperty(JsonPropertyNamesEscaped.AllowedNamespaceComponents, ref builder, escapeName: false);
-                    includeInferredTupleElementNames.AddAsProperty(JsonPropertyNamesEscaped.IncludeInferredTupleElementNames, ref builder, escapeName: false);
-                    tupleElementNameCasing.AddAsProperty(JsonPropertyNamesEscaped.TupleElementNameCasing, ref builder, escapeName: false);
+                    allowCommonHungarianPrefixes.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AllowCommonHungarianPrefixes, ref builder);
+                    allowedHungarianPrefixes.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AllowedHungarianPrefixes, ref builder);
+                    allowedNamespaceComponents.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AllowedNamespaceComponents, ref builder);
+                    includeInferredTupleElementNames.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IncludeInferredTupleElementNames, ref builder);
+                    tupleElementNameCasing.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TupleElementNameCasing, ref builder);
                 }
 
                 /// <summary>

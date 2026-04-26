@@ -1063,4 +1063,76 @@ public readonly partial struct DenoSchema
         /// </summary>
         public static ReadOnlySpan<byte> Vendor => "vendor"u8;
     }
+
+    /// <summary>
+    /// Provides pre-baked property name blobs for fast builder property storage.
+    /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
+    /// </summary>
+    private static class JsonPropertyNamesPrebaked
+    {
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Bench"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Bench => [0x75, 0x00, 0x00, 0x00, 0x22, 0x62, 0x65, 0x6E, 0x63, 0x68, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="CompilerOptions"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> CompilerOptions => [0x15, 0x01, 0x00, 0x00, 0x22, 0x63, 0x6F, 0x6D, 0x70, 0x69, 0x6C, 0x65, 0x72, 0x4F, 0x70, 0x74, 0x69, 0x6F, 0x6E, 0x73, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Exclude"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Exclude => [0x95, 0x00, 0x00, 0x00, 0x22, 0x65, 0x78, 0x63, 0x6C, 0x75, 0x64, 0x65, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Fmt"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Fmt => [0x55, 0x00, 0x00, 0x00, 0x22, 0x66, 0x6D, 0x74, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="ImportMap"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> ImportMap => [0xB5, 0x00, 0x00, 0x00, 0x22, 0x69, 0x6D, 0x70, 0x6F, 0x72, 0x74, 0x4D, 0x61, 0x70, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Imports"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Imports => [0x95, 0x00, 0x00, 0x00, 0x22, 0x69, 0x6D, 0x70, 0x6F, 0x72, 0x74, 0x73, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Lint"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Lint => [0x65, 0x00, 0x00, 0x00, 0x22, 0x6C, 0x69, 0x6E, 0x74, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Lock"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Lock => [0x65, 0x00, 0x00, 0x00, 0x22, 0x6C, 0x6F, 0x63, 0x6B, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="NodeModulesDir"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> NodeModulesDir => [0x05, 0x01, 0x00, 0x00, 0x22, 0x6E, 0x6F, 0x64, 0x65, 0x4D, 0x6F, 0x64, 0x75, 0x6C, 0x65, 0x73, 0x44, 0x69, 0x72, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Scopes"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Scopes => [0x85, 0x00, 0x00, 0x00, 0x22, 0x73, 0x63, 0x6F, 0x70, 0x65, 0x73, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Tasks"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Tasks => [0x75, 0x00, 0x00, 0x00, 0x22, 0x74, 0x61, 0x73, 0x6B, 0x73, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Test"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Test => [0x65, 0x00, 0x00, 0x00, 0x22, 0x74, 0x65, 0x73, 0x74, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Vendor"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Vendor => [0x85, 0x00, 0x00, 0x00, 0x22, 0x76, 0x65, 0x6E, 0x64, 0x6F, 0x72, 0x22];
+    }
 }

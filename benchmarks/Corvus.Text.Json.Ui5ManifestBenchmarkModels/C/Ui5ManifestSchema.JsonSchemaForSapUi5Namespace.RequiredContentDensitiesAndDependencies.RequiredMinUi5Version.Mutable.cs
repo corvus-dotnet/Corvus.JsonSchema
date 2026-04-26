@@ -307,7 +307,7 @@ public readonly partial struct Ui5ManifestSchema
                         else
                         {
                             // We are going to insert the new value
-                            value.AddAsProperty(JsonPropertyNamesEscaped.Components, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                            value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Components, ref cvb);
                             int endIndex = _idx + _parent.GetDbSize(_idx, false);
                             _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                         }
@@ -343,7 +343,7 @@ public readonly partial struct Ui5ManifestSchema
                         else
                         {
                             // We are going to insert the new value
-                            value.AddAsProperty(JsonPropertyNamesEscaped.Components, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                            value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Components, ref cvb);
                             int endIndex = _idx + _parent.GetDbSize(_idx, false);
                             _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                         }
@@ -388,7 +388,7 @@ public readonly partial struct Ui5ManifestSchema
                         else
                         {
                             // We are going to insert the new value
-                            value.AddAsProperty(JsonPropertyNamesEscaped.Libs, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                            value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Libs, ref cvb);
                             int endIndex = _idx + _parent.GetDbSize(_idx, false);
                             _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                         }
@@ -424,7 +424,7 @@ public readonly partial struct Ui5ManifestSchema
                         else
                         {
                             // We are going to insert the new value
-                            value.AddAsProperty(JsonPropertyNamesEscaped.Libs, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                            value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Libs, ref cvb);
                             int endIndex = _idx + _parent.GetDbSize(_idx, false);
                             _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                         }
@@ -467,7 +467,7 @@ public readonly partial struct Ui5ManifestSchema
                         else
                         {
                             // We are going to insert the new value
-                            value.AddAsProperty(JsonPropertyNamesEscaped.MinUi5Version, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                            value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MinUi5Version, ref cvb);
                             int endIndex = _idx + _parent.GetDbSize(_idx, false);
                             _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                         }
@@ -662,6 +662,24 @@ public readonly partial struct Ui5ManifestSchema
                         }
                     }
 
+                    internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+                    {
+                        switch(_kind)
+                        {
+                            case Kind.Unknown:
+                                break;
+                            case Kind.JsonElement:
+                                valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                                break;
+                            case Kind.Builder:
+                                valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
+                                break;
+                            default:
+                                Debug.Fail("Unexpected Kind");
+                                break;
+                        }
+                    }
+
                     internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
                     {
                         switch(_kind)
@@ -763,6 +781,24 @@ public readonly partial struct Ui5ManifestSchema
                         }
                     }
 
+                    internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+                    {
+                        switch(_kind)
+                        {
+                            case Kind.Unknown:
+                                break;
+                            case Kind.Source:
+                                _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                                break;
+                            case Kind.Builder:
+                                valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
+                                break;
+                            default:
+                                Debug.Fail("Unexpected Kind");
+                                break;
+                        }
+                    }
+
                     internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
                     {
                         switch(_kind)
@@ -845,9 +881,9 @@ public readonly partial struct Ui5ManifestSchema
                         in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.RequiredMinUi5Version.ComponentsEntity.Source components = default,
                         in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.RequiredMinUi5Version.LibsEntity.Source libs = default)
                     {
-                        minUi5Version.AddAsProperty(JsonPropertyNamesEscaped.MinUi5Version, ref builder, escapeName: false);
-                        components.AddAsProperty(JsonPropertyNamesEscaped.Components, ref builder, escapeName: false);
-                        libs.AddAsProperty(JsonPropertyNamesEscaped.Libs, ref builder, escapeName: false);
+                        minUi5Version.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MinUi5Version, ref builder);
+                        components.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Components, ref builder);
+                        libs.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Libs, ref builder);
                     }
 
                     /// <summary>
@@ -874,9 +910,9 @@ public readonly partial struct Ui5ManifestSchema
                     where TContext : allows ref struct
                     #endif
                     {
-                        minUi5Version.AddAsProperty(JsonPropertyNamesEscaped.MinUi5Version, ref builder, escapeName: false);
-                        components.AddAsProperty(JsonPropertyNamesEscaped.Components, ref builder, escapeName: false);
-                        libs.AddAsProperty(JsonPropertyNamesEscaped.Libs, ref builder, escapeName: false);
+                        minUi5Version.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MinUi5Version, ref builder);
+                        components.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Components, ref builder);
+                        libs.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Libs, ref builder);
                     }
 
                     /// <summary>

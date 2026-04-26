@@ -59,14 +59,14 @@ public readonly partial struct VercelSchema
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext =
-                        Corvus.VercelBenchmark.Current.VercelSchema.RequiredUseArray.RequiredUse.ConfigEntity.JsonSchema.PushChildContextUnescaped(
+                        Corvus.VercelBenchmark.Current.JsonObject.JsonSchema.PushChildContextUnescaped(
                             parentDocument,
                             parentDocumentIndex,
                             ref context,
                             JsonPropertyNames.ConfigUtf8,
                             evaluationPath: ConfigSchemaEvaluationPath);
 
-                    Corvus.VercelBenchmark.Current.VercelSchema.RequiredUseArray.RequiredUse.ConfigEntity.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext);
+                    Corvus.VercelBenchmark.Current.JsonObject.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext);
                     context.CommitChildContext(childContext.IsMatch, ref childContext);
                 }
 
@@ -132,17 +132,17 @@ public readonly partial struct VercelSchema
                 /// <summary>
                 /// Gets a provider for the schema location from which this type was generated.
                 /// </summary>
-                public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("vercel-schema.json#/properties/builds/items"u8, buffer, out written);
+                public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/properties/builds/items"u8, buffer, out written);
 
                 /// <summary>
                 /// Gets the schema location from which this type was generated.
                 /// </summary>
-                public const string SchemaLocation = "vercel-schema.json#/properties/builds/items";
+                public const string SchemaLocation = "/properties/builds/items";
 
                 /// <summary>
                 /// Gets the schema location from which this type was generated as a UTF-8 string.
                 /// </summary>
-                public static ReadOnlySpan<byte> SchemaLocationUtf8 => "vercel-schema.json#/properties/builds/items"u8;
+                public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/properties/builds/items"u8;
 
                 /// <summary>
                 /// Applies the JSON schema semantics defined by this type to the instance determined by the given document and index.

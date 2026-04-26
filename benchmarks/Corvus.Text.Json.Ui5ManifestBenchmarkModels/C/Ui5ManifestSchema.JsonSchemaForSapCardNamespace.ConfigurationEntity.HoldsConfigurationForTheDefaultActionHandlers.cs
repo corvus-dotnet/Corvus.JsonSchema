@@ -93,11 +93,11 @@ public readonly partial struct Ui5ManifestSchema
                 /// Configuration for the submit action handler
                 /// </para>
                 /// </remarks>
-                public Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.HoldsConfigurationForTheDefaultActionHandlers.ConfigurationForTheSubmitActionHandler Submit
+                public Corvus.Ui5ManifestBenchmark.Current.JsonObject Submit
                 {
                     get
                     {
-                        if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SubmitUtf8, out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapCardNamespace.ConfigurationEntity.HoldsConfigurationForTheDefaultActionHandlers.ConfigurationForTheSubmitActionHandler value))
+                        if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SubmitUtf8, out Corvus.Ui5ManifestBenchmark.Current.JsonObject value))
                         {
                             return value;
                         }
@@ -547,6 +547,18 @@ public readonly partial struct Ui5ManifestSchema
                     /// Gets the escaped UTF-8 JSON property name for <see cref="Submit"/>.
                     /// </summary>
                     public static ReadOnlySpan<byte> Submit => "submit"u8;
+                }
+
+                /// <summary>
+                /// Provides pre-baked property name blobs for fast builder property storage.
+                /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
+                /// </summary>
+                private static class JsonPropertyNamesPrebaked
+                {
+                    /// <summary>
+                    /// Gets the pre-baked property name blob for <see cref="Submit"/>.
+                    /// </summary>
+                    public static ReadOnlySpan<byte> Submit => [0x85, 0x00, 0x00, 0x00, 0x22, 0x73, 0x75, 0x62, 0x6D, 0x69, 0x74, 0x22];
                 }
             }
         }

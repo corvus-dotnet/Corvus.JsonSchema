@@ -1345,14 +1345,14 @@ public readonly partial struct ClangFormatSchema
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext77 =
-                Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.JavaImportGroupArray.JsonSchema.PushChildContextUnescaped(
+                Corvus.ClangFormatBenchmark.Current.JsonArray.JsonSchema.PushChildContextUnescaped(
                     parentDocument,
                     parentDocumentIndex,
                     ref context,
                     JsonPropertyNames.JavaImportGroupUtf8,
                     evaluationPath: JavaImportGroupSchemaEvaluationPath);
 
-            Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.JavaImportGroupArray.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext77);
+            Corvus.ClangFormatBenchmark.Current.JsonArray.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext77);
             context.CommitChildContext(childContext77.IsMatch, ref childContext77);
         }
 
@@ -2642,17 +2642,17 @@ public readonly partial struct ClangFormatSchema
         /// <summary>
         /// Gets a provider for the schema location from which this type was generated.
         /// </summary>
-        public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("clang-format-schema.json"u8, buffer, out written);
+        public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath(""u8, buffer, out written);
 
         /// <summary>
         /// Gets the schema location from which this type was generated.
         /// </summary>
-        public const string SchemaLocation = "clang-format-schema.json";
+        public const string SchemaLocation = "";
 
         /// <summary>
         /// Gets the schema location from which this type was generated as a UTF-8 string.
         /// </summary>
-        public static ReadOnlySpan<byte> SchemaLocationUtf8 => "clang-format-schema.json"u8;
+        public static ReadOnlySpan<byte> SchemaLocationUtf8 => ""u8;
 
         /// <summary>
         /// Applies the JSON schema semantics defined by this type to the instance determined by the given document and index.

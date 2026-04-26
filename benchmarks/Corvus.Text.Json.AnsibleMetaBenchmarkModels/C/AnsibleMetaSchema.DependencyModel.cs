@@ -278,11 +278,11 @@ public readonly partial struct AnsibleMetaSchema
         /// Gets the (optional) <c>vars</c> property.
         /// Vars
         /// </summary>
-        public Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DependencyModel.Vars VarsValue
+        public Corvus.AnsibleMetaBenchmark.Current.JsonObject Vars
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.VarsValueUtf8, out Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.DependencyModel.Vars value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.VarsUtf8, out Corvus.AnsibleMetaBenchmark.Current.JsonObject value))
                 {
                     return value;
                 }
@@ -964,9 +964,9 @@ public readonly partial struct AnsibleMetaSchema
             public const string TagsValue = "tags";
 
             /// <summary>
-            /// Gets the JSON property name for <see cref="VarsValue"/>.
+            /// Gets the JSON property name for <see cref="Vars"/>.
             /// </summary>
-            public const string VarsValue = "vars";
+            public const string Vars = "vars";
 
             /// <summary>
             /// Gets the JSON property name for <see cref="Version"/>.
@@ -1009,9 +1009,9 @@ public readonly partial struct AnsibleMetaSchema
             public static ReadOnlySpan<byte> TagsValueUtf8 => "tags"u8;
 
             /// <summary>
-            /// Gets the JSON property name for <see cref="VarsValue"/>.
+            /// Gets the JSON property name for <see cref="Vars"/>.
             /// </summary>
-            public static ReadOnlySpan<byte> VarsValueUtf8 => "vars"u8;
+            public static ReadOnlySpan<byte> VarsUtf8 => "vars"u8;
 
             /// <summary>
             /// Gets the JSON property name for <see cref="Version"/>.
@@ -1060,9 +1060,9 @@ public readonly partial struct AnsibleMetaSchema
             public static ReadOnlySpan<byte> TagsValue => "tags"u8;
 
             /// <summary>
-            /// Gets the escaped UTF-8 JSON property name for <see cref="VarsValue"/>.
+            /// Gets the escaped UTF-8 JSON property name for <see cref="Vars"/>.
             /// </summary>
-            public static ReadOnlySpan<byte> VarsValue => "vars"u8;
+            public static ReadOnlySpan<byte> Vars => "vars"u8;
 
             /// <summary>
             /// Gets the escaped UTF-8 JSON property name for <see cref="Version"/>.
@@ -1073,6 +1073,58 @@ public readonly partial struct AnsibleMetaSchema
             /// Gets the escaped UTF-8 JSON property name for <see cref="When"/>.
             /// </summary>
             public static ReadOnlySpan<byte> When => "when"u8;
+        }
+
+        /// <summary>
+        /// Provides pre-baked property name blobs for fast builder property storage.
+        /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
+        /// </summary>
+        private static class JsonPropertyNamesPrebaked
+        {
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Become"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Become => [0x85, 0x00, 0x00, 0x00, 0x22, 0x62, 0x65, 0x63, 0x6F, 0x6D, 0x65, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Name"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Name => [0x65, 0x00, 0x00, 0x00, 0x22, 0x6E, 0x61, 0x6D, 0x65, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Role"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Role => [0x65, 0x00, 0x00, 0x00, 0x22, 0x72, 0x6F, 0x6C, 0x65, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="ScmValue"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> ScmValue => [0x55, 0x00, 0x00, 0x00, 0x22, 0x73, 0x63, 0x6D, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Src"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Src => [0x55, 0x00, 0x00, 0x00, 0x22, 0x73, 0x72, 0x63, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="TagsValue"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> TagsValue => [0x65, 0x00, 0x00, 0x00, 0x22, 0x74, 0x61, 0x67, 0x73, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Vars"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Vars => [0x65, 0x00, 0x00, 0x00, 0x22, 0x76, 0x61, 0x72, 0x73, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Version"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Version => [0x95, 0x00, 0x00, 0x00, 0x22, 0x76, 0x65, 0x72, 0x73, 0x69, 0x6F, 0x6E, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="When"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> When => [0x65, 0x00, 0x00, 0x00, 0x22, 0x77, 0x68, 0x65, 0x6E, 0x22];
         }
     }
 }

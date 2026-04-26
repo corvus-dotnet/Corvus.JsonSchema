@@ -86,17 +86,17 @@ public readonly partial struct Ui5Schema
                                             /// <summary>
                                             /// Gets a provider for the schema location from which this type was generated.
                                             /// </summary>
-                                            public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("ui5-schema.json#/then/else/then/else/else/else/then/definitions/shims/properties/configurations"u8, buffer, out written);
+                                            public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/then/else/then/else/else/else/then/definitions/shims/properties/configurations"u8, buffer, out written);
 
                                             /// <summary>
                                             /// Gets the schema location from which this type was generated.
                                             /// </summary>
-                                            public const string SchemaLocation = "ui5-schema.json#/then/else/then/else/else/else/then/definitions/shims/properties/configurations";
+                                            public const string SchemaLocation = "/then/else/then/else/else/else/then/definitions/shims/properties/configurations";
 
                                             /// <summary>
                                             /// Gets the schema location from which this type was generated as a UTF-8 string.
                                             /// </summary>
-                                            public static ReadOnlySpan<byte> SchemaLocationUtf8 => "ui5-schema.json#/then/else/then/else/else/else/then/definitions/shims/properties/configurations"u8;
+                                            public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/then/else/then/else/else/else/then/definitions/shims/properties/configurations"u8;
 
                                             /// <summary>
                                             /// Applies the JSON schema semantics defined by this type to the instance determined by the given document and index.
@@ -147,7 +147,7 @@ public readonly partial struct Ui5Schema
                                                                     objectValidation_unescapedPropertyName.Span,
                                                                     evaluationPath: PatternPropertiesSchemaEvaluationPath);
 
-                                                            Corvus.Ui5Benchmark.Current.Ui5Schema.RequiredSpecVersion.ElseEntity.RequiredKindAndMetadataAndSpecVersionAndType.ElseEntity.ElseEntity2.ElseEntity.ThenEntity.ShimsEntity.ConfigurationsEntity.Entity.JsonSchema.Evaluate(parentDocument, objectValidation_currentIndex, ref childContext);
+                                                            Corvus.Ui5Benchmark.Current.JsonObject.JsonSchema.Evaluate(parentDocument, objectValidation_currentIndex, ref childContext);
                                                             context.EvaluatedKeyword(context.IsMatch, ".+", messageProvider: JsonSchemaEvaluation.ExpectedMatchPatternPropertySchema, "patternProperties"u8);
                                                             context.CommitChildContext(childContext.IsMatch, ref childContext);
                                                         }

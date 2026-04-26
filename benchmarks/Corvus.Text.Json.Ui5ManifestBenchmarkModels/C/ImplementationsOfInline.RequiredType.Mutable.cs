@@ -451,7 +451,7 @@ public readonly partial struct ImplementationsOfInline
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Type, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Type, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -485,7 +485,7 @@ public readonly partial struct ImplementationsOfInline
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Type, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Type, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -939,6 +939,36 @@ public readonly partial struct ImplementationsOfInline
                 }
             }
 
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.JsonElement:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                        break;
+                    case Kind.RawUtf8StringRequiresUnescaping:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _utf8Backing, escapeValue: false, valueRequiresUnescaping: true);
+                        break;
+                    case Kind.RawUtf8StringNotRequiresUnescaping:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _utf8Backing, escapeValue: false, valueRequiresUnescaping: false);
+                        break;
+                    case Kind.Utf8String:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _utf8Backing, escapeValue: true, valueRequiresUnescaping: false);
+                        break;
+                    case Kind.Utf16String:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _utf16Backing);
+                        break;
+                    case Kind.Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
             internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
             {
                 switch(_kind)
@@ -1076,6 +1106,24 @@ public readonly partial struct ImplementationsOfInline
                 }
             }
 
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.Source:
+                        _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                        break;
+                    case Kind.Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
             internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
             {
                 switch(_kind)
@@ -1154,7 +1202,7 @@ public readonly partial struct ImplementationsOfInline
             /// </summary>
             internal static void Create(ref ComplexValueBuilder builder, in Corvus.Text.Json.JsonElement.Source type)
             {
-                type.AddAsProperty(JsonPropertyNamesEscaped.Type, ref builder, escapeName: false);
+                type.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Type, ref builder);
             }
 
             /// <summary>
@@ -1176,7 +1224,7 @@ public readonly partial struct ImplementationsOfInline
             where TContext : allows ref struct
             #endif
             {
-                type.AddAsProperty(JsonPropertyNamesEscaped.Type, ref builder, escapeName: false);
+                type.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Type, ref builder);
             }
 
             /// <summary>

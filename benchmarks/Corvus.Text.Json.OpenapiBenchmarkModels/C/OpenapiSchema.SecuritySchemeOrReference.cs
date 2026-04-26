@@ -167,11 +167,11 @@ public readonly partial struct OpenapiSchema
         /// <summary>
         /// Gets the (optional) <c>$ref</c> property.
         /// </summary>
-        public Corvus.OpenapiBenchmark.Current.JsonUriReferenceNotAsserted Ref
+        public Corvus.OpenapiBenchmark.Current.JsonUriReference Ref
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.RefUtf8, out Corvus.OpenapiBenchmark.Current.JsonUriReferenceNotAsserted value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.RefUtf8, out Corvus.OpenapiBenchmark.Current.JsonUriReference value))
                 {
                     return value;
                 }
@@ -263,11 +263,11 @@ public readonly partial struct OpenapiSchema
         /// <summary>
         /// Gets the (optional) <c>openIdConnectUrl</c> property.
         /// </summary>
-        public Corvus.OpenapiBenchmark.Current.JsonUriNotAsserted OpenIdConnectUrl
+        public Corvus.OpenapiBenchmark.Current.JsonUri OpenIdConnectUrl
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.OpenIdConnectUrlUtf8, out Corvus.OpenapiBenchmark.Current.JsonUriNotAsserted value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.OpenIdConnectUrlUtf8, out Corvus.OpenapiBenchmark.Current.JsonUri value))
                 {
                     return value;
                 }
@@ -1013,6 +1013,63 @@ public readonly partial struct OpenapiSchema
             /// Gets the escaped UTF-8 JSON property name for <see cref="Type"/>.
             /// </summary>
             public static ReadOnlySpan<byte> Type => "type"u8;
+        }
+
+        /// <summary>
+        /// Provides pre-baked property name blobs for fast builder property storage.
+        /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
+        /// </summary>
+        private static class JsonPropertyNamesPrebaked
+        {
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Ref"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Ref => [0x65, 0x00, 0x00, 0x00, 0x22, 0x24, 0x72, 0x65, 0x66, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="BearerFormat"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> BearerFormat => [0xE5, 0x00, 0x00, 0x00, 0x22, 0x62, 0x65, 0x61, 0x72, 0x65, 0x72, 0x46, 0x6F, 0x72, 0x6D, 0x61, 0x74, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Description"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Description => [0xD5, 0x00, 0x00, 0x00, 0x22, 0x64, 0x65, 0x73, 0x63, 0x72, 0x69, 0x70, 0x74, 0x69, 0x6F, 0x6E, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Flows"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Flows => [0x75, 0x00, 0x00, 0x00, 0x22, 0x66, 0x6C, 0x6F, 0x77, 0x73, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="In"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> In => [0x45, 0x00, 0x00, 0x00, 0x22, 0x69, 0x6E, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Name"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Name => [0x65, 0x00, 0x00, 0x00, 0x22, 0x6E, 0x61, 0x6D, 0x65, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="OpenIdConnectUrl"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> OpenIdConnectUrl => [0x25, 0x01, 0x00, 0x00, 0x22, 0x6F, 0x70, 0x65, 0x6E, 0x49, 0x64, 0x43, 0x6F, 0x6E, 0x6E, 0x65, 0x63, 0x74, 0x55, 0x72, 0x6C, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Scheme"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Scheme => [0x85, 0x00, 0x00, 0x00, 0x22, 0x73, 0x63, 0x68, 0x65, 0x6D, 0x65, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Summary"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Summary => [0x95, 0x00, 0x00, 0x00, 0x22, 0x73, 0x75, 0x6D, 0x6D, 0x61, 0x72, 0x79, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Type"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Type => [0x65, 0x00, 0x00, 0x00, 0x22, 0x74, 0x79, 0x70, 0x65, 0x22];
         }
     }
 }

@@ -415,7 +415,7 @@ public readonly partial struct GitpodConfigurationSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Clion, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Clion, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -451,7 +451,7 @@ public readonly partial struct GitpodConfigurationSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Clion, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Clion, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -496,7 +496,7 @@ public readonly partial struct GitpodConfigurationSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Goland, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Goland, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -532,7 +532,7 @@ public readonly partial struct GitpodConfigurationSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Goland, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Goland, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -577,7 +577,7 @@ public readonly partial struct GitpodConfigurationSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Intellij, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Intellij, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -613,7 +613,7 @@ public readonly partial struct GitpodConfigurationSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Intellij, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Intellij, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -658,7 +658,7 @@ public readonly partial struct GitpodConfigurationSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Phpstorm, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Phpstorm, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -694,7 +694,7 @@ public readonly partial struct GitpodConfigurationSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Phpstorm, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Phpstorm, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -739,7 +739,7 @@ public readonly partial struct GitpodConfigurationSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Plugins, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Plugins, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -775,7 +775,7 @@ public readonly partial struct GitpodConfigurationSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Plugins, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Plugins, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -820,7 +820,7 @@ public readonly partial struct GitpodConfigurationSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Pycharm, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Pycharm, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -856,7 +856,7 @@ public readonly partial struct GitpodConfigurationSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Pycharm, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Pycharm, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -901,7 +901,7 @@ public readonly partial struct GitpodConfigurationSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Rider, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Rider, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -937,7 +937,7 @@ public readonly partial struct GitpodConfigurationSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Rider, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Rider, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -982,7 +982,7 @@ public readonly partial struct GitpodConfigurationSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Rubymine, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Rubymine, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1018,7 +1018,7 @@ public readonly partial struct GitpodConfigurationSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Rubymine, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Rubymine, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1063,7 +1063,7 @@ public readonly partial struct GitpodConfigurationSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Webstorm, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Webstorm, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1099,7 +1099,7 @@ public readonly partial struct GitpodConfigurationSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Webstorm, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Webstorm, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1306,6 +1306,24 @@ public readonly partial struct GitpodConfigurationSchema
                 }
             }
 
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.JsonElement:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                        break;
+                    case Kind.Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
             internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
             {
                 switch(_kind)
@@ -1407,6 +1425,24 @@ public readonly partial struct GitpodConfigurationSchema
                 }
             }
 
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.Source:
+                        _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                        break;
+                    case Kind.Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
             internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
             {
                 switch(_kind)
@@ -1495,15 +1531,15 @@ public readonly partial struct GitpodConfigurationSchema
                 in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.JetbrainsProduct.Source rubymine = default,
                 in Corvus.GitpodConfigurationBenchmark.Current.GitpodConfigurationSchema.JetbrainsProduct.Source webstorm = default)
             {
-                clion.AddAsProperty(JsonPropertyNamesEscaped.Clion, ref builder, escapeName: false);
-                goland.AddAsProperty(JsonPropertyNamesEscaped.Goland, ref builder, escapeName: false);
-                intellij.AddAsProperty(JsonPropertyNamesEscaped.Intellij, ref builder, escapeName: false);
-                phpstorm.AddAsProperty(JsonPropertyNamesEscaped.Phpstorm, ref builder, escapeName: false);
-                plugins.AddAsProperty(JsonPropertyNamesEscaped.Plugins, ref builder, escapeName: false);
-                pycharm.AddAsProperty(JsonPropertyNamesEscaped.Pycharm, ref builder, escapeName: false);
-                rider.AddAsProperty(JsonPropertyNamesEscaped.Rider, ref builder, escapeName: false);
-                rubymine.AddAsProperty(JsonPropertyNamesEscaped.Rubymine, ref builder, escapeName: false);
-                webstorm.AddAsProperty(JsonPropertyNamesEscaped.Webstorm, ref builder, escapeName: false);
+                clion.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Clion, ref builder);
+                goland.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Goland, ref builder);
+                intellij.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Intellij, ref builder);
+                phpstorm.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Phpstorm, ref builder);
+                plugins.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Plugins, ref builder);
+                pycharm.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Pycharm, ref builder);
+                rider.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Rider, ref builder);
+                rubymine.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Rubymine, ref builder);
+                webstorm.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Webstorm, ref builder);
             }
 
             /// <summary>
@@ -1542,15 +1578,15 @@ public readonly partial struct GitpodConfigurationSchema
             where TContext : allows ref struct
             #endif
             {
-                clion.AddAsProperty(JsonPropertyNamesEscaped.Clion, ref builder, escapeName: false);
-                goland.AddAsProperty(JsonPropertyNamesEscaped.Goland, ref builder, escapeName: false);
-                intellij.AddAsProperty(JsonPropertyNamesEscaped.Intellij, ref builder, escapeName: false);
-                phpstorm.AddAsProperty(JsonPropertyNamesEscaped.Phpstorm, ref builder, escapeName: false);
-                plugins.AddAsProperty(JsonPropertyNamesEscaped.Plugins, ref builder, escapeName: false);
-                pycharm.AddAsProperty(JsonPropertyNamesEscaped.Pycharm, ref builder, escapeName: false);
-                rider.AddAsProperty(JsonPropertyNamesEscaped.Rider, ref builder, escapeName: false);
-                rubymine.AddAsProperty(JsonPropertyNamesEscaped.Rubymine, ref builder, escapeName: false);
-                webstorm.AddAsProperty(JsonPropertyNamesEscaped.Webstorm, ref builder, escapeName: false);
+                clion.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Clion, ref builder);
+                goland.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Goland, ref builder);
+                intellij.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Intellij, ref builder);
+                phpstorm.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Phpstorm, ref builder);
+                plugins.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Plugins, ref builder);
+                pycharm.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Pycharm, ref builder);
+                rider.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Rider, ref builder);
+                rubymine.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Rubymine, ref builder);
+                webstorm.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Webstorm, ref builder);
             }
 
             /// <summary>

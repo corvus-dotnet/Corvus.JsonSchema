@@ -729,6 +729,28 @@ public readonly partial struct DependabotSchema
                             /// </summary>
                             public static ReadOnlySpan<byte> UpdateType => "update_type"u8;
                         }
+
+                        /// <summary>
+                        /// Provides pre-baked property name blobs for fast builder property storage.
+                        /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
+                        /// </summary>
+                        private static class JsonPropertyNamesPrebaked
+                        {
+                            /// <summary>
+                            /// Gets the pre-baked property name blob for <see cref="DependencyName"/>.
+                            /// </summary>
+                            public static ReadOnlySpan<byte> DependencyName => [0x15, 0x01, 0x00, 0x00, 0x22, 0x64, 0x65, 0x70, 0x65, 0x6E, 0x64, 0x65, 0x6E, 0x63, 0x79, 0x5F, 0x6E, 0x61, 0x6D, 0x65, 0x22];
+
+                            /// <summary>
+                            /// Gets the pre-baked property name blob for <see cref="DependencyType"/>.
+                            /// </summary>
+                            public static ReadOnlySpan<byte> DependencyType => [0x15, 0x01, 0x00, 0x00, 0x22, 0x64, 0x65, 0x70, 0x65, 0x6E, 0x64, 0x65, 0x6E, 0x63, 0x79, 0x5F, 0x74, 0x79, 0x70, 0x65, 0x22];
+
+                            /// <summary>
+                            /// Gets the pre-baked property name blob for <see cref="UpdateType"/>.
+                            /// </summary>
+                            public static ReadOnlySpan<byte> UpdateType => [0xD5, 0x00, 0x00, 0x00, 0x22, 0x75, 0x70, 0x64, 0x61, 0x74, 0x65, 0x5F, 0x74, 0x79, 0x70, 0x65, 0x22];
+                        }
                     }
                 }
             }

@@ -339,11 +339,11 @@ public readonly partial struct Ui5ManifestSchema
                     /// Represents the transition parameters that are passed to the event handlers
                     /// </para>
                     /// </remarks>
-                    public Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Target.TransitionParametersEntity TransitionParameters
+                    public Corvus.Ui5ManifestBenchmark.Current.JsonObject TransitionParameters
                     {
                         get
                         {
-                            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TransitionParametersUtf8, out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Target.TransitionParametersEntity value))
+                            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TransitionParametersUtf8, out Corvus.Ui5ManifestBenchmark.Current.JsonObject value))
                             {
                                 return value;
                             }
@@ -1222,6 +1222,78 @@ public readonly partial struct Ui5ManifestSchema
                         /// Gets the escaped UTF-8 JSON property name for <see cref="ViewType"/>.
                         /// </summary>
                         public static ReadOnlySpan<byte> ViewType => "viewType"u8;
+                    }
+
+                    /// <summary>
+                    /// Provides pre-baked property name blobs for fast builder property storage.
+                    /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
+                    /// </summary>
+                    private static class JsonPropertyNamesPrebaked
+                    {
+                        /// <summary>
+                        /// Gets the pre-baked property name blob for <see cref="ClearControlAggregation"/>.
+                        /// </summary>
+                        public static ReadOnlySpan<byte> ClearControlAggregation => [0x95, 0x01, 0x00, 0x00, 0x22, 0x63, 0x6C, 0x65, 0x61, 0x72, 0x43, 0x6F, 0x6E, 0x74, 0x72, 0x6F, 0x6C, 0x41, 0x67, 0x67, 0x72, 0x65, 0x67, 0x61, 0x74, 0x69, 0x6F, 0x6E, 0x22];
+
+                        /// <summary>
+                        /// Gets the pre-baked property name blob for <see cref="ControlAggregation"/>.
+                        /// </summary>
+                        public static ReadOnlySpan<byte> ControlAggregation => [0x45, 0x01, 0x00, 0x00, 0x22, 0x63, 0x6F, 0x6E, 0x74, 0x72, 0x6F, 0x6C, 0x41, 0x67, 0x67, 0x72, 0x65, 0x67, 0x61, 0x74, 0x69, 0x6F, 0x6E, 0x22];
+
+                        /// <summary>
+                        /// Gets the pre-baked property name blob for <see cref="ControlId"/>.
+                        /// </summary>
+                        public static ReadOnlySpan<byte> ControlId => [0xB5, 0x00, 0x00, 0x00, 0x22, 0x63, 0x6F, 0x6E, 0x74, 0x72, 0x6F, 0x6C, 0x49, 0x64, 0x22];
+
+                        /// <summary>
+                        /// Gets the pre-baked property name blob for <see cref="Parent"/>.
+                        /// </summary>
+                        public static ReadOnlySpan<byte> Parent => [0x85, 0x00, 0x00, 0x00, 0x22, 0x70, 0x61, 0x72, 0x65, 0x6E, 0x74, 0x22];
+
+                        /// <summary>
+                        /// Gets the pre-baked property name blob for <see cref="TargetParent"/>.
+                        /// </summary>
+                        public static ReadOnlySpan<byte> TargetParent => [0xE5, 0x00, 0x00, 0x00, 0x22, 0x74, 0x61, 0x72, 0x67, 0x65, 0x74, 0x50, 0x61, 0x72, 0x65, 0x6E, 0x74, 0x22];
+
+                        /// <summary>
+                        /// Gets the pre-baked property name blob for <see cref="Title"/>.
+                        /// </summary>
+                        public static ReadOnlySpan<byte> Title => [0x75, 0x00, 0x00, 0x00, 0x22, 0x74, 0x69, 0x74, 0x6C, 0x65, 0x22];
+
+                        /// <summary>
+                        /// Gets the pre-baked property name blob for <see cref="Transition"/>.
+                        /// </summary>
+                        public static ReadOnlySpan<byte> Transition => [0xC5, 0x00, 0x00, 0x00, 0x22, 0x74, 0x72, 0x61, 0x6E, 0x73, 0x69, 0x74, 0x69, 0x6F, 0x6E, 0x22];
+
+                        /// <summary>
+                        /// Gets the pre-baked property name blob for <see cref="TransitionParameters"/>.
+                        /// </summary>
+                        public static ReadOnlySpan<byte> TransitionParameters => [0x65, 0x01, 0x00, 0x00, 0x22, 0x74, 0x72, 0x61, 0x6E, 0x73, 0x69, 0x74, 0x69, 0x6F, 0x6E, 0x50, 0x61, 0x72, 0x61, 0x6D, 0x65, 0x74, 0x65, 0x72, 0x73, 0x22];
+
+                        /// <summary>
+                        /// Gets the pre-baked property name blob for <see cref="ViewId"/>.
+                        /// </summary>
+                        public static ReadOnlySpan<byte> ViewId => [0x85, 0x00, 0x00, 0x00, 0x22, 0x76, 0x69, 0x65, 0x77, 0x49, 0x64, 0x22];
+
+                        /// <summary>
+                        /// Gets the pre-baked property name blob for <see cref="ViewLevel"/>.
+                        /// </summary>
+                        public static ReadOnlySpan<byte> ViewLevel => [0xB5, 0x00, 0x00, 0x00, 0x22, 0x76, 0x69, 0x65, 0x77, 0x4C, 0x65, 0x76, 0x65, 0x6C, 0x22];
+
+                        /// <summary>
+                        /// Gets the pre-baked property name blob for <see cref="ViewName"/>.
+                        /// </summary>
+                        public static ReadOnlySpan<byte> ViewName => [0xA5, 0x00, 0x00, 0x00, 0x22, 0x76, 0x69, 0x65, 0x77, 0x4E, 0x61, 0x6D, 0x65, 0x22];
+
+                        /// <summary>
+                        /// Gets the pre-baked property name blob for <see cref="ViewPath"/>.
+                        /// </summary>
+                        public static ReadOnlySpan<byte> ViewPath => [0xA5, 0x00, 0x00, 0x00, 0x22, 0x76, 0x69, 0x65, 0x77, 0x50, 0x61, 0x74, 0x68, 0x22];
+
+                        /// <summary>
+                        /// Gets the pre-baked property name blob for <see cref="ViewType"/>.
+                        /// </summary>
+                        public static ReadOnlySpan<byte> ViewType => [0xA5, 0x00, 0x00, 0x00, 0x22, 0x76, 0x69, 0x65, 0x77, 0x54, 0x79, 0x70, 0x65, 0x22];
                     }
                 }
             }

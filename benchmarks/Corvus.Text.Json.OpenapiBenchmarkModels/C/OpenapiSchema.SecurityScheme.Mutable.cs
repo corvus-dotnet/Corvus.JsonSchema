@@ -402,11 +402,11 @@ public readonly partial struct OpenapiSchema
             /// <summary>
             /// Gets the (optional) <c>openIdConnectUrl</c> property.
             /// </summary>
-            public Corvus.OpenapiBenchmark.Current.JsonUriNotAsserted.Mutable OpenIdConnectUrl
+            public Corvus.OpenapiBenchmark.Current.JsonUri.Mutable OpenIdConnectUrl
             {
                 get
                 {
-                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.OpenIdConnectUrlUtf8, out Corvus.OpenapiBenchmark.Current.JsonUriNotAsserted.Mutable value))
+                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.OpenIdConnectUrlUtf8, out Corvus.OpenapiBenchmark.Current.JsonUri.Mutable value))
                     {
                         return value;
                     }
@@ -506,7 +506,7 @@ public readonly partial struct OpenapiSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.BearerFormat, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.BearerFormat, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -551,7 +551,7 @@ public readonly partial struct OpenapiSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Description, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Description, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -596,7 +596,7 @@ public readonly partial struct OpenapiSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Flows, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Flows, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -632,7 +632,7 @@ public readonly partial struct OpenapiSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Flows, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Flows, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -677,7 +677,7 @@ public readonly partial struct OpenapiSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.In, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.In, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -722,7 +722,7 @@ public readonly partial struct OpenapiSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Name, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Name, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -746,7 +746,7 @@ public readonly partial struct OpenapiSchema
             /// Set the <c>openIdConnectUrl</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetOpenIdConnectUrl(in Corvus.OpenapiBenchmark.Current.JsonUriNotAsserted.Source value)
+            public void SetOpenIdConnectUrl(in Corvus.OpenapiBenchmark.Current.JsonUri.Source value)
             {
                 CheckValidInstance();
 
@@ -767,7 +767,7 @@ public readonly partial struct OpenapiSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.OpenIdConnectUrl, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.OpenIdConnectUrl, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -812,7 +812,7 @@ public readonly partial struct OpenapiSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Scheme, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Scheme, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -855,7 +855,7 @@ public readonly partial struct OpenapiSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Type, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Type, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1550,6 +1550,24 @@ public readonly partial struct OpenapiSchema
                 }
             }
 
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.JsonElement:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                        break;
+                    case Kind.Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
             internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
             {
                 switch(_kind)
@@ -1651,6 +1669,24 @@ public readonly partial struct OpenapiSchema
                 }
             }
 
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.Source:
+                        _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                        break;
+                    case Kind.Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
             internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
             {
                 switch(_kind)
@@ -1735,17 +1771,17 @@ public readonly partial struct OpenapiSchema
                 in Corvus.OpenapiBenchmark.Current.OpenapiSchema.OauthFlows.Source flows = default,
                 in Corvus.OpenapiBenchmark.Current.OpenapiSchema.SecurityScheme.TypeApikeyEntity.RequiredInAndName.InEntity.Source inValue = default,
                 in Corvus.OpenapiBenchmark.Current.JsonString.Source name = default,
-                in Corvus.OpenapiBenchmark.Current.JsonUriNotAsserted.Source openIdConnectUrl = default,
+                in Corvus.OpenapiBenchmark.Current.JsonUri.Source openIdConnectUrl = default,
                 in Corvus.OpenapiBenchmark.Current.JsonString.Source scheme = default)
             {
-                type.AddAsProperty(JsonPropertyNamesEscaped.Type, ref builder, escapeName: false);
-                bearerFormat.AddAsProperty(JsonPropertyNamesEscaped.BearerFormat, ref builder, escapeName: false);
-                description.AddAsProperty(JsonPropertyNamesEscaped.Description, ref builder, escapeName: false);
-                flows.AddAsProperty(JsonPropertyNamesEscaped.Flows, ref builder, escapeName: false);
-                inValue.AddAsProperty(JsonPropertyNamesEscaped.In, ref builder, escapeName: false);
-                name.AddAsProperty(JsonPropertyNamesEscaped.Name, ref builder, escapeName: false);
-                openIdConnectUrl.AddAsProperty(JsonPropertyNamesEscaped.OpenIdConnectUrl, ref builder, escapeName: false);
-                scheme.AddAsProperty(JsonPropertyNamesEscaped.Scheme, ref builder, escapeName: false);
+                type.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Type, ref builder);
+                bearerFormat.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.BearerFormat, ref builder);
+                description.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Description, ref builder);
+                flows.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Flows, ref builder);
+                inValue.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.In, ref builder);
+                name.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Name, ref builder);
+                openIdConnectUrl.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.OpenIdConnectUrl, ref builder);
+                scheme.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Scheme, ref builder);
             }
 
             /// <summary>
@@ -1758,7 +1794,7 @@ public readonly partial struct OpenapiSchema
                 in Corvus.OpenapiBenchmark.Current.OpenapiSchema.OauthFlows.Source flows = default,
                 in Corvus.OpenapiBenchmark.Current.OpenapiSchema.SecurityScheme.TypeApikeyEntity.RequiredInAndName.InEntity.Source inValue = default,
                 in Corvus.OpenapiBenchmark.Current.JsonString.Source name = default,
-                in Corvus.OpenapiBenchmark.Current.JsonUriNotAsserted.Source openIdConnectUrl = default,
+                in Corvus.OpenapiBenchmark.Current.JsonUri.Source openIdConnectUrl = default,
                 in Corvus.OpenapiBenchmark.Current.JsonString.Source scheme = default)
             {
                 Create(ref _builder, type, bearerFormat, description, flows, inValue, name, openIdConnectUrl, scheme);
@@ -1776,20 +1812,20 @@ public readonly partial struct OpenapiSchema
                 in Corvus.OpenapiBenchmark.Current.OpenapiSchema.OauthFlows.Source<TContext> flows = default,
                 in Corvus.OpenapiBenchmark.Current.OpenapiSchema.SecurityScheme.TypeApikeyEntity.RequiredInAndName.InEntity.Source inValue = default,
                 in Corvus.OpenapiBenchmark.Current.JsonString.Source name = default,
-                in Corvus.OpenapiBenchmark.Current.JsonUriNotAsserted.Source openIdConnectUrl = default,
+                in Corvus.OpenapiBenchmark.Current.JsonUri.Source openIdConnectUrl = default,
                 in Corvus.OpenapiBenchmark.Current.JsonString.Source scheme = default)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif
             {
-                type.AddAsProperty(JsonPropertyNamesEscaped.Type, ref builder, escapeName: false);
-                bearerFormat.AddAsProperty(JsonPropertyNamesEscaped.BearerFormat, ref builder, escapeName: false);
-                description.AddAsProperty(JsonPropertyNamesEscaped.Description, ref builder, escapeName: false);
-                flows.AddAsProperty(JsonPropertyNamesEscaped.Flows, ref builder, escapeName: false);
-                inValue.AddAsProperty(JsonPropertyNamesEscaped.In, ref builder, escapeName: false);
-                name.AddAsProperty(JsonPropertyNamesEscaped.Name, ref builder, escapeName: false);
-                openIdConnectUrl.AddAsProperty(JsonPropertyNamesEscaped.OpenIdConnectUrl, ref builder, escapeName: false);
-                scheme.AddAsProperty(JsonPropertyNamesEscaped.Scheme, ref builder, escapeName: false);
+                type.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Type, ref builder);
+                bearerFormat.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.BearerFormat, ref builder);
+                description.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Description, ref builder);
+                flows.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Flows, ref builder);
+                inValue.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.In, ref builder);
+                name.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Name, ref builder);
+                openIdConnectUrl.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.OpenIdConnectUrl, ref builder);
+                scheme.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Scheme, ref builder);
             }
 
             /// <summary>
@@ -1803,7 +1839,7 @@ public readonly partial struct OpenapiSchema
                 in Corvus.OpenapiBenchmark.Current.OpenapiSchema.OauthFlows.Source<TContext> flows = default,
                 in Corvus.OpenapiBenchmark.Current.OpenapiSchema.SecurityScheme.TypeApikeyEntity.RequiredInAndName.InEntity.Source inValue = default,
                 in Corvus.OpenapiBenchmark.Current.JsonString.Source name = default,
-                in Corvus.OpenapiBenchmark.Current.JsonUriNotAsserted.Source openIdConnectUrl = default,
+                in Corvus.OpenapiBenchmark.Current.JsonUri.Source openIdConnectUrl = default,
                 in Corvus.OpenapiBenchmark.Current.JsonString.Source scheme = default)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
@@ -1993,7 +2029,7 @@ public readonly partial struct OpenapiSchema
         /// <param name="scheme">The value of the property.</param>
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
         /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-        public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.SecurityScheme.TypeEntity.Source type, in Corvus.OpenapiBenchmark.Current.JsonString.Source bearerFormat = default, in Corvus.OpenapiBenchmark.Current.JsonString.Source description = default, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.OauthFlows.Source flows = default, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.SecurityScheme.TypeApikeyEntity.RequiredInAndName.InEntity.Source inValue = default, in Corvus.OpenapiBenchmark.Current.JsonString.Source name = default, in Corvus.OpenapiBenchmark.Current.JsonUriNotAsserted.Source openIdConnectUrl = default, in Corvus.OpenapiBenchmark.Current.JsonString.Source scheme = default, int initialCapacity = 30)
+        public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.SecurityScheme.TypeEntity.Source type, in Corvus.OpenapiBenchmark.Current.JsonString.Source bearerFormat = default, in Corvus.OpenapiBenchmark.Current.JsonString.Source description = default, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.OauthFlows.Source flows = default, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.SecurityScheme.TypeApikeyEntity.RequiredInAndName.InEntity.Source inValue = default, in Corvus.OpenapiBenchmark.Current.JsonString.Source name = default, in Corvus.OpenapiBenchmark.Current.JsonUri.Source openIdConnectUrl = default, in Corvus.OpenapiBenchmark.Current.JsonString.Source scheme = default, int initialCapacity = 30)
         {
             JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
             ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
@@ -2022,7 +2058,7 @@ public readonly partial struct OpenapiSchema
         /// <param name="scheme">The value of the property.</param>
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
         /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-        public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.SecurityScheme.TypeEntity.Source type, in Corvus.OpenapiBenchmark.Current.JsonString.Source bearerFormat = default, in Corvus.OpenapiBenchmark.Current.JsonString.Source description = default, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.OauthFlows.Source<TContext> flows = default, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.SecurityScheme.TypeApikeyEntity.RequiredInAndName.InEntity.Source inValue = default, in Corvus.OpenapiBenchmark.Current.JsonString.Source name = default, in Corvus.OpenapiBenchmark.Current.JsonUriNotAsserted.Source openIdConnectUrl = default, in Corvus.OpenapiBenchmark.Current.JsonString.Source scheme = default, int initialCapacity = 30)
+        public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.SecurityScheme.TypeEntity.Source type, in Corvus.OpenapiBenchmark.Current.JsonString.Source bearerFormat = default, in Corvus.OpenapiBenchmark.Current.JsonString.Source description = default, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.OauthFlows.Source<TContext> flows = default, in Corvus.OpenapiBenchmark.Current.OpenapiSchema.SecurityScheme.TypeApikeyEntity.RequiredInAndName.InEntity.Source inValue = default, in Corvus.OpenapiBenchmark.Current.JsonString.Source name = default, in Corvus.OpenapiBenchmark.Current.JsonUri.Source openIdConnectUrl = default, in Corvus.OpenapiBenchmark.Current.JsonString.Source scheme = default, int initialCapacity = 30)
             #if NET9_0_OR_GREATER
             where TContext : allows ref struct
             #endif

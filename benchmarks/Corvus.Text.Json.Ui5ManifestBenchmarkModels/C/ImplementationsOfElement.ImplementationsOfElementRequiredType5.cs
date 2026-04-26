@@ -1193,5 +1193,87 @@ public readonly partial struct ImplementationsOfElement
             /// </summary>
             public static ReadOnlySpan<byte> VerticalCellContentAlignment => "verticalCellContentAlignment"u8;
         }
+
+        /// <summary>
+        /// Provides pre-baked property name blobs for fast builder property storage.
+        /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
+        /// </summary>
+        private static class JsonPropertyNamesPrebaked
+        {
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Columns"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Columns => [0x95, 0x00, 0x00, 0x00, 0x22, 0x63, 0x6F, 0x6C, 0x75, 0x6D, 0x6E, 0x73, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Fallback"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Fallback => [0xA5, 0x00, 0x00, 0x00, 0x22, 0x66, 0x61, 0x6C, 0x6C, 0x62, 0x61, 0x63, 0x6B, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="FirstRowAsHeader"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> FirstRowAsHeader => [0x25, 0x01, 0x00, 0x00, 0x22, 0x66, 0x69, 0x72, 0x73, 0x74, 0x52, 0x6F, 0x77, 0x41, 0x73, 0x48, 0x65, 0x61, 0x64, 0x65, 0x72, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="GridStyle"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> GridStyle => [0xB5, 0x00, 0x00, 0x00, 0x22, 0x67, 0x72, 0x69, 0x64, 0x53, 0x74, 0x79, 0x6C, 0x65, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Height"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Height => [0x85, 0x00, 0x00, 0x00, 0x22, 0x68, 0x65, 0x69, 0x67, 0x68, 0x74, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="HorizontalCellContentAlignment"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> HorizontalCellContentAlignment => [0x05, 0x02, 0x00, 0x00, 0x22, 0x68, 0x6F, 0x72, 0x69, 0x7A, 0x6F, 0x6E, 0x74, 0x61, 0x6C, 0x43, 0x65, 0x6C, 0x6C, 0x43, 0x6F, 0x6E, 0x74, 0x65, 0x6E, 0x74, 0x41, 0x6C, 0x69, 0x67, 0x6E, 0x6D, 0x65, 0x6E, 0x74, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Id"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Id => [0x45, 0x00, 0x00, 0x00, 0x22, 0x69, 0x64, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="IsVisible"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> IsVisible => [0xB5, 0x00, 0x00, 0x00, 0x22, 0x69, 0x73, 0x56, 0x69, 0x73, 0x69, 0x62, 0x6C, 0x65, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Requires"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Requires => [0xA5, 0x00, 0x00, 0x00, 0x22, 0x72, 0x65, 0x71, 0x75, 0x69, 0x72, 0x65, 0x73, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Rows"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Rows => [0x65, 0x00, 0x00, 0x00, 0x22, 0x72, 0x6F, 0x77, 0x73, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Separator"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Separator => [0xB5, 0x00, 0x00, 0x00, 0x22, 0x73, 0x65, 0x70, 0x61, 0x72, 0x61, 0x74, 0x6F, 0x72, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="ShowGridLines"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> ShowGridLines => [0xF5, 0x00, 0x00, 0x00, 0x22, 0x73, 0x68, 0x6F, 0x77, 0x47, 0x72, 0x69, 0x64, 0x4C, 0x69, 0x6E, 0x65, 0x73, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Spacing"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Spacing => [0x95, 0x00, 0x00, 0x00, 0x22, 0x73, 0x70, 0x61, 0x63, 0x69, 0x6E, 0x67, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Type"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Type => [0x65, 0x00, 0x00, 0x00, 0x22, 0x74, 0x79, 0x70, 0x65, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="VerticalCellContentAlignment"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> VerticalCellContentAlignment => [0xE5, 0x01, 0x00, 0x00, 0x22, 0x76, 0x65, 0x72, 0x74, 0x69, 0x63, 0x61, 0x6C, 0x43, 0x65, 0x6C, 0x6C, 0x43, 0x6F, 0x6E, 0x74, 0x65, 0x6E, 0x74, 0x41, 0x6C, 0x69, 0x67, 0x6E, 0x6D, 0x65, 0x6E, 0x74, 0x22];
+        }
     }
 }

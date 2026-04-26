@@ -526,7 +526,7 @@ public readonly partial struct NestCliSchema
                             else
                             {
                                 // We are going to insert the new value
-                                value.AddAsProperty(JsonPropertyNamesEscaped.CopyFiles, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CopyFiles, ref cvb);
                                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                             }
@@ -571,7 +571,7 @@ public readonly partial struct NestCliSchema
                             else
                             {
                                 // We are going to insert the new value
-                                value.AddAsProperty(JsonPropertyNamesEscaped.Extensions, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Extensions, ref cvb);
                                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                             }
@@ -607,7 +607,7 @@ public readonly partial struct NestCliSchema
                             else
                             {
                                 // We are going to insert the new value
-                                value.AddAsProperty(JsonPropertyNamesEscaped.Extensions, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Extensions, ref cvb);
                                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                             }
@@ -652,7 +652,7 @@ public readonly partial struct NestCliSchema
                             else
                             {
                                 // We are going to insert the new value
-                                value.AddAsProperty(JsonPropertyNamesEscaped.Filenames, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Filenames, ref cvb);
                                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                             }
@@ -688,7 +688,7 @@ public readonly partial struct NestCliSchema
                             else
                             {
                                 // We are going to insert the new value
-                                value.AddAsProperty(JsonPropertyNamesEscaped.Filenames, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Filenames, ref cvb);
                                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                             }
@@ -733,7 +733,7 @@ public readonly partial struct NestCliSchema
                             else
                             {
                                 // We are going to insert the new value
-                                value.AddAsProperty(JsonPropertyNamesEscaped.IncludeDotfiles, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IncludeDotfiles, ref cvb);
                                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                             }
@@ -778,7 +778,7 @@ public readonly partial struct NestCliSchema
                             else
                             {
                                 // We are going to insert the new value
-                                value.AddAsProperty(JsonPropertyNamesEscaped.OutDir, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.OutDir, ref cvb);
                                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                             }
@@ -823,7 +823,7 @@ public readonly partial struct NestCliSchema
                             else
                             {
                                 // We are going to insert the new value
-                                value.AddAsProperty(JsonPropertyNamesEscaped.Quiet, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Quiet, ref cvb);
                                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                             }
@@ -868,7 +868,7 @@ public readonly partial struct NestCliSchema
                             else
                             {
                                 // We are going to insert the new value
-                                value.AddAsProperty(JsonPropertyNamesEscaped.Sync, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Sync, ref cvb);
                                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                             }
@@ -913,7 +913,7 @@ public readonly partial struct NestCliSchema
                             else
                             {
                                 // We are going to insert the new value
-                                value.AddAsProperty(JsonPropertyNamesEscaped.Watch, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Watch, ref cvb);
                                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                             }
@@ -1296,6 +1296,24 @@ public readonly partial struct NestCliSchema
                             }
                         }
 
+                        internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+                        {
+                            switch(_kind)
+                            {
+                                case Kind.Unknown:
+                                    break;
+                                case Kind.JsonElement:
+                                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                                    break;
+                                case Kind.Builder:
+                                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
+                                    break;
+                                default:
+                                    Debug.Fail("Unexpected Kind");
+                                    break;
+                            }
+                        }
+
                         internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
                         {
                             switch(_kind)
@@ -1397,6 +1415,24 @@ public readonly partial struct NestCliSchema
                             }
                         }
 
+                        internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+                        {
+                            switch(_kind)
+                            {
+                                case Kind.Unknown:
+                                    break;
+                                case Kind.Source:
+                                    _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                                    break;
+                                case Kind.Builder:
+                                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
+                                    break;
+                                default:
+                                    Debug.Fail("Unexpected Kind");
+                                    break;
+                            }
+                        }
+
                         internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
                         {
                             switch(_kind)
@@ -1484,14 +1520,14 @@ public readonly partial struct NestCliSchema
                             in Corvus.NestCliBenchmark.Current.JsonBoolean.Source sync = default,
                             in Corvus.NestCliBenchmark.Current.JsonBoolean.Source watch = default)
                         {
-                            copyFiles.AddAsProperty(JsonPropertyNamesEscaped.CopyFiles, ref builder, escapeName: false);
-                            extensions.AddAsProperty(JsonPropertyNamesEscaped.Extensions, ref builder, escapeName: false);
-                            filenames.AddAsProperty(JsonPropertyNamesEscaped.Filenames, ref builder, escapeName: false);
-                            includeDotfiles.AddAsProperty(JsonPropertyNamesEscaped.IncludeDotfiles, ref builder, escapeName: false);
-                            outDir.AddAsProperty(JsonPropertyNamesEscaped.OutDir, ref builder, escapeName: false);
-                            quiet.AddAsProperty(JsonPropertyNamesEscaped.Quiet, ref builder, escapeName: false);
-                            sync.AddAsProperty(JsonPropertyNamesEscaped.Sync, ref builder, escapeName: false);
-                            watch.AddAsProperty(JsonPropertyNamesEscaped.Watch, ref builder, escapeName: false);
+                            copyFiles.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CopyFiles, ref builder);
+                            extensions.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Extensions, ref builder);
+                            filenames.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Filenames, ref builder);
+                            includeDotfiles.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IncludeDotfiles, ref builder);
+                            outDir.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.OutDir, ref builder);
+                            quiet.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Quiet, ref builder);
+                            sync.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Sync, ref builder);
+                            watch.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Watch, ref builder);
                         }
 
                         /// <summary>
@@ -1528,14 +1564,14 @@ public readonly partial struct NestCliSchema
                         where TContext : allows ref struct
                         #endif
                         {
-                            copyFiles.AddAsProperty(JsonPropertyNamesEscaped.CopyFiles, ref builder, escapeName: false);
-                            extensions.AddAsProperty(JsonPropertyNamesEscaped.Extensions, ref builder, escapeName: false);
-                            filenames.AddAsProperty(JsonPropertyNamesEscaped.Filenames, ref builder, escapeName: false);
-                            includeDotfiles.AddAsProperty(JsonPropertyNamesEscaped.IncludeDotfiles, ref builder, escapeName: false);
-                            outDir.AddAsProperty(JsonPropertyNamesEscaped.OutDir, ref builder, escapeName: false);
-                            quiet.AddAsProperty(JsonPropertyNamesEscaped.Quiet, ref builder, escapeName: false);
-                            sync.AddAsProperty(JsonPropertyNamesEscaped.Sync, ref builder, escapeName: false);
-                            watch.AddAsProperty(JsonPropertyNamesEscaped.Watch, ref builder, escapeName: false);
+                            copyFiles.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CopyFiles, ref builder);
+                            extensions.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Extensions, ref builder);
+                            filenames.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Filenames, ref builder);
+                            includeDotfiles.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IncludeDotfiles, ref builder);
+                            outDir.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.OutDir, ref builder);
+                            quiet.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Quiet, ref builder);
+                            sync.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Sync, ref builder);
+                            watch.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Watch, ref builder);
                         }
 
                         /// <summary>

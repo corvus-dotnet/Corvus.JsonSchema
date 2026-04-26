@@ -387,7 +387,7 @@ public readonly partial struct ClangFormatSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.Kind, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Kind, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -432,7 +432,7 @@ public readonly partial struct ClangFormatSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.OverEmptyLines, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.OverEmptyLines, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -815,6 +815,24 @@ public readonly partial struct ClangFormatSchema
                     }
                 }
 
+                internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+                {
+                    switch(_kind)
+                    {
+                        case Kind.Unknown:
+                            break;
+                        case Kind.JsonElement:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                            break;
+                        case Kind.Builder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
+                            break;
+                        default:
+                            Debug.Fail("Unexpected Kind");
+                            break;
+                    }
+                }
+
                 internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
                 {
                     switch(_kind)
@@ -916,6 +934,24 @@ public readonly partial struct ClangFormatSchema
                     }
                 }
 
+                internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+                {
+                    switch(_kind)
+                    {
+                        case Kind.Unknown:
+                            break;
+                        case Kind.Source:
+                            _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                            break;
+                        case Kind.Builder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
+                            break;
+                        default:
+                            Debug.Fail("Unexpected Kind");
+                            break;
+                    }
+                }
+
                 internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
                 {
                     switch(_kind)
@@ -997,8 +1033,8 @@ public readonly partial struct ClangFormatSchema
                     in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignTrailingCommentsEntity.ClangFormat16AlignmentOptions.SpecifiesTheWayToAlignTrailingComments.Source kind = default,
                     in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignTrailingCommentsEntity.ClangFormat16AlignmentOptions.HowManyEmptyLinesToApplyAlignment.Source overEmptyLines = default)
                 {
-                    kind.AddAsProperty(JsonPropertyNamesEscaped.Kind, ref builder, escapeName: false);
-                    overEmptyLines.AddAsProperty(JsonPropertyNamesEscaped.OverEmptyLines, ref builder, escapeName: false);
+                    kind.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Kind, ref builder);
+                    overEmptyLines.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.OverEmptyLines, ref builder);
                 }
 
                 /// <summary>

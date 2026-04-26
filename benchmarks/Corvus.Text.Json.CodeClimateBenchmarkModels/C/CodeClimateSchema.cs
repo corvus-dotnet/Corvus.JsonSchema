@@ -765,4 +765,36 @@ public readonly partial struct CodeClimateSchema
         /// </summary>
         public static ReadOnlySpan<byte> VersionValue => "version"u8;
     }
+
+    /// <summary>
+    /// Provides pre-baked property name blobs for fast builder property storage.
+    /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
+    /// </summary>
+    private static class JsonPropertyNamesPrebaked
+    {
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="ChecksValue"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> ChecksValue => [0x85, 0x00, 0x00, 0x00, 0x22, 0x63, 0x68, 0x65, 0x63, 0x6B, 0x73, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="ExcludePatterns"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> ExcludePatterns => [0x25, 0x01, 0x00, 0x00, 0x22, 0x65, 0x78, 0x63, 0x6C, 0x75, 0x64, 0x65, 0x5F, 0x70, 0x61, 0x74, 0x74, 0x65, 0x72, 0x6E, 0x73, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="PluginsValue"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> PluginsValue => [0x95, 0x00, 0x00, 0x00, 0x22, 0x70, 0x6C, 0x75, 0x67, 0x69, 0x6E, 0x73, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Prepare"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Prepare => [0x95, 0x00, 0x00, 0x00, 0x22, 0x70, 0x72, 0x65, 0x70, 0x61, 0x72, 0x65, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="VersionValue"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> VersionValue => [0x95, 0x00, 0x00, 0x00, 0x22, 0x76, 0x65, 0x72, 0x73, 0x69, 0x6F, 0x6E, 0x22];
+    }
 }

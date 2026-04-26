@@ -636,5 +636,32 @@ public readonly partial struct Ui5ManifestSchema
             /// </summary>
             public static ReadOnlySpan<byte> HasData => "hasData"u8;
         }
+
+        /// <summary>
+        /// Provides pre-baked property name blobs for fast builder property storage.
+        /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
+        /// </summary>
+        private static class JsonPropertyNamesPrebaked
+        {
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Actions"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Actions => [0x95, 0x00, 0x00, 0x00, 0x22, 0x61, 0x63, 0x74, 0x69, 0x6F, 0x6E, 0x73, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="DataValue"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> DataValue => [0x65, 0x00, 0x00, 0x00, 0x22, 0x64, 0x61, 0x74, 0x61, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Groups"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Groups => [0x85, 0x00, 0x00, 0x00, 0x22, 0x67, 0x72, 0x6F, 0x75, 0x70, 0x73, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="HasData"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> HasData => [0x95, 0x00, 0x00, 0x00, 0x22, 0x68, 0x61, 0x73, 0x44, 0x61, 0x74, 0x61, 0x22];
+        }
     }
 }

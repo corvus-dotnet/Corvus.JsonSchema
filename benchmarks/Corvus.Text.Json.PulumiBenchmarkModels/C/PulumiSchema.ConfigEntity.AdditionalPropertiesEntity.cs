@@ -329,24 +329,6 @@ public readonly partial struct PulumiSchema
             private JsonTokenType TokenType => _parent?.GetJsonTokenType(_idx) ?? JsonTokenType.None;
 
             /// <summary>
-            /// Conversion to <see cref="Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigEntity.AdditionalPropertiesEntity.OneOf3Array"/>.
-            /// </summary>
-            /// <param name="value">The value from which to convert.</param>
-            public static explicit operator Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigEntity.AdditionalPropertiesEntity.OneOf3Array(AdditionalPropertiesEntity value)
-            {
-                return Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigEntity.AdditionalPropertiesEntity.OneOf3Array.From(value);
-            }
-
-            /// <summary>
-            /// Conversion from <see cref="Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigEntity.AdditionalPropertiesEntity.OneOf3Array"/>.
-            /// </summary>
-            /// <param name="value">The value from which to convert.</param>
-            public static implicit operator AdditionalPropertiesEntity(Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigEntity.AdditionalPropertiesEntity.OneOf3Array value)
-            {
-                return From(value);
-            }
-
-            /// <summary>
             /// Conversion to <see cref="Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigTypeDeclaration"/>.
             /// </summary>
             /// <param name="value">The value from which to convert.</param>
@@ -948,15 +930,15 @@ public readonly partial struct PulumiSchema
             }
 
             /// <summary>
-            /// Gets the value as a <see cref="Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigEntity.AdditionalPropertiesEntity.OneOf3Array" />.
+            /// Gets the value as a <see cref="Corvus.PulumiBenchmark.Current.JsonArray" />.
             /// </summary>
             /// <param name="result">The result of the conversions.</param>
             /// <returns><see langword="true" /> if the conversion was valid.</returns>
-            public bool TryGetAsOneOf3Array(out Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigEntity.AdditionalPropertiesEntity.OneOf3Array result)
+            public bool TryGetAsJsonArray(out Corvus.PulumiBenchmark.Current.JsonArray result)
             {
-                if (Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigEntity.AdditionalPropertiesEntity.OneOf3Array.JsonSchema.Evaluate(_parent, _idx))
+                if (Corvus.PulumiBenchmark.Current.JsonArray.JsonSchema.Evaluate(_parent, _idx))
                 {
-                    result = Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigEntity.AdditionalPropertiesEntity.OneOf3Array.From(this);
+                    result = Corvus.PulumiBenchmark.Current.JsonArray.From(this);
                     return true;
                 }
 
@@ -973,7 +955,7 @@ public readonly partial struct PulumiSchema
             /// <param name="matchJsonString">Match a <see cref="Corvus.PulumiBenchmark.Current.JsonString"/>.</param>
             /// <param name="matchJsonInteger">Match a <see cref="Corvus.PulumiBenchmark.Current.JsonInteger"/>.</param>
             /// <param name="matchJsonBoolean">Match a <see cref="Corvus.PulumiBenchmark.Current.JsonBoolean"/>.</param>
-            /// <param name="matchOneOf3Array">Match a <see cref="Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigEntity.AdditionalPropertiesEntity.OneOf3Array"/>.</param>
+            /// <param name="matchJsonArray">Match a <see cref="Corvus.PulumiBenchmark.Current.JsonArray"/>.</param>
             /// <param name="matchConfigTypeDeclaration">Match a <see cref="Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigTypeDeclaration"/>.</param>
             /// <param name="defaultMatch">Match any other value.</param>
             /// <returns>An instance of the value returned by the match function.</returns>
@@ -982,7 +964,7 @@ public readonly partial struct PulumiSchema
                 Matcher<Corvus.PulumiBenchmark.Current.JsonString, TContext, TResult> matchJsonString,
                 Matcher<Corvus.PulumiBenchmark.Current.JsonInteger, TContext, TResult> matchJsonInteger,
                 Matcher<Corvus.PulumiBenchmark.Current.JsonBoolean, TContext, TResult> matchJsonBoolean,
-                Matcher<Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigEntity.AdditionalPropertiesEntity.OneOf3Array, TContext, TResult> matchOneOf3Array,
+                Matcher<Corvus.PulumiBenchmark.Current.JsonArray, TContext, TResult> matchJsonArray,
                 Matcher<Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigTypeDeclaration, TContext, TResult> matchConfigTypeDeclaration,
                 Matcher<Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigEntity.AdditionalPropertiesEntity, TContext, TResult> defaultMatch)
 #if NET9_0_OR_GREATER
@@ -1004,9 +986,9 @@ public readonly partial struct PulumiSchema
                     return matchJsonBoolean(Corvus.PulumiBenchmark.Current.JsonBoolean.From(this), context);
                 }
 
-                if (Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigEntity.AdditionalPropertiesEntity.OneOf3Array.JsonSchema.Evaluate(_parent, _idx))
+                if (Corvus.PulumiBenchmark.Current.JsonArray.JsonSchema.Evaluate(_parent, _idx))
                 {
-                    return matchOneOf3Array(Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigEntity.AdditionalPropertiesEntity.OneOf3Array.From(this), context);
+                    return matchJsonArray(Corvus.PulumiBenchmark.Current.JsonArray.From(this), context);
                 }
 
                 if (Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigTypeDeclaration.JsonSchema.Evaluate(_parent, _idx))
@@ -1024,7 +1006,7 @@ public readonly partial struct PulumiSchema
             /// <param name="matchJsonString">Match a <see cref="Corvus.PulumiBenchmark.Current.JsonString"/>.</param>
             /// <param name="matchJsonInteger">Match a <see cref="Corvus.PulumiBenchmark.Current.JsonInteger"/>.</param>
             /// <param name="matchJsonBoolean">Match a <see cref="Corvus.PulumiBenchmark.Current.JsonBoolean"/>.</param>
-            /// <param name="matchOneOf3Array">Match a <see cref="Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigEntity.AdditionalPropertiesEntity.OneOf3Array"/>.</param>
+            /// <param name="matchJsonArray">Match a <see cref="Corvus.PulumiBenchmark.Current.JsonArray"/>.</param>
             /// <param name="matchConfigTypeDeclaration">Match a <see cref="Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigTypeDeclaration"/>.</param>
             /// <param name="defaultMatch">Match any other value.</param>
             /// <returns>An instance of the value returned by the match function.</returns>
@@ -1032,7 +1014,7 @@ public readonly partial struct PulumiSchema
                 Matcher<Corvus.PulumiBenchmark.Current.JsonString, TResult> matchJsonString,
                 Matcher<Corvus.PulumiBenchmark.Current.JsonInteger, TResult> matchJsonInteger,
                 Matcher<Corvus.PulumiBenchmark.Current.JsonBoolean, TResult> matchJsonBoolean,
-                Matcher<Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigEntity.AdditionalPropertiesEntity.OneOf3Array, TResult> matchOneOf3Array,
+                Matcher<Corvus.PulumiBenchmark.Current.JsonArray, TResult> matchJsonArray,
                 Matcher<Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigTypeDeclaration, TResult> matchConfigTypeDeclaration,
                 Matcher<Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigEntity.AdditionalPropertiesEntity, TResult> defaultMatch)
             {
@@ -1051,9 +1033,9 @@ public readonly partial struct PulumiSchema
                     return matchJsonBoolean(Corvus.PulumiBenchmark.Current.JsonBoolean.From(this));
                 }
 
-                if (Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigEntity.AdditionalPropertiesEntity.OneOf3Array.JsonSchema.Evaluate(_parent, _idx))
+                if (Corvus.PulumiBenchmark.Current.JsonArray.JsonSchema.Evaluate(_parent, _idx))
                 {
-                    return matchOneOf3Array(Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigEntity.AdditionalPropertiesEntity.OneOf3Array.From(this));
+                    return matchJsonArray(Corvus.PulumiBenchmark.Current.JsonArray.From(this));
                 }
 
                 if (Corvus.PulumiBenchmark.Current.PulumiSchema.ConfigTypeDeclaration.JsonSchema.Evaluate(_parent, _idx))

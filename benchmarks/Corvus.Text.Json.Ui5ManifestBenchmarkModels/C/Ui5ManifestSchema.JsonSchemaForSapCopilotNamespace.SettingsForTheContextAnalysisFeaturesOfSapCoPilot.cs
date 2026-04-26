@@ -683,6 +683,23 @@ public readonly partial struct Ui5ManifestSchema
                 /// </summary>
                 public static ReadOnlySpan<byte> WhitelistedEntityTypes => "whitelistedEntityTypes"u8;
             }
+
+            /// <summary>
+            /// Provides pre-baked property name blobs for fast builder property storage.
+            /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
+            /// </summary>
+            private static class JsonPropertyNamesPrebaked
+            {
+                /// <summary>
+                /// Gets the pre-baked property name blob for <see cref="AllowAddingObjectsFromAppScreenToCollection"/>.
+                /// </summary>
+                public static ReadOnlySpan<byte> AllowAddingObjectsFromAppScreenToCollection => [0xD5, 0x02, 0x00, 0x00, 0x22, 0x61, 0x6C, 0x6C, 0x6F, 0x77, 0x41, 0x64, 0x64, 0x69, 0x6E, 0x67, 0x4F, 0x62, 0x6A, 0x65, 0x63, 0x74, 0x73, 0x46, 0x72, 0x6F, 0x6D, 0x41, 0x70, 0x70, 0x53, 0x63, 0x72, 0x65, 0x65, 0x6E, 0x54, 0x6F, 0x43, 0x6F, 0x6C, 0x6C, 0x65, 0x63, 0x74, 0x69, 0x6F, 0x6E, 0x22];
+
+                /// <summary>
+                /// Gets the pre-baked property name blob for <see cref="WhitelistedEntityTypes"/>.
+                /// </summary>
+                public static ReadOnlySpan<byte> WhitelistedEntityTypes => [0x85, 0x01, 0x00, 0x00, 0x22, 0x77, 0x68, 0x69, 0x74, 0x65, 0x6C, 0x69, 0x73, 0x74, 0x65, 0x64, 0x45, 0x6E, 0x74, 0x69, 0x74, 0x79, 0x54, 0x79, 0x70, 0x65, 0x73, 0x22];
+            }
         }
     }
 }

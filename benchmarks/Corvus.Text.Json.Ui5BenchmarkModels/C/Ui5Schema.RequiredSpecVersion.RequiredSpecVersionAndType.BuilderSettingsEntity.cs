@@ -595,6 +595,28 @@ public readonly partial struct Ui5Schema
                     /// </summary>
                     public static ReadOnlySpan<byte> IncludeDependencyTree => "includeDependencyTree"u8;
                 }
+
+                /// <summary>
+                /// Provides pre-baked property name blobs for fast builder property storage.
+                /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
+                /// </summary>
+                private static class JsonPropertyNamesPrebaked
+                {
+                    /// <summary>
+                    /// Gets the pre-baked property name blob for <see cref="IncludeDependency"/>.
+                    /// </summary>
+                    public static ReadOnlySpan<byte> IncludeDependency => [0x35, 0x01, 0x00, 0x00, 0x22, 0x69, 0x6E, 0x63, 0x6C, 0x75, 0x64, 0x65, 0x44, 0x65, 0x70, 0x65, 0x6E, 0x64, 0x65, 0x6E, 0x63, 0x79, 0x22];
+
+                    /// <summary>
+                    /// Gets the pre-baked property name blob for <see cref="IncludeDependencyRegExp"/>.
+                    /// </summary>
+                    public static ReadOnlySpan<byte> IncludeDependencyRegExp => [0x95, 0x01, 0x00, 0x00, 0x22, 0x69, 0x6E, 0x63, 0x6C, 0x75, 0x64, 0x65, 0x44, 0x65, 0x70, 0x65, 0x6E, 0x64, 0x65, 0x6E, 0x63, 0x79, 0x52, 0x65, 0x67, 0x45, 0x78, 0x70, 0x22];
+
+                    /// <summary>
+                    /// Gets the pre-baked property name blob for <see cref="IncludeDependencyTree"/>.
+                    /// </summary>
+                    public static ReadOnlySpan<byte> IncludeDependencyTree => [0x75, 0x01, 0x00, 0x00, 0x22, 0x69, 0x6E, 0x63, 0x6C, 0x75, 0x64, 0x65, 0x44, 0x65, 0x70, 0x65, 0x6E, 0x64, 0x65, 0x6E, 0x63, 0x79, 0x54, 0x72, 0x65, 0x65, 0x22];
+                }
             }
         }
     }

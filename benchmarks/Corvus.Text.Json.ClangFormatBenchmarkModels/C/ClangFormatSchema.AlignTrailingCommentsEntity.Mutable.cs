@@ -862,6 +862,30 @@ public readonly partial struct ClangFormatSchema
                 }
             }
 
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.JsonElement:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                        break;
+                    case Kind.True:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, true);
+                        break;
+                    case Kind.False:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, false);
+                        break;
+                    case Kind.ClangFormat16AlignmentOptionsBuilder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _clangFormat16AlignmentOptionsBuilderInstance!, static (in b, ref o) => Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignTrailingCommentsEntity.ClangFormat16AlignmentOptions.Builder.BuildValue(b, ref o));
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
             internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
             {
                 switch(_kind)
@@ -974,6 +998,24 @@ public readonly partial struct ClangFormatSchema
                         break;
                     case Kind.ClangFormat16AlignmentOptionsBuilder:
                         valueBuilder.AddProperty(utf8Name, BuildWithContext.Create(_context, _clangFormat16AlignmentOptionsBuilderInstance!), static (in b, ref o) => Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignTrailingCommentsEntity.ClangFormat16AlignmentOptions.Builder.BuildValue(b.Context, b.Build, ref o), escapeName, nameRequiresUnescaping);
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.Source:
+                        _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                        break;
+                    case Kind.ClangFormat16AlignmentOptionsBuilder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _clangFormat16AlignmentOptionsBuilderInstance!), static (in b, ref o) => Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.AlignTrailingCommentsEntity.ClangFormat16AlignmentOptions.Builder.BuildValue(b.Context, b.Build, ref o));
                         break;
                     default:
                         Debug.Fail("Unexpected Kind");

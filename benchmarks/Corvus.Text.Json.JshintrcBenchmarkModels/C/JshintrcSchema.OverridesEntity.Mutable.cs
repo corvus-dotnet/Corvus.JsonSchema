@@ -178,12 +178,12 @@ public readonly partial struct JshintrcSchema
             /// <param name="propertyName">The name of the property.</param>
             /// <returns>The value of the property with the given name.</returns>
             /// <exception cref="InvalidOperationException">The value is not an object.</exception>
-            public Corvus.JshintrcBenchmark.Current.JshintrcSchema.OverridesEntity.ThePathPatternToApplyTheGivenOptionsTo.Mutable this[ReadOnlySpan<byte> propertyName]
+            public Corvus.JshintrcBenchmark.Current.JsonObject.Mutable this[ReadOnlySpan<byte> propertyName]
             {
                 get
                 {
                     CheckValidInstance();
-                    if (!_parent.TryGetNamedPropertyValue(_idx, propertyName, out Corvus.JshintrcBenchmark.Current.JshintrcSchema.OverridesEntity.ThePathPatternToApplyTheGivenOptionsTo.Mutable value))
+                    if (!_parent.TryGetNamedPropertyValue(_idx, propertyName, out Corvus.JshintrcBenchmark.Current.JsonObject.Mutable value))
                     {
                         return default;
                     }
@@ -198,12 +198,12 @@ public readonly partial struct JshintrcSchema
             /// <param name="propertyName">The name of the property.</param>
             /// <returns>The value of the property with the given name.</returns>
             /// <exception cref="InvalidOperationException">The value is not an object.</exception>
-            public Corvus.JshintrcBenchmark.Current.JshintrcSchema.OverridesEntity.ThePathPatternToApplyTheGivenOptionsTo.Mutable this[ReadOnlySpan<char> propertyName]
+            public Corvus.JshintrcBenchmark.Current.JsonObject.Mutable this[ReadOnlySpan<char> propertyName]
             {
                 get
                 {
                     CheckValidInstance();
-                    if (!_parent.TryGetNamedPropertyValue(_idx, propertyName, out Corvus.JshintrcBenchmark.Current.JshintrcSchema.OverridesEntity.ThePathPatternToApplyTheGivenOptionsTo.Mutable value))
+                    if (!_parent.TryGetNamedPropertyValue(_idx, propertyName, out Corvus.JshintrcBenchmark.Current.JsonObject.Mutable value))
                     {
                         return default;
                     }
@@ -218,12 +218,12 @@ public readonly partial struct JshintrcSchema
             /// <param name="propertyName">The name of the property.</param>
             /// <returns>The value of the property with the given name.</returns>
             /// <exception cref="InvalidOperationException">The value is not an object.</exception>
-            public Corvus.JshintrcBenchmark.Current.JshintrcSchema.OverridesEntity.ThePathPatternToApplyTheGivenOptionsTo.Mutable this[string propertyName]
+            public Corvus.JshintrcBenchmark.Current.JsonObject.Mutable this[string propertyName]
             {
                 get
                 {
                     CheckValidInstance();
-                    if (!_parent.TryGetNamedPropertyValue(_idx, propertyName, out Corvus.JshintrcBenchmark.Current.JshintrcSchema.OverridesEntity.ThePathPatternToApplyTheGivenOptionsTo.Mutable value))
+                    if (!_parent.TryGetNamedPropertyValue(_idx, propertyName, out Corvus.JshintrcBenchmark.Current.JsonObject.Mutable value))
                     {
                         return default;
                     }
@@ -239,7 +239,7 @@ public readonly partial struct JshintrcSchema
             /// <param name="value">The value of the property, if present.</param>
             /// <returns><see langword="true"/> if the property was found, otherwise <see langword="false"/>.</returns>
             /// <exception cref="InvalidOperationException">The value is not an object.</exception>
-            public bool TryGetProperty(ReadOnlySpan<byte> propertyName, out Corvus.JshintrcBenchmark.Current.JshintrcSchema.OverridesEntity.ThePathPatternToApplyTheGivenOptionsTo.Mutable value)
+            public bool TryGetProperty(ReadOnlySpan<byte> propertyName, out Corvus.JshintrcBenchmark.Current.JsonObject.Mutable value)
             {
                 CheckValidInstance();
                 return _parent.TryGetNamedPropertyValue(_idx, propertyName, out value);
@@ -252,7 +252,7 @@ public readonly partial struct JshintrcSchema
             /// <param name="value">The value of the property, if present.</param>
             /// <returns><see langword="true"/> if the property was found, otherwise <see langword="false"/>.</returns>
             /// <exception cref="InvalidOperationException">The value is not an object.</exception>
-            public bool TryGetProperty(ReadOnlySpan<char> propertyName, out Corvus.JshintrcBenchmark.Current.JshintrcSchema.OverridesEntity.ThePathPatternToApplyTheGivenOptionsTo.Mutable value)
+            public bool TryGetProperty(ReadOnlySpan<char> propertyName, out Corvus.JshintrcBenchmark.Current.JsonObject.Mutable value)
             {
                 CheckValidInstance();
                 return _parent.TryGetNamedPropertyValue(_idx, propertyName, out value);
@@ -265,7 +265,7 @@ public readonly partial struct JshintrcSchema
             /// <param name="value">The value of the property, if present.</param>
             /// <returns><see langword="true"/> if the property was found, otherwise <see langword="false"/>.</returns>
             /// <exception cref="InvalidOperationException">The value is not an object.</exception>
-            public bool TryGetProperty(string propertyName, out Corvus.JshintrcBenchmark.Current.JshintrcSchema.OverridesEntity.ThePathPatternToApplyTheGivenOptionsTo.Mutable value)
+            public bool TryGetProperty(string propertyName, out Corvus.JshintrcBenchmark.Current.JsonObject.Mutable value)
             {
                 CheckValidInstance();
                 return _parent.TryGetNamedPropertyValue(_idx, propertyName, out value);
@@ -285,10 +285,10 @@ public readonly partial struct JshintrcSchema
             /// Enumerates the object.
             /// </summary>
             /// <exception cref="InvalidOperationException">The value is not an object.</exception>
-            public ObjectEnumerator<Corvus.JshintrcBenchmark.Current.JshintrcSchema.OverridesEntity.ThePathPatternToApplyTheGivenOptionsTo.Mutable> EnumerateObject()
+            public ObjectEnumerator<Corvus.JshintrcBenchmark.Current.JsonObject.Mutable> EnumerateObject()
             {
                 CheckValidInstance();
-                return EnumeratorCreator.CreateObjectEnumerator<Corvus.JshintrcBenchmark.Current.JshintrcSchema.OverridesEntity.ThePathPatternToApplyTheGivenOptionsTo.Mutable>(_parent, _idx);
+                return EnumeratorCreator.CreateObjectEnumerator<Corvus.JshintrcBenchmark.Current.JsonObject.Mutable>(_parent, _idx);
             }
 
             /// <inheritdoc/>
@@ -415,7 +415,7 @@ public readonly partial struct JshintrcSchema
             ///   </para>
             /// </remarks>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public void SetProperty(string propertyName, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.OverridesEntity.ThePathPatternToApplyTheGivenOptionsTo.Source value)
+            public void SetProperty(string propertyName, in Corvus.JshintrcBenchmark.Current.JsonObject.Source value)
             {
                 SetProperty(propertyName.AsSpan(), value);
             }
@@ -438,7 +438,7 @@ public readonly partial struct JshintrcSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<char> propertyName, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.OverridesEntity.ThePathPatternToApplyTheGivenOptionsTo.Source value)
+            public void SetProperty(ReadOnlySpan<char> propertyName, in Corvus.JshintrcBenchmark.Current.JsonObject.Source value)
             {
                 CheckValidInstance();
 
@@ -485,7 +485,7 @@ public readonly partial struct JshintrcSchema
             ///     If the property doesn't exist, it will be added to the object.
             ///   </para>
             /// </remarks>
-            public void SetProperty(ReadOnlySpan<byte> propertyName, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.OverridesEntity.ThePathPatternToApplyTheGivenOptionsTo.Source value)
+            public void SetProperty(ReadOnlySpan<byte> propertyName, in Corvus.JshintrcBenchmark.Current.JsonObject.Source value)
             {
                 CheckValidInstance();
 
@@ -673,6 +673,24 @@ public readonly partial struct JshintrcSchema
                 }
             }
 
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.JsonElement:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                        break;
+                    case Kind.Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
             internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
             {
                 switch(_kind)
@@ -774,6 +792,24 @@ public readonly partial struct JshintrcSchema
                 }
             }
 
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.Source:
+                        _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                        break;
+                    case Kind.Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
             internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
             {
                 switch(_kind)
@@ -852,7 +888,7 @@ public readonly partial struct JshintrcSchema
             /// </summary>
             /// <param name="propertyName">The name of the property to add.</param>
             /// <param name="value">The value of the property to add.</param>
-            public void AddProperty(ReadOnlySpan<byte> propertyName, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.OverridesEntity.ThePathPatternToApplyTheGivenOptionsTo.Source value)
+            public void AddProperty(ReadOnlySpan<byte> propertyName, in Corvus.JshintrcBenchmark.Current.JsonObject.Source value)
             {
                 value.AddAsProperty(propertyName, ref _builder);
             }
@@ -862,7 +898,7 @@ public readonly partial struct JshintrcSchema
             /// </summary>
             /// <param name="propertyName">The name of the property to add.</param>
             /// <param name="value">The value of the property to add.</param>
-            public void AddProperty(ReadOnlySpan<char> propertyName, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.OverridesEntity.ThePathPatternToApplyTheGivenOptionsTo.Source value)
+            public void AddProperty(ReadOnlySpan<char> propertyName, in Corvus.JshintrcBenchmark.Current.JsonObject.Source value)
             {
                 value.AddAsProperty(propertyName, ref _builder);
             }
@@ -872,7 +908,7 @@ public readonly partial struct JshintrcSchema
             /// </summary>
             /// <param name="propertyName">The name of the property to add.</param>
             /// <param name="value">The value of the property to add.</param>
-            public void AddProperty(string propertyName, in Corvus.JshintrcBenchmark.Current.JshintrcSchema.OverridesEntity.ThePathPatternToApplyTheGivenOptionsTo.Source value)
+            public void AddProperty(string propertyName, in Corvus.JshintrcBenchmark.Current.JsonObject.Source value)
             {
                 value.AddAsProperty(propertyName, ref _builder);
             }

@@ -933,6 +933,38 @@ public readonly partial struct LazygitSchema
                             /// </summary>
                             public static ReadOnlySpan<byte> Type => "type"u8;
                         }
+
+                        /// <summary>
+                        /// Provides pre-baked property name blobs for fast builder property storage.
+                        /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
+                        /// </summary>
+                        private static class JsonPropertyNamesPrebaked
+                        {
+                            /// <summary>
+                            /// Gets the pre-baked property name blob for <see cref="InitialValue"/>.
+                            /// </summary>
+                            public static ReadOnlySpan<byte> InitialValue => [0xE5, 0x00, 0x00, 0x00, 0x22, 0x69, 0x6E, 0x69, 0x74, 0x69, 0x61, 0x6C, 0x56, 0x61, 0x6C, 0x75, 0x65, 0x22];
+
+                            /// <summary>
+                            /// Gets the pre-baked property name blob for <see cref="Key"/>.
+                            /// </summary>
+                            public static ReadOnlySpan<byte> Key => [0x55, 0x00, 0x00, 0x00, 0x22, 0x6B, 0x65, 0x79, 0x22];
+
+                            /// <summary>
+                            /// Gets the pre-baked property name blob for <see cref="Suggestions"/>.
+                            /// </summary>
+                            public static ReadOnlySpan<byte> Suggestions => [0xD5, 0x00, 0x00, 0x00, 0x22, 0x73, 0x75, 0x67, 0x67, 0x65, 0x73, 0x74, 0x69, 0x6F, 0x6E, 0x73, 0x22];
+
+                            /// <summary>
+                            /// Gets the pre-baked property name blob for <see cref="Title"/>.
+                            /// </summary>
+                            public static ReadOnlySpan<byte> Title => [0x75, 0x00, 0x00, 0x00, 0x22, 0x74, 0x69, 0x74, 0x6C, 0x65, 0x22];
+
+                            /// <summary>
+                            /// Gets the pre-baked property name blob for <see cref="Type"/>.
+                            /// </summary>
+                            public static ReadOnlySpan<byte> Type => [0x65, 0x00, 0x00, 0x00, 0x22, 0x74, 0x79, 0x70, 0x65, 0x22];
+                        }
                     }
                 }
             }

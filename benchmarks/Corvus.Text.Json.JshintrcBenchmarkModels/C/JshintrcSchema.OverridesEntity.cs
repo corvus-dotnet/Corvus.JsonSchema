@@ -71,12 +71,12 @@ public readonly partial struct JshintrcSchema
         /// <param name="propertyName">The name of the property.</param>
         /// <returns>The value of the property with the given name.</returns>
         /// <exception cref="InvalidOperationException">The value is not an object.</exception>
-        public Corvus.JshintrcBenchmark.Current.JshintrcSchema.OverridesEntity.ThePathPatternToApplyTheGivenOptionsTo this[ReadOnlySpan<byte> propertyName]
+        public Corvus.JshintrcBenchmark.Current.JsonObject this[ReadOnlySpan<byte> propertyName]
         {
             get
             {
                 CheckValidInstance();
-                if (!_parent.TryGetNamedPropertyValue(_idx, propertyName, out Corvus.JshintrcBenchmark.Current.JshintrcSchema.OverridesEntity.ThePathPatternToApplyTheGivenOptionsTo value))
+                if (!_parent.TryGetNamedPropertyValue(_idx, propertyName, out Corvus.JshintrcBenchmark.Current.JsonObject value))
                 {
                     return default;
                 }
@@ -91,12 +91,12 @@ public readonly partial struct JshintrcSchema
         /// <param name="propertyName">The name of the property.</param>
         /// <returns>The value of the property with the given name.</returns>
         /// <exception cref="InvalidOperationException">The value is not an object.</exception>
-        public Corvus.JshintrcBenchmark.Current.JshintrcSchema.OverridesEntity.ThePathPatternToApplyTheGivenOptionsTo this[ReadOnlySpan<char> propertyName]
+        public Corvus.JshintrcBenchmark.Current.JsonObject this[ReadOnlySpan<char> propertyName]
         {
             get
             {
                 CheckValidInstance();
-                if (!_parent.TryGetNamedPropertyValue(_idx, propertyName, out Corvus.JshintrcBenchmark.Current.JshintrcSchema.OverridesEntity.ThePathPatternToApplyTheGivenOptionsTo value))
+                if (!_parent.TryGetNamedPropertyValue(_idx, propertyName, out Corvus.JshintrcBenchmark.Current.JsonObject value))
                 {
                     return default;
                 }
@@ -111,12 +111,12 @@ public readonly partial struct JshintrcSchema
         /// <param name="propertyName">The name of the property.</param>
         /// <returns>The value of the property with the given name.</returns>
         /// <exception cref="InvalidOperationException">The value is not an object.</exception>
-        public Corvus.JshintrcBenchmark.Current.JshintrcSchema.OverridesEntity.ThePathPatternToApplyTheGivenOptionsTo this[string propertyName]
+        public Corvus.JshintrcBenchmark.Current.JsonObject this[string propertyName]
         {
             get
             {
                 CheckValidInstance();
-                if (!_parent.TryGetNamedPropertyValue(_idx, propertyName, out Corvus.JshintrcBenchmark.Current.JshintrcSchema.OverridesEntity.ThePathPatternToApplyTheGivenOptionsTo value))
+                if (!_parent.TryGetNamedPropertyValue(_idx, propertyName, out Corvus.JshintrcBenchmark.Current.JsonObject value))
                 {
                     return default;
                 }
@@ -132,7 +132,7 @@ public readonly partial struct JshintrcSchema
         /// <param name="value">The value of the property, if present.</param>
         /// <returns><see langword="true"/> if the property was found, otherwise <see langword="false"/>.</returns>
         /// <exception cref="InvalidOperationException">The value is not an object.</exception>
-        public bool TryGetProperty(ReadOnlySpan<byte> propertyName, out Corvus.JshintrcBenchmark.Current.JshintrcSchema.OverridesEntity.ThePathPatternToApplyTheGivenOptionsTo value)
+        public bool TryGetProperty(ReadOnlySpan<byte> propertyName, out Corvus.JshintrcBenchmark.Current.JsonObject value)
         {
             CheckValidInstance();
             return _parent.TryGetNamedPropertyValue(_idx, propertyName, out value);
@@ -145,7 +145,7 @@ public readonly partial struct JshintrcSchema
         /// <param name="value">The value of the property, if present.</param>
         /// <returns><see langword="true"/> if the property was found, otherwise <see langword="false"/>.</returns>
         /// <exception cref="InvalidOperationException">The value is not an object.</exception>
-        public bool TryGetProperty(ReadOnlySpan<char> propertyName, out Corvus.JshintrcBenchmark.Current.JshintrcSchema.OverridesEntity.ThePathPatternToApplyTheGivenOptionsTo value)
+        public bool TryGetProperty(ReadOnlySpan<char> propertyName, out Corvus.JshintrcBenchmark.Current.JsonObject value)
         {
             CheckValidInstance();
             return _parent.TryGetNamedPropertyValue(_idx, propertyName, out value);
@@ -158,7 +158,7 @@ public readonly partial struct JshintrcSchema
         /// <param name="value">The value of the property, if present.</param>
         /// <returns><see langword="true"/> if the property was found, otherwise <see langword="false"/>.</returns>
         /// <exception cref="InvalidOperationException">The value is not an object.</exception>
-        public bool TryGetProperty(string propertyName, out Corvus.JshintrcBenchmark.Current.JshintrcSchema.OverridesEntity.ThePathPatternToApplyTheGivenOptionsTo value)
+        public bool TryGetProperty(string propertyName, out Corvus.JshintrcBenchmark.Current.JsonObject value)
         {
             CheckValidInstance();
             return _parent.TryGetNamedPropertyValue(_idx, propertyName, out value);
@@ -178,10 +178,10 @@ public readonly partial struct JshintrcSchema
         /// Enumerates the object.
         /// </summary>
         /// <exception cref="InvalidOperationException">The value is not an object.</exception>
-        public ObjectEnumerator<Corvus.JshintrcBenchmark.Current.JshintrcSchema.OverridesEntity.ThePathPatternToApplyTheGivenOptionsTo> EnumerateObject()
+        public ObjectEnumerator<Corvus.JshintrcBenchmark.Current.JsonObject> EnumerateObject()
         {
             CheckValidInstance();
-            return EnumeratorCreator.CreateObjectEnumerator<Corvus.JshintrcBenchmark.Current.JshintrcSchema.OverridesEntity.ThePathPatternToApplyTheGivenOptionsTo>(_parent, _idx);
+            return EnumeratorCreator.CreateObjectEnumerator<Corvus.JshintrcBenchmark.Current.JsonObject>(_parent, _idx);
         }
 
         /// <inheritdoc/>

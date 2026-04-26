@@ -683,7 +683,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Version, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Version, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -728,7 +728,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.BHeaderExpanded, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.BHeaderExpanded, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -771,7 +771,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Cards, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Cards, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -805,7 +805,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Cards, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Cards, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -838,7 +838,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.ChartSettings, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ChartSettings, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -874,7 +874,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.ChartSettings, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ChartSettings, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -919,7 +919,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.ConsiderAnalyticalParameters, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ConsiderAnalyticalParameters, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -964,7 +964,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.ContainerLayout, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ContainerLayout, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1009,7 +1009,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.DataLoadSettings, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DataLoadSettings, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1045,7 +1045,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.DataLoadSettings, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DataLoadSettings, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1090,7 +1090,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.DisableErrorPage, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DisableErrorPage, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1135,7 +1135,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.DisableTableCardFlexibility, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DisableTableCardFlexibility, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1180,7 +1180,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.EnableLazyRendering, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.EnableLazyRendering, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1225,7 +1225,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.EnableLiveFilter, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.EnableLiveFilter, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1270,7 +1270,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.FilterSettings, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.FilterSettings, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1306,7 +1306,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.FilterSettings, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.FilterSettings, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1351,7 +1351,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.GlobalFilterEntitySet, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.GlobalFilterEntitySet, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1396,7 +1396,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.GlobalFilterEntityType, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.GlobalFilterEntityType, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1441,7 +1441,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.GlobalFilterModel, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.GlobalFilterModel, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1486,7 +1486,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.RefreshIntervalInMinutes, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.RefreshIntervalInMinutes, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1531,7 +1531,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.RefreshStrategyOnAppRestore, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.RefreshStrategyOnAppRestore, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1567,7 +1567,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.RefreshStrategyOnAppRestore, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.RefreshStrategyOnAppRestore, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1612,7 +1612,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.ResizableLayout, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ResizableLayout, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1648,7 +1648,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.ResizableLayout, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ResizableLayout, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1693,7 +1693,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.ShowBasicSearch, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ShowBasicSearch, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1738,7 +1738,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.ShowDateInRelativeFormat, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ShowDateInRelativeFormat, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1783,7 +1783,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.SmartVariantRequired, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SmartVariantRequired, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1828,7 +1828,7 @@ public readonly partial struct Ui5ManifestSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.UseDateRangeType, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.UseDateRangeType, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -2035,6 +2035,24 @@ public readonly partial struct Ui5ManifestSchema
                 }
             }
 
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.JsonElement:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                        break;
+                    case Kind.Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
             internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
             {
                 switch(_kind)
@@ -2129,6 +2147,24 @@ public readonly partial struct Ui5ManifestSchema
                         break;
                     case Kind.Builder:
                         valueBuilder.AddProperty(utf8Name, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o), escapeName, nameRequiresUnescaping);
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.Source:
+                        _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                        break;
+                    case Kind.Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                         break;
                     default:
                         Debug.Fail("Unexpected Kind");
@@ -2237,28 +2273,28 @@ public readonly partial struct Ui5ManifestSchema
                 in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.SmartVariantRequiredEntity.Source smartVariantRequired = default,
                 in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapOvpNamespace.UseDateRangeTypeEntity.Source useDateRangeType = default)
             {
-                cards.AddAsProperty(JsonPropertyNamesEscaped.Cards, ref builder, escapeName: false);
-                version.AddAsProperty(JsonPropertyNamesEscaped.Version, ref builder, escapeName: false);
-                bHeaderExpanded.AddAsProperty(JsonPropertyNamesEscaped.BHeaderExpanded, ref builder, escapeName: false);
-                chartSettings.AddAsProperty(JsonPropertyNamesEscaped.ChartSettings, ref builder, escapeName: false);
-                considerAnalyticalParameters.AddAsProperty(JsonPropertyNamesEscaped.ConsiderAnalyticalParameters, ref builder, escapeName: false);
-                containerLayout.AddAsProperty(JsonPropertyNamesEscaped.ContainerLayout, ref builder, escapeName: false);
-                dataLoadSettings.AddAsProperty(JsonPropertyNamesEscaped.DataLoadSettings, ref builder, escapeName: false);
-                disableErrorPage.AddAsProperty(JsonPropertyNamesEscaped.DisableErrorPage, ref builder, escapeName: false);
-                disableTableCardFlexibility.AddAsProperty(JsonPropertyNamesEscaped.DisableTableCardFlexibility, ref builder, escapeName: false);
-                enableLazyRendering.AddAsProperty(JsonPropertyNamesEscaped.EnableLazyRendering, ref builder, escapeName: false);
-                enableLiveFilter.AddAsProperty(JsonPropertyNamesEscaped.EnableLiveFilter, ref builder, escapeName: false);
-                filterSettings.AddAsProperty(JsonPropertyNamesEscaped.FilterSettings, ref builder, escapeName: false);
-                globalFilterEntitySet.AddAsProperty(JsonPropertyNamesEscaped.GlobalFilterEntitySet, ref builder, escapeName: false);
-                globalFilterEntityType.AddAsProperty(JsonPropertyNamesEscaped.GlobalFilterEntityType, ref builder, escapeName: false);
-                globalFilterModel.AddAsProperty(JsonPropertyNamesEscaped.GlobalFilterModel, ref builder, escapeName: false);
-                refreshIntervalInMinutes.AddAsProperty(JsonPropertyNamesEscaped.RefreshIntervalInMinutes, ref builder, escapeName: false);
-                refreshStrategyOnAppRestore.AddAsProperty(JsonPropertyNamesEscaped.RefreshStrategyOnAppRestore, ref builder, escapeName: false);
-                resizableLayout.AddAsProperty(JsonPropertyNamesEscaped.ResizableLayout, ref builder, escapeName: false);
-                showBasicSearch.AddAsProperty(JsonPropertyNamesEscaped.ShowBasicSearch, ref builder, escapeName: false);
-                showDateInRelativeFormat.AddAsProperty(JsonPropertyNamesEscaped.ShowDateInRelativeFormat, ref builder, escapeName: false);
-                smartVariantRequired.AddAsProperty(JsonPropertyNamesEscaped.SmartVariantRequired, ref builder, escapeName: false);
-                useDateRangeType.AddAsProperty(JsonPropertyNamesEscaped.UseDateRangeType, ref builder, escapeName: false);
+                cards.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Cards, ref builder);
+                version.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Version, ref builder);
+                bHeaderExpanded.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.BHeaderExpanded, ref builder);
+                chartSettings.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ChartSettings, ref builder);
+                considerAnalyticalParameters.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ConsiderAnalyticalParameters, ref builder);
+                containerLayout.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ContainerLayout, ref builder);
+                dataLoadSettings.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DataLoadSettings, ref builder);
+                disableErrorPage.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DisableErrorPage, ref builder);
+                disableTableCardFlexibility.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DisableTableCardFlexibility, ref builder);
+                enableLazyRendering.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.EnableLazyRendering, ref builder);
+                enableLiveFilter.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.EnableLiveFilter, ref builder);
+                filterSettings.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.FilterSettings, ref builder);
+                globalFilterEntitySet.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.GlobalFilterEntitySet, ref builder);
+                globalFilterEntityType.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.GlobalFilterEntityType, ref builder);
+                globalFilterModel.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.GlobalFilterModel, ref builder);
+                refreshIntervalInMinutes.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.RefreshIntervalInMinutes, ref builder);
+                refreshStrategyOnAppRestore.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.RefreshStrategyOnAppRestore, ref builder);
+                resizableLayout.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ResizableLayout, ref builder);
+                showBasicSearch.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ShowBasicSearch, ref builder);
+                showDateInRelativeFormat.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ShowDateInRelativeFormat, ref builder);
+                smartVariantRequired.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SmartVariantRequired, ref builder);
+                useDateRangeType.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.UseDateRangeType, ref builder);
             }
 
             /// <summary>
@@ -2323,28 +2359,28 @@ public readonly partial struct Ui5ManifestSchema
             where TContext : allows ref struct
             #endif
             {
-                cards.AddAsProperty(JsonPropertyNamesEscaped.Cards, ref builder, escapeName: false);
-                version.AddAsProperty(JsonPropertyNamesEscaped.Version, ref builder, escapeName: false);
-                bHeaderExpanded.AddAsProperty(JsonPropertyNamesEscaped.BHeaderExpanded, ref builder, escapeName: false);
-                chartSettings.AddAsProperty(JsonPropertyNamesEscaped.ChartSettings, ref builder, escapeName: false);
-                considerAnalyticalParameters.AddAsProperty(JsonPropertyNamesEscaped.ConsiderAnalyticalParameters, ref builder, escapeName: false);
-                containerLayout.AddAsProperty(JsonPropertyNamesEscaped.ContainerLayout, ref builder, escapeName: false);
-                dataLoadSettings.AddAsProperty(JsonPropertyNamesEscaped.DataLoadSettings, ref builder, escapeName: false);
-                disableErrorPage.AddAsProperty(JsonPropertyNamesEscaped.DisableErrorPage, ref builder, escapeName: false);
-                disableTableCardFlexibility.AddAsProperty(JsonPropertyNamesEscaped.DisableTableCardFlexibility, ref builder, escapeName: false);
-                enableLazyRendering.AddAsProperty(JsonPropertyNamesEscaped.EnableLazyRendering, ref builder, escapeName: false);
-                enableLiveFilter.AddAsProperty(JsonPropertyNamesEscaped.EnableLiveFilter, ref builder, escapeName: false);
-                filterSettings.AddAsProperty(JsonPropertyNamesEscaped.FilterSettings, ref builder, escapeName: false);
-                globalFilterEntitySet.AddAsProperty(JsonPropertyNamesEscaped.GlobalFilterEntitySet, ref builder, escapeName: false);
-                globalFilterEntityType.AddAsProperty(JsonPropertyNamesEscaped.GlobalFilterEntityType, ref builder, escapeName: false);
-                globalFilterModel.AddAsProperty(JsonPropertyNamesEscaped.GlobalFilterModel, ref builder, escapeName: false);
-                refreshIntervalInMinutes.AddAsProperty(JsonPropertyNamesEscaped.RefreshIntervalInMinutes, ref builder, escapeName: false);
-                refreshStrategyOnAppRestore.AddAsProperty(JsonPropertyNamesEscaped.RefreshStrategyOnAppRestore, ref builder, escapeName: false);
-                resizableLayout.AddAsProperty(JsonPropertyNamesEscaped.ResizableLayout, ref builder, escapeName: false);
-                showBasicSearch.AddAsProperty(JsonPropertyNamesEscaped.ShowBasicSearch, ref builder, escapeName: false);
-                showDateInRelativeFormat.AddAsProperty(JsonPropertyNamesEscaped.ShowDateInRelativeFormat, ref builder, escapeName: false);
-                smartVariantRequired.AddAsProperty(JsonPropertyNamesEscaped.SmartVariantRequired, ref builder, escapeName: false);
-                useDateRangeType.AddAsProperty(JsonPropertyNamesEscaped.UseDateRangeType, ref builder, escapeName: false);
+                cards.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Cards, ref builder);
+                version.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Version, ref builder);
+                bHeaderExpanded.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.BHeaderExpanded, ref builder);
+                chartSettings.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ChartSettings, ref builder);
+                considerAnalyticalParameters.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ConsiderAnalyticalParameters, ref builder);
+                containerLayout.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ContainerLayout, ref builder);
+                dataLoadSettings.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DataLoadSettings, ref builder);
+                disableErrorPage.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DisableErrorPage, ref builder);
+                disableTableCardFlexibility.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DisableTableCardFlexibility, ref builder);
+                enableLazyRendering.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.EnableLazyRendering, ref builder);
+                enableLiveFilter.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.EnableLiveFilter, ref builder);
+                filterSettings.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.FilterSettings, ref builder);
+                globalFilterEntitySet.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.GlobalFilterEntitySet, ref builder);
+                globalFilterEntityType.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.GlobalFilterEntityType, ref builder);
+                globalFilterModel.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.GlobalFilterModel, ref builder);
+                refreshIntervalInMinutes.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.RefreshIntervalInMinutes, ref builder);
+                refreshStrategyOnAppRestore.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.RefreshStrategyOnAppRestore, ref builder);
+                resizableLayout.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ResizableLayout, ref builder);
+                showBasicSearch.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ShowBasicSearch, ref builder);
+                showDateInRelativeFormat.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ShowDateInRelativeFormat, ref builder);
+                smartVariantRequired.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SmartVariantRequired, ref builder);
+                useDateRangeType.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.UseDateRangeType, ref builder);
             }
 
             /// <summary>

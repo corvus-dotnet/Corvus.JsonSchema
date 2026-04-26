@@ -66,17 +66,17 @@ public readonly partial struct VercelSchema
                             /// <summary>
                             /// Gets a provider for the schema location from which this type was generated.
                             /// </summary>
-                            public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("vercel-schema.json#/properties/routes/items/anyOf/0/properties/missing/items"u8, buffer, out written);
+                            public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/properties/routes/items/anyOf/0/properties/missing/items"u8, buffer, out written);
 
                             /// <summary>
                             /// Gets the schema location from which this type was generated.
                             /// </summary>
-                            public const string SchemaLocation = "vercel-schema.json#/properties/routes/items/anyOf/0/properties/missing/items";
+                            public const string SchemaLocation = "/properties/routes/items/anyOf/0/properties/missing/items";
 
                             /// <summary>
                             /// Gets the schema location from which this type was generated as a UTF-8 string.
                             /// </summary>
-                            public static ReadOnlySpan<byte> SchemaLocationUtf8 => "vercel-schema.json#/properties/routes/items/anyOf/0/properties/missing/items"u8;
+                            public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/properties/routes/items/anyOf/0/properties/missing/items"u8;
                             private static readonly JsonSchemaPathProvider AnyOf0SchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/anyOf/0"u8, buffer, out written);
                             private static readonly JsonSchemaPathProvider AnyOf1SchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/anyOf/1"u8, buffer, out written);
 

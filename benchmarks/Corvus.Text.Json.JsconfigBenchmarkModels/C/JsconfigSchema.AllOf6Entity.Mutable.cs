@@ -999,6 +999,33 @@ public readonly partial struct JsconfigSchema
                 }
             }
 
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.JsonElement:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                        break;
+                    case Kind.ExcludeDefinitionBuilder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _excludeDefinitionBuilderInstance!, static (in b, ref o) => Corvus.JsconfigBenchmark.Current.JsconfigSchema.ExcludeDefinition.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.FilesDefinitionBuilder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _filesDefinitionBuilderInstance!, static (in b, ref o) => Corvus.JsconfigBenchmark.Current.JsconfigSchema.FilesDefinition.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.IncludeDefinitionBuilder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _includeDefinitionBuilderInstance!, static (in b, ref o) => Corvus.JsconfigBenchmark.Current.JsconfigSchema.IncludeDefinition.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.ReferencesDefinitionBuilder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _referencesDefinitionBuilderInstance!, static (in b, ref o) => Corvus.JsconfigBenchmark.Current.JsconfigSchema.ReferencesDefinition.Builder.BuildValue(b, ref o));
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
             internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
             {
                 switch(_kind)
@@ -1141,6 +1168,33 @@ public readonly partial struct JsconfigSchema
                         break;
                     case Kind.ReferencesDefinitionBuilder:
                         valueBuilder.AddProperty(utf8Name, BuildWithContext.Create(_context, _referencesDefinitionBuilderInstance!), static (in b, ref o) => Corvus.JsconfigBenchmark.Current.JsconfigSchema.ReferencesDefinition.Builder.BuildValue(b.Context, b.Build, ref o), escapeName, nameRequiresUnescaping);
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.Source:
+                        _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                        break;
+                    case Kind.ExcludeDefinitionBuilder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _excludeDefinitionBuilderInstance!), static (in b, ref o) => Corvus.JsconfigBenchmark.Current.JsconfigSchema.ExcludeDefinition.Builder.BuildValue(b.Context, b.Build, ref o));
+                        break;
+                    case Kind.FilesDefinitionBuilder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _filesDefinitionBuilderInstance!), static (in b, ref o) => Corvus.JsconfigBenchmark.Current.JsconfigSchema.FilesDefinition.Builder.BuildValue(b.Context, b.Build, ref o));
+                        break;
+                    case Kind.IncludeDefinitionBuilder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _includeDefinitionBuilderInstance!), static (in b, ref o) => Corvus.JsconfigBenchmark.Current.JsconfigSchema.IncludeDefinition.Builder.BuildValue(b.Context, b.Build, ref o));
+                        break;
+                    case Kind.ReferencesDefinitionBuilder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _referencesDefinitionBuilderInstance!), static (in b, ref o) => Corvus.JsconfigBenchmark.Current.JsconfigSchema.ReferencesDefinition.Builder.BuildValue(b.Context, b.Build, ref o));
                         break;
                     default:
                         Debug.Fail("Unexpected Kind");

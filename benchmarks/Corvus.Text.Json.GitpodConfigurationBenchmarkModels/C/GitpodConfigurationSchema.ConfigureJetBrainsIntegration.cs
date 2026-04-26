@@ -816,5 +816,57 @@ public readonly partial struct GitpodConfigurationSchema
             /// </summary>
             public static ReadOnlySpan<byte> Webstorm => "webstorm"u8;
         }
+
+        /// <summary>
+        /// Provides pre-baked property name blobs for fast builder property storage.
+        /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
+        /// </summary>
+        private static class JsonPropertyNamesPrebaked
+        {
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Clion"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Clion => [0x75, 0x00, 0x00, 0x00, 0x22, 0x63, 0x6C, 0x69, 0x6F, 0x6E, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Goland"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Goland => [0x85, 0x00, 0x00, 0x00, 0x22, 0x67, 0x6F, 0x6C, 0x61, 0x6E, 0x64, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Intellij"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Intellij => [0xA5, 0x00, 0x00, 0x00, 0x22, 0x69, 0x6E, 0x74, 0x65, 0x6C, 0x6C, 0x69, 0x6A, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Phpstorm"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Phpstorm => [0xA5, 0x00, 0x00, 0x00, 0x22, 0x70, 0x68, 0x70, 0x73, 0x74, 0x6F, 0x72, 0x6D, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Plugins"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Plugins => [0x95, 0x00, 0x00, 0x00, 0x22, 0x70, 0x6C, 0x75, 0x67, 0x69, 0x6E, 0x73, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Pycharm"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Pycharm => [0x95, 0x00, 0x00, 0x00, 0x22, 0x70, 0x79, 0x63, 0x68, 0x61, 0x72, 0x6D, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Rider"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Rider => [0x75, 0x00, 0x00, 0x00, 0x22, 0x72, 0x69, 0x64, 0x65, 0x72, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Rubymine"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Rubymine => [0xA5, 0x00, 0x00, 0x00, 0x22, 0x72, 0x75, 0x62, 0x79, 0x6D, 0x69, 0x6E, 0x65, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Webstorm"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Webstorm => [0xA5, 0x00, 0x00, 0x00, 0x22, 0x77, 0x65, 0x62, 0x73, 0x74, 0x6F, 0x72, 0x6D, 0x22];
+        }
     }
 }

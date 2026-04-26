@@ -505,7 +505,7 @@ public readonly partial struct CodeClimateSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.ArgumentCount, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ArgumentCount, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -541,7 +541,7 @@ public readonly partial struct CodeClimateSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.ArgumentCount, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ArgumentCount, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -586,7 +586,7 @@ public readonly partial struct CodeClimateSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.ComplexLogic, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ComplexLogic, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -622,7 +622,7 @@ public readonly partial struct CodeClimateSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.ComplexLogic, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ComplexLogic, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -667,7 +667,7 @@ public readonly partial struct CodeClimateSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.FileLines, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.FileLines, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -703,7 +703,7 @@ public readonly partial struct CodeClimateSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.FileLines, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.FileLines, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -748,7 +748,7 @@ public readonly partial struct CodeClimateSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.IdenticalCode, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IdenticalCode, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -784,7 +784,7 @@ public readonly partial struct CodeClimateSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.IdenticalCode, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IdenticalCode, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -829,7 +829,7 @@ public readonly partial struct CodeClimateSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.MethodComplexity, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MethodComplexity, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -865,7 +865,7 @@ public readonly partial struct CodeClimateSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.MethodComplexity, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MethodComplexity, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -910,7 +910,7 @@ public readonly partial struct CodeClimateSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.MethodCount, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MethodCount, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -946,7 +946,7 @@ public readonly partial struct CodeClimateSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.MethodCount, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MethodCount, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -991,7 +991,7 @@ public readonly partial struct CodeClimateSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.MethodLines, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MethodLines, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1027,7 +1027,7 @@ public readonly partial struct CodeClimateSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.MethodLines, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MethodLines, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1072,7 +1072,7 @@ public readonly partial struct CodeClimateSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.NestedControlFlow, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.NestedControlFlow, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1108,7 +1108,7 @@ public readonly partial struct CodeClimateSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.NestedControlFlow, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.NestedControlFlow, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1153,7 +1153,7 @@ public readonly partial struct CodeClimateSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.ReturnStatements, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ReturnStatements, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1189,7 +1189,7 @@ public readonly partial struct CodeClimateSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.ReturnStatements, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ReturnStatements, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1234,7 +1234,7 @@ public readonly partial struct CodeClimateSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.SimilarCode, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SimilarCode, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1270,7 +1270,7 @@ public readonly partial struct CodeClimateSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.SimilarCode, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SimilarCode, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1653,6 +1653,24 @@ public readonly partial struct CodeClimateSchema
                 }
             }
 
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.JsonElement:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                        break;
+                    case Kind.Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
             internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
             {
                 switch(_kind)
@@ -1754,6 +1772,24 @@ public readonly partial struct CodeClimateSchema
                 }
             }
 
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.Source:
+                        _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                        break;
+                    case Kind.Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
             internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
             {
                 switch(_kind)
@@ -1843,16 +1879,16 @@ public readonly partial struct CodeClimateSchema
                 in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source returnStatements = default,
                 in Corvus.CodeClimateBenchmark.Current.CodeClimateSchema.Enabled.Source similarCode = default)
             {
-                argumentCount.AddAsProperty(JsonPropertyNamesEscaped.ArgumentCount, ref builder, escapeName: false);
-                complexLogic.AddAsProperty(JsonPropertyNamesEscaped.ComplexLogic, ref builder, escapeName: false);
-                fileLines.AddAsProperty(JsonPropertyNamesEscaped.FileLines, ref builder, escapeName: false);
-                identicalCode.AddAsProperty(JsonPropertyNamesEscaped.IdenticalCode, ref builder, escapeName: false);
-                methodComplexity.AddAsProperty(JsonPropertyNamesEscaped.MethodComplexity, ref builder, escapeName: false);
-                methodCount.AddAsProperty(JsonPropertyNamesEscaped.MethodCount, ref builder, escapeName: false);
-                methodLines.AddAsProperty(JsonPropertyNamesEscaped.MethodLines, ref builder, escapeName: false);
-                nestedControlFlow.AddAsProperty(JsonPropertyNamesEscaped.NestedControlFlow, ref builder, escapeName: false);
-                returnStatements.AddAsProperty(JsonPropertyNamesEscaped.ReturnStatements, ref builder, escapeName: false);
-                similarCode.AddAsProperty(JsonPropertyNamesEscaped.SimilarCode, ref builder, escapeName: false);
+                argumentCount.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ArgumentCount, ref builder);
+                complexLogic.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ComplexLogic, ref builder);
+                fileLines.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.FileLines, ref builder);
+                identicalCode.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IdenticalCode, ref builder);
+                methodComplexity.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MethodComplexity, ref builder);
+                methodCount.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MethodCount, ref builder);
+                methodLines.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MethodLines, ref builder);
+                nestedControlFlow.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.NestedControlFlow, ref builder);
+                returnStatements.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ReturnStatements, ref builder);
+                similarCode.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SimilarCode, ref builder);
             }
 
             /// <summary>
@@ -1893,16 +1929,16 @@ public readonly partial struct CodeClimateSchema
             where TContext : allows ref struct
             #endif
             {
-                argumentCount.AddAsProperty(JsonPropertyNamesEscaped.ArgumentCount, ref builder, escapeName: false);
-                complexLogic.AddAsProperty(JsonPropertyNamesEscaped.ComplexLogic, ref builder, escapeName: false);
-                fileLines.AddAsProperty(JsonPropertyNamesEscaped.FileLines, ref builder, escapeName: false);
-                identicalCode.AddAsProperty(JsonPropertyNamesEscaped.IdenticalCode, ref builder, escapeName: false);
-                methodComplexity.AddAsProperty(JsonPropertyNamesEscaped.MethodComplexity, ref builder, escapeName: false);
-                methodCount.AddAsProperty(JsonPropertyNamesEscaped.MethodCount, ref builder, escapeName: false);
-                methodLines.AddAsProperty(JsonPropertyNamesEscaped.MethodLines, ref builder, escapeName: false);
-                nestedControlFlow.AddAsProperty(JsonPropertyNamesEscaped.NestedControlFlow, ref builder, escapeName: false);
-                returnStatements.AddAsProperty(JsonPropertyNamesEscaped.ReturnStatements, ref builder, escapeName: false);
-                similarCode.AddAsProperty(JsonPropertyNamesEscaped.SimilarCode, ref builder, escapeName: false);
+                argumentCount.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ArgumentCount, ref builder);
+                complexLogic.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ComplexLogic, ref builder);
+                fileLines.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.FileLines, ref builder);
+                identicalCode.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IdenticalCode, ref builder);
+                methodComplexity.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MethodComplexity, ref builder);
+                methodCount.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MethodCount, ref builder);
+                methodLines.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MethodLines, ref builder);
+                nestedControlFlow.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.NestedControlFlow, ref builder);
+                returnStatements.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ReturnStatements, ref builder);
+                similarCode.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SimilarCode, ref builder);
             }
 
             /// <summary>

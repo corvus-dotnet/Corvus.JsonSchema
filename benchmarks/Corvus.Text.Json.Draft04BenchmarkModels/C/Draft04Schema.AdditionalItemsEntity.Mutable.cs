@@ -880,6 +880,30 @@ public readonly partial struct Draft04Schema
                 }
             }
 
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.JsonElement:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                        break;
+                    case Kind.True:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, true);
+                        break;
+                    case Kind.False:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, false);
+                        break;
+                    case Kind.Draft04SchemaBuilder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _draft04SchemaBuilderInstance!, static (in b, ref o) => Corvus.Draft04Benchmark.Current.Draft04Schema.Builder.BuildValue(b, ref o));
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
             internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
             {
                 switch(_kind)
@@ -992,6 +1016,24 @@ public readonly partial struct Draft04Schema
                         break;
                     case Kind.Draft04SchemaBuilder:
                         valueBuilder.AddProperty(utf8Name, BuildWithContext.Create(_context, _draft04SchemaBuilderInstance!), static (in b, ref o) => Corvus.Draft04Benchmark.Current.Draft04Schema.Builder.BuildValue(b.Context, b.Build, ref o), escapeName, nameRequiresUnescaping);
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.Source:
+                        _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                        break;
+                    case Kind.Draft04SchemaBuilder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _draft04SchemaBuilderInstance!), static (in b, ref o) => Corvus.Draft04Benchmark.Current.Draft04Schema.Builder.BuildValue(b.Context, b.Build, ref o));
                         break;
                     default:
                         Debug.Fail("Unexpected Kind");

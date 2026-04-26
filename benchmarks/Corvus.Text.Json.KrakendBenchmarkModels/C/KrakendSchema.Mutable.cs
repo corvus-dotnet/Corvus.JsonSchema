@@ -211,11 +211,11 @@ public readonly partial struct KrakendSchema
         /// See: https://www.krakend.io/docs/async/
         /// </para>
         /// </remarks>
-        public Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271asyncAgentJson.Mutable AsyncAgent
+        public Corvus.KrakendBenchmark.Current.KrakendSchema.AsyncAgent.Mutable AsyncAgentValue
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.AsyncAgentUtf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271asyncAgentJson.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.AsyncAgentValueUtf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.AsyncAgent.Mutable value))
                 {
                     return value;
                 }
@@ -264,11 +264,11 @@ public readonly partial struct KrakendSchema
         /// See: https://www.krakend.io/docs/service-settings/tls/
         /// </para>
         /// </remarks>
-        public Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271clientTlsJson.Mutable ClientTls
+        public Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.Mutable ClientTlsValue
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ClientTlsUtf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271clientTlsJson.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ClientTlsValueUtf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.Mutable value))
                 {
                     return value;
                 }
@@ -517,11 +517,11 @@ public readonly partial struct KrakendSchema
         /// See: https://www.krakend.io/docs/endpoints/
         /// </para>
         /// </remarks>
-        public Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271endpointJsonArray.Mutable Endpoints
+        public Corvus.KrakendBenchmark.Current.KrakendSchema.EndpointArray.Mutable Endpoints
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.EndpointsUtf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271endpointJsonArray.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.EndpointsUtf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.EndpointArray.Mutable value))
                 {
                     return value;
                 }
@@ -567,11 +567,11 @@ public readonly partial struct KrakendSchema
         /// The optional configuration that extends the core functionality of the gateway is specified here. The `extra_config` at this level enables service components, meaning that they apply globally to all endpoints or activity.
         /// </para>
         /// </remarks>
-        public Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271serviceExtraConfigJson.Mutable ExtraConfig
+        public Corvus.KrakendBenchmark.Current.KrakendSchema.ServiceExtraConfig.Mutable ExtraConfig
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ExtraConfigUtf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271serviceExtraConfigJson.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ExtraConfigUtf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.ServiceExtraConfig.Mutable value))
                 {
                     return value;
                 }
@@ -994,11 +994,11 @@ public readonly partial struct KrakendSchema
         /// See: https://www.krakend.io/docs/service-settings/tls/
         /// </para>
         /// </remarks>
-        public Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271tlsJson.Mutable Tls
+        public Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.Mutable TlsValue
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TlsUtf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271tlsJson.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TlsValueUtf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.Mutable value))
                 {
                     return value;
                 }
@@ -1118,19 +1118,19 @@ public readonly partial struct KrakendSchema
         /// Set the <c>async_agent</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetAsyncAgent(in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271asyncAgentJson.Source value)
+        public void SetAsyncAgentValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.AsyncAgent.Source value)
         {
             CheckValidInstance();
 
             if (value.IsUndefined)
             {
-                JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.AsyncAgentUtf8);
+                JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.AsyncAgentValueUtf8);
                 _documentVersion = _parent.Version;
                 return;
             }
 
             ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.AsyncAgentUtf8, out IJsonDocument? elementParent, out int elementIdx))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.AsyncAgentValueUtf8, out IJsonDocument? elementParent, out int elementIdx))
             {
                 // We are going to replace just the value
                 value.AddAsItem(ref cvb);
@@ -1139,7 +1139,7 @@ public readonly partial struct KrakendSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.AsyncAgent, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AsyncAgentValue, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1151,7 +1151,7 @@ public readonly partial struct KrakendSchema
         /// Set the <c>async_agent</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetAsyncAgent<TContext>(in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271asyncAgentJson.Source<TContext> value)
+        public void SetAsyncAgentValue<TContext>(in Corvus.KrakendBenchmark.Current.KrakendSchema.AsyncAgent.Source<TContext> value)
 #if NET9_0_OR_GREATER
             where TContext : allows ref struct
 #endif
@@ -1160,13 +1160,13 @@ public readonly partial struct KrakendSchema
 
             if (value.IsUndefined)
             {
-                JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.AsyncAgentUtf8);
+                JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.AsyncAgentValueUtf8);
                 _documentVersion = _parent.Version;
                 return;
             }
 
             ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.AsyncAgentUtf8, out IJsonDocument? elementParent, out int elementIdx))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.AsyncAgentValueUtf8, out IJsonDocument? elementParent, out int elementIdx))
             {
                 // We are going to replace just the value
                 value.AddAsItem(ref cvb);
@@ -1175,7 +1175,7 @@ public readonly partial struct KrakendSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.AsyncAgent, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AsyncAgentValue, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1187,10 +1187,10 @@ public readonly partial struct KrakendSchema
         /// Remove the <c>async_agent</c> property, if present.
         /// </summary>
         /// <returns><see langword="true"/> if the property was found and removed; otherwise, <see langword="false"/>.</returns>
-        public bool RemoveAsyncAgent()
+        public bool RemoveAsyncAgentValue()
         {
             CheckValidInstance();
-            bool result = JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.AsyncAgentUtf8);
+            bool result = JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.AsyncAgentValueUtf8);
             _documentVersion = _parent.Version;
             return result;
         }
@@ -1220,7 +1220,7 @@ public readonly partial struct KrakendSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.CacheTtl, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CacheTtl, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1244,19 +1244,19 @@ public readonly partial struct KrakendSchema
         /// Set the <c>client_tls</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetClientTls(in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271clientTlsJson.Source value)
+        public void SetClientTlsValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.Source value)
         {
             CheckValidInstance();
 
             if (value.IsUndefined)
             {
-                JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.ClientTlsUtf8);
+                JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.ClientTlsValueUtf8);
                 _documentVersion = _parent.Version;
                 return;
             }
 
             ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ClientTlsUtf8, out IJsonDocument? elementParent, out int elementIdx))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ClientTlsValueUtf8, out IJsonDocument? elementParent, out int elementIdx))
             {
                 // We are going to replace just the value
                 value.AddAsItem(ref cvb);
@@ -1265,7 +1265,7 @@ public readonly partial struct KrakendSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.ClientTls, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ClientTlsValue, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1277,7 +1277,7 @@ public readonly partial struct KrakendSchema
         /// Set the <c>client_tls</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetClientTls<TContext>(in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271clientTlsJson.Source<TContext> value)
+        public void SetClientTlsValue<TContext>(in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.Source<TContext> value)
 #if NET9_0_OR_GREATER
             where TContext : allows ref struct
 #endif
@@ -1286,13 +1286,13 @@ public readonly partial struct KrakendSchema
 
             if (value.IsUndefined)
             {
-                JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.ClientTlsUtf8);
+                JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.ClientTlsValueUtf8);
                 _documentVersion = _parent.Version;
                 return;
             }
 
             ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ClientTlsUtf8, out IJsonDocument? elementParent, out int elementIdx))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ClientTlsValueUtf8, out IJsonDocument? elementParent, out int elementIdx))
             {
                 // We are going to replace just the value
                 value.AddAsItem(ref cvb);
@@ -1301,7 +1301,7 @@ public readonly partial struct KrakendSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.ClientTls, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ClientTlsValue, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1313,10 +1313,10 @@ public readonly partial struct KrakendSchema
         /// Remove the <c>client_tls</c> property, if present.
         /// </summary>
         /// <returns><see langword="true"/> if the property was found and removed; otherwise, <see langword="false"/>.</returns>
-        public bool RemoveClientTls()
+        public bool RemoveClientTlsValue()
         {
             CheckValidInstance();
-            bool result = JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.ClientTlsUtf8);
+            bool result = JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.ClientTlsValueUtf8);
             _documentVersion = _parent.Version;
             return result;
         }
@@ -1346,7 +1346,7 @@ public readonly partial struct KrakendSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.DebugEndpointValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DebugEndpointValue, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1391,7 +1391,7 @@ public readonly partial struct KrakendSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.DialerFallbackDelay, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DialerFallbackDelay, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1436,7 +1436,7 @@ public readonly partial struct KrakendSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.DialerKeepAlive, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DialerKeepAlive, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1481,7 +1481,7 @@ public readonly partial struct KrakendSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.DialerTimeout, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DialerTimeout, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1526,7 +1526,7 @@ public readonly partial struct KrakendSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.DisableCompressionValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DisableCompressionValue, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1571,7 +1571,7 @@ public readonly partial struct KrakendSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.DisableKeepAlivesValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DisableKeepAlivesValue, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1616,7 +1616,7 @@ public readonly partial struct KrakendSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.DisableRest, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DisableRest, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1661,7 +1661,7 @@ public readonly partial struct KrakendSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.DnsCacheTtl, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DnsCacheTtl, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1706,7 +1706,7 @@ public readonly partial struct KrakendSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.EchoEndpointValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.EchoEndpointValue, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1730,7 +1730,7 @@ public readonly partial struct KrakendSchema
         /// Set the <c>endpoints</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetEndpoints(in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271endpointJsonArray.Source value)
+        public void SetEndpoints(in Corvus.KrakendBenchmark.Current.KrakendSchema.EndpointArray.Source value)
         {
             CheckValidInstance();
 
@@ -1751,7 +1751,7 @@ public readonly partial struct KrakendSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Endpoints, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Endpoints, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1763,7 +1763,7 @@ public readonly partial struct KrakendSchema
         /// Set the <c>endpoints</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetEndpoints<TContext>(in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271endpointJsonArray.Source<TContext> value)
+        public void SetEndpoints<TContext>(in Corvus.KrakendBenchmark.Current.KrakendSchema.EndpointArray.Source<TContext> value)
 #if NET9_0_OR_GREATER
             where TContext : allows ref struct
 #endif
@@ -1787,7 +1787,7 @@ public readonly partial struct KrakendSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Endpoints, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Endpoints, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1832,7 +1832,7 @@ public readonly partial struct KrakendSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.ExpectContinueTimeout, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ExpectContinueTimeout, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1856,7 +1856,7 @@ public readonly partial struct KrakendSchema
         /// Set the <c>extra_config</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetExtraConfig(in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271serviceExtraConfigJson.Source value)
+        public void SetExtraConfig(in Corvus.KrakendBenchmark.Current.KrakendSchema.ServiceExtraConfig.Source value)
         {
             CheckValidInstance();
 
@@ -1877,7 +1877,7 @@ public readonly partial struct KrakendSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.ExtraConfig, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ExtraConfig, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1889,7 +1889,7 @@ public readonly partial struct KrakendSchema
         /// Set the <c>extra_config</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetExtraConfig<TContext>(in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271serviceExtraConfigJson.Source<TContext> value)
+        public void SetExtraConfig<TContext>(in Corvus.KrakendBenchmark.Current.KrakendSchema.ServiceExtraConfig.Source<TContext> value)
 #if NET9_0_OR_GREATER
             where TContext : allows ref struct
 #endif
@@ -1913,7 +1913,7 @@ public readonly partial struct KrakendSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.ExtraConfig, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ExtraConfig, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1958,7 +1958,7 @@ public readonly partial struct KrakendSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Host, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Host, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1994,7 +1994,7 @@ public readonly partial struct KrakendSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Host, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Host, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -2039,7 +2039,7 @@ public readonly partial struct KrakendSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.IdleConnectionTimeout, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IdleConnectionTimeout, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -2084,7 +2084,7 @@ public readonly partial struct KrakendSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.IdleTimeout, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IdleTimeout, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -2129,7 +2129,7 @@ public readonly partial struct KrakendSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.ListenIpValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ListenIpValue, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -2174,7 +2174,7 @@ public readonly partial struct KrakendSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.MaxHeaderBytesValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MaxHeaderBytesValue, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -2219,7 +2219,7 @@ public readonly partial struct KrakendSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.MaxIdleConnectionsValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MaxIdleConnectionsValue, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -2264,7 +2264,7 @@ public readonly partial struct KrakendSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.MaxIdleConnectionsPerHostValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MaxIdleConnectionsPerHostValue, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -2309,7 +2309,7 @@ public readonly partial struct KrakendSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.NameValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.NameValue, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -2354,7 +2354,7 @@ public readonly partial struct KrakendSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.OutputEncodingValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.OutputEncodingValue, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -2399,7 +2399,7 @@ public readonly partial struct KrakendSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.PluginValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PluginValue, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -2435,7 +2435,7 @@ public readonly partial struct KrakendSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.PluginValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PluginValue, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -2480,7 +2480,7 @@ public readonly partial struct KrakendSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.PortValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PortValue, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -2525,7 +2525,7 @@ public readonly partial struct KrakendSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.ReadHeaderTimeout, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ReadHeaderTimeout, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -2570,7 +2570,7 @@ public readonly partial struct KrakendSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.ReadTimeout, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ReadTimeout, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -2615,7 +2615,7 @@ public readonly partial struct KrakendSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.ResponseHeaderTimeout, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ResponseHeaderTimeout, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -2660,7 +2660,7 @@ public readonly partial struct KrakendSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.SequentialStartValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SequentialStartValue, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -2705,7 +2705,7 @@ public readonly partial struct KrakendSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Timeout, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Timeout, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -2729,19 +2729,19 @@ public readonly partial struct KrakendSchema
         /// Set the <c>tls</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetTls(in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271tlsJson.Source value)
+        public void SetTlsValue(in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.Source value)
         {
             CheckValidInstance();
 
             if (value.IsUndefined)
             {
-                JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.TlsUtf8);
+                JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.TlsValueUtf8);
                 _documentVersion = _parent.Version;
                 return;
             }
 
             ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TlsUtf8, out IJsonDocument? elementParent, out int elementIdx))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TlsValueUtf8, out IJsonDocument? elementParent, out int elementIdx))
             {
                 // We are going to replace just the value
                 value.AddAsItem(ref cvb);
@@ -2750,7 +2750,7 @@ public readonly partial struct KrakendSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Tls, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TlsValue, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -2762,7 +2762,7 @@ public readonly partial struct KrakendSchema
         /// Set the <c>tls</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetTls<TContext>(in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271tlsJson.Source<TContext> value)
+        public void SetTlsValue<TContext>(in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.Source<TContext> value)
 #if NET9_0_OR_GREATER
             where TContext : allows ref struct
 #endif
@@ -2771,13 +2771,13 @@ public readonly partial struct KrakendSchema
 
             if (value.IsUndefined)
             {
-                JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.TlsUtf8);
+                JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.TlsValueUtf8);
                 _documentVersion = _parent.Version;
                 return;
             }
 
             ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TlsUtf8, out IJsonDocument? elementParent, out int elementIdx))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TlsValueUtf8, out IJsonDocument? elementParent, out int elementIdx))
             {
                 // We are going to replace just the value
                 value.AddAsItem(ref cvb);
@@ -2786,7 +2786,7 @@ public readonly partial struct KrakendSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Tls, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TlsValue, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -2798,10 +2798,10 @@ public readonly partial struct KrakendSchema
         /// Remove the <c>tls</c> property, if present.
         /// </summary>
         /// <returns><see langword="true"/> if the property was found and removed; otherwise, <see langword="false"/>.</returns>
-        public bool RemoveTls()
+        public bool RemoveTlsValue()
         {
             CheckValidInstance();
-            bool result = JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.TlsUtf8);
+            bool result = JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.TlsValueUtf8);
             _documentVersion = _parent.Version;
             return result;
         }
@@ -2831,7 +2831,7 @@ public readonly partial struct KrakendSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.UseH2c, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.UseH2c, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -2874,7 +2874,7 @@ public readonly partial struct KrakendSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Version, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Version, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -2907,7 +2907,7 @@ public readonly partial struct KrakendSchema
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.WriteTimeout, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.WriteTimeout, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -3290,6 +3290,24 @@ public readonly partial struct KrakendSchema
             }
         }
 
+        internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+        {
+            switch(_kind)
+            {
+                case Kind.Unknown:
+                    break;
+                case Kind.JsonElement:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                    break;
+                case Kind.Builder:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
+                    break;
+                default:
+                    Debug.Fail("Unexpected Kind");
+                    break;
+            }
+        }
+
         internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
         {
             switch(_kind)
@@ -3391,6 +3409,24 @@ public readonly partial struct KrakendSchema
             }
         }
 
+        internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+        {
+            switch(_kind)
+            {
+                case Kind.Unknown:
+                    break;
+                case Kind.Source:
+                    _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                    break;
+                case Kind.Builder:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
+                    break;
+                default:
+                    Debug.Fail("Unexpected Kind");
+                    break;
+            }
+        }
+
         internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
         {
             switch(_kind)
@@ -3469,9 +3505,9 @@ public readonly partial struct KrakendSchema
         /// </summary>
         internal static void Create(
             ref ComplexValueBuilder builder,
-            in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271asyncAgentJson.Source asyncAgent = default,
+            in Corvus.KrakendBenchmark.Current.KrakendSchema.AsyncAgent.Source asyncAgent = default,
             in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source cacheTtl = default,
-            in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271clientTlsJson.Source clientTls = default,
+            in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.Source clientTls = default,
             in Corvus.KrakendBenchmark.Current.KrakendSchema.DebugEndpoint.Source debugEndpoint = default,
             in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source dialerFallbackDelay = default,
             in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source dialerKeepAlive = default,
@@ -3481,9 +3517,9 @@ public readonly partial struct KrakendSchema
             in Corvus.KrakendBenchmark.Current.KrakendSchema.DisableResTfulUrLs.Source disableRest = default,
             in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source dnsCacheTtl = default,
             in Corvus.KrakendBenchmark.Current.KrakendSchema.EchoEndpoint.Source echoEndpoint = default,
-            in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271endpointJsonArray.Source endpoints = default,
+            in Corvus.KrakendBenchmark.Current.KrakendSchema.EndpointArray.Source endpoints = default,
             in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source expectContinueTimeout = default,
-            in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271serviceExtraConfigJson.Source extraConfig = default,
+            in Corvus.KrakendBenchmark.Current.KrakendSchema.ServiceExtraConfig.Source extraConfig = default,
             in Corvus.KrakendBenchmark.Current.KrakendSchema.JsonStringArray.Source host = default,
             in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source idleConnectionTimeout = default,
             in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source idleTimeout = default,
@@ -3500,54 +3536,54 @@ public readonly partial struct KrakendSchema
             in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source responseHeaderTimeout = default,
             in Corvus.KrakendBenchmark.Current.KrakendSchema.SequentialStart.Source sequentialStart = default,
             in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source timeout = default,
-            in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271tlsJson.Source tls = default,
+            in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.Source tls = default,
             in Corvus.KrakendBenchmark.Current.KrakendSchema.EnableH2c.Source useH2c = default,
             in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source writeTimeout = default)
         {
-            builder.AddProperty(JsonPropertyNamesEscaped.Version, Corvus.KrakendBenchmark.Current.KrakendSchema.VersionOfThisSyntax.ConstInstance);
-            asyncAgent.AddAsProperty(JsonPropertyNamesEscaped.AsyncAgent, ref builder, escapeName: false);
-            cacheTtl.AddAsProperty(JsonPropertyNamesEscaped.CacheTtl, ref builder, escapeName: false);
-            clientTls.AddAsProperty(JsonPropertyNamesEscaped.ClientTls, ref builder, escapeName: false);
-            debugEndpoint.AddAsProperty(JsonPropertyNamesEscaped.DebugEndpointValue, ref builder, escapeName: false);
-            dialerFallbackDelay.AddAsProperty(JsonPropertyNamesEscaped.DialerFallbackDelay, ref builder, escapeName: false);
-            dialerKeepAlive.AddAsProperty(JsonPropertyNamesEscaped.DialerKeepAlive, ref builder, escapeName: false);
-            dialerTimeout.AddAsProperty(JsonPropertyNamesEscaped.DialerTimeout, ref builder, escapeName: false);
-            disableCompression.AddAsProperty(JsonPropertyNamesEscaped.DisableCompressionValue, ref builder, escapeName: false);
-            disableKeepAlives.AddAsProperty(JsonPropertyNamesEscaped.DisableKeepAlivesValue, ref builder, escapeName: false);
-            disableRest.AddAsProperty(JsonPropertyNamesEscaped.DisableRest, ref builder, escapeName: false);
-            dnsCacheTtl.AddAsProperty(JsonPropertyNamesEscaped.DnsCacheTtl, ref builder, escapeName: false);
-            echoEndpoint.AddAsProperty(JsonPropertyNamesEscaped.EchoEndpointValue, ref builder, escapeName: false);
-            endpoints.AddAsProperty(JsonPropertyNamesEscaped.Endpoints, ref builder, escapeName: false);
-            expectContinueTimeout.AddAsProperty(JsonPropertyNamesEscaped.ExpectContinueTimeout, ref builder, escapeName: false);
-            extraConfig.AddAsProperty(JsonPropertyNamesEscaped.ExtraConfig, ref builder, escapeName: false);
-            host.AddAsProperty(JsonPropertyNamesEscaped.Host, ref builder, escapeName: false);
-            idleConnectionTimeout.AddAsProperty(JsonPropertyNamesEscaped.IdleConnectionTimeout, ref builder, escapeName: false);
-            idleTimeout.AddAsProperty(JsonPropertyNamesEscaped.IdleTimeout, ref builder, escapeName: false);
-            listenIp.AddAsProperty(JsonPropertyNamesEscaped.ListenIpValue, ref builder, escapeName: false);
-            maxHeaderBytes.AddAsProperty(JsonPropertyNamesEscaped.MaxHeaderBytesValue, ref builder, escapeName: false);
-            maxIdleConnections.AddAsProperty(JsonPropertyNamesEscaped.MaxIdleConnectionsValue, ref builder, escapeName: false);
-            maxIdleConnectionsPerHost.AddAsProperty(JsonPropertyNamesEscaped.MaxIdleConnectionsPerHostValue, ref builder, escapeName: false);
-            name.AddAsProperty(JsonPropertyNamesEscaped.NameValue, ref builder, escapeName: false);
-            outputEncoding.AddAsProperty(JsonPropertyNamesEscaped.OutputEncodingValue, ref builder, escapeName: false);
-            plugin.AddAsProperty(JsonPropertyNamesEscaped.PluginValue, ref builder, escapeName: false);
-            port.AddAsProperty(JsonPropertyNamesEscaped.PortValue, ref builder, escapeName: false);
-            readHeaderTimeout.AddAsProperty(JsonPropertyNamesEscaped.ReadHeaderTimeout, ref builder, escapeName: false);
-            readTimeout.AddAsProperty(JsonPropertyNamesEscaped.ReadTimeout, ref builder, escapeName: false);
-            responseHeaderTimeout.AddAsProperty(JsonPropertyNamesEscaped.ResponseHeaderTimeout, ref builder, escapeName: false);
-            sequentialStart.AddAsProperty(JsonPropertyNamesEscaped.SequentialStartValue, ref builder, escapeName: false);
-            timeout.AddAsProperty(JsonPropertyNamesEscaped.Timeout, ref builder, escapeName: false);
-            tls.AddAsProperty(JsonPropertyNamesEscaped.Tls, ref builder, escapeName: false);
-            useH2c.AddAsProperty(JsonPropertyNamesEscaped.UseH2c, ref builder, escapeName: false);
-            writeTimeout.AddAsProperty(JsonPropertyNamesEscaped.WriteTimeout, ref builder, escapeName: false);
+            builder.AddPrebakedProperty(JsonPropertyNamesPrebaked.Version, Corvus.KrakendBenchmark.Current.KrakendSchema.VersionOfThisSyntax.ConstInstance);
+            asyncAgent.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AsyncAgentValue, ref builder);
+            cacheTtl.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CacheTtl, ref builder);
+            clientTls.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ClientTlsValue, ref builder);
+            debugEndpoint.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DebugEndpointValue, ref builder);
+            dialerFallbackDelay.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DialerFallbackDelay, ref builder);
+            dialerKeepAlive.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DialerKeepAlive, ref builder);
+            dialerTimeout.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DialerTimeout, ref builder);
+            disableCompression.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DisableCompressionValue, ref builder);
+            disableKeepAlives.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DisableKeepAlivesValue, ref builder);
+            disableRest.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DisableRest, ref builder);
+            dnsCacheTtl.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DnsCacheTtl, ref builder);
+            echoEndpoint.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.EchoEndpointValue, ref builder);
+            endpoints.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Endpoints, ref builder);
+            expectContinueTimeout.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ExpectContinueTimeout, ref builder);
+            extraConfig.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ExtraConfig, ref builder);
+            host.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Host, ref builder);
+            idleConnectionTimeout.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IdleConnectionTimeout, ref builder);
+            idleTimeout.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IdleTimeout, ref builder);
+            listenIp.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ListenIpValue, ref builder);
+            maxHeaderBytes.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MaxHeaderBytesValue, ref builder);
+            maxIdleConnections.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MaxIdleConnectionsValue, ref builder);
+            maxIdleConnectionsPerHost.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MaxIdleConnectionsPerHostValue, ref builder);
+            name.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.NameValue, ref builder);
+            outputEncoding.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.OutputEncodingValue, ref builder);
+            plugin.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PluginValue, ref builder);
+            port.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PortValue, ref builder);
+            readHeaderTimeout.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ReadHeaderTimeout, ref builder);
+            readTimeout.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ReadTimeout, ref builder);
+            responseHeaderTimeout.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ResponseHeaderTimeout, ref builder);
+            sequentialStart.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SequentialStartValue, ref builder);
+            timeout.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Timeout, ref builder);
+            tls.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TlsValue, ref builder);
+            useH2c.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.UseH2c, ref builder);
+            writeTimeout.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.WriteTimeout, ref builder);
         }
 
         /// <summary>
         /// Creates an instance of a <see cref="KrakendSchema"/>.
         /// </summary>
         public void Create(
-            in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271asyncAgentJson.Source asyncAgent = default,
+            in Corvus.KrakendBenchmark.Current.KrakendSchema.AsyncAgent.Source asyncAgent = default,
             in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source cacheTtl = default,
-            in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271clientTlsJson.Source clientTls = default,
+            in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.Source clientTls = default,
             in Corvus.KrakendBenchmark.Current.KrakendSchema.DebugEndpoint.Source debugEndpoint = default,
             in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source dialerFallbackDelay = default,
             in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source dialerKeepAlive = default,
@@ -3557,9 +3593,9 @@ public readonly partial struct KrakendSchema
             in Corvus.KrakendBenchmark.Current.KrakendSchema.DisableResTfulUrLs.Source disableRest = default,
             in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source dnsCacheTtl = default,
             in Corvus.KrakendBenchmark.Current.KrakendSchema.EchoEndpoint.Source echoEndpoint = default,
-            in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271endpointJsonArray.Source endpoints = default,
+            in Corvus.KrakendBenchmark.Current.KrakendSchema.EndpointArray.Source endpoints = default,
             in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source expectContinueTimeout = default,
-            in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271serviceExtraConfigJson.Source extraConfig = default,
+            in Corvus.KrakendBenchmark.Current.KrakendSchema.ServiceExtraConfig.Source extraConfig = default,
             in Corvus.KrakendBenchmark.Current.KrakendSchema.JsonStringArray.Source host = default,
             in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source idleConnectionTimeout = default,
             in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source idleTimeout = default,
@@ -3576,7 +3612,7 @@ public readonly partial struct KrakendSchema
             in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source responseHeaderTimeout = default,
             in Corvus.KrakendBenchmark.Current.KrakendSchema.SequentialStart.Source sequentialStart = default,
             in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source timeout = default,
-            in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271tlsJson.Source tls = default,
+            in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.Source tls = default,
             in Corvus.KrakendBenchmark.Current.KrakendSchema.EnableH2c.Source useH2c = default,
             in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source writeTimeout = default)
         {
@@ -3589,9 +3625,9 @@ public readonly partial struct KrakendSchema
         internal static void Create<TContext>(
             in TContext context,
             ref ComplexValueBuilder builder,
-            in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271asyncAgentJson.Source<TContext> asyncAgent = default,
+            in Corvus.KrakendBenchmark.Current.KrakendSchema.AsyncAgent.Source<TContext> asyncAgent = default,
             in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source cacheTtl = default,
-            in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271clientTlsJson.Source<TContext> clientTls = default,
+            in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.Source<TContext> clientTls = default,
             in Corvus.KrakendBenchmark.Current.KrakendSchema.DebugEndpoint.Source debugEndpoint = default,
             in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source dialerFallbackDelay = default,
             in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source dialerKeepAlive = default,
@@ -3601,9 +3637,9 @@ public readonly partial struct KrakendSchema
             in Corvus.KrakendBenchmark.Current.KrakendSchema.DisableResTfulUrLs.Source disableRest = default,
             in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source dnsCacheTtl = default,
             in Corvus.KrakendBenchmark.Current.KrakendSchema.EchoEndpoint.Source echoEndpoint = default,
-            in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271endpointJsonArray.Source<TContext> endpoints = default,
+            in Corvus.KrakendBenchmark.Current.KrakendSchema.EndpointArray.Source<TContext> endpoints = default,
             in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source expectContinueTimeout = default,
-            in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271serviceExtraConfigJson.Source<TContext> extraConfig = default,
+            in Corvus.KrakendBenchmark.Current.KrakendSchema.ServiceExtraConfig.Source<TContext> extraConfig = default,
             in Corvus.KrakendBenchmark.Current.KrakendSchema.JsonStringArray.Source<TContext> host = default,
             in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source idleConnectionTimeout = default,
             in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source idleTimeout = default,
@@ -3620,48 +3656,48 @@ public readonly partial struct KrakendSchema
             in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source responseHeaderTimeout = default,
             in Corvus.KrakendBenchmark.Current.KrakendSchema.SequentialStart.Source sequentialStart = default,
             in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source timeout = default,
-            in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271tlsJson.Source<TContext> tls = default,
+            in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.Source<TContext> tls = default,
             in Corvus.KrakendBenchmark.Current.KrakendSchema.EnableH2c.Source useH2c = default,
             in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source writeTimeout = default)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif
         {
-            builder.AddProperty(JsonPropertyNamesEscaped.Version, Corvus.KrakendBenchmark.Current.KrakendSchema.VersionOfThisSyntax.ConstInstance);
-            asyncAgent.AddAsProperty(JsonPropertyNamesEscaped.AsyncAgent, ref builder, escapeName: false);
-            cacheTtl.AddAsProperty(JsonPropertyNamesEscaped.CacheTtl, ref builder, escapeName: false);
-            clientTls.AddAsProperty(JsonPropertyNamesEscaped.ClientTls, ref builder, escapeName: false);
-            debugEndpoint.AddAsProperty(JsonPropertyNamesEscaped.DebugEndpointValue, ref builder, escapeName: false);
-            dialerFallbackDelay.AddAsProperty(JsonPropertyNamesEscaped.DialerFallbackDelay, ref builder, escapeName: false);
-            dialerKeepAlive.AddAsProperty(JsonPropertyNamesEscaped.DialerKeepAlive, ref builder, escapeName: false);
-            dialerTimeout.AddAsProperty(JsonPropertyNamesEscaped.DialerTimeout, ref builder, escapeName: false);
-            disableCompression.AddAsProperty(JsonPropertyNamesEscaped.DisableCompressionValue, ref builder, escapeName: false);
-            disableKeepAlives.AddAsProperty(JsonPropertyNamesEscaped.DisableKeepAlivesValue, ref builder, escapeName: false);
-            disableRest.AddAsProperty(JsonPropertyNamesEscaped.DisableRest, ref builder, escapeName: false);
-            dnsCacheTtl.AddAsProperty(JsonPropertyNamesEscaped.DnsCacheTtl, ref builder, escapeName: false);
-            echoEndpoint.AddAsProperty(JsonPropertyNamesEscaped.EchoEndpointValue, ref builder, escapeName: false);
-            endpoints.AddAsProperty(JsonPropertyNamesEscaped.Endpoints, ref builder, escapeName: false);
-            expectContinueTimeout.AddAsProperty(JsonPropertyNamesEscaped.ExpectContinueTimeout, ref builder, escapeName: false);
-            extraConfig.AddAsProperty(JsonPropertyNamesEscaped.ExtraConfig, ref builder, escapeName: false);
-            host.AddAsProperty(JsonPropertyNamesEscaped.Host, ref builder, escapeName: false);
-            idleConnectionTimeout.AddAsProperty(JsonPropertyNamesEscaped.IdleConnectionTimeout, ref builder, escapeName: false);
-            idleTimeout.AddAsProperty(JsonPropertyNamesEscaped.IdleTimeout, ref builder, escapeName: false);
-            listenIp.AddAsProperty(JsonPropertyNamesEscaped.ListenIpValue, ref builder, escapeName: false);
-            maxHeaderBytes.AddAsProperty(JsonPropertyNamesEscaped.MaxHeaderBytesValue, ref builder, escapeName: false);
-            maxIdleConnections.AddAsProperty(JsonPropertyNamesEscaped.MaxIdleConnectionsValue, ref builder, escapeName: false);
-            maxIdleConnectionsPerHost.AddAsProperty(JsonPropertyNamesEscaped.MaxIdleConnectionsPerHostValue, ref builder, escapeName: false);
-            name.AddAsProperty(JsonPropertyNamesEscaped.NameValue, ref builder, escapeName: false);
-            outputEncoding.AddAsProperty(JsonPropertyNamesEscaped.OutputEncodingValue, ref builder, escapeName: false);
-            plugin.AddAsProperty(JsonPropertyNamesEscaped.PluginValue, ref builder, escapeName: false);
-            port.AddAsProperty(JsonPropertyNamesEscaped.PortValue, ref builder, escapeName: false);
-            readHeaderTimeout.AddAsProperty(JsonPropertyNamesEscaped.ReadHeaderTimeout, ref builder, escapeName: false);
-            readTimeout.AddAsProperty(JsonPropertyNamesEscaped.ReadTimeout, ref builder, escapeName: false);
-            responseHeaderTimeout.AddAsProperty(JsonPropertyNamesEscaped.ResponseHeaderTimeout, ref builder, escapeName: false);
-            sequentialStart.AddAsProperty(JsonPropertyNamesEscaped.SequentialStartValue, ref builder, escapeName: false);
-            timeout.AddAsProperty(JsonPropertyNamesEscaped.Timeout, ref builder, escapeName: false);
-            tls.AddAsProperty(JsonPropertyNamesEscaped.Tls, ref builder, escapeName: false);
-            useH2c.AddAsProperty(JsonPropertyNamesEscaped.UseH2c, ref builder, escapeName: false);
-            writeTimeout.AddAsProperty(JsonPropertyNamesEscaped.WriteTimeout, ref builder, escapeName: false);
+            builder.AddPrebakedProperty(JsonPropertyNamesPrebaked.Version, Corvus.KrakendBenchmark.Current.KrakendSchema.VersionOfThisSyntax.ConstInstance);
+            asyncAgent.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AsyncAgentValue, ref builder);
+            cacheTtl.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CacheTtl, ref builder);
+            clientTls.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ClientTlsValue, ref builder);
+            debugEndpoint.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DebugEndpointValue, ref builder);
+            dialerFallbackDelay.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DialerFallbackDelay, ref builder);
+            dialerKeepAlive.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DialerKeepAlive, ref builder);
+            dialerTimeout.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DialerTimeout, ref builder);
+            disableCompression.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DisableCompressionValue, ref builder);
+            disableKeepAlives.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DisableKeepAlivesValue, ref builder);
+            disableRest.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DisableRest, ref builder);
+            dnsCacheTtl.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DnsCacheTtl, ref builder);
+            echoEndpoint.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.EchoEndpointValue, ref builder);
+            endpoints.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Endpoints, ref builder);
+            expectContinueTimeout.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ExpectContinueTimeout, ref builder);
+            extraConfig.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ExtraConfig, ref builder);
+            host.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Host, ref builder);
+            idleConnectionTimeout.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IdleConnectionTimeout, ref builder);
+            idleTimeout.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IdleTimeout, ref builder);
+            listenIp.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ListenIpValue, ref builder);
+            maxHeaderBytes.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MaxHeaderBytesValue, ref builder);
+            maxIdleConnections.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MaxIdleConnectionsValue, ref builder);
+            maxIdleConnectionsPerHost.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MaxIdleConnectionsPerHostValue, ref builder);
+            name.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.NameValue, ref builder);
+            outputEncoding.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.OutputEncodingValue, ref builder);
+            plugin.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PluginValue, ref builder);
+            port.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PortValue, ref builder);
+            readHeaderTimeout.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ReadHeaderTimeout, ref builder);
+            readTimeout.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ReadTimeout, ref builder);
+            responseHeaderTimeout.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ResponseHeaderTimeout, ref builder);
+            sequentialStart.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SequentialStartValue, ref builder);
+            timeout.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Timeout, ref builder);
+            tls.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TlsValue, ref builder);
+            useH2c.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.UseH2c, ref builder);
+            writeTimeout.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.WriteTimeout, ref builder);
         }
 
         /// <summary>
@@ -3669,9 +3705,9 @@ public readonly partial struct KrakendSchema
         /// </summary>
         public void Create<TContext>(
             in TContext context,
-            in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271asyncAgentJson.Source<TContext> asyncAgent = default,
+            in Corvus.KrakendBenchmark.Current.KrakendSchema.AsyncAgent.Source<TContext> asyncAgent = default,
             in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source cacheTtl = default,
-            in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271clientTlsJson.Source<TContext> clientTls = default,
+            in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.Source<TContext> clientTls = default,
             in Corvus.KrakendBenchmark.Current.KrakendSchema.DebugEndpoint.Source debugEndpoint = default,
             in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source dialerFallbackDelay = default,
             in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source dialerKeepAlive = default,
@@ -3681,9 +3717,9 @@ public readonly partial struct KrakendSchema
             in Corvus.KrakendBenchmark.Current.KrakendSchema.DisableResTfulUrLs.Source disableRest = default,
             in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source dnsCacheTtl = default,
             in Corvus.KrakendBenchmark.Current.KrakendSchema.EchoEndpoint.Source echoEndpoint = default,
-            in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271endpointJsonArray.Source<TContext> endpoints = default,
+            in Corvus.KrakendBenchmark.Current.KrakendSchema.EndpointArray.Source<TContext> endpoints = default,
             in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source expectContinueTimeout = default,
-            in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271serviceExtraConfigJson.Source<TContext> extraConfig = default,
+            in Corvus.KrakendBenchmark.Current.KrakendSchema.ServiceExtraConfig.Source<TContext> extraConfig = default,
             in Corvus.KrakendBenchmark.Current.KrakendSchema.JsonStringArray.Source<TContext> host = default,
             in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source idleConnectionTimeout = default,
             in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source idleTimeout = default,
@@ -3700,7 +3736,7 @@ public readonly partial struct KrakendSchema
             in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source responseHeaderTimeout = default,
             in Corvus.KrakendBenchmark.Current.KrakendSchema.SequentialStart.Source sequentialStart = default,
             in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source timeout = default,
-            in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271tlsJson.Source<TContext> tls = default,
+            in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.Source<TContext> tls = default,
             in Corvus.KrakendBenchmark.Current.KrakendSchema.EnableH2c.Source useH2c = default,
             in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source writeTimeout = default)
         #if NET9_0_OR_GREATER
@@ -3899,7 +3935,7 @@ public readonly partial struct KrakendSchema
     /// <param name="writeTimeout">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271asyncAgentJson.Source asyncAgent = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source cacheTtl = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271clientTlsJson.Source clientTls = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.DebugEndpoint.Source debugEndpoint = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source dialerFallbackDelay = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source dialerKeepAlive = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source dialerTimeout = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.DisableCompression.Source disableCompression = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.DisableKeepAlives.Source disableKeepAlives = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.DisableResTfulUrLs.Source disableRest = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source dnsCacheTtl = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.EchoEndpoint.Source echoEndpoint = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271endpointJsonArray.Source endpoints = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source expectContinueTimeout = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271serviceExtraConfigJson.Source extraConfig = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.JsonStringArray.Source host = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source idleConnectionTimeout = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source idleTimeout = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.ListenIp.Source listenIp = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.MaxHeaderBytes.Source maxHeaderBytes = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.MaxIdleConnections.Source maxIdleConnections = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.MaxIdleConnectionsPerHost.Source maxIdleConnectionsPerHost = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Name.Source name = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.OutputEncoding.Source outputEncoding = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Plugin.Source plugin = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Port.Source port = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source readHeaderTimeout = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source readTimeout = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source responseHeaderTimeout = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.SequentialStart.Source sequentialStart = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source timeout = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271tlsJson.Source tls = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.EnableH2c.Source useH2c = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source writeTimeout = default, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.KrakendBenchmark.Current.KrakendSchema.AsyncAgent.Source asyncAgent = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source cacheTtl = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.Source clientTls = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.DebugEndpoint.Source debugEndpoint = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source dialerFallbackDelay = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source dialerKeepAlive = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source dialerTimeout = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.DisableCompression.Source disableCompression = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.DisableKeepAlives.Source disableKeepAlives = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.DisableResTfulUrLs.Source disableRest = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source dnsCacheTtl = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.EchoEndpoint.Source echoEndpoint = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.EndpointArray.Source endpoints = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source expectContinueTimeout = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.ServiceExtraConfig.Source extraConfig = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.JsonStringArray.Source host = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source idleConnectionTimeout = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source idleTimeout = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.ListenIp.Source listenIp = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.MaxHeaderBytes.Source maxHeaderBytes = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.MaxIdleConnections.Source maxIdleConnections = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.MaxIdleConnectionsPerHost.Source maxIdleConnectionsPerHost = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Name.Source name = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.OutputEncoding.Source outputEncoding = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Plugin.Source plugin = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Port.Source port = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source readHeaderTimeout = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source readTimeout = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source responseHeaderTimeout = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.SequentialStart.Source sequentialStart = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source timeout = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.Source tls = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.EnableH2c.Source useH2c = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source writeTimeout = default, int initialCapacity = 30)
     {
         JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
@@ -3954,7 +3990,7 @@ public readonly partial struct KrakendSchema
     /// <param name="writeTimeout">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271asyncAgentJson.Source<TContext> asyncAgent = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source cacheTtl = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271clientTlsJson.Source<TContext> clientTls = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.DebugEndpoint.Source debugEndpoint = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source dialerFallbackDelay = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source dialerKeepAlive = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source dialerTimeout = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.DisableCompression.Source disableCompression = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.DisableKeepAlives.Source disableKeepAlives = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.DisableResTfulUrLs.Source disableRest = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source dnsCacheTtl = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.EchoEndpoint.Source echoEndpoint = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271endpointJsonArray.Source<TContext> endpoints = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source expectContinueTimeout = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271serviceExtraConfigJson.Source<TContext> extraConfig = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.JsonStringArray.Source<TContext> host = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source idleConnectionTimeout = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source idleTimeout = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.ListenIp.Source listenIp = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.MaxHeaderBytes.Source maxHeaderBytes = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.MaxIdleConnections.Source maxIdleConnections = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.MaxIdleConnectionsPerHost.Source maxIdleConnectionsPerHost = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Name.Source name = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.OutputEncoding.Source outputEncoding = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Plugin.Source<TContext> plugin = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Port.Source port = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source readHeaderTimeout = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source readTimeout = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source responseHeaderTimeout = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.SequentialStart.Source sequentialStart = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source timeout = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271tlsJson.Source<TContext> tls = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.EnableH2c.Source useH2c = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source writeTimeout = default, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.KrakendBenchmark.Current.KrakendSchema.AsyncAgent.Source<TContext> asyncAgent = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source cacheTtl = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls.Source<TContext> clientTls = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.DebugEndpoint.Source debugEndpoint = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source dialerFallbackDelay = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source dialerKeepAlive = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source dialerTimeout = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.DisableCompression.Source disableCompression = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.DisableKeepAlives.Source disableKeepAlives = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.DisableResTfulUrLs.Source disableRest = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source dnsCacheTtl = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.EchoEndpoint.Source echoEndpoint = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.EndpointArray.Source<TContext> endpoints = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source expectContinueTimeout = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.ServiceExtraConfig.Source<TContext> extraConfig = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.JsonStringArray.Source<TContext> host = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source idleConnectionTimeout = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source idleTimeout = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.ListenIp.Source listenIp = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.MaxHeaderBytes.Source maxHeaderBytes = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.MaxIdleConnections.Source maxIdleConnections = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.MaxIdleConnectionsPerHost.Source maxIdleConnectionsPerHost = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Name.Source name = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.OutputEncoding.Source outputEncoding = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Plugin.Source<TContext> plugin = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Port.Source port = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source readHeaderTimeout = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source readTimeout = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source responseHeaderTimeout = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.SequentialStart.Source sequentialStart = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source timeout = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Tls.Source<TContext> tls = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.EnableH2c.Source useH2c = default, in Corvus.KrakendBenchmark.Current.KrakendSchema.Duration.Source writeTimeout = default, int initialCapacity = 30)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif

@@ -204,11 +204,11 @@ public readonly partial struct Ui5ManifestSchema
                 /// Represents the list of supported locales
                 /// </para>
                 /// </remarks>
-                public Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TerminologySetting.RequiredBundleName.RepresentsTheListOfSupportedLocales.Mutable SupportedLocales
+                public Corvus.Ui5ManifestBenchmark.Current.JsonArray.Mutable SupportedLocales
                 {
                     get
                     {
-                        if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SupportedLocalesUtf8, out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TerminologySetting.RequiredBundleName.RepresentsTheListOfSupportedLocales.Mutable value))
+                        if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.SupportedLocalesUtf8, out Corvus.Ui5ManifestBenchmark.Current.JsonArray.Mutable value))
                         {
                             return value;
                         }
@@ -269,7 +269,7 @@ public readonly partial struct Ui5ManifestSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.BundleName, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.BundleName, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -281,7 +281,7 @@ public readonly partial struct Ui5ManifestSchema
                 /// Set the <c>supportedLocales</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetSupportedLocales(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TerminologySetting.RequiredBundleName.RepresentsTheListOfSupportedLocales.Source value)
+                public void SetSupportedLocales(in Corvus.Ui5ManifestBenchmark.Current.JsonArray.Source value)
                 {
                     CheckValidInstance();
 
@@ -302,7 +302,7 @@ public readonly partial struct Ui5ManifestSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.SupportedLocales, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SupportedLocales, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -314,7 +314,7 @@ public readonly partial struct Ui5ManifestSchema
                 /// Set the <c>supportedLocales</c> property.
                 /// </summary>
                 /// <param name="value">The value of the property to add.</param>
-                public void SetSupportedLocales<TContext>(in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TerminologySetting.RequiredBundleName.RepresentsTheListOfSupportedLocales.Source<TContext> value)
+                public void SetSupportedLocales<TContext>(in Corvus.Ui5ManifestBenchmark.Current.JsonArray.Source<TContext> value)
 #if NET9_0_OR_GREATER
                     where TContext : allows ref struct
 #endif
@@ -338,7 +338,7 @@ public readonly partial struct Ui5ManifestSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.SupportedLocales, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SupportedLocales, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -545,6 +545,24 @@ public readonly partial struct Ui5ManifestSchema
                     }
                 }
 
+                internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+                {
+                    switch(_kind)
+                    {
+                        case Kind.Unknown:
+                            break;
+                        case Kind.JsonElement:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                            break;
+                        case Kind.Builder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
+                            break;
+                        default:
+                            Debug.Fail("Unexpected Kind");
+                            break;
+                    }
+                }
+
                 internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
                 {
                     switch(_kind)
@@ -646,6 +664,24 @@ public readonly partial struct Ui5ManifestSchema
                     }
                 }
 
+                internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+                {
+                    switch(_kind)
+                    {
+                        case Kind.Unknown:
+                            break;
+                        case Kind.Source:
+                            _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                            break;
+                        case Kind.Builder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
+                            break;
+                        default:
+                            Debug.Fail("Unexpected Kind");
+                            break;
+                    }
+                }
+
                 internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
                 {
                     switch(_kind)
@@ -725,16 +761,16 @@ public readonly partial struct Ui5ManifestSchema
                 internal static void Create(
                     ref ComplexValueBuilder builder,
                     in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source bundleName,
-                    in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TerminologySetting.RequiredBundleName.RepresentsTheListOfSupportedLocales.Source supportedLocales = default)
+                    in Corvus.Ui5ManifestBenchmark.Current.JsonArray.Source supportedLocales = default)
                 {
-                    bundleName.AddAsProperty(JsonPropertyNamesEscaped.BundleName, ref builder, escapeName: false);
-                    supportedLocales.AddAsProperty(JsonPropertyNamesEscaped.SupportedLocales, ref builder, escapeName: false);
+                    bundleName.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.BundleName, ref builder);
+                    supportedLocales.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SupportedLocales, ref builder);
                 }
 
                 /// <summary>
                 /// Creates an instance of a <see cref="RequiredBundleName"/>.
                 /// </summary>
-                public void Create(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source bundleName, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TerminologySetting.RequiredBundleName.RepresentsTheListOfSupportedLocales.Source supportedLocales = default)
+                public void Create(in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source bundleName, in Corvus.Ui5ManifestBenchmark.Current.JsonArray.Source supportedLocales = default)
                 {
                     Create(ref _builder, bundleName, supportedLocales);
                 }
@@ -746,13 +782,13 @@ public readonly partial struct Ui5ManifestSchema
                     in TContext context,
                     ref ComplexValueBuilder builder,
                     in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source bundleName,
-                    in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TerminologySetting.RequiredBundleName.RepresentsTheListOfSupportedLocales.Source<TContext> supportedLocales = default)
+                    in Corvus.Ui5ManifestBenchmark.Current.JsonArray.Source<TContext> supportedLocales = default)
                 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
                 #endif
                 {
-                    bundleName.AddAsProperty(JsonPropertyNamesEscaped.BundleName, ref builder, escapeName: false);
-                    supportedLocales.AddAsProperty(JsonPropertyNamesEscaped.SupportedLocales, ref builder, escapeName: false);
+                    bundleName.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.BundleName, ref builder);
+                    supportedLocales.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SupportedLocales, ref builder);
                 }
 
                 /// <summary>
@@ -761,7 +797,7 @@ public readonly partial struct Ui5ManifestSchema
                 public void Create<TContext>(
                     in TContext context,
                     in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source bundleName,
-                    in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TerminologySetting.RequiredBundleName.RepresentsTheListOfSupportedLocales.Source<TContext> supportedLocales = default)
+                    in Corvus.Ui5ManifestBenchmark.Current.JsonArray.Source<TContext> supportedLocales = default)
                 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
                 #endif
@@ -896,7 +932,7 @@ public readonly partial struct Ui5ManifestSchema
             /// <param name="supportedLocales">The value of the property.</param>
             /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
             /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-            public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source bundleName, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TerminologySetting.RequiredBundleName.RepresentsTheListOfSupportedLocales.Source supportedLocales = default, int initialCapacity = 30)
+            public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source bundleName, in Corvus.Ui5ManifestBenchmark.Current.JsonArray.Source supportedLocales = default, int initialCapacity = 30)
             {
                 JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
                 ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
@@ -919,7 +955,7 @@ public readonly partial struct Ui5ManifestSchema
             /// <param name="supportedLocales">The value of the property.</param>
             /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
             /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-            public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source bundleName, in Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.TerminologySetting.RequiredBundleName.RepresentsTheListOfSupportedLocales.Source<TContext> supportedLocales = default, int initialCapacity = 30)
+            public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source bundleName, in Corvus.Ui5ManifestBenchmark.Current.JsonArray.Source<TContext> supportedLocales = default, int initialCapacity = 30)
                 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
                 #endif

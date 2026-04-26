@@ -57,17 +57,17 @@ public readonly partial struct CypressSchema
                 /// <summary>
                 /// Gets a provider for the schema location from which this type was generated.
                 /// </summary>
-                public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("cypress-schema.json#/definitions/cypressConfig/properties/retries"u8, buffer, out written);
+                public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/definitions/cypressConfig/properties/retries"u8, buffer, out written);
 
                 /// <summary>
                 /// Gets the schema location from which this type was generated.
                 /// </summary>
-                public const string SchemaLocation = "cypress-schema.json#/definitions/cypressConfig/properties/retries";
+                public const string SchemaLocation = "/definitions/cypressConfig/properties/retries";
 
                 /// <summary>
                 /// Gets the schema location from which this type was generated as a UTF-8 string.
                 /// </summary>
-                public static ReadOnlySpan<byte> SchemaLocationUtf8 => "cypress-schema.json#/definitions/cypressConfig/properties/retries"u8;
+                public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/definitions/cypressConfig/properties/retries"u8;
 
                 /// <summary>
                 /// Applies the JSON schema semantics defined by this type to the instance determined by the given document and index.

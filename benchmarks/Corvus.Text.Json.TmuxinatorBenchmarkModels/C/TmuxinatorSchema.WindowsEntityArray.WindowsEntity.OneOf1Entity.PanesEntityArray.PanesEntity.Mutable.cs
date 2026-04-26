@@ -1124,6 +1124,10 @@ public readonly partial struct TmuxinatorSchema
 
                             private Source(double value) { SimpleTypesBacking.Initialize(ref _simpleTypeBacking, value, static (isAlsoArray, buffer, out written) => Utf8Formatter.TryFormat(isAlsoArray, buffer, out written)); _kind = Kind.NumericSimpleType; }
 
+                            private Source(int value) { SimpleTypesBacking.Initialize(ref _simpleTypeBacking, value, static (isAlsoArray, buffer, out written) => Utf8Formatter.TryFormat(isAlsoArray, buffer, out written)); _kind = Kind.NumericSimpleType; }
+
+                            private Source(long value) { SimpleTypesBacking.Initialize(ref _simpleTypeBacking, value, static (isAlsoArray, buffer, out written) => Utf8Formatter.TryFormat(isAlsoArray, buffer, out written)); _kind = Kind.NumericSimpleType; }
+
                             internal Source(Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.WindowsEntityArray.WindowsEntity.OneOf1Entity.PanesEntityArray.PanesEntity.Builder.Build value) {_arrayBuilder = value; _kind = Kind.Builder; }
 
                             public static implicit operator Source(PanesEntity instance) => new(JsonElement.From(instance));
@@ -1178,6 +1182,42 @@ public readonly partial struct TmuxinatorSchema
                                         break;
                                     case Kind.Builder:
                                         valueBuilder.AddProperty(utf8Name, _arrayBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
+                                        break;
+                                    default:
+                                        Debug.Fail("Unexpected Kind");
+                                        break;
+                                }
+                            }
+
+                            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+                            {
+                                switch(_kind)
+                                {
+                                    case Kind.Unknown:
+                                        break;
+                                    case Kind.JsonElement:
+                                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                                        break;
+                                    case Kind.RawUtf8StringRequiresUnescaping:
+                                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _utf8Backing, escapeValue: false, valueRequiresUnescaping: true);
+                                        break;
+                                    case Kind.RawUtf8StringNotRequiresUnescaping:
+                                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _utf8Backing, escapeValue: false, valueRequiresUnescaping: false);
+                                        break;
+                                    case Kind.Utf8String:
+                                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _utf8Backing, escapeValue: true, valueRequiresUnescaping: false);
+                                        break;
+                                    case Kind.Utf16String:
+                                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _utf16Backing);
+                                        break;
+                                    case Kind.NumericSimpleType:
+                                        valueBuilder.AddPrebakedPropertyFormattedNumber(prebakedPropertyName, _simpleTypeBacking.Span());
+                                        break;
+                                    case Kind.FormattedNumber:
+                                        valueBuilder.AddPrebakedPropertyFormattedNumber(prebakedPropertyName, _utf8Backing);
+                                        break;
+                                    case Kind.Builder:
+                                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _arrayBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                                         break;
                                     default:
                                         Debug.Fail("Unexpected Kind");
@@ -1333,6 +1373,24 @@ public readonly partial struct TmuxinatorSchema
                                         break;
                                     case Kind.Builder:
                                         valueBuilder.AddProperty(utf8Name, BuildWithContext.Create(_context, _arrayBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o), escapeName, nameRequiresUnescaping);
+                                        break;
+                                    default:
+                                        Debug.Fail("Unexpected Kind");
+                                        break;
+                                }
+                            }
+
+                            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+                            {
+                                switch(_kind)
+                                {
+                                    case Kind.Unknown:
+                                        break;
+                                    case Kind.Source:
+                                        _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                                        break;
+                                    case Kind.Builder:
+                                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _arrayBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                                         break;
                                     default:
                                         Debug.Fail("Unexpected Kind");

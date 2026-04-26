@@ -711,5 +711,42 @@ public readonly partial struct Ui5ManifestSchema
             /// </summary>
             public static ReadOnlySpan<byte> Url => "url"u8;
         }
+
+        /// <summary>
+        /// Provides pre-baked property name blobs for fast builder property storage.
+        /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
+        /// </summary>
+        private static class JsonPropertyNamesPrebaked
+        {
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Enabled"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Enabled => [0x95, 0x00, 0x00, 0x00, 0x22, 0x65, 0x6E, 0x61, 0x62, 0x6C, 0x65, 0x64, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Parameters"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Parameters => [0xC5, 0x00, 0x00, 0x00, 0x22, 0x70, 0x61, 0x72, 0x61, 0x6D, 0x65, 0x74, 0x65, 0x72, 0x73, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="ServiceValue"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> ServiceValue => [0x95, 0x00, 0x00, 0x00, 0x22, 0x73, 0x65, 0x72, 0x76, 0x69, 0x63, 0x65, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Target"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Target => [0x85, 0x00, 0x00, 0x00, 0x22, 0x74, 0x61, 0x72, 0x67, 0x65, 0x74, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Type"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Type => [0x65, 0x00, 0x00, 0x00, 0x22, 0x74, 0x79, 0x70, 0x65, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Url"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Url => [0x55, 0x00, 0x00, 0x00, 0x22, 0x75, 0x72, 0x6C, 0x22];
+        }
     }
 }

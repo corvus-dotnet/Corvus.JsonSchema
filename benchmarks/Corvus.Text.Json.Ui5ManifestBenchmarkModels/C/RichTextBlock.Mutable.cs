@@ -452,7 +452,7 @@ public readonly partial struct RichTextBlock
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Fallback, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Fallback, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -488,7 +488,7 @@ public readonly partial struct RichTextBlock
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Fallback, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Fallback, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -533,7 +533,7 @@ public readonly partial struct RichTextBlock
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Height, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Height, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -569,7 +569,7 @@ public readonly partial struct RichTextBlock
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Height, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Height, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -614,7 +614,7 @@ public readonly partial struct RichTextBlock
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.HorizontalAlignment, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.HorizontalAlignment, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -659,7 +659,7 @@ public readonly partial struct RichTextBlock
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Id, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Id, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -695,7 +695,7 @@ public readonly partial struct RichTextBlock
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Id, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Id, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -738,7 +738,7 @@ public readonly partial struct RichTextBlock
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Inlines, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Inlines, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -772,7 +772,7 @@ public readonly partial struct RichTextBlock
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Inlines, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Inlines, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -805,7 +805,7 @@ public readonly partial struct RichTextBlock
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.IsVisible, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IsVisible, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -841,7 +841,7 @@ public readonly partial struct RichTextBlock
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.IsVisible, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IsVisible, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -886,7 +886,7 @@ public readonly partial struct RichTextBlock
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Requires, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Requires, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -922,7 +922,7 @@ public readonly partial struct RichTextBlock
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Requires, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Requires, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -967,7 +967,7 @@ public readonly partial struct RichTextBlock
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Separator, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Separator, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1003,7 +1003,7 @@ public readonly partial struct RichTextBlock
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Separator, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Separator, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1048,7 +1048,7 @@ public readonly partial struct RichTextBlock
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Spacing, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Spacing, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1084,7 +1084,7 @@ public readonly partial struct RichTextBlock
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Spacing, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Spacing, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1129,7 +1129,7 @@ public readonly partial struct RichTextBlock
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Type, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Type, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1371,6 +1371,24 @@ public readonly partial struct RichTextBlock
             }
         }
 
+        internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+        {
+            switch(_kind)
+            {
+                case Kind.Unknown:
+                    break;
+                case Kind.JsonElement:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                    break;
+                case Kind.Builder:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
+                    break;
+                default:
+                    Debug.Fail("Unexpected Kind");
+                    break;
+            }
+        }
+
         internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
         {
             switch(_kind)
@@ -1472,6 +1490,24 @@ public readonly partial struct RichTextBlock
             }
         }
 
+        internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+        {
+            switch(_kind)
+            {
+                case Kind.Unknown:
+                    break;
+                case Kind.Source:
+                    _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                    break;
+                case Kind.Builder:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
+                    break;
+                default:
+                    Debug.Fail("Unexpected Kind");
+                    break;
+            }
+        }
+
         internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
         {
             switch(_kind)
@@ -1561,16 +1597,16 @@ public readonly partial struct RichTextBlock
             in Corvus.Text.Json.JsonElement.Source spacing = default,
             in Corvus.Ui5ManifestBenchmark.Current.RichTextBlock.MustBeRichTextBlock.Source type = default)
         {
-            inlines.AddAsProperty(JsonPropertyNamesEscaped.Inlines, ref builder, escapeName: false);
-            fallback.AddAsProperty(JsonPropertyNamesEscaped.Fallback, ref builder, escapeName: false);
-            height.AddAsProperty(JsonPropertyNamesEscaped.Height, ref builder, escapeName: false);
-            horizontalAlignment.AddAsProperty(JsonPropertyNamesEscaped.HorizontalAlignment, ref builder, escapeName: false);
-            id.AddAsProperty(JsonPropertyNamesEscaped.Id, ref builder, escapeName: false);
-            isVisible.AddAsProperty(JsonPropertyNamesEscaped.IsVisible, ref builder, escapeName: false);
-            requires.AddAsProperty(JsonPropertyNamesEscaped.Requires, ref builder, escapeName: false);
-            separator.AddAsProperty(JsonPropertyNamesEscaped.Separator, ref builder, escapeName: false);
-            spacing.AddAsProperty(JsonPropertyNamesEscaped.Spacing, ref builder, escapeName: false);
-            type.AddAsProperty(JsonPropertyNamesEscaped.Type, ref builder, escapeName: false);
+            inlines.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Inlines, ref builder);
+            fallback.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Fallback, ref builder);
+            height.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Height, ref builder);
+            horizontalAlignment.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.HorizontalAlignment, ref builder);
+            id.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Id, ref builder);
+            isVisible.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IsVisible, ref builder);
+            requires.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Requires, ref builder);
+            separator.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Separator, ref builder);
+            spacing.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Spacing, ref builder);
+            type.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Type, ref builder);
         }
 
         /// <summary>
@@ -1611,16 +1647,16 @@ public readonly partial struct RichTextBlock
         where TContext : allows ref struct
         #endif
         {
-            inlines.AddAsProperty(JsonPropertyNamesEscaped.Inlines, ref builder, escapeName: false);
-            fallback.AddAsProperty(JsonPropertyNamesEscaped.Fallback, ref builder, escapeName: false);
-            height.AddAsProperty(JsonPropertyNamesEscaped.Height, ref builder, escapeName: false);
-            horizontalAlignment.AddAsProperty(JsonPropertyNamesEscaped.HorizontalAlignment, ref builder, escapeName: false);
-            id.AddAsProperty(JsonPropertyNamesEscaped.Id, ref builder, escapeName: false);
-            isVisible.AddAsProperty(JsonPropertyNamesEscaped.IsVisible, ref builder, escapeName: false);
-            requires.AddAsProperty(JsonPropertyNamesEscaped.Requires, ref builder, escapeName: false);
-            separator.AddAsProperty(JsonPropertyNamesEscaped.Separator, ref builder, escapeName: false);
-            spacing.AddAsProperty(JsonPropertyNamesEscaped.Spacing, ref builder, escapeName: false);
-            type.AddAsProperty(JsonPropertyNamesEscaped.Type, ref builder, escapeName: false);
+            inlines.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Inlines, ref builder);
+            fallback.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Fallback, ref builder);
+            height.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Height, ref builder);
+            horizontalAlignment.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.HorizontalAlignment, ref builder);
+            id.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Id, ref builder);
+            isVisible.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IsVisible, ref builder);
+            requires.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Requires, ref builder);
+            separator.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Separator, ref builder);
+            spacing.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Spacing, ref builder);
+            type.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Type, ref builder);
         }
 
         /// <summary>

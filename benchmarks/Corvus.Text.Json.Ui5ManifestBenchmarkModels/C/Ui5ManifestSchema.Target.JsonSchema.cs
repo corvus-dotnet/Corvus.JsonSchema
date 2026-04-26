@@ -158,14 +158,14 @@ public readonly partial struct Ui5ManifestSchema
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext7 =
-                    Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Target.TransitionParametersEntity.JsonSchema.PushChildContextUnescaped(
+                    Corvus.Ui5ManifestBenchmark.Current.JsonObject.JsonSchema.PushChildContextUnescaped(
                         parentDocument,
                         parentDocumentIndex,
                         ref context,
                         JsonPropertyNames.TransitionParametersUtf8,
                         evaluationPath: TransitionParametersSchemaEvaluationPath);
 
-                Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Target.TransitionParametersEntity.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext7);
+                Corvus.Ui5ManifestBenchmark.Current.JsonObject.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext7);
                 context.CommitChildContext(childContext7.IsMatch, ref childContext7);
             }
 
@@ -229,17 +229,17 @@ public readonly partial struct Ui5ManifestSchema
             /// <summary>
             /// Gets a provider for the schema location from which this type was generated.
             /// </summary>
-            public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("ui5-manifest-schema.json#/definitions/target"u8, buffer, out written);
+            public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/definitions/target"u8, buffer, out written);
 
             /// <summary>
             /// Gets the schema location from which this type was generated.
             /// </summary>
-            public const string SchemaLocation = "ui5-manifest-schema.json#/definitions/target";
+            public const string SchemaLocation = "/definitions/target";
 
             /// <summary>
             /// Gets the schema location from which this type was generated as a UTF-8 string.
             /// </summary>
-            public static ReadOnlySpan<byte> SchemaLocationUtf8 => "ui5-manifest-schema.json#/definitions/target"u8;
+            public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/definitions/target"u8;
 
             /// <summary>
             /// Applies the JSON schema semantics defined by this type to the instance determined by the given document and index.

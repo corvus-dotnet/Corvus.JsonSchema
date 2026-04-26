@@ -637,7 +637,7 @@ public readonly partial struct LazygitSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.AllBranchesLogCmdValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AllBranchesLogCmdValue, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -682,7 +682,7 @@ public readonly partial struct LazygitSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.AutoFetchValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AutoFetchValue, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -727,7 +727,7 @@ public readonly partial struct LazygitSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.AutoRefreshValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AutoRefreshValue, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -772,7 +772,7 @@ public readonly partial struct LazygitSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.BranchLogCmdValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.BranchLogCmdValue, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -817,7 +817,7 @@ public readonly partial struct LazygitSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.CommitValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CommitValue, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -853,7 +853,7 @@ public readonly partial struct LazygitSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.CommitValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CommitValue, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -898,7 +898,7 @@ public readonly partial struct LazygitSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.CommitPrefixesValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CommitPrefixesValue, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -934,7 +934,7 @@ public readonly partial struct LazygitSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.CommitPrefixesValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CommitPrefixesValue, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -979,7 +979,7 @@ public readonly partial struct LazygitSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.DiffContextSizeValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DiffContextSizeValue, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1024,7 +1024,7 @@ public readonly partial struct LazygitSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.DisableForcePushingValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DisableForcePushingValue, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1069,7 +1069,7 @@ public readonly partial struct LazygitSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.FetchAllValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.FetchAllValue, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1114,7 +1114,7 @@ public readonly partial struct LazygitSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.LogValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.LogValue, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1150,7 +1150,7 @@ public readonly partial struct LazygitSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.LogValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.LogValue, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1195,7 +1195,7 @@ public readonly partial struct LazygitSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.MainBranches, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MainBranches, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1231,7 +1231,7 @@ public readonly partial struct LazygitSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.MainBranches, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MainBranches, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1276,7 +1276,7 @@ public readonly partial struct LazygitSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.MergingValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MergingValue, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1312,7 +1312,7 @@ public readonly partial struct LazygitSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.MergingValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MergingValue, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1357,7 +1357,7 @@ public readonly partial struct LazygitSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.OverrideGpgValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.OverrideGpgValue, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1402,7 +1402,7 @@ public readonly partial struct LazygitSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.PagingValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PagingValue, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1438,7 +1438,7 @@ public readonly partial struct LazygitSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.PagingValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PagingValue, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1483,7 +1483,7 @@ public readonly partial struct LazygitSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.ParseEmojiValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ParseEmojiValue, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1528,7 +1528,7 @@ public readonly partial struct LazygitSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.SkipHookPrefixValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SkipHookPrefixValue, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1735,6 +1735,24 @@ public readonly partial struct LazygitSchema
                 }
             }
 
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.JsonElement:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                        break;
+                    case Kind.Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
             internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
             {
                 switch(_kind)
@@ -1829,6 +1847,24 @@ public readonly partial struct LazygitSchema
                         break;
                     case Kind.Builder:
                         valueBuilder.AddProperty(utf8Name, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o), escapeName, nameRequiresUnescaping);
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.Source:
+                        _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                        break;
+                    case Kind.Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                         break;
                     default:
                         Debug.Fail("Unexpected Kind");
@@ -1931,22 +1967,22 @@ public readonly partial struct LazygitSchema
                 in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.ParseEmoji.Source parseEmoji = default,
                 in Corvus.LazygitBenchmark.Current.LazygitSchema.Git.SkipHookPrefix.Source skipHookPrefix = default)
             {
-                allBranchesLogCmd.AddAsProperty(JsonPropertyNamesEscaped.AllBranchesLogCmdValue, ref builder, escapeName: false);
-                autoFetch.AddAsProperty(JsonPropertyNamesEscaped.AutoFetchValue, ref builder, escapeName: false);
-                autoRefresh.AddAsProperty(JsonPropertyNamesEscaped.AutoRefreshValue, ref builder, escapeName: false);
-                branchLogCmd.AddAsProperty(JsonPropertyNamesEscaped.BranchLogCmdValue, ref builder, escapeName: false);
-                commit.AddAsProperty(JsonPropertyNamesEscaped.CommitValue, ref builder, escapeName: false);
-                commitPrefixes.AddAsProperty(JsonPropertyNamesEscaped.CommitPrefixesValue, ref builder, escapeName: false);
-                diffContextSize.AddAsProperty(JsonPropertyNamesEscaped.DiffContextSizeValue, ref builder, escapeName: false);
-                disableForcePushing.AddAsProperty(JsonPropertyNamesEscaped.DisableForcePushingValue, ref builder, escapeName: false);
-                fetchAll.AddAsProperty(JsonPropertyNamesEscaped.FetchAllValue, ref builder, escapeName: false);
-                log.AddAsProperty(JsonPropertyNamesEscaped.LogValue, ref builder, escapeName: false);
-                mainBranches.AddAsProperty(JsonPropertyNamesEscaped.MainBranches, ref builder, escapeName: false);
-                merging.AddAsProperty(JsonPropertyNamesEscaped.MergingValue, ref builder, escapeName: false);
-                overrideGpg.AddAsProperty(JsonPropertyNamesEscaped.OverrideGpgValue, ref builder, escapeName: false);
-                paging.AddAsProperty(JsonPropertyNamesEscaped.PagingValue, ref builder, escapeName: false);
-                parseEmoji.AddAsProperty(JsonPropertyNamesEscaped.ParseEmojiValue, ref builder, escapeName: false);
-                skipHookPrefix.AddAsProperty(JsonPropertyNamesEscaped.SkipHookPrefixValue, ref builder, escapeName: false);
+                allBranchesLogCmd.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AllBranchesLogCmdValue, ref builder);
+                autoFetch.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AutoFetchValue, ref builder);
+                autoRefresh.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AutoRefreshValue, ref builder);
+                branchLogCmd.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.BranchLogCmdValue, ref builder);
+                commit.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CommitValue, ref builder);
+                commitPrefixes.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CommitPrefixesValue, ref builder);
+                diffContextSize.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DiffContextSizeValue, ref builder);
+                disableForcePushing.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DisableForcePushingValue, ref builder);
+                fetchAll.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.FetchAllValue, ref builder);
+                log.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.LogValue, ref builder);
+                mainBranches.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MainBranches, ref builder);
+                merging.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MergingValue, ref builder);
+                overrideGpg.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.OverrideGpgValue, ref builder);
+                paging.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PagingValue, ref builder);
+                parseEmoji.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ParseEmojiValue, ref builder);
+                skipHookPrefix.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SkipHookPrefixValue, ref builder);
             }
 
             /// <summary>
@@ -1999,22 +2035,22 @@ public readonly partial struct LazygitSchema
             where TContext : allows ref struct
             #endif
             {
-                allBranchesLogCmd.AddAsProperty(JsonPropertyNamesEscaped.AllBranchesLogCmdValue, ref builder, escapeName: false);
-                autoFetch.AddAsProperty(JsonPropertyNamesEscaped.AutoFetchValue, ref builder, escapeName: false);
-                autoRefresh.AddAsProperty(JsonPropertyNamesEscaped.AutoRefreshValue, ref builder, escapeName: false);
-                branchLogCmd.AddAsProperty(JsonPropertyNamesEscaped.BranchLogCmdValue, ref builder, escapeName: false);
-                commit.AddAsProperty(JsonPropertyNamesEscaped.CommitValue, ref builder, escapeName: false);
-                commitPrefixes.AddAsProperty(JsonPropertyNamesEscaped.CommitPrefixesValue, ref builder, escapeName: false);
-                diffContextSize.AddAsProperty(JsonPropertyNamesEscaped.DiffContextSizeValue, ref builder, escapeName: false);
-                disableForcePushing.AddAsProperty(JsonPropertyNamesEscaped.DisableForcePushingValue, ref builder, escapeName: false);
-                fetchAll.AddAsProperty(JsonPropertyNamesEscaped.FetchAllValue, ref builder, escapeName: false);
-                log.AddAsProperty(JsonPropertyNamesEscaped.LogValue, ref builder, escapeName: false);
-                mainBranches.AddAsProperty(JsonPropertyNamesEscaped.MainBranches, ref builder, escapeName: false);
-                merging.AddAsProperty(JsonPropertyNamesEscaped.MergingValue, ref builder, escapeName: false);
-                overrideGpg.AddAsProperty(JsonPropertyNamesEscaped.OverrideGpgValue, ref builder, escapeName: false);
-                paging.AddAsProperty(JsonPropertyNamesEscaped.PagingValue, ref builder, escapeName: false);
-                parseEmoji.AddAsProperty(JsonPropertyNamesEscaped.ParseEmojiValue, ref builder, escapeName: false);
-                skipHookPrefix.AddAsProperty(JsonPropertyNamesEscaped.SkipHookPrefixValue, ref builder, escapeName: false);
+                allBranchesLogCmd.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AllBranchesLogCmdValue, ref builder);
+                autoFetch.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AutoFetchValue, ref builder);
+                autoRefresh.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AutoRefreshValue, ref builder);
+                branchLogCmd.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.BranchLogCmdValue, ref builder);
+                commit.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CommitValue, ref builder);
+                commitPrefixes.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CommitPrefixesValue, ref builder);
+                diffContextSize.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DiffContextSizeValue, ref builder);
+                disableForcePushing.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DisableForcePushingValue, ref builder);
+                fetchAll.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.FetchAllValue, ref builder);
+                log.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.LogValue, ref builder);
+                mainBranches.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MainBranches, ref builder);
+                merging.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MergingValue, ref builder);
+                overrideGpg.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.OverrideGpgValue, ref builder);
+                paging.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PagingValue, ref builder);
+                parseEmoji.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ParseEmojiValue, ref builder);
+                skipHookPrefix.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SkipHookPrefixValue, ref builder);
             }
 
             /// <summary>

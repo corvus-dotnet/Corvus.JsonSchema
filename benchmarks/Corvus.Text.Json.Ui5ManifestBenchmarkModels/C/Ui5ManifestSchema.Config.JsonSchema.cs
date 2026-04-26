@@ -36,17 +36,17 @@ public readonly partial struct Ui5ManifestSchema
             /// <summary>
             /// Gets a provider for the schema location from which this type was generated.
             /// </summary>
-            public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("ui5-manifest-schema.json#/definitions/config"u8, buffer, out written);
+            public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/definitions/config"u8, buffer, out written);
 
             /// <summary>
             /// Gets the schema location from which this type was generated.
             /// </summary>
-            public const string SchemaLocation = "ui5-manifest-schema.json#/definitions/config";
+            public const string SchemaLocation = "/definitions/config";
 
             /// <summary>
             /// Gets the schema location from which this type was generated as a UTF-8 string.
             /// </summary>
-            public static ReadOnlySpan<byte> SchemaLocationUtf8 => "ui5-manifest-schema.json#/definitions/config"u8;
+            public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/definitions/config"u8;
             private static readonly JsonSchemaPathProvider OneOf0SchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/oneOf/0"u8, buffer, out written);
             private static readonly JsonSchemaPathProvider OneOf1SchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/oneOf/1"u8, buffer, out written);
             private static readonly JsonSchemaPathProvider OneOf2SchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/oneOf/2"u8, buffer, out written);
@@ -157,8 +157,8 @@ public readonly partial struct Ui5ManifestSchema
                 }
 
                 JsonSchemaContext oneOfContext4 =
-                    Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Config.OneOf4Entity.JsonSchema.PushChildContext(parentDocument, parentIndex, ref context, schemaEvaluationPath: OneOf4SchemaEvaluationPath);
-                Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.Config.OneOf4Entity.JsonSchema.Evaluate(parentDocument, parentIndex, ref oneOfContext4);
+                    Corvus.Ui5ManifestBenchmark.Current.JsonObject.JsonSchema.PushChildContext(parentDocument, parentIndex, ref context, schemaEvaluationPath: OneOf4SchemaEvaluationPath);
+                Corvus.Ui5ManifestBenchmark.Current.JsonObject.JsonSchema.Evaluate(parentDocument, parentIndex, ref oneOfContext4);
 
                 if (oneOfContext4.IsMatch)
                 {

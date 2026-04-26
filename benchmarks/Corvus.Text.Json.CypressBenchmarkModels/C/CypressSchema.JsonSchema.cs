@@ -200,17 +200,17 @@ public readonly partial struct CypressSchema
         /// <summary>
         /// Gets a provider for the schema location from which this type was generated.
         /// </summary>
-        public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("cypress-schema.json"u8, buffer, out written);
+        public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath(""u8, buffer, out written);
 
         /// <summary>
         /// Gets the schema location from which this type was generated.
         /// </summary>
-        public const string SchemaLocation = "cypress-schema.json";
+        public const string SchemaLocation = "";
 
         /// <summary>
         /// Gets the schema location from which this type was generated as a UTF-8 string.
         /// </summary>
-        public static ReadOnlySpan<byte> SchemaLocationUtf8 => "cypress-schema.json"u8;
+        public static ReadOnlySpan<byte> SchemaLocationUtf8 => ""u8;
         private static readonly JsonSchemaPathProvider AllOf0SchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/allOf/0/$ref"u8, buffer, out written);
         private static readonly JsonSchemaPathProvider AllOf1SchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/allOf/1"u8, buffer, out written);
 
@@ -393,14 +393,14 @@ public readonly partial struct CypressSchema
                                 context.AddAppliedEvaluatedProperty(objectValidation_propertyCount);
 
                                 JsonSchemaContext hoistedChildContext8 =
-                                    Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.EnvEntity.JsonSchema.PushChildContextUnescaped(
+                                    Corvus.CypressBenchmark.Current.JsonObject.JsonSchema.PushChildContextUnescaped(
                                         parentDocument,
                                         objectValidation_currentIndex,
                                         ref hoistedAllOf0_context,
                                         "env"u8,
                                         evaluationPath: HoistedAllOf0EnvSchemaEvaluationPath);
 
-                                Corvus.CypressBenchmark.Current.CypressSchema.CypressConfig.EnvEntity.JsonSchema.Evaluate(parentDocument, objectValidation_currentIndex, ref hoistedChildContext8);
+                                Corvus.CypressBenchmark.Current.JsonObject.JsonSchema.Evaluate(parentDocument, objectValidation_currentIndex, ref hoistedChildContext8);
                                 hoistedAllOf0_context.CommitChildContext(hoistedChildContext8.IsMatch, ref hoistedChildContext8);
                                 break;
                             case 9:

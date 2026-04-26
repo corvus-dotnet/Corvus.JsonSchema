@@ -104,11 +104,11 @@ public readonly partial struct KrakendSchema
     /// See: https://www.krakend.io/docs/async/
     /// </para>
     /// </remarks>
-    public Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271asyncAgentJson AsyncAgent
+    public Corvus.KrakendBenchmark.Current.KrakendSchema.AsyncAgent AsyncAgentValue
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.AsyncAgentUtf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271asyncAgentJson value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.AsyncAgentValueUtf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.AsyncAgent value))
             {
                 return value;
             }
@@ -157,11 +157,11 @@ public readonly partial struct KrakendSchema
     /// See: https://www.krakend.io/docs/service-settings/tls/
     /// </para>
     /// </remarks>
-    public Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271clientTlsJson ClientTls
+    public Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls ClientTlsValue
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ClientTlsUtf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271clientTlsJson value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ClientTlsValueUtf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.ClientTls value))
             {
                 return value;
             }
@@ -410,11 +410,11 @@ public readonly partial struct KrakendSchema
     /// See: https://www.krakend.io/docs/endpoints/
     /// </para>
     /// </remarks>
-    public Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271endpointJsonArray Endpoints
+    public Corvus.KrakendBenchmark.Current.KrakendSchema.EndpointArray Endpoints
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.EndpointsUtf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271endpointJsonArray value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.EndpointsUtf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.EndpointArray value))
             {
                 return value;
             }
@@ -460,11 +460,11 @@ public readonly partial struct KrakendSchema
     /// The optional configuration that extends the core functionality of the gateway is specified here. The `extra_config` at this level enables service components, meaning that they apply globally to all endpoints or activity.
     /// </para>
     /// </remarks>
-    public Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271serviceExtraConfigJson ExtraConfig
+    public Corvus.KrakendBenchmark.Current.KrakendSchema.ServiceExtraConfig ExtraConfig
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ExtraConfigUtf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271serviceExtraConfigJson value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ExtraConfigUtf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.ServiceExtraConfig value))
             {
                 return value;
             }
@@ -887,11 +887,11 @@ public readonly partial struct KrakendSchema
     /// See: https://www.krakend.io/docs/service-settings/tls/
     /// </para>
     /// </remarks>
-    public Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271tlsJson Tls
+    public Corvus.KrakendBenchmark.Current.KrakendSchema.Tls TlsValue
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TlsUtf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.Https11wwwKrakendIo1schema1v271tlsJson value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TlsValueUtf8, out Corvus.KrakendBenchmark.Current.KrakendSchema.Tls value))
             {
                 return value;
             }
@@ -1400,9 +1400,9 @@ public readonly partial struct KrakendSchema
     public static class JsonPropertyNames
     {
         /// <summary>
-        /// Gets the JSON property name for <see cref="AsyncAgent"/>.
+        /// Gets the JSON property name for <see cref="AsyncAgentValue"/>.
         /// </summary>
-        public const string AsyncAgent = "async_agent";
+        public const string AsyncAgentValue = "async_agent";
 
         /// <summary>
         /// Gets the JSON property name for <see cref="CacheTtl"/>.
@@ -1410,9 +1410,9 @@ public readonly partial struct KrakendSchema
         public const string CacheTtl = "cache_ttl";
 
         /// <summary>
-        /// Gets the JSON property name for <see cref="ClientTls"/>.
+        /// Gets the JSON property name for <see cref="ClientTlsValue"/>.
         /// </summary>
-        public const string ClientTls = "client_tls";
+        public const string ClientTlsValue = "client_tls";
 
         /// <summary>
         /// Gets the JSON property name for <see cref="DebugEndpointValue"/>.
@@ -1555,9 +1555,9 @@ public readonly partial struct KrakendSchema
         public const string Timeout = "timeout";
 
         /// <summary>
-        /// Gets the JSON property name for <see cref="Tls"/>.
+        /// Gets the JSON property name for <see cref="TlsValue"/>.
         /// </summary>
-        public const string Tls = "tls";
+        public const string TlsValue = "tls";
 
         /// <summary>
         /// Gets the JSON property name for <see cref="UseH2c"/>.
@@ -1575,9 +1575,9 @@ public readonly partial struct KrakendSchema
         public const string WriteTimeout = "write_timeout";
 
         /// <summary>
-        /// Gets the JSON property name for <see cref="AsyncAgent"/>.
+        /// Gets the JSON property name for <see cref="AsyncAgentValue"/>.
         /// </summary>
-        public static ReadOnlySpan<byte> AsyncAgentUtf8 => "async_agent"u8;
+        public static ReadOnlySpan<byte> AsyncAgentValueUtf8 => "async_agent"u8;
 
         /// <summary>
         /// Gets the JSON property name for <see cref="CacheTtl"/>.
@@ -1585,9 +1585,9 @@ public readonly partial struct KrakendSchema
         public static ReadOnlySpan<byte> CacheTtlUtf8 => "cache_ttl"u8;
 
         /// <summary>
-        /// Gets the JSON property name for <see cref="ClientTls"/>.
+        /// Gets the JSON property name for <see cref="ClientTlsValue"/>.
         /// </summary>
-        public static ReadOnlySpan<byte> ClientTlsUtf8 => "client_tls"u8;
+        public static ReadOnlySpan<byte> ClientTlsValueUtf8 => "client_tls"u8;
 
         /// <summary>
         /// Gets the JSON property name for <see cref="DebugEndpointValue"/>.
@@ -1730,9 +1730,9 @@ public readonly partial struct KrakendSchema
         public static ReadOnlySpan<byte> TimeoutUtf8 => "timeout"u8;
 
         /// <summary>
-        /// Gets the JSON property name for <see cref="Tls"/>.
+        /// Gets the JSON property name for <see cref="TlsValue"/>.
         /// </summary>
-        public static ReadOnlySpan<byte> TlsUtf8 => "tls"u8;
+        public static ReadOnlySpan<byte> TlsValueUtf8 => "tls"u8;
 
         /// <summary>
         /// Gets the JSON property name for <see cref="UseH2c"/>.
@@ -1756,9 +1756,9 @@ public readonly partial struct KrakendSchema
     private static class JsonPropertyNamesEscaped
     {
         /// <summary>
-        /// Gets the escaped UTF-8 JSON property name for <see cref="AsyncAgent"/>.
+        /// Gets the escaped UTF-8 JSON property name for <see cref="AsyncAgentValue"/>.
         /// </summary>
-        public static ReadOnlySpan<byte> AsyncAgent => "async_agent"u8;
+        public static ReadOnlySpan<byte> AsyncAgentValue => "async_agent"u8;
 
         /// <summary>
         /// Gets the escaped UTF-8 JSON property name for <see cref="CacheTtl"/>.
@@ -1766,9 +1766,9 @@ public readonly partial struct KrakendSchema
         public static ReadOnlySpan<byte> CacheTtl => "cache_ttl"u8;
 
         /// <summary>
-        /// Gets the escaped UTF-8 JSON property name for <see cref="ClientTls"/>.
+        /// Gets the escaped UTF-8 JSON property name for <see cref="ClientTlsValue"/>.
         /// </summary>
-        public static ReadOnlySpan<byte> ClientTls => "client_tls"u8;
+        public static ReadOnlySpan<byte> ClientTlsValue => "client_tls"u8;
 
         /// <summary>
         /// Gets the escaped UTF-8 JSON property name for <see cref="DebugEndpointValue"/>.
@@ -1911,9 +1911,9 @@ public readonly partial struct KrakendSchema
         public static ReadOnlySpan<byte> Timeout => "timeout"u8;
 
         /// <summary>
-        /// Gets the escaped UTF-8 JSON property name for <see cref="Tls"/>.
+        /// Gets the escaped UTF-8 JSON property name for <see cref="TlsValue"/>.
         /// </summary>
-        public static ReadOnlySpan<byte> Tls => "tls"u8;
+        public static ReadOnlySpan<byte> TlsValue => "tls"u8;
 
         /// <summary>
         /// Gets the escaped UTF-8 JSON property name for <see cref="UseH2c"/>.
@@ -1929,5 +1929,187 @@ public readonly partial struct KrakendSchema
         /// Gets the escaped UTF-8 JSON property name for <see cref="WriteTimeout"/>.
         /// </summary>
         public static ReadOnlySpan<byte> WriteTimeout => "write_timeout"u8;
+    }
+
+    /// <summary>
+    /// Provides pre-baked property name blobs for fast builder property storage.
+    /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
+    /// </summary>
+    private static class JsonPropertyNamesPrebaked
+    {
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="AsyncAgentValue"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> AsyncAgentValue => [0xD5, 0x00, 0x00, 0x00, 0x22, 0x61, 0x73, 0x79, 0x6E, 0x63, 0x5F, 0x61, 0x67, 0x65, 0x6E, 0x74, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="CacheTtl"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> CacheTtl => [0xB5, 0x00, 0x00, 0x00, 0x22, 0x63, 0x61, 0x63, 0x68, 0x65, 0x5F, 0x74, 0x74, 0x6C, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="ClientTlsValue"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> ClientTlsValue => [0xC5, 0x00, 0x00, 0x00, 0x22, 0x63, 0x6C, 0x69, 0x65, 0x6E, 0x74, 0x5F, 0x74, 0x6C, 0x73, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="DebugEndpointValue"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> DebugEndpointValue => [0x05, 0x01, 0x00, 0x00, 0x22, 0x64, 0x65, 0x62, 0x75, 0x67, 0x5F, 0x65, 0x6E, 0x64, 0x70, 0x6F, 0x69, 0x6E, 0x74, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="DialerFallbackDelay"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> DialerFallbackDelay => [0x75, 0x01, 0x00, 0x00, 0x22, 0x64, 0x69, 0x61, 0x6C, 0x65, 0x72, 0x5F, 0x66, 0x61, 0x6C, 0x6C, 0x62, 0x61, 0x63, 0x6B, 0x5F, 0x64, 0x65, 0x6C, 0x61, 0x79, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="DialerKeepAlive"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> DialerKeepAlive => [0x35, 0x01, 0x00, 0x00, 0x22, 0x64, 0x69, 0x61, 0x6C, 0x65, 0x72, 0x5F, 0x6B, 0x65, 0x65, 0x70, 0x5F, 0x61, 0x6C, 0x69, 0x76, 0x65, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="DialerTimeout"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> DialerTimeout => [0x05, 0x01, 0x00, 0x00, 0x22, 0x64, 0x69, 0x61, 0x6C, 0x65, 0x72, 0x5F, 0x74, 0x69, 0x6D, 0x65, 0x6F, 0x75, 0x74, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="DisableCompressionValue"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> DisableCompressionValue => [0x55, 0x01, 0x00, 0x00, 0x22, 0x64, 0x69, 0x73, 0x61, 0x62, 0x6C, 0x65, 0x5F, 0x63, 0x6F, 0x6D, 0x70, 0x72, 0x65, 0x73, 0x73, 0x69, 0x6F, 0x6E, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="DisableKeepAlivesValue"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> DisableKeepAlivesValue => [0x55, 0x01, 0x00, 0x00, 0x22, 0x64, 0x69, 0x73, 0x61, 0x62, 0x6C, 0x65, 0x5F, 0x6B, 0x65, 0x65, 0x70, 0x5F, 0x61, 0x6C, 0x69, 0x76, 0x65, 0x73, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="DisableRest"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> DisableRest => [0xE5, 0x00, 0x00, 0x00, 0x22, 0x64, 0x69, 0x73, 0x61, 0x62, 0x6C, 0x65, 0x5F, 0x72, 0x65, 0x73, 0x74, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="DnsCacheTtl"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> DnsCacheTtl => [0xF5, 0x00, 0x00, 0x00, 0x22, 0x64, 0x6E, 0x73, 0x5F, 0x63, 0x61, 0x63, 0x68, 0x65, 0x5F, 0x74, 0x74, 0x6C, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="EchoEndpointValue"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> EchoEndpointValue => [0xF5, 0x00, 0x00, 0x00, 0x22, 0x65, 0x63, 0x68, 0x6F, 0x5F, 0x65, 0x6E, 0x64, 0x70, 0x6F, 0x69, 0x6E, 0x74, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Endpoints"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Endpoints => [0xB5, 0x00, 0x00, 0x00, 0x22, 0x65, 0x6E, 0x64, 0x70, 0x6F, 0x69, 0x6E, 0x74, 0x73, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="ExpectContinueTimeout"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> ExpectContinueTimeout => [0x95, 0x01, 0x00, 0x00, 0x22, 0x65, 0x78, 0x70, 0x65, 0x63, 0x74, 0x5F, 0x63, 0x6F, 0x6E, 0x74, 0x69, 0x6E, 0x75, 0x65, 0x5F, 0x74, 0x69, 0x6D, 0x65, 0x6F, 0x75, 0x74, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="ExtraConfig"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> ExtraConfig => [0xE5, 0x00, 0x00, 0x00, 0x22, 0x65, 0x78, 0x74, 0x72, 0x61, 0x5F, 0x63, 0x6F, 0x6E, 0x66, 0x69, 0x67, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Host"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Host => [0x65, 0x00, 0x00, 0x00, 0x22, 0x68, 0x6F, 0x73, 0x74, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="IdleConnectionTimeout"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> IdleConnectionTimeout => [0x95, 0x01, 0x00, 0x00, 0x22, 0x69, 0x64, 0x6C, 0x65, 0x5F, 0x63, 0x6F, 0x6E, 0x6E, 0x65, 0x63, 0x74, 0x69, 0x6F, 0x6E, 0x5F, 0x74, 0x69, 0x6D, 0x65, 0x6F, 0x75, 0x74, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="IdleTimeout"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> IdleTimeout => [0xE5, 0x00, 0x00, 0x00, 0x22, 0x69, 0x64, 0x6C, 0x65, 0x5F, 0x74, 0x69, 0x6D, 0x65, 0x6F, 0x75, 0x74, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="ListenIpValue"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> ListenIpValue => [0xB5, 0x00, 0x00, 0x00, 0x22, 0x6C, 0x69, 0x73, 0x74, 0x65, 0x6E, 0x5F, 0x69, 0x70, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="MaxHeaderBytesValue"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> MaxHeaderBytesValue => [0x25, 0x01, 0x00, 0x00, 0x22, 0x6D, 0x61, 0x78, 0x5F, 0x68, 0x65, 0x61, 0x64, 0x65, 0x72, 0x5F, 0x62, 0x79, 0x74, 0x65, 0x73, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="MaxIdleConnectionsValue"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> MaxIdleConnectionsValue => [0x65, 0x01, 0x00, 0x00, 0x22, 0x6D, 0x61, 0x78, 0x5F, 0x69, 0x64, 0x6C, 0x65, 0x5F, 0x63, 0x6F, 0x6E, 0x6E, 0x65, 0x63, 0x74, 0x69, 0x6F, 0x6E, 0x73, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="MaxIdleConnectionsPerHostValue"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> MaxIdleConnectionsPerHostValue => [0xF5, 0x01, 0x00, 0x00, 0x22, 0x6D, 0x61, 0x78, 0x5F, 0x69, 0x64, 0x6C, 0x65, 0x5F, 0x63, 0x6F, 0x6E, 0x6E, 0x65, 0x63, 0x74, 0x69, 0x6F, 0x6E, 0x73, 0x5F, 0x70, 0x65, 0x72, 0x5F, 0x68, 0x6F, 0x73, 0x74, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="NameValue"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> NameValue => [0x65, 0x00, 0x00, 0x00, 0x22, 0x6E, 0x61, 0x6D, 0x65, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="OutputEncodingValue"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> OutputEncodingValue => [0x15, 0x01, 0x00, 0x00, 0x22, 0x6F, 0x75, 0x74, 0x70, 0x75, 0x74, 0x5F, 0x65, 0x6E, 0x63, 0x6F, 0x64, 0x69, 0x6E, 0x67, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="PluginValue"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> PluginValue => [0x85, 0x00, 0x00, 0x00, 0x22, 0x70, 0x6C, 0x75, 0x67, 0x69, 0x6E, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="PortValue"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> PortValue => [0x65, 0x00, 0x00, 0x00, 0x22, 0x70, 0x6F, 0x72, 0x74, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="ReadHeaderTimeout"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> ReadHeaderTimeout => [0x55, 0x01, 0x00, 0x00, 0x22, 0x72, 0x65, 0x61, 0x64, 0x5F, 0x68, 0x65, 0x61, 0x64, 0x65, 0x72, 0x5F, 0x74, 0x69, 0x6D, 0x65, 0x6F, 0x75, 0x74, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="ReadTimeout"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> ReadTimeout => [0xE5, 0x00, 0x00, 0x00, 0x22, 0x72, 0x65, 0x61, 0x64, 0x5F, 0x74, 0x69, 0x6D, 0x65, 0x6F, 0x75, 0x74, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="ResponseHeaderTimeout"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> ResponseHeaderTimeout => [0x95, 0x01, 0x00, 0x00, 0x22, 0x72, 0x65, 0x73, 0x70, 0x6F, 0x6E, 0x73, 0x65, 0x5F, 0x68, 0x65, 0x61, 0x64, 0x65, 0x72, 0x5F, 0x74, 0x69, 0x6D, 0x65, 0x6F, 0x75, 0x74, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="SequentialStartValue"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> SequentialStartValue => [0x25, 0x01, 0x00, 0x00, 0x22, 0x73, 0x65, 0x71, 0x75, 0x65, 0x6E, 0x74, 0x69, 0x61, 0x6C, 0x5F, 0x73, 0x74, 0x61, 0x72, 0x74, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Timeout"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Timeout => [0x95, 0x00, 0x00, 0x00, 0x22, 0x74, 0x69, 0x6D, 0x65, 0x6F, 0x75, 0x74, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="TlsValue"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> TlsValue => [0x55, 0x00, 0x00, 0x00, 0x22, 0x74, 0x6C, 0x73, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="UseH2c"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> UseH2c => [0x95, 0x00, 0x00, 0x00, 0x22, 0x75, 0x73, 0x65, 0x5F, 0x68, 0x32, 0x63, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Version"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Version => [0x95, 0x00, 0x00, 0x00, 0x22, 0x76, 0x65, 0x72, 0x73, 0x69, 0x6F, 0x6E, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="WriteTimeout"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> WriteTimeout => [0xF5, 0x00, 0x00, 0x00, 0x22, 0x77, 0x72, 0x69, 0x74, 0x65, 0x5F, 0x74, 0x69, 0x6D, 0x65, 0x6F, 0x75, 0x74, 0x22];
     }
 }

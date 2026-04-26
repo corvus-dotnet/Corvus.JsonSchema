@@ -276,14 +276,14 @@ public readonly partial struct AnsibleMetaSchema
             {
                 context.AddLocalEvaluatedProperty(propertyCount);
                 JsonSchemaContext childContext14 =
-                    Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GalaxyInfoModel.VideoLinksArray.JsonSchema.PushChildContextUnescaped(
+                    Corvus.AnsibleMetaBenchmark.Current.JsonArray.JsonSchema.PushChildContextUnescaped(
                         parentDocument,
                         parentDocumentIndex,
                         ref context,
                         JsonPropertyNames.VideoLinksUtf8,
                         evaluationPath: VideoLinksSchemaEvaluationPath);
 
-                Corvus.AnsibleMetaBenchmark.Current.AnsibleMetaSchema.GalaxyInfoModel.VideoLinksArray.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext14);
+                Corvus.AnsibleMetaBenchmark.Current.JsonArray.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext14);
                 context.CommitChildContext(childContext14.IsMatch, ref childContext14);
             }
 
@@ -324,17 +324,17 @@ public readonly partial struct AnsibleMetaSchema
             /// <summary>
             /// Gets a provider for the schema location from which this type was generated.
             /// </summary>
-            public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("https://raw.githubusercontent.com/ansible/ansible-lint/main/src/ansiblelint/schemas/meta.json#/definitions/GalaxyInfoModel"u8, buffer, out written);
+            public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/definitions/GalaxyInfoModel"u8, buffer, out written);
 
             /// <summary>
             /// Gets the schema location from which this type was generated.
             /// </summary>
-            public const string SchemaLocation = "https://raw.githubusercontent.com/ansible/ansible-lint/main/src/ansiblelint/schemas/meta.json#/definitions/GalaxyInfoModel";
+            public const string SchemaLocation = "/definitions/GalaxyInfoModel";
 
             /// <summary>
             /// Gets the schema location from which this type was generated as a UTF-8 string.
             /// </summary>
-            public static ReadOnlySpan<byte> SchemaLocationUtf8 => "https://raw.githubusercontent.com/ansible/ansible-lint/main/src/ansiblelint/schemas/meta.json#/definitions/GalaxyInfoModel"u8;
+            public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/definitions/GalaxyInfoModel"u8;
             private static readonly JsonSchemaPathProvider AllOf0SchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/allOf/0"u8, buffer, out written);
             private static readonly JsonSchemaPathProvider AllOf1SchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/allOf/1"u8, buffer, out written);
             private static readonly JsonSchemaPathProvider ElseSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/else"u8, buffer, out written);

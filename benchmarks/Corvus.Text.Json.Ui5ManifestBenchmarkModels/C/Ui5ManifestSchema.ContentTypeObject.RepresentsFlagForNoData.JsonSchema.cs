@@ -59,17 +59,17 @@ public readonly partial struct Ui5ManifestSchema
                 /// <summary>
                 /// Gets a provider for the schema location from which this type was generated.
                 /// </summary>
-                public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("ui5-manifest-schema.json#/definitions/ContentType.Object/properties/hasData"u8, buffer, out written);
+                public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/definitions/ContentType.Object/properties/hasData"u8, buffer, out written);
 
                 /// <summary>
                 /// Gets the schema location from which this type was generated.
                 /// </summary>
-                public const string SchemaLocation = "ui5-manifest-schema.json#/definitions/ContentType.Object/properties/hasData";
+                public const string SchemaLocation = "/definitions/ContentType.Object/properties/hasData";
 
                 /// <summary>
                 /// Gets the schema location from which this type was generated as a UTF-8 string.
                 /// </summary>
-                public static ReadOnlySpan<byte> SchemaLocationUtf8 => "ui5-manifest-schema.json#/definitions/ContentType.Object/properties/hasData"u8;
+                public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/definitions/ContentType.Object/properties/hasData"u8;
                 private static readonly JsonSchemaPathProvider OneOf0SchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/oneOf/0"u8, buffer, out written);
                 private static readonly JsonSchemaPathProvider OneOf1SchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/oneOf/1"u8, buffer, out written);
                 private static readonly JsonSchemaPathProvider OneOf2SchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/oneOf/2"u8, buffer, out written);
@@ -116,8 +116,8 @@ public readonly partial struct Ui5ManifestSchema
                     }
 
                     JsonSchemaContext oneOfContext1 =
-                        Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObject.RepresentsFlagForNoData.OneOf1Entity.JsonSchema.PushChildContext(parentDocument, parentIndex, ref context, schemaEvaluationPath: OneOf1SchemaEvaluationPath);
-                    Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObject.RepresentsFlagForNoData.OneOf1Entity.JsonSchema.Evaluate(parentDocument, parentIndex, ref oneOfContext1);
+                        Corvus.Ui5ManifestBenchmark.Current.JsonObject.JsonSchema.PushChildContext(parentDocument, parentIndex, ref context, schemaEvaluationPath: OneOf1SchemaEvaluationPath);
+                    Corvus.Ui5ManifestBenchmark.Current.JsonObject.JsonSchema.Evaluate(parentDocument, parentIndex, ref oneOfContext1);
 
                     if (oneOfContext1.IsMatch)
                     {
@@ -137,8 +137,8 @@ public readonly partial struct Ui5ManifestSchema
                     }
 
                     JsonSchemaContext oneOfContext2 =
-                        Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObject.RepresentsFlagForNoData.OneOf2Array.JsonSchema.PushChildContext(parentDocument, parentIndex, ref context, schemaEvaluationPath: OneOf2SchemaEvaluationPath);
-                    Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ContentTypeObject.RepresentsFlagForNoData.OneOf2Array.JsonSchema.Evaluate(parentDocument, parentIndex, ref oneOfContext2);
+                        Corvus.Ui5ManifestBenchmark.Current.JsonArray.JsonSchema.PushChildContext(parentDocument, parentIndex, ref context, schemaEvaluationPath: OneOf2SchemaEvaluationPath);
+                    Corvus.Ui5ManifestBenchmark.Current.JsonArray.JsonSchema.Evaluate(parentDocument, parentIndex, ref oneOfContext2);
 
                     if (oneOfContext2.IsMatch)
                     {

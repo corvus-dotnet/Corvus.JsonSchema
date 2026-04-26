@@ -156,6 +156,7 @@
     <Compile Include="JsonSchemaCodeGeneratorTests.cs" />
     <Compile Include="JsonRegexValidatorTests.cs" />
     <Compile Include="JsonSchemaContextTests.cs" />
+    <Compile Include="Canonicalization\JsonCanonicalizerTests.cs" />
     <Compile Include="JsonSchemaMatchingNumberTests.cs" />
     <Compile Include="JsonSchemaMatchingStringTests.cs" />
     <Compile Include="JsonSchemaResultsCollectorTests.cs" />
@@ -248,6 +249,7 @@
     <Compile Include="JsonElementMutableImmutableConsistencyTests.cs" />
     <Compile Include="JsonElementNumericBoundaryTests.cs" />
     <Compile Include="JsonElementParseTests.cs" />
+    <Compile Include="JsonPointerExtensionTests.cs" />
     <Compile Include="JsonElementWriteTests.cs" />
     <Compile Include="JsonEncodedTextTests.cs" />
     <Compile Include="JsonGuidTestData.cs" />

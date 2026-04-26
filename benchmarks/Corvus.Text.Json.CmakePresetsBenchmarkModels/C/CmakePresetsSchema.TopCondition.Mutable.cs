@@ -1144,6 +1144,60 @@ public readonly partial struct CmakePresetsSchema
                 }
             }
 
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.JsonElement:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                        break;
+                    case Kind.Null:
+                        valueBuilder.AddPrebakedPropertyNullValue(prebakedPropertyName);
+                        break;
+                    case Kind.True:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, true);
+                        break;
+                    case Kind.False:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, false);
+                        break;
+                    case Kind.ConditionRequiredConditionsAndTypeBuilder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _conditionRequiredConditionsAndTypeBuilderInstance!, static (in b, ref o) => Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.ConditionRequiredConditionsAndType.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.ConditionRequiredLhsAndRhsAndTypeBuilder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _conditionRequiredLhsAndRhsAndTypeBuilderInstance!, static (in b, ref o) => Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.ConditionRequiredLhsAndRhsAndType.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.ConditionRequiredListAndStringEntityAndTypeBuilder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _conditionRequiredListAndStringEntityAndTypeBuilderInstance!, static (in b, ref o) => Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.ConditionRequiredListAndStringEntityAndType.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.ConditionRequiredRegexAndStringEntityAndTypeBuilder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _conditionRequiredRegexAndStringEntityAndTypeBuilderInstance!, static (in b, ref o) => Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.ConditionRequiredRegexAndStringEntityAndType.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.RequiredConditionAndTypeBuilder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _requiredConditionAndTypeBuilderInstance!, static (in b, ref o) => Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.RequiredConditionAndType.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.RequiredConditionsAndTypeBuilder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _requiredConditionsAndTypeBuilderInstance!, static (in b, ref o) => Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.RequiredConditionsAndType.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.RequiredLhsAndRhsAndTypeBuilder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _requiredLhsAndRhsAndTypeBuilderInstance!, static (in b, ref o) => Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.RequiredLhsAndRhsAndType.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.RequiredListAndStringEntityAndTypeBuilder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _requiredListAndStringEntityAndTypeBuilderInstance!, static (in b, ref o) => Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.RequiredListAndStringEntityAndType.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.RequiredRegexAndStringEntityAndTypeBuilder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _requiredRegexAndStringEntityAndTypeBuilderInstance!, static (in b, ref o) => Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.RequiredRegexAndStringEntityAndType.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.RequiredTypeAndValueBuilder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _requiredTypeAndValueBuilderInstance!, static (in b, ref o) => Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.RequiredTypeAndValue.Builder.BuildValue(b, ref o));
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
             internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
             {
                 switch(_kind)
@@ -1409,6 +1463,51 @@ public readonly partial struct CmakePresetsSchema
                         break;
                     case Kind.RequiredTypeAndValueBuilder:
                         valueBuilder.AddProperty(utf8Name, BuildWithContext.Create(_context, _requiredTypeAndValueBuilderInstance!), static (in b, ref o) => Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.RequiredTypeAndValue.Builder.BuildValue(b.Context, b.Build, ref o), escapeName, nameRequiresUnescaping);
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.Source:
+                        _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                        break;
+                    case Kind.ConditionRequiredConditionsAndTypeBuilder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _conditionRequiredConditionsAndTypeBuilderInstance!), static (in b, ref o) => Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.ConditionRequiredConditionsAndType.Builder.BuildValue(b.Context, b.Build, ref o));
+                        break;
+                    case Kind.ConditionRequiredLhsAndRhsAndTypeBuilder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _conditionRequiredLhsAndRhsAndTypeBuilderInstance!), static (in b, ref o) => Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.ConditionRequiredLhsAndRhsAndType.Builder.BuildValue(b.Context, b.Build, ref o));
+                        break;
+                    case Kind.ConditionRequiredListAndStringEntityAndTypeBuilder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _conditionRequiredListAndStringEntityAndTypeBuilderInstance!), static (in b, ref o) => Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.ConditionRequiredListAndStringEntityAndType.Builder.BuildValue(b.Context, b.Build, ref o));
+                        break;
+                    case Kind.ConditionRequiredRegexAndStringEntityAndTypeBuilder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _conditionRequiredRegexAndStringEntityAndTypeBuilderInstance!), static (in b, ref o) => Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.ConditionRequiredRegexAndStringEntityAndType.Builder.BuildValue(b.Context, b.Build, ref o));
+                        break;
+                    case Kind.RequiredConditionAndTypeBuilder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _requiredConditionAndTypeBuilderInstance!), static (in b, ref o) => Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.RequiredConditionAndType.Builder.BuildValue(b.Context, b.Build, ref o));
+                        break;
+                    case Kind.RequiredConditionsAndTypeBuilder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _requiredConditionsAndTypeBuilderInstance!), static (in b, ref o) => Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.RequiredConditionsAndType.Builder.BuildValue(b.Context, b.Build, ref o));
+                        break;
+                    case Kind.RequiredLhsAndRhsAndTypeBuilder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _requiredLhsAndRhsAndTypeBuilderInstance!), static (in b, ref o) => Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.RequiredLhsAndRhsAndType.Builder.BuildValue(b.Context, b.Build, ref o));
+                        break;
+                    case Kind.RequiredListAndStringEntityAndTypeBuilder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _requiredListAndStringEntityAndTypeBuilderInstance!), static (in b, ref o) => Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.RequiredListAndStringEntityAndType.Builder.BuildValue(b.Context, b.Build, ref o));
+                        break;
+                    case Kind.RequiredRegexAndStringEntityAndTypeBuilder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _requiredRegexAndStringEntityAndTypeBuilderInstance!), static (in b, ref o) => Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.RequiredRegexAndStringEntityAndType.Builder.BuildValue(b.Context, b.Build, ref o));
+                        break;
+                    case Kind.RequiredTypeAndValueBuilder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _requiredTypeAndValueBuilderInstance!), static (in b, ref o) => Corvus.CmakePresetsBenchmark.Current.CmakePresetsSchema.Condition.RequiredTypeAndValue.Builder.BuildValue(b.Context, b.Build, ref o));
                         break;
                     default:
                         Debug.Fail("Unexpected Kind");

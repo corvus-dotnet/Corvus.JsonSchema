@@ -993,6 +993,39 @@ public readonly partial struct Cql2Schema
                 }
             }
 
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.JsonElement:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                        break;
+                    case Kind.RawUtf8StringRequiresUnescaping:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _utf8Backing, escapeValue: false, valueRequiresUnescaping: true);
+                        break;
+                    case Kind.RawUtf8StringNotRequiresUnescaping:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _utf8Backing, escapeValue: false, valueRequiresUnescaping: false);
+                        break;
+                    case Kind.Utf8String:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _utf8Backing, escapeValue: true, valueRequiresUnescaping: false);
+                        break;
+                    case Kind.Utf16String:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _utf16Backing);
+                        break;
+                    case Kind.PatternExpressionRequiredArgsAndOpBuilder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _patternExpressionRequiredArgsAndOpBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.PatternExpression.PatternExpressionRequiredArgsAndOp.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.RequiredArgsAndOpBuilder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _requiredArgsAndOpBuilderInstance!, static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.PatternExpression.RequiredArgsAndOp.Builder.BuildValue(b, ref o));
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
             internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
             {
                 switch(_kind)
@@ -1139,6 +1172,27 @@ public readonly partial struct Cql2Schema
                         break;
                     case Kind.RequiredArgsAndOpBuilder:
                         valueBuilder.AddProperty(utf8Name, BuildWithContext.Create(_context, _requiredArgsAndOpBuilderInstance!), static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.PatternExpression.RequiredArgsAndOp.Builder.BuildValue(b.Context, b.Build, ref o), escapeName, nameRequiresUnescaping);
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.Source:
+                        _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                        break;
+                    case Kind.PatternExpressionRequiredArgsAndOpBuilder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _patternExpressionRequiredArgsAndOpBuilderInstance!), static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.PatternExpression.PatternExpressionRequiredArgsAndOp.Builder.BuildValue(b.Context, b.Build, ref o));
+                        break;
+                    case Kind.RequiredArgsAndOpBuilder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _requiredArgsAndOpBuilderInstance!), static (in b, ref o) => Corvus.Cql2Benchmark.Current.Cql2Schema.PatternExpression.RequiredArgsAndOp.Builder.BuildValue(b.Context, b.Build, ref o));
                         break;
                     default:
                         Debug.Fail("Unexpected Kind");

@@ -46,17 +46,17 @@ public readonly partial struct ActionSubmit
             /// <summary>
             /// Gets a provider for the schema location from which this type was generated.
             /// </summary>
-            public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("https://adaptivecards.io/schemas/adaptive-card.json#/definitions/Action.Submit/properties/data"u8, buffer, out written);
+            public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/definitions/https:~1~1adaptivecards.io~1schemas~1adaptive-card.json/definitions/Action.Submit/properties/data"u8, buffer, out written);
 
             /// <summary>
             /// Gets the schema location from which this type was generated.
             /// </summary>
-            public const string SchemaLocation = "https://adaptivecards.io/schemas/adaptive-card.json#/definitions/Action.Submit/properties/data";
+            public const string SchemaLocation = "/definitions/https:~1~1adaptivecards.io~1schemas~1adaptive-card.json/definitions/Action.Submit/properties/data";
 
             /// <summary>
             /// Gets the schema location from which this type was generated as a UTF-8 string.
             /// </summary>
-            public static ReadOnlySpan<byte> SchemaLocationUtf8 => "https://adaptivecards.io/schemas/adaptive-card.json#/definitions/Action.Submit/properties/data"u8;
+            public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/definitions/https:~1~1adaptivecards.io~1schemas~1adaptive-card.json/definitions/Action.Submit/properties/data"u8;
             private static readonly JsonSchemaPathProvider AnyOf0SchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/anyOf/0"u8, buffer, out written);
             private static readonly JsonSchemaPathProvider AnyOf1SchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/anyOf/1"u8, buffer, out written);
 
@@ -102,8 +102,8 @@ public readonly partial struct ActionSubmit
                 }
 
                 JsonSchemaContext anyOfContext1 =
-                    Corvus.Ui5ManifestBenchmark.Current.ActionSubmit.DataEntity.AnyOf1Entity.JsonSchema.PushChildContext(parentDocument, parentIndex, ref context, schemaEvaluationPath: AnyOf1SchemaEvaluationPath);
-                Corvus.Ui5ManifestBenchmark.Current.ActionSubmit.DataEntity.AnyOf1Entity.JsonSchema.Evaluate(parentDocument, parentIndex, ref anyOfContext1);
+                    Corvus.Ui5ManifestBenchmark.Current.JsonObject.JsonSchema.PushChildContext(parentDocument, parentIndex, ref context, schemaEvaluationPath: AnyOf1SchemaEvaluationPath);
+                Corvus.Ui5ManifestBenchmark.Current.JsonObject.JsonSchema.Evaluate(parentDocument, parentIndex, ref anyOfContext1);
                 anyOfComposedIsMatch = anyOfComposedIsMatch || anyOfContext1.IsMatch;
 
                 if (anyOfContext1.IsMatch)

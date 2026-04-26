@@ -46,17 +46,17 @@ public readonly partial struct TmuxinatorSchema
                 /// <summary>
                 /// Gets a provider for the schema location from which this type was generated.
                 /// </summary>
-                public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("https://json.schemastore.org/tmuxinator.json#/properties/tabs/items"u8, buffer, out written);
+                public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/properties/tabs/items"u8, buffer, out written);
 
                 /// <summary>
                 /// Gets the schema location from which this type was generated.
                 /// </summary>
-                public const string SchemaLocation = "https://json.schemastore.org/tmuxinator.json#/properties/tabs/items";
+                public const string SchemaLocation = "/properties/tabs/items";
 
                 /// <summary>
                 /// Gets the schema location from which this type was generated as a UTF-8 string.
                 /// </summary>
-                public static ReadOnlySpan<byte> SchemaLocationUtf8 => "https://json.schemastore.org/tmuxinator.json#/properties/tabs/items"u8;
+                public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/properties/tabs/items"u8;
                 private static readonly JsonSchemaPathProvider OneOf0SchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/oneOf/0"u8, buffer, out written);
                 private static readonly JsonSchemaPathProvider OneOf1SchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/oneOf/1"u8, buffer, out written);
 
@@ -101,8 +101,8 @@ public readonly partial struct TmuxinatorSchema
                     }
 
                     JsonSchemaContext oneOfContext1 =
-                        Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.TabsEntityArray.TabsEntity.OneOf1Entity.JsonSchema.PushChildContext(parentDocument, parentIndex, ref context, schemaEvaluationPath: OneOf1SchemaEvaluationPath);
-                    Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.TabsEntityArray.TabsEntity.OneOf1Entity.JsonSchema.Evaluate(parentDocument, parentIndex, ref oneOfContext1);
+                        Corvus.TmuxinatorBenchmark.Current.JsonObject.JsonSchema.PushChildContext(parentDocument, parentIndex, ref context, schemaEvaluationPath: OneOf1SchemaEvaluationPath);
+                    Corvus.TmuxinatorBenchmark.Current.JsonObject.JsonSchema.Evaluate(parentDocument, parentIndex, ref oneOfContext1);
 
                     if (oneOfContext1.IsMatch)
                     {

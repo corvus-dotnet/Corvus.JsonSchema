@@ -107,14 +107,14 @@ public readonly partial struct Ui5ManifestSchema
                 {
                     context.AddLocalEvaluatedProperty(propertyCount);
                     JsonSchemaContext childContext3 =
-                        Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ComponentSettingDef.JsonSchema.PushChildContextUnescaped(
+                        Corvus.Ui5ManifestBenchmark.Current.JsonObject.JsonSchema.PushChildContextUnescaped(
                             parentDocument,
                             parentDocumentIndex,
                             ref context,
                             JsonPropertyNames.SettingsUtf8,
                             evaluationPath: SettingsSchemaEvaluationPath);
 
-                    Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.ComponentSettingDef.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext3);
+                    Corvus.Ui5ManifestBenchmark.Current.JsonObject.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext3);
                     context.CommitChildContext(childContext3.IsMatch, ref childContext3);
                 }
 
@@ -144,17 +144,17 @@ public readonly partial struct Ui5ManifestSchema
                 /// <summary>
                 /// Gets a provider for the schema location from which this type was generated.
                 /// </summary>
-                public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("ui5-manifest-schema.json#/definitions/implementingComponent_def/oneOf/1"u8, buffer, out written);
+                public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/definitions/implementingComponent_def/oneOf/1"u8, buffer, out written);
 
                 /// <summary>
                 /// Gets the schema location from which this type was generated.
                 /// </summary>
-                public const string SchemaLocation = "ui5-manifest-schema.json#/definitions/implementingComponent_def/oneOf/1";
+                public const string SchemaLocation = "/definitions/implementingComponent_def/oneOf/1";
 
                 /// <summary>
                 /// Gets the schema location from which this type was generated as a UTF-8 string.
                 /// </summary>
-                public static ReadOnlySpan<byte> SchemaLocationUtf8 => "ui5-manifest-schema.json#/definitions/implementingComponent_def/oneOf/1"u8;
+                public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/definitions/implementingComponent_def/oneOf/1"u8;
 
                 /// <summary>
                 /// Applies the JSON schema semantics defined by this type to the instance determined by the given document and index.

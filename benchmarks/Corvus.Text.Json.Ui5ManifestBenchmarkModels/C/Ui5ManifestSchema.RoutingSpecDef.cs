@@ -742,5 +742,47 @@ public readonly partial struct Ui5ManifestSchema
             /// </summary>
             public static ReadOnlySpan<byte> TypeImageUrl => "typeImageUrl"u8;
         }
+
+        /// <summary>
+        /// Provides pre-baked property name blobs for fast builder property storage.
+        /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
+        /// </summary>
+        private static class JsonPropertyNamesPrebaked
+        {
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Binding"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Binding => [0x95, 0x00, 0x00, 0x00, 0x22, 0x62, 0x69, 0x6E, 0x64, 0x69, 0x6E, 0x67, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="HeaderTitle"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> HeaderTitle => [0xD5, 0x00, 0x00, 0x00, 0x22, 0x68, 0x65, 0x61, 0x64, 0x65, 0x72, 0x54, 0x69, 0x74, 0x6C, 0x65, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="NoKey"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> NoKey => [0x75, 0x00, 0x00, 0x00, 0x22, 0x6E, 0x6F, 0x4B, 0x65, 0x79, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="NoOData"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> NoOData => [0x95, 0x00, 0x00, 0x00, 0x22, 0x6E, 0x6F, 0x4F, 0x44, 0x61, 0x74, 0x61, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="RouteName"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> RouteName => [0xB5, 0x00, 0x00, 0x00, 0x22, 0x72, 0x6F, 0x75, 0x74, 0x65, 0x4E, 0x61, 0x6D, 0x65, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="SemanticKey"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> SemanticKey => [0xD5, 0x00, 0x00, 0x00, 0x22, 0x73, 0x65, 0x6D, 0x61, 0x6E, 0x74, 0x69, 0x63, 0x4B, 0x65, 0x79, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="TypeImageUrl"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> TypeImageUrl => [0xE5, 0x00, 0x00, 0x00, 0x22, 0x74, 0x79, 0x70, 0x65, 0x49, 0x6D, 0x61, 0x67, 0x65, 0x55, 0x72, 0x6C, 0x22];
+        }
     }
 }

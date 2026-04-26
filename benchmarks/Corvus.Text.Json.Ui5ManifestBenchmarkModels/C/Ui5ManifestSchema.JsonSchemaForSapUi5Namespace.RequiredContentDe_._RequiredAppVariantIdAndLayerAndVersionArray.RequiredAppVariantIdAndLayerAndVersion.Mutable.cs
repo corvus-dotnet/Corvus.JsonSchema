@@ -316,7 +316,7 @@ public readonly partial struct Ui5ManifestSchema
                             else
                             {
                                 // We are going to insert the new value
-                                value.AddAsProperty(JsonPropertyNamesEscaped.AppVariantId, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AppVariantId, ref cvb);
                                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                             }
@@ -347,7 +347,7 @@ public readonly partial struct Ui5ManifestSchema
                             else
                             {
                                 // We are going to insert the new value
-                                value.AddAsProperty(JsonPropertyNamesEscaped.Layer, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Layer, ref cvb);
                                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                             }
@@ -378,7 +378,7 @@ public readonly partial struct Ui5ManifestSchema
                             else
                             {
                                 // We are going to insert the new value
-                                value.AddAsProperty(JsonPropertyNamesEscaped.Version, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Version, ref cvb);
                                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                             }
@@ -573,6 +573,24 @@ public readonly partial struct Ui5ManifestSchema
                             }
                         }
 
+                        internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+                        {
+                            switch(_kind)
+                            {
+                                case Kind.Unknown:
+                                    break;
+                                case Kind.JsonElement:
+                                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                                    break;
+                                case Kind.Builder:
+                                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
+                                    break;
+                                default:
+                                    Debug.Fail("Unexpected Kind");
+                                    break;
+                            }
+                        }
+
                         internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
                         {
                             switch(_kind)
@@ -674,6 +692,24 @@ public readonly partial struct Ui5ManifestSchema
                             }
                         }
 
+                        internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+                        {
+                            switch(_kind)
+                            {
+                                case Kind.Unknown:
+                                    break;
+                                case Kind.Source:
+                                    _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                                    break;
+                                case Kind.Builder:
+                                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
+                                    break;
+                                default:
+                                    Debug.Fail("Unexpected Kind");
+                                    break;
+                            }
+                        }
+
                         internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
                         {
                             switch(_kind)
@@ -756,9 +792,9 @@ public readonly partial struct Ui5ManifestSchema
                             in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source layer,
                             in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source version)
                         {
-                            appVariantId.AddAsProperty(JsonPropertyNamesEscaped.AppVariantId, ref builder, escapeName: false);
-                            layer.AddAsProperty(JsonPropertyNamesEscaped.Layer, ref builder, escapeName: false);
-                            version.AddAsProperty(JsonPropertyNamesEscaped.Version, ref builder, escapeName: false);
+                            appVariantId.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.AppVariantId, ref builder);
+                            layer.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Layer, ref builder);
+                            version.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Version, ref builder);
                         }
 
                         /// <summary>

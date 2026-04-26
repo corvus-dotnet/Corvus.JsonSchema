@@ -277,24 +277,6 @@ public readonly partial struct CspellSchema
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         private JsonTokenType TokenType => _parent?.GetJsonTokenType(_idx) ?? JsonTokenType.None;
 
-        /// <summary>
-        /// Conversion to <see cref="Corvus.CspellBenchmark.Current.CspellSchema.Serializable.AnyOf4Entity"/>.
-        /// </summary>
-        /// <param name="value">The value from which to convert.</param>
-        public static explicit operator Corvus.CspellBenchmark.Current.CspellSchema.Serializable.AnyOf4Entity(Serializable value)
-        {
-            return Corvus.CspellBenchmark.Current.CspellSchema.Serializable.AnyOf4Entity.From(value);
-        }
-
-        /// <summary>
-        /// Conversion from <see cref="Corvus.CspellBenchmark.Current.CspellSchema.Serializable.AnyOf4Entity"/>.
-        /// </summary>
-        /// <param name="value">The value from which to convert.</param>
-        public static implicit operator Serializable(Corvus.CspellBenchmark.Current.CspellSchema.Serializable.AnyOf4Entity value)
-        {
-            return From(value);
-        }
-
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static explicit operator string(Serializable value) => value._parent.GetString(value._idx, JsonTokenType.String) ?? throw new FormatException();
 
@@ -879,15 +861,15 @@ public readonly partial struct CspellSchema
         }
 
         /// <summary>
-        /// Gets the value as a <see cref="Corvus.CspellBenchmark.Current.CspellSchema.Serializable.AnyOf4Entity" />.
+        /// Gets the value as a <see cref="Corvus.CspellBenchmark.Current.JsonObject" />.
         /// </summary>
         /// <param name="result">The result of the conversions.</param>
         /// <returns><see langword="true" /> if the conversion was valid.</returns>
-        public bool TryGetAsAnyOf4Entity(out Corvus.CspellBenchmark.Current.CspellSchema.Serializable.AnyOf4Entity result)
+        public bool TryGetAsJsonObject(out Corvus.CspellBenchmark.Current.JsonObject result)
         {
-            if (Corvus.CspellBenchmark.Current.CspellSchema.Serializable.AnyOf4Entity.JsonSchema.Evaluate(_parent, _idx))
+            if (Corvus.CspellBenchmark.Current.JsonObject.JsonSchema.Evaluate(_parent, _idx))
             {
-                result = Corvus.CspellBenchmark.Current.CspellSchema.Serializable.AnyOf4Entity.From(this);
+                result = Corvus.CspellBenchmark.Current.JsonObject.From(this);
                 return true;
             }
 
@@ -905,7 +887,7 @@ public readonly partial struct CspellSchema
         /// <param name="matchJsonString">Match a <see cref="Corvus.CspellBenchmark.Current.JsonString"/>.</param>
         /// <param name="matchJsonBoolean">Match a <see cref="Corvus.CspellBenchmark.Current.JsonBoolean"/>.</param>
         /// <param name="matchJsonNull">Match a <see cref="Corvus.CspellBenchmark.Current.JsonNull"/>.</param>
-        /// <param name="matchAnyOf4Entity">Match a <see cref="Corvus.CspellBenchmark.Current.CspellSchema.Serializable.AnyOf4Entity"/>.</param>
+        /// <param name="matchJsonObject">Match a <see cref="Corvus.CspellBenchmark.Current.JsonObject"/>.</param>
         /// <param name="defaultMatch">Match any other value.</param>
         /// <returns>An instance of the value returned by the match function.</returns>
         public TResult Match<TContext, TResult>(
@@ -914,7 +896,7 @@ public readonly partial struct CspellSchema
             Matcher<Corvus.CspellBenchmark.Current.JsonString, TContext, TResult> matchJsonString,
             Matcher<Corvus.CspellBenchmark.Current.JsonBoolean, TContext, TResult> matchJsonBoolean,
             Matcher<Corvus.CspellBenchmark.Current.JsonNull, TContext, TResult> matchJsonNull,
-            Matcher<Corvus.CspellBenchmark.Current.CspellSchema.Serializable.AnyOf4Entity, TContext, TResult> matchAnyOf4Entity,
+            Matcher<Corvus.CspellBenchmark.Current.JsonObject, TContext, TResult> matchJsonObject,
             Matcher<Corvus.CspellBenchmark.Current.CspellSchema.Serializable, TContext, TResult> defaultMatch)
 #if NET9_0_OR_GREATER
         where TContext : allows ref struct
@@ -940,9 +922,9 @@ public readonly partial struct CspellSchema
                 return matchJsonNull(Corvus.CspellBenchmark.Current.JsonNull.From(this), context);
             }
 
-            if (Corvus.CspellBenchmark.Current.CspellSchema.Serializable.AnyOf4Entity.JsonSchema.Evaluate(_parent, _idx))
+            if (Corvus.CspellBenchmark.Current.JsonObject.JsonSchema.Evaluate(_parent, _idx))
             {
-                return matchAnyOf4Entity(Corvus.CspellBenchmark.Current.CspellSchema.Serializable.AnyOf4Entity.From(this), context);
+                return matchJsonObject(Corvus.CspellBenchmark.Current.JsonObject.From(this), context);
             }
 
             return defaultMatch(this, context);
@@ -956,7 +938,7 @@ public readonly partial struct CspellSchema
         /// <param name="matchJsonString">Match a <see cref="Corvus.CspellBenchmark.Current.JsonString"/>.</param>
         /// <param name="matchJsonBoolean">Match a <see cref="Corvus.CspellBenchmark.Current.JsonBoolean"/>.</param>
         /// <param name="matchJsonNull">Match a <see cref="Corvus.CspellBenchmark.Current.JsonNull"/>.</param>
-        /// <param name="matchAnyOf4Entity">Match a <see cref="Corvus.CspellBenchmark.Current.CspellSchema.Serializable.AnyOf4Entity"/>.</param>
+        /// <param name="matchJsonObject">Match a <see cref="Corvus.CspellBenchmark.Current.JsonObject"/>.</param>
         /// <param name="defaultMatch">Match any other value.</param>
         /// <returns>An instance of the value returned by the match function.</returns>
         public TResult Match<TResult>(
@@ -964,7 +946,7 @@ public readonly partial struct CspellSchema
             Matcher<Corvus.CspellBenchmark.Current.JsonString, TResult> matchJsonString,
             Matcher<Corvus.CspellBenchmark.Current.JsonBoolean, TResult> matchJsonBoolean,
             Matcher<Corvus.CspellBenchmark.Current.JsonNull, TResult> matchJsonNull,
-            Matcher<Corvus.CspellBenchmark.Current.CspellSchema.Serializable.AnyOf4Entity, TResult> matchAnyOf4Entity,
+            Matcher<Corvus.CspellBenchmark.Current.JsonObject, TResult> matchJsonObject,
             Matcher<Corvus.CspellBenchmark.Current.CspellSchema.Serializable, TResult> defaultMatch)
         {
             if (Corvus.CspellBenchmark.Current.JsonNumber.JsonSchema.Evaluate(_parent, _idx))
@@ -987,9 +969,9 @@ public readonly partial struct CspellSchema
                 return matchJsonNull(Corvus.CspellBenchmark.Current.JsonNull.From(this));
             }
 
-            if (Corvus.CspellBenchmark.Current.CspellSchema.Serializable.AnyOf4Entity.JsonSchema.Evaluate(_parent, _idx))
+            if (Corvus.CspellBenchmark.Current.JsonObject.JsonSchema.Evaluate(_parent, _idx))
             {
-                return matchAnyOf4Entity(Corvus.CspellBenchmark.Current.CspellSchema.Serializable.AnyOf4Entity.From(this));
+                return matchJsonObject(Corvus.CspellBenchmark.Current.JsonObject.From(this));
             }
 
             return defaultMatch(this);

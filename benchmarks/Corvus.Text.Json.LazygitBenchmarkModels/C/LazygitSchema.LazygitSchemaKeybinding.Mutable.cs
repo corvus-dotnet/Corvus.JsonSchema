@@ -462,7 +462,7 @@ public readonly partial struct LazygitSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.BranchesValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.BranchesValue, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -498,7 +498,7 @@ public readonly partial struct LazygitSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.BranchesValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.BranchesValue, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -543,7 +543,7 @@ public readonly partial struct LazygitSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.CommitFilesValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CommitFilesValue, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -579,7 +579,7 @@ public readonly partial struct LazygitSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.CommitFilesValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CommitFilesValue, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -624,7 +624,7 @@ public readonly partial struct LazygitSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.CommitsValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CommitsValue, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -660,7 +660,7 @@ public readonly partial struct LazygitSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.CommitsValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CommitsValue, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -705,7 +705,7 @@ public readonly partial struct LazygitSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.FilesValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.FilesValue, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -741,7 +741,7 @@ public readonly partial struct LazygitSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.FilesValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.FilesValue, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -786,7 +786,7 @@ public readonly partial struct LazygitSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.MainValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MainValue, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -822,7 +822,7 @@ public readonly partial struct LazygitSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.MainValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MainValue, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -867,7 +867,7 @@ public readonly partial struct LazygitSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.StashValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.StashValue, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -903,7 +903,7 @@ public readonly partial struct LazygitSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.StashValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.StashValue, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -948,7 +948,7 @@ public readonly partial struct LazygitSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.StatusValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.StatusValue, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -984,7 +984,7 @@ public readonly partial struct LazygitSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.StatusValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.StatusValue, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1029,7 +1029,7 @@ public readonly partial struct LazygitSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.SubmodulesValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SubmodulesValue, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1065,7 +1065,7 @@ public readonly partial struct LazygitSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.SubmodulesValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SubmodulesValue, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1110,7 +1110,7 @@ public readonly partial struct LazygitSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.UniversalValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.UniversalValue, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1146,7 +1146,7 @@ public readonly partial struct LazygitSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.UniversalValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.UniversalValue, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1353,6 +1353,24 @@ public readonly partial struct LazygitSchema
                 }
             }
 
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.JsonElement:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                        break;
+                    case Kind.Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
             internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
             {
                 switch(_kind)
@@ -1454,6 +1472,24 @@ public readonly partial struct LazygitSchema
                 }
             }
 
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.Source:
+                        _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                        break;
+                    case Kind.Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
             internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
             {
                 switch(_kind)
@@ -1542,15 +1578,15 @@ public readonly partial struct LazygitSchema
                 in Corvus.LazygitBenchmark.Current.LazygitSchema.LazygitSchemaKeybinding.Submodules.Source submodules = default,
                 in Corvus.LazygitBenchmark.Current.LazygitSchema.LazygitSchemaKeybinding.Universal.Source universal = default)
             {
-                branches.AddAsProperty(JsonPropertyNamesEscaped.BranchesValue, ref builder, escapeName: false);
-                commitFiles.AddAsProperty(JsonPropertyNamesEscaped.CommitFilesValue, ref builder, escapeName: false);
-                commits.AddAsProperty(JsonPropertyNamesEscaped.CommitsValue, ref builder, escapeName: false);
-                files.AddAsProperty(JsonPropertyNamesEscaped.FilesValue, ref builder, escapeName: false);
-                main.AddAsProperty(JsonPropertyNamesEscaped.MainValue, ref builder, escapeName: false);
-                stash.AddAsProperty(JsonPropertyNamesEscaped.StashValue, ref builder, escapeName: false);
-                status.AddAsProperty(JsonPropertyNamesEscaped.StatusValue, ref builder, escapeName: false);
-                submodules.AddAsProperty(JsonPropertyNamesEscaped.SubmodulesValue, ref builder, escapeName: false);
-                universal.AddAsProperty(JsonPropertyNamesEscaped.UniversalValue, ref builder, escapeName: false);
+                branches.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.BranchesValue, ref builder);
+                commitFiles.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CommitFilesValue, ref builder);
+                commits.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CommitsValue, ref builder);
+                files.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.FilesValue, ref builder);
+                main.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MainValue, ref builder);
+                stash.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.StashValue, ref builder);
+                status.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.StatusValue, ref builder);
+                submodules.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SubmodulesValue, ref builder);
+                universal.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.UniversalValue, ref builder);
             }
 
             /// <summary>
@@ -1589,15 +1625,15 @@ public readonly partial struct LazygitSchema
             where TContext : allows ref struct
             #endif
             {
-                branches.AddAsProperty(JsonPropertyNamesEscaped.BranchesValue, ref builder, escapeName: false);
-                commitFiles.AddAsProperty(JsonPropertyNamesEscaped.CommitFilesValue, ref builder, escapeName: false);
-                commits.AddAsProperty(JsonPropertyNamesEscaped.CommitsValue, ref builder, escapeName: false);
-                files.AddAsProperty(JsonPropertyNamesEscaped.FilesValue, ref builder, escapeName: false);
-                main.AddAsProperty(JsonPropertyNamesEscaped.MainValue, ref builder, escapeName: false);
-                stash.AddAsProperty(JsonPropertyNamesEscaped.StashValue, ref builder, escapeName: false);
-                status.AddAsProperty(JsonPropertyNamesEscaped.StatusValue, ref builder, escapeName: false);
-                submodules.AddAsProperty(JsonPropertyNamesEscaped.SubmodulesValue, ref builder, escapeName: false);
-                universal.AddAsProperty(JsonPropertyNamesEscaped.UniversalValue, ref builder, escapeName: false);
+                branches.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.BranchesValue, ref builder);
+                commitFiles.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CommitFilesValue, ref builder);
+                commits.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CommitsValue, ref builder);
+                files.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.FilesValue, ref builder);
+                main.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MainValue, ref builder);
+                stash.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.StashValue, ref builder);
+                status.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.StatusValue, ref builder);
+                submodules.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SubmodulesValue, ref builder);
+                universal.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.UniversalValue, ref builder);
             }
 
             /// <summary>

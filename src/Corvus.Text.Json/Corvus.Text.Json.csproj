@@ -208,8 +208,11 @@
     <Compile Include="Corvus\Text\Json\JsonSchema\Internal\IPV4AddressHelper.cs" />
     <Compile Include="Corvus\Text\Json\JsonSchema\Internal\IPV6AddressHelper.cs" />
     <Compile Include="Corvus\Text\Json\JsonSchema\Internal\JsonSchemaContext.cs" />
+    <Compile Include="Corvus\Text\Json\Canonicalization\Es6NumberFormatter.cs" />
+    <Compile Include="Corvus\Text\Json\Canonicalization\JsonCanonicalizer.cs" />
     <Compile Include="Corvus\Text\Json\Document\JsonElement.JsonSchema.cs" />
     <Compile Include="Corvus\Text\Json\Document\JsonElementExtensions.cs" />
+    <Compile Include="Corvus\Text\Json\Document\JsonElementExtensions.JsonPointer.cs" />
     <Compile Include="Corvus\Text\Json\JsonSchema\Internal\JsonSchemaEvaluation.Null.cs" />
     <Compile Include="Corvus\Text\Json\JsonSchema\Internal\JsonSchemaEvaluation.Boolean.cs" />
     <Compile Include="Corvus\Text\Json\JsonSchema\Internal\JsonSchemaMatcher.cs" />
@@ -288,6 +291,7 @@
     <Compile Include="Corvus\Text\Json\Uri\Utf8IriReference.cs" />
     <Compile Include="Corvus\Text\Json\Uri\Utf8Iri.cs" />
     <Compile Include="Corvus\Text\Json\Uri\Utf8JsonPointer.cs" />
+    <Compile Include="Corvus\Text\Json\Uri\JsonPointerEncodedSegmentEnumerator.cs" />
     <Compile Include="Corvus\Text\Json\Uri\Utf8UriReference.cs" />
     <Compile Include="Corvus\Text\Json\Uri\Utf8Uri.cs" />
     <Compile Include="Corvus\Text\Json\Uri\Utf8Uri.EscapeDataString.cs" />

@@ -697,6 +697,10 @@ public readonly partial struct JasmineSchema
 
                 private Source(double value) { SimpleTypesBacking.Initialize(ref _simpleTypeBacking, value, static (isAlsoArray, buffer, out written) => Utf8Formatter.TryFormat(isAlsoArray, buffer, out written)); _kind = Kind.NumericSimpleType; }
 
+                private Source(int value) { SimpleTypesBacking.Initialize(ref _simpleTypeBacking, value, static (isAlsoArray, buffer, out written) => Utf8Formatter.TryFormat(isAlsoArray, buffer, out written)); _kind = Kind.NumericSimpleType; }
+
+                private Source(long value) { SimpleTypesBacking.Initialize(ref _simpleTypeBacking, value, static (isAlsoArray, buffer, out written) => Utf8Formatter.TryFormat(isAlsoArray, buffer, out written)); _kind = Kind.NumericSimpleType; }
+
                 private Source(Kind kind) { Debug.Assert(kind == Kind.Null); _kind = Kind.Null; }
 
                 public static implicit operator Source(SeedEntity instance) => new(JsonElement.From(instance));
@@ -757,6 +761,42 @@ public readonly partial struct JasmineSchema
                             break;
                         case Kind.FormattedNumber:
                             valueBuilder.AddPropertyFormattedNumber(utf8Name, _utf8Backing, escapeName, nameRequiresUnescaping);
+                            break;
+                        default:
+                            Debug.Fail("Unexpected Kind");
+                            break;
+                    }
+                }
+
+                internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+                {
+                    switch(_kind)
+                    {
+                        case Kind.Unknown:
+                            break;
+                        case Kind.JsonElement:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                            break;
+                        case Kind.Null:
+                            valueBuilder.AddPrebakedPropertyNullValue(prebakedPropertyName);
+                            break;
+                        case Kind.RawUtf8StringRequiresUnescaping:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, _utf8Backing, escapeValue: false, valueRequiresUnescaping: true);
+                            break;
+                        case Kind.RawUtf8StringNotRequiresUnescaping:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, _utf8Backing, escapeValue: false, valueRequiresUnescaping: false);
+                            break;
+                        case Kind.Utf8String:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, _utf8Backing, escapeValue: true, valueRequiresUnescaping: false);
+                            break;
+                        case Kind.Utf16String:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, _utf16Backing);
+                            break;
+                        case Kind.NumericSimpleType:
+                            valueBuilder.AddPrebakedPropertyFormattedNumber(prebakedPropertyName, _simpleTypeBacking.Span());
+                            break;
+                        case Kind.FormattedNumber:
+                            valueBuilder.AddPrebakedPropertyFormattedNumber(prebakedPropertyName, _utf8Backing);
                             break;
                         default:
                             Debug.Fail("Unexpected Kind");

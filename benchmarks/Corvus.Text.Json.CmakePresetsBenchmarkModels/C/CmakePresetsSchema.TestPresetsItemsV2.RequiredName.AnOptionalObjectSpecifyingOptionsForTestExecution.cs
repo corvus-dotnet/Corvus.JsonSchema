@@ -908,6 +908,68 @@ public readonly partial struct CmakePresetsSchema
                     /// </summary>
                     public static ReadOnlySpan<byte> Timeout => "timeout"u8;
                 }
+
+                /// <summary>
+                /// Provides pre-baked property name blobs for fast builder property storage.
+                /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
+                /// </summary>
+                private static class JsonPropertyNamesPrebaked
+                {
+                    /// <summary>
+                    /// Gets the pre-baked property name blob for <see cref="EnableFailover"/>.
+                    /// </summary>
+                    public static ReadOnlySpan<byte> EnableFailover => [0x05, 0x01, 0x00, 0x00, 0x22, 0x65, 0x6E, 0x61, 0x62, 0x6C, 0x65, 0x46, 0x61, 0x69, 0x6C, 0x6F, 0x76, 0x65, 0x72, 0x22];
+
+                    /// <summary>
+                    /// Gets the pre-baked property name blob for <see cref="InteractiveDebugging"/>.
+                    /// </summary>
+                    public static ReadOnlySpan<byte> InteractiveDebugging => [0x65, 0x01, 0x00, 0x00, 0x22, 0x69, 0x6E, 0x74, 0x65, 0x72, 0x61, 0x63, 0x74, 0x69, 0x76, 0x65, 0x44, 0x65, 0x62, 0x75, 0x67, 0x67, 0x69, 0x6E, 0x67, 0x22];
+
+                    /// <summary>
+                    /// Gets the pre-baked property name blob for <see cref="Jobs"/>.
+                    /// </summary>
+                    public static ReadOnlySpan<byte> Jobs => [0x65, 0x00, 0x00, 0x00, 0x22, 0x6A, 0x6F, 0x62, 0x73, 0x22];
+
+                    /// <summary>
+                    /// Gets the pre-baked property name blob for <see cref="NoTestsAction"/>.
+                    /// </summary>
+                    public static ReadOnlySpan<byte> NoTestsAction => [0xF5, 0x00, 0x00, 0x00, 0x22, 0x6E, 0x6F, 0x54, 0x65, 0x73, 0x74, 0x73, 0x41, 0x63, 0x74, 0x69, 0x6F, 0x6E, 0x22];
+
+                    /// <summary>
+                    /// Gets the pre-baked property name blob for <see cref="Repeat"/>.
+                    /// </summary>
+                    public static ReadOnlySpan<byte> Repeat => [0x85, 0x00, 0x00, 0x00, 0x22, 0x72, 0x65, 0x70, 0x65, 0x61, 0x74, 0x22];
+
+                    /// <summary>
+                    /// Gets the pre-baked property name blob for <see cref="ResourceSpecFile"/>.
+                    /// </summary>
+                    public static ReadOnlySpan<byte> ResourceSpecFile => [0x25, 0x01, 0x00, 0x00, 0x22, 0x72, 0x65, 0x73, 0x6F, 0x75, 0x72, 0x63, 0x65, 0x53, 0x70, 0x65, 0x63, 0x46, 0x69, 0x6C, 0x65, 0x22];
+
+                    /// <summary>
+                    /// Gets the pre-baked property name blob for <see cref="ScheduleRandom"/>.
+                    /// </summary>
+                    public static ReadOnlySpan<byte> ScheduleRandom => [0x05, 0x01, 0x00, 0x00, 0x22, 0x73, 0x63, 0x68, 0x65, 0x64, 0x75, 0x6C, 0x65, 0x52, 0x61, 0x6E, 0x64, 0x6F, 0x6D, 0x22];
+
+                    /// <summary>
+                    /// Gets the pre-baked property name blob for <see cref="ShowOnly"/>.
+                    /// </summary>
+                    public static ReadOnlySpan<byte> ShowOnly => [0xA5, 0x00, 0x00, 0x00, 0x22, 0x73, 0x68, 0x6F, 0x77, 0x4F, 0x6E, 0x6C, 0x79, 0x22];
+
+                    /// <summary>
+                    /// Gets the pre-baked property name blob for <see cref="StopOnFailure"/>.
+                    /// </summary>
+                    public static ReadOnlySpan<byte> StopOnFailure => [0xF5, 0x00, 0x00, 0x00, 0x22, 0x73, 0x74, 0x6F, 0x70, 0x4F, 0x6E, 0x46, 0x61, 0x69, 0x6C, 0x75, 0x72, 0x65, 0x22];
+
+                    /// <summary>
+                    /// Gets the pre-baked property name blob for <see cref="TestLoad"/>.
+                    /// </summary>
+                    public static ReadOnlySpan<byte> TestLoad => [0xA5, 0x00, 0x00, 0x00, 0x22, 0x74, 0x65, 0x73, 0x74, 0x4C, 0x6F, 0x61, 0x64, 0x22];
+
+                    /// <summary>
+                    /// Gets the pre-baked property name blob for <see cref="Timeout"/>.
+                    /// </summary>
+                    public static ReadOnlySpan<byte> Timeout => [0x95, 0x00, 0x00, 0x00, 0x22, 0x74, 0x69, 0x6D, 0x65, 0x6F, 0x75, 0x74, 0x22];
+                }
             }
         }
     }

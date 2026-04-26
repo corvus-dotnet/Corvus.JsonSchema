@@ -636,6 +636,28 @@ public readonly partial struct LazygitSchema
                 /// </summary>
                 public static ReadOnlySpan<byte> ShowWholeGraphValue => "showWholeGraph"u8;
             }
+
+            /// <summary>
+            /// Provides pre-baked property name blobs for fast builder property storage.
+            /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
+            /// </summary>
+            private static class JsonPropertyNamesPrebaked
+            {
+                /// <summary>
+                /// Gets the pre-baked property name blob for <see cref="OrderValue"/>.
+                /// </summary>
+                public static ReadOnlySpan<byte> OrderValue => [0x75, 0x00, 0x00, 0x00, 0x22, 0x6F, 0x72, 0x64, 0x65, 0x72, 0x22];
+
+                /// <summary>
+                /// Gets the pre-baked property name blob for <see cref="ShowGraphValue"/>.
+                /// </summary>
+                public static ReadOnlySpan<byte> ShowGraphValue => [0xB5, 0x00, 0x00, 0x00, 0x22, 0x73, 0x68, 0x6F, 0x77, 0x47, 0x72, 0x61, 0x70, 0x68, 0x22];
+
+                /// <summary>
+                /// Gets the pre-baked property name blob for <see cref="ShowWholeGraphValue"/>.
+                /// </summary>
+                public static ReadOnlySpan<byte> ShowWholeGraphValue => [0x05, 0x01, 0x00, 0x00, 0x22, 0x73, 0x68, 0x6F, 0x77, 0x57, 0x68, 0x6F, 0x6C, 0x65, 0x47, 0x72, 0x61, 0x70, 0x68, 0x22];
+            }
         }
     }
 }

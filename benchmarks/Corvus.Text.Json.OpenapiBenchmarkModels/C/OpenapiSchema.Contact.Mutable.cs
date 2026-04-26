@@ -232,11 +232,11 @@ public readonly partial struct OpenapiSchema
             /// <summary>
             /// Gets the (optional) <c>email</c> property.
             /// </summary>
-            public Corvus.OpenapiBenchmark.Current.JsonEmailNotAsserted.Mutable Email
+            public Corvus.OpenapiBenchmark.Current.JsonEmail.Mutable Email
             {
                 get
                 {
-                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.EmailUtf8, out Corvus.OpenapiBenchmark.Current.JsonEmailNotAsserted.Mutable value))
+                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.EmailUtf8, out Corvus.OpenapiBenchmark.Current.JsonEmail.Mutable value))
                     {
                         return value;
                     }
@@ -264,11 +264,11 @@ public readonly partial struct OpenapiSchema
             /// <summary>
             /// Gets the (optional) <c>url</c> property.
             /// </summary>
-            public Corvus.OpenapiBenchmark.Current.JsonUriNotAsserted.Mutable Url
+            public Corvus.OpenapiBenchmark.Current.JsonUri.Mutable Url
             {
                 get
                 {
-                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.UrlUtf8, out Corvus.OpenapiBenchmark.Current.JsonUriNotAsserted.Mutable value))
+                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.UrlUtf8, out Corvus.OpenapiBenchmark.Current.JsonUri.Mutable value))
                     {
                         return value;
                     }
@@ -310,7 +310,7 @@ public readonly partial struct OpenapiSchema
             /// Set the <c>email</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetEmail(in Corvus.OpenapiBenchmark.Current.JsonEmailNotAsserted.Source value)
+            public void SetEmail(in Corvus.OpenapiBenchmark.Current.JsonEmail.Source value)
             {
                 CheckValidInstance();
 
@@ -331,7 +331,7 @@ public readonly partial struct OpenapiSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Email, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Email, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -376,7 +376,7 @@ public readonly partial struct OpenapiSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Name, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Name, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -400,7 +400,7 @@ public readonly partial struct OpenapiSchema
             /// Set the <c>url</c> property.
             /// </summary>
             /// <param name="value">The value of the property to add.</param>
-            public void SetUrl(in Corvus.OpenapiBenchmark.Current.JsonUriNotAsserted.Source value)
+            public void SetUrl(in Corvus.OpenapiBenchmark.Current.JsonUri.Source value)
             {
                 CheckValidInstance();
 
@@ -421,7 +421,7 @@ public readonly partial struct OpenapiSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Url, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Url, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -839,6 +839,24 @@ public readonly partial struct OpenapiSchema
                 }
             }
 
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.JsonElement:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                        break;
+                    case Kind.Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
             internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
             {
                 switch(_kind)
@@ -940,6 +958,24 @@ public readonly partial struct OpenapiSchema
                 }
             }
 
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.Source:
+                        _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                        break;
+                    case Kind.Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
             internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
             {
                 switch(_kind)
@@ -1018,22 +1054,22 @@ public readonly partial struct OpenapiSchema
             /// </summary>
             internal static void Create(
                 ref ComplexValueBuilder builder,
-                in Corvus.OpenapiBenchmark.Current.JsonEmailNotAsserted.Source email = default,
+                in Corvus.OpenapiBenchmark.Current.JsonEmail.Source email = default,
                 in Corvus.OpenapiBenchmark.Current.JsonString.Source name = default,
-                in Corvus.OpenapiBenchmark.Current.JsonUriNotAsserted.Source url = default)
+                in Corvus.OpenapiBenchmark.Current.JsonUri.Source url = default)
             {
-                email.AddAsProperty(JsonPropertyNamesEscaped.Email, ref builder, escapeName: false);
-                name.AddAsProperty(JsonPropertyNamesEscaped.Name, ref builder, escapeName: false);
-                url.AddAsProperty(JsonPropertyNamesEscaped.Url, ref builder, escapeName: false);
+                email.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Email, ref builder);
+                name.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Name, ref builder);
+                url.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Url, ref builder);
             }
 
             /// <summary>
             /// Creates an instance of a <see cref="Contact"/>.
             /// </summary>
             public void Create(
-                in Corvus.OpenapiBenchmark.Current.JsonEmailNotAsserted.Source email = default,
+                in Corvus.OpenapiBenchmark.Current.JsonEmail.Source email = default,
                 in Corvus.OpenapiBenchmark.Current.JsonString.Source name = default,
-                in Corvus.OpenapiBenchmark.Current.JsonUriNotAsserted.Source url = default)
+                in Corvus.OpenapiBenchmark.Current.JsonUri.Source url = default)
             {
                 Create(ref _builder, email, name, url);
             }
@@ -1196,7 +1232,7 @@ public readonly partial struct OpenapiSchema
         /// <param name="url">The value of the property.</param>
         /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
         /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-        public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.OpenapiBenchmark.Current.JsonEmailNotAsserted.Source email = default, in Corvus.OpenapiBenchmark.Current.JsonString.Source name = default, in Corvus.OpenapiBenchmark.Current.JsonUriNotAsserted.Source url = default, int initialCapacity = 30)
+        public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in Corvus.OpenapiBenchmark.Current.JsonEmail.Source email = default, in Corvus.OpenapiBenchmark.Current.JsonString.Source name = default, in Corvus.OpenapiBenchmark.Current.JsonUri.Source url = default, int initialCapacity = 30)
         {
             JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
             ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);

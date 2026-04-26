@@ -637,6 +637,18 @@ public readonly partial struct Ui5Schema
                 /// </summary>
                 public static ReadOnlySpan<byte> Kind => "kind"u8;
             }
+
+            /// <summary>
+            /// Provides pre-baked property name blobs for fast builder property storage.
+            /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
+            /// </summary>
+            private static class JsonPropertyNamesPrebaked
+            {
+                /// <summary>
+                /// Gets the pre-baked property name blob for <see cref="Kind"/>.
+                /// </summary>
+                public static ReadOnlySpan<byte> Kind => [0x65, 0x00, 0x00, 0x00, 0x22, 0x6B, 0x69, 0x6E, 0x64, 0x22];
+            }
         }
     }
 }

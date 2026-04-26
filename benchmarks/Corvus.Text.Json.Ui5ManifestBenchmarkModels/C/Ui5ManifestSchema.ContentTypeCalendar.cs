@@ -816,5 +816,57 @@ public readonly partial struct Ui5ManifestSchema
             /// </summary>
             public static ReadOnlySpan<byte> SpecialDate => "specialDate"u8;
         }
+
+        /// <summary>
+        /// Provides pre-baked property name blobs for fast builder property storage.
+        /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
+        /// </summary>
+        private static class JsonPropertyNamesPrebaked
+        {
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="DataValue"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> DataValue => [0x65, 0x00, 0x00, 0x00, 0x22, 0x64, 0x61, 0x74, 0x61, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Date"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Date => [0x65, 0x00, 0x00, 0x00, 0x22, 0x64, 0x61, 0x74, 0x65, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="ItemValue"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> ItemValue => [0x65, 0x00, 0x00, 0x00, 0x22, 0x69, 0x74, 0x65, 0x6D, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="LegendItem"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> LegendItem => [0xC5, 0x00, 0x00, 0x00, 0x22, 0x6C, 0x65, 0x67, 0x65, 0x6E, 0x64, 0x49, 0x74, 0x65, 0x6D, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="MaxItems"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> MaxItems => [0xA5, 0x00, 0x00, 0x00, 0x22, 0x6D, 0x61, 0x78, 0x49, 0x74, 0x65, 0x6D, 0x73, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="MaxLegendItems"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> MaxLegendItems => [0x05, 0x01, 0x00, 0x00, 0x22, 0x6D, 0x61, 0x78, 0x4C, 0x65, 0x67, 0x65, 0x6E, 0x64, 0x49, 0x74, 0x65, 0x6D, 0x73, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="MoreItems"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> MoreItems => [0xB5, 0x00, 0x00, 0x00, 0x22, 0x6D, 0x6F, 0x72, 0x65, 0x49, 0x74, 0x65, 0x6D, 0x73, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="NoItemsText"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> NoItemsText => [0xD5, 0x00, 0x00, 0x00, 0x22, 0x6E, 0x6F, 0x49, 0x74, 0x65, 0x6D, 0x73, 0x54, 0x65, 0x78, 0x74, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="SpecialDate"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> SpecialDate => [0xD5, 0x00, 0x00, 0x00, 0x22, 0x73, 0x70, 0x65, 0x63, 0x69, 0x61, 0x6C, 0x44, 0x61, 0x74, 0x65, 0x22];
+        }
     }
 }

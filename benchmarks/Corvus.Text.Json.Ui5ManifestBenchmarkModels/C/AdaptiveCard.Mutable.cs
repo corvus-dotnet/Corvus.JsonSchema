@@ -541,7 +541,7 @@ public readonly partial struct AdaptiveCard
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Schema, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Schema, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -586,7 +586,7 @@ public readonly partial struct AdaptiveCard
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Actions, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Actions, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -622,7 +622,7 @@ public readonly partial struct AdaptiveCard
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Actions, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Actions, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -667,7 +667,7 @@ public readonly partial struct AdaptiveCard
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Authentication, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Authentication, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -703,7 +703,7 @@ public readonly partial struct AdaptiveCard
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Authentication, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Authentication, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -748,7 +748,7 @@ public readonly partial struct AdaptiveCard
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.BackgroundImage, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.BackgroundImage, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -784,7 +784,7 @@ public readonly partial struct AdaptiveCard
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.BackgroundImage, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.BackgroundImage, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -829,7 +829,7 @@ public readonly partial struct AdaptiveCard
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Body, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Body, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -865,7 +865,7 @@ public readonly partial struct AdaptiveCard
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Body, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Body, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -910,7 +910,7 @@ public readonly partial struct AdaptiveCard
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.FallbackText, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.FallbackText, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -955,7 +955,7 @@ public readonly partial struct AdaptiveCard
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Lang, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Lang, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1000,7 +1000,7 @@ public readonly partial struct AdaptiveCard
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.MinHeight, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MinHeight, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1045,7 +1045,7 @@ public readonly partial struct AdaptiveCard
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Refresh, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Refresh, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1081,7 +1081,7 @@ public readonly partial struct AdaptiveCard
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Refresh, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Refresh, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1126,7 +1126,7 @@ public readonly partial struct AdaptiveCard
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Rtl, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Rtl, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1171,7 +1171,7 @@ public readonly partial struct AdaptiveCard
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.SelectAction, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SelectAction, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1207,7 +1207,7 @@ public readonly partial struct AdaptiveCard
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.SelectAction, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SelectAction, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1252,7 +1252,7 @@ public readonly partial struct AdaptiveCard
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Speak, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Speak, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1297,7 +1297,7 @@ public readonly partial struct AdaptiveCard
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Type, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Type, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1342,7 +1342,7 @@ public readonly partial struct AdaptiveCard
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.Version, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Version, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1387,7 +1387,7 @@ public readonly partial struct AdaptiveCard
             else
             {
                 // We are going to insert the new value
-                value.AddAsProperty(JsonPropertyNamesEscaped.VerticalContentAlignment, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.VerticalContentAlignment, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -1594,6 +1594,24 @@ public readonly partial struct AdaptiveCard
             }
         }
 
+        internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+        {
+            switch(_kind)
+            {
+                case Kind.Unknown:
+                    break;
+                case Kind.JsonElement:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                    break;
+                case Kind.Builder:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
+                    break;
+                default:
+                    Debug.Fail("Unexpected Kind");
+                    break;
+            }
+        }
+
         internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
         {
             switch(_kind)
@@ -1695,6 +1713,24 @@ public readonly partial struct AdaptiveCard
             }
         }
 
+        internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+        {
+            switch(_kind)
+            {
+                case Kind.Unknown:
+                    break;
+                case Kind.Source:
+                    _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                    break;
+                case Kind.Builder:
+                    valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
+                    break;
+                default:
+                    Debug.Fail("Unexpected Kind");
+                    break;
+            }
+        }
+
         internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
         {
             switch(_kind)
@@ -1789,21 +1825,21 @@ public readonly partial struct AdaptiveCard
             in Corvus.Ui5ManifestBenchmark.Current.JsonString.Source version = default,
             in Corvus.Ui5ManifestBenchmark.Current.VerticalContentAlignment.Source verticalContentAlignment = default)
         {
-            schema.AddAsProperty(JsonPropertyNamesEscaped.Schema, ref builder, escapeName: false);
-            actions.AddAsProperty(JsonPropertyNamesEscaped.Actions, ref builder, escapeName: false);
-            authentication.AddAsProperty(JsonPropertyNamesEscaped.Authentication, ref builder, escapeName: false);
-            backgroundImage.AddAsProperty(JsonPropertyNamesEscaped.BackgroundImage, ref builder, escapeName: false);
-            body.AddAsProperty(JsonPropertyNamesEscaped.Body, ref builder, escapeName: false);
-            fallbackText.AddAsProperty(JsonPropertyNamesEscaped.FallbackText, ref builder, escapeName: false);
-            lang.AddAsProperty(JsonPropertyNamesEscaped.Lang, ref builder, escapeName: false);
-            minHeight.AddAsProperty(JsonPropertyNamesEscaped.MinHeight, ref builder, escapeName: false);
-            refresh.AddAsProperty(JsonPropertyNamesEscaped.Refresh, ref builder, escapeName: false);
-            rtl.AddAsProperty(JsonPropertyNamesEscaped.Rtl, ref builder, escapeName: false);
-            selectAction.AddAsProperty(JsonPropertyNamesEscaped.SelectAction, ref builder, escapeName: false);
-            speak.AddAsProperty(JsonPropertyNamesEscaped.Speak, ref builder, escapeName: false);
-            type.AddAsProperty(JsonPropertyNamesEscaped.Type, ref builder, escapeName: false);
-            version.AddAsProperty(JsonPropertyNamesEscaped.Version, ref builder, escapeName: false);
-            verticalContentAlignment.AddAsProperty(JsonPropertyNamesEscaped.VerticalContentAlignment, ref builder, escapeName: false);
+            schema.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Schema, ref builder);
+            actions.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Actions, ref builder);
+            authentication.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Authentication, ref builder);
+            backgroundImage.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.BackgroundImage, ref builder);
+            body.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Body, ref builder);
+            fallbackText.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.FallbackText, ref builder);
+            lang.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Lang, ref builder);
+            minHeight.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MinHeight, ref builder);
+            refresh.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Refresh, ref builder);
+            rtl.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Rtl, ref builder);
+            selectAction.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SelectAction, ref builder);
+            speak.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Speak, ref builder);
+            type.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Type, ref builder);
+            version.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Version, ref builder);
+            verticalContentAlignment.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.VerticalContentAlignment, ref builder);
         }
 
         /// <summary>
@@ -1854,21 +1890,21 @@ public readonly partial struct AdaptiveCard
         where TContext : allows ref struct
         #endif
         {
-            schema.AddAsProperty(JsonPropertyNamesEscaped.Schema, ref builder, escapeName: false);
-            actions.AddAsProperty(JsonPropertyNamesEscaped.Actions, ref builder, escapeName: false);
-            authentication.AddAsProperty(JsonPropertyNamesEscaped.Authentication, ref builder, escapeName: false);
-            backgroundImage.AddAsProperty(JsonPropertyNamesEscaped.BackgroundImage, ref builder, escapeName: false);
-            body.AddAsProperty(JsonPropertyNamesEscaped.Body, ref builder, escapeName: false);
-            fallbackText.AddAsProperty(JsonPropertyNamesEscaped.FallbackText, ref builder, escapeName: false);
-            lang.AddAsProperty(JsonPropertyNamesEscaped.Lang, ref builder, escapeName: false);
-            minHeight.AddAsProperty(JsonPropertyNamesEscaped.MinHeight, ref builder, escapeName: false);
-            refresh.AddAsProperty(JsonPropertyNamesEscaped.Refresh, ref builder, escapeName: false);
-            rtl.AddAsProperty(JsonPropertyNamesEscaped.Rtl, ref builder, escapeName: false);
-            selectAction.AddAsProperty(JsonPropertyNamesEscaped.SelectAction, ref builder, escapeName: false);
-            speak.AddAsProperty(JsonPropertyNamesEscaped.Speak, ref builder, escapeName: false);
-            type.AddAsProperty(JsonPropertyNamesEscaped.Type, ref builder, escapeName: false);
-            version.AddAsProperty(JsonPropertyNamesEscaped.Version, ref builder, escapeName: false);
-            verticalContentAlignment.AddAsProperty(JsonPropertyNamesEscaped.VerticalContentAlignment, ref builder, escapeName: false);
+            schema.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Schema, ref builder);
+            actions.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Actions, ref builder);
+            authentication.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Authentication, ref builder);
+            backgroundImage.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.BackgroundImage, ref builder);
+            body.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Body, ref builder);
+            fallbackText.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.FallbackText, ref builder);
+            lang.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Lang, ref builder);
+            minHeight.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.MinHeight, ref builder);
+            refresh.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Refresh, ref builder);
+            rtl.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Rtl, ref builder);
+            selectAction.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SelectAction, ref builder);
+            speak.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Speak, ref builder);
+            type.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Type, ref builder);
+            version.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Version, ref builder);
+            verticalContentAlignment.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.VerticalContentAlignment, ref builder);
         }
 
         /// <summary>

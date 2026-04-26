@@ -87,24 +87,6 @@ public readonly partial struct SemanticReleaseSchema
                 [DebuggerBrowsable(DebuggerBrowsableState.Never)]
                 private JsonTokenType TokenType => _parent?.GetJsonTokenType(_idx) ?? JsonTokenType.None;
 
-                /// <summary>
-                /// Conversion to <see cref="Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.PluginsEntityArray.PluginsEntity.AnyOf1Array"/>.
-                /// </summary>
-                /// <param name="value">The value from which to convert.</param>
-                public static explicit operator Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.PluginsEntityArray.PluginsEntity.AnyOf1Array.Mutable(Mutable value)
-                {
-                    return Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.PluginsEntityArray.PluginsEntity.AnyOf1Array.Mutable.From(value);
-                }
-
-                /// <summary>
-                /// Conversion from <see cref="Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.PluginsEntityArray.PluginsEntity.AnyOf1Array"/>.
-                /// </summary>
-                /// <param name="value">The value from which to convert.</param>
-                public static implicit operator Mutable(Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.PluginsEntityArray.PluginsEntity.AnyOf1Array.Mutable value)
-                {
-                    return From(value);
-                }
-
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
                 public static explicit operator string(Mutable value) => value._parent.GetString(value._idx, JsonTokenType.String) ?? throw new FormatException();
 
@@ -828,13 +810,13 @@ public readonly partial struct SemanticReleaseSchema
                 /// <typeparam name="TResult">The result of calling the match function.</typeparam>
                 /// <param name="context">The context to pass to the match function.</param>
                 /// <param name="matchJsonString">Match a <see cref="Corvus.SemanticReleaseBenchmark.Current.JsonString"/>.</param>
-                /// <param name="matchAnyOf1Array">Match a <see cref="Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.PluginsEntityArray.PluginsEntity.AnyOf1Array"/>.</param>
+                /// <param name="matchJsonArray">Match a <see cref="Corvus.SemanticReleaseBenchmark.Current.JsonArray"/>.</param>
                 /// <param name="defaultMatch">Match any other value.</param>
                 /// <returns>An instance of the value returned by the match function.</returns>
                 public TResult Match<TContext, TResult>(
                     in TContext context,
                     Matcher<Corvus.SemanticReleaseBenchmark.Current.JsonString, TContext, TResult> matchJsonString,
-                    Matcher<Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.PluginsEntityArray.PluginsEntity.AnyOf1Array, TContext, TResult> matchAnyOf1Array,
+                    Matcher<Corvus.SemanticReleaseBenchmark.Current.JsonArray, TContext, TResult> matchJsonArray,
                     Matcher<Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.PluginsEntityArray.PluginsEntity.Mutable, TContext, TResult> defaultMatch)
 #if NET9_0_OR_GREATER
                 where TContext : allows ref struct
@@ -845,9 +827,9 @@ public readonly partial struct SemanticReleaseSchema
                         return matchJsonString(Corvus.SemanticReleaseBenchmark.Current.JsonString.Mutable.From(this), context);
                     }
 
-                    if (Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.PluginsEntityArray.PluginsEntity.AnyOf1Array.JsonSchema.Evaluate(_parent, _idx))
+                    if (Corvus.SemanticReleaseBenchmark.Current.JsonArray.JsonSchema.Evaluate(_parent, _idx))
                     {
-                        return matchAnyOf1Array(Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.PluginsEntityArray.PluginsEntity.AnyOf1Array.Mutable.From(this), context);
+                        return matchJsonArray(Corvus.SemanticReleaseBenchmark.Current.JsonArray.Mutable.From(this), context);
                     }
 
                     return defaultMatch(this, context);
@@ -858,12 +840,12 @@ public readonly partial struct SemanticReleaseSchema
                 /// </summary>
                 /// <typeparam name="TResult">The result of calling the match function.</typeparam>
                 /// <param name="matchJsonString">Match a <see cref="Corvus.SemanticReleaseBenchmark.Current.JsonString"/>.</param>
-                /// <param name="matchAnyOf1Array">Match a <see cref="Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.PluginsEntityArray.PluginsEntity.AnyOf1Array"/>.</param>
+                /// <param name="matchJsonArray">Match a <see cref="Corvus.SemanticReleaseBenchmark.Current.JsonArray"/>.</param>
                 /// <param name="defaultMatch">Match any other value.</param>
                 /// <returns>An instance of the value returned by the match function.</returns>
                 public TResult Match<TResult>(
                     Matcher<Corvus.SemanticReleaseBenchmark.Current.JsonString, TResult> matchJsonString,
-                    Matcher<Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.PluginsEntityArray.PluginsEntity.AnyOf1Array, TResult> matchAnyOf1Array,
+                    Matcher<Corvus.SemanticReleaseBenchmark.Current.JsonArray, TResult> matchJsonArray,
                     Matcher<Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.PluginsEntityArray.PluginsEntity.Mutable, TResult> defaultMatch)
                 {
                     if (Corvus.SemanticReleaseBenchmark.Current.JsonString.JsonSchema.Evaluate(_parent, _idx))
@@ -871,9 +853,9 @@ public readonly partial struct SemanticReleaseSchema
                         return matchJsonString(Corvus.SemanticReleaseBenchmark.Current.JsonString.Mutable.From(this));
                     }
 
-                    if (Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.PluginsEntityArray.PluginsEntity.AnyOf1Array.JsonSchema.Evaluate(_parent, _idx))
+                    if (Corvus.SemanticReleaseBenchmark.Current.JsonArray.JsonSchema.Evaluate(_parent, _idx))
                     {
-                        return matchAnyOf1Array(Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.PluginsEntityArray.PluginsEntity.AnyOf1Array.Mutable.From(this));
+                        return matchJsonArray(Corvus.SemanticReleaseBenchmark.Current.JsonArray.Mutable.From(this));
                     }
 
                     return defaultMatch(this);
@@ -897,15 +879,15 @@ public readonly partial struct SemanticReleaseSchema
                 }
 
                 /// <summary>
-                /// Gets the value as a <see cref="Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.PluginsEntityArray.PluginsEntity.AnyOf1Array" />.
+                /// Gets the value as a <see cref="Corvus.SemanticReleaseBenchmark.Current.JsonArray" />.
                 /// </summary>
                 /// <param name="result">The result of the conversions.</param>
                 /// <returns><see langword="true" /> if the conversion was valid.</returns>
-                public bool TryGetAsAnyOf1Array(out Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.PluginsEntityArray.PluginsEntity.AnyOf1Array result)
+                public bool TryGetAsJsonArray(out Corvus.SemanticReleaseBenchmark.Current.JsonArray result)
                 {
-                    if (Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.PluginsEntityArray.PluginsEntity.AnyOf1Array.JsonSchema.Evaluate(_parent, _idx))
+                    if (Corvus.SemanticReleaseBenchmark.Current.JsonArray.JsonSchema.Evaluate(_parent, _idx))
                     {
-                        result = Corvus.SemanticReleaseBenchmark.Current.SemanticReleaseSchema.PluginsEntityArray.PluginsEntity.AnyOf1Array.Mutable.From(this);
+                        result = Corvus.SemanticReleaseBenchmark.Current.JsonArray.Mutable.From(this);
                         return true;
                     }
 
@@ -1004,6 +986,36 @@ public readonly partial struct SemanticReleaseSchema
                             break;
                         case Kind.Builder:
                             valueBuilder.AddProperty(utf8Name, _arrayBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
+                            break;
+                        default:
+                            Debug.Fail("Unexpected Kind");
+                            break;
+                    }
+                }
+
+                internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+                {
+                    switch(_kind)
+                    {
+                        case Kind.Unknown:
+                            break;
+                        case Kind.JsonElement:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                            break;
+                        case Kind.RawUtf8StringRequiresUnescaping:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, _utf8Backing, escapeValue: false, valueRequiresUnescaping: true);
+                            break;
+                        case Kind.RawUtf8StringNotRequiresUnescaping:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, _utf8Backing, escapeValue: false, valueRequiresUnescaping: false);
+                            break;
+                        case Kind.Utf8String:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, _utf8Backing, escapeValue: true, valueRequiresUnescaping: false);
+                            break;
+                        case Kind.Utf16String:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, _utf16Backing);
+                            break;
+                        case Kind.Builder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, _arrayBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                             break;
                         default:
                             Debug.Fail("Unexpected Kind");
@@ -1141,6 +1153,24 @@ public readonly partial struct SemanticReleaseSchema
                             break;
                         case Kind.Builder:
                             valueBuilder.AddProperty(utf8Name, BuildWithContext.Create(_context, _arrayBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o), escapeName, nameRequiresUnescaping);
+                            break;
+                        default:
+                            Debug.Fail("Unexpected Kind");
+                            break;
+                    }
+                }
+
+                internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+                {
+                    switch(_kind)
+                    {
+                        case Kind.Unknown:
+                            break;
+                        case Kind.Source:
+                            _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                            break;
+                        case Kind.Builder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _arrayBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                             break;
                         default:
                             Debug.Fail("Unexpected Kind");

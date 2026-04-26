@@ -1779,6 +1779,81 @@ public readonly partial struct ExtendableElement
                 }
             }
 
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.JsonElement:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                        break;
+                    case Kind.RawUtf8StringRequiresUnescaping:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _utf8Backing, escapeValue: false, valueRequiresUnescaping: true);
+                        break;
+                    case Kind.RawUtf8StringNotRequiresUnescaping:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _utf8Backing, escapeValue: false, valueRequiresUnescaping: false);
+                        break;
+                    case Kind.Utf8String:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _utf8Backing, escapeValue: true, valueRequiresUnescaping: false);
+                        break;
+                    case Kind.Utf16String:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _utf16Backing);
+                        break;
+                    case Kind.ImplementationsOfElementRequiredTypeBuilder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _implementationsOfElementRequiredTypeBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.ImplementationsOfElementRequiredType1Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _implementationsOfElementRequiredType1BuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType1.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.ImplementationsOfElementRequiredType10Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _implementationsOfElementRequiredType10BuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType10.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.ImplementationsOfElementRequiredType11Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _implementationsOfElementRequiredType11BuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType11.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.ImplementationsOfElementRequiredType12Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _implementationsOfElementRequiredType12BuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType12.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.ImplementationsOfElementRequiredType13Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _implementationsOfElementRequiredType13BuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType13.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.ImplementationsOfElementRequiredType14Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _implementationsOfElementRequiredType14BuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType14.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.ImplementationsOfElementRequiredType2Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _implementationsOfElementRequiredType2BuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType2.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.ImplementationsOfElementRequiredType3Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _implementationsOfElementRequiredType3BuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType3.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.ImplementationsOfElementRequiredType4Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _implementationsOfElementRequiredType4BuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType4.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.ImplementationsOfElementRequiredType5Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _implementationsOfElementRequiredType5BuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType5.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.ImplementationsOfElementRequiredType6Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _implementationsOfElementRequiredType6BuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType6.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.ImplementationsOfElementRequiredType7Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _implementationsOfElementRequiredType7BuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType7.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.ImplementationsOfElementRequiredType8Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _implementationsOfElementRequiredType8BuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType8.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.ImplementationsOfElementRequiredType9Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _implementationsOfElementRequiredType9BuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType9.Builder.BuildValue(b, ref o));
+                        break;
+                    case Kind.RequiredTypeBuilder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _requiredTypeBuilderInstance!, static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.RequiredType.Builder.BuildValue(b, ref o));
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
             internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
             {
                 switch(_kind)
@@ -2149,6 +2224,69 @@ public readonly partial struct ExtendableElement
                         break;
                     case Kind.RequiredTypeBuilder:
                         valueBuilder.AddProperty(utf8Name, BuildWithContext.Create(_context, _requiredTypeBuilderInstance!), static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.RequiredType.Builder.BuildValue(b.Context, b.Build, ref o), escapeName, nameRequiresUnescaping);
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.Source:
+                        _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                        break;
+                    case Kind.ImplementationsOfElementRequiredTypeBuilder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _implementationsOfElementRequiredTypeBuilderInstance!), static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType.Builder.BuildValue(b.Context, b.Build, ref o));
+                        break;
+                    case Kind.ImplementationsOfElementRequiredType1Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _implementationsOfElementRequiredType1BuilderInstance!), static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType1.Builder.BuildValue(b.Context, b.Build, ref o));
+                        break;
+                    case Kind.ImplementationsOfElementRequiredType10Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _implementationsOfElementRequiredType10BuilderInstance!), static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType10.Builder.BuildValue(b.Context, b.Build, ref o));
+                        break;
+                    case Kind.ImplementationsOfElementRequiredType11Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _implementationsOfElementRequiredType11BuilderInstance!), static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType11.Builder.BuildValue(b.Context, b.Build, ref o));
+                        break;
+                    case Kind.ImplementationsOfElementRequiredType12Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _implementationsOfElementRequiredType12BuilderInstance!), static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType12.Builder.BuildValue(b.Context, b.Build, ref o));
+                        break;
+                    case Kind.ImplementationsOfElementRequiredType13Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _implementationsOfElementRequiredType13BuilderInstance!), static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType13.Builder.BuildValue(b.Context, b.Build, ref o));
+                        break;
+                    case Kind.ImplementationsOfElementRequiredType14Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _implementationsOfElementRequiredType14BuilderInstance!), static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType14.Builder.BuildValue(b.Context, b.Build, ref o));
+                        break;
+                    case Kind.ImplementationsOfElementRequiredType2Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _implementationsOfElementRequiredType2BuilderInstance!), static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType2.Builder.BuildValue(b.Context, b.Build, ref o));
+                        break;
+                    case Kind.ImplementationsOfElementRequiredType3Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _implementationsOfElementRequiredType3BuilderInstance!), static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType3.Builder.BuildValue(b.Context, b.Build, ref o));
+                        break;
+                    case Kind.ImplementationsOfElementRequiredType4Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _implementationsOfElementRequiredType4BuilderInstance!), static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType4.Builder.BuildValue(b.Context, b.Build, ref o));
+                        break;
+                    case Kind.ImplementationsOfElementRequiredType5Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _implementationsOfElementRequiredType5BuilderInstance!), static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType5.Builder.BuildValue(b.Context, b.Build, ref o));
+                        break;
+                    case Kind.ImplementationsOfElementRequiredType6Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _implementationsOfElementRequiredType6BuilderInstance!), static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType6.Builder.BuildValue(b.Context, b.Build, ref o));
+                        break;
+                    case Kind.ImplementationsOfElementRequiredType7Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _implementationsOfElementRequiredType7BuilderInstance!), static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType7.Builder.BuildValue(b.Context, b.Build, ref o));
+                        break;
+                    case Kind.ImplementationsOfElementRequiredType8Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _implementationsOfElementRequiredType8BuilderInstance!), static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType8.Builder.BuildValue(b.Context, b.Build, ref o));
+                        break;
+                    case Kind.ImplementationsOfElementRequiredType9Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _implementationsOfElementRequiredType9BuilderInstance!), static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.ImplementationsOfElementRequiredType9.Builder.BuildValue(b.Context, b.Build, ref o));
+                        break;
+                    case Kind.RequiredTypeBuilder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _requiredTypeBuilderInstance!), static (in b, ref o) => Corvus.Ui5ManifestBenchmark.Current.ImplementationsOfElement.RequiredType.Builder.BuildValue(b.Context, b.Build, ref o));
                         break;
                     default:
                         Debug.Fail("Unexpected Kind");

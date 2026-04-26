@@ -78,11 +78,11 @@ public readonly partial struct VercelSchema
             /// Optionally, an object including arbitrary metadata to be passed to the Builder
             /// </para>
             /// </remarks>
-            public Corvus.VercelBenchmark.Current.VercelSchema.RequiredUseArray.RequiredUse.ConfigEntity Config
+            public Corvus.VercelBenchmark.Current.JsonObject Config
             {
                 get
                 {
-                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ConfigUtf8, out Corvus.VercelBenchmark.Current.VercelSchema.RequiredUseArray.RequiredUse.ConfigEntity value))
+                    if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ConfigUtf8, out Corvus.VercelBenchmark.Current.JsonObject value))
                     {
                         return value;
                     }
@@ -607,6 +607,28 @@ public readonly partial struct VercelSchema
                 /// Gets the escaped UTF-8 JSON property name for <see cref="Use"/>.
                 /// </summary>
                 public static ReadOnlySpan<byte> Use => "use"u8;
+            }
+
+            /// <summary>
+            /// Provides pre-baked property name blobs for fast builder property storage.
+            /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
+            /// </summary>
+            private static class JsonPropertyNamesPrebaked
+            {
+                /// <summary>
+                /// Gets the pre-baked property name blob for <see cref="Config"/>.
+                /// </summary>
+                public static ReadOnlySpan<byte> Config => [0x85, 0x00, 0x00, 0x00, 0x22, 0x63, 0x6F, 0x6E, 0x66, 0x69, 0x67, 0x22];
+
+                /// <summary>
+                /// Gets the pre-baked property name blob for <see cref="Src"/>.
+                /// </summary>
+                public static ReadOnlySpan<byte> Src => [0x55, 0x00, 0x00, 0x00, 0x22, 0x73, 0x72, 0x63, 0x22];
+
+                /// <summary>
+                /// Gets the pre-baked property name blob for <see cref="Use"/>.
+                /// </summary>
+                public static ReadOnlySpan<byte> Use => [0x55, 0x00, 0x00, 0x00, 0x22, 0x75, 0x73, 0x65, 0x22];
             }
         }
     }

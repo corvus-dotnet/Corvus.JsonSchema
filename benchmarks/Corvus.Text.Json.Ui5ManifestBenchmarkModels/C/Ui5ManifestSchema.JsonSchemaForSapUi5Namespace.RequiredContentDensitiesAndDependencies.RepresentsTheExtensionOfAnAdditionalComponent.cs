@@ -109,11 +109,11 @@ public readonly partial struct Ui5ManifestSchema
                 /// Represents extensions of the component
                 /// </para>
                 /// </remarks>
-                public Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.RepresentsTheExtensionOfAnAdditionalComponent.RepresentsExtensionsOfTheComponent Extensions
+                public Corvus.Ui5ManifestBenchmark.Current.JsonObject Extensions
                 {
                     get
                     {
-                        if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ExtensionsUtf8, out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.JsonSchemaForSapUi5Namespace.RequiredContentDensitiesAndDependencies.RepresentsTheExtensionOfAnAdditionalComponent.RepresentsExtensionsOfTheComponent value))
+                        if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ExtensionsUtf8, out Corvus.Ui5ManifestBenchmark.Current.JsonObject value))
                         {
                             return value;
                         }
@@ -614,6 +614,28 @@ public readonly partial struct Ui5ManifestSchema
                     /// Gets the escaped UTF-8 JSON property name for <see cref="MinVersion"/>.
                     /// </summary>
                     public static ReadOnlySpan<byte> MinVersion => "minVersion"u8;
+                }
+
+                /// <summary>
+                /// Provides pre-baked property name blobs for fast builder property storage.
+                /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
+                /// </summary>
+                private static class JsonPropertyNamesPrebaked
+                {
+                    /// <summary>
+                    /// Gets the pre-baked property name blob for <see cref="Component"/>.
+                    /// </summary>
+                    public static ReadOnlySpan<byte> Component => [0xB5, 0x00, 0x00, 0x00, 0x22, 0x63, 0x6F, 0x6D, 0x70, 0x6F, 0x6E, 0x65, 0x6E, 0x74, 0x22];
+
+                    /// <summary>
+                    /// Gets the pre-baked property name blob for <see cref="Extensions"/>.
+                    /// </summary>
+                    public static ReadOnlySpan<byte> Extensions => [0xC5, 0x00, 0x00, 0x00, 0x22, 0x65, 0x78, 0x74, 0x65, 0x6E, 0x73, 0x69, 0x6F, 0x6E, 0x73, 0x22];
+
+                    /// <summary>
+                    /// Gets the pre-baked property name blob for <see cref="MinVersion"/>.
+                    /// </summary>
+                    public static ReadOnlySpan<byte> MinVersion => [0xC5, 0x00, 0x00, 0x00, 0x22, 0x6D, 0x69, 0x6E, 0x56, 0x65, 0x72, 0x73, 0x69, 0x6F, 0x6E, 0x22];
                 }
             }
         }

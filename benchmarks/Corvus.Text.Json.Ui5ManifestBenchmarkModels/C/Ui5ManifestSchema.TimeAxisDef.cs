@@ -172,11 +172,11 @@ public readonly partial struct Ui5ManifestSchema
         /// Plot area is a parent property which defines multiple other properties for smoothness and marker size
         /// </para>
         /// </remarks>
-        public Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.LevelsDef Levels
+        public Corvus.Ui5ManifestBenchmark.Current.JsonArray Levels
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.LevelsUtf8, out Corvus.Ui5ManifestBenchmark.Current.Ui5ManifestSchema.LevelsDef value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.LevelsUtf8, out Corvus.Ui5ManifestBenchmark.Current.JsonArray value))
                 {
                     return value;
                 }
@@ -636,6 +636,18 @@ public readonly partial struct Ui5ManifestSchema
             /// Gets the escaped UTF-8 JSON property name for <see cref="Levels"/>.
             /// </summary>
             public static ReadOnlySpan<byte> Levels => "levels"u8;
+        }
+
+        /// <summary>
+        /// Provides pre-baked property name blobs for fast builder property storage.
+        /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
+        /// </summary>
+        private static class JsonPropertyNamesPrebaked
+        {
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Levels"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Levels => [0x85, 0x00, 0x00, 0x00, 0x22, 0x6C, 0x65, 0x76, 0x65, 0x6C, 0x73, 0x22];
         }
     }
 }

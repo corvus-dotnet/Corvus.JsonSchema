@@ -41,17 +41,17 @@ public readonly partial struct GeoJsonSchema
                 /// <summary>
                 /// Gets a provider for the schema location from which this type was generated.
                 /// </summary>
-                public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("https://geojson.org/schema/GeoJSON.json#/oneOf/7/properties/properties"u8, buffer, out written);
+                public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/oneOf/7/properties/properties"u8, buffer, out written);
 
                 /// <summary>
                 /// Gets the schema location from which this type was generated.
                 /// </summary>
-                public const string SchemaLocation = "https://geojson.org/schema/GeoJSON.json#/oneOf/7/properties/properties";
+                public const string SchemaLocation = "/oneOf/7/properties/properties";
 
                 /// <summary>
                 /// Gets the schema location from which this type was generated as a UTF-8 string.
                 /// </summary>
-                public static ReadOnlySpan<byte> SchemaLocationUtf8 => "https://geojson.org/schema/GeoJSON.json#/oneOf/7/properties/properties"u8;
+                public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/oneOf/7/properties/properties"u8;
                 private static readonly JsonSchemaPathProvider OneOf0SchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/oneOf/0"u8, buffer, out written);
                 private static readonly JsonSchemaPathProvider OneOf1SchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/oneOf/1"u8, buffer, out written);
 
@@ -96,8 +96,8 @@ public readonly partial struct GeoJsonSchema
                     }
 
                     JsonSchemaContext oneOfContext1 =
-                        Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.PropertiesEntity.OneOf1Entity.JsonSchema.PushChildContext(parentDocument, parentIndex, ref context, schemaEvaluationPath: OneOf1SchemaEvaluationPath);
-                    Corvus.GeoJsonBenchmark.Current.GeoJsonSchema.GeoJsonFeature.PropertiesEntity.OneOf1Entity.JsonSchema.Evaluate(parentDocument, parentIndex, ref oneOfContext1);
+                        Corvus.GeoJsonBenchmark.Current.JsonObject.JsonSchema.PushChildContext(parentDocument, parentIndex, ref context, schemaEvaluationPath: OneOf1SchemaEvaluationPath);
+                    Corvus.GeoJsonBenchmark.Current.JsonObject.JsonSchema.Evaluate(parentDocument, parentIndex, ref oneOfContext1);
 
                     if (oneOfContext1.IsMatch)
                     {

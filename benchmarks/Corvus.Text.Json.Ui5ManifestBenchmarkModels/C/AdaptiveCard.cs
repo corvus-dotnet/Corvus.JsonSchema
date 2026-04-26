@@ -1032,4 +1032,86 @@ public readonly partial struct AdaptiveCard
         /// </summary>
         public static ReadOnlySpan<byte> VerticalContentAlignment => "verticalContentAlignment"u8;
     }
+
+    /// <summary>
+    /// Provides pre-baked property name blobs for fast builder property storage.
+    /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
+    /// </summary>
+    private static class JsonPropertyNamesPrebaked
+    {
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Schema"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Schema => [0x95, 0x00, 0x00, 0x00, 0x22, 0x24, 0x73, 0x63, 0x68, 0x65, 0x6D, 0x61, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Actions"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Actions => [0x95, 0x00, 0x00, 0x00, 0x22, 0x61, 0x63, 0x74, 0x69, 0x6F, 0x6E, 0x73, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Authentication"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Authentication => [0x05, 0x01, 0x00, 0x00, 0x22, 0x61, 0x75, 0x74, 0x68, 0x65, 0x6E, 0x74, 0x69, 0x63, 0x61, 0x74, 0x69, 0x6F, 0x6E, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="BackgroundImage"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> BackgroundImage => [0x15, 0x01, 0x00, 0x00, 0x22, 0x62, 0x61, 0x63, 0x6B, 0x67, 0x72, 0x6F, 0x75, 0x6E, 0x64, 0x49, 0x6D, 0x61, 0x67, 0x65, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Body"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Body => [0x65, 0x00, 0x00, 0x00, 0x22, 0x62, 0x6F, 0x64, 0x79, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="FallbackText"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> FallbackText => [0xE5, 0x00, 0x00, 0x00, 0x22, 0x66, 0x61, 0x6C, 0x6C, 0x62, 0x61, 0x63, 0x6B, 0x54, 0x65, 0x78, 0x74, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Lang"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Lang => [0x65, 0x00, 0x00, 0x00, 0x22, 0x6C, 0x61, 0x6E, 0x67, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="MinHeight"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> MinHeight => [0xB5, 0x00, 0x00, 0x00, 0x22, 0x6D, 0x69, 0x6E, 0x48, 0x65, 0x69, 0x67, 0x68, 0x74, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Refresh"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Refresh => [0x95, 0x00, 0x00, 0x00, 0x22, 0x72, 0x65, 0x66, 0x72, 0x65, 0x73, 0x68, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Rtl"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Rtl => [0x55, 0x00, 0x00, 0x00, 0x22, 0x72, 0x74, 0x6C, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="SelectAction"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> SelectAction => [0xE5, 0x00, 0x00, 0x00, 0x22, 0x73, 0x65, 0x6C, 0x65, 0x63, 0x74, 0x41, 0x63, 0x74, 0x69, 0x6F, 0x6E, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Speak"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Speak => [0x75, 0x00, 0x00, 0x00, 0x22, 0x73, 0x70, 0x65, 0x61, 0x6B, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Type"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Type => [0x65, 0x00, 0x00, 0x00, 0x22, 0x74, 0x79, 0x70, 0x65, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Version"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Version => [0x95, 0x00, 0x00, 0x00, 0x22, 0x76, 0x65, 0x72, 0x73, 0x69, 0x6F, 0x6E, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="VerticalContentAlignment"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> VerticalContentAlignment => [0xA5, 0x01, 0x00, 0x00, 0x22, 0x76, 0x65, 0x72, 0x74, 0x69, 0x63, 0x61, 0x6C, 0x43, 0x6F, 0x6E, 0x74, 0x65, 0x6E, 0x74, 0x41, 0x6C, 0x69, 0x67, 0x6E, 0x6D, 0x65, 0x6E, 0x74, 0x22];
+    }
 }

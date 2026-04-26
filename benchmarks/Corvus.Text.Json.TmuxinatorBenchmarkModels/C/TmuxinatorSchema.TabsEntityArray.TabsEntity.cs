@@ -207,24 +207,6 @@ public readonly partial struct TmuxinatorSchema
             [DebuggerBrowsable(DebuggerBrowsableState.Never)]
             private JsonTokenType TokenType => _parent?.GetJsonTokenType(_idx) ?? JsonTokenType.None;
 
-            /// <summary>
-            /// Conversion to <see cref="Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.TabsEntityArray.TabsEntity.OneOf1Entity"/>.
-            /// </summary>
-            /// <param name="value">The value from which to convert.</param>
-            public static explicit operator Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.TabsEntityArray.TabsEntity.OneOf1Entity(TabsEntity value)
-            {
-                return Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.TabsEntityArray.TabsEntity.OneOf1Entity.From(value);
-            }
-
-            /// <summary>
-            /// Conversion from <see cref="Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.TabsEntityArray.TabsEntity.OneOf1Entity"/>.
-            /// </summary>
-            /// <param name="value">The value from which to convert.</param>
-            public static implicit operator TabsEntity(Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.TabsEntityArray.TabsEntity.OneOf1Entity value)
-            {
-                return From(value);
-            }
-
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static explicit operator string(TabsEntity value) => value._parent.GetString(value._idx, JsonTokenType.String) ?? throw new FormatException();
 
@@ -697,15 +679,15 @@ public readonly partial struct TmuxinatorSchema
             }
 
             /// <summary>
-            /// Gets the value as a <see cref="Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.TabsEntityArray.TabsEntity.OneOf1Entity" />.
+            /// Gets the value as a <see cref="Corvus.TmuxinatorBenchmark.Current.JsonObject" />.
             /// </summary>
             /// <param name="result">The result of the conversions.</param>
             /// <returns><see langword="true" /> if the conversion was valid.</returns>
-            public bool TryGetAsOneOf1Entity(out Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.TabsEntityArray.TabsEntity.OneOf1Entity result)
+            public bool TryGetAsJsonObject(out Corvus.TmuxinatorBenchmark.Current.JsonObject result)
             {
-                if (Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.TabsEntityArray.TabsEntity.OneOf1Entity.JsonSchema.Evaluate(_parent, _idx))
+                if (Corvus.TmuxinatorBenchmark.Current.JsonObject.JsonSchema.Evaluate(_parent, _idx))
                 {
-                    result = Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.TabsEntityArray.TabsEntity.OneOf1Entity.From(this);
+                    result = Corvus.TmuxinatorBenchmark.Current.JsonObject.From(this);
                     return true;
                 }
 
@@ -720,13 +702,13 @@ public readonly partial struct TmuxinatorSchema
             /// <typeparam name="TResult">The result of calling the match function.</typeparam>
             /// <param name="context">The context to pass to the match function.</param>
             /// <param name="matchJsonString">Match a <see cref="Corvus.TmuxinatorBenchmark.Current.JsonString"/>.</param>
-            /// <param name="matchOneOf1Entity">Match a <see cref="Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.TabsEntityArray.TabsEntity.OneOf1Entity"/>.</param>
+            /// <param name="matchJsonObject">Match a <see cref="Corvus.TmuxinatorBenchmark.Current.JsonObject"/>.</param>
             /// <param name="defaultMatch">Match any other value.</param>
             /// <returns>An instance of the value returned by the match function.</returns>
             public TResult Match<TContext, TResult>(
                 in TContext context,
                 Matcher<Corvus.TmuxinatorBenchmark.Current.JsonString, TContext, TResult> matchJsonString,
-                Matcher<Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.TabsEntityArray.TabsEntity.OneOf1Entity, TContext, TResult> matchOneOf1Entity,
+                Matcher<Corvus.TmuxinatorBenchmark.Current.JsonObject, TContext, TResult> matchJsonObject,
                 Matcher<Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.TabsEntityArray.TabsEntity, TContext, TResult> defaultMatch)
 #if NET9_0_OR_GREATER
             where TContext : allows ref struct
@@ -737,9 +719,9 @@ public readonly partial struct TmuxinatorSchema
                     return matchJsonString(Corvus.TmuxinatorBenchmark.Current.JsonString.From(this), context);
                 }
 
-                if (Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.TabsEntityArray.TabsEntity.OneOf1Entity.JsonSchema.Evaluate(_parent, _idx))
+                if (Corvus.TmuxinatorBenchmark.Current.JsonObject.JsonSchema.Evaluate(_parent, _idx))
                 {
-                    return matchOneOf1Entity(Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.TabsEntityArray.TabsEntity.OneOf1Entity.From(this), context);
+                    return matchJsonObject(Corvus.TmuxinatorBenchmark.Current.JsonObject.From(this), context);
                 }
 
                 return defaultMatch(this, context);
@@ -750,12 +732,12 @@ public readonly partial struct TmuxinatorSchema
             /// </summary>
             /// <typeparam name="TResult">The result of calling the match function.</typeparam>
             /// <param name="matchJsonString">Match a <see cref="Corvus.TmuxinatorBenchmark.Current.JsonString"/>.</param>
-            /// <param name="matchOneOf1Entity">Match a <see cref="Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.TabsEntityArray.TabsEntity.OneOf1Entity"/>.</param>
+            /// <param name="matchJsonObject">Match a <see cref="Corvus.TmuxinatorBenchmark.Current.JsonObject"/>.</param>
             /// <param name="defaultMatch">Match any other value.</param>
             /// <returns>An instance of the value returned by the match function.</returns>
             public TResult Match<TResult>(
                 Matcher<Corvus.TmuxinatorBenchmark.Current.JsonString, TResult> matchJsonString,
-                Matcher<Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.TabsEntityArray.TabsEntity.OneOf1Entity, TResult> matchOneOf1Entity,
+                Matcher<Corvus.TmuxinatorBenchmark.Current.JsonObject, TResult> matchJsonObject,
                 Matcher<Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.TabsEntityArray.TabsEntity, TResult> defaultMatch)
             {
                 if (Corvus.TmuxinatorBenchmark.Current.JsonString.JsonSchema.Evaluate(_parent, _idx))
@@ -763,9 +745,9 @@ public readonly partial struct TmuxinatorSchema
                     return matchJsonString(Corvus.TmuxinatorBenchmark.Current.JsonString.From(this));
                 }
 
-                if (Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.TabsEntityArray.TabsEntity.OneOf1Entity.JsonSchema.Evaluate(_parent, _idx))
+                if (Corvus.TmuxinatorBenchmark.Current.JsonObject.JsonSchema.Evaluate(_parent, _idx))
                 {
-                    return matchOneOf1Entity(Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.TabsEntityArray.TabsEntity.OneOf1Entity.From(this));
+                    return matchJsonObject(Corvus.TmuxinatorBenchmark.Current.JsonObject.From(this));
                 }
 
                 return defaultMatch(this);

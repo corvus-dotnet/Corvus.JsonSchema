@@ -891,5 +891,57 @@ public readonly partial struct CspellSchema
             /// </summary>
             public static ReadOnlySpan<byte> UseCompounds => "useCompounds"u8;
         }
+
+        /// <summary>
+        /// Provides pre-baked property name blobs for fast builder property storage.
+        /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
+        /// </summary>
+        private static class JsonPropertyNamesPrebaked
+        {
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="AddWords"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> AddWords => [0xA5, 0x00, 0x00, 0x00, 0x22, 0x61, 0x64, 0x64, 0x57, 0x6F, 0x72, 0x64, 0x73, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Description"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Description => [0xD5, 0x00, 0x00, 0x00, 0x22, 0x64, 0x65, 0x73, 0x63, 0x72, 0x69, 0x70, 0x74, 0x69, 0x6F, 0x6E, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Name"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Name => [0x65, 0x00, 0x00, 0x00, 0x22, 0x6E, 0x61, 0x6D, 0x65, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="NoSuggest"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> NoSuggest => [0xB5, 0x00, 0x00, 0x00, 0x22, 0x6E, 0x6F, 0x53, 0x75, 0x67, 0x67, 0x65, 0x73, 0x74, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Path"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Path => [0x65, 0x00, 0x00, 0x00, 0x22, 0x70, 0x61, 0x74, 0x68, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="RepMap"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> RepMap => [0x85, 0x00, 0x00, 0x00, 0x22, 0x72, 0x65, 0x70, 0x4D, 0x61, 0x70, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Scope"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Scope => [0x75, 0x00, 0x00, 0x00, 0x22, 0x73, 0x63, 0x6F, 0x70, 0x65, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Type"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Type => [0x65, 0x00, 0x00, 0x00, 0x22, 0x74, 0x79, 0x70, 0x65, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="UseCompounds"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> UseCompounds => [0xE5, 0x00, 0x00, 0x00, 0x22, 0x75, 0x73, 0x65, 0x43, 0x6F, 0x6D, 0x70, 0x6F, 0x75, 0x6E, 0x64, 0x73, 0x22];
+        }
     }
 }

@@ -434,7 +434,7 @@ public readonly partial struct NestCliSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Assets, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Assets, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -470,7 +470,7 @@ public readonly partial struct NestCliSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Assets, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Assets, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -515,7 +515,7 @@ public readonly partial struct NestCliSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.BuilderValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.BuilderValue, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -551,7 +551,7 @@ public readonly partial struct NestCliSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.BuilderValue, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.BuilderValue, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -596,7 +596,7 @@ public readonly partial struct NestCliSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.DeleteOutDir, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DeleteOutDir, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -641,7 +641,7 @@ public readonly partial struct NestCliSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.ManualRestart, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ManualRestart, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -686,7 +686,7 @@ public readonly partial struct NestCliSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Plugins, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Plugins, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -722,7 +722,7 @@ public readonly partial struct NestCliSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Plugins, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Plugins, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -767,7 +767,7 @@ public readonly partial struct NestCliSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.TsConfigPath, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TsConfigPath, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -812,7 +812,7 @@ public readonly partial struct NestCliSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.TypeCheck, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TypeCheck, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -857,7 +857,7 @@ public readonly partial struct NestCliSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.WatchAssets, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.WatchAssets, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -902,7 +902,7 @@ public readonly partial struct NestCliSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.Webpack, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Webpack, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -947,7 +947,7 @@ public readonly partial struct NestCliSchema
                 else
                 {
                     // We are going to insert the new value
-                    value.AddAsProperty(JsonPropertyNamesEscaped.WebpackConfigPath, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                    value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.WebpackConfigPath, ref cvb);
                     int endIndex = _idx + _parent.GetDbSize(_idx, false);
                     _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                 }
@@ -1154,6 +1154,24 @@ public readonly partial struct NestCliSchema
                 }
             }
 
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.JsonElement:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                        break;
+                    case Kind.Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
             internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
             {
                 switch(_kind)
@@ -1255,6 +1273,24 @@ public readonly partial struct NestCliSchema
                 }
             }
 
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.Source:
+                        _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                        break;
+                    case Kind.Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
             internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
             {
                 switch(_kind)
@@ -1344,16 +1380,16 @@ public readonly partial struct NestCliSchema
                 in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.WebpackEntity.Source webpack = default,
                 in Corvus.NestCliBenchmark.Current.NestCliSchema.CompilerOptions.WebpackConfigPathEntity.Source webpackConfigPath = default)
             {
-                assets.AddAsProperty(JsonPropertyNamesEscaped.Assets, ref builder, escapeName: false);
-                builder1.AddAsProperty(JsonPropertyNamesEscaped.BuilderValue, ref builder, escapeName: false);
-                deleteOutDir.AddAsProperty(JsonPropertyNamesEscaped.DeleteOutDir, ref builder, escapeName: false);
-                manualRestart.AddAsProperty(JsonPropertyNamesEscaped.ManualRestart, ref builder, escapeName: false);
-                plugins.AddAsProperty(JsonPropertyNamesEscaped.Plugins, ref builder, escapeName: false);
-                tsConfigPath.AddAsProperty(JsonPropertyNamesEscaped.TsConfigPath, ref builder, escapeName: false);
-                typeCheck.AddAsProperty(JsonPropertyNamesEscaped.TypeCheck, ref builder, escapeName: false);
-                watchAssets.AddAsProperty(JsonPropertyNamesEscaped.WatchAssets, ref builder, escapeName: false);
-                webpack.AddAsProperty(JsonPropertyNamesEscaped.Webpack, ref builder, escapeName: false);
-                webpackConfigPath.AddAsProperty(JsonPropertyNamesEscaped.WebpackConfigPath, ref builder, escapeName: false);
+                assets.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Assets, ref builder);
+                builder1.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.BuilderValue, ref builder);
+                deleteOutDir.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DeleteOutDir, ref builder);
+                manualRestart.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ManualRestart, ref builder);
+                plugins.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Plugins, ref builder);
+                tsConfigPath.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TsConfigPath, ref builder);
+                typeCheck.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TypeCheck, ref builder);
+                watchAssets.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.WatchAssets, ref builder);
+                webpack.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Webpack, ref builder);
+                webpackConfigPath.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.WebpackConfigPath, ref builder);
             }
 
             /// <summary>
@@ -1394,16 +1430,16 @@ public readonly partial struct NestCliSchema
             where TContext : allows ref struct
             #endif
             {
-                assets.AddAsProperty(JsonPropertyNamesEscaped.Assets, ref builder, escapeName: false);
-                builder1.AddAsProperty(JsonPropertyNamesEscaped.BuilderValue, ref builder, escapeName: false);
-                deleteOutDir.AddAsProperty(JsonPropertyNamesEscaped.DeleteOutDir, ref builder, escapeName: false);
-                manualRestart.AddAsProperty(JsonPropertyNamesEscaped.ManualRestart, ref builder, escapeName: false);
-                plugins.AddAsProperty(JsonPropertyNamesEscaped.Plugins, ref builder, escapeName: false);
-                tsConfigPath.AddAsProperty(JsonPropertyNamesEscaped.TsConfigPath, ref builder, escapeName: false);
-                typeCheck.AddAsProperty(JsonPropertyNamesEscaped.TypeCheck, ref builder, escapeName: false);
-                watchAssets.AddAsProperty(JsonPropertyNamesEscaped.WatchAssets, ref builder, escapeName: false);
-                webpack.AddAsProperty(JsonPropertyNamesEscaped.Webpack, ref builder, escapeName: false);
-                webpackConfigPath.AddAsProperty(JsonPropertyNamesEscaped.WebpackConfigPath, ref builder, escapeName: false);
+                assets.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Assets, ref builder);
+                builder1.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.BuilderValue, ref builder);
+                deleteOutDir.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.DeleteOutDir, ref builder);
+                manualRestart.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.ManualRestart, ref builder);
+                plugins.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Plugins, ref builder);
+                tsConfigPath.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TsConfigPath, ref builder);
+                typeCheck.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.TypeCheck, ref builder);
+                watchAssets.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.WatchAssets, ref builder);
+                webpack.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Webpack, ref builder);
+                webpackConfigPath.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.WebpackConfigPath, ref builder);
             }
 
             /// <summary>

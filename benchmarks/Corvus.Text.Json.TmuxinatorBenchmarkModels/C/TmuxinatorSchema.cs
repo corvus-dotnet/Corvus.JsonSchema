@@ -99,11 +99,11 @@ public readonly partial struct TmuxinatorSchema
     /// <summary>
     /// Gets the (optional) <c>defaults</c> property.
     /// </summary>
-    public Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.DefaultsEntity Defaults
+    public Corvus.TmuxinatorBenchmark.Current.JsonObject Defaults
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.DefaultsUtf8, out Corvus.TmuxinatorBenchmark.Current.TmuxinatorSchema.DefaultsEntity value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.DefaultsUtf8, out Corvus.TmuxinatorBenchmark.Current.JsonObject value))
             {
                 return value;
             }
@@ -1324,5 +1324,132 @@ public readonly partial struct TmuxinatorSchema
         /// Gets the escaped UTF-8 JSON property name for <see cref="Windows"/>.
         /// </summary>
         public static ReadOnlySpan<byte> Windows => "windows"u8;
+    }
+
+    /// <summary>
+    /// Provides pre-baked property name blobs for fast builder property storage.
+    /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
+    /// </summary>
+    private static class JsonPropertyNamesPrebaked
+    {
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Attach"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Attach => [0x85, 0x00, 0x00, 0x00, 0x22, 0x61, 0x74, 0x74, 0x61, 0x63, 0x68, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="CliArgs"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> CliArgs => [0xA5, 0x00, 0x00, 0x00, 0x22, 0x63, 0x6C, 0x69, 0x5F, 0x61, 0x72, 0x67, 0x73, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Defaults"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Defaults => [0xA5, 0x00, 0x00, 0x00, 0x22, 0x64, 0x65, 0x66, 0x61, 0x75, 0x6C, 0x74, 0x73, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Name"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Name => [0x65, 0x00, 0x00, 0x00, 0x22, 0x6E, 0x61, 0x6D, 0x65, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="OnProjectExit"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> OnProjectExit => [0x15, 0x01, 0x00, 0x00, 0x22, 0x6F, 0x6E, 0x5F, 0x70, 0x72, 0x6F, 0x6A, 0x65, 0x63, 0x74, 0x5F, 0x65, 0x78, 0x69, 0x74, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="OnProjectFirstStart"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> OnProjectFirstStart => [0x85, 0x01, 0x00, 0x00, 0x22, 0x6F, 0x6E, 0x5F, 0x70, 0x72, 0x6F, 0x6A, 0x65, 0x63, 0x74, 0x5F, 0x66, 0x69, 0x72, 0x73, 0x74, 0x5F, 0x73, 0x74, 0x61, 0x72, 0x74, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="OnProjectRestart"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> OnProjectRestart => [0x45, 0x01, 0x00, 0x00, 0x22, 0x6F, 0x6E, 0x5F, 0x70, 0x72, 0x6F, 0x6A, 0x65, 0x63, 0x74, 0x5F, 0x72, 0x65, 0x73, 0x74, 0x61, 0x72, 0x74, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="OnProjectStart"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> OnProjectStart => [0x25, 0x01, 0x00, 0x00, 0x22, 0x6F, 0x6E, 0x5F, 0x70, 0x72, 0x6F, 0x6A, 0x65, 0x63, 0x74, 0x5F, 0x73, 0x74, 0x61, 0x72, 0x74, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="OnProjectStop"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> OnProjectStop => [0x15, 0x01, 0x00, 0x00, 0x22, 0x6F, 0x6E, 0x5F, 0x70, 0x72, 0x6F, 0x6A, 0x65, 0x63, 0x74, 0x5F, 0x73, 0x74, 0x6F, 0x70, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Post"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Post => [0x65, 0x00, 0x00, 0x00, 0x22, 0x70, 0x6F, 0x73, 0x74, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Pre"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Pre => [0x55, 0x00, 0x00, 0x00, 0x22, 0x70, 0x72, 0x65, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="PreWindow"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> PreWindow => [0xC5, 0x00, 0x00, 0x00, 0x22, 0x70, 0x72, 0x65, 0x5F, 0x77, 0x69, 0x6E, 0x64, 0x6F, 0x77, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="ProjectName"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> ProjectName => [0xE5, 0x00, 0x00, 0x00, 0x22, 0x70, 0x72, 0x6F, 0x6A, 0x65, 0x63, 0x74, 0x5F, 0x6E, 0x61, 0x6D, 0x65, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="ProjectRoot"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> ProjectRoot => [0xE5, 0x00, 0x00, 0x00, 0x22, 0x70, 0x72, 0x6F, 0x6A, 0x65, 0x63, 0x74, 0x5F, 0x72, 0x6F, 0x6F, 0x74, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Rbenv"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Rbenv => [0x75, 0x00, 0x00, 0x00, 0x22, 0x72, 0x62, 0x65, 0x6E, 0x76, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Root"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Root => [0x65, 0x00, 0x00, 0x00, 0x22, 0x72, 0x6F, 0x6F, 0x74, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="SocketName"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> SocketName => [0xD5, 0x00, 0x00, 0x00, 0x22, 0x73, 0x6F, 0x63, 0x6B, 0x65, 0x74, 0x5F, 0x6E, 0x61, 0x6D, 0x65, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="StartupPane"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> StartupPane => [0xE5, 0x00, 0x00, 0x00, 0x22, 0x73, 0x74, 0x61, 0x72, 0x74, 0x75, 0x70, 0x5F, 0x70, 0x61, 0x6E, 0x65, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="StartupWindow"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> StartupWindow => [0x05, 0x01, 0x00, 0x00, 0x22, 0x73, 0x74, 0x61, 0x72, 0x74, 0x75, 0x70, 0x5F, 0x77, 0x69, 0x6E, 0x64, 0x6F, 0x77, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Tabs"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Tabs => [0x65, 0x00, 0x00, 0x00, 0x22, 0x74, 0x61, 0x62, 0x73, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="TmuxCommand"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> TmuxCommand => [0xE5, 0x00, 0x00, 0x00, 0x22, 0x74, 0x6D, 0x75, 0x78, 0x5F, 0x63, 0x6F, 0x6D, 0x6D, 0x61, 0x6E, 0x64, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="TmuxDetached"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> TmuxDetached => [0xF5, 0x00, 0x00, 0x00, 0x22, 0x74, 0x6D, 0x75, 0x78, 0x5F, 0x64, 0x65, 0x74, 0x61, 0x63, 0x68, 0x65, 0x64, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="TmuxOptions"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> TmuxOptions => [0xE5, 0x00, 0x00, 0x00, 0x22, 0x74, 0x6D, 0x75, 0x78, 0x5F, 0x6F, 0x70, 0x74, 0x69, 0x6F, 0x6E, 0x73, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Windows"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Windows => [0x95, 0x00, 0x00, 0x00, 0x22, 0x77, 0x69, 0x6E, 0x64, 0x6F, 0x77, 0x73, 0x22];
     }
 }

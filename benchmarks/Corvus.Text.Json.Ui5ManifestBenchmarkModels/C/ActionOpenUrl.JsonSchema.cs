@@ -257,17 +257,17 @@ public readonly partial struct ActionOpenUrl
         /// <summary>
         /// Gets a provider for the schema location from which this type was generated.
         /// </summary>
-        public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("https://adaptivecards.io/schemas/adaptive-card.json#/definitions/Action.OpenUrl"u8, buffer, out written);
+        public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/definitions/https:~1~1adaptivecards.io~1schemas~1adaptive-card.json/definitions/Action.OpenUrl"u8, buffer, out written);
 
         /// <summary>
         /// Gets the schema location from which this type was generated.
         /// </summary>
-        public const string SchemaLocation = "https://adaptivecards.io/schemas/adaptive-card.json#/definitions/Action.OpenUrl";
+        public const string SchemaLocation = "/definitions/https:~1~1adaptivecards.io~1schemas~1adaptive-card.json/definitions/Action.OpenUrl";
 
         /// <summary>
         /// Gets the schema location from which this type was generated as a UTF-8 string.
         /// </summary>
-        public static ReadOnlySpan<byte> SchemaLocationUtf8 => "https://adaptivecards.io/schemas/adaptive-card.json#/definitions/Action.OpenUrl"u8;
+        public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/definitions/https:~1~1adaptivecards.io~1schemas~1adaptive-card.json/definitions/Action.OpenUrl"u8;
         private static readonly JsonSchemaPathProvider AllOf0SchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/allOf/0/$ref"u8, buffer, out written);
 
         /// <summary>

@@ -3110,4 +3110,361 @@ public readonly partial struct JshintrcSchema
         /// </summary>
         public static ReadOnlySpan<byte> Yui => "yui"u8;
     }
+
+    /// <summary>
+    /// Provides pre-baked property name blobs for fast builder property storage.
+    /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
+    /// </summary>
+    private static class JsonPropertyNamesPrebaked
+    {
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Asi"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Asi => [0x55, 0x00, 0x00, 0x00, 0x22, 0x61, 0x73, 0x69, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Bitwise"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Bitwise => [0x95, 0x00, 0x00, 0x00, 0x22, 0x62, 0x69, 0x74, 0x77, 0x69, 0x73, 0x65, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Boss"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Boss => [0x65, 0x00, 0x00, 0x00, 0x22, 0x62, 0x6F, 0x73, 0x73, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Browser"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Browser => [0x95, 0x00, 0x00, 0x00, 0x22, 0x62, 0x72, 0x6F, 0x77, 0x73, 0x65, 0x72, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Browserify"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Browserify => [0xC5, 0x00, 0x00, 0x00, 0x22, 0x62, 0x72, 0x6F, 0x77, 0x73, 0x65, 0x72, 0x69, 0x66, 0x79, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Couch"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Couch => [0x75, 0x00, 0x00, 0x00, 0x22, 0x63, 0x6F, 0x75, 0x63, 0x68, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Curly"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Curly => [0x75, 0x00, 0x00, 0x00, 0x22, 0x63, 0x75, 0x72, 0x6C, 0x79, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="DebugValue"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> DebugValue => [0x75, 0x00, 0x00, 0x00, 0x22, 0x64, 0x65, 0x62, 0x75, 0x67, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Devel"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Devel => [0x75, 0x00, 0x00, 0x00, 0x22, 0x64, 0x65, 0x76, 0x65, 0x6C, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Dojo"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Dojo => [0x65, 0x00, 0x00, 0x00, 0x22, 0x64, 0x6F, 0x6A, 0x6F, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Elision"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Elision => [0x95, 0x00, 0x00, 0x00, 0x22, 0x65, 0x6C, 0x69, 0x73, 0x69, 0x6F, 0x6E, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Eqeqeq"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Eqeqeq => [0x85, 0x00, 0x00, 0x00, 0x22, 0x65, 0x71, 0x65, 0x71, 0x65, 0x71, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Eqnull"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Eqnull => [0x85, 0x00, 0x00, 0x00, 0x22, 0x65, 0x71, 0x6E, 0x75, 0x6C, 0x6C, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Esversion"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Esversion => [0xB5, 0x00, 0x00, 0x00, 0x22, 0x65, 0x73, 0x76, 0x65, 0x72, 0x73, 0x69, 0x6F, 0x6E, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Evil"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Evil => [0x65, 0x00, 0x00, 0x00, 0x22, 0x65, 0x76, 0x69, 0x6C, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Expr"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Expr => [0x65, 0x00, 0x00, 0x00, 0x22, 0x65, 0x78, 0x70, 0x72, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Extends"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Extends => [0x95, 0x00, 0x00, 0x00, 0x22, 0x65, 0x78, 0x74, 0x65, 0x6E, 0x64, 0x73, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Forin"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Forin => [0x75, 0x00, 0x00, 0x00, 0x22, 0x66, 0x6F, 0x72, 0x69, 0x6E, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="FreezeValue"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> FreezeValue => [0x85, 0x00, 0x00, 0x00, 0x22, 0x66, 0x72, 0x65, 0x65, 0x7A, 0x65, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Funcscope"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Funcscope => [0xB5, 0x00, 0x00, 0x00, 0x22, 0x66, 0x75, 0x6E, 0x63, 0x73, 0x63, 0x6F, 0x70, 0x65, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Futurehostile"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Futurehostile => [0xF5, 0x00, 0x00, 0x00, 0x22, 0x66, 0x75, 0x74, 0x75, 0x72, 0x65, 0x68, 0x6F, 0x73, 0x74, 0x69, 0x6C, 0x65, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Globals"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Globals => [0x95, 0x00, 0x00, 0x00, 0x22, 0x67, 0x6C, 0x6F, 0x62, 0x61, 0x6C, 0x73, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Iterator"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Iterator => [0xA5, 0x00, 0x00, 0x00, 0x22, 0x69, 0x74, 0x65, 0x72, 0x61, 0x74, 0x6F, 0x72, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Jasmine"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Jasmine => [0x95, 0x00, 0x00, 0x00, 0x22, 0x6A, 0x61, 0x73, 0x6D, 0x69, 0x6E, 0x65, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Jquery"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Jquery => [0x85, 0x00, 0x00, 0x00, 0x22, 0x6A, 0x71, 0x75, 0x65, 0x72, 0x79, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Lastsemic"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Lastsemic => [0xB5, 0x00, 0x00, 0x00, 0x22, 0x6C, 0x61, 0x73, 0x74, 0x73, 0x65, 0x6D, 0x69, 0x63, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Latedef"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Latedef => [0x95, 0x00, 0x00, 0x00, 0x22, 0x6C, 0x61, 0x74, 0x65, 0x64, 0x65, 0x66, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Leanswitch"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Leanswitch => [0xC5, 0x00, 0x00, 0x00, 0x22, 0x6C, 0x65, 0x61, 0x6E, 0x73, 0x77, 0x69, 0x74, 0x63, 0x68, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Loopfunc"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Loopfunc => [0xA5, 0x00, 0x00, 0x00, 0x22, 0x6C, 0x6F, 0x6F, 0x70, 0x66, 0x75, 0x6E, 0x63, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Maxcomplexity"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Maxcomplexity => [0xF5, 0x00, 0x00, 0x00, 0x22, 0x6D, 0x61, 0x78, 0x63, 0x6F, 0x6D, 0x70, 0x6C, 0x65, 0x78, 0x69, 0x74, 0x79, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Maxdepth"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Maxdepth => [0xA5, 0x00, 0x00, 0x00, 0x22, 0x6D, 0x61, 0x78, 0x64, 0x65, 0x70, 0x74, 0x68, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Maxerr"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Maxerr => [0x85, 0x00, 0x00, 0x00, 0x22, 0x6D, 0x61, 0x78, 0x65, 0x72, 0x72, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Maxparams"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Maxparams => [0xB5, 0x00, 0x00, 0x00, 0x22, 0x6D, 0x61, 0x78, 0x70, 0x61, 0x72, 0x61, 0x6D, 0x73, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Maxstatements"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Maxstatements => [0xF5, 0x00, 0x00, 0x00, 0x22, 0x6D, 0x61, 0x78, 0x73, 0x74, 0x61, 0x74, 0x65, 0x6D, 0x65, 0x6E, 0x74, 0x73, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Mocha"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Mocha => [0x75, 0x00, 0x00, 0x00, 0x22, 0x6D, 0x6F, 0x63, 0x68, 0x61, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Module"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Module => [0x85, 0x00, 0x00, 0x00, 0x22, 0x6D, 0x6F, 0x64, 0x75, 0x6C, 0x65, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Mootools"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Mootools => [0xA5, 0x00, 0x00, 0x00, 0x22, 0x6D, 0x6F, 0x6F, 0x74, 0x6F, 0x6F, 0x6C, 0x73, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Moz"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Moz => [0x55, 0x00, 0x00, 0x00, 0x22, 0x6D, 0x6F, 0x7A, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Noarg"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Noarg => [0x75, 0x00, 0x00, 0x00, 0x22, 0x6E, 0x6F, 0x61, 0x72, 0x67, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Nocomma"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Nocomma => [0x95, 0x00, 0x00, 0x00, 0x22, 0x6E, 0x6F, 0x63, 0x6F, 0x6D, 0x6D, 0x61, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Node"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Node => [0x65, 0x00, 0x00, 0x00, 0x22, 0x6E, 0x6F, 0x64, 0x65, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Nonbsp"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Nonbsp => [0x85, 0x00, 0x00, 0x00, 0x22, 0x6E, 0x6F, 0x6E, 0x62, 0x73, 0x70, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Nonew"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Nonew => [0x75, 0x00, 0x00, 0x00, 0x22, 0x6E, 0x6F, 0x6E, 0x65, 0x77, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Nonstandard"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Nonstandard => [0xD5, 0x00, 0x00, 0x00, 0x22, 0x6E, 0x6F, 0x6E, 0x73, 0x74, 0x61, 0x6E, 0x64, 0x61, 0x72, 0x64, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Noreturnawait"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Noreturnawait => [0xF5, 0x00, 0x00, 0x00, 0x22, 0x6E, 0x6F, 0x72, 0x65, 0x74, 0x75, 0x72, 0x6E, 0x61, 0x77, 0x61, 0x69, 0x74, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Notypeof"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Notypeof => [0xA5, 0x00, 0x00, 0x00, 0x22, 0x6E, 0x6F, 0x74, 0x79, 0x70, 0x65, 0x6F, 0x66, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Noyield"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Noyield => [0x95, 0x00, 0x00, 0x00, 0x22, 0x6E, 0x6F, 0x79, 0x69, 0x65, 0x6C, 0x64, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Overrides"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Overrides => [0xB5, 0x00, 0x00, 0x00, 0x22, 0x6F, 0x76, 0x65, 0x72, 0x72, 0x69, 0x64, 0x65, 0x73, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Phantom"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Phantom => [0x95, 0x00, 0x00, 0x00, 0x22, 0x70, 0x68, 0x61, 0x6E, 0x74, 0x6F, 0x6D, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Plusplus"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Plusplus => [0xA5, 0x00, 0x00, 0x00, 0x22, 0x70, 0x6C, 0x75, 0x73, 0x70, 0x6C, 0x75, 0x73, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Proto"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Proto => [0x75, 0x00, 0x00, 0x00, 0x22, 0x70, 0x72, 0x6F, 0x74, 0x6F, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Prototypejs"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Prototypejs => [0xD5, 0x00, 0x00, 0x00, 0x22, 0x70, 0x72, 0x6F, 0x74, 0x6F, 0x74, 0x79, 0x70, 0x65, 0x6A, 0x73, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Regexpu"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Regexpu => [0x95, 0x00, 0x00, 0x00, 0x22, 0x72, 0x65, 0x67, 0x65, 0x78, 0x70, 0x75, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Rhino"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Rhino => [0x75, 0x00, 0x00, 0x00, 0x22, 0x72, 0x68, 0x69, 0x6E, 0x6F, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Scripturl"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Scripturl => [0xB5, 0x00, 0x00, 0x00, 0x22, 0x73, 0x63, 0x72, 0x69, 0x70, 0x74, 0x75, 0x72, 0x6C, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Shadow"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Shadow => [0x85, 0x00, 0x00, 0x00, 0x22, 0x73, 0x68, 0x61, 0x64, 0x6F, 0x77, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Shelljs"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Shelljs => [0x95, 0x00, 0x00, 0x00, 0x22, 0x73, 0x68, 0x65, 0x6C, 0x6C, 0x6A, 0x73, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="SingleGroups"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> SingleGroups => [0xE5, 0x00, 0x00, 0x00, 0x22, 0x73, 0x69, 0x6E, 0x67, 0x6C, 0x65, 0x47, 0x72, 0x6F, 0x75, 0x70, 0x73, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Strict"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Strict => [0x85, 0x00, 0x00, 0x00, 0x22, 0x73, 0x74, 0x72, 0x69, 0x63, 0x74, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Supernew"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Supernew => [0xA5, 0x00, 0x00, 0x00, 0x22, 0x73, 0x75, 0x70, 0x65, 0x72, 0x6E, 0x65, 0x77, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Trailingcomma"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Trailingcomma => [0xF5, 0x00, 0x00, 0x00, 0x22, 0x74, 0x72, 0x61, 0x69, 0x6C, 0x69, 0x6E, 0x67, 0x63, 0x6F, 0x6D, 0x6D, 0x61, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Typed"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Typed => [0x75, 0x00, 0x00, 0x00, 0x22, 0x74, 0x79, 0x70, 0x65, 0x64, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Undef"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Undef => [0x75, 0x00, 0x00, 0x00, 0x22, 0x75, 0x6E, 0x64, 0x65, 0x66, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Unused"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Unused => [0x85, 0x00, 0x00, 0x00, 0x22, 0x75, 0x6E, 0x75, 0x73, 0x65, 0x64, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Validthis"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Validthis => [0xB5, 0x00, 0x00, 0x00, 0x22, 0x76, 0x61, 0x6C, 0x69, 0x64, 0x74, 0x68, 0x69, 0x73, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Varstmt"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Varstmt => [0x95, 0x00, 0x00, 0x00, 0x22, 0x76, 0x61, 0x72, 0x73, 0x74, 0x6D, 0x74, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Withstmt"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Withstmt => [0xA5, 0x00, 0x00, 0x00, 0x22, 0x77, 0x69, 0x74, 0x68, 0x73, 0x74, 0x6D, 0x74, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Worker"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Worker => [0x85, 0x00, 0x00, 0x00, 0x22, 0x77, 0x6F, 0x72, 0x6B, 0x65, 0x72, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Wsh"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Wsh => [0x55, 0x00, 0x00, 0x00, 0x22, 0x77, 0x73, 0x68, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Yui"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Yui => [0x55, 0x00, 0x00, 0x00, 0x22, 0x79, 0x75, 0x69, 0x22];
+    }
 }

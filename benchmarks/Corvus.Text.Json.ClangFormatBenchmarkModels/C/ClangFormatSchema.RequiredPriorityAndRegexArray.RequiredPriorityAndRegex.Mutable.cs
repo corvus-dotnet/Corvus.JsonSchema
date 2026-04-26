@@ -419,7 +419,7 @@ public readonly partial struct ClangFormatSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.CaseSensitive, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CaseSensitive, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -462,7 +462,7 @@ public readonly partial struct ClangFormatSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.Priority, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Priority, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -493,7 +493,7 @@ public readonly partial struct ClangFormatSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.Regex, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Regex, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -526,7 +526,7 @@ public readonly partial struct ClangFormatSchema
                     else
                     {
                         // We are going to insert the new value
-                        value.AddAsProperty(JsonPropertyNamesEscaped.SortPriority, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                        value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SortPriority, ref cvb);
                         int endIndex = _idx + _parent.GetDbSize(_idx, false);
                         _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                     }
@@ -909,6 +909,24 @@ public readonly partial struct ClangFormatSchema
                     }
                 }
 
+                internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+                {
+                    switch(_kind)
+                    {
+                        case Kind.Unknown:
+                            break;
+                        case Kind.JsonElement:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                            break;
+                        case Kind.Builder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
+                            break;
+                        default:
+                            Debug.Fail("Unexpected Kind");
+                            break;
+                    }
+                }
+
                 internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
                 {
                     switch(_kind)
@@ -1010,6 +1028,24 @@ public readonly partial struct ClangFormatSchema
                     }
                 }
 
+                internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+                {
+                    switch(_kind)
+                    {
+                        case Kind.Unknown:
+                            break;
+                        case Kind.Source:
+                            _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                            break;
+                        case Kind.Builder:
+                            valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
+                            break;
+                        default:
+                            Debug.Fail("Unexpected Kind");
+                            break;
+                    }
+                }
+
                 internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
                 {
                     switch(_kind)
@@ -1093,10 +1129,10 @@ public readonly partial struct ClangFormatSchema
                     in Corvus.ClangFormatBenchmark.Current.JsonBoolean.Source caseSensitive = default,
                     in Corvus.ClangFormatBenchmark.Current.ClangFormatSchema.RequiredPriorityAndRegexArray.RequiredPriorityAndRegex.SortPriorityEntity.Source sortPriority = default)
                 {
-                    priority.AddAsProperty(JsonPropertyNamesEscaped.Priority, ref builder, escapeName: false);
-                    regex.AddAsProperty(JsonPropertyNamesEscaped.Regex, ref builder, escapeName: false);
-                    caseSensitive.AddAsProperty(JsonPropertyNamesEscaped.CaseSensitive, ref builder, escapeName: false);
-                    sortPriority.AddAsProperty(JsonPropertyNamesEscaped.SortPriority, ref builder, escapeName: false);
+                    priority.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Priority, ref builder);
+                    regex.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Regex, ref builder);
+                    caseSensitive.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.CaseSensitive, ref builder);
+                    sortPriority.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.SortPriority, ref builder);
                 }
 
                 /// <summary>

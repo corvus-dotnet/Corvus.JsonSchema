@@ -64,24 +64,6 @@ public readonly partial struct CspellSchema
             [DebuggerBrowsable(DebuggerBrowsableState.Never)]
             private JsonTokenType TokenType => _parent?.GetJsonTokenType(_idx) ?? JsonTokenType.None;
 
-            /// <summary>
-            /// Conversion to <see cref="Corvus.CspellBenchmark.Current.CspellSchema.Serializable.AnyOf4Entity"/>.
-            /// </summary>
-            /// <param name="value">The value from which to convert.</param>
-            public static explicit operator Corvus.CspellBenchmark.Current.CspellSchema.Serializable.AnyOf4Entity.Mutable(Mutable value)
-            {
-                return Corvus.CspellBenchmark.Current.CspellSchema.Serializable.AnyOf4Entity.Mutable.From(value);
-            }
-
-            /// <summary>
-            /// Conversion from <see cref="Corvus.CspellBenchmark.Current.CspellSchema.Serializable.AnyOf4Entity"/>.
-            /// </summary>
-            /// <param name="value">The value from which to convert.</param>
-            public static implicit operator Mutable(Corvus.CspellBenchmark.Current.CspellSchema.Serializable.AnyOf4Entity.Mutable value)
-            {
-                return From(value);
-            }
-
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static explicit operator string(Mutable value) => value._parent.GetString(value._idx, JsonTokenType.String) ?? throw new FormatException();
 
@@ -530,24 +512,6 @@ public readonly partial struct CspellSchema
                 return _parent.TextEquals(_idx, text, isPropertyName: false);
             }
 
-            /// <summary>
-            /// Apply a composed value.
-            /// </summary>
-            /// <remarks>
-            /// This will add or update any property values provided by the <paramref name="value"/>.
-            /// </remarks>
-            public void Apply(in Corvus.CspellBenchmark.Current.CspellSchema.Serializable.AnyOf4Entity value)
-            {
-                CheckValidInstance();
-
-                foreach (var property in value.EnumerateObject())
-                {
-                    JsonElementHelpers.SetPropertyUnsafe(this, property);
-                }
-
-                _documentVersion = _parent.Version;
-            }
-
             /// <inheritdoc/>
             public void WriteTo(Utf8JsonWriter writer)
             {
@@ -874,7 +838,7 @@ public readonly partial struct CspellSchema
             /// <param name="matchJsonString">Match a <see cref="Corvus.CspellBenchmark.Current.JsonString"/>.</param>
             /// <param name="matchJsonBoolean">Match a <see cref="Corvus.CspellBenchmark.Current.JsonBoolean"/>.</param>
             /// <param name="matchJsonNull">Match a <see cref="Corvus.CspellBenchmark.Current.JsonNull"/>.</param>
-            /// <param name="matchAnyOf4Entity">Match a <see cref="Corvus.CspellBenchmark.Current.CspellSchema.Serializable.AnyOf4Entity"/>.</param>
+            /// <param name="matchJsonObject">Match a <see cref="Corvus.CspellBenchmark.Current.JsonObject"/>.</param>
             /// <param name="defaultMatch">Match any other value.</param>
             /// <returns>An instance of the value returned by the match function.</returns>
             public TResult Match<TContext, TResult>(
@@ -883,7 +847,7 @@ public readonly partial struct CspellSchema
                 Matcher<Corvus.CspellBenchmark.Current.JsonString, TContext, TResult> matchJsonString,
                 Matcher<Corvus.CspellBenchmark.Current.JsonBoolean, TContext, TResult> matchJsonBoolean,
                 Matcher<Corvus.CspellBenchmark.Current.JsonNull, TContext, TResult> matchJsonNull,
-                Matcher<Corvus.CspellBenchmark.Current.CspellSchema.Serializable.AnyOf4Entity, TContext, TResult> matchAnyOf4Entity,
+                Matcher<Corvus.CspellBenchmark.Current.JsonObject, TContext, TResult> matchJsonObject,
                 Matcher<Corvus.CspellBenchmark.Current.CspellSchema.Serializable.Mutable, TContext, TResult> defaultMatch)
 #if NET9_0_OR_GREATER
             where TContext : allows ref struct
@@ -909,9 +873,9 @@ public readonly partial struct CspellSchema
                     return matchJsonNull(Corvus.CspellBenchmark.Current.JsonNull.Mutable.From(this), context);
                 }
 
-                if (Corvus.CspellBenchmark.Current.CspellSchema.Serializable.AnyOf4Entity.JsonSchema.Evaluate(_parent, _idx))
+                if (Corvus.CspellBenchmark.Current.JsonObject.JsonSchema.Evaluate(_parent, _idx))
                 {
-                    return matchAnyOf4Entity(Corvus.CspellBenchmark.Current.CspellSchema.Serializable.AnyOf4Entity.Mutable.From(this), context);
+                    return matchJsonObject(Corvus.CspellBenchmark.Current.JsonObject.Mutable.From(this), context);
                 }
 
                 return defaultMatch(this, context);
@@ -925,7 +889,7 @@ public readonly partial struct CspellSchema
             /// <param name="matchJsonString">Match a <see cref="Corvus.CspellBenchmark.Current.JsonString"/>.</param>
             /// <param name="matchJsonBoolean">Match a <see cref="Corvus.CspellBenchmark.Current.JsonBoolean"/>.</param>
             /// <param name="matchJsonNull">Match a <see cref="Corvus.CspellBenchmark.Current.JsonNull"/>.</param>
-            /// <param name="matchAnyOf4Entity">Match a <see cref="Corvus.CspellBenchmark.Current.CspellSchema.Serializable.AnyOf4Entity"/>.</param>
+            /// <param name="matchJsonObject">Match a <see cref="Corvus.CspellBenchmark.Current.JsonObject"/>.</param>
             /// <param name="defaultMatch">Match any other value.</param>
             /// <returns>An instance of the value returned by the match function.</returns>
             public TResult Match<TResult>(
@@ -933,7 +897,7 @@ public readonly partial struct CspellSchema
                 Matcher<Corvus.CspellBenchmark.Current.JsonString, TResult> matchJsonString,
                 Matcher<Corvus.CspellBenchmark.Current.JsonBoolean, TResult> matchJsonBoolean,
                 Matcher<Corvus.CspellBenchmark.Current.JsonNull, TResult> matchJsonNull,
-                Matcher<Corvus.CspellBenchmark.Current.CspellSchema.Serializable.AnyOf4Entity, TResult> matchAnyOf4Entity,
+                Matcher<Corvus.CspellBenchmark.Current.JsonObject, TResult> matchJsonObject,
                 Matcher<Corvus.CspellBenchmark.Current.CspellSchema.Serializable.Mutable, TResult> defaultMatch)
             {
                 if (Corvus.CspellBenchmark.Current.JsonNumber.JsonSchema.Evaluate(_parent, _idx))
@@ -956,9 +920,9 @@ public readonly partial struct CspellSchema
                     return matchJsonNull(Corvus.CspellBenchmark.Current.JsonNull.Mutable.From(this));
                 }
 
-                if (Corvus.CspellBenchmark.Current.CspellSchema.Serializable.AnyOf4Entity.JsonSchema.Evaluate(_parent, _idx))
+                if (Corvus.CspellBenchmark.Current.JsonObject.JsonSchema.Evaluate(_parent, _idx))
                 {
-                    return matchAnyOf4Entity(Corvus.CspellBenchmark.Current.CspellSchema.Serializable.AnyOf4Entity.Mutable.From(this));
+                    return matchJsonObject(Corvus.CspellBenchmark.Current.JsonObject.Mutable.From(this));
                 }
 
                 return defaultMatch(this);
@@ -1033,15 +997,15 @@ public readonly partial struct CspellSchema
             }
 
             /// <summary>
-            /// Gets the value as a <see cref="Corvus.CspellBenchmark.Current.CspellSchema.Serializable.AnyOf4Entity" />.
+            /// Gets the value as a <see cref="Corvus.CspellBenchmark.Current.JsonObject" />.
             /// </summary>
             /// <param name="result">The result of the conversions.</param>
             /// <returns><see langword="true" /> if the conversion was valid.</returns>
-            public bool TryGetAsAnyOf4Entity(out Corvus.CspellBenchmark.Current.CspellSchema.Serializable.AnyOf4Entity result)
+            public bool TryGetAsJsonObject(out Corvus.CspellBenchmark.Current.JsonObject result)
             {
-                if (Corvus.CspellBenchmark.Current.CspellSchema.Serializable.AnyOf4Entity.JsonSchema.Evaluate(_parent, _idx))
+                if (Corvus.CspellBenchmark.Current.JsonObject.JsonSchema.Evaluate(_parent, _idx))
                 {
-                    result = Corvus.CspellBenchmark.Current.CspellSchema.Serializable.AnyOf4Entity.Mutable.From(this);
+                    result = Corvus.CspellBenchmark.Current.JsonObject.Mutable.From(this);
                     return true;
                 }
 
@@ -1112,6 +1076,10 @@ public readonly partial struct CspellSchema
             }
 
             private Source(double value) { SimpleTypesBacking.Initialize(ref _simpleTypeBacking, value, static (isAlsoArray, buffer, out written) => Utf8Formatter.TryFormat(isAlsoArray, buffer, out written)); _kind = Kind.NumericSimpleType; }
+
+            private Source(int value) { SimpleTypesBacking.Initialize(ref _simpleTypeBacking, value, static (isAlsoArray, buffer, out written) => Utf8Formatter.TryFormat(isAlsoArray, buffer, out written)); _kind = Kind.NumericSimpleType; }
+
+            private Source(long value) { SimpleTypesBacking.Initialize(ref _simpleTypeBacking, value, static (isAlsoArray, buffer, out written) => Utf8Formatter.TryFormat(isAlsoArray, buffer, out written)); _kind = Kind.NumericSimpleType; }
 
             private Source(bool value) { _kind = value ? Kind.True : Kind.False; }
 
@@ -1192,6 +1160,51 @@ public readonly partial struct CspellSchema
                         break;
                     case Kind.Builder:
                         valueBuilder.AddProperty(utf8Name, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o), escapeName, nameRequiresUnescaping);
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.JsonElement:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                        break;
+                    case Kind.Null:
+                        valueBuilder.AddPrebakedPropertyNullValue(prebakedPropertyName);
+                        break;
+                    case Kind.True:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, true);
+                        break;
+                    case Kind.False:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, false);
+                        break;
+                    case Kind.RawUtf8StringRequiresUnescaping:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _utf8Backing, escapeValue: false, valueRequiresUnescaping: true);
+                        break;
+                    case Kind.RawUtf8StringNotRequiresUnescaping:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _utf8Backing, escapeValue: false, valueRequiresUnescaping: false);
+                        break;
+                    case Kind.Utf8String:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _utf8Backing, escapeValue: true, valueRequiresUnescaping: false);
+                        break;
+                    case Kind.Utf16String:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _utf16Backing);
+                        break;
+                    case Kind.NumericSimpleType:
+                        valueBuilder.AddPrebakedPropertyFormattedNumber(prebakedPropertyName, _simpleTypeBacking.Span());
+                        break;
+                    case Kind.FormattedNumber:
+                        valueBuilder.AddPrebakedPropertyFormattedNumber(prebakedPropertyName, _utf8Backing);
+                        break;
+                    case Kind.Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
                         break;
                     default:
                         Debug.Fail("Unexpected Kind");
@@ -1374,6 +1387,24 @@ public readonly partial struct CspellSchema
                         break;
                     case Kind.Builder:
                         valueBuilder.AddProperty(utf8Name, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o), escapeName, nameRequiresUnescaping);
+                        break;
+                    default:
+                        Debug.Fail("Unexpected Kind");
+                        break;
+                }
+            }
+
+            internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+            {
+                switch(_kind)
+                {
+                    case Kind.Unknown:
+                        break;
+                    case Kind.Source:
+                        _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                        break;
+                    case Kind.Builder:
+                        valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
                         break;
                     default:
                         Debug.Fail("Unexpected Kind");

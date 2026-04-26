@@ -393,7 +393,7 @@ public readonly partial struct DependabotSchema
                         else
                         {
                             // We are going to insert the new value
-                            value.AddAsProperty(JsonPropertyNamesEscaped.IncludeScope, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                            value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IncludeScope, ref cvb);
                             int endIndex = _idx + _parent.GetDbSize(_idx, false);
                             _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                         }
@@ -438,7 +438,7 @@ public readonly partial struct DependabotSchema
                         else
                         {
                             // We are going to insert the new value
-                            value.AddAsProperty(JsonPropertyNamesEscaped.Prefix, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                            value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Prefix, ref cvb);
                             int endIndex = _idx + _parent.GetDbSize(_idx, false);
                             _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                         }
@@ -483,7 +483,7 @@ public readonly partial struct DependabotSchema
                         else
                         {
                             // We are going to insert the new value
-                            value.AddAsProperty(JsonPropertyNamesEscaped.PrefixDevelopment, ref cvb, escapeName: false, nameRequiresUnescaping: false);
+                            value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PrefixDevelopment, ref cvb);
                             int endIndex = _idx + _parent.GetDbSize(_idx, false);
                             _parent.InsertAndDispose(_idx, endIndex, ref cvb);
                         }
@@ -866,6 +866,24 @@ public readonly partial struct DependabotSchema
                         }
                     }
 
+                    internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+                    {
+                        switch(_kind)
+                        {
+                            case Kind.Unknown:
+                                break;
+                            case Kind.JsonElement:
+                                valueBuilder.AddPrebakedProperty(prebakedPropertyName, _jsonElement);
+                                break;
+                            case Kind.Builder:
+                                valueBuilder.AddPrebakedProperty(prebakedPropertyName, _objectBuilder!, static (in b, ref o) => Builder.BuildValue(b, ref o));
+                                break;
+                            default:
+                                Debug.Fail("Unexpected Kind");
+                                break;
+                        }
+                    }
+
                     internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
                     {
                         switch(_kind)
@@ -967,6 +985,24 @@ public readonly partial struct DependabotSchema
                         }
                     }
 
+                    internal void AddAsPrebakedProperty(ReadOnlySpan<byte> prebakedPropertyName, ref ComplexValueBuilder valueBuilder)
+                    {
+                        switch(_kind)
+                        {
+                            case Kind.Unknown:
+                                break;
+                            case Kind.Source:
+                                _source.AddAsPrebakedProperty(prebakedPropertyName, ref valueBuilder);
+                                break;
+                            case Kind.Builder:
+                                valueBuilder.AddPrebakedProperty(prebakedPropertyName, BuildWithContext.Create(_context, _objectBuilder!), static (in b, ref o) => Builder.BuildValue(b.Context, b.Build, ref o));
+                                break;
+                            default:
+                                Debug.Fail("Unexpected Kind");
+                                break;
+                        }
+                    }
+
                     internal void AddAsProperty(ReadOnlySpan<char> name, ref ComplexValueBuilder valueBuilder)
                     {
                         switch(_kind)
@@ -1049,9 +1085,9 @@ public readonly partial struct DependabotSchema
                         in Corvus.DependabotBenchmark.Current.JsonString.Source prefix = default,
                         in Corvus.DependabotBenchmark.Current.JsonString.Source prefixDevelopment = default)
                     {
-                        includeScope.AddAsProperty(JsonPropertyNamesEscaped.IncludeScope, ref builder, escapeName: false);
-                        prefix.AddAsProperty(JsonPropertyNamesEscaped.Prefix, ref builder, escapeName: false);
-                        prefixDevelopment.AddAsProperty(JsonPropertyNamesEscaped.PrefixDevelopment, ref builder, escapeName: false);
+                        includeScope.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.IncludeScope, ref builder);
+                        prefix.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Prefix, ref builder);
+                        prefixDevelopment.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.PrefixDevelopment, ref builder);
                     }
 
                     /// <summary>

@@ -690,5 +690,32 @@ public readonly partial struct OpenapiSchema
             /// </summary>
             public static ReadOnlySpan<byte> Password => "password"u8;
         }
+
+        /// <summary>
+        /// Provides pre-baked property name blobs for fast builder property storage.
+        /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
+        /// </summary>
+        private static class JsonPropertyNamesPrebaked
+        {
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="AuthorizationCode"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> AuthorizationCode => [0x35, 0x01, 0x00, 0x00, 0x22, 0x61, 0x75, 0x74, 0x68, 0x6F, 0x72, 0x69, 0x7A, 0x61, 0x74, 0x69, 0x6F, 0x6E, 0x43, 0x6F, 0x64, 0x65, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="ClientCredentials"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> ClientCredentials => [0x35, 0x01, 0x00, 0x00, 0x22, 0x63, 0x6C, 0x69, 0x65, 0x6E, 0x74, 0x43, 0x72, 0x65, 0x64, 0x65, 0x6E, 0x74, 0x69, 0x61, 0x6C, 0x73, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Implicit"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Implicit => [0xA5, 0x00, 0x00, 0x00, 0x22, 0x69, 0x6D, 0x70, 0x6C, 0x69, 0x63, 0x69, 0x74, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Password"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Password => [0xA5, 0x00, 0x00, 0x00, 0x22, 0x70, 0x61, 0x73, 0x73, 0x77, 0x6F, 0x72, 0x64, 0x22];
+        }
     }
 }
