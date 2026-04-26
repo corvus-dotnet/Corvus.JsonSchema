@@ -1,0 +1,540 @@
+[
+  {
+    "comment": "Identity: empty objects",
+    "source": {},
+    "target": {}
+  },
+  {
+    "comment": "Identity: empty arrays",
+    "source": [],
+    "target": []
+  },
+  {
+    "comment": "Identity: object with properties",
+    "source": {"foo": 1, "bar": 2},
+    "target": {"foo": 1, "bar": 2}
+  },
+  {
+    "comment": "Identity: nested object",
+    "source": {"a": {"b": {"c": 1}}},
+    "target": {"a": {"b": {"c": 1}}}
+  },
+  {
+    "comment": "Identity: array of objects",
+    "source": [{"a": 1}, {"b": 2}],
+    "target": [{"a": 1}, {"b": 2}]
+  },
+  {
+    "comment": "Identity: scalar string",
+    "source": "hello",
+    "target": "hello"
+  },
+  {
+    "comment": "Identity: scalar number",
+    "source": 42,
+    "target": 42
+  },
+  {
+    "comment": "Identity: scalar boolean",
+    "source": true,
+    "target": true
+  },
+  {
+    "comment": "Identity: null",
+    "source": null,
+    "target": null
+  },
+
+  {
+    "comment": "Object property order is not significant (from json-patch-tests: rearrangements OK)",
+    "source": {"foo": 1, "bar": 2},
+    "target": {"bar": 2, "foo": 1}
+  },
+  {
+    "comment": "Nested object property order is not significant",
+    "source": {"foo": {"foo": 1, "bar": 2}},
+    "target": {"foo": {"bar": 2, "foo": 1}}
+  },
+  {
+    "comment": "Object in array: property order not significant",
+    "source": [{"foo": 1, "bar": 2}],
+    "target": [{"bar": 2, "foo": 1}]
+  },
+
+  {
+    "comment": "Root replacement: object to array",
+    "source": {},
+    "target": []
+  },
+  {
+    "comment": "Root replacement: array to object",
+    "source": [],
+    "target": {}
+  },
+  {
+    "comment": "Root replacement: number to string",
+    "source": 42,
+    "target": "hello"
+  },
+  {
+    "comment": "Root replacement: string to number",
+    "source": "hello",
+    "target": 42
+  },
+  {
+    "comment": "Root replacement: boolean to null",
+    "source": true,
+    "target": null
+  },
+  {
+    "comment": "Root replacement: null to object",
+    "source": null,
+    "target": {"a": 1}
+  },
+  {
+    "comment": "Root replacement: null to array",
+    "source": null,
+    "target": [1, 2, 3]
+  },
+  {
+    "comment": "Root replacement: scalar to different scalar",
+    "source": 1,
+    "target": 2
+  },
+  {
+    "comment": "Root replacement: true to false",
+    "source": true,
+    "target": false
+  },
+
+  {
+    "comment": "Object: add single property",
+    "source": {"foo": 1},
+    "target": {"foo": 1, "bar": 2}
+  },
+  {
+    "comment": "Object: add property with true value",
+    "source": {"foo": 1},
+    "target": {"foo": 1, "bar": true}
+  },
+  {
+    "comment": "Object: add property with false value",
+    "source": {"foo": 1},
+    "target": {"foo": 1, "bar": false}
+  },
+  {
+    "comment": "Object: add property with null value",
+    "source": {"foo": 1},
+    "target": {"foo": 1, "bar": null}
+  },
+  {
+    "comment": "Object: add composite value (from json-patch-tests)",
+    "source": {"foo": 1},
+    "target": {"foo": 1, "bar": [1, 2]}
+  },
+  {
+    "comment": "Object: add nested object value",
+    "source": {"foo": 1},
+    "target": {"foo": 1, "child": {"grandchild": {}}}
+  },
+  {
+    "comment": "Object: remove single property",
+    "source": {"foo": 1, "bar": 2},
+    "target": {"foo": 1}
+  },
+  {
+    "comment": "Object: remove property with null value (from json-patch-tests)",
+    "source": {"foo": null},
+    "target": {}
+  },
+  {
+    "comment": "Object: replace value",
+    "source": {"foo": 1},
+    "target": {"foo": 2}
+  },
+  {
+    "comment": "Object: replace null with truthy (from json-patch-tests)",
+    "source": {"foo": null},
+    "target": {"foo": "truthy"}
+  },
+  {
+    "comment": "Object: replace value with null (from json-patch-tests)",
+    "source": {"foo": "bar"},
+    "target": {"foo": null}
+  },
+  {
+    "comment": "Object: multiple changes (add + remove + replace)",
+    "source": {"a": 1, "b": 2, "c": 3},
+    "target": {"a": 1, "b": 99, "d": 4}
+  },
+  {
+    "comment": "Object: replace value with different type (string to number, from json-everything)",
+    "source": {"test": "string", "test2": "string"},
+    "target": {"test": false, "test2": 123}
+  },
+  {
+    "comment": "Object: type changes across multiple properties (from json-everything: ChangeTypeInObject)",
+    "source": {"test": true, "test2": "string", "test3": {"test123": 123}},
+    "target": {"test": false, "test2": 123, "test3": [123]}
+  },
+  {
+    "comment": "Object: replace object property with scalar",
+    "source": {"a": {"b": 1}},
+    "target": {"a": 42}
+  },
+  {
+    "comment": "Object: replace scalar property with object",
+    "source": {"a": 42},
+    "target": {"a": {"b": 1}}
+  },
+  {
+    "comment": "Object: replace array property with object",
+    "source": {"a": [1, 2]},
+    "target": {"a": {"x": 1}}
+  },
+  {
+    "comment": "Object: empty to non-empty",
+    "source": {},
+    "target": {"a": 1}
+  },
+  {
+    "comment": "Object: non-empty to empty",
+    "source": {"a": 1},
+    "target": {}
+  },
+
+  {
+    "comment": "Nested: deep property change",
+    "source": {"a": {"b": {"c": 1}}},
+    "target": {"a": {"b": {"c": 2}}}
+  },
+  {
+    "comment": "Nested: add property into nested array element (from json-patch-tests)",
+    "source": {"foo": 1, "baz": [{"qux": "hello"}]},
+    "target": {"foo": 1, "baz": [{"qux": "hello", "foo": "world"}]}
+  },
+  {
+    "comment": "Nested: very deep change (6 levels)",
+    "source": {"a": {"b": {"c": {"d": {"e": {"f": 1}}}}}},
+    "target": {"a": {"b": {"c": {"d": {"e": {"f": 2}}}}}}
+  },
+  {
+    "comment": "Nested: changes at multiple levels simultaneously",
+    "source": {"users": [{"name": "Alice", "age": 30}, {"name": "Bob", "age": 25}], "count": 2},
+    "target": {"users": [{"name": "Alice", "age": 31}, {"name": "Bob", "age": 25}], "count": 2, "active": true}
+  },
+
+  {
+    "comment": "Array: element-wise replace in same-length array",
+    "source": [1, 2, 3],
+    "target": [1, 99, 3]
+  },
+  {
+    "comment": "Array: all elements different, same length",
+    "source": [1, 2, 3],
+    "target": [4, 5, 6]
+  },
+  {
+    "comment": "Array: shorter target (elements removed from end)",
+    "source": [1, 2, 3],
+    "target": [1, 2]
+  },
+  {
+    "comment": "Array: longer target (elements added at end)",
+    "source": [1, 2, 3],
+    "target": [1, 2, 3, 4]
+  },
+  {
+    "comment": "Array: empty to non-empty",
+    "source": [],
+    "target": [1]
+  },
+  {
+    "comment": "Array: non-empty to empty",
+    "source": [1, 2, 3],
+    "target": []
+  },
+  {
+    "comment": "Array: nested array change",
+    "source": [[1, 2], [3, 4]],
+    "target": [[1, 2], [3, 99]]
+  },
+  {
+    "comment": "Array: object elements with property changes",
+    "source": [{"a": 1}, {"b": 2}],
+    "target": [{"a": 1}, {"b": 3}]
+  },
+  {
+    "comment": "Array: replace element type (number to string)",
+    "source": [1, 2, 3],
+    "target": [1, "two", 3]
+  },
+  {
+    "comment": "Array: replace element type (object to array)",
+    "source": [{"a": 1}],
+    "target": [[1, 2]]
+  },
+  {
+    "comment": "Array: nested empty arrays",
+    "source": [[], []],
+    "target": [[], [1]]
+  },
+  {
+    "comment": "Array: boolean element changes (from json-everything: ChangeTypeInArray)",
+    "source": [{"test": true}, {"test": "test321"}],
+    "target": [{"test": false}, {"test": "test32132"}]
+  },
+
+  {
+    "comment": "Special chars: empty string property name (from json-patch-tests)",
+    "source": {"": 1},
+    "target": {"": 2}
+  },
+  {
+    "comment": "Special chars: tilde in property name (RFC 6901 ~0 encoding)",
+    "source": {"m~n": 8},
+    "target": {"m~n": 9}
+  },
+  {
+    "comment": "Special chars: slash in property name (RFC 6901 ~1 encoding)",
+    "source": {"a/b": 1},
+    "target": {"a/b": 2}
+  },
+  {
+    "comment": "Special chars: tilde and slash together in property name",
+    "source": {"a~/b": 1},
+    "target": {"a~/b": 2}
+  },
+  {
+    "comment": "Special chars: percent in property name",
+    "source": {"c%d": 2},
+    "target": {"c%d": 3}
+  },
+  {
+    "comment": "Special chars: caret in property name",
+    "source": {"e^f": 3},
+    "target": {"e^f": 4}
+  },
+  {
+    "comment": "Special chars: pipe in property name",
+    "source": {"g|h": 4},
+    "target": {"g|h": 5}
+  },
+  {
+    "comment": "Special chars: backslash in property name",
+    "source": {"i\\j": 5},
+    "target": {"i\\j": 6}
+  },
+  {
+    "comment": "Special chars: double-quote in property name",
+    "source": {"k\"l": 6},
+    "target": {"k\"l": 7}
+  },
+  {
+    "comment": "Special chars: space in property name",
+    "source": {" ": 7},
+    "target": {" ": 8}
+  },
+  {
+    "comment": "Special chars: kubernetes-style slash in deep property name (from json-everything)",
+    "source": {"spec": {"template": {"metadata": {"annotations": {"kubectl.kubernetes.io/restartedAt": "1719861246", "date": "1719861246"}}}}},
+    "target": {"spec": {"template": {"metadata": {"annotations": {"kubectl.kubernetes.io/restartedAt": "", "date": "1719925004"}}}}}
+  },
+  {
+    "comment": "Special chars: multiple special char properties with change (consolidated from json-patch-tests)",
+    "source": {"foo": ["bar", "baz"], "": 0, "a/b": 1, "c%d": 2, "e^f": 3, "g|h": 4, "i\\j": 5, "k\"l": 6, " ": 7, "m~n": 8},
+    "target": {"foo": ["bar", "baz"], "": 0, "a/b": 1, "c%d": 2, "e^f": 3, "g|h": 4, "i\\j": 5, "k\"l": 6, " ": 7, "m~n": 9}
+  },
+  {
+    "comment": "Special chars: add property with slash in name",
+    "source": {"a": 1},
+    "target": {"a": 1, "b/c": 2}
+  },
+  {
+    "comment": "Special chars: remove property with tilde in name",
+    "source": {"a~b": 1, "c": 2},
+    "target": {"c": 2}
+  },
+
+  {
+    "comment": "Case sensitivity: different capitalisation (from json-patch-tests)",
+    "source": {"foo": "bar"},
+    "target": {"foo": "bar", "FOO": "BAR"}
+  },
+  {
+    "comment": "Case sensitivity: property names are case-sensitive",
+    "source": {"Foo": 1},
+    "target": {"foo": 1}
+  },
+
+  {
+    "comment": "Null handling: null replaces non-null",
+    "source": {"foo": "bar"},
+    "target": {"foo": null}
+  },
+  {
+    "comment": "Null handling: non-null replaces null",
+    "source": {"foo": null},
+    "target": {"foo": "bar"}
+  },
+  {
+    "comment": "Null handling: null to null (identity)",
+    "source": {"foo": null},
+    "target": {"foo": null}
+  },
+  {
+    "comment": "Null handling: add null property",
+    "source": {},
+    "target": {"foo": null}
+  },
+  {
+    "comment": "Null handling: null in array",
+    "source": [1, null, 3],
+    "target": [1, null, 4]
+  },
+  {
+    "comment": "Null handling: replace null in array with value",
+    "source": [null],
+    "target": [42]
+  },
+
+  {
+    "comment": "Complex: many properties with mixed adds, removes, replaces",
+    "source": {"a": 1, "b": "two", "c": true, "d": null, "e": [1, 2], "f": {"g": 3}},
+    "target": {"a": 1, "b": "TWO", "d": false, "e": [1, 2, 3], "f": {"g": 4}, "h": "new"}
+  },
+  {
+    "comment": "Complex: nested changes at multiple levels",
+    "source": {"level1": {"level2": {"str": "hello", "num": 42, "arr": [1, 2]}, "extra": true}},
+    "target": {"level1": {"level2": {"str": "world", "num": 99, "arr": [1, 3]}, "extra": false, "added": "new"}}
+  },
+  {
+    "comment": "Complex: array of mixed types",
+    "source": [1, "two", true, null, {"a": 1}, [2, 3]],
+    "target": [1, "TWO", false, null, {"a": 2}, [2, 4]]
+  },
+  {
+    "comment": "Complex: deeply nested arrays and objects (from json-everything style)",
+    "source": {"data": [{"id": 1, "tags": ["a", "b"], "meta": {"active": true}}, {"id": 2, "tags": ["c"], "meta": {"active": false}}]},
+    "target": {"data": [{"id": 1, "tags": ["a", "x"], "meta": {"active": true}}, {"id": 2, "tags": ["c"], "meta": {"active": true}}]}
+  },
+
+  {
+    "comment": "Numeric: integer vs float",
+    "source": {"val": 1},
+    "target": {"val": 1.5}
+  },
+  {
+    "comment": "Numeric: zero to non-zero",
+    "source": {"val": 0},
+    "target": {"val": 1}
+  },
+  {
+    "comment": "Numeric: negative numbers",
+    "source": {"val": -1},
+    "target": {"val": -2}
+  },
+  {
+    "comment": "Numeric: large integers",
+    "source": {"val": 9999999999},
+    "target": {"val": 1}
+  },
+
+  {
+    "comment": "String: empty to non-empty",
+    "source": {"val": ""},
+    "target": {"val": "hello"}
+  },
+  {
+    "comment": "String: non-empty to empty",
+    "source": {"val": "hello"},
+    "target": {"val": ""}
+  },
+  {
+    "comment": "String: with unicode characters",
+    "source": {"val": "hello"},
+    "target": {"val": "h\u00e9llo w\u00f6rld"}
+  },
+  {
+    "comment": "String: with emoji (supplementary plane)",
+    "source": {"val": "hello"},
+    "target": {"val": "hello \ud83c\udf0d"}
+  },
+  {
+    "comment": "String: with escaped characters (newlines)",
+    "source": {"val": "line1\nline2"},
+    "target": {"val": "line1\nline2\nline3"}
+  },
+  {
+    "comment": "String: with tab characters",
+    "source": {"val": "col1\tcol2"},
+    "target": {"val": "col1\tcol3"}
+  },
+
+  {
+    "comment": "Unicode: property names with CJK characters",
+    "source": {"\u540d\u524d": "\u592a\u90ce"},
+    "target": {"\u540d\u524d": "\u82b1\u5b50"}
+  },
+  {
+    "comment": "Unicode: property names with accented characters",
+    "source": {"caf\u00e9": 1},
+    "target": {"caf\u00e9": 2}
+  },
+  {
+    "comment": "Unicode: add property with unicode name",
+    "source": {"a": 1},
+    "target": {"a": 1, "\u00fcber": 2}
+  },
+
+  {
+    "comment": "Numeric property name: '0' as object key (from json-patch-tests)",
+    "source": {"foo": 1},
+    "target": {"foo": 1, "0": "bar"}
+  },
+  {
+    "comment": "Numeric property name: multiple numeric keys",
+    "source": {"0": "a", "1": "b"},
+    "target": {"0": "a", "1": "c", "2": "d"}
+  },
+
+  {
+    "comment": "Boolean arrays: all elements change",
+    "source": [true, false, true],
+    "target": [false, true, false]
+  },
+  {
+    "comment": "Nested empty containers: populate both",
+    "source": {"a": {}, "b": []},
+    "target": {"a": {"x": 1}, "b": [1]}
+  },
+  {
+    "comment": "Nested empty containers: identity",
+    "source": {"a": {}, "b": []},
+    "target": {"a": {}, "b": []}
+  },
+
+  {
+    "comment": "All JSON value types present",
+    "source": {"str": "a", "num": 1, "bool": true, "null": null, "obj": {}, "arr": []},
+    "target": {"str": "b", "num": 2, "bool": false, "null": null, "obj": {"x": 1}, "arr": [1]}
+  },
+
+  {
+    "comment": "Deep copy semantics: nested object structure (from json-patch-tests)",
+    "source": {"foo": {"bar": {"baz": [{"boo": "net"}]}}},
+    "target": {"foo": {"bar": {"baz": [{"boo": "net"}]}}, "bak": {"bar": {"baz": [{"boo": "qux"}]}}}
+  },
+
+  {
+    "comment": "Large array: many elements with single change",
+    "source": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19],
+    "target": [0, 1, 2, 3, 4, 5, 6, 7, 8, 99, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]
+  },
+
+  {
+    "comment": "Whitespace in string values: significant",
+    "source": {"val": "  hello  "},
+    "target": {"val": " hello "}
+  }
+]

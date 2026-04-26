@@ -27,6 +27,9 @@
     <ProjectReference Include="..\..\src\Corvus.Text.Json.Patch\Corvus.Text.Json.Patch.csproj" />
     <ProjectReference Include="..\..\src\Corvus.Text.Json\Corvus.Text.Json.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <Content Include="TestData\**\*.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
   <ItemGroup Condition="'$(TargetFramework)' == 'net481'">
     <PackageReference Include="System.Text.Json" />
   </ItemGroup>
