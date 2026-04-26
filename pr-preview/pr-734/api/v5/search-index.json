@@ -5922,6 +5922,27 @@
     "Body": "Disposes the underlying resources used to store the UTF-8 string backing the URI value."
   },
   {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-canonicalization-jsoncanonicalizer.html",
+    "Title": "JsonCanonicalizer",
+    "Description": "Produces canonical JSON output per RFC 8785 (JSON Canonicalization Scheme — JCS).",
+    "Keywords": "JsonCanonicalizer class Corvus.Text.Json.Canonicalization",
+    "Body": "Produces canonical JSON output per RFC 8785 (JSON Canonicalization Scheme — JCS).\r\nJCS defines a deterministic serialization of JSON values: - Object properties are sorted by UTF-16 code unit values of the property names. - Numbers use ECMAScript 6 `Number.toString()` formatting. - Strings use minimal escaping (only control characters, backslash, and double-quote). - No whitespace between structural tokens. Input must conform to I-JSON (RFC 7493): no duplicate property names, and all numbers must be representable as IEEE 754 double-precision values.\r\nTryCanonicalize: Canonicalizes a JSON element per RFC 8785 and writes the result to a byte span.\r\nCanonicalize: Canonicalizes a JSON element per RFC 8785 and returns the result as a byte array."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-canonicalization-jsoncanonicalizer.trycanonicalize.html",
+    "Title": "JsonCanonicalizer.TryCanonicalize",
+    "Description": "Canonicalizes a JSON element per RFC 8785 and writes the result to a byte span.",
+    "Keywords": "JsonCanonicalizer TryCanonicalize method Corvus.Text.Json.Canonicalization",
+    "Body": "Canonicalizes a JSON element per RFC 8785 and writes the result to a byte span."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-canonicalization-jsoncanonicalizer.canonicalize.html",
+    "Title": "JsonCanonicalizer.Canonicalize",
+    "Description": "Canonicalizes a JSON element per RFC 8785 and returns the result as a byte array.",
+    "Keywords": "JsonCanonicalizer Canonicalize method Corvus.Text.Json.Canonicalization",
+    "Body": "Canonicalizes a JSON element per RFC 8785 and returns the result as a byte array."
+  },
+  {
     "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-compatibility-polyfills.html",
     "Title": "Polyfills",
     "Description": "Provides polyfills for Corvus.JsonSchema API compatibility.",
@@ -11877,6 +11898,20 @@
     "Description": "",
     "Keywords": "RuleEvaluator EndInvoke method Corvus.Text.Json.JsonLogic",
     "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-patch-jsondiffextensions.html",
+    "Title": "JsonDiffExtensions",
+    "Description": "Extension methods for computing a JSON Patch (RFC 6902) that transforms one [`JsonElement`](/api/v5/corvus-text-json-jsonelement.html) into another.",
+    "Keywords": "JsonDiffExtensions class Corvus.Text.Json.Patch",
+    "Body": "Extension methods for computing a JSON Patch (RFC 6902) that transforms one [`JsonElement`](/api/v5/corvus-text-json-jsonelement.html) into another.\r\nThe diff operates on semantic JSON equality: object property order is not significant, and all property names within an object are assumed to be unique. If duplicate property names are present, only the last value for each name is considered (matching [`JsonElement`](/api/v5/corvus-text-json-jsonelement.html) comparison semantics). For arrays, the diff compares element-by-element when lengths match. When array lengths differ, the entire array is replaced. This produces correct but not necessarily minimal patches for arrays with insertions or deletions. A future version may implement LCS-based array diffing for more compact patches.\r\nCreatePatch: Creates a [`JsonPatchDocument`](/api/v5/corvus-text-json-patch-jsonpatchdocument.html) that transforms `source` into `target`."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-patch-jsondiffextensions.createpatch.html",
+    "Title": "JsonDiffExtensions.CreatePatch",
+    "Description": "Creates a [`JsonPatchDocument`](/api/v5/corvus-text-json-patch-jsonpatchdocument.html) that transforms `source` into `target`.",
+    "Keywords": "JsonDiffExtensions CreatePatch method Corvus.Text.Json.Patch",
+    "Body": "Creates a [`JsonPatchDocument`](/api/v5/corvus-text-json-patch-jsonpatchdocument.html) that transforms `source` into `target`."
   },
   {
     "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-patch-jsonmergepatchextensions.html",
