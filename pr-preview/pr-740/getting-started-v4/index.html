@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#1C1D21" />
+    <meta name="description" content="Step-by-step guide to the V4 engine: install Corvus.Json.ExtendedTypes, define a JSON Schema, generate strongly-typed C# code, and use it for serialization, validation, and composition." />
+    <meta name="keywords" content="getting started, V4, installation, JSON Schema, code generator, C#, tutorial, Corvus.Json.ExtendedTypes" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:description" content="Step-by-step guide to the V4 engine: install Corvus.Json.ExtendedTypes, define a JSON Schema, and generate strongly-typed C# code." />
+    <meta name="twitter:image" content="/Corvus.JsonSchema/pr-preview/pr-740/assets/images/og-corvus.png" />
+    <meta name="twitter:title" content="Getting Started (V4 Engine) &#x2014; Corvus.JsonSchema" />
+    <meta property="article:tag" content="getting started" />
+    <meta property="article:tag" content="V4" />
+    <meta property="article:tag" content="installation" />
+    <meta property="article:tag" content="JSON Schema" />
+    <meta property="article:tag" content="code generator" />
+    <meta property="article:tag" content="C#" />
+    <meta property="article:tag" content="tutorial" />
+    <meta property="article:tag" content="Corvus.Json.ExtendedTypes" />
+    <meta property="og:description" content="Step-by-step guide to the V4 engine: install Corvus.Json.ExtendedTypes, define a JSON Schema, and generate strongly-typed C# code." />
+    <meta property="og:image" content="/Corvus.JsonSchema/pr-preview/pr-740/assets/images/og-corvus.png" />
+    <meta property="og:title" content="Getting Started (V4 Engine) &#x2014; Corvus.JsonSchema" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://corvus-oss.org/corvus-json-schema/getting-started-v4/" />
+    <title>Getting Started (V4 Engine) &#x2014; Corvus.JsonSchema</title>
+    <link itemprop="url" href="https://corvus-oss.org/corvus-json-schema/getting-started-v4/" />
+    <link rel="canonical" href="https://corvus-oss.org/corvus-json-schema/getting-started-v4/" />
+    <link rel="sitemap" href="https://corvus-oss.org/corvus-json-schema/sitemap.xml" />
+    <!-- Styles -->
+    <link rel="stylesheet" href="/Corvus.JsonSchema/pr-preview/pr-740/main.css" />
+    <link rel="icon" type="image/svg+xml" href="/Corvus.JsonSchema/pr-preview/pr-740/assets/images/favicon.svg" />
+    
+</head>
+<body>
+    <a class="sr-only" href="#main-content">Skip to content</a>
+<header class="site-header">
+    <div class="site-header__inner">
+        <a class="site-header__brand" href="/Corvus.JsonSchema/pr-preview/pr-740/index.html" aria-label="Corvus.JsonSchema home">
+            <img src="/Corvus.JsonSchema/pr-preview/pr-740/assets/images/logo-corvus.svg" alt="" width="28" height="28" aria-hidden="true" />
+            Corvus<span style="color:var(--color-brand)">.</span>Json<span style="color:var(--color-brand)">Schema</span>
+        </a>
+        <nav class="site-header__nav-desktop" aria-label="Main navigation">
+                    <a href="/Corvus.JsonSchema/pr-preview/pr-740/getting-started/index.html"
+                       class="site-header__link "
+                       >Getting Started</a>
+                    <a href="/Corvus.JsonSchema/pr-preview/pr-740/docs/index.html"
+                       class="site-header__link "
+                       >Documentation</a>
+                    <a href="/Corvus.JsonSchema/pr-preview/pr-740/examples/index.html"
+                       class="site-header__link "
+                       >Examples</a>
+                    <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/index.html"
+                       class="site-header__link "
+                       >API</a>
+            <a href="/Corvus.JsonSchema/pr-preview/pr-740/playground/"
+               class="site-header__link"
+               target="_blank" rel="noopener noreferrer"
+               title="Interactive JSON Schema playground">Playground</a>
+            <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema"
+               class="site-header__link" target="_blank" rel="noopener noreferrer"
+               aria-label="View on GitHub">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+            </a>
+        </nav>
+        <button class="site-header__menu-toggle js-toggle-menu"
+                aria-expanded="false" aria-label="Toggle menu">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+            </svg>
+        </button>
+    </div>
+</header>
+<nav class="site-header__nav-mobile js-mobile-nav" aria-label="Mobile navigation">
+            <a href="/Corvus.JsonSchema/pr-preview/pr-740/getting-started/index.html" class="site-header__link">Getting Started</a>
+            <a href="/Corvus.JsonSchema/pr-preview/pr-740/docs/index.html" class="site-header__link">Documentation</a>
+            <a href="/Corvus.JsonSchema/pr-preview/pr-740/examples/index.html" class="site-header__link">Examples</a>
+            <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/index.html" class="site-header__link">API</a>
+    <a href="/Corvus.JsonSchema/pr-preview/pr-740/playground/" class="site-header__link" target="_blank" rel="noopener noreferrer">Playground</a>
+    <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema"
+       class="site-header__link" target="_blank" rel="noopener noreferrer">GitHub</a>
+</nav>
+
+    <div class="page-content">
+    <div class="layout-docs container">
+    <aside class="sidebar">
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Getting Started (V4)</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                    <li class="sidebar__item"><a class="sidebar__link is-active" href="/Corvus.JsonSchema/pr-preview/pr-740/getting-started-v4/index.html">Tutorial</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Documentation</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                            <li class="sidebar__item">
+                                <a class="sidebar__link" href="/Corvus.JsonSchema/pr-preview/pr-740/docs/parsed-json-document.html">Parsing &amp; Reading JSON</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link" href="/Corvus.JsonSchema/pr-preview/pr-740/docs/json-document-builder.html">Building &amp; Mutating JSON</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link" href="/Corvus.JsonSchema/pr-preview/pr-740/docs/source-generator.html">Source Generator</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link" href="/Corvus.JsonSchema/pr-preview/pr-740/docs/code-generator.html">CLI Code Generation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link" href="/Corvus.JsonSchema/pr-preview/pr-740/docs/validator.html">Dynamic Schema Validation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link" href="/Corvus.JsonSchema/pr-preview/pr-740/docs/migrating-from-v4-to-v5.html">Migrating from V4</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link" href="/Corvus.JsonSchema/pr-preview/pr-740/docs/using-copilot-for-migration.html">Copilot Migration</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link" href="/Corvus.JsonSchema/pr-preview/pr-740/docs/migration-analyzers.html">Migration Analyzers</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link" href="/Corvus.JsonSchema/pr-preview/pr-740/docs/analyzers.html">Analyzers</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link" href="/Corvus.JsonSchema/pr-preview/pr-740/docs/schema-evaluator.html">Standalone Schema Evaluator</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link" href="/Corvus.JsonSchema/pr-preview/pr-740/docs/json-patch.html">JSON Patch (RFC 6902)</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link" href="/Corvus.JsonSchema/pr-preview/pr-740/docs/json-logic.html">JsonLogic Rule Engine</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link" href="/Corvus.JsonSchema/pr-preview/pr-740/docs/jsonata.html">JSONata Query Language</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link" href="/Corvus.JsonSchema/pr-preview/pr-740/docs/jmes-path.html">JMESPath Query Language</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link" href="/Corvus.JsonSchema/pr-preview/pr-740/docs/yaml.html">YAML Converter</a>
+                            </li>
+                </ul>
+            </div>
+        </div>
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Examples</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                    <li class="sidebar__item"><a class="sidebar__link" href="/Corvus.JsonSchema/pr-preview/pr-740/examples/index.html">All Recipes</a></li>
+                </ul>
+            </div>
+        </div>
+    </aside>
+    <main id="main-content" class="layout-docs__main">
+        <div class="doc__content">
+<h2 id="introduction-v4-engine">Introduction — V4 Engine</h2>
+<p>This hands-on tutorial walks you through JSON Schema-based code generation with the <strong>V4 engine</strong> (<code>Corvus.Json.ExtendedTypes</code> and <code>Corvus.Json.JsonSchema.TypeGeneratorTool</code>). It builds on <code>System.Text.Json</code> to provide rich serialization, deserialization, composition, and validation support.</p>
+<blockquote>
+<p><strong>Looking for the V5 engine?</strong> The V5 engine (<code>Corvus.Text.Json</code>) offers source-generator integration, pooled-memory parsing, mutable documents, and improved performance. See the <a href="/Corvus.JsonSchema/pr-preview/pr-740/getting-started/index.html">V5 Getting Started guide</a>.</p>
+</blockquote>
+<h3 id="what-you-will-learn">What you will learn</h3>
+<ul>
+<li>Generate C# code from JSON Schema using the <code>corvusjson</code> CLI tool (with <code>--engine V4</code> for V4 output)</li>
+<li>Serialize and deserialize JSON documents with the generated types</li>
+<li>Validate JSON documents against schema</li>
+<li>Navigate JSON documents — including additional properties, arrays, and union types</li>
+<li>Create new JSON documents using factory methods and composition</li>
+<li>Use pattern matching with <code>oneOf</code>/<code>anyOf</code> union types</li>
+</ul>
+<h3 id="prerequisites">Prerequisites</h3>
+<ul>
+<li><a href="https://dotnet.microsoft.com/en-us/download/dotnet/8.0">.NET 8 SDK or later</a> (or Visual Studio 2022)</li>
+<li>A shell with developer tools in the path (PowerShell, Terminal, etc.)</li>
+<li>A text editor or IDE (VS Code, Visual Studio, etc.)</li>
+</ul>
+<blockquote>
+<p><strong>Note:</strong> .NET 8.0 support on the V4 engine will be dropped in November 2026 when .NET 8 reaches end-of-life.</p>
+</blockquote>
+<p>Some familiarity with C#, <a href="https://json-schema.org/understanding-json-schema/">JSON Schema</a>, and <code>System.Text.Json</code> will help, but is not required.</p>
+<h2 id="getting-started">Getting started</h2>
+<p>First, install the code generator tool globally:</p>
+<pre><code>dotnet tool install --global Corvus.Json.JsonSchema.TypeGeneratorTool --prerelease
+</code></pre>
+<p>Create a console app and add the extended types package:</p>
+<pre><code>dotnet new console -o JsonSchemaSample -f net8.0
+cd JsonSchemaSample
+dotnet add package Corvus.Json.ExtendedTypes
+</code></pre>
+<h2 id="designing-with-json-schema">Designing with JSON Schema</h2>
+<p>We will work with a JSON Schema document describing a <code>Person</code>. Here is the complete schema — save it as <code>api/person-from-api.json</code> in your project:</p>
+<pre><code class="language-json">{
+  &quot;$schema&quot;: &quot;https://json-schema.org/draft/2020-12/schema&quot;,
+  &quot;title&quot;: &quot;JSON Schema for a Person entity coming back from a 3rd party API&quot;,
+  &quot;$defs&quot;: {
+    &quot;Person&quot;: {
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;required&quot;:  [&quot;name&quot;],
+      &quot;properties&quot;: {
+        &quot;name&quot;: { &quot;$ref&quot;: &quot;#/$defs/PersonName&quot; },
+        &quot;dateOfBirth&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;format&quot;: &quot;date&quot;
+        }
+      }
+    },
+    &quot;PersonName&quot;: {
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;description&quot;: &quot;A name of a person.&quot;,
+      &quot;required&quot;: [ &quot;familyName&quot; ],
+      &quot;properties&quot;: {
+        &quot;givenName&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/PersonNameElement&quot;,
+          &quot;description&quot;: &quot;The person's given name.&quot;
+        },
+        &quot;familyName&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/PersonNameElement&quot;,
+          &quot;description&quot;: &quot;The person's family name.&quot;
+        },
+        &quot;otherNames&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/OtherNames&quot;,
+          &quot;description&quot;: &quot;Other (middle) names for the person&quot;
+        }
+      }
+    },
+    &quot;OtherNames&quot;: {
+        &quot;oneOf&quot;: [
+            { &quot;$ref&quot;: &quot;#/$defs/PersonNameElement&quot; },
+            { &quot;$ref&quot;: &quot;#/$defs/PersonNameElementArray&quot; }
+        ]
+    },
+    &quot;PersonNameElementArray&quot;: {
+      &quot;type&quot;: &quot;array&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/PersonNameElement&quot;
+      }
+    },
+    &quot;PersonNameElement&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;minLength&quot;: 1,
+      &quot;maxLength&quot;: 256
+    },
+    &quot;Link&quot;:
+    {
+      &quot;required&quot;: [ &quot;href&quot; ],
+      &quot;type&quot;: &quot;object&quot;,
+      &quot;properties&quot;: {
+        &quot;href&quot;: {
+          &quot;title&quot;: &quot;URI of the target resource&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;Either a URI [RFC3986] or URI Template [RFC6570] of the target resource.&quot;
+        },
+        &quot;templated&quot;: {
+          &quot;title&quot;: &quot;URI Template&quot;,
+          &quot;type&quot;: &quot;boolean&quot;,
+          &quot;description&quot;: &quot;Is true when the link object's href property is a URI Template. Defaults to false.&quot;,
+          &quot;default&quot;: false
+        },
+        &quot;type&quot;: {
+          &quot;title&quot;: &quot;Media type indication of the target resource&quot;,
+          &quot;pattern&quot;: &quot;^(application|audio|example|image|message|model|multipart|text|video)\\\\/[a-zA-Z0-9!#\\\\$&amp;\\\\.\\\\+-\\\\^_]{1,127}$&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;name&quot;: {
+          &quot;title&quot;: &quot;Secondary key&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;profile&quot;: {
+          &quot;title&quot;: &quot;Additional semantics of the target resource&quot;,
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;format&quot;: &quot;uri&quot;
+        },
+        &quot;description&quot;: {
+          &quot;title&quot;: &quot;Human-readable identifier&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;hreflang&quot;: {
+          &quot;title&quot;: &quot;Language indication of the target resource [RFC5988]&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      }
+    }
+  }
+}
+</code></pre>
+<h3 id="key-schema-features">Key schema features</h3>
+<ul>
+<li><strong><code>Person</code></strong> — an object with a required <code>name</code> property and an optional <code>dateOfBirth</code> (a <code>date</code>-formatted string)</li>
+<li><strong><code>PersonName</code></strong> — an object with a required <code>familyName</code> and optional <code>givenName</code> and <code>otherNames</code></li>
+<li><strong><code>PersonNameElement</code></strong> — a string with length constraints (1–256 characters)</li>
+<li><strong><code>OtherNames</code></strong> — a <code>oneOf</code> union: either a single <code>PersonNameElement</code> string or a <code>PersonNameElementArray</code></li>
+<li><strong><code>Link</code></strong> — a HAL-style web link (not referenced by <code>Person</code>, included for later use)</li>
+</ul>
+<p>The <code>OtherNames</code> union type allows backwards-compatible API evolution — a previous version might support only a single string, while a newer version adds the array form.</p>
+<h2 id="generating-c-code">Generating C# code</h2>
+<p>Run the code generator, specifying the root namespace and the path to the <code>Person</code> definition:</p>
+<pre><code>corvusjson jsonschema --rootNamespace JsonSchemaSample.Api --rootPath #/$defs/Person person-from-api.json --engine V4
+</code></pre>
+<p>This produces files for each schema element reachable from <code>Person</code>:</p>
+<table>
+<thead>
+<tr>
+<th>Schema location</th>
+<th>Files</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>#/$defs/Person</code></td>
+<td><code>Person.cs</code>, <code>Person.Object.cs</code>, <code>Person.Validate.cs</code></td>
+</tr>
+<tr>
+<td><code>#/$defs/PersonName</code></td>
+<td><code>PersonName.cs</code>, <code>PersonName.Object.cs</code>, <code>PersonName.Validate.cs</code></td>
+</tr>
+<tr>
+<td><code>#/$defs/PersonNameElement</code></td>
+<td><code>PersonNameElement.cs</code>, <code>PersonNameElement.String.cs</code>, <code>PersonNameElement.Validate.cs</code></td>
+</tr>
+<tr>
+<td><code>#/$defs/OtherNames</code></td>
+<td><code>OtherNames.cs</code>, <code>OtherNames.Array.cs</code>, <code>OtherNames.String.cs</code>, <code>OtherNames.Validate.cs</code></td>
+</tr>
+<tr>
+<td><code>#/$defs/PersonNameElementArray</code></td>
+<td><code>PersonNameElementArray.cs</code>, <code>PersonNameElementArray.Validate.cs</code></td>
+</tr>
+</tbody>
+</table>
+<p>Note that the <code>Link</code> schema was <strong>not</strong> generated — the tool only generates types reachable from the root path.</p>
+<p>Build the project to verify everything compiles:</p>
+<pre><code>cd ..
+dotnet build
+</code></pre>
+<h2 id="consuming-json-deserialization">Consuming JSON — &quot;Deserialization&quot;</h2>
+<p>Our generated types are <code>readonly struct</code> wrappers over <code>System.Text.Json</code>'s <code>JsonElement</code>. They provide named property accessors with just-in-time conversion to .NET types — without copying the underlying UTF-8 bytes.</p>
+<h3 id="parsing-from-a-json-string">Parsing from a JSON string</h3>
+<p>Add using statements and parse a JSON document:</p>
+<pre><code class="language-csharp">using System.Text.Json;
+using Corvus.Json;
+using JsonSchemaSample.Api;
+using NodaTime;
+
+string jsonText =
+  &quot;&quot;&quot;
+  {
+    &quot;name&quot;: {
+      &quot;familyName&quot;: &quot;Oldroyd&quot;,
+      &quot;givenName&quot;: &quot;Michael&quot;,
+      &quot;otherNames&quot;: [&quot;Francis&quot;, &quot;James&quot;]
+    },
+    &quot;dateOfBirth&quot;: &quot;1944-07-14&quot;
+  }
+  &quot;&quot;&quot;;
+
+using JsonDocument document = JsonDocument.Parse(jsonText);
+Person michaelOldroyd = new(document.RootElement);
+</code></pre>
+<p>Access properties with strongly-typed accessors:</p>
+<pre><code class="language-csharp">string familyName = (string)michaelOldroyd.Name.FamilyName;
+string givenName = (string)michaelOldroyd.Name.GivenName;
+LocalDate dateOfBirth = michaelOldroyd.DateOfBirth;
+
+Console.WriteLine($&quot;{familyName}, {givenName}: {dateOfBirth}&quot;);
+// Output: Oldroyd, Michael: 14 July 1944
+</code></pre>
+<p>Creating the <code>Person</code> wrapper allocates almost nothing — it stores a reference to the <code>JsonElement</code> on the stack. String allocations only happen when you convert to .NET types.</p>
+<h3 id="using-jsonany.parse-and-person.parse">Using <code>JsonAny.Parse()</code> and <code>Person.Parse()</code></h3>
+<p>You don't have to manage <code>JsonDocument</code> lifetime manually. <code>JsonAny.Parse()</code> clones the relevant segment and disposes the underlying document:</p>
+<pre><code class="language-csharp">Person michaelOldroyd = JsonAny.Parse(jsonText);
+</code></pre>
+<p>Or use the type-specific <code>Parse()</code> method directly:</p>
+<pre><code class="language-csharp">var michaelOldroyd = Person.Parse(jsonText);
+</code></pre>
+<h3 id="type-conversions">Type conversions</h3>
+<p>All types in <code>Corvus.Json</code> implement <code>IJsonValue</code>. Every generated type has implicit conversions to and from <code>JsonAny</code>, which enables zero-ceremony interop:</p>
+<pre><code class="language-csharp">// Any IJsonValue → JsonAny → Any other IJsonValue
+JsonFoo myFoo = ...;
+JsonBar myBar = myFoo.As&lt;JsonBar&gt;();
+</code></pre>
+<p>The code generator examines each schema and emits appropriate conversions. For example, <code>PersonNameElement</code> (a <code>string</code> schema) converts implicitly to <code>string</code>, and <code>JsonDate</code> converts implicitly to <code>NodaTime.LocalDate</code>.</p>
+<blockquote>
+<p>Converting between types doesn't guarantee validity — always validate if correctness matters.</p>
+</blockquote>
+<h2 id="serialization">Serialization</h2>
+<p>All JSON types support <code>WriteTo(Utf8JsonWriter)</code> for efficient output:</p>
+<pre><code class="language-csharp">Utf8JsonWriter writer = ...;
+michaelOldroyd.WriteTo(writer);
+</code></pre>
+<p>For quick inspection, use the <code>Serialize()</code> extension method:</p>
+<pre><code class="language-csharp">string serialized = michaelOldroyd.Serialize();
+Console.WriteLine(serialized);
+// {&quot;name&quot;:{&quot;familyName&quot;:&quot;Oldroyd&quot;,&quot;givenName&quot;:&quot;Michael&quot;,&quot;otherNames&quot;:[&quot;Francis&quot;,&quot;James&quot;]},&quot;dateOfBirth&quot;:&quot;1944-07-14&quot;}
+</code></pre>
+<blockquote>
+<p>Prefer <code>WriteTo()</code> in production — it writes UTF-8 bytes directly to the output without string allocation. <code>Serialize()</code> is convenient for debugging but allocates a string.</p>
+</blockquote>
+<h2 id="validation">Validation</h2>
+<p>JSON Schema uses a duck-typing model — it describes the <em>shape</em> of data rather than enforcing a rigid type system. When you construct a C# type from JSON data, it will be safe to use only if the data is <em>valid</em> according to the schema.</p>
+<p>The code generator emits a <code>Validate()</code> method on each type. For simple pass/fail checks, use the <code>IsValid()</code> extension:</p>
+<pre><code class="language-csharp">bool isValid = michaelOldroyd.IsValid();
+Console.WriteLine($&quot;michaelOldroyd {(isValid ? &quot;is&quot; : &quot;is not&quot;)} valid.&quot;);
+// Output: michaelOldroyd is valid.
+</code></pre>
+<h3 id="invalid-data">Invalid data</h3>
+<p>Even when data is invalid, you can still access the parts that <em>are</em> present:</p>
+<pre><code class="language-csharp">string invalidJsonText =
+    &quot;&quot;&quot;
+    {
+      &quot;name&quot;: {
+        &quot;givenName&quot;: &quot;Michael&quot;,
+        &quot;otherNames&quot;: [&quot;Francis&quot;, &quot;James&quot;]
+      },
+      &quot;dateOfBirth&quot;: &quot;1944-07-14&quot;
+    }
+    &quot;&quot;&quot;;
+
+Person invalidPerson = JsonAny.Parse(invalidJsonText);
+Console.WriteLine($&quot;Is valid: {invalidPerson.IsValid()}&quot;);
+// Output: Is valid: False
+
+// The missing familyName makes it invalid, but we can still read what's there
+string givenName = (string)invalidPerson.Name.GivenName;
+Console.WriteLine(givenName);
+// Output: Michael
+</code></pre>
+<blockquote>
+<p>This forgiving approach is useful for diagnostics and self-healing scenarios. If you need to fail fast, validate first and throw an exception.</p>
+</blockquote>
+<h2 id="values-null-and-undefined">Values, Null, and Undefined</h2>
+<p>JSON properties have three states:</p>
+<pre><code class="language-json">{ &quot;foo&quot;: 3.14 }   // Present with a value
+{ &quot;foo&quot;: null }    // Present but null
+{}                 // Not present (undefined)
+</code></pre>
+<p>Accessing a property that is undefined will throw when you try to convert it to a .NET type. Use the extension methods to check first:</p>
+<pre><code class="language-csharp">string givenName =
+    michaelOldroyd.Name.GivenName.IsNotUndefined()
+        ? (string)michaelOldroyd.Name.GivenName
+        : &quot;[no given name specified]&quot;;
+</code></pre>
+<p>Related extensions: <code>IsNull()</code>, <code>IsNullOrUndefined()</code>, <code>IsNotUndefined()</code>.</p>
+<blockquote>
+<p><strong>Nullable properties</strong>: You can pass <code>--optionalAsNullable</code> to the code generator to emit optional properties as <code>Nullable&lt;T&gt;</code> directly, giving a more idiomatic .NET experience.</p>
+</blockquote>
+<h3 id="additional-properties">Additional properties</h3>
+<p>JSON Schema allows additional properties by default. Access them with <code>TryGetProperty()</code>:</p>
+<pre><code class="language-csharp">if (michaelOldroyd.TryGetProperty(&quot;occupation&quot;, out JsonAny occupation) &amp;&amp;
+    occupation.ValueKind == JsonValueKind.String)
+{
+    Console.WriteLine($&quot;occupation: {occupation.AsString}&quot;);
+}
+</code></pre>
+<h3 id="enumerating-properties">Enumerating properties</h3>
+<p>Use <code>EnumerateObject()</code> to iterate all properties. Filter out well-known properties using the generated <code>JsonPropertyNames</code> constants:</p>
+<pre><code class="language-csharp">foreach (JsonObjectProperty property in michaelOldroyd.EnumerateObject())
+{
+    if (property.NameEquals(Person.JsonPropertyNames.DateOfBirthUtf8) ||
+        property.NameEquals(Person.JsonPropertyNames.NameUtf8))
+    {
+        continue; // Skip well-known properties
+    }
+
+    Console.WriteLine($&quot;{(string)property.Name}: {property.Value}&quot;);
+}
+</code></pre>
+<blockquote>
+<p>The <code>NameEquals()</code> method with the pre-encoded <code>XXXUtf8</code> properties avoids allocating strings for property name comparisons.</p>
+</blockquote>
+<h3 id="working-with-arrays">Working with arrays</h3>
+<p>Array types expose <code>EnumerateArray()</code>, <code>Length</code>, and indexer access:</p>
+<pre><code class="language-csharp">foreach (PersonNameElement otherName in michaelOldroyd.Name.OtherNames.EnumerateArray())
+{
+    Console.WriteLine(otherName);
+}
+// Output:
+// Francis
+// James
+</code></pre>
+<h3 id="preserving-information">Preserving information</h3>
+<p>Unlike code-first serializers, the V4 type model preserves all information through roundtrips — including additional properties, unknown extensions, and structural details — even when converting between types.</p>
+<h2 id="creating-json">Creating JSON</h2>
+<h3 id="creating-primitives">Creating primitives</h3>
+<p>Primitive types support both implicit conversion and explicit construction:</p>
+<pre><code class="language-csharp">JsonString myString = &quot;hello&quot;;
+JsonNumber myNumber = 3.14;
+JsonBoolean myBool = true;
+JsonNull myNull = JsonAny.Null;
+</code></pre>
+<p>Explore the extended types like <code>JsonDateTime</code>, <code>JsonInteger</code>, <code>JsonEmail</code>, and others for format-specific schemas.</p>
+<h3 id="creating-arrays">Creating arrays</h3>
+<p>Array types with a simple item schema emit <code>FromItems()</code> and <code>FromRange()</code> factory methods:</p>
+<pre><code class="language-csharp">// From individual items (with implicit conversion from string)
+var otherNames = PersonNameElementArray.FromItems(&quot;Margaret&quot;, &quot;Nancy&quot;);
+
+// From an existing collection
+var nameList = new List&lt;PersonNameElement&gt; { &quot;Margaret&quot;, &quot;Nancy&quot; };
+PersonNameElementArray array = PersonNameElementArray.FromRange(nameList);
+</code></pre>
+<h3 id="creating-objects-with-create">Creating objects with <code>Create()</code></h3>
+<p>The code generator emits <code>Create()</code> factory methods that understand required vs. optional properties:</p>
+<pre><code class="language-csharp">Person audreyJones =
+    Person.Create(
+        name: PersonName.Create(
+                givenName: &quot;Audrey&quot;,
+                otherNames: PersonNameElementArray.FromItems(&quot;Margaret&quot;, &quot;Nancy&quot;),
+                familyName: &quot;Jones&quot;),
+        dateOfBirth: new LocalDate(1947, 11, 7));
+</code></pre>
+<p>A minimal valid <code>Person</code> needs only the required <code>name</code> with a <code>familyName</code>:</p>
+<pre><code class="language-csharp">var minPerson = Person.Create(PersonName.Create(&quot;Jones&quot;));
+</code></pre>
+<h3 id="optional-vs.null-in-create">Optional vs. Null in <code>Create()</code></h3>
+<p>When creating objects, <code>.NET null</code> means <em>do not set the property</em> (undefined), while <code>JsonAny.Null</code> means <em>set the property to JSON null</em>:</p>
+<pre><code class="language-csharp">// dateOfBirth is undefined — not present in JSON
+Person.Create(
+  name: PersonName.Create(&quot;Jones&quot;),
+  dateOfBirth: null);
+// Produces: { &quot;name&quot;: {&quot;familyName&quot;: &quot;Jones&quot;} }
+
+// dateOfBirth is explicitly null
+Person.Create(
+  name: PersonName.Create(&quot;Jones&quot;),
+  dateOfBirth: JsonAny.Null);
+// Produces: { &quot;name&quot;: {&quot;familyName&quot;: &quot;Jones&quot;}, &quot;dateOfBirth&quot;: null }
+</code></pre>
+<h2 id="union-types">Union types</h2>
+<p>The <code>OtherNames</code> property uses <code>oneOf</code> to represent a union of <code>PersonNameElement</code> (string) and <code>PersonNameElementArray</code> (array). The code generator emits <code>Is...</code> and <code>As...</code> members for each variant:</p>
+<pre><code class="language-csharp">OtherNames otherNames = michaelOldroyd.Name.OtherNames;
+
+if (otherNames.IsPersonNameElementArray)
+{
+    PersonNameElementArray array = otherNames.AsPersonNameElementArray;
+    // Use the array
+}
+</code></pre>
+<p>There is also a <code>TryGetAs...</code> pattern:</p>
+<pre><code class="language-csharp">if (michaelOldroyd.Name.OtherNames.TryGetAsPersonNameElementArray(
+        out PersonNameElementArray otherNamesArray))
+{
+    otherNamesArray.EnumerateArray();
+}
+</code></pre>
+<h2 id="pattern-matching-with-match">Pattern matching with <code>Match()</code></h2>
+<p>Any union type (<code>oneOf</code>, <code>anyOf</code>, <code>allOf</code>, <code>if</code>/<code>then</code>/<code>else</code>) emits an exhaustive <code>Match()</code> method that takes a delegate for each variant:</p>
+<pre><code class="language-csharp">string result = audreyJones.Name.OtherNames.Match(
+    static (in PersonNameElement otherNames) =&gt;
+        $&quot;Other names: {otherNames}&quot;,
+    static (in PersonNameElementArray otherNames) =&gt;
+        $&quot;Other names: {string.Join(&quot;, &quot;, otherNames)}&quot;,
+    static (in OtherNames value) =&gt;
+        throw new InvalidOperationException($&quot;Unexpected type: {value}&quot;));
+</code></pre>
+<p>Because the match is exhaustive, you avoid common errors with missing cases.</p>
+<blockquote>
+<p>There are similar match methods for <code>if</code>/<code>then</code>/<code>else</code> and <code>enum</code> types.</p>
+</blockquote>
+        </div>
+    </main>
+</div>
+    </div>
+    <footer class="site-footer">
+    <div class="site-footer__inner">
+        <div class="site-footer__sponsor">
+            Sponsored by
+            <a href="https://endjin.com" target="_blank" rel="noopener noreferrer">endjin</a>
+        </div>
+        <ul class="site-footer__links" role="list">
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/pr-preview/pr-740/getting-started/index.html">Getting Started</a></li>
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/pr-preview/pr-740/docs/index.html">Documentation</a></li>
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/pr-preview/pr-740/examples/index.html">Examples</a></li>
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/pr-preview/pr-740/api/index.html">API</a></li>
+            <li><a class="site-footer__link" href="https://github.com/corvus-dotnet/Corvus.JsonSchema" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+            <li><a class="site-footer__link" href="https://www.nuget.org/packages?q=Corvus.Json" target="_blank" rel="noopener noreferrer">NuGet</a></li>
+        </ul>
+        <p class="site-footer__copyright">&copy; 2026 endjin Ltd.</p>
+    </div>
+</footer>
+
+    <!-- highlight.js for syntax highlighting (CSS targets .hljs-* classes) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/csharp.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/json.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/bash.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/xml.min.js" defer></script>
+    <script>document.addEventListener('DOMContentLoaded',()=>hljs.highlightAll())</script>
+    <script src="/Corvus.JsonSchema/pr-preview/pr-740/assets/js/main.js" defer></script>
+    <script src="/Corvus.JsonSchema/pr-preview/pr-740/assets/js/sidebar-search.js" defer></script>
+    
+</body>
+</html>

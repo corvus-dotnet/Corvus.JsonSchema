@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#1C1D21" />
+    <meta name="description" content="API documentation for BigNumber in Corvus.Numerics" />
+    <meta name="keywords" content="API, struct, BigNumber, Corvus.Numerics" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:description" content="API documentation for BigNumber" />
+    <meta name="twitter:image" content="/Corvus.JsonSchema/pr-preview/pr-740/assets/images/og-corvus.png" />
+    <meta name="twitter:title" content="BigNumber &#x2014; Corvus.Numerics" />
+    <meta property="article:tag" content="API" />
+    <meta property="article:tag" content="struct" />
+    <meta property="article:tag" content="BigNumber" />
+    <meta property="article:tag" content="Corvus.Numerics" />
+    <meta property="og:description" content="API documentation for BigNumber" />
+    <meta property="og:image" content="/Corvus.JsonSchema/pr-preview/pr-740/assets/images/og-corvus.png" />
+    <meta property="og:title" content="BigNumber &#x2014; Corvus.Numerics" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://corvus-oss.org/corvus-json-schema/api/v5/corvus-numerics-bignumber/" />
+    <title>BigNumber &#x2014; Corvus.Numerics</title>
+    <link itemprop="url" href="https://corvus-oss.org/corvus-json-schema/api/v5/corvus-numerics-bignumber/" />
+    <link rel="canonical" href="https://corvus-oss.org/corvus-json-schema/api/v5/corvus-numerics-bignumber/" />
+    <link rel="sitemap" href="https://corvus-oss.org/corvus-json-schema/sitemap.xml" />
+    <!-- Styles -->
+    <link rel="stylesheet" href="/Corvus.JsonSchema/pr-preview/pr-740/main.css" />
+    <link rel="icon" type="image/svg+xml" href="/Corvus.JsonSchema/pr-preview/pr-740/assets/images/favicon.svg" />
+    
+</head>
+<body>
+    <a class="sr-only" href="#main-content">Skip to content</a>
+<header class="site-header">
+    <div class="site-header__inner">
+        <a class="site-header__brand" href="/Corvus.JsonSchema/pr-preview/pr-740/index.html" aria-label="Corvus.JsonSchema home">
+            <img src="/Corvus.JsonSchema/pr-preview/pr-740/assets/images/logo-corvus.svg" alt="" width="28" height="28" aria-hidden="true" />
+            Corvus<span style="color:var(--color-brand)">.</span>Json<span style="color:var(--color-brand)">Schema</span>
+        </a>
+        <nav class="site-header__nav-desktop" aria-label="Main navigation">
+                    <a href="/Corvus.JsonSchema/pr-preview/pr-740/getting-started/index.html"
+                       class="site-header__link "
+                       >Getting Started</a>
+                    <a href="/Corvus.JsonSchema/pr-preview/pr-740/docs/index.html"
+                       class="site-header__link "
+                       >Documentation</a>
+                    <a href="/Corvus.JsonSchema/pr-preview/pr-740/examples/index.html"
+                       class="site-header__link "
+                       >Examples</a>
+                    <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/index.html"
+                       class="site-header__link "
+                       >API</a>
+            <a href="/Corvus.JsonSchema/pr-preview/pr-740/playground/"
+               class="site-header__link"
+               target="_blank" rel="noopener noreferrer"
+               title="Interactive JSON Schema playground">Playground</a>
+            <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema"
+               class="site-header__link" target="_blank" rel="noopener noreferrer"
+               aria-label="View on GitHub">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+            </a>
+        </nav>
+        <button class="site-header__menu-toggle js-toggle-menu"
+                aria-expanded="false" aria-label="Toggle menu">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+            </svg>
+        </button>
+    </div>
+</header>
+<nav class="site-header__nav-mobile js-mobile-nav" aria-label="Mobile navigation">
+            <a href="/Corvus.JsonSchema/pr-preview/pr-740/getting-started/index.html" class="site-header__link">Getting Started</a>
+            <a href="/Corvus.JsonSchema/pr-preview/pr-740/docs/index.html" class="site-header__link">Documentation</a>
+            <a href="/Corvus.JsonSchema/pr-preview/pr-740/examples/index.html" class="site-header__link">Examples</a>
+            <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/index.html" class="site-header__link">API</a>
+    <a href="/Corvus.JsonSchema/pr-preview/pr-740/playground/" class="site-header__link" target="_blank" rel="noopener noreferrer">Playground</a>
+    <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema"
+       class="site-header__link" target="_blank" rel="noopener noreferrer">GitHub</a>
+</nav>
+
+    <div class="page-content">
+    <div class="layout-docs container">
+        <button class="sidebar-toggle" aria-label="Toggle navigation" aria-expanded="false"></button>
+    <div class="sidebar-backdrop"></div>
+    <aside class="sidebar" data-has-member-nav>
+        <div class="sidebar-search">
+            <svg class="sidebar-search__icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M11.5 7a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0Zm-.82 4.74a6 6 0 1 1 1.06-1.06l3.04 3.04a.75.75 0 1 1-1.06 1.06l-3.04-3.04Z"/></svg>
+            <input id="sidebar-search-input" class="sidebar-search__input" type="search" placeholder="Search" autocomplete="off" />
+            <div id="sidebar-search-dropdown" class="sidebar-search__dropdown" hidden></div>
+        </div>
+        <div class="sidebar__inner" data-sidebar-url="sidebar.html">
+        </div>
+    </aside>
+
+    <main id="main-content" class="layout-docs__main">
+        <div class="doc__content api-ref">
+            <h1>BigNumber</h1>
+<h2 id="definition">Definition</h2>
+<p><strong>Namespace:</strong> Corvus.Numerics<br />
+<strong>Assembly:</strong> Corvus.Text.Json.dll<br />
+<strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/zf-migration/src/Corvus.Text.Json/Corvus/Numerics/BigNumber.cs#L35">BigNumber.cs</a></p>
+<p>Represents an arbitrary-precision decimal number using a significand and exponent.</p>
+<pre><code class="language-csharp">public readonly struct BigNumber : IEquatable&lt;BigNumber&gt;, IComparable&lt;BigNumber&gt;, IComparable, IFormattable, ISpanFormattable, IUtf8SpanFormattable, INumber&lt;BigNumber&gt;, IParsable&lt;BigNumber&gt;, ISpanParsable&lt;BigNumber&gt;, IAdditionOperators&lt;BigNumber, BigNumber, BigNumber&gt;, IAdditiveIdentity&lt;BigNumber, BigNumber&gt;, IComparisonOperators&lt;BigNumber, BigNumber, bool&gt;, IEqualityOperators&lt;BigNumber, BigNumber, bool&gt;, IDecrementOperators&lt;BigNumber&gt;, IDivisionOperators&lt;BigNumber, BigNumber, BigNumber&gt;, IIncrementOperators&lt;BigNumber&gt;, IModulusOperators&lt;BigNumber, BigNumber, BigNumber&gt;, IMultiplicativeIdentity&lt;BigNumber, BigNumber&gt;, IMultiplyOperators&lt;BigNumber, BigNumber, BigNumber&gt;, INumberBase&lt;BigNumber&gt;, IUtf8SpanParsable&lt;BigNumber&gt;, ISubtractionOperators&lt;BigNumber, BigNumber, BigNumber&gt;, IUnaryNegationOperators&lt;BigNumber, BigNumber&gt;, IUnaryPlusOperators&lt;BigNumber, BigNumber&gt;, ISignedNumber&lt;BigNumber&gt;
+</code></pre>
+<h2 id="remarks">Remarks</h2>
+<p>Internally represented as: value = significand × 10^exponent where significand is a <a href="https://learn.microsoft.com/dotnet/api/system.numerics.biginteger"><code>BigInteger</code></a> and exponent is a <a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>Int32</code></a>. This type provides equivalent functionality to <a href="https://learn.microsoft.com/dotnet/api/system.decimal"><code>Decimal</code></a> but with arbitrary precision, similar to how <a href="https://learn.microsoft.com/dotnet/api/system.numerics.biginteger"><code>BigInteger</code></a> extends integer arithmetic beyond fixed sizes.</p>
+<h2 id="implements">Implements</h2>
+<p><a href="https://learn.microsoft.com/dotnet/api/system.iequatable-1"><code>IEquatable&lt;BigNumber&gt;</code></a>, <a href="https://learn.microsoft.com/dotnet/api/system.icomparable-1"><code>IComparable&lt;BigNumber&gt;</code></a>, <a href="https://learn.microsoft.com/dotnet/api/system.icomparable"><code>IComparable</code></a>, <a href="https://learn.microsoft.com/dotnet/api/system.iformattable"><code>IFormattable</code></a>, <a href="https://learn.microsoft.com/dotnet/api/system.ispanformattable"><code>ISpanFormattable</code></a>, <a href="https://learn.microsoft.com/dotnet/api/system.iutf8spanformattable"><code>IUtf8SpanFormattable</code></a>, <a href="https://learn.microsoft.com/dotnet/api/system.numerics.inumber-1"><code>INumber&lt;BigNumber&gt;</code></a>, <a href="https://learn.microsoft.com/dotnet/api/system.iparsable-1"><code>IParsable&lt;BigNumber&gt;</code></a>, <a href="https://learn.microsoft.com/dotnet/api/system.ispanparsable-1"><code>ISpanParsable&lt;BigNumber&gt;</code></a>, <a href="https://learn.microsoft.com/dotnet/api/system.numerics.iadditionoperators-3"><code>IAdditionOperators&lt;BigNumber, BigNumber, BigNumber&gt;</code></a>, <a href="https://learn.microsoft.com/dotnet/api/system.numerics.iadditiveidentity-2"><code>IAdditiveIdentity&lt;BigNumber, BigNumber&gt;</code></a>, <a href="https://learn.microsoft.com/dotnet/api/system.numerics.icomparisonoperators-3"><code>IComparisonOperators&lt;BigNumber, BigNumber, bool&gt;</code></a>, <a href="https://learn.microsoft.com/dotnet/api/system.numerics.iequalityoperators-3"><code>IEqualityOperators&lt;BigNumber, BigNumber, bool&gt;</code></a>, <a href="https://learn.microsoft.com/dotnet/api/system.numerics.idecrementoperators-1"><code>IDecrementOperators&lt;BigNumber&gt;</code></a>, <a href="https://learn.microsoft.com/dotnet/api/system.numerics.idivisionoperators-3"><code>IDivisionOperators&lt;BigNumber, BigNumber, BigNumber&gt;</code></a>, <a href="https://learn.microsoft.com/dotnet/api/system.numerics.iincrementoperators-1"><code>IIncrementOperators&lt;BigNumber&gt;</code></a>, <a href="https://learn.microsoft.com/dotnet/api/system.numerics.imodulusoperators-3"><code>IModulusOperators&lt;BigNumber, BigNumber, BigNumber&gt;</code></a>, <a href="https://learn.microsoft.com/dotnet/api/system.numerics.imultiplicativeidentity-2"><code>IMultiplicativeIdentity&lt;BigNumber, BigNumber&gt;</code></a>, <a href="https://learn.microsoft.com/dotnet/api/system.numerics.imultiplyoperators-3"><code>IMultiplyOperators&lt;BigNumber, BigNumber, BigNumber&gt;</code></a>, <a href="https://learn.microsoft.com/dotnet/api/system.numerics.inumberbase-1"><code>INumberBase&lt;BigNumber&gt;</code></a>, <a href="https://learn.microsoft.com/dotnet/api/system.iutf8spanparsable-1"><code>IUtf8SpanParsable&lt;BigNumber&gt;</code></a>, <a href="https://learn.microsoft.com/dotnet/api/system.numerics.isubtractionoperators-3"><code>ISubtractionOperators&lt;BigNumber, BigNumber, BigNumber&gt;</code></a>, <a href="https://learn.microsoft.com/dotnet/api/system.numerics.iunarynegationoperators-2"><code>IUnaryNegationOperators&lt;BigNumber, BigNumber&gt;</code></a>, <a href="https://learn.microsoft.com/dotnet/api/system.numerics.iunaryplusoperators-2"><code>IUnaryPlusOperators&lt;BigNumber, BigNumber&gt;</code></a>, <a href="https://learn.microsoft.com/dotnet/api/system.numerics.isignednumber-1"><code>ISignedNumber&lt;BigNumber&gt;</code></a></p>
+<h2 id="constructors">Constructors</h2>
+<table>
+<thead>
+<tr>
+<th>Constructor</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-numerics-bignumber.ctor.html#bignumber-biginteger-int">BigNumber(BigInteger, int)</a></td>
+<td>Initializes a new instance of the <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-numerics-bignumber.html"><code>BigNumber</code></a> struct.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="properties">Properties</h2>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-numerics-bignumber.exponent.html">Exponent</a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>int</code></a></td>
+<td>Gets the exponent (power of 10) of the number.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-numerics-bignumber.minusone.html">MinusOne</a> <code>static</code></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-numerics-bignumber.html"><code>BigNumber</code></a></td>
+<td>Gets a value representing minus one.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-numerics-bignumber.one.html">One</a> <code>static</code></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-numerics-bignumber.html"><code>BigNumber</code></a></td>
+<td>Gets a value representing one.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-numerics-bignumber.radix.html">Radix</a> <code>static</code></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>int</code></a></td>
+<td>Gets the radix (base) of the number system.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-numerics-bignumber.significand.html">Significand</a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.numerics.biginteger"><code>BigInteger</code></a></td>
+<td>Gets the significand of the number.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-numerics-bignumber.zero.html">Zero</a> <code>static</code></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-numerics-bignumber.html"><code>BigNumber</code></a></td>
+<td>Gets a value representing zero.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="methods">Methods</h2>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-numerics-bignumber.abs.html#abs-bignumber">Abs(BigNumber)</a> <code>static</code></td>
+<td>Returns the absolute value.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-numerics-bignumber.ceiling.html#ceiling-bignumber">Ceiling(BigNumber)</a> <code>static</code></td>
+<td>Returns the smallest integer greater than or equal to the specified number.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-numerics-bignumber.compareto.html">CompareTo</a></td>
+<td>Compares this instance with another <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-numerics-bignumber.html"><code>BigNumber</code></a> value.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-numerics-bignumber.divide.html#divide-bignumber-bignumber-int">Divide(BigNumber, BigNumber, int)</a> <code>static</code></td>
+<td>Divides one <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-numerics-bignumber.html"><code>BigNumber</code></a> by another with specified precision.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-numerics-bignumber.equals.html">Equals</a></td>
+<td>Determines whether the specified <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-numerics-bignumber.html"><code>BigNumber</code></a> is equal to this instance.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-numerics-bignumber.floor.html#floor-bignumber">Floor(BigNumber)</a> <code>static</code></td>
+<td>Returns the largest integer less than or equal to the specified number.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-numerics-bignumber.gethashcode.html#gethashcode">GetHashCode()</a></td>
+<td>Returns a hash code for this instance.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-numerics-bignumber.isinteger.html#isinteger">IsInteger()</a></td>
+<td>Determines whether this instance represents an integer value.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-numerics-bignumber.normalize.html#normalize">Normalize()</a></td>
+<td>Returns a normalized copy of this number with trailing zeros removed from the significand.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-numerics-bignumber.parse.html">Parse</a> <code>static</code></td>
+<td>Parses a string into a <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-numerics-bignumber.html"><code>BigNumber</code></a>.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-numerics-bignumber.pow.html#pow-bignumber-int">Pow(BigNumber, int)</a> <code>static</code></td>
+<td>Raises a BigNumber to an integer power.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-numerics-bignumber.round.html#round-bignumber-int-midpointrounding">Round(BigNumber, int, MidpointRounding)</a> <code>static</code></td>
+<td>Rounds a value to a specified number of decimal places.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-numerics-bignumber.sign.html#sign-bignumber">Sign(BigNumber)</a> <code>static</code></td>
+<td>Returns the sign of the number.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-numerics-bignumber.sqrt.html#sqrt-bignumber-int">Sqrt(BigNumber, int)</a> <code>static</code></td>
+<td>Computes the square root of a BigNumber using Newton's method.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-numerics-bignumber.tostring.html">ToString</a></td>
+<td>Returns the string representation of this <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-numerics-bignumber.html"><code>BigNumber</code></a> value.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-numerics-bignumber.truncate.html#truncate-bignumber">Truncate(BigNumber)</a> <code>static</code></td>
+<td>Truncates a value to an integer by removing the fractional part.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-numerics-bignumber.tryformat.html">TryFormat</a></td>
+<td>Tries to format this <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-numerics-bignumber.html"><code>BigNumber</code></a> value into the provided character span.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-numerics-bignumber.tryformatoptimized.html#tryformatoptimized-span-char-ref-int-readonlyspan-char-iformatprovider">TryFormatOptimized(Span&lt;char&gt;, ref int, ReadOnlySpan&lt;char&gt;, IFormatProvider)</a></td>
+<td>Tries to format this instance into the provided UTF-16 span with zero allocations.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-numerics-bignumber.tryformatutf8optimized.html#tryformatutf8optimized-span-byte-ref-int-readonlyspan-char-iformatprovider">TryFormatUtf8Optimized(Span&lt;byte&gt;, ref int, ReadOnlySpan&lt;char&gt;, IFormatProvider)</a></td>
+<td>Tries to format this instance into the provided UTF-8 span with zero allocations.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-numerics-bignumber.trygetminimumformatbufferlength.html#trygetminimumformatbufferlength-ref-int">TryGetMinimumFormatBufferLength(ref int)</a></td>
+<td>Gets the minimum format buffer length.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-numerics-bignumber.tryparse.html">TryParse</a> <code>static</code></td>
+<td>Attempts to parse a string into a <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-numerics-bignumber.html"><code>BigNumber</code></a>.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-numerics-bignumber.tryparsejsonutf8.html#tryparsejsonutf8-readonlyspan-byte-ref-bignumber">TryParseJsonUtf8(ReadOnlySpan&lt;byte&gt;, ref BigNumber)</a> <code>static</code></td>
+<td>Tries to parse a BigNumber from UTF-8 bytes in JSON format with zero allocations.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="operators">Operators</h2>
+<table>
+<thead>
+<tr>
+<th>Operator</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-numerics-bignumber.op-addition.html#operator-bignumber-bignumber">operator +(BigNumber, BigNumber)</a></td>
+<td>Adds two <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-numerics-bignumber.html"><code>BigNumber</code></a> values.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-numerics-bignumber.op-decrement.html#operator-bignumber">operator --(BigNumber)</a></td>
+<td>Decrements a value by one.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-numerics-bignumber.op-division.html#operator-bignumber-bignumber">operator /(BigNumber, BigNumber)</a></td>
+<td>Divides one <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-numerics-bignumber.html"><code>BigNumber</code></a> by another with default precision.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-numerics-bignumber.op-equality.html#operator-bignumber-bignumber">operator ==(BigNumber, BigNumber)</a></td>
+<td>Determines whether two <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-numerics-bignumber.html"><code>BigNumber</code></a> values are equal.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-numerics-bignumber.op-explicit.html">Explicit</a></td>
+<td>Explicitly converts a <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-numerics-bignumber.html"><code>BigNumber</code></a> to a <a href="https://learn.microsoft.com/dotnet/api/system.decimal"><code>Decimal</code></a>.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-numerics-bignumber.op-greaterthan.html#operator-bignumber-bignumber">operator &gt;(BigNumber, BigNumber)</a></td>
+<td>Determines whether one value is greater than another.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-numerics-bignumber.op-greaterthanorequal.html#operator-bignumber-bignumber">operator &gt;=(BigNumber, BigNumber)</a></td>
+<td>Determines whether one value is greater than or equal to another.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-numerics-bignumber.op-implicit.html">Implicit</a></td>
+<td>Converts an <a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>Int32</code></a> to a <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-numerics-bignumber.html"><code>BigNumber</code></a>.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-numerics-bignumber.op-increment.html#operator-bignumber">operator ++(BigNumber)</a></td>
+<td>Increments a value by one.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-numerics-bignumber.op-inequality.html#operator-bignumber-bignumber">operator !=(BigNumber, BigNumber)</a></td>
+<td>Determines whether two <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-numerics-bignumber.html"><code>BigNumber</code></a> values are not equal.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-numerics-bignumber.op-lessthan.html#operator-bignumber-bignumber">operator &lt;(BigNumber, BigNumber)</a></td>
+<td>Determines whether one value is less than another.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-numerics-bignumber.op-lessthanorequal.html#operator-bignumber-bignumber">operator &lt;=(BigNumber, BigNumber)</a></td>
+<td>Determines whether one value is less than or equal to another.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-numerics-bignumber.op-modulus.html#operator-bignumber-bignumber">operator %(BigNumber, BigNumber)</a></td>
+<td>Computes the remainder of division.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-numerics-bignumber.op-multiply.html#operator-bignumber-bignumber">operator *(BigNumber, BigNumber)</a></td>
+<td>Multiplies two <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-numerics-bignumber.html"><code>BigNumber</code></a> values.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-numerics-bignumber.op-subtraction.html#operator-bignumber-bignumber">operator -(BigNumber, BigNumber)</a></td>
+<td>Subtracts one <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-numerics-bignumber.html"><code>BigNumber</code></a> from another.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-numerics-bignumber.op-unarynegation.html#operator-bignumber">operator -(BigNumber)</a></td>
+<td>Negates a value.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-numerics-bignumber.op-unaryplus.html#operator-bignumber">operator +(BigNumber)</a></td>
+<td>Returns the value unchanged (unary plus).</td>
+</tr>
+</tbody>
+</table>
+<h2 id="applies-to">Applies To</h2>
+<table>
+<thead>
+<tr>
+<th>Product</th>
+<th>Versions</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>.NET</td>
+<td>9, 10</td>
+</tr>
+<tr>
+<td>.NET Standard</td>
+<td>2.0, 2.1</td>
+</tr>
+</tbody>
+</table>
+        </div>
+        <div class="api-feedback">
+            <div class="api-feedback__inner">
+                <img src="/Corvus.JsonSchema/pr-preview/pr-740/assets/images/logo-corvus.svg" alt="Corvus" class="api-feedback__logo" />
+                <div class="api-feedback__text">
+                    <h3>Collaborate with us on GitHub</h3>
+                    <p>The source for this content can be found on <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema" target="_blank" rel="noopener noreferrer">GitHub</a>, where you can also create and review issues and pull requests.</p>
+                    <a class="api-feedback__link" href="https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/new" target="_blank" rel="noopener noreferrer">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor"><path d="M8 0c4.42 0 8 3.58 8 8a8.013 8.013 0 0 1-5.45 7.59c-.4.08-.55-.17-.55-.38 0-.27.01-1.13.01-2.2 0-.75-.25-1.23-.54-1.48 1.78-.2 3.65-.88 3.65-3.95 0-.88-.31-1.59-.82-2.15.08-.2.36-1.02-.08-2.12 0 0-.67-.22-2.2.82-.64-.18-1.32-.27-2-.27-.68 0-1.36.09-2 .27-1.53-1.03-2.2-.82-2.2-.82-.44 1.1-.16 1.92-.08 2.12-.51.56-.82 1.28-.82 2.15 0 3.06 1.86 3.75 3.64 3.95-.23.2-.44.55-.51 1.07-.46.21-1.61.55-2.33-.66-.15-.24-.6-.83-1.23-.82-.67.01-.27.38.01.53.34.19.73.9.82 1.13.16.45.68 1.31 2.69.94 0 .67.01 1.3.01 1.49 0 .21-.15.45-.55.38A7.995 7.995 0 0 1 0 8c0-4.42 3.58-8 8-8Z"/></svg>
+                        Open an issue
+                    </a>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+    </div>
+    <footer class="site-footer">
+    <div class="site-footer__inner">
+        <div class="site-footer__sponsor">
+            Sponsored by
+            <a href="https://endjin.com" target="_blank" rel="noopener noreferrer">endjin</a>
+        </div>
+        <ul class="site-footer__links" role="list">
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/pr-preview/pr-740/getting-started/index.html">Getting Started</a></li>
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/pr-preview/pr-740/docs/index.html">Documentation</a></li>
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/pr-preview/pr-740/examples/index.html">Examples</a></li>
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/pr-preview/pr-740/api/index.html">API</a></li>
+            <li><a class="site-footer__link" href="https://github.com/corvus-dotnet/Corvus.JsonSchema" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+            <li><a class="site-footer__link" href="https://www.nuget.org/packages?q=Corvus.Json" target="_blank" rel="noopener noreferrer">NuGet</a></li>
+        </ul>
+        <p class="site-footer__copyright">&copy; 2026 endjin Ltd.</p>
+    </div>
+</footer>
+
+    <!-- highlight.js for syntax highlighting (CSS targets .hljs-* classes) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/csharp.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/json.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/bash.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/xml.min.js" defer></script>
+    <script>document.addEventListener('DOMContentLoaded',()=>hljs.highlightAll())</script>
+    <script src="/Corvus.JsonSchema/pr-preview/pr-740/assets/js/main.js" defer></script>
+    <script src="/Corvus.JsonSchema/pr-preview/pr-740/assets/js/sidebar-search.js" defer></script>
+    
+</body>
+</html>

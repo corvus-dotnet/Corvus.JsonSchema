@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#1C1D21" />
+    <meta name="description" content="This recipe demonstrates how to efficiently convert between different schema representations of similar entities - a common pattern in layered architectures where data transforms between API, domain, and persistence layers." />
+    <meta name="keywords" content="recipe, JSON Schema, C#, mapping, input, output, values, type, required, properties, minimum, minLength, maxLength, From, CreateBuilder, TryGetValue" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:description" content="This recipe demonstrates how to efficiently convert between different schema representations of similar entities - a common pattern in layered architectures where data transforms between API, domain, and persistence layers." />
+    <meta name="twitter:image" content="/Corvus.JsonSchema/pr-preview/pr-740/assets/images/og-corvus.png" />
+    <meta name="twitter:title" content="Mapping Input and Output Values - Corvus.Text.Json Examples" />
+    <meta property="article:tag" content="recipe" />
+    <meta property="article:tag" content="JSON Schema" />
+    <meta property="article:tag" content="C#" />
+    <meta property="article:tag" content="mapping" />
+    <meta property="article:tag" content="input" />
+    <meta property="article:tag" content="output" />
+    <meta property="article:tag" content="values" />
+    <meta property="article:tag" content="type" />
+    <meta property="article:tag" content="required" />
+    <meta property="article:tag" content="properties" />
+    <meta property="article:tag" content="minimum" />
+    <meta property="article:tag" content="minLength" />
+    <meta property="article:tag" content="maxLength" />
+    <meta property="article:tag" content="From" />
+    <meta property="article:tag" content="CreateBuilder" />
+    <meta property="article:tag" content="TryGetValue" />
+    <meta property="og:description" content="This recipe demonstrates how to efficiently convert between different schema representations of similar entities - a common pattern in layered architectures where data transforms between API, domain, and persistence layers." />
+    <meta property="og:image" content="/Corvus.JsonSchema/pr-preview/pr-740/assets/images/og-corvus.png" />
+    <meta property="og:title" content="Mapping Input and Output Values - Corvus.Text.Json Examples" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://corvus-oss.org/corvus-json-schema/examples/mapping-input-and-output-values/" />
+    <title>Mapping Input and Output Values - Corvus.Text.Json Examples</title>
+    <link itemprop="url" href="https://corvus-oss.org/corvus-json-schema/examples/mapping-input-and-output-values/" />
+    <link rel="canonical" href="https://corvus-oss.org/corvus-json-schema/examples/mapping-input-and-output-values/" />
+    <link rel="sitemap" href="https://corvus-oss.org/corvus-json-schema/sitemap.xml" />
+    <!-- Styles -->
+    <link rel="stylesheet" href="/Corvus.JsonSchema/pr-preview/pr-740/main.css" />
+    <link rel="icon" type="image/svg+xml" href="/Corvus.JsonSchema/pr-preview/pr-740/assets/images/favicon.svg" />
+    
+</head>
+<body>
+    <a class="sr-only" href="#main-content">Skip to content</a>
+<header class="site-header">
+    <div class="site-header__inner">
+        <a class="site-header__brand" href="/Corvus.JsonSchema/pr-preview/pr-740/index.html" aria-label="Corvus.JsonSchema home">
+            <img src="/Corvus.JsonSchema/pr-preview/pr-740/assets/images/logo-corvus.svg" alt="" width="28" height="28" aria-hidden="true" />
+            Corvus<span style="color:var(--color-brand)">.</span>Json<span style="color:var(--color-brand)">Schema</span>
+        </a>
+        <nav class="site-header__nav-desktop" aria-label="Main navigation">
+                    <a href="/Corvus.JsonSchema/pr-preview/pr-740/getting-started/index.html"
+                       class="site-header__link "
+                       >Getting Started</a>
+                    <a href="/Corvus.JsonSchema/pr-preview/pr-740/docs/index.html"
+                       class="site-header__link "
+                       >Documentation</a>
+                    <a href="/Corvus.JsonSchema/pr-preview/pr-740/examples/index.html"
+                       class="site-header__link is-active"
+                       aria-current=page>Examples</a>
+                    <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/index.html"
+                       class="site-header__link "
+                       >API</a>
+            <a href="/Corvus.JsonSchema/pr-preview/pr-740/playground/"
+               class="site-header__link"
+               target="_blank" rel="noopener noreferrer"
+               title="Interactive JSON Schema playground">Playground</a>
+            <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema"
+               class="site-header__link" target="_blank" rel="noopener noreferrer"
+               aria-label="View on GitHub">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+            </a>
+        </nav>
+        <button class="site-header__menu-toggle js-toggle-menu"
+                aria-expanded="false" aria-label="Toggle menu">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+            </svg>
+        </button>
+    </div>
+</header>
+<nav class="site-header__nav-mobile js-mobile-nav" aria-label="Mobile navigation">
+            <a href="/Corvus.JsonSchema/pr-preview/pr-740/getting-started/index.html" class="site-header__link">Getting Started</a>
+            <a href="/Corvus.JsonSchema/pr-preview/pr-740/docs/index.html" class="site-header__link">Documentation</a>
+            <a href="/Corvus.JsonSchema/pr-preview/pr-740/examples/index.html" class="site-header__link">Examples</a>
+            <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/index.html" class="site-header__link">API</a>
+    <a href="/Corvus.JsonSchema/pr-preview/pr-740/playground/" class="site-header__link" target="_blank" rel="noopener noreferrer">Playground</a>
+    <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema"
+       class="site-header__link" target="_blank" rel="noopener noreferrer">GitHub</a>
+</nav>
+
+    <div class="page-content">
+    <div class="layout-docs container">
+    <button class="sidebar-toggle" aria-label="Toggle navigation" aria-expanded="false"></button>
+<div class="sidebar-backdrop"></div>
+<aside class="sidebar">
+    <div class="sidebar__inner">
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Getting Started</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                    <li class="sidebar__item"><a class="sidebar__link" href="/Corvus.JsonSchema/pr-preview/pr-740/getting-started/index.html">Tutorial</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Documentation</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/parsed-json-document.html">Parsing &amp; Reading JSON</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/json-document-builder.html">Building &amp; Mutating JSON</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/source-generator.html">Source Generator</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/code-generator.html">CLI Code Generation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/validator.html">Dynamic Schema Validation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/migrating-from-v4-to-v5.html">Migrating from V4</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/using-copilot-for-migration.html">Copilot Migration</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/migration-analyzers.html">Migration Analyzers</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/analyzers.html">Analyzers</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/schema-evaluator.html">Standalone Schema Evaluator</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/json-patch.html">JSON Patch (RFC 6902)</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/json-logic.html">JsonLogic Rule Engine</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/jsonata.html">JSONata Query Language</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/jmes-path.html">JMESPath Query Language</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/yaml.html">YAML Converter</a>
+                            </li>
+                </ul>
+            </div>
+        </div>
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Examples</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/data-object.html">Simple Data Objects</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/data-object-validation.html">Data Object Validation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/reusing-common-types.html">Reusing Common Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/open-versus-closed-types.html">Open Versus Closed Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/extending-a-base-type.html">Extending a Base Type</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/constraining-a-base-type.html">Constraining a Base Type</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/creating-a-strongly-typed-array.html">Strongly Typed Arrays</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/creating-an-array-of-higher-rank.html">Multi-Dimensional Arrays</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/working-with-tensors.html">Working with Tensors</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/creating-tuples.html">Creating Tuples</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/interfaces-and-mix-in-types.html">Interfaces and Mix-In Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/pattern-matching.html">Pattern Matching and Discriminated Unions</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/polymorphism-with-discriminators.html">Polymorphism with Discriminator Properties</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/string-enumerations.html">String Enumerations and Pattern Matching</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/numeric-enumerations.html">Numeric Enumerations</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/maps.html">Maps of Strings to Strongly Typed Values</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link is-active" href="/Corvus.JsonSchema/pr-preview/pr-740/examples/mapping-input-and-output-values.html">Mapping Input and Output Values</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/creating-and-mutating-objects.html">Creating and Mutating Objects</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/clone-and-freeze.html">Clone and Freeze</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/conditional-schemas.html">Conditional Schemas</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/default-values.html">Default Values</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/format-validation.html">Format Validation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/json-patch.html">JSON Patch (RFC 6902)</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/json-logic.html">JsonLogic Rule Evaluation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/jsonata.html">JSONata Expression Evaluation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/jmespath.html">JMESPath Query Evaluation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/yaml.html">YAML Conversion</a>
+                            </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</aside>
+
+    <main id="main-content" class="layout-docs__main">
+        <div class="doc__content">
+            <h1>Mapping Input and Output Values</h1>
+                <div class="card__tags" style="margin-bottom:1.5rem">
+                        <span class="card__tag">recipe</span>
+                        <span class="card__tag">JSON Schema</span>
+                        <span class="card__tag">C#</span>
+                        <span class="card__tag">mapping</span>
+                        <span class="card__tag">input</span>
+                        <span class="card__tag">output</span>
+                        <span class="card__tag">values</span>
+                        <span class="card__tag">type</span>
+                        <span class="card__tag">required</span>
+                        <span class="card__tag">properties</span>
+                        <span class="card__tag">minimum</span>
+                        <span class="card__tag">minLength</span>
+                        <span class="card__tag">maxLength</span>
+                        <span class="card__tag">From</span>
+                        <span class="card__tag">CreateBuilder</span>
+                        <span class="card__tag">TryGetValue</span>
+                </div>
+<p>This recipe demonstrates how to efficiently convert between different schema representations of similar entities - a common pattern in layered architectures where data transforms between API, domain, and persistence layers.</p>
+<h2 id="the-problem">The Problem</h2>
+<p>A common problem in API-driven applications is the need to map data from one schema to another as information moves between the layers in your solution. The representation of an entity in your API is often similar, but not identical, to the representation of the same entity in your data store — or to the same entity in a third-party API on which you depend to provide your service.</p>
+<p>In .NET applications it is common to use tools like <a href="https://docs.automapper.org/en/stable/">AutoMapper</a> to help with this process. Corvus.Text.Json offers a schema-first alternative: because the generated types share a common set of property-entity interfaces, you can convert between arbitrary types using <code>From()</code> — even if they are compiled into different assemblies with no inheritance relationship of any kind between them. This works with zero (or near-zero) allocation, because <code>From()</code> creates a view over the same underlying JSON data rather than extracting to .NET primitives and re-serializing.</p>
+<h2 id="the-pattern">The Pattern</h2>
+<p>In real-world applications, you often need to map data between different representations:</p>
+<ul>
+<li><strong>API schema</strong> → <strong>Domain model</strong> → <strong>Database schema</strong></li>
+<li><strong>External API response</strong> → <strong>Internal representation</strong></li>
+<li><strong>Legacy system format</strong> → <strong>Modern API format</strong></li>
+</ul>
+<p>While these representations often contain similar data, property names and structures may differ. For example:</p>
+<ul>
+<li>API uses <code>id</code> and <code>name</code></li>
+<li>Database uses <code>identifier</code> and <code>fullName</code></li>
+<li>CRM uses <code>customerId</code> and <code>displayName</code></li>
+</ul>
+<p>In a real system you might have three or more representations of the same entity — one for your public API, one for a corporate CRM, and one for your database — each with its own naming conventions, additional constraints, or extra fields. The pattern shown here scales naturally to those multi-system scenarios.</p>
+<p>Corvus.Text.Json provides efficient builder patterns for zero-allocation transformations between these formats.</p>
+<h2 id="the-schemas">The Schemas</h2>
+<h3 id="source.json-input-format">source.json (Input format)</h3>
+<pre><code class="language-json">{
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;required&quot;: [&quot;id&quot;, &quot;name&quot;],
+  &quot;properties&quot;: {
+    &quot;id&quot;: { &quot;type&quot;: &quot;integer&quot; },
+    &quot;name&quot;: { &quot;type&quot;: &quot;string&quot; }
+  }
+}
+</code></pre>
+<h3 id="target.json-output-format">target.json (Output format)</h3>
+<pre><code class="language-json">{
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;required&quot;: [&quot;identifier&quot;, &quot;fullName&quot;],
+  &quot;properties&quot;: {
+    &quot;identifier&quot;: { &quot;type&quot;: &quot;integer&quot; },
+    &quot;fullName&quot;: { &quot;type&quot;: &quot;string&quot; }
+  }
+}
+</code></pre>
+<h3 id="crm.json-crm-format-constrained-properties">crm.json (CRM format — constrained properties)</h3>
+<pre><code class="language-json">{
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;required&quot;: [&quot;customerId&quot;, &quot;displayName&quot;],
+  &quot;properties&quot;: {
+    &quot;customerId&quot;: {
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;minimum&quot;: 1
+    },
+    &quot;displayName&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;minLength&quot;: 1,
+      &quot;maxLength&quot;: 256
+    }
+  }
+}
+</code></pre>
+<p>These are independent schemas that could be defined in different assemblies or namespaces. The generated types don't need to know about each other.</p>
+<p>Notice that <code>source.json</code> and <code>target.json</code> have simple, unconstrained properties (<code>{ &quot;type&quot;: &quot;integer&quot; }</code>, <code>{ &quot;type&quot;: &quot;string&quot; }</code>), while <code>crm.json</code> adds validation constraints (<code>minimum</code>, <code>minLength</code>, <code>maxLength</code>). This distinction matters for how the code generator handles entity types — see <a href="#level-1b-using-from-for-constrained-types">Using <code>From()</code> for constrained types</a> below.</p>
+<h2 id="generated-code-usage">Generated Code Usage</h2>
+<h3 id="parsing-the-source-data">Parsing the source data</h3>
+<pre><code class="language-csharp">string sourceJson = &quot;&quot;&quot;
+    {
+      &quot;id&quot;: 123,
+      &quot;name&quot;: &quot;John Doe&quot;
+    }
+    &quot;&quot;&quot;;
+
+using var parsedSource = ParsedJsonDocument&lt;SourceType&gt;.Parse(sourceJson);
+SourceType source = parsedSource.RootElement;
+Console.WriteLine($&quot;Source - id: {source.Id}, name: {source.Name}&quot;);
+// Output: Source - id: 123, name: John Doe
+</code></pre>
+<h2 id="transformation-patterns">Transformation Patterns</h2>
+<p>This recipe demonstrates four transformation patterns with increasing complexity:</p>
+<h3 id="level-1-zero-allocation-property-mapping">Level 1: Zero-Allocation Property Mapping</h3>
+<p>Use the <code>CreateBuilder()</code> convenience overload to map properties directly with named parameters:</p>
+<pre><code class="language-csharp">using JsonWorkspace workspace = JsonWorkspace.Create();
+using var parsedSource = ParsedJsonDocument&lt;SourceType&gt;.Parse(sourceJson);
+SourceType source = parsedSource.RootElement;
+
+// Map to target type - property entities are compatible (zero-allocation view)
+using var targetBuilder = TargetType.CreateBuilder(
+    workspace,
+    fullName: source.Name,
+    identifier: source.Id);
+
+TargetType target = targetBuilder.RootElement;
+Console.WriteLine($&quot;Target - identifier: {target.Identifier}, fullName: {target.FullName}&quot;);
+// Output: Target - identifier: 123, fullName: John Doe
+</code></pre>
+<p><strong>Key points:</strong></p>
+<ul>
+<li>Property entity types are compatible when their underlying schemas match (both are strings, both are integers, etc.)</li>
+<li>When the types are reduced (e.g., a <code>{ &quot;type&quot;: &quot;string&quot; }</code> property becomes <code>JsonString</code>), you can pass source properties directly as named parameters</li>
+<li>When types are not reduced (e.g., they have additional constraints), use <code>TargetEntityType.From(sourceProperty)</code> to convert between compatible entity types</li>
+<li><code>From()</code> creates a zero-allocation view over the same underlying JSON data — no primitive extraction, no string copy, no re-serialization</li>
+<li>This works even if the source and target types are defined in different assemblies with no inheritance relationship between them; schema compatibility is what matters</li>
+<li>Only fall back to <code>TryGetValue()</code> when you actually need to transform the value (see Level 3 below)</li>
+</ul>
+<h3 id="level-1b-using-from-for-constrained-types">Level 1b: Using <code>From()</code> for Constrained Types</h3>
+<p>When the target schema adds constraints beyond the basic type (e.g., <code>minimum</code>, <code>minLength</code>, <code>maxLength</code>), the code generator produces distinct entity types instead of reducing them to <code>JsonInteger</code>/<code>JsonString</code>. In that case, you need <code>From()</code> to convert between the compatible but distinct entity types:</p>
+<pre><code class="language-csharp">// CRM properties have constraints, so entity types are NOT reduced.
+// Use From() to convert between compatible entity types (still zero-allocation).
+using var crmBuilder = CrmType.CreateBuilder(
+    workspace,
+    customerId: CrmType.CustomerIdEntity.From(source.Id),
+    displayName: CrmType.DisplayNameEntity.From(source.Name));
+
+CrmType crm = crmBuilder.RootElement;
+Console.WriteLine($&quot;CRM - customerId: {crm.CustomerId}, displayName: {crm.DisplayName}&quot;);
+// Output: CRM - customerId: 123, displayName: John Doe
+</code></pre>
+<p><strong>Why is <code>From()</code> needed here?</strong></p>
+<ul>
+<li><code>source.Id</code> is a <code>JsonInteger</code> (reduced — no constraints on the source schema)</li>
+<li><code>CrmType.CustomerIdEntity</code> is a distinct type (not reduced — the schema specifies <code>minimum: 1</code>)</li>
+<li>There's no implicit conversion between these types, so you call <code>CrmType.CustomerIdEntity.From(source.Id)</code> to create a zero-allocation view</li>
+<li><code>From()</code> does <strong>not</strong> validate the constraints — it creates a reinterpretation of the same underlying JSON. Validation happens separately via the schema validation API</li>
+</ul>
+<h3 id="level-2-bidirectional-mapping">Level 2: Bidirectional Mapping</h3>
+<p>The same pattern works in reverse to map target back to source:</p>
+<pre><code class="language-csharp">// Reverse transformation (target -&gt; source)
+using var sourceBuilder = SourceType.CreateBuilder(
+    workspace,
+    id: target.Identifier,
+    name: target.FullName);
+
+SourceType reversedSource = sourceBuilder.RootElement;
+Console.WriteLine(reversedSource);
+// Output: {&quot;id&quot;:123,&quot;name&quot;:&quot;John Doe&quot;}
+</code></pre>
+<p>This demonstrates that compatibility works bidirectionally - you can map from source to target and back again using the same zero-allocation pattern.</p>
+<h3 id="level-3-transformation-with-value-modification">Level 3: Transformation with Value Modification</h3>
+<p>Only use <code>TryGetValue()</code> when you need to modify the actual values:</p>
+<pre><code class="language-csharp">// Extract ONLY when transforming values
+if (source.Id.TryGetValue(out long idValue) &amp;&amp; source.Name.TryGetValue(out string? nameValue) &amp;&amp; nameValue is not null)
+{
+    using var modifiedBuilder = TargetType.CreateBuilder(
+        workspace,
+        fullName: nameValue.ToUpperInvariant(),
+        identifier: idValue + 1000);
+
+    TargetType modified = modifiedBuilder.RootElement;
+    Console.WriteLine(modified);
+    // Output: {&quot;fullName&quot;:&quot;JOHN DOE&quot;,&quot;identifier&quot;:1123}
+}
+</code></pre>
+<p><strong>When to extract:</strong></p>
+<ul>
+<li>Use <code>TryGetValue()</code> only when performing arithmetic operations, string transformations, or other value modifications</li>
+<li>For simple remapping (like Levels 1 and 2), use <code>From()</code> to avoid allocation</li>
+</ul>
+<h3 id="multi-stage-transformation-pipelines">Multi-stage transformation pipelines</h3>
+<p>The <code>From()</code> and builder patterns chain naturally across multiple stages. Because all transformations share the same <code>JsonWorkspace</code>, you can build a pipeline — for example, API → Domain → Database — without extra allocation between stages. Each stage creates its builder from the previous stage's output, reusing the same workspace memory pool.</p>
+<p>In a real system with three or more representations (see <a href="https://endjin.com/blog/2024/05/json-schema-patterns-dotnet-mapping-input-and-output-values">the blog post</a> for a worked example with API, CRM, and database customer schemas), you would apply the same <code>From()</code> pattern at each boundary, falling back to <code>TryGetValue()</code> only at stages that genuinely transform values.</p>
+<h2 id="performance-characteristics">Performance Characteristics</h2>
+<p>The builder pattern provides several performance benefits:</p>
+<ol>
+<li><strong>Workspace-scoped allocations</strong> - All temporary buffers come from <code>ArrayPool&lt;byte&gt;</code> via the workspace</li>
+<li><strong>Zero-copy transformations</strong> - Property values are referenced, not copied, when possible</li>
+<li><strong>Batch operations</strong> - Multiple property sets happen in a single builder construction</li>
+<li><strong>Deterministic cleanup</strong> - <code>using</code> declarations ensure pooled memory is returned promptly</li>
+</ol>
+<h2 id="key-differences-from-v4">Key Differences from V4</h2>
+<h3 id="v4-corvus.json">V4 (Corvus.Json)</h3>
+<pre><code class="language-csharp">// Create with builder method
+TargetType target = TargetType.Create(
+    identifier: source.Id,
+    fullName: source.Name);
+
+// Or use WithProperty for transformations
+TargetType target = TargetType.Empty
+    .WithProperty(&quot;identifier&quot;, source.Id)
+    .WithProperty(&quot;fullName&quot;, source.Name);
+
+// Or use As&lt;T&gt;() for compatible schemas
+TargetType target = source.As&lt;TargetType&gt;();
+</code></pre>
+<h3 id="v5-corvus.text.json">V5 (Corvus.Text.Json)</h3>
+<pre><code class="language-csharp">// Use workspace and convenience overload with named parameters
+using JsonWorkspace workspace = JsonWorkspace.Create();
+
+// Map to target type - property entities are compatible (zero-allocation view)
+using var targetBuilder = TargetType.CreateBuilder(
+    workspace,
+    fullName: source.Name,
+    identifier: source.Id);
+
+TargetType target = targetBuilder.RootElement;
+</code></pre>
+<p><strong>Key differences:</strong></p>
+<ul>
+<li>V5 requires explicit <code>JsonWorkspace</code> for memory management</li>
+<li>V5 uses <code>CreateBuilder()</code> with named parameters for zero-allocation mapping</li>
+<li>V5 makes allocation lifetime explicit through <code>using</code> declarations</li>
+</ul>
+<h2 id="running-the-example">Running the Example</h2>
+<pre><code class="language-bash">cd docs/ExampleRecipes/017-MappingInputAndOutputValues
+dotnet run
+</code></pre>
+<h2 id="related-patterns">Related Patterns</h2>
+<ul>
+<li><a href="/Corvus.JsonSchema/pr-preview/pr-740/examples/data-object.html">001-DataObject</a> - Creating and manipulating data objects</li>
+<li><a href="/Corvus.JsonSchema/pr-preview/pr-740/examples/open-versus-closed-types.html">004-OpenVersusClosedTypes</a> - Mutable operations on open types</li>
+<li><a href="/Corvus.JsonSchema/pr-preview/pr-740/examples/maps.html">016-Maps</a> - Working with dynamic property sets</li>
+<li><a href="/Corvus.JsonSchema/pr-preview/pr-740/examples/interfaces-and-mix-in-types.html">011-InterfacesAndMixInTypes</a> - Type composition with <code>allOf</code></li>
+</ul>
+<h2 id="real-world-scenarios">Real-World Scenarios</h2>
+<p>This pattern is especially useful for:</p>
+<ol>
+<li><strong>API Gateways</strong> - Transform external API responses to internal models</li>
+<li><strong>Data Layer Mapping</strong> - Convert domain models to database DTOs</li>
+<li><strong>Event Transformation</strong> - Reshape events between microservices</li>
+<li><strong>Legacy Integration</strong> - Adapt old formats to new schemas</li>
+<li><strong>Multi-tenant Systems</strong> - Transform data for different tenant schemas</li>
+</ol>
+<h2 id="frequently-asked-questions">Frequently Asked Questions</h2>
+<h3 id="q-does-from-copy-the-underlying-json-data">Q: Does <code>From()</code> copy the underlying JSON data?</h3>
+<p><strong>A:</strong> No. <code>From()</code> performs a zero-copy type conversion — it reinterprets the same underlying JSON buffer as the target type. No data is duplicated or re-serialized. This is what makes <code>From()</code> so efficient for mapping between types that share structural compatibility. Actual data copying only happens when you mutate values through a <code>JsonDocumentBuilder</code>.</p>
+<h3 id="q-can-i-map-between-types-in-different-assemblies">Q: Can I map between types in different assemblies?</h3>
+<p><strong>A:</strong> Yes, as long as both types are generated from schemas with compatible structures. The <code>From()</code> method works on the underlying JSON representation, not on .NET type identity. You can reference generated types from separate projects and convert between them using the same <code>From()</code> pattern.</p>
+<h3 id="q-when-should-i-use-from-vs-trygetvalue">Q: When should I use <code>From()</code> vs <code>TryGetValue()</code>?</h3>
+<p><strong>A:</strong> Use <code>From()</code> when you're converting an entire entity to a different schema representation without modifying values — it's zero-allocation and zero-copy. Use <code>TryGetValue()</code> when you need to extract a primitive value for transformation (e.g., converting a string to uppercase or reformatting a date) before building the output.</p>
+<h3 id="q-how-does-this-compare-to-automapper">Q: How does this compare to AutoMapper?</h3>
+<p><strong>A:</strong> Unlike AutoMapper, which uses reflection and creates intermediate objects, the <code>From()</code> pattern operates directly on the JSON buffer with no reflection, no intermediate allocations, and no runtime configuration. The mapping is determined at compile time by the schema structure. This makes it significantly faster but limited to structural conversions — complex business logic transformations still require explicit code.</p>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "Q: Does `From()` copy the underlying JSON data?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "**A:** No. From() performs a zero-copy type conversion — it reinterprets the same underlying JSON buffer as the target type. No data is duplicated or re-serialized. This is what makes From() so efficient for mapping between types that share structural compatibility. Actual data copying only happens when you mutate values through a JsonDocumentBuilder."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Q: Can I map between types in different assemblies?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "**A:** Yes, as long as both types are generated from schemas with compatible structures. The From() method works on the underlying JSON representation, not on .NET type identity. You can reference generated types from separate projects and convert between them using the same From() pattern."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Q: When should I use `From()` vs `TryGetValue()`?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "**A:** Use From() when you're converting an entire entity to a different schema representation without modifying values — it's zero-allocation and zero-copy. Use TryGetValue() when you need to extract a primitive value for transformation (e.g., converting a string to uppercase or reformatting a date) before building the output."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Q: How does this compare to AutoMapper?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "**A:** Unlike AutoMapper, which uses reflection and creates intermediate objects, the From() pattern operates directly on the JSON buffer with no reflection, no intermediate allocations, and no runtime configuration. The mapping is determined at compile time by the schema structure. This makes it significantly faster but limited to structural conversions — complex business logic transformations still require explicit code."
+      }
+    }
+  ]
+}
+</script>
+        </div>
+    </main>
+</div>
+
+    </div>
+    <footer class="site-footer">
+    <div class="site-footer__inner">
+        <div class="site-footer__sponsor">
+            Sponsored by
+            <a href="https://endjin.com" target="_blank" rel="noopener noreferrer">endjin</a>
+        </div>
+        <ul class="site-footer__links" role="list">
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/pr-preview/pr-740/getting-started/index.html">Getting Started</a></li>
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/pr-preview/pr-740/docs/index.html">Documentation</a></li>
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/pr-preview/pr-740/examples/index.html">Examples</a></li>
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/pr-preview/pr-740/api/index.html">API</a></li>
+            <li><a class="site-footer__link" href="https://github.com/corvus-dotnet/Corvus.JsonSchema" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+            <li><a class="site-footer__link" href="https://www.nuget.org/packages?q=Corvus.Json" target="_blank" rel="noopener noreferrer">NuGet</a></li>
+        </ul>
+        <p class="site-footer__copyright">&copy; 2026 endjin Ltd.</p>
+    </div>
+</footer>
+
+    <!-- highlight.js for syntax highlighting (CSS targets .hljs-* classes) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/csharp.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/json.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/bash.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/xml.min.js" defer></script>
+    <script>document.addEventListener('DOMContentLoaded',()=>hljs.highlightAll())</script>
+    <script src="/Corvus.JsonSchema/pr-preview/pr-740/assets/js/main.js" defer></script>
+    <script src="/Corvus.JsonSchema/pr-preview/pr-740/assets/js/sidebar-search.js" defer></script>
+    
+</body>
+</html>

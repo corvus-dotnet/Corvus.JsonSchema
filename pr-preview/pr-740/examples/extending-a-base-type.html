@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#1C1D21" />
+    <meta name="description" content="This recipe demonstrates how to use `$ref` to extend an open base type with additional properties, creating a derived schema that includes all base properties plus its own &#x2014; similar to inheritance in object-oriented languages." />
+    <meta name="keywords" content="recipe, JSON Schema, C#, extending, base, type, $ref, required, properties, format, maximum, $defs, minLength, maxLength, allOf, TryGetProperty, CreateBuilder, From" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:description" content="This recipe demonstrates how to use `$ref` to extend an open base type with additional properties, creating a derived schema that includes all base properties plus its own &#x2014; similar to inheritance in object-oriented languages." />
+    <meta name="twitter:image" content="/Corvus.JsonSchema/pr-preview/pr-740/assets/images/og-corvus.png" />
+    <meta name="twitter:title" content="Extending a Base Type - Corvus.Text.Json Examples" />
+    <meta property="article:tag" content="recipe" />
+    <meta property="article:tag" content="JSON Schema" />
+    <meta property="article:tag" content="C#" />
+    <meta property="article:tag" content="extending" />
+    <meta property="article:tag" content="base" />
+    <meta property="article:tag" content="type" />
+    <meta property="article:tag" content="$ref" />
+    <meta property="article:tag" content="required" />
+    <meta property="article:tag" content="properties" />
+    <meta property="article:tag" content="format" />
+    <meta property="article:tag" content="maximum" />
+    <meta property="article:tag" content="$defs" />
+    <meta property="article:tag" content="minLength" />
+    <meta property="article:tag" content="maxLength" />
+    <meta property="article:tag" content="allOf" />
+    <meta property="article:tag" content="TryGetProperty" />
+    <meta property="article:tag" content="CreateBuilder" />
+    <meta property="article:tag" content="From" />
+    <meta property="og:description" content="This recipe demonstrates how to use `$ref` to extend an open base type with additional properties, creating a derived schema that includes all base properties plus its own &#x2014; similar to inheritance in object-oriented languages." />
+    <meta property="og:image" content="/Corvus.JsonSchema/pr-preview/pr-740/assets/images/og-corvus.png" />
+    <meta property="og:title" content="Extending a Base Type - Corvus.Text.Json Examples" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://corvus-oss.org/corvus-json-schema/examples/extending-a-base-type/" />
+    <title>Extending a Base Type - Corvus.Text.Json Examples</title>
+    <link itemprop="url" href="https://corvus-oss.org/corvus-json-schema/examples/extending-a-base-type/" />
+    <link rel="canonical" href="https://corvus-oss.org/corvus-json-schema/examples/extending-a-base-type/" />
+    <link rel="sitemap" href="https://corvus-oss.org/corvus-json-schema/sitemap.xml" />
+    <!-- Styles -->
+    <link rel="stylesheet" href="/Corvus.JsonSchema/pr-preview/pr-740/main.css" />
+    <link rel="icon" type="image/svg+xml" href="/Corvus.JsonSchema/pr-preview/pr-740/assets/images/favicon.svg" />
+    
+</head>
+<body>
+    <a class="sr-only" href="#main-content">Skip to content</a>
+<header class="site-header">
+    <div class="site-header__inner">
+        <a class="site-header__brand" href="/Corvus.JsonSchema/pr-preview/pr-740/index.html" aria-label="Corvus.JsonSchema home">
+            <img src="/Corvus.JsonSchema/pr-preview/pr-740/assets/images/logo-corvus.svg" alt="" width="28" height="28" aria-hidden="true" />
+            Corvus<span style="color:var(--color-brand)">.</span>Json<span style="color:var(--color-brand)">Schema</span>
+        </a>
+        <nav class="site-header__nav-desktop" aria-label="Main navigation">
+                    <a href="/Corvus.JsonSchema/pr-preview/pr-740/getting-started/index.html"
+                       class="site-header__link "
+                       >Getting Started</a>
+                    <a href="/Corvus.JsonSchema/pr-preview/pr-740/docs/index.html"
+                       class="site-header__link "
+                       >Documentation</a>
+                    <a href="/Corvus.JsonSchema/pr-preview/pr-740/examples/index.html"
+                       class="site-header__link is-active"
+                       aria-current=page>Examples</a>
+                    <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/index.html"
+                       class="site-header__link "
+                       >API</a>
+            <a href="/Corvus.JsonSchema/pr-preview/pr-740/playground/"
+               class="site-header__link"
+               target="_blank" rel="noopener noreferrer"
+               title="Interactive JSON Schema playground">Playground</a>
+            <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema"
+               class="site-header__link" target="_blank" rel="noopener noreferrer"
+               aria-label="View on GitHub">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+            </a>
+        </nav>
+        <button class="site-header__menu-toggle js-toggle-menu"
+                aria-expanded="false" aria-label="Toggle menu">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+            </svg>
+        </button>
+    </div>
+</header>
+<nav class="site-header__nav-mobile js-mobile-nav" aria-label="Mobile navigation">
+            <a href="/Corvus.JsonSchema/pr-preview/pr-740/getting-started/index.html" class="site-header__link">Getting Started</a>
+            <a href="/Corvus.JsonSchema/pr-preview/pr-740/docs/index.html" class="site-header__link">Documentation</a>
+            <a href="/Corvus.JsonSchema/pr-preview/pr-740/examples/index.html" class="site-header__link">Examples</a>
+            <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/index.html" class="site-header__link">API</a>
+    <a href="/Corvus.JsonSchema/pr-preview/pr-740/playground/" class="site-header__link" target="_blank" rel="noopener noreferrer">Playground</a>
+    <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema"
+       class="site-header__link" target="_blank" rel="noopener noreferrer">GitHub</a>
+</nav>
+
+    <div class="page-content">
+    <div class="layout-docs container">
+    <button class="sidebar-toggle" aria-label="Toggle navigation" aria-expanded="false"></button>
+<div class="sidebar-backdrop"></div>
+<aside class="sidebar">
+    <div class="sidebar__inner">
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Getting Started</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                    <li class="sidebar__item"><a class="sidebar__link" href="/Corvus.JsonSchema/pr-preview/pr-740/getting-started/index.html">Tutorial</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Documentation</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/parsed-json-document.html">Parsing &amp; Reading JSON</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/json-document-builder.html">Building &amp; Mutating JSON</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/source-generator.html">Source Generator</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/code-generator.html">CLI Code Generation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/validator.html">Dynamic Schema Validation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/migrating-from-v4-to-v5.html">Migrating from V4</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/using-copilot-for-migration.html">Copilot Migration</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/migration-analyzers.html">Migration Analyzers</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/analyzers.html">Analyzers</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/schema-evaluator.html">Standalone Schema Evaluator</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/json-patch.html">JSON Patch (RFC 6902)</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/json-logic.html">JsonLogic Rule Engine</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/jsonata.html">JSONata Query Language</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/jmes-path.html">JMESPath Query Language</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/yaml.html">YAML Converter</a>
+                            </li>
+                </ul>
+            </div>
+        </div>
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Examples</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/data-object.html">Simple Data Objects</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/data-object-validation.html">Data Object Validation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/reusing-common-types.html">Reusing Common Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/open-versus-closed-types.html">Open Versus Closed Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link is-active" href="/Corvus.JsonSchema/pr-preview/pr-740/examples/extending-a-base-type.html">Extending a Base Type</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/constraining-a-base-type.html">Constraining a Base Type</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/creating-a-strongly-typed-array.html">Strongly Typed Arrays</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/creating-an-array-of-higher-rank.html">Multi-Dimensional Arrays</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/working-with-tensors.html">Working with Tensors</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/creating-tuples.html">Creating Tuples</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/interfaces-and-mix-in-types.html">Interfaces and Mix-In Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/pattern-matching.html">Pattern Matching and Discriminated Unions</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/polymorphism-with-discriminators.html">Polymorphism with Discriminator Properties</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/string-enumerations.html">String Enumerations and Pattern Matching</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/numeric-enumerations.html">Numeric Enumerations</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/maps.html">Maps of Strings to Strongly Typed Values</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/mapping-input-and-output-values.html">Mapping Input and Output Values</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/creating-and-mutating-objects.html">Creating and Mutating Objects</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/clone-and-freeze.html">Clone and Freeze</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/conditional-schemas.html">Conditional Schemas</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/default-values.html">Default Values</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/format-validation.html">Format Validation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/json-patch.html">JSON Patch (RFC 6902)</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/json-logic.html">JsonLogic Rule Evaluation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/jsonata.html">JSONata Expression Evaluation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/jmespath.html">JMESPath Query Evaluation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/yaml.html">YAML Conversion</a>
+                            </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</aside>
+
+    <main id="main-content" class="layout-docs__main">
+        <div class="doc__content">
+            <h1>Extending a Base Type</h1>
+                <div class="card__tags" style="margin-bottom:1.5rem">
+                        <span class="card__tag">recipe</span>
+                        <span class="card__tag">JSON Schema</span>
+                        <span class="card__tag">C#</span>
+                        <span class="card__tag">extending</span>
+                        <span class="card__tag">base</span>
+                        <span class="card__tag">type</span>
+                        <span class="card__tag">$ref</span>
+                        <span class="card__tag">required</span>
+                        <span class="card__tag">properties</span>
+                        <span class="card__tag">format</span>
+                        <span class="card__tag">maximum</span>
+                        <span class="card__tag">$defs</span>
+                        <span class="card__tag">minLength</span>
+                        <span class="card__tag">maxLength</span>
+                        <span class="card__tag">allOf</span>
+                        <span class="card__tag">TryGetProperty</span>
+                        <span class="card__tag">CreateBuilder</span>
+                        <span class="card__tag">From</span>
+                </div>
+<p>This recipe demonstrates how to use <code>$ref</code> to extend an open base type with additional properties, creating a derived schema that includes all base properties plus its own — similar to inheritance in object-oriented languages.</p>
+<h2 id="the-pattern">The Pattern</h2>
+<p>When you have an open type, you can extend it with additional properties. This is rather like deriving from an (unsealed) base type in an object-oriented language, and adding additional properties in the derived type. If you are coming from an OOP background, think of <code>$ref</code> as the schema-world equivalent of inheritance: the base schema (<code>person-open.json</code>) defines a set of properties and constraints, and the extending schema adds its own on top, without modifying the original.</p>
+<p>In this case we use <code>$ref</code> to declare that we are basing a new schema on the <code>person-open.json</code> schema.</p>
+<p>We then extend it with an additional <code>wealth</code> property, which is a 32-bit integer number. This happens to be declared as a <code>required</code> property.</p>
+<h2 id="the-schemas">The Schemas</h2>
+<p>File: <code>person-wealthy.json</code></p>
+<pre><code class="language-json">{
+  &quot;title&quot;: &quot;A wealthy person&quot;,
+  &quot;$ref&quot;: &quot;./person-open.json&quot;,
+  &quot;required&quot;: [&quot;wealth&quot;],
+  &quot;properties&quot;: {
+    &quot;wealth&quot;: {
+      &quot;type&quot;: &quot;integer&quot;,
+      &quot;format&quot;: &quot;int32&quot;
+    }
+  }
+}
+</code></pre>
+<p>File: <code>person-open.json</code></p>
+<pre><code class="language-json">{
+  &quot;title&quot;: &quot;The person schema https://schema.org/Person&quot;,
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;required&quot;: [ &quot;familyName&quot;, &quot;givenName&quot;, &quot;birthDate&quot; ],
+  &quot;properties&quot;: {
+    &quot;familyName&quot;: { &quot;$ref&quot;: &quot;#/$defs/constrainedString&quot; },
+    &quot;givenName&quot;: { &quot;$ref&quot;: &quot;#/$defs/constrainedString&quot; },
+    &quot;otherNames&quot;: { &quot;$ref&quot;: &quot;#/$defs/constrainedString&quot; },
+    &quot;birthDate&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;format&quot;: &quot;date&quot;
+    },
+    &quot;height&quot;: {
+      &quot;type&quot;: &quot;number&quot;,
+      &quot;format&quot;: &quot;double&quot;,
+      &quot;exclusiveMinimum&quot;: 0.0,
+      &quot;maximum&quot;: 3.0
+    }
+  },
+
+  &quot;$defs&quot;: {
+    &quot;constrainedString&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;minLength&quot;: 1,
+      &quot;maxLength&quot;: 256
+    }
+  }
+}
+</code></pre>
+<div class="aside"><p>In draft 6 and draft 7, <code>$ref</code> cannot be used in this way. It acts as a reference to the target type and <em>ignores</em> the adjacent values. This is often a bit surprising! Instead, you can use <code>allOf</code> with a single value to get the same effect. It is a little clunkier to read, but works in the same way.
+<code>{ &quot;allOf&quot;: [{&quot;$ref&quot;: &quot;./person-closed.json&quot;}]}</code></p>
+</div>
+<p>The code generator generates types for both <code>PersonOpen</code> and <code>PersonWealthy</code>. When it encounters the <code>$ref</code> in <code>person-wealthy.json</code>, it follows the reference to <code>person-open.json</code>, resolves all the properties defined there, and composes them into the <code>PersonWealthy</code> type alongside its own declared properties.</p>
+<p><code>PersonWealthy</code> includes all of the properties defined both on <code>PersonOpen</code> and <code>PersonWealthy</code>:</p>
+<ul>
+<li><code>BirthDate</code></li>
+<li><code>FamilyName</code></li>
+<li><code>GivenName</code></li>
+<li><code>OtherNames</code></li>
+<li><code>Height</code></li>
+<li><code>Wealth</code></li>
+</ul>
+<h2 id="generated-code-usage">Generated Code Usage</h2>
+<h3 id="creating-an-extended-type">Creating an extended type</h3>
+<p><a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/v5/docs/ExampleRecipes/005-ExtendingABaseType/Program.cs">Example code</a></p>
+<pre><code class="language-csharp">using Corvus.Text.Json;
+using ExtendingABaseType.Models;
+using NodaTime;
+
+// A wealthy person has an additional required property: &quot;Wealth&quot;.
+using JsonWorkspace workspace = JsonWorkspace.Create();
+using var wealthyDoc = PersonWealthy.CreateBuilder(
+    workspace,
+    birthDate: new LocalDate(1820, 1, 17),
+    familyName: &quot;Brontë&quot;,
+    givenName: &quot;Anne&quot;,
+    wealth: 1_000_000,
+    height: 1.57);
+
+int wealth = wealthyDoc.RootElement.Wealth;
+Console.WriteLine($&quot;Wealth: {wealth}&quot;);
+</code></pre>
+<h3 id="converting-to-the-base-type">Converting to the base type</h3>
+<pre><code class="language-csharp">string json = wealthyDoc.RootElement.ToString();
+using var parsedWealthy = ParsedJsonDocument&lt;PersonWealthy&gt;.Parse(json);
+PersonWealthy wealthyPerson = parsedWealthy.RootElement;
+
+// Convert to the type on which it is based (PersonOpen).
+PersonOpen basePerson = PersonOpen.From(wealthyPerson);
+</code></pre>
+<h3 id="accessing-properties-on-the-base-type">Accessing properties on the base type</h3>
+<p>There are three ways to access properties on a JSON element:</p>
+<ol>
+<li><strong>Strongly-typed property</strong> (e.g. <code>wealthyPerson.Wealth</code>) — use this when you have an instance of the type that declares the property. This is the most natural and efficient approach.</li>
+<li><strong><code>TryGetProperty</code> with a UTF-8 byte literal</strong> (e.g. <code>&quot;wealth&quot;u8</code>) — use this when the property is present in the underlying JSON but not declared on the .NET type you are working with, such as when you have converted to a base type like <code>PersonOpen</code>.</li>
+<li><strong><code>TryGetProperty</code> with a string</strong> (e.g. <code>&quot;wealth&quot;</code>) — another dynamic option, convenient when you already have a string property name.</li>
+</ol>
+<p>The <code>TryGetProperty</code> approach is especially useful when working with open base types. After converting a <code>PersonWealthy</code> to <code>PersonOpen</code> with <code>PersonOpen.From()</code>, the <code>wealth</code> property still exists in the underlying JSON data — it is just not surfaced as a strongly-typed .NET property on <code>PersonOpen</code>.</p>
+<pre><code class="language-csharp">// Although the property is not present on the PersonOpen .NET type, it is still
+// available through the generic TryGetProperty() API.
+if (basePerson.TryGetProperty(&quot;wealth&quot;u8, out JsonElement wealthElement))
+{
+    // We will only get here if wealthElement is not undefined.
+    // We know our PersonOpen was derived from a valid PersonWealthy so we do not
+    // need to re-validate; if it was present, then it is known to be an int32.
+    Console.WriteLine($&quot;Wealth: {wealthElement.GetInt32()}&quot;);
+}
+
+// Or we could just use a literal string as the property name.
+if (basePerson.TryGetProperty(&quot;wealth&quot;, out JsonElement wealthElement2))
+{
+    Console.WriteLine($&quot;Wealth: {wealthElement2.GetInt32()}&quot;);
+}
+</code></pre>
+<h2 id="key-differences-from-v4">Key Differences from V4</h2>
+<h3 id="v4-corvus.json">V4 (Corvus.Json)</h3>
+<pre><code class="language-csharp">// Create directly with static Create method
+PersonWealthy wealthy = PersonWealthy.Create(
+    birthDate: new LocalDate(1820, 1, 17),
+    familyName: &quot;Brontë&quot;,
+    givenName: &quot;Anne&quot;,
+    wealth: 1_000_000,
+    height: 1.57);
+
+// Access properties directly
+int wealth = wealthy.Wealth;
+
+// Convert to base type with As&lt;T&gt;()
+PersonOpen basePerson = wealthy.As&lt;PersonOpen&gt;();
+
+// Access undeclared property via TryGetProperty
+if (basePerson.TryGetProperty(&quot;wealth&quot;u8, out var wealthElement))
+{
+    int w = wealthElement.GetInt32();
+}
+</code></pre>
+<h3 id="v5-corvus.text.json">V5 (Corvus.Text.Json)</h3>
+<pre><code class="language-csharp">// Create with workspace and builder
+using JsonWorkspace workspace = JsonWorkspace.Create();
+using var wealthyDoc = PersonWealthy.CreateBuilder(
+    workspace,
+    birthDate: new LocalDate(1820, 1, 17),
+    familyName: &quot;Brontë&quot;,
+    givenName: &quot;Anne&quot;,
+    wealth: 1_000_000,
+    height: 1.57);
+
+// Access properties directly (same as V4)
+int wealth = wealthyDoc.RootElement.Wealth;
+
+// Convert to base type with From()
+PersonOpen basePerson = PersonOpen.From(wealthyDoc.RootElement);
+
+// Access undeclared property via TryGetProperty (same as V4)
+if (basePerson.TryGetProperty(&quot;wealth&quot;u8, out JsonElement wealthElement))
+{
+    int w = wealthElement.GetInt32();
+}
+</code></pre>
+<p><strong>Key differences:</strong></p>
+<ul>
+<li>V5 uses <code>CreateBuilder(workspace, prop: value)</code> instead of V4's <code>Create()</code> static method</li>
+<li>V5 requires a <code>JsonWorkspace</code> for construction and manages lifetime with <code>using</code></li>
+<li>V5 uses <code>From()</code> for type conversion instead of <code>As&lt;T&gt;()</code></li>
+<li>Property access via strongly-typed properties and <code>TryGetProperty</code> works the same in both versions</li>
+</ul>
+<h2 id="running-the-example">Running the Example</h2>
+<pre><code class="language-bash">cd docs/ExampleRecipes/005-ExtendingABaseType
+dotnet run
+</code></pre>
+<h2 id="related-patterns">Related Patterns</h2>
+<ul>
+<li><a href="/Corvus.JsonSchema/pr-preview/pr-740/examples/reusing-common-types.html">003-ReusingCommonTypes</a> - Using <code>$ref</code> and <code>$defs</code> for shared type definitions</li>
+<li><a href="/Corvus.JsonSchema/pr-preview/pr-740/examples/open-versus-closed-types.html">004-OpenVersusClosedTypes</a> - Understanding open vs closed types</li>
+<li><a href="/Corvus.JsonSchema/pr-preview/pr-740/examples/constraining-a-base-type.html">006-ConstrainingABaseType</a> - Narrowing constraints instead of adding properties</li>
+<li><a href="/Corvus.JsonSchema/pr-preview/pr-740/examples/interfaces-and-mix-in-types.html">011-InterfacesAndMixInTypes</a> - Composing multiple schemas with <code>allOf</code></li>
+</ul>
+<h2 id="frequently-asked-questions">Frequently Asked Questions</h2>
+<h3 id="how-is-ref-like-inheritance-in-oop">How is <code>$ref</code> like inheritance in OOP?</h3>
+<p>Think of <code>$ref</code> as single inheritance: the base schema defines a set of properties and constraints, and the extending schema adds its own on top. The key difference from OOP is that JSON Schema composes <em>constraints</em> — you can't &quot;override&quot; a base property to weaken its constraints, only add more. The extending schema's properties are merged with those from the referenced schema, and all constraints from both apply during validation.</p>
+<h3 id="can-i-access-base-type-properties-on-the-extended-type">Can I access base-type properties on the extended type?</h3>
+<p>Yes. When the code generator encounters <code>$ref</code>, it follows the reference and composes all properties from the base schema into the generated type. <code>PersonWealthy</code> has strongly-typed properties for both its own <code>Wealth</code> and all of <code>PersonOpen</code>'s properties (<code>FamilyName</code>, <code>GivenName</code>, <code>BirthDate</code>, etc.). You access them the same way — <code>wealthyPerson.FamilyName</code>.</p>
+<h3 id="when-should-i-use-trygetproperty-instead-of-a-strongly-typed-property">When should I use <code>TryGetProperty</code> instead of a strongly-typed property?</h3>
+<p>Use <code>TryGetProperty</code> when you have converted to a base type (e.g., <code>PersonOpen.From(wealthyPerson)</code>) and need to access a property that exists in the JSON but is not declared on the base .NET type. The property is still present in the underlying JSON data; <code>TryGetProperty</code> with a UTF-8 byte literal (<code>&quot;wealth&quot;u8</code>) gives you zero-allocation access to it. Use the strongly-typed property whenever it is available on the type you are working with.</p>
+<h3 id="does-the-base-type-need-to-be-open-for-extension-to-work">Does the base type need to be open for extension to work?</h3>
+<p>Yes. If the base type has <code>unevaluatedProperties: false</code> (closed), then any document with properties not declared in that schema will fail validation against the base. You can still <em>compose</em> schemas using <code>$ref</code> on a closed type (see <a href="/Corvus.JsonSchema/pr-preview/pr-740/examples/constraining-a-base-type.html">006-ConstrainingABaseType</a>), but you cannot add new properties — only narrow existing constraints.</p>
+<h3 id="what-about-draft-67-where-ref-ignores-adjacent-keywords">What about draft 6/7 where <code>$ref</code> ignores adjacent keywords?</h3>
+<p>In draft 6 and 7, <code>$ref</code> replaces the entire schema object — sibling keywords like <code>properties</code> and <code>required</code> are silently ignored. The workaround is to wrap the reference in an <code>allOf</code>: <code>{ &quot;allOf&quot;: [{&quot;$ref&quot;: &quot;./person-open.json&quot;}], &quot;properties&quot;: { ... } }</code>. This achieves the same composition but is less readable. Draft 2019-09 and later allow <code>$ref</code> alongside other keywords, which is what this recipe uses.</p>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "How is `$ref` like inheritance in OOP?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Think of $ref as single inheritance: the base schema defines a set of properties and constraints, and the extending schema adds its own on top. The key difference from OOP is that JSON Schema composes *constraints* — you can't \"override\" a base property to weaken its constraints, only add more. The extending schema's properties are merged with those from the referenced schema, and all constraints from both apply during validation."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Can I access base-type properties on the extended type?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. When the code generator encounters $ref, it follows the reference and composes all properties from the base schema into the generated type. PersonWealthy has strongly-typed properties for both its own Wealth and all of PersonOpen's properties (FamilyName, GivenName, BirthDate, etc.). You access them the same way — wealthyPerson.FamilyName."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "When should I use `TryGetProperty` instead of a strongly-typed property?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Use TryGetProperty when you have converted to a base type (e.g., PersonOpen.From(wealthyPerson)) and need to access a property that exists in the JSON but is not declared on the base .NET type. The property is still present in the underlying JSON data; TryGetProperty with a UTF-8 byte literal (\"wealth\"u8) gives you zero-allocation access to it. Use the strongly-typed property whenever it is available on the type you are working with."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Does the base type need to be open for extension to work?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. If the base type has unevaluatedProperties: false (closed), then any document with properties not declared in that schema will fail validation against the base. You can still *compose* schemas using $ref on a closed type (see [006-ConstrainingABaseType](../006-ConstrainingABaseType/)), but you cannot add new properties — only narrow existing constraints."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What about draft 6/7 where `$ref` ignores adjacent keywords?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "In draft 6 and 7, $ref replaces the entire schema object — sibling keywords like properties and required are silently ignored. The workaround is to wrap the reference in an allOf: { \"allOf\": [{\"$ref\": \"./person-open.json\"}], \"properties\": { ... } }. This achieves the same composition but is less readable. Draft 2019-09 and later allow $ref alongside other keywords, which is what this recipe uses."
+      }
+    }
+  ]
+}
+</script>
+        </div>
+    </main>
+</div>
+
+    </div>
+    <footer class="site-footer">
+    <div class="site-footer__inner">
+        <div class="site-footer__sponsor">
+            Sponsored by
+            <a href="https://endjin.com" target="_blank" rel="noopener noreferrer">endjin</a>
+        </div>
+        <ul class="site-footer__links" role="list">
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/pr-preview/pr-740/getting-started/index.html">Getting Started</a></li>
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/pr-preview/pr-740/docs/index.html">Documentation</a></li>
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/pr-preview/pr-740/examples/index.html">Examples</a></li>
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/pr-preview/pr-740/api/index.html">API</a></li>
+            <li><a class="site-footer__link" href="https://github.com/corvus-dotnet/Corvus.JsonSchema" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+            <li><a class="site-footer__link" href="https://www.nuget.org/packages?q=Corvus.Json" target="_blank" rel="noopener noreferrer">NuGet</a></li>
+        </ul>
+        <p class="site-footer__copyright">&copy; 2026 endjin Ltd.</p>
+    </div>
+</footer>
+
+    <!-- highlight.js for syntax highlighting (CSS targets .hljs-* classes) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/csharp.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/json.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/bash.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/xml.min.js" defer></script>
+    <script>document.addEventListener('DOMContentLoaded',()=>hljs.highlightAll())</script>
+    <script src="/Corvus.JsonSchema/pr-preview/pr-740/assets/js/main.js" defer></script>
+    <script src="/Corvus.JsonSchema/pr-preview/pr-740/assets/js/sidebar-search.js" defer></script>
+    
+</body>
+</html>

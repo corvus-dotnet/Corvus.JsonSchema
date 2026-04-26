@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#1C1D21" />
+    <meta name="description" content="API documentation for JsonataCodeGenHelpers in Corvus.Text.Json.Jsonata" />
+    <meta name="keywords" content="API, class, JsonataCodeGenHelpers, Corvus.Text.Json.Jsonata" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:description" content="API documentation for JsonataCodeGenHelpers" />
+    <meta name="twitter:image" content="/Corvus.JsonSchema/pr-preview/pr-740/assets/images/og-corvus.png" />
+    <meta name="twitter:title" content="JsonataCodeGenHelpers &#x2014; Corvus.Text.Json.Jsonata" />
+    <meta property="article:tag" content="API" />
+    <meta property="article:tag" content="class" />
+    <meta property="article:tag" content="JsonataCodeGenHelpers" />
+    <meta property="article:tag" content="Corvus.Text.Json.Jsonata" />
+    <meta property="og:description" content="API documentation for JsonataCodeGenHelpers" />
+    <meta property="og:image" content="/Corvus.JsonSchema/pr-preview/pr-740/assets/images/og-corvus.png" />
+    <meta property="og:title" content="JsonataCodeGenHelpers &#x2014; Corvus.Text.Json.Jsonata" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://corvus-oss.org/corvus-json-schema/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers/" />
+    <title>JsonataCodeGenHelpers &#x2014; Corvus.Text.Json.Jsonata</title>
+    <link itemprop="url" href="https://corvus-oss.org/corvus-json-schema/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers/" />
+    <link rel="canonical" href="https://corvus-oss.org/corvus-json-schema/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers/" />
+    <link rel="sitemap" href="https://corvus-oss.org/corvus-json-schema/sitemap.xml" />
+    <!-- Styles -->
+    <link rel="stylesheet" href="/Corvus.JsonSchema/pr-preview/pr-740/main.css" />
+    <link rel="icon" type="image/svg+xml" href="/Corvus.JsonSchema/pr-preview/pr-740/assets/images/favicon.svg" />
+    
+</head>
+<body>
+    <a class="sr-only" href="#main-content">Skip to content</a>
+<header class="site-header">
+    <div class="site-header__inner">
+        <a class="site-header__brand" href="/Corvus.JsonSchema/pr-preview/pr-740/index.html" aria-label="Corvus.JsonSchema home">
+            <img src="/Corvus.JsonSchema/pr-preview/pr-740/assets/images/logo-corvus.svg" alt="" width="28" height="28" aria-hidden="true" />
+            Corvus<span style="color:var(--color-brand)">.</span>Json<span style="color:var(--color-brand)">Schema</span>
+        </a>
+        <nav class="site-header__nav-desktop" aria-label="Main navigation">
+                    <a href="/Corvus.JsonSchema/pr-preview/pr-740/getting-started/index.html"
+                       class="site-header__link "
+                       >Getting Started</a>
+                    <a href="/Corvus.JsonSchema/pr-preview/pr-740/docs/index.html"
+                       class="site-header__link "
+                       >Documentation</a>
+                    <a href="/Corvus.JsonSchema/pr-preview/pr-740/examples/index.html"
+                       class="site-header__link "
+                       >Examples</a>
+                    <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/index.html"
+                       class="site-header__link "
+                       >API</a>
+            <a href="/Corvus.JsonSchema/pr-preview/pr-740/playground/"
+               class="site-header__link"
+               target="_blank" rel="noopener noreferrer"
+               title="Interactive JSON Schema playground">Playground</a>
+            <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema"
+               class="site-header__link" target="_blank" rel="noopener noreferrer"
+               aria-label="View on GitHub">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+            </a>
+        </nav>
+        <button class="site-header__menu-toggle js-toggle-menu"
+                aria-expanded="false" aria-label="Toggle menu">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+            </svg>
+        </button>
+    </div>
+</header>
+<nav class="site-header__nav-mobile js-mobile-nav" aria-label="Mobile navigation">
+            <a href="/Corvus.JsonSchema/pr-preview/pr-740/getting-started/index.html" class="site-header__link">Getting Started</a>
+            <a href="/Corvus.JsonSchema/pr-preview/pr-740/docs/index.html" class="site-header__link">Documentation</a>
+            <a href="/Corvus.JsonSchema/pr-preview/pr-740/examples/index.html" class="site-header__link">Examples</a>
+            <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/index.html" class="site-header__link">API</a>
+    <a href="/Corvus.JsonSchema/pr-preview/pr-740/playground/" class="site-header__link" target="_blank" rel="noopener noreferrer">Playground</a>
+    <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema"
+       class="site-header__link" target="_blank" rel="noopener noreferrer">GitHub</a>
+</nav>
+
+    <div class="page-content">
+    <div class="layout-docs container">
+        <button class="sidebar-toggle" aria-label="Toggle navigation" aria-expanded="false"></button>
+    <div class="sidebar-backdrop"></div>
+    <aside class="sidebar" data-has-member-nav>
+        <div class="sidebar-search">
+            <svg class="sidebar-search__icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M11.5 7a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0Zm-.82 4.74a6 6 0 1 1 1.06-1.06l3.04 3.04a.75.75 0 1 1-1.06 1.06l-3.04-3.04Z"/></svg>
+            <input id="sidebar-search-input" class="sidebar-search__input" type="search" placeholder="Search" autocomplete="off" />
+            <div id="sidebar-search-dropdown" class="sidebar-search__dropdown" hidden></div>
+        </div>
+        <div class="sidebar__inner" data-sidebar-url="sidebar.html">
+        </div>
+    </aside>
+
+    <main id="main-content" class="layout-docs__main">
+        <div class="doc__content api-ref">
+            <h1>JsonataCodeGenHelpers</h1>
+<h2 id="definition">Definition</h2>
+<p><strong>Namespace:</strong> Corvus.Text.Json.Jsonata<br />
+<strong>Assembly:</strong> Corvus.Text.Json.dll</p>
+<p>Public helper methods for code-generated JSONata evaluators.</p>
+<pre><code class="language-csharp">public static class JsonataCodeGenHelpers
+</code></pre>
+<h2 id="remarks">Remarks</h2>
+<p>This class provides the runtime operations that generated JSONata evaluation code calls. It bridges between the public <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a> API and the internal JSONata evaluation machinery. Generated code emitted by <code>JsonataCodeGenerator</code> calls these helpers for operations that are too complex to inline (path navigation with auto-flattening, arithmetic with type checking, string coercion, etc.). Simple operations like literal creation and property access are emitted inline.</p>
+<h2 id="inheritance">Inheritance</h2>
+<p><a href="https://learn.microsoft.com/dotnet/api/system.object"><code>Object</code></a> → <strong>JsonataCodeGenHelpers</strong></p>
+<h2 id="properties">Properties</h2>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.emptystring.html">EmptyString</a> <code>static</code></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a></td>
+<td>Gets a cached <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a> representing JSON <code>&quot;&quot;</code>.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.false.html">False</a> <code>static</code></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a></td>
+<td>Gets a cached <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a> representing JSON <code>false</code>.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.null.html">Null</a> <code>static</code></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a></td>
+<td>Gets a cached <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a> representing JSON <code>null</code>.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.one.html">One</a> <code>static</code></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a></td>
+<td>Gets a cached <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a> representing JSON <code>1</code>.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.true.html">True</a> <code>static</code></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a></td>
+<td>Gets a cached <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a> representing JSON <code>true</code>.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.zero.html">Zero</a> <code>static</code></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a></td>
+<td>Gets a cached <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a> representing JSON <code>0</code>.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="methods">Methods</h2>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.abs.html#abs-ref-jsonelement-jsonworkspace">Abs(ref JsonElement, JsonWorkspace)</a> <code>static</code></td>
+<td>JSONata <code>$abs</code> function.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.add.html#add-ref-jsonelement-ref-jsonelement-jsonworkspace">Add(ref JsonElement, ref JsonElement, JsonWorkspace)</a> <code>static</code></td>
+<td>JSONata addition (+) operator.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.addresultwithflatten.html#addresultwithflatten-jsonelement-mutable-ref-jsonelement-int">AddResultWithFlatten(JsonElement.Mutable, ref JsonElement, int)</a> <code>static</code></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.append.html#append-ref-jsonelement-ref-jsonelement-jsonworkspace">Append(ref JsonElement, ref JsonElement, JsonWorkspace)</a> <code>static</code></td>
+<td>JSONata <code>$append</code> function — concatenates two values/arrays.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.applychainstep.html#applychainstep-ref-jsonelement-byte-func-jsonelement-jsonworkspace-jsonelement-jsonworkspace">ApplyChainStep(ref JsonElement, byte[][], Func&lt;JsonElement, JsonWorkspace, JsonElement&gt;, JsonWorkspace)</a> <code>static</code></td>
+<td>Fused property-chain navigation + step application (general version). Same as <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.applystepoverelements.html"><code>ApplyStepOverElements</code></a> but avoids...</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.applystage.html#applystage-ref-jsonelement-func-jsonelement-jsonworkspace-jsonelement-jsonworkspace">ApplyStage(ref JsonElement, Func&lt;JsonElement, JsonWorkspace, JsonElement&gt;, JsonWorkspace)</a> <code>static</code></td>
+<td>Applies a stage (predicate or numeric index) to the input, matching the runtime's <code>ApplyStages</code> semantics. If the stage evaluates to a number, it is used as an array index. Otherwise, the result is...</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.applystepcollectingresults.html#applystepcollectingresults-ref-jsonelement-func-jsonelement-jsonworkspace-jsonelement-jsonworkspace">ApplyStepCollectingResults(ref JsonElement, Func&lt;JsonElement, JsonWorkspace, JsonElement&gt;, JsonWorkspace)</a> <code>static</code></td>
+<td>Like <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.applystepoverelementsnoflatten.html"><code>ApplyStepOverElementsNoFlatten</code></a> but always produces a collection array. Used when an array constr...</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.applystepoverelements.html#applystepoverelements-ref-jsonelement-func-jsonelement-jsonworkspace-jsonelement-jsonworkspace">ApplyStepOverElements(ref JsonElement, Func&lt;JsonElement, JsonWorkspace, JsonElement&gt;, JsonWorkspace)</a> <code>static</code></td>
+<td>Applies a step function over each element of a multi-valued result, collecting results with JSONata auto-flattening.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.applystepoverelementsnoflatten.html#applystepoverelementsnoflatten-ref-jsonelement-func-jsonelement-jsonworkspace-jsonelement-jsonworkspace">ApplyStepOverElementsNoFlatten(ref JsonElement, Func&lt;JsonElement, JsonWorkspace, JsonElement&gt;, JsonWorkspace)</a> <code>static</code></td>
+<td>Like <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.applystepoverelements.html"><code>ApplyStepOverElements</code></a> but does NOT auto-flatten array results. Used for array constructor steps in paths...</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.areequal.html#areequal-ref-jsonelement-ref-jsonelement">AreEqual(ref JsonElement, ref JsonElement)</a> <code>static</code></td>
+<td>JSONata equality (=) operator.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.arenotequal.html#arenotequal-ref-jsonelement-ref-jsonelement">AreNotEqual(ref JsonElement, ref JsonElement)</a> <code>static</code></td>
+<td>JSONata inequality (!=) operator.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.arithmeticadd.html#arithmeticadd-double-double">ArithmeticAdd(double, double)</a> <code>static</code></td>
+<td>Raw-double addition. NaN inputs propagate as undefined.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.arithmeticdivide.html#arithmeticdivide-double-double">ArithmeticDivide(double, double)</a> <code>static</code></td>
+<td>Raw-double division. NaN inputs propagate as undefined.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.arithmeticmodulo.html#arithmeticmodulo-double-double">ArithmeticModulo(double, double)</a> <code>static</code></td>
+<td>Raw-double modulo. NaN inputs propagate as undefined.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.arithmeticmultiply.html#arithmeticmultiply-double-double">ArithmeticMultiply(double, double)</a> <code>static</code></td>
+<td>Raw-double multiplication. NaN inputs propagate as undefined.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.arithmeticsubtract.html#arithmeticsubtract-double-double">ArithmeticSubtract(double, double)</a> <code>static</code></td>
+<td>Raw-double subtraction. NaN inputs propagate as undefined.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.arrayindex.html#arrayindex-ref-jsonelement-int">ArrayIndex(ref JsonElement, int)</a> <code>static</code></td>
+<td>Gets an element from an array by index, supporting negative indices (from end). Used for global (post-aggregation) indexing.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.arrayindexperelement.html#arrayindexperelement-ref-jsonelement-int">ArrayIndexPerElement(ref JsonElement, int)</a> <code>static</code></td>
+<td>Per-element array index: matches the runtime's <code>ApplyPerElementFilterStages</code> behaviour for constant numeric indices within a path step.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.assert.html#assert-ref-jsonelement-ref-jsonelement-jsonworkspace">Assert(ref JsonElement, ref JsonElement, JsonWorkspace)</a> <code>static</code></td>
+<td>JSONata <code>$assert</code> function — throws D3141 if the condition is false.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.average.html#average-ref-jsonelement-jsonworkspace">Average(ref JsonElement, JsonWorkspace)</a> <code>static</code></td>
+<td>JSONata <code>$average</code> function — returns the average of numeric values in an array.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.averageoverchain.html#averageoverchain-ref-jsonelement-byte-jsonworkspace">AverageOverChain(ref JsonElement, byte[][], JsonWorkspace)</a> <code>static</code></td>
+<td>Fused <code>$average</code> over a property chain.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.averageoverchaindouble.html#averageoverchaindouble-ref-jsonelement-byte-jsonworkspace">AverageOverChainDouble(ref JsonElement, byte[][], JsonWorkspace)</a> <code>static</code></td>
+<td>Fused navigate-and-average: walks a property chain and computes the average of all numeric leaf values without materializing an intermediate array.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.base64decode.html#base64decode-ref-jsonelement-jsonworkspace">Base64Decode(ref JsonElement, JsonWorkspace)</a> <code>static</code></td>
+<td>JSONata <code>$base64decode</code> function.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.base64encode.html#base64encode-ref-jsonelement-jsonworkspace">Base64Encode(ref JsonElement, JsonWorkspace)</a> <code>static</code></td>
+<td>JSONata <code>$base64encode</code> function.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.beginconcat.html#beginconcat-span-byte">BeginConcat(Span&lt;byte&gt;)</a> <code>static</code></td>
+<td>Creates a <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers-concatbuilder.html"><code>ConcatBuilder</code></a> for zero-allocation string concatenation in generated code. The caller provides a stack-alloca...</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.beginconcatrented.html#beginconcatrented-int">BeginConcatRented(int)</a> <code>static</code></td>
+<td>Begins a concat operation backed by a rented <a href="https://learn.microsoft.com/dotnet/api/system.buffers.arraypool-1"><code>ArrayPool</code></a> buffer. Use...</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.beginjoin.html#beginjoin-span-byte-readonlyspan-byte">BeginJoin(Span&lt;byte&gt;, ReadOnlySpan&lt;byte&gt;)</a> <code>static</code></td>
+<td>Creates a <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers-joinbuilder.html"><code>JoinBuilder</code></a> for zero-allocation <code>$join</code> of scalar elements.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.booleanelement.html#booleanelement-bool">BooleanElement(bool)</a> <code>static</code></td>
+<td>Creates a <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a> representing the given boolean value.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.ceil.html#ceil-ref-jsonelement-jsonworkspace">Ceil(ref JsonElement, JsonWorkspace)</a> <code>static</code></td>
+<td>JSONata <code>$ceil</code> function.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.chaindistinct.html">ChainDistinct</a> <code>static</code></td>
+<td>Fused chain navigation + distinct: navigates a property chain into a lightweight <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-elementbuffer.html"><code>ElementBuffer</code></a> (no intermediate builder), then deduplicates...</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.chainkeepsingletonarray.html">ChainKeepSingletonArray</a> <code>static</code></td>
+<td>Fused chain navigation + keep-singleton-array (<code>\[\]</code> syntax). Navigates the property chain into an <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-elementbuffer.html"><code>ElementBuffer</code></a> (no intermediate builder), t...</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.chainmerge.html">ChainMerge</a> <code>static</code></td>
+<td>Fused chain navigation + merge. Navigates the property chain into an <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-elementbuffer.html"><code>ElementBuffer</code></a> (no intermediate builder), then merges object properties...</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.coercetostringelement.html#coercetostringelement-ref-jsonelement-jsonworkspace">CoerceToStringElement(ref JsonElement, JsonWorkspace)</a> <code>static</code></td>
+<td>Coerces a <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a> to a string per JSONata semantics.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.comparenumbergt.html#comparenumbergt-ref-jsonelement-double">CompareNumberGT(ref JsonElement, double)</a> <code>static</code></td>
+<td>Fused <code>element &gt; constant</code> comparison that returns <code>bool</code> directly. Avoids materializing the constant as a <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a> via <code>NumberFromDouble</code>.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.comparenumbergte.html#comparenumbergte-ref-jsonelement-double">CompareNumberGTE(ref JsonElement, double)</a> <code>static</code></td>
+<td>Fused <code>element &gt;= constant</code> comparison that returns <code>bool</code> directly.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.comparenumberlt.html#comparenumberlt-ref-jsonelement-double">CompareNumberLT(ref JsonElement, double)</a> <code>static</code></td>
+<td>Fused <code>element &lt; constant</code> comparison that returns <code>bool</code> directly.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.comparenumberlte.html#comparenumberlte-ref-jsonelement-double">CompareNumberLTE(ref JsonElement, double)</a> <code>static</code></td>
+<td>Fused <code>element &lt;= constant</code> comparison that returns <code>bool</code> directly.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.contains.html#contains-ref-jsonelement-ref-jsonelement-jsonworkspace">Contains(ref JsonElement, ref JsonElement, JsonWorkspace)</a> <code>static</code></td>
+<td>JSONata <code>$contains</code> function (string-only; regex falls back to runtime).</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.count.html#count-ref-jsonelement-jsonworkspace">Count(ref JsonElement, JsonWorkspace)</a> <code>static</code></td>
+<td>JSONata <code>$count</code> function — counts elements in an array.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.countoverchain.html#countoverchain-ref-jsonelement-byte-jsonworkspace">CountOverChain(ref JsonElement, byte[][], JsonWorkspace)</a> <code>static</code></td>
+<td>Fused <code>$count</code> over a property chain. Navigates the chain into an <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-elementbuffer.html"><code>ElementBuffer</code></a> and counts the elements directly.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.createarraywithflatten.html#createarraywithflatten-jsonelement-long-jsonworkspace">CreateArrayWithFlatten(JsonElement[], long, JsonWorkspace)</a> <code>static</code></td>
+<td>Creates a JSON array from elements, where some elements may need auto-flattening.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.createformatnumberpicture.html">CreateFormatNumberPicture</a> <code>static</code></td>
+<td>Creates a pre-parsed format-number picture for use with <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.formatnumberpreparsed.html"><code>FormatNumberPreParsed</code></a>. Called once from a static field...</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.decodeurl.html#decodeurl-ref-jsonelement-jsonworkspace">DecodeUrl(ref JsonElement, JsonWorkspace)</a> <code>static</code></td>
+<td>JSONata <code>$decodeUrl</code> function.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.decodeurlcomponent.html#decodeurlcomponent-ref-jsonelement-jsonworkspace">DecodeUrlComponent(ref JsonElement, JsonWorkspace)</a> <code>static</code></td>
+<td>JSONata <code>$decodeUrlComponent</code> function.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.distinct.html#distinct-ref-jsonelement-jsonworkspace">Distinct(ref JsonElement, JsonWorkspace)</a> <code>static</code></td>
+<td>JSONata <code>$distinct</code> function — deduplicates by GetRawText.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.divide.html#divide-ref-jsonelement-ref-jsonelement-jsonworkspace">Divide(ref JsonElement, ref JsonElement, JsonWorkspace)</a> <code>static</code></td>
+<td>JSONata division (/) operator.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.doubletoelement.html#doubletoelement-double-jsonworkspace">DoubleToElement(double, JsonWorkspace)</a> <code>static</code></td>
+<td>Materializes a raw <code>double</code> to a <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a>. NaN (undefined sentinel) returns <code>default</code>.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.eachproperty.html">EachProperty</a> <code>static</code></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.encodeurl.html#encodeurl-ref-jsonelement-jsonworkspace">EncodeUrl(ref JsonElement, JsonWorkspace)</a> <code>static</code></td>
+<td>JSONata <code>$encodeUrl</code> function.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.encodeurlcomponent.html#encodeurlcomponent-ref-jsonelement-jsonworkspace">EncodeUrlComponent(ref JsonElement, JsonWorkspace)</a> <code>static</code></td>
+<td>JSONata <code>$encodeUrlComponent</code> function.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.enumeratedescendant.html#enumeratedescendant-ref-jsonelement-jsonworkspace">EnumerateDescendant(ref JsonElement, JsonWorkspace)</a> <code>static</code></td>
+<td>Descendant step: recursively collects all descendant values from the input. Arrays are traversed but not included as descendants themselves. Objects and primitive values are included, and object pr...</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.enumeratedescendantproperty.html#enumeratedescendantproperty-ref-jsonelement-byte-jsonworkspace">EnumerateDescendantProperty(ref JsonElement, byte[], JsonWorkspace)</a> <code>static</code></td>
+<td>Fused descendant + property navigation. Recursively collects the named property from all descendant objects in a single pass, avoiding intermediate array materialization.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.enumeratewildcard.html#enumeratewildcard-ref-jsonelement-jsonworkspace">EnumerateWildcard(ref JsonElement, JsonWorkspace)</a> <code>static</code></td>
+<td>Wildcard step: enumerates all values of an object (flattening array values), or all elements of an array. Returns a collected JSON array.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.error.html#error-ref-jsonelement-jsonworkspace">Error(ref JsonElement, JsonWorkspace)</a> <code>static</code></td>
+<td>JSONata <code>$error</code> function — throws D3137.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.evaluateexpression.html#evaluateexpression-string-ref-jsonelement-jsonworkspace">EvaluateExpression(string, ref JsonElement, JsonWorkspace)</a> <code>static</code></td>
+<td>Evaluates a JSONata expression at runtime. Used as a fallback for expressions that cannot be statically compiled.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.exists.html#exists-ref-jsonelement-jsonworkspace">Exists(ref JsonElement, JsonWorkspace)</a> <code>static</code></td>
+<td>JSONata <code>$exists</code> function — returns true if the value is not undefined.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.existsoverchain.html">ExistsOverChain</a> <code>static</code></td>
+<td>Fused <code>$exists(chain)</code> — walks the property chain and returns a boolean indicating whether at least one value exists. Short-circuits on the first found element — never allocates an [<code>ElementBuffer</code>...</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.filterchainelements.html#filterchainelements-ref-jsonelement-byte-func-jsonelement-jsonworkspace-bool-jsonworkspace">FilterChainElements(ref JsonElement, byte[][], Func&lt;JsonElement, JsonWorkspace, bool&gt;, JsonWorkspace)</a> <code>static</code></td>
+<td>Fused property-chain navigation + element filter. Navigates <code>names</code> into an <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-elementbuffer.html"><code>ElementBuffer</code></a>, then filters elements through <code>predicate</code>.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.filterelements.html#filterelements-ref-jsonelement-func-jsonelement-jsonworkspace-bool-jsonworkspace">FilterElements(ref JsonElement, Func&lt;JsonElement, JsonWorkspace, bool&gt;, JsonWorkspace)</a> <code>static</code></td>
+<td>Helper for inline <code>$filter</code> — filters array elements by a predicate.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.flatten.html#flatten-ref-jsonelement-jsonworkspace">Flatten(ref JsonElement, JsonWorkspace)</a> <code>static</code></td>
+<td>JSONata <code>$flatten</code> function — flattens nested arrays one level.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.floor.html#floor-ref-jsonelement-jsonworkspace">Floor(ref JsonElement, JsonWorkspace)</a> <code>static</code></td>
+<td>JSONata <code>$floor</code> function.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.formatbase.html#formatbase-ref-jsonelement-ref-jsonelement-jsonworkspace">FormatBase(ref JsonElement, ref JsonElement, JsonWorkspace)</a> <code>static</code></td>
+<td>JSONata <code>$formatBase</code> function.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.formatinteger.html#formatinteger-ref-jsonelement-ref-jsonelement-jsonworkspace">FormatInteger(ref JsonElement, ref JsonElement, JsonWorkspace)</a> <code>static</code></td>
+<td>JSONata <code>$formatInteger</code> function.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.formatnumber.html#formatnumber-ref-jsonelement-ref-jsonelement-ref-jsonelement-jsonworkspace">FormatNumber(ref JsonElement, ref JsonElement, ref JsonElement, JsonWorkspace)</a> <code>static</code></td>
+<td>JSONata <code>$formatNumber</code> function.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.formatnumberpreparsed.html#formatnumberpreparsed-ref-jsonelement-cachedformatnumberpicture-jsonworkspace">FormatNumberPreParsed(ref JsonElement, CachedFormatNumberPicture, JsonWorkspace)</a> <code>static</code></td>
+<td>JSONata <code>$formatNumber</code> using a pre-parsed picture. Zero per-call allocations.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.frommillis.html#frommillis-ref-jsonelement-ref-jsonelement-ref-jsonelement-jsonworkspace">FromMillis(ref JsonElement, ref JsonElement, ref JsonElement, JsonWorkspace)</a> <code>static</code></td>
+<td>JSONata <code>$fromMillis</code> function — converts milliseconds to a date/time string.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.fusedchainbuildarray.html#fusedchainbuildarray-ref-jsonelement-byte-action-jsonelement-jsonworkspace-jsonelement-mutable-jsonworkspace">FusedChainBuildArray(ref JsonElement, byte[][], Action&lt;JsonElement, JsonWorkspace, JsonElement.Mutable&gt;, JsonWorkspace)</a> <code>static</code></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.fusedchaingroupbyperelement.html#fusedchaingroupbyperelement-ref-jsonelement-byte-byte-byte-jsonworkspace">FusedChainGroupByPerElement(ref JsonElement, byte[][], byte[], byte[], JsonWorkspace)</a> <code>static</code></td>
+<td>Fuses a property chain navigation with per-element group-by object construction. Navigates the chain into an <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-elementbuffer.html"><code>ElementBuffer</code></a> (no intermediate...</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.greaterthan.html#greaterthan-ref-jsonelement-ref-jsonelement">GreaterThan(ref JsonElement, ref JsonElement)</a> <code>static</code></td>
+<td>JSONata greater-than (&gt;) operator. Returns a boolean element, or <code>default</code> (undefined) when one operand is undefined and the other is a valid comparison type.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.greaterthanorequal.html#greaterthanorequal-ref-jsonelement-ref-jsonelement">GreaterThanOrEqual(ref JsonElement, ref JsonElement)</a> <code>static</code></td>
+<td>JSONata greater-than-or-equal (&gt;=) operator. Returns a boolean element, or <code>default</code> (undefined) when one operand is undefined and the other is a valid comparison type.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.groupbymapelements.html#groupbymapelements-ref-jsonelement-func-jsonelement-jsonworkspace-jsonelement-jsonworkspace">GroupByMapElements(ref JsonElement, Func&lt;JsonElement, JsonWorkspace, JsonElement&gt;, JsonWorkspace)</a> <code>static</code></td>
+<td>Per-element object construction with groupby semantics: returns <code>default</code> for empty or null/undefined input, singularises a 1-element result, and skips undefined transform results. Used for `path.{...</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.groupbyobject.html#groupbyobject-ref-jsonelement-func-jsonelement-jsonworkspace-string-func-jsonelement-jsonworkspace-jsonelement-jsonworkspace">GroupByObject(ref JsonElement, Func&lt;JsonElement, JsonWorkspace, string&gt;, Func&lt;JsonElement, JsonWorkspace, JsonElement&gt;, JsonWorkspace)</a> <code>static</code></td>
+<td>Group-by object construction: <code>data{keyExpr: valueExpr}</code>. Mirrors the runtime's two-phase approach: Phase 1: Evaluate KEY per element → group ELEMENTS by key. Phase 2: For each group, build context...</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.groupbyobjectperelement.html#groupbyobjectperelement-ref-jsonelement-func-jsonelement-jsonworkspace-string-func-jsonelement-jsonworkspace-jsonelement-jsonworkspace">GroupByObjectPerElement(ref JsonElement, Func&lt;JsonElement, JsonWorkspace, string&gt;, Func&lt;JsonElement, JsonWorkspace, JsonElement&gt;, JsonWorkspace)</a> <code>static</code></td>
+<td>Per-element group-by for path steps (<code>.{key: value}</code>). Each element of the input array is individually passed to...</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.in.html#in-ref-jsonelement-ref-jsonelement">In(ref JsonElement, ref JsonElement)</a> <code>static</code></td>
+<td>JSONata <code>in</code> operator — tests whether the left value is contained in the right array.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.istruthy.html#istruthy-ref-jsonelement">IsTruthy(ref JsonElement)</a> <code>static</code></td>
+<td>Determines whether a <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a> is truthy per JSONata semantics.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.join.html#join-ref-jsonelement-ref-jsonelement-jsonworkspace">Join(ref JsonElement, ref JsonElement, JsonWorkspace)</a> <code>static</code></td>
+<td>JSONata <code>$join</code> function — joins array elements with a separator.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.keepsingletonarray.html#keepsingletonarray-ref-jsonelement-jsonworkspace">KeepSingletonArray(ref JsonElement, JsonWorkspace)</a> <code>static</code></td>
+<td>Implements the KeepSingletonArray semantics for path expressions. When a path has <code>\[\]</code> on a step, the result must be an array. For singleton results that are non-arrays, wraps in a single-element a...</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.keys.html#keys-ref-jsonelement-jsonworkspace">Keys(ref JsonElement, JsonWorkspace)</a> <code>static</code></td>
+<td>JSONata <code>$keys</code> function — returns unique keys from an object or array of objects.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.length.html#length-ref-jsonelement-jsonworkspace">Length(ref JsonElement, JsonWorkspace)</a> <code>static</code></td>
+<td>JSONata <code>$length</code> function — counts Unicode code points in a string.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.lessthan.html#lessthan-ref-jsonelement-ref-jsonelement">LessThan(ref JsonElement, ref JsonElement)</a> <code>static</code></td>
+<td>JSONata less-than (&lt;) operator. Returns a boolean element, or <code>default</code> (undefined) when one operand is undefined and the other is a valid comparison type.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.lessthanorequal.html#lessthanorequal-ref-jsonelement-ref-jsonelement">LessThanOrEqual(ref JsonElement, ref JsonElement)</a> <code>static</code></td>
+<td>JSONata less-than-or-equal (&lt;=) operator. Returns a boolean element, or <code>default</code> (undefined) when one operand is undefined and the other is a valid comparison type.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.lookup.html#lookup-ref-jsonelement-ref-jsonelement-jsonworkspace">Lookup(ref JsonElement, ref JsonElement, JsonWorkspace)</a> <code>static</code></td>
+<td>JSONata <code>$lookup</code> function — looks up a property recursively across objects/arrays.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.lowercase.html#lowercase-ref-jsonelement-jsonworkspace">Lowercase(ref JsonElement, JsonWorkspace)</a> <code>static</code></td>
+<td>JSONata <code>$lowercase</code> function.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.mapchaindouble.html#mapchaindouble-ref-jsonelement-byte-func-jsonelement-jsonworkspace-double-jsonworkspace">MapChainDouble(ref JsonElement, byte[][], Func&lt;JsonElement, JsonWorkspace, double&gt;, JsonWorkspace)</a> <code>static</code></td>
+<td>Fused property-chain navigation + double-space map. Navigates <code>names</code> into an <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-elementbuffer.html"><code>ElementBuffer</code></a> (ArrayPool-backed), then maps each element throu...</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.mapchainelements.html#mapchainelements-ref-jsonelement-byte-func-jsonelement-jsonworkspace-jsonelement-jsonworkspace">MapChainElements(ref JsonElement, byte[][], Func&lt;JsonElement, JsonWorkspace, JsonElement&gt;, JsonWorkspace)</a> <code>static</code></td>
+<td>Fused property-chain navigation + element map. Navigates <code>names</code> into an <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-elementbuffer.html"><code>ElementBuffer</code></a>, then maps each element through <code>transform</code>.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.mapelements.html#mapelements-ref-jsonelement-func-jsonelement-jsonworkspace-jsonelement-jsonworkspace">MapElements(ref JsonElement, Func&lt;JsonElement, JsonWorkspace, JsonElement&gt;, JsonWorkspace)</a> <code>static</code></td>
+<td>Helper for inline <code>$map</code> — maps a function over array elements and collects results into an array.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.mapelementsdouble.html#mapelementsdouble-ref-jsonelement-func-jsonelement-jsonworkspace-double-jsonworkspace">MapElementsDouble(ref JsonElement, Func&lt;JsonElement, JsonWorkspace, double&gt;, JsonWorkspace)</a> <code>static</code></td>
+<td>Specialized map that keeps results as raw <code>double</code> values, avoiding the per-element <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.doubletoelement.html"><code>DoubleToElement</code></a> and intermediate...</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.mapelementswithindex.html#mapelementswithindex-ref-jsonelement-func-jsonelement-jsonelement-jsonworkspace-jsonelement-jsonworkspace">MapElementsWithIndex(ref JsonElement, Func&lt;JsonElement, JsonElement, JsonWorkspace, JsonElement&gt;, JsonWorkspace)</a> <code>static</code></td>
+<td>Helper for inline <code>$map</code> with index parameter — maps each element with its index.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.mapoverelementsdouble.html#mapoverelementsdouble-ref-jsonelement-func-jsonelement-jsonworkspace-double-jsonworkspace">MapOverElementsDouble(ref JsonElement, Func&lt;JsonElement, JsonWorkspace, double&gt;, JsonWorkspace)</a> <code>static</code></td>
+<td>Fused map-over-elements for computed steps that produce <code>double</code> results. Writes doubles directly into the array builder via <code>AddItem(double)</code> (implicit <code>Source</code> conversion), avoiding per-element `...</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.match.html#match-ref-jsonelement-regex-ref-jsonelement-jsonworkspace">Match(ref JsonElement, Regex, ref JsonElement, JsonWorkspace)</a> <code>static</code></td>
+<td>JSONata <code>$match</code> function — matches a string against a compiled <a href="https://learn.microsoft.com/dotnet/api/system.text.regularexpressions.regex"><code>Regex</code></a> and returns an array of match objects `{&quot;match...</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.max.html#max-ref-jsonelement-jsonworkspace">Max(ref JsonElement, JsonWorkspace)</a> <code>static</code></td>
+<td>JSONata <code>$max</code> function — returns the maximum numeric value in an array.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.maxoverchain.html#maxoverchain-ref-jsonelement-byte-jsonworkspace">MaxOverChain(ref JsonElement, byte[][], JsonWorkspace)</a> <code>static</code></td>
+<td>Fused <code>$max</code> over a property chain.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.maxoverchaindouble.html#maxoverchaindouble-ref-jsonelement-byte-jsonworkspace">MaxOverChainDouble(ref JsonElement, byte[][], JsonWorkspace)</a> <code>static</code></td>
+<td>Fused navigate-and-max: walks a property chain and finds the maximum numeric value without materializing an intermediate array.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.merge.html#merge-ref-jsonelement-jsonworkspace">Merge(ref JsonElement, JsonWorkspace)</a> <code>static</code></td>
+<td>JSONata <code>$merge</code> function — merges an array of objects. Last-wins for duplicate property names.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.millis.html#millis-jsonworkspace">Millis(JsonWorkspace)</a> <code>static</code></td>
+<td>JSONata <code>$millis</code> function — returns current UTC time as unix milliseconds.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.min.html#min-ref-jsonelement-jsonworkspace">Min(ref JsonElement, JsonWorkspace)</a> <code>static</code></td>
+<td>JSONata <code>$min</code> function — returns the minimum numeric value in an array.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.minoverchain.html#minoverchain-ref-jsonelement-byte-jsonworkspace">MinOverChain(ref JsonElement, byte[][], JsonWorkspace)</a> <code>static</code></td>
+<td>Fused <code>$min</code> over a property chain.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.minoverchaindouble.html#minoverchaindouble-ref-jsonelement-byte-jsonworkspace">MinOverChainDouble(ref JsonElement, byte[][], JsonWorkspace)</a> <code>static</code></td>
+<td>Fused navigate-and-min: walks a property chain and finds the minimum numeric value without materializing an intermediate array.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.modulo.html#modulo-ref-jsonelement-ref-jsonelement-jsonworkspace">Modulo(ref JsonElement, ref JsonElement, JsonWorkspace)</a> <code>static</code></td>
+<td>JSONata modulo (%) operator.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.multiply.html#multiply-ref-jsonelement-ref-jsonelement-jsonworkspace">Multiply(ref JsonElement, ref JsonElement, JsonWorkspace)</a> <code>static</code></td>
+<td>JSONata multiplication (*) operator.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.navigateproperty.html#navigateproperty-ref-jsonelement-byte-jsonworkspace">NavigateProperty(ref JsonElement, byte[], JsonWorkspace)</a> <code>static</code></td>
+<td>Navigates a single property with auto-flattening over arrays.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.navigatepropertychain.html">NavigatePropertyChain</a> <code>static</code></td>
+<td>Navigates a chain of property names with JSONata auto-flattening semantics, using at most one <code>ArrayBuilder</code> for the entire chain regardless of how many nested arrays are encountered.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.navigatepropertychaininto.html">NavigatePropertyChainInto</a> <code>static</code></td>
+<td>Navigates a property chain, collecting leaf results into an <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-elementbuffer.html"><code>ElementBuffer</code></a> instead of creating a...</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.navigatepropertychainwithpredicates.html#navigatepropertychainwithpredicates-ref-jsonelement-byte-int-valuetuple-byte-byte-jsonworkspace">NavigatePropertyChainWithPredicates(ref JsonElement, byte[][], int[], ValueTuple&lt;byte[], byte[][]&gt;[], JsonWorkspace)</a> <code>static</code></td>
+<td>This is the codegen equivalent of the runtime's EvalPropertyChainWithPredicates — a single tight loop handles the entire path including predicates, avoiding all delegate dispatch and intermediate e...</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.navigatepropertytoarray.html#navigatepropertytoarray-ref-jsonelement-byte-jsonworkspace">NavigatePropertyToArray(ref JsonElement, byte[], JsonWorkspace)</a> <code>static</code></td>
+<td>Navigates a single property over an array and returns the result as an array. Builds directly into the CVB array builder (no intermediate...</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.negate.html#negate-ref-jsonelement-jsonworkspace">Negate(ref JsonElement, JsonWorkspace)</a> <code>static</code></td>
+<td>JSONata unary negation (-) operator.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.now.html#now-jsonworkspace">Now(JsonWorkspace)</a> <code>static</code></td>
+<td>JSONata <code>$now</code> function — returns current UTC time as ISO 8601 string.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.number.html#number-ref-jsonelement-jsonworkspace">Number(ref JsonElement, JsonWorkspace)</a> <code>static</code></td>
+<td>JSONata <code>$number</code> function — coerces the input to a number. Handles booleans (true→1, false→0), strings (decimal, hex 0x, binary 0b, octal 0o), and passes through existing numbers. Arrays/objects/n...</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.numberfromdouble.html#numberfromdouble-double-jsonworkspace">NumberFromDouble(double, JsonWorkspace)</a> <code>static</code></td>
+<td>Creates a <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a> number from a double value.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.pad.html#pad-ref-jsonelement-ref-jsonelement-ref-jsonelement-jsonworkspace">Pad(ref JsonElement, ref JsonElement, ref JsonElement, JsonWorkspace)</a> <code>static</code></td>
+<td>JSONata <code>$pad</code> function — pads a string with cycling pad characters.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.parseinteger.html#parseinteger-ref-jsonelement-ref-jsonelement-jsonworkspace">ParseInteger(ref JsonElement, ref JsonElement, JsonWorkspace)</a> <code>static</code></td>
+<td>JSONata <code>$parseInteger</code> function.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.parsenumber.html#parsenumber-readonlyspan-byte">ParseNumber(ReadOnlySpan&lt;byte&gt;)</a> <code>static</code></td>
+<td>Parses a JSON number from its raw UTF-8 representation.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.power.html#power-ref-jsonelement-ref-jsonelement-jsonworkspace">Power(ref JsonElement, ref JsonElement, JsonWorkspace)</a> <code>static</code></td>
+<td>JSONata <code>$power</code> function. Throws D3061 if result is non-finite.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.range.html#range-ref-jsonelement-ref-jsonelement-jsonworkspace">Range(ref JsonElement, ref JsonElement, JsonWorkspace)</a> <code>static</code></td>
+<td>JSONata range (..) operator. Builds an array of integers from <code>left</code> to <code>right</code>.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.reduceelements.html#reduceelements-ref-jsonelement-ref-jsonelement-func-jsonelement-jsonelement-jsonworkspace-jsonelement-jsonworkspace">ReduceElements(ref JsonElement, ref JsonElement, Func&lt;JsonElement, JsonElement, JsonWorkspace, JsonElement&gt;, JsonWorkspace)</a> <code>static</code></td>
+<td>Helper for inline <code>$reduce</code> — reduces array elements with an accumulator.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.reduceelementsdouble.html#reduceelementsdouble-ref-jsonelement-double-func-double-jsonelement-jsonworkspace-double-jsonworkspace">ReduceElementsDouble(ref JsonElement, double, Func&lt;double, JsonElement, JsonWorkspace, double&gt;, JsonWorkspace)</a> <code>static</code></td>
+<td>Specialized reduce that keeps the accumulator as a raw <code>double</code> throughout the loop, avoiding the per-iteration...</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.replace.html#replace-ref-jsonelement-ref-jsonelement-ref-jsonelement-ref-jsonelement-jsonworkspace">Replace(ref JsonElement, ref JsonElement, ref JsonElement, ref JsonElement, JsonWorkspace)</a> <code>static</code></td>
+<td>JSONata <code>$replace</code> function — string-only form (no regex). Replaces occurrences of a pattern string with a replacement string, with an optional limit on the number of replacements.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.replaceregex.html#replaceregex-ref-jsonelement-regex-ref-jsonelement-ref-jsonelement-jsonworkspace">ReplaceRegex(ref JsonElement, Regex, ref JsonElement, ref JsonElement, JsonWorkspace)</a> <code>static</code></td>
+<td>JSONata <code>$replace</code> function — regex form. Uses <a href="https://learn.microsoft.com/dotnet/api/system.text.valuestringbuilder"><code>ValueStringBuilder</code></a> and...</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.reverse.html#reverse-ref-jsonelement-jsonworkspace">Reverse(ref JsonElement, JsonWorkspace)</a> <code>static</code></td>
+<td>JSONata <code>$reverse</code> function.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.round.html#round-ref-jsonelement-ref-jsonelement-jsonworkspace">Round(ref JsonElement, ref JsonElement, JsonWorkspace)</a> <code>static</code></td>
+<td>JSONata <code>$round</code> function with optional precision. Uses banker's rounding (MidpointRounding.ToEven). Negative precision rounds to tens, hundreds, etc.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.shuffle.html#shuffle-ref-jsonelement-jsonworkspace">Shuffle(ref JsonElement, JsonWorkspace)</a> <code>static</code></td>
+<td>JSONata <code>$shuffle</code> function — Fisher-Yates shuffle.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.shufflefrombuffer.html#shufflefrombuffer-ref-elementbuffer-jsonworkspace">ShuffleFromBuffer(ref ElementBuffer, JsonWorkspace)</a> <code>static</code></td>
+<td>Shuffles elements from a pre-populated <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-elementbuffer.html"><code>ElementBuffer</code></a> (e.g., from a chain navigation) and builds a single result array document. Used by the...</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.siftproperty.html">SiftProperty</a> <code>static</code></td>
+<td></td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.simplegroupbyannotation.html#simplegroupbyannotation-ref-jsonelement-byte-byte-jsonworkspace">SimpleGroupByAnnotation(ref JsonElement, byte[], byte[], JsonWorkspace)</a> <code>static</code></td>
+<td>Optimized annotation group-by where both key and value are simple property names. Groups ALL elements by key property, collecting values per group. Mirrors the runtime's `ApplySimpleNamePairGroupBy...</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.simplegroupbyperelement.html#simplegroupbyperelement-ref-jsonelement-byte-byte-jsonworkspace">SimpleGroupByPerElement(ref JsonElement, byte[], byte[], JsonWorkspace)</a> <code>static</code></td>
+<td>Optimized per-element group-by for path steps where both key and value are simple property names (<code>.{keyProp: valueProp}</code>). Accesses properties directly via...</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.single.html#single-ref-jsonelement-jsonworkspace">Single(ref JsonElement, JsonWorkspace)</a> <code>static</code></td>
+<td>JSONata <code>$single</code> function (1-arg form) — returns the single element of an array.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.singlewithpredicate.html#singlewithpredicate-ref-jsonelement-func-jsonelement-jsonworkspace-bool-jsonworkspace">SingleWithPredicate(ref JsonElement, Func&lt;JsonElement, JsonWorkspace, bool&gt;, JsonWorkspace)</a> <code>static</code></td>
+<td>JSONata <code>$single(array, predicate)</code> — filters array by predicate, expects exactly 1 match.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.singlewithpredicateindexed.html#singlewithpredicateindexed-ref-jsonelement-func-jsonelement-jsonelement-jsonelement-jsonworkspace-bool-jsonworkspace">SingleWithPredicateIndexed(ref JsonElement, Func&lt;JsonElement, JsonElement, JsonElement, JsonWorkspace, bool&gt;, JsonWorkspace)</a> <code>static</code></td>
+<td>JSONata <code>$single(array, predicate)</code> with index and array parameters.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.sortbykeys.html#sortbykeys-ref-jsonelement-func-jsonelement-jsonworkspace-jsonelement-bool-jsonworkspace">SortByKeys(ref JsonElement, Func&lt;JsonElement, JsonWorkspace, JsonElement&gt;[], bool[], JsonWorkspace)</a> <code>static</code></td>
+<td>Sort step helper: sorts an array by evaluating sort key expressions per element. Uses a stable index-based sort that preserves relative order of equal elements.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.sortdefault.html#sortdefault-ref-jsonelement-jsonworkspace">SortDefault(ref JsonElement, JsonWorkspace)</a> <code>static</code></td>
+<td>JSONata <code>$sort</code> function with 1 argument — default sort. Flattens arrays, validates no objects/arrays, sorts numbers numerically and strings by ordinal comparison.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.sortdefaultchain.html#sortdefaultchain-ref-jsonelement-byte-jsonworkspace">SortDefaultChain(ref JsonElement, byte[][], JsonWorkspace)</a> <code>static</code></td>
+<td>Default sort fused with chain navigation — collects elements into an <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-elementbuffer.html"><code>ElementBuffer</code></a> instead of materializing an intermediate builder document.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.split.html#split-ref-jsonelement-ref-jsonelement-ref-jsonelement-jsonworkspace">Split(ref JsonElement, ref JsonElement, ref JsonElement, JsonWorkspace)</a> <code>static</code></td>
+<td>JSONata <code>$split</code> function (string separator only).</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.splitbyconstantstring.html#splitbyconstantstring-ref-jsonelement-byte-jsonworkspace">SplitByConstantString(ref JsonElement, byte[], JsonWorkspace)</a> <code>static</code></td>
+<td>JSONata <code>$split</code> function — constant string separator, no limit. Takes pre-computed UTF-8 separator bytes directly, skipping <code>GetUtf8String()</code> on the separator and all limit processing.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.splitregex.html#splitregex-ref-jsonelement-regex-ref-jsonelement-jsonworkspace">SplitRegex(ref JsonElement, Regex, ref JsonElement, JsonWorkspace)</a> <code>static</code></td>
+<td>JSONata <code>$split</code> function — regex separator form. Uses a pre-compiled <a href="https://learn.microsoft.com/dotnet/api/system.text.regularexpressions.regex"><code>Regex</code></a> passed from the code-generated static fi...</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.spread.html#spread-ref-jsonelement-jsonworkspace">Spread(ref JsonElement, JsonWorkspace)</a> <code>static</code></td>
+<td>JSONata <code>$spread</code> function — expands each property into a single-property object.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.sqrt.html#sqrt-ref-jsonelement-jsonworkspace">Sqrt(ref JsonElement, JsonWorkspace)</a> <code>static</code></td>
+<td>JSONata <code>$sqrt</code> function. Throws D3060 for negative numbers.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.string.html">String</a> <code>static</code></td>
+<td>JSONata <code>$string</code> function — converts a value to its string representation.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.stringconcat.html#stringconcat-ref-jsonelement-ref-jsonelement-jsonworkspace">StringConcat(ref JsonElement, ref JsonElement, JsonWorkspace)</a> <code>static</code></td>
+<td>JSONata string concatenation (&amp;) operator. Coerces both operands to strings.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.stringconcat3.html#stringconcat3-ref-jsonelement-ref-jsonelement-ref-jsonelement-jsonworkspace">StringConcat3(ref JsonElement, ref JsonElement, ref JsonElement, JsonWorkspace)</a> <code>static</code></td>
+<td>Multi-operand string concatenation. Uses a single <code>Utf8ValueStringBuilder</code> pass instead of creating intermediate string elements.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.stringconcat4.html#stringconcat4-ref-jsonelement-ref-jsonelement-ref-jsonelement-ref-jsonelement-jsonworkspace">StringConcat4(ref JsonElement, ref JsonElement, ref JsonElement, ref JsonElement, JsonWorkspace)</a> <code>static</code></td>
+<td>Multi-operand string concatenation (4 operands).</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.stringconcat5.html#stringconcat5-ref-jsonelement-ref-jsonelement-ref-jsonelement-ref-jsonelement-ref-jsonelement-jsonworkspace">StringConcat5(ref JsonElement, ref JsonElement, ref JsonElement, ref JsonElement, ref JsonElement, JsonWorkspace)</a> <code>static</code></td>
+<td>Multi-operand string concatenation (5 operands).</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.stringconcatmany.html#stringconcatmany-jsonworkspace-jsonelement">StringConcatMany(JsonWorkspace, JsonElement[])</a> <code>static</code></td>
+<td>Multi-operand string concatenation (6+ operands).</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.stringelement.html#stringelement-string-jsonworkspace">StringElement(string, JsonWorkspace)</a> <code>static</code></td>
+<td>Creates a JSON string element from a .NET string value.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.stringfromunescapedutf8.html#stringfromunescapedutf8-readonlyspan-byte-jsonworkspace">StringFromUnescapedUtf8(ReadOnlySpan&lt;byte&gt;, JsonWorkspace)</a> <code>static</code></td>
+<td>Creates a JSON string element from unescaped UTF-8 bytes. Forwarding method so generated code can use the single <code>H.</code> prefix.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.substring.html#substring-ref-jsonelement-ref-jsonelement-ref-jsonelement-jsonworkspace">Substring(ref JsonElement, ref JsonElement, ref JsonElement, JsonWorkspace)</a> <code>static</code></td>
+<td>JSONata <code>$substring</code> function — code-point-aware substring.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.substringafter.html#substringafter-ref-jsonelement-ref-jsonelement-jsonworkspace">SubstringAfter(ref JsonElement, ref JsonElement, JsonWorkspace)</a> <code>static</code></td>
+<td>JSONata <code>$substringAfter</code> function.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.substringbefore.html#substringbefore-ref-jsonelement-ref-jsonelement-jsonworkspace">SubstringBefore(ref JsonElement, ref JsonElement, JsonWorkspace)</a> <code>static</code></td>
+<td>JSONata <code>$substringBefore</code> function.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.subtract.html#subtract-ref-jsonelement-ref-jsonelement-jsonworkspace">Subtract(ref JsonElement, ref JsonElement, JsonWorkspace)</a> <code>static</code></td>
+<td>JSONata subtraction (-) operator.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.sum.html#sum-ref-jsonelement-jsonworkspace">Sum(ref JsonElement, JsonWorkspace)</a> <code>static</code></td>
+<td>JSONata <code>$sum</code> function — sums numeric values in an array.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.sumoverchain.html#sumoverchain-ref-jsonelement-byte-jsonworkspace">SumOverChain(ref JsonElement, byte[][], JsonWorkspace)</a> <code>static</code></td>
+<td>Fused <code>$sum</code> over a property chain. Navigates the chain into an <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-elementbuffer.html"><code>ElementBuffer</code></a> (no builder document) and sums the numeric elements directly,...</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.sumoverchaindouble.html#sumoverchaindouble-ref-jsonelement-byte-func-jsonelement-jsonworkspace-double-jsonworkspace">SumOverChainDouble(ref JsonElement, byte[][], Func&lt;JsonElement, JsonWorkspace, double&gt;, JsonWorkspace)</a> <code>static</code></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a>-returning variant of <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.sumoverchaindoubleraw.html"><code>SumOverChainDoubleRaw</code></a>.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.sumoverchaindoubleraw.html#sumoverchaindoubleraw-ref-jsonelement-byte-func-jsonelement-jsonworkspace-double-jsonworkspace">SumOverChainDoubleRaw(ref JsonElement, byte[][], Func&lt;JsonElement, JsonWorkspace, double&gt;, JsonWorkspace)</a> <code>static</code></td>
+<td>Fused sum-over-property-chain: navigates a property name chain from the input, auto-flattening arrays at each step, then applies <code>step</code> to each leaf element and accumulates the sum. Returns [<code>NaN</code>]...</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.sumoverelementsdouble.html#sumoverelementsdouble-ref-jsonelement-func-jsonelement-jsonworkspace-double-jsonworkspace">SumOverElementsDouble(ref JsonElement, Func&lt;JsonElement, JsonWorkspace, double&gt;, JsonWorkspace)</a> <code>static</code></td>
+<td>Fused <code>$sum</code> over per-element double-producing step. Evaluates the step function per element and sums the raw doubles directly, avoiding the intermediate...</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.sumoverelementsdoubleraw.html#sumoverelementsdoubleraw-ref-jsonelement-func-jsonelement-jsonworkspace-double-jsonworkspace">SumOverElementsDoubleRaw(ref JsonElement, Func&lt;JsonElement, JsonWorkspace, double&gt;, JsonWorkspace)</a> <code>static</code></td>
+<td>Raw double variant of <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.sumoverelementsdouble.html"><code>SumOverElementsDouble</code></a>: returns the accumulated sum as a <code>double</code> (...</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.toarithmeticdoubleleft.html#toarithmeticdoubleleft-ref-jsonelement">ToArithmeticDoubleLeft(ref JsonElement)</a> <code>static</code></td>
+<td>Extracts a <code>double</code> from a left operand <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a> for arithmetic. Returns <a href="https://learn.microsoft.com/dotnet/api/system.double"><code>NaN</code></a> for undefine...</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.toarithmeticdoubleright.html#toarithmeticdoubleright-ref-jsonelement">ToArithmeticDoubleRight(ref JsonElement)</a> <code>static</code></td>
+<td>Extracts a <code>double</code> from a right operand <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonelement.html"><code>JsonElement</code></a> for arithmetic. Returns <a href="https://learn.microsoft.com/dotnet/api/system.double"><code>NaN</code></a> for undefin...</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.tomillis.html#tomillis-ref-jsonelement-ref-jsonelement-jsonworkspace">ToMillis(ref JsonElement, ref JsonElement, JsonWorkspace)</a> <code>static</code></td>
+<td>JSONata <code>$toMillis</code> function — parses a date/time string to milliseconds.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.trim.html#trim-ref-jsonelement-jsonworkspace">Trim(ref JsonElement, JsonWorkspace)</a> <code>static</code></td>
+<td>JSONata <code>$trim</code> function — trims and collapses whitespace.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.type.html#type-ref-jsonelement-jsonworkspace">Type(ref JsonElement, JsonWorkspace)</a> <code>static</code></td>
+<td>JSONata <code>$type</code> function — returns a string describing the input type.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.uppercase.html#uppercase-ref-jsonelement-jsonworkspace">Uppercase(ref JsonElement, JsonWorkspace)</a> <code>static</code></td>
+<td>JSONata <code>$uppercase</code> function.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.utf8.html#utf8-string">Utf8(string)</a> <code>static</code></td>
+<td>Converts a string to a UTF-8 byte array.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.validategroupbykey.html#validategroupbykey-ref-jsonelement">ValidateGroupByKey(ref JsonElement)</a> <code>static</code></td>
+<td>Validates a group-by key expression result, returning the string key or <code>null</code> if the key is undefined. Throws T1003 for non-string, non-undefined keys.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.values.html#values-ref-jsonelement-jsonworkspace">Values(ref JsonElement, JsonWorkspace)</a> <code>static</code></td>
+<td>JSONata <code>$values</code> function — returns values from an object. Uses <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-elementbuffer.html"><code>ElementBuffer</code></a> to avoid document creation when the object has a single prope...</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.wrapasarray.html#wrapasarray-ref-jsonelement-jsonworkspace">WrapAsArray(ref JsonElement, JsonWorkspace)</a> <code>static</code></td>
+<td>Implements JSONata's <code>\[\]</code> (keep-array) operator. Ensures the result is always a JSON array: undefined → undefined, already an array → returned as-is, scalar → wrapped in a single-element array.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.zip.html">Zip</a> <code>static</code></td>
+<td>JSONata <code>$zip</code> function — transposes a single array. Each element becomes a single-element inner array.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.zipbufferandelement.html#zipbufferandelement-jsonelement-int-ref-jsonelement-jsonworkspace">ZipBufferAndElement(JsonElement[], int, ref JsonElement, JsonWorkspace)</a> <code>static</code></td>
+<td>Buffer-fused mixed zip: first arg is a raw buffer, second is a pre-resolved JsonElement.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.zipelementandbuffer.html#zipelementandbuffer-ref-jsonelement-jsonelement-int-jsonworkspace">ZipElementAndBuffer(ref JsonElement, JsonElement[], int, JsonWorkspace)</a> <code>static</code></td>
+<td>Buffer-fused mixed zip: one arg is a pre-resolved JsonElement (e.g., a constant), the other is a raw buffer from property chain navigation.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-jsonatacodegenhelpers.zipfrombuffers.html">ZipFromBuffers</a> <code>static</code></td>
+<td>Buffer-fused 2-arg zip: takes raw backing arrays from <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-jsonata-elementbuffer.getcontents.html"><code>GetContents</code></a> and produces the zip result with a single builder document (no...</td>
+</tr>
+</tbody>
+</table>
+<h2 id="applies-to">Applies To</h2>
+<table>
+<thead>
+<tr>
+<th>Product</th>
+<th>Versions</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>.NET</td>
+<td>9, 10</td>
+</tr>
+<tr>
+<td>.NET Standard</td>
+<td>2.0, 2.1</td>
+</tr>
+</tbody>
+</table>
+        </div>
+        <div class="api-feedback">
+            <div class="api-feedback__inner">
+                <img src="/Corvus.JsonSchema/pr-preview/pr-740/assets/images/logo-corvus.svg" alt="Corvus" class="api-feedback__logo" />
+                <div class="api-feedback__text">
+                    <h3>Collaborate with us on GitHub</h3>
+                    <p>The source for this content can be found on <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema" target="_blank" rel="noopener noreferrer">GitHub</a>, where you can also create and review issues and pull requests.</p>
+                    <a class="api-feedback__link" href="https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/new" target="_blank" rel="noopener noreferrer">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor"><path d="M8 0c4.42 0 8 3.58 8 8a8.013 8.013 0 0 1-5.45 7.59c-.4.08-.55-.17-.55-.38 0-.27.01-1.13.01-2.2 0-.75-.25-1.23-.54-1.48 1.78-.2 3.65-.88 3.65-3.95 0-.88-.31-1.59-.82-2.15.08-.2.36-1.02-.08-2.12 0 0-.67-.22-2.2.82-.64-.18-1.32-.27-2-.27-.68 0-1.36.09-2 .27-1.53-1.03-2.2-.82-2.2-.82-.44 1.1-.16 1.92-.08 2.12-.51.56-.82 1.28-.82 2.15 0 3.06 1.86 3.75 3.64 3.95-.23.2-.44.55-.51 1.07-.46.21-1.61.55-2.33-.66-.15-.24-.6-.83-1.23-.82-.67.01-.27.38.01.53.34.19.73.9.82 1.13.16.45.68 1.31 2.69.94 0 .67.01 1.3.01 1.49 0 .21-.15.45-.55.38A7.995 7.995 0 0 1 0 8c0-4.42 3.58-8 8-8Z"/></svg>
+                        Open an issue
+                    </a>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+    </div>
+    <footer class="site-footer">
+    <div class="site-footer__inner">
+        <div class="site-footer__sponsor">
+            Sponsored by
+            <a href="https://endjin.com" target="_blank" rel="noopener noreferrer">endjin</a>
+        </div>
+        <ul class="site-footer__links" role="list">
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/pr-preview/pr-740/getting-started/index.html">Getting Started</a></li>
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/pr-preview/pr-740/docs/index.html">Documentation</a></li>
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/pr-preview/pr-740/examples/index.html">Examples</a></li>
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/pr-preview/pr-740/api/index.html">API</a></li>
+            <li><a class="site-footer__link" href="https://github.com/corvus-dotnet/Corvus.JsonSchema" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+            <li><a class="site-footer__link" href="https://www.nuget.org/packages?q=Corvus.Json" target="_blank" rel="noopener noreferrer">NuGet</a></li>
+        </ul>
+        <p class="site-footer__copyright">&copy; 2026 endjin Ltd.</p>
+    </div>
+</footer>
+
+    <!-- highlight.js for syntax highlighting (CSS targets .hljs-* classes) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/csharp.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/json.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/bash.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/xml.min.js" defer></script>
+    <script>document.addEventListener('DOMContentLoaded',()=>hljs.highlightAll())</script>
+    <script src="/Corvus.JsonSchema/pr-preview/pr-740/assets/js/main.js" defer></script>
+    <script src="/Corvus.JsonSchema/pr-preview/pr-740/assets/js/sidebar-search.js" defer></script>
+    
+</body>
+</html>

@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#1C1D21" />
+    <meta name="description" content="API documentation for the Corvus.Json.CodeGeneration.CSharp namespace" />
+    <meta name="keywords" content="API, reference, Corvus.Json.CodeGeneration.CSharp" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:description" content="API reference for the Corvus.Json.CodeGeneration.CSharp namespace" />
+    <meta name="twitter:image" content="/Corvus.JsonSchema/pr-preview/pr-740/assets/images/og-corvus.png" />
+    <meta name="twitter:title" content="Corvus.Json.CodeGeneration.CSharp Namespace" />
+    <meta property="article:tag" content="API" />
+    <meta property="article:tag" content="reference" />
+    <meta property="article:tag" content="Corvus.Json.CodeGeneration.CSharp" />
+    <meta property="og:description" content="API reference for the Corvus.Json.CodeGeneration.CSharp namespace" />
+    <meta property="og:image" content="/Corvus.JsonSchema/pr-preview/pr-740/assets/images/og-corvus.png" />
+    <meta property="og:title" content="Corvus.Json.CodeGeneration.CSharp Namespace" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://corvus-oss.org/corvus-json-schema/api/v4/corvus-json-codegeneration-csharp/" />
+    <title>Corvus.Json.CodeGeneration.CSharp Namespace &#x2014; API Reference</title>
+    <link itemprop="url" href="https://corvus-oss.org/corvus-json-schema/api/v4/corvus-json-codegeneration-csharp/" />
+    <link rel="canonical" href="https://corvus-oss.org/corvus-json-schema/api/v4/corvus-json-codegeneration-csharp/" />
+    <link rel="sitemap" href="https://corvus-oss.org/corvus-json-schema/sitemap.xml" />
+    <!-- Styles -->
+    <link rel="stylesheet" href="/Corvus.JsonSchema/pr-preview/pr-740/main.css" />
+    <link rel="icon" type="image/svg+xml" href="/Corvus.JsonSchema/pr-preview/pr-740/assets/images/favicon.svg" />
+    
+</head>
+<body>
+    <a class="sr-only" href="#main-content">Skip to content</a>
+<header class="site-header">
+    <div class="site-header__inner">
+        <a class="site-header__brand" href="/Corvus.JsonSchema/pr-preview/pr-740/index.html" aria-label="Corvus.JsonSchema home">
+            <img src="/Corvus.JsonSchema/pr-preview/pr-740/assets/images/logo-corvus.svg" alt="" width="28" height="28" aria-hidden="true" />
+            Corvus<span style="color:var(--color-brand)">.</span>Json<span style="color:var(--color-brand)">Schema</span>
+        </a>
+        <nav class="site-header__nav-desktop" aria-label="Main navigation">
+                    <a href="/Corvus.JsonSchema/pr-preview/pr-740/getting-started/index.html"
+                       class="site-header__link "
+                       >Getting Started</a>
+                    <a href="/Corvus.JsonSchema/pr-preview/pr-740/docs/index.html"
+                       class="site-header__link "
+                       >Documentation</a>
+                    <a href="/Corvus.JsonSchema/pr-preview/pr-740/examples/index.html"
+                       class="site-header__link "
+                       >Examples</a>
+                    <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/index.html"
+                       class="site-header__link "
+                       >API</a>
+            <a href="/Corvus.JsonSchema/pr-preview/pr-740/playground/"
+               class="site-header__link"
+               target="_blank" rel="noopener noreferrer"
+               title="Interactive JSON Schema playground">Playground</a>
+            <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema"
+               class="site-header__link" target="_blank" rel="noopener noreferrer"
+               aria-label="View on GitHub">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+            </a>
+        </nav>
+        <button class="site-header__menu-toggle js-toggle-menu"
+                aria-expanded="false" aria-label="Toggle menu">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+            </svg>
+        </button>
+    </div>
+</header>
+<nav class="site-header__nav-mobile js-mobile-nav" aria-label="Mobile navigation">
+            <a href="/Corvus.JsonSchema/pr-preview/pr-740/getting-started/index.html" class="site-header__link">Getting Started</a>
+            <a href="/Corvus.JsonSchema/pr-preview/pr-740/docs/index.html" class="site-header__link">Documentation</a>
+            <a href="/Corvus.JsonSchema/pr-preview/pr-740/examples/index.html" class="site-header__link">Examples</a>
+            <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/index.html" class="site-header__link">API</a>
+    <a href="/Corvus.JsonSchema/pr-preview/pr-740/playground/" class="site-header__link" target="_blank" rel="noopener noreferrer">Playground</a>
+    <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema"
+       class="site-header__link" target="_blank" rel="noopener noreferrer">GitHub</a>
+</nav>
+
+    <div class="page-content">
+    <div class="layout-docs container">
+        <button class="sidebar-toggle" aria-label="Toggle navigation" aria-expanded="false"></button>
+    <div class="sidebar-backdrop"></div>
+    <aside class="sidebar" data-has-member-nav>
+        <div class="sidebar-search">
+            <svg class="sidebar-search__icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M11.5 7a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0Zm-.82 4.74a6 6 0 1 1 1.06-1.06l3.04 3.04a.75.75 0 1 1-1.06 1.06l-3.04-3.04Z"/></svg>
+            <input id="sidebar-search-input" class="sidebar-search__input" type="search" placeholder="Search" autocomplete="off" />
+            <div id="sidebar-search-dropdown" class="sidebar-search__dropdown" hidden></div>
+        </div>
+        <div class="sidebar__inner" data-sidebar-url="sidebar.html">
+        </div>
+    </aside>
+
+    <main id="main-content" class="layout-docs__main">
+        <div class="doc__content api-ref">
+            <h1>Corvus.Json.CodeGeneration.CSharp Namespace</h1>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Kind</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-codegeneration-csharp-allofsubschemavalidationhandler.html">AllOfSubschemaValidationHandler</a></td>
+<td>class</td>
+<td>An all-of subschema validation handler.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-codegeneration-csharp-anyofconstvalidationhandler.html">AnyOfConstValidationHandler</a></td>
+<td>class</td>
+<td>An any-of const validation handler.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-codegeneration-csharp-anyofsubschemavalidationhandler.html">AnyOfSubschemaValidationHandler</a></td>
+<td>class</td>
+<td>An any-of subschema validation handler.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-codegeneration-csharp-appendconstructorbackingfieldassignmentcallback.html">AppendConstructorBackingFieldAssignmentCallback</a></td>
+<td>delegate</td>
+<td>A delegate for a callback to assign a backing field with a value.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-codegeneration-csharp-arrayitemsvalidationhandler.html">ArrayItemsValidationHandler</a></td>
+<td>class</td>
+<td>A validation handler for array items, when there is no explicit tuple type.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-codegeneration-csharp-arraylengthvalidationhandler.html">ArrayLengthValidationHandler</a></td>
+<td>class</td>
+<td>An array length validation handler.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-codegeneration-csharp-arraypartial.html">ArrayPartial</a></td>
+<td>class</td>
+<td>Provides the Array file for a type declaration.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-codegeneration-csharp-arrayvalidationhandler.html">ArrayValidationHandler</a></td>
+<td>class</td>
+<td>A validation handler for the <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-codegeneration-iarrayvalidationkeyword.html"><code>IArrayValidationKeyword</code></a> capability.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-codegeneration-csharp-baseschemanameheuristic.html">BaseSchemaNameHeuristic</a></td>
+<td>class</td>
+<td>A name heuristic based on a base schema that will need to get its name from the path or reference.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-codegeneration-csharp-booleanpartial.html">BooleanPartial</a></td>
+<td>class</td>
+<td>Provides the Boolean file for a type declaration.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-codegeneration-csharp-builtinarraytypenameheuristic.html">BuiltInArrayTypeNameHeuristic</a></td>
+<td>class</td>
+<td>A name heuristic based on a built-in array type.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-codegeneration-csharp-builtinbooleantypenameheuristic.html">BuiltInBooleanTypeNameHeuristic</a></td>
+<td>class</td>
+<td>A name heuristic based on a built-in boolean type.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-codegeneration-csharp-builtinintegertypenameheuristic.html">BuiltInIntegerTypeNameHeuristic</a></td>
+<td>class</td>
+<td>A name heuristic based on a built-in number type.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-codegeneration-csharp-builtinnulltypenameheuristic.html">BuiltInNullTypeNameHeuristic</a></td>
+<td>class</td>
+<td>A name heuristic based on a built-in boolean type.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-codegeneration-csharp-builtinnumbertypenameheuristic.html">BuiltInNumberTypeNameHeuristic</a></td>
+<td>class</td>
+<td>A name heuristic based on a built-in number type.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-codegeneration-csharp-builtinobjecttypenameheuristic.html">BuiltInObjectTypeNameHeuristic</a></td>
+<td>class</td>
+<td>A name heuristic based on a built-in object type.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-codegeneration-csharp-builtinstringtypenameheuristic.html">BuiltInStringTypeNameHeuristic</a></td>
+<td>class</td>
+<td>A name heuristic based on a built-in string type.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-codegeneration-csharp-csharplanguageprovider.html">CSharpLanguageProvider</a></td>
+<td>class</td>
+<td>The C# language provider.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-codegeneration-csharp-csharplanguageprovider-namedtype.html">CSharpLanguageProvider.NamedType</a></td>
+<td>struct</td>
+<td></td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-codegeneration-csharp-csharplanguageprovider-namespace.html">CSharpLanguageProvider.Namespace</a></td>
+<td>struct</td>
+<td></td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-codegeneration-csharp-csharplanguageprovider-options.html">CSharpLanguageProvider.Options</a></td>
+<td>class</td>
+<td></td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-codegeneration-csharp-csharpmembername.html">CSharpMemberName</a></td>
+<td>class</td>
+<td>The name of a C# member.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-codegeneration-csharp-compositionallofvalidationhandler.html">CompositionAllOfValidationHandler</a></td>
+<td>class</td>
+<td>A validation handler for the <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-codegeneration-iallofvalidationkeyword.html"><code>IAllOfValidationKeyword</code></a> capability.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-codegeneration-csharp-compositionanyofvalidationhandler.html">CompositionAnyOfValidationHandler</a></td>
+<td>class</td>
+<td>A validation handler for the <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-codegeneration-ianyofvalidationkeyword.html"><code>IAnyOfValidationKeyword</code></a> capability.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-codegeneration-csharp-compositionnotvalidationhandler.html">CompositionNotValidationHandler</a></td>
+<td>class</td>
+<td>A validation handler for the <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-codegeneration-inotvalidationkeyword.html"><code>INotValidationKeyword</code></a> capability.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-codegeneration-csharp-compositiononeofvalidationhandler.html">CompositionOneOfValidationHandler</a></td>
+<td>class</td>
+<td>A validation handler for the <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-codegeneration-ioneofvalidationkeyword.html"><code>IOneOfValidationKeyword</code></a> capability.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-codegeneration-csharp-conditionalcodespecification.html">ConditionalCodeSpecification</a></td>
+<td>struct</td>
+<td>A type for which allows code to be conditionally emitted, either by <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-codegeneration-csharp-frameworktype.html"><code>FrameworkType</code></a> and/or via a do-nothing placeholder [<code>DoNotEmit</code>]...</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-codegeneration-csharp-constpropertynameheuristic.html">ConstPropertyNameHeuristic</a></td>
+<td>class</td>
+<td>A name heuristic based on const properties.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-codegeneration-csharp-constvalidationhandler.html">ConstValidationHandler</a></td>
+<td>class</td>
+<td>A validation handler for <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-codegeneration-isingleconstantvalidationkeyword.html"><code>ISingleConstantValidationKeyword</code></a> capability.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-codegeneration-csharp-containsvalidationhandler.html">ContainsValidationHandler</a></td>
+<td>class</td>
+<td>A validation handler for a contains count.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-codegeneration-csharp-corepartial.html">CorePartial</a></td>
+<td>class</td>
+<td>Provides the core file for a type declaration.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-codegeneration-csharp-customkeywordnameheuristic.html">CustomKeywordNameHeuristic</a></td>
+<td>class</td>
+<td>A name heuristic based on a CustomKeyword index.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-codegeneration-csharp-defaultnamecollisionresolver.html">DefaultNameCollisionResolver</a></td>
+<td>class</td>
+<td>The default name collision resolver.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-codegeneration-csharp-defaultvaluenameheuristic.html">DefaultValueNameHeuristic</a></td>
+<td>class</td>
+<td>A name heuristic based on a default value.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-codegeneration-csharp-dependentrequiredvalidationhandler.html">DependentRequiredValidationHandler</a></td>
+<td>class</td>
+<td>A dependent required property validation handler.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-codegeneration-csharp-dependentschemasvalidationhandler.html">DependentSchemasValidationHandler</a></td>
+<td>class</td>
+<td>A property name validation handler.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-codegeneration-csharp-documentationnameheuristic.html">DocumentationNameHeuristic</a></td>
+<td>class</td>
+<td>A name heuristic based on documentation keywords.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-codegeneration-csharp-formathandlerextensions.html">FormatHandlerExtensions</a></td>
+<td>class</td>
+<td>Extensions for <a href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1"><code>IEnumerable</code></a>.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-codegeneration-csharp-formathandlerregistry.html">FormatHandlerRegistry</a></td>
+<td>class</td>
+<td>A registry for type format handlers.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-codegeneration-csharp-formatvalidationhandler.html">FormatValidationHandler</a></td>
+<td>class</td>
+<td>A validation handler for the <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-codegeneration-iformatvalidationkeyword.html"><code>IFormatValidationKeyword</code></a> capability.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-codegeneration-csharp-formatting.html">Formatting</a></td>
+<td>class</td>
+<td>Formatting utilities.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-codegeneration-csharp-frameworktype.html">FrameworkType</a></td>
+<td>enum</td>
+<td>Specifies a framework type for conditionaly code generation.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-codegeneration-csharp-generatedtypeaccessibility.html">GeneratedTypeAccessibility</a></td>
+<td>enum</td>
+<td>Defines the accessibility of the generated types.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-codegeneration-csharp-iformathandler.html">IFormatHandler</a></td>
+<td>interface</td>
+<td>Support for well-known format types.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-codegeneration-csharp-inamecollisionresolver.html">INameCollisionResolver</a></td>
+<td>interface</td>
+<td>Defines a collision resolver that creates a unique name for a child type.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-codegeneration-csharp-inumberformathandler.html">INumberFormatHandler</a></td>
+<td>interface</td>
+<td>A format handler for number formats.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-codegeneration-csharp-istringformathandler.html">IStringFormatHandler</a></td>
+<td>interface</td>
+<td>A format provider for string formats.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-codegeneration-csharp-keywordvalidationhandlerbase.html">KeywordValidationHandlerBase</a></td>
+<td>class</td>
+<td>A base class for <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-codegeneration-ikeywordvalidationhandler.html"><code>IKeywordValidationHandler</code></a> implementations.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-codegeneration-csharp-methodparameter.html">MethodParameter</a></td>
+<td>struct</td>
+<td>A parameter for a method.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-codegeneration-csharp-namecollisionresolverregistry.html">NameCollisionResolverRegistry</a></td>
+<td>class</td>
+<td>A validation handler registry for implementers of <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-codegeneration-ilanguageprovider.html"><code>ILanguageProvider</code></a>.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-codegeneration-csharp-numberpartial.html">NumberPartial</a></td>
+<td>class</td>
+<td>Provides the Number file for a type declaration.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-codegeneration-csharp-numberrangevalidationhandler.html">NumberRangeValidationHandler</a></td>
+<td>class</td>
+<td>A string length validation handler.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-codegeneration-csharp-numbervalidationhandler.html">NumberValidationHandler</a></td>
+<td>class</td>
+<td>A validation handler for the <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-codegeneration-inumbervalidationkeyword.html"><code>INumberValidationKeyword</code></a> capability.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-codegeneration-csharp-objectpartial.html">ObjectPartial</a></td>
+<td>class</td>
+<td>Provides the Object file for a type declaration.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-codegeneration-csharp-objectvalidationhandler.html">ObjectValidationHandler</a></td>
+<td>class</td>
+<td>A validation handler for the <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-codegeneration-iobjectvalidationkeyword.html"><code>IObjectValidationKeyword</code></a> capability.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-codegeneration-csharp-oneofsubschemavalidationhandler.html">OneOfSubschemaValidationHandler</a></td>
+<td>class</td>
+<td>A oneOf subschema validation handler.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-codegeneration-csharp-pathnameheuristic.html">PathNameHeuristic</a></td>
+<td>class</td>
+<td>A name heuristic based on a path index.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-codegeneration-csharp-patternpropertiesvalidationhandler.html">PatternPropertiesValidationHandler</a></td>
+<td>class</td>
+<td>A properties property validation handler.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-codegeneration-csharp-propertiesvalidationhandler.html">PropertiesValidationHandler</a></td>
+<td>class</td>
+<td>A properties property validation handler.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-codegeneration-csharp-propertycountvalidationhandler.html">PropertyCountValidationHandler</a></td>
+<td>class</td>
+<td>A property count validation handler.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-codegeneration-csharp-propertydeclarationextensions.html">PropertyDeclarationExtensions</a></td>
+<td>class</td>
+<td>Extension methods for property declaration.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-codegeneration-csharp-propertynamesvalidationhandler.html">PropertyNamesValidationHandler</a></td>
+<td>class</td>
+<td>A property name validation handler.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-codegeneration-csharp-publiccodegeneratorextensions.html">PublicCodeGeneratorExtensions</a></td>
+<td>class</td>
+<td>Publically available code generator extensions.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-codegeneration-csharp-requiredpropertynameheuristic.html">RequiredPropertyNameHeuristic</a></td>
+<td>class</td>
+<td>A name heuristic based on required properties value.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-codegeneration-csharp-requiredvalidationhandler.html">RequiredValidationHandler</a></td>
+<td>class</td>
+<td>A required property validation handler.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-codegeneration-csharp-singletypearraynameheuristic.html">SingleTypeArrayNameHeuristic</a></td>
+<td>class</td>
+<td>A name heuristic based on single-type arrays.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-codegeneration-csharp-stringlengthvalidationhandler.html">StringLengthValidationHandler</a></td>
+<td>class</td>
+<td>A string length validation handler.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-codegeneration-csharp-stringpartial.html">StringPartial</a></td>
+<td>class</td>
+<td>Provides the String file for a type declaration.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-codegeneration-csharp-stringregexvalidationhandler.html">StringRegexValidationHandler</a></td>
+<td>class</td>
+<td>A string length validation handler.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-codegeneration-csharp-stringvalidationhandler.html">StringValidationHandler</a></td>
+<td>class</td>
+<td>A validation handler for <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-codegeneration-istringvalidationkeyword.html"><code>IStringValidationKeyword</code></a> capability.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-codegeneration-csharp-subschemanameheuristic.html">SubschemaNameHeuristic</a></td>
+<td>class</td>
+<td>A name heuristic based on an inline subschema.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-codegeneration-csharp-ternaryifvalidationhandler.html">TernaryIfValidationHandler</a></td>
+<td>class</td>
+<td>A validation handler for the <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-codegeneration-iternaryifvalidationkeyword.html"><code>ITernaryIfValidationKeyword</code></a> capability.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-codegeneration-csharp-tuplevalidationhandler.html">TupleValidationHandler</a></td>
+<td>class</td>
+<td>A tuple (prefixItems) validation handler.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-codegeneration-csharp-typedeclarationextensions.html">TypeDeclarationExtensions</a></td>
+<td>class</td>
+<td>Extension methods for <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-codegeneration-typedeclaration.html"><code>TypeDeclaration</code></a>.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-codegeneration-csharp-typevalidationhandler.html">TypeValidationHandler</a></td>
+<td>class</td>
+<td>A validation handler for <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-codegeneration-icoretypevalidationkeyword.html"><code>ICoreTypeValidationKeyword</code></a> capability.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-codegeneration-csharp-uniqueitemsvalidationhandler.html">UniqueItemsValidationHandler</a></td>
+<td>class</td>
+<td>A string length validation handler.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-codegeneration-csharp-validatepartial.html">ValidatePartial</a></td>
+<td>class</td>
+<td>Provides a Validate partial class for a type declaration.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-codegeneration-csharp-validationcodegeneratorextensions.html">ValidationCodeGeneratorExtensions</a></td>
+<td>class</td>
+<td>Extensions to <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-codegeneration-codegenerator.html"><code>CodeGenerator</code></a> for validation.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-codegeneration-csharp-wellknownnumericformathandler.html">WellKnownNumericFormatHandler</a></td>
+<td>class</td>
+<td>Handlers for well-known numeric formats.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-codegeneration-csharp-wellknownstringformathandler.html">WellKnownStringFormatHandler</a></td>
+<td>class</td>
+<td>Handlers for well-known string formats.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-codegeneration-csharp-wellknowntypenameheuristic.html">WellKnownTypeNameHeuristic</a></td>
+<td>class</td>
+<td>A name heuristic based on the <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-codegeneration-wellknowntypedeclarations.html"><code>WellKnownTypeDeclarations</code></a>.</td>
+</tr>
+</tbody>
+</table>
+        </div>
+        <div class="api-feedback">
+            <div class="api-feedback__inner">
+                <img src="/Corvus.JsonSchema/pr-preview/pr-740/assets/images/logo-corvus.svg" alt="Corvus" class="api-feedback__logo" />
+                <div class="api-feedback__text">
+                    <h3>Collaborate with us on GitHub</h3>
+                    <p>The source for this content can be found on <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema" target="_blank" rel="noopener noreferrer">GitHub</a>, where you can also create and review issues and pull requests.</p>
+                    <a class="api-feedback__link" href="https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/new" target="_blank" rel="noopener noreferrer">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor"><path d="M8 0c4.42 0 8 3.58 8 8a8.013 8.013 0 0 1-5.45 7.59c-.4.08-.55-.17-.55-.38 0-.27.01-1.13.01-2.2 0-.75-.25-1.23-.54-1.48 1.78-.2 3.65-.88 3.65-3.95 0-.88-.31-1.59-.82-2.15.08-.2.36-1.02-.08-2.12 0 0-.67-.22-2.2.82-.64-.18-1.32-.27-2-.27-.68 0-1.36.09-2 .27-1.53-1.03-2.2-.82-2.2-.82-.44 1.1-.16 1.92-.08 2.12-.51.56-.82 1.28-.82 2.15 0 3.06 1.86 3.75 3.64 3.95-.23.2-.44.55-.51 1.07-.46.21-1.61.55-2.33-.66-.15-.24-.6-.83-1.23-.82-.67.01-.27.38.01.53.34.19.73.9.82 1.13.16.45.68 1.31 2.69.94 0 .67.01 1.3.01 1.49 0 .21-.15.45-.55.38A7.995 7.995 0 0 1 0 8c0-4.42 3.58-8 8-8Z"/></svg>
+                        Open an issue
+                    </a>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+    </div>
+    <footer class="site-footer">
+    <div class="site-footer__inner">
+        <div class="site-footer__sponsor">
+            Sponsored by
+            <a href="https://endjin.com" target="_blank" rel="noopener noreferrer">endjin</a>
+        </div>
+        <ul class="site-footer__links" role="list">
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/pr-preview/pr-740/getting-started/index.html">Getting Started</a></li>
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/pr-preview/pr-740/docs/index.html">Documentation</a></li>
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/pr-preview/pr-740/examples/index.html">Examples</a></li>
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/pr-preview/pr-740/api/index.html">API</a></li>
+            <li><a class="site-footer__link" href="https://github.com/corvus-dotnet/Corvus.JsonSchema" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+            <li><a class="site-footer__link" href="https://www.nuget.org/packages?q=Corvus.Json" target="_blank" rel="noopener noreferrer">NuGet</a></li>
+        </ul>
+        <p class="site-footer__copyright">&copy; 2026 endjin Ltd.</p>
+    </div>
+</footer>
+
+    <!-- highlight.js for syntax highlighting (CSS targets .hljs-* classes) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/csharp.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/json.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/bash.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/xml.min.js" defer></script>
+    <script>document.addEventListener('DOMContentLoaded',()=>hljs.highlightAll())</script>
+    <script src="/Corvus.JsonSchema/pr-preview/pr-740/assets/js/main.js" defer></script>
+    <script src="/Corvus.JsonSchema/pr-preview/pr-740/assets/js/sidebar-search.js" defer></script>
+    
+</body>
+</html>

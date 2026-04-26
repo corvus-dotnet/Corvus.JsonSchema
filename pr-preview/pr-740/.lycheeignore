@@ -1,0 +1,36 @@
+# Known-flaky or expected-missing URLs to exclude from link checking.
+# One pattern per line; supports regex.
+
+# Placeholder/example URLs
+https?://example\.com
+https?://localhost
+
+# CDN resources (may rate-limit CI)
+https://cdnjs\.cloudflare\.com
+
+# GitHub API rate limiting
+https://api\.github\.com
+
+# NuGet package pages (may return 404 for pre-release versions)
+https://www\.nuget\.org/packages/.*/\d+\.\d+\.\d+-
+
+# Canonical/SEO links (og:url, rel=canonical, rel=sitemap) always point to the
+# production domain, which is unreachable during local and preview builds.
+https://corvus-oss\.org
+
+# GitHub source-code line-number fragments (#L42 etc.) are rendered by JavaScript;
+# lychee cannot find them in the raw HTML that GitHub returns.
+https://github\.com/corvus-dotnet/Corvus\.JsonSchema/blob/.+#L\d+
+
+# GitHub tree links to directories that exist on feature branches but not yet on main.
+# These resolve once the PR is merged.
+https://github\.com/corvus-dotnet/Corvus\.JsonSchema/tree/main/benchmarks
+
+# dotnet.microsoft.com returns 403 to automated crawlers
+https://dotnet\.microsoft\.com
+
+# endjin.com has flaky DNS that causes intermittent CI failures
+https://endjin\.com
+
+# learn.microsoft.com intermittently returns 429 (rate limiting) in CI
+https://learn\.microsoft\.com

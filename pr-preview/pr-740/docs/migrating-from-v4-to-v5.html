@@ -1,0 +1,1809 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#1C1D21" />
+    <meta name="description" content="This guide helps you migrate code written against the V4 code generator (`Corvus.Json.CodeGeneration`, known informally as &quot;Corvus.Json&quot;) to the V5 code generator (`Corvus.Text.Json.CodeGeneration`, known informally as &quot;Corvus.Text.Json&quot;)." />
+    <meta name="keywords" content="documentation, Corvus.Text.Json" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:description" content="This guide helps you migrate code written against the V4 code generator (`Corvus.Json.CodeGeneration`, known informally as &quot;Corvus.Json&quot;) to the V5 code generator (`Corvus.Text.Json.CodeGeneration`, known informally as &quot;Corvus.Text.Json&quot;)." />
+    <meta name="twitter:image" content="/Corvus.JsonSchema/pr-preview/pr-740/assets/images/og-corvus.png" />
+    <meta name="twitter:title" content="Migrating from V4 - Corvus.Text.Json" />
+    <meta property="article:tag" content="documentation" />
+    <meta property="article:tag" content="Corvus.Text.Json" />
+    <meta property="og:description" content="This guide helps you migrate code written against the V4 code generator (`Corvus.Json.CodeGeneration`, known informally as &quot;Corvus.Json&quot;) to the V5 code generator (`Corvus.Text.Json.CodeGeneration`, known informally as &quot;Corvus.Text.Json&quot;)." />
+    <meta property="og:image" content="/Corvus.JsonSchema/pr-preview/pr-740/assets/images/og-corvus.png" />
+    <meta property="og:title" content="Migrating from V4 - Corvus.Text.Json" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://corvus-oss.org/corvus-json-schema/docs/migrating-from-v4-to-v5/" />
+    <title>Migrating from V4 - Corvus.Text.Json</title>
+    <link itemprop="url" href="https://corvus-oss.org/corvus-json-schema/docs/migrating-from-v4-to-v5/" />
+    <link rel="canonical" href="https://corvus-oss.org/corvus-json-schema/docs/migrating-from-v4-to-v5/" />
+    <link rel="sitemap" href="https://corvus-oss.org/corvus-json-schema/sitemap.xml" />
+    <!-- Styles -->
+    <link rel="stylesheet" href="/Corvus.JsonSchema/pr-preview/pr-740/main.css" />
+    <link rel="icon" type="image/svg+xml" href="/Corvus.JsonSchema/pr-preview/pr-740/assets/images/favicon.svg" />
+    
+</head>
+<body>
+    <a class="sr-only" href="#main-content">Skip to content</a>
+<header class="site-header">
+    <div class="site-header__inner">
+        <a class="site-header__brand" href="/Corvus.JsonSchema/pr-preview/pr-740/index.html" aria-label="Corvus.JsonSchema home">
+            <img src="/Corvus.JsonSchema/pr-preview/pr-740/assets/images/logo-corvus.svg" alt="" width="28" height="28" aria-hidden="true" />
+            Corvus<span style="color:var(--color-brand)">.</span>Json<span style="color:var(--color-brand)">Schema</span>
+        </a>
+        <nav class="site-header__nav-desktop" aria-label="Main navigation">
+                    <a href="/Corvus.JsonSchema/pr-preview/pr-740/getting-started/index.html"
+                       class="site-header__link "
+                       >Getting Started</a>
+                    <a href="/Corvus.JsonSchema/pr-preview/pr-740/docs/index.html"
+                       class="site-header__link is-active"
+                       aria-current=page>Documentation</a>
+                    <a href="/Corvus.JsonSchema/pr-preview/pr-740/examples/index.html"
+                       class="site-header__link "
+                       >Examples</a>
+                    <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/index.html"
+                       class="site-header__link "
+                       >API</a>
+            <a href="/Corvus.JsonSchema/pr-preview/pr-740/playground/"
+               class="site-header__link"
+               target="_blank" rel="noopener noreferrer"
+               title="Interactive JSON Schema playground">Playground</a>
+            <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema"
+               class="site-header__link" target="_blank" rel="noopener noreferrer"
+               aria-label="View on GitHub">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+            </a>
+        </nav>
+        <button class="site-header__menu-toggle js-toggle-menu"
+                aria-expanded="false" aria-label="Toggle menu">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+            </svg>
+        </button>
+    </div>
+</header>
+<nav class="site-header__nav-mobile js-mobile-nav" aria-label="Mobile navigation">
+            <a href="/Corvus.JsonSchema/pr-preview/pr-740/getting-started/index.html" class="site-header__link">Getting Started</a>
+            <a href="/Corvus.JsonSchema/pr-preview/pr-740/docs/index.html" class="site-header__link">Documentation</a>
+            <a href="/Corvus.JsonSchema/pr-preview/pr-740/examples/index.html" class="site-header__link">Examples</a>
+            <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/index.html" class="site-header__link">API</a>
+    <a href="/Corvus.JsonSchema/pr-preview/pr-740/playground/" class="site-header__link" target="_blank" rel="noopener noreferrer">Playground</a>
+    <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema"
+       class="site-header__link" target="_blank" rel="noopener noreferrer">GitHub</a>
+</nav>
+
+    <div class="page-content">
+    <div class="layout-docs container">
+    <button class="sidebar-toggle" aria-label="Toggle navigation" aria-expanded="false"></button>
+<div class="sidebar-backdrop"></div>
+<aside class="sidebar">
+    <div class="sidebar__inner">
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Getting Started</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                    <li class="sidebar__item"><a class="sidebar__link" href="/Corvus.JsonSchema/pr-preview/pr-740/getting-started/index.html">Tutorial</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Documentation</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/parsed-json-document.html">Parsing &amp; Reading JSON</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/json-document-builder.html">Building &amp; Mutating JSON</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/source-generator.html">Source Generator</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/code-generator.html">CLI Code Generation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/validator.html">Dynamic Schema Validation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link is-active" href="/Corvus.JsonSchema/pr-preview/pr-740/docs/migrating-from-v4-to-v5.html">Migrating from V4</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/using-copilot-for-migration.html">Copilot Migration</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/migration-analyzers.html">Migration Analyzers</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/analyzers.html">Analyzers</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/schema-evaluator.html">Standalone Schema Evaluator</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/json-patch.html">JSON Patch (RFC 6902)</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/json-logic.html">JsonLogic Rule Engine</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/jsonata.html">JSONata Query Language</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/jmes-path.html">JMESPath Query Language</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/yaml.html">YAML Converter</a>
+                            </li>
+                </ul>
+            </div>
+        </div>
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Examples</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/data-object.html">Simple Data Objects</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/data-object-validation.html">Data Object Validation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/reusing-common-types.html">Reusing Common Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/open-versus-closed-types.html">Open Versus Closed Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/extending-a-base-type.html">Extending a Base Type</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/constraining-a-base-type.html">Constraining a Base Type</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/creating-a-strongly-typed-array.html">Strongly Typed Arrays</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/creating-an-array-of-higher-rank.html">Multi-Dimensional Arrays</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/working-with-tensors.html">Working with Tensors</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/creating-tuples.html">Creating Tuples</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/interfaces-and-mix-in-types.html">Interfaces and Mix-In Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/pattern-matching.html">Pattern Matching and Discriminated Unions</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/polymorphism-with-discriminators.html">Polymorphism with Discriminator Properties</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/string-enumerations.html">String Enumerations and Pattern Matching</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/numeric-enumerations.html">Numeric Enumerations</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/maps.html">Maps of Strings to Strongly Typed Values</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/mapping-input-and-output-values.html">Mapping Input and Output Values</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/creating-and-mutating-objects.html">Creating and Mutating Objects</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/clone-and-freeze.html">Clone and Freeze</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/conditional-schemas.html">Conditional Schemas</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/default-values.html">Default Values</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/format-validation.html">Format Validation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/json-patch.html">JSON Patch (RFC 6902)</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/json-logic.html">JsonLogic Rule Evaluation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/jsonata.html">JSONata Expression Evaluation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/jmespath.html">JMESPath Query Evaluation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/yaml.html">YAML Conversion</a>
+                            </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</aside>
+
+    <main id="main-content" class="layout-docs__main">
+        <div class="doc__content">
+            <h1>Migrating from V4</h1>
+<p>This guide helps you migrate code written against the V4 code generator (<code>Corvus.Json.CodeGeneration</code>, known informally as &quot;Corvus.Json&quot;) to the V5 code generator (<code>Corvus.Text.Json.CodeGeneration</code>, known informally as &quot;Corvus.Text.Json&quot;).</p>
+<p>V5 is a ground-up rewrite. The generated types are still readonly structs backed by JSON Schema, but the underlying architecture — memory management, mutation, and code generation — is fundamentally different. Most V4 patterns have a direct V5 equivalent, but some require rethinking.</p>
+<blockquote>
+<p><strong>Tip:</strong> Install the <a href="/Corvus.JsonSchema/pr-preview/pr-740/docs/migration-analyzers.html"><code>Corvus.Text.Json.Migration.Analyzers</code></a> NuGet package to get Roslyn diagnostics that detect V4 patterns in your code and offer automatic code fixes. See the <a href="/Corvus.JsonSchema/pr-preview/pr-740/docs/migration-analyzers.html">Migration Analyzers Reference</a> for the complete list of diagnostics.</p>
+</blockquote>
+<h2 id="overview-of-changes">Overview of Changes</h2>
+<table>
+<thead>
+<tr>
+<th>Aspect</th>
+<th>V4 (Corvus.Json)</th>
+<th>V5 (Corvus.Text.Json)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Architecture</strong></td>
+<td>Each value stores its own <code>JsonElement</code> or <code>ImmutableList&lt;JsonObjectProperty&gt;</code> backing</td>
+<td>Values are lightweight indexes into a pooled <code>IJsonDocument</code></td>
+</tr>
+<tr>
+<td><strong>Mutation model</strong></td>
+<td>Functional — <code>With*()</code> returns a new instance</td>
+<td>Imperative — <code>Set*()</code> mutates in-place via <code>JsonDocumentBuilder</code></td>
+</tr>
+<tr>
+<td><strong>Memory</strong></td>
+<td><code>JsonElement</code> backed by <code>JsonDocument</code></td>
+<td><code>ParsedJsonDocument&lt;T&gt;</code> backed by <code>ArrayPool&lt;byte&gt;</code></td>
+</tr>
+<tr>
+<td><strong>Parsing</strong></td>
+<td><code>MyType.Parse(json)</code> or <code>ParsedValue&lt;MyType&gt;.Parse(json)</code></td>
+<td><code>ParsedJsonDocument&lt;MyType&gt;.Parse(json)</code> returning a disposable document, <strong>or</strong> <code>MyType.ParseValue(json)</code> for a self-owned copy</td>
+</tr>
+<tr>
+<td><strong>Validation</strong></td>
+<td><code>entity.Validate(ValidationContext, ValidationLevel)</code></td>
+<td><code>entity.EvaluateSchema()</code> returning <code>bool</code>, or <code>entity.EvaluateSchema(collector)</code> for detailed results</td>
+</tr>
+<tr>
+<td><strong>Code generation</strong></td>
+<td><code>Corvus.Json.CodeGeneration</code> / <code>generatejsonschematypes</code></td>
+<td><code>Corvus.Text.Json.CodeGeneration</code> / <code>corvusjson jsonschema</code> (or legacy <code>generatejsonschematypes --engine V5</code>)</td>
+</tr>
+<tr>
+<td><strong>Target frameworks</strong></td>
+<td>net8.0, netstandard2.0</td>
+<td>net9.0, net10.0, netstandard2.0, netstandard2.1</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="package-and-namespace-changes">Package and Namespace Changes</h2>
+<table>
+<thead>
+<tr>
+<th>V4</th>
+<th>V5</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Corvus.Json</code> namespace</td>
+<td><code>Corvus.Text.Json</code> namespace</td>
+</tr>
+<tr>
+<td><code>Corvus.Json.JsonAny</code></td>
+<td><code>Corvus.Text.Json.JsonElement</code></td>
+</tr>
+<tr>
+<td><code>Corvus.Json.JsonString</code></td>
+<td><code>Corvus.Text.Json.JsonElement</code> (use <code>GetString()</code>, <code>TryGetValue()</code>)</td>
+</tr>
+<tr>
+<td><code>Corvus.Json.JsonNumber</code></td>
+<td><code>Corvus.Text.Json.JsonElement</code> (use <code>GetInt32()</code>, <code>GetDouble()</code>, etc.)</td>
+</tr>
+<tr>
+<td><code>Corvus.Json.JsonBoolean</code></td>
+<td><code>Corvus.Text.Json.JsonElement</code> (use <code>GetBoolean()</code>, <code>TryGetValue()</code>)</td>
+</tr>
+<tr>
+<td><code>Corvus.Json.JsonObject</code></td>
+<td><code>Corvus.Text.Json.JsonElement</code></td>
+</tr>
+<tr>
+<td><code>Corvus.Json.JsonArray</code></td>
+<td><code>Corvus.Text.Json.JsonElement</code></td>
+</tr>
+<tr>
+<td><code>System.Text.Json.JsonElement</code></td>
+<td><code>Corvus.Text.Json.JsonElement</code> (different type!)</td>
+</tr>
+<tr>
+<td><code>System.Text.Json.JsonValueKind</code></td>
+<td><code>Corvus.Text.Json.JsonValueKind</code></td>
+</tr>
+<tr>
+<td><code>Corvus.Json.ParsedValue&lt;T&gt;</code></td>
+<td><code>Corvus.Text.Json.ParsedJsonDocument&lt;T&gt;</code></td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><strong>Important</strong>: <code>Corvus.Text.Json.JsonElement</code> is <em>not</em> <code>System.Text.Json.JsonElement</code>. If you need to interop with <code>System.Text.Json</code>, you'll need explicit conversions.</p>
+</blockquote>
+<hr />
+<h2 id="strongly-typed-value-types">Strongly-Typed Value Types</h2>
+<p>V4 provided a fixed set of well-known types for common JSON values. V5 replaces most of these with direct access via operators and <code>TryGetValue()</code>, and adds support for arbitrary-precision numerics and UTF-8 URI/IRI types.</p>
+<h3 id="numeric-types">Numeric types</h3>
+<table>
+<thead>
+<tr>
+<th>V4 (Corvus.Json)</th>
+<th>V5 (Corvus.Text.Json)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>JsonNumber</code></td>
+<td><code>GetInt32()</code>, <code>GetDouble()</code>, <code>TryGetValue(out int)</code>, <code>TryGetValue(out double)</code>, etc.</td>
+</tr>
+<tr>
+<td><code>JsonInteger</code></td>
+<td><code>GetInt64()</code>, <code>TryGetValue(out long)</code></td>
+</tr>
+<tr>
+<td><code>JsonInt32</code></td>
+<td><code>GetInt32()</code>, <code>TryGetValue(out int)</code></td>
+</tr>
+<tr>
+<td><code>JsonInt64</code></td>
+<td><code>GetInt64()</code>, <code>TryGetValue(out long)</code></td>
+</tr>
+<tr>
+<td><code>JsonInt128</code></td>
+<td><code>TryGetValue(out Int128)</code></td>
+</tr>
+<tr>
+<td><code>JsonDouble</code></td>
+<td><code>GetDouble()</code>, <code>TryGetValue(out double)</code></td>
+</tr>
+<tr>
+<td><code>JsonSingle</code></td>
+<td><code>TryGetValue(out float)</code></td>
+</tr>
+<tr>
+<td><code>JsonHalf</code></td>
+<td><code>TryGetValue(out Half)</code></td>
+</tr>
+<tr>
+<td><code>JsonDecimal</code></td>
+<td><code>TryGetValue(out decimal)</code></td>
+</tr>
+<tr>
+<td><code>JsonByte</code></td>
+<td><code>TryGetValue(out byte)</code></td>
+</tr>
+<tr>
+<td><code>JsonSByte</code></td>
+<td><code>TryGetValue(out sbyte)</code></td>
+</tr>
+<tr>
+<td><code>JsonInt16</code></td>
+<td><code>TryGetValue(out short)</code></td>
+</tr>
+<tr>
+<td><code>JsonUInt16</code></td>
+<td><code>TryGetValue(out ushort)</code></td>
+</tr>
+<tr>
+<td><code>JsonUInt32</code></td>
+<td><code>TryGetValue(out uint)</code></td>
+</tr>
+<tr>
+<td><code>JsonUInt64</code></td>
+<td><code>TryGetValue(out ulong)</code></td>
+</tr>
+<tr>
+<td><code>JsonUInt128</code></td>
+<td><code>TryGetValue(out UInt128)</code></td>
+</tr>
+<tr>
+<td>N/A</td>
+<td><code>TryGetValue(out BigNumber)</code> — arbitrary-precision decimal (<code>Corvus.Numerics.BigNumber</code>)</td>
+</tr>
+<tr>
+<td>N/A</td>
+<td><code>TryGetValue(out BigInteger)</code> — arbitrary-precision integer (<code>System.Numerics.BigInteger</code>)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="string-types">String types</h3>
+<table>
+<thead>
+<tr>
+<th>V4 (Corvus.Json)</th>
+<th>V5 (Corvus.Text.Json)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>JsonString</code></td>
+<td><code>GetString()</code>, <code>GetUtf8String()</code>, <code>GetUtf16String()</code>, <code>TryGetValue(out string?)</code></td>
+</tr>
+<tr>
+<td><code>v4.TryGetValue&lt;TState&gt;(state, callback)</code> (delegate with <code>ReadOnlySpan&lt;byte&gt;</code> or <code>ReadOnlySpan&lt;char&gt;</code>)</td>
+<td><code>GetUtf8String()</code> → <code>.Span</code> or <code>GetUtf16String()</code> → <code>.Span</code></td>
+</tr>
+<tr>
+<td><code>JsonUri</code></td>
+<td><code>TryGetValue(out Utf8UriValue)</code></td>
+</tr>
+<tr>
+<td><code>JsonUriReference</code></td>
+<td><code>TryGetValue(out Utf8UriReferenceValue)</code></td>
+</tr>
+<tr>
+<td><code>JsonIri</code></td>
+<td><code>TryGetValue(out Utf8IriValue)</code></td>
+</tr>
+<tr>
+<td><code>JsonIriReference</code></td>
+<td><code>TryGetValue(out Utf8IriReferenceValue)</code></td>
+</tr>
+<tr>
+<td><code>JsonDate</code></td>
+<td><code>TryGetValue(out LocalDate)</code> (NodaTime)</td>
+</tr>
+<tr>
+<td><code>JsonDateTime</code></td>
+<td><code>TryGetValue(out OffsetDateTime)</code> (NodaTime), or <code>TryGetDateTimeOffset(out DateTimeOffset)</code></td>
+</tr>
+<tr>
+<td><code>JsonTime</code></td>
+<td><code>TryGetValue(out OffsetTime)</code> (NodaTime)</td>
+</tr>
+<tr>
+<td><code>JsonDuration</code></td>
+<td><code>TryGetValue(out Period)</code> (NodaTime)</td>
+</tr>
+<tr>
+<td><code>JsonUuid</code></td>
+<td><code>TryGetGuid(out Guid)</code></td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><strong>Note</strong>: V5's <code>Utf8UriValue</code>, <code>Utf8UriReferenceValue</code>, <code>Utf8IriValue</code>, and <code>Utf8IriReferenceValue</code> are <code>readonly struct</code> types that hold the parsed URI/IRI as UTF-8 bytes, avoiding UTF-16 string allocations. V5's <code>BigNumber</code> provides arbitrary-precision decimal arithmetic beyond <code>decimal</code>'s 28-digit limit, and <code>BigInteger</code> support allows lossless handling of very large integers.</p>
+</blockquote>
+<h3 id="type-coercion">Type coercion</h3>
+<p>Because V5 no longer has a set of common well-known types (<code>JsonString</code>, <code>JsonNumber</code>, etc.) that all schema types share, you will always need to explicitly coerce values to the specific target type. In V4 this was <code>sourceInstance.As&lt;TargetType&gt;()</code>; in V5 it is <code>TargetType.From(sourceInstance)</code>.</p>
+<p>Although slightly more verbose, this makes the intent clearer.</p>
+<p>In reality, this was often necessary anyway, because your strings and numbers had additional constraints (such as length or range) and no longer resolved to the built-in types.</p>
+<hr />
+<h2 id="parsing">Parsing</h2>
+<h3 id="v4-parse-directly-to-a-value">V4: Parse directly to a value</h3>
+<pre><code class="language-csharp">// V4 — simple, but leaks the underlying JsonDocument
+MigrationPerson v4 = MigrationPerson.Parse(&quot;&quot;&quot;{&quot;name&quot;:&quot;Jo&quot;,&quot;age&quot;:30}&quot;&quot;&quot;);
+
+// V4 (preferred) — ParsedValue manages the JsonDocument lifetime
+using ParsedValue&lt;MigrationPerson&gt; parsed = ParsedValue&lt;MigrationPerson&gt;.Parse(&quot;&quot;&quot;{&quot;name&quot;:&quot;Jo&quot;,&quot;age&quot;:30}&quot;&quot;&quot;);
+MigrationPerson v4 = parsed.Instance;
+</code></pre>
+<h3 id="v5-parse-into-a-parsedjsondocument">V5: Parse into a ParsedJsonDocument</h3>
+<pre><code class="language-csharp">// V5 — ParsedJsonDocument owns the pooled memory; always dispose it
+using ParsedJsonDocument&lt;MigrationPerson&gt; doc =
+    ParsedJsonDocument&lt;MigrationPerson&gt;.Parse(&quot;&quot;&quot;{&quot;name&quot;:&quot;Jo&quot;,&quot;age&quot;:30}&quot;&quot;&quot;);
+MigrationPerson v5 = doc.RootElement;
+</code></pre>
+<p>Alternatively, <code>ParseValue</code> creates a self-contained document from a span, string, or reader:</p>
+<pre><code class="language-csharp">// V5 — ParseValue creates a self-owned document (disposable)
+MigrationPerson v5 = MigrationPerson.ParseValue(&quot;&quot;&quot;{&quot;name&quot;:&quot;Jo&quot;,&quot;age&quot;:30}&quot;&quot;&quot;);
+</code></pre>
+<blockquote>
+<p><strong>Key similarity</strong>: In both V4 and V5, the returned struct is a lightweight reference into a parent document. In V4 it references the <code>JsonDocument</code> inside <code>ParsedValue&lt;T&gt;</code>; in V5 it references the <code>ParsedJsonDocument&lt;T&gt;</code>. In both cases, the value is only valid while the parent document is alive — always keep the <code>using</code> in scope.</p>
+</blockquote>
+<hr />
+<h2 id="property-access">Property Access</h2>
+<p>Property access is largely unchanged — both V4 and V5 generate typed properties on the struct.</p>
+<pre><code class="language-csharp">// V4
+string name = (string)v4.Name;
+int age = (int)v4.Age;
+
+// V5 — identical
+string name = (string)v5.Name;
+int age = (int)v5.Age;
+</code></pre>
+<h3 id="property-count">Property count</h3>
+<pre><code class="language-csharp">// V4
+int count = v4.Count;
+
+// V5
+int count = v5.GetPropertyCount();
+</code></pre>
+<h3 id="property-indexers">Property indexers</h3>
+<p>V4 used <code>JsonPropertyName</code>-based indexing. <code>JsonPropertyName</code> was implicitly convertible from <code>string</code>, so in practice you were usually just passing strings. V5 replaces this with direct <code>ReadOnlySpan&lt;byte&gt;</code>, <code>ReadOnlySpan&lt;char&gt;</code>, and <code>string</code> overloads, giving you more flexibility. In particular, the <code>&quot;name&quot;u8</code> UTF-8 literal syntax lets you use <code>ReadOnlySpan&lt;byte&gt;</code> for zero-allocation property lookups:</p>
+<pre><code class="language-csharp">// V4 — JsonPropertyName was implicitly convertible from string
+JsonAny value = v4[&quot;name&quot;];
+
+// V5 — multiple overloads
+JsonElement value = v5[&quot;name&quot;u8];      // UTF-8 span (preferred, zero-allocation)
+JsonElement value = v5[&quot;name&quot;];         // string
+</code></pre>
+<h3 id="trygetproperty">TryGetProperty</h3>
+<pre><code class="language-csharp">// V4
+if (v4.TryGetProperty(&quot;name&quot;, out JsonAny value)) { ... }
+
+// V5
+if (v5.TryGetProperty(&quot;name&quot;u8, out JsonElement value)) { ... }
+</code></pre>
+<h3 id="getting-the-unescaped-utf-8-string">Getting the unescaped UTF-8 string</h3>
+<p>V4 provided <code>TryGetValue</code> delegate overloads that gave you access to the underlying bytes or characters without allocating a <code>string</code> — one for <code>ReadOnlySpan&lt;byte&gt;</code> (UTF-8) and one for <code>ReadOnlySpan&lt;char&gt;</code> (UTF-16). V5 replaces the UTF-8 delegate with <code>GetUtf8String()</code>, which returns an <code>UnescapedUtf8JsonString</code> — a disposable <code>ref struct</code> giving you direct access to the unescaped UTF-8 bytes:</p>
+<pre><code class="language-csharp">// V4 — delegate-based access to the UTF-8 bytes
+bool found = v4.Name.TryGetValue(searchTerm, (term, span) =&gt; span.SequenceEqual(term));
+
+// V5 — direct span access (replaces the delegate pattern)
+using UnescapedUtf8JsonString utf8 = v5.Name.GetUtf8String();
+ReadOnlySpan&lt;byte&gt; bytes = utf8.Span;
+bool found = bytes.SequenceEqual(searchTerm);
+</code></pre>
+<p>V4 string properties also have <code>GetString()</code> and <code>TryGetString()</code>, which return a <code>string?</code>. V5 has these too, but <code>GetUtf8String()</code> avoids the UTF-8 → UTF-16 transcoding cost:</p>
+<pre><code class="language-csharp">// Both V4 and V5 — returns string? (allocates)
+string? name = v4.Name.GetString();
+string? name = v5.Name.GetString();
+
+// V5 only — returns unescaped UTF-8 bytes (no string allocation)
+using UnescapedUtf8JsonString utf8 = v5.Name.GetUtf8String();
+</code></pre>
+<blockquote>
+<p><strong>Note</strong>: <code>UnescapedUtf8JsonString</code> is a <code>ref struct</code> that may hold a rented buffer, so always use a <code>using</code> declaration to ensure the buffer is returned to the pool.</p>
+</blockquote>
+<h3 id="getting-the-unescaped-utf-16-string">Getting the unescaped UTF-16 string</h3>
+<p>Similarly, V5 provides <code>GetUtf16String()</code>, which returns an <code>UnescapedUtf16JsonString</code> — a disposable <code>ref struct</code> giving you access to the unescaped UTF-16 characters without allocating a managed <code>string</code>. This replaces the V4 <code>TryGetValue</code> delegate overload that provided <code>ReadOnlySpan&lt;char&gt;</code>:</p>
+<pre><code class="language-csharp">// V4 — delegate-based access to the UTF-16 chars
+bool found = v4.Name.TryGetValue(searchTerm, (term, span) =&gt; span.SequenceEqual(term));
+
+// V5 — direct UTF-16 span access
+using UnescapedUtf16JsonString utf16 = v5.Name.GetUtf16String();
+ReadOnlySpan&lt;char&gt; chars = utf16.Span;
+bool found = chars.SequenceEqual(searchTerm);
+</code></pre>
+<p>You can also access the data as <code>ReadOnlyMemory&lt;char&gt;</code> via <code>utf16.Memory</code>, or take ownership of the underlying rented array with <code>utf16.TakeOwnership(out char[]? rentedChars)</code> for scenarios where you need the data to outlive the <code>using</code> scope.</p>
+<blockquote>
+<p><strong>Note</strong>: Like <code>UnescapedUtf8JsonString</code>, <code>UnescapedUtf16JsonString</code> is a <code>ref struct</code> that may hold a rented buffer. Always use a <code>using</code> declaration to ensure cleanup.</p>
+</blockquote>
+<hr />
+<h2 id="json-property-names">JSON Property Names</h2>
+<p>Both V4 and V5 generate a <code>JsonPropertyNames</code> nested class on each object type, providing both <code>string</code> constants and UTF-8 <code>ReadOnlySpan&lt;byte&gt;</code> accessors for each declared property:</p>
+<pre><code class="language-csharp">// V4 and V5 — identical public API
+string name = MigrationPerson.JsonPropertyNames.Name;              // &quot;name&quot;
+ReadOnlySpan&lt;byte&gt; nameUtf8 = MigrationPerson.JsonPropertyNames.NameUtf8; // &quot;name&quot;u8
+</code></pre>
+<p>These are useful for generic property access, serialization, and working with the low-level <code>JsonElement</code> API.</p>
+<hr />
+<h2 id="serialization">Serialization</h2>
+<p>Both engines produce equivalent JSON output via <code>ToString()</code> and <code>WriteTo()</code>.</p>
+<pre><code class="language-csharp">// V4
+string json = v4.ToString();
+v4.WriteTo(systemTextJsonWriter); // System.Text.Json.Utf8JsonWriter
+
+// V5
+string json = v5.ToString();
+v5.WriteTo(corvusWriter);         // Corvus.Text.Json.Utf8JsonWriter (not System.Text.Json!)
+</code></pre>
+<blockquote>
+<p><strong>Note</strong>: V5 uses <code>Corvus.Text.Json.Utf8JsonWriter</code>, a drop-in replacement for <code>System.Text.Json.Utf8JsonWriter</code>. The <code>JsonWorkspace</code> offers the ability to rent writers for zero-allocation writing to in-memory buffers, streams, and ASP.NET Core HTTP Response Bodies (see <a href="/Corvus.JsonSchema/pr-preview/pr-740/docs/json-document-builder.html#renting-writers-from-the-workspace">Renting Writers from the Workspace</a>).</p>
+</blockquote>
+<hr />
+<h2 id="formatting-iformattable-ispanformattable-iutf8spanformattable">Formatting (<code>IFormattable</code>, <code>ISpanFormattable</code>, <code>IUtf8SpanFormattable</code>)</h2>
+<p>V5 generated types implement <code>IFormattable</code>, <code>ISpanFormattable</code> (.NET 9+), and <code>IUtf8SpanFormattable</code> (.NET 9+). V4 types do not implement any of these interfaces.</p>
+<p>This means V5 types can be used directly with <code>string.Format</code>, interpolated strings with custom format specifiers, and zero-allocation <code>TryFormat</code> to <code>Span&lt;char&gt;</code> or <code>Span&lt;byte&gt;</code> buffers:</p>
+<pre><code class="language-csharp">// V5 — IFormattable: ToString with format string and culture
+string formatted = v5.DateOfBirth.ToString(&quot;d&quot;, CultureInfo.InvariantCulture); // &quot;03/15/2024&quot;
+string iso = v5.DateOfBirth.ToString(&quot;o&quot;, null);                               // &quot;2024-03-15&quot;
+
+// V5 — IFormattable: number formatting
+string currency = v5.Age.ToString(&quot;C0&quot;, CultureInfo.InvariantCulture);         // &quot;¤30&quot;
+string grouped = v5.Age.ToString(&quot;N0&quot;, CultureInfo.InvariantCulture);          // &quot;30&quot;
+</code></pre>
+<pre><code class="language-csharp">// V5 — ISpanFormattable: zero-allocation formatting to char buffer (.NET 9+)
+Span&lt;char&gt; charBuffer = stackalloc char[64];
+if (v5.Age.TryFormat(charBuffer, out int charsWritten, &quot;N0&quot;, CultureInfo.InvariantCulture))
+{
+    ReadOnlySpan&lt;char&gt; result = charBuffer[..charsWritten];
+}
+
+// V5 — IUtf8SpanFormattable: zero-allocation formatting to UTF-8 byte buffer (.NET 9+)
+Span&lt;byte&gt; utf8Buffer = stackalloc byte[64];
+if (v5.Age.TryFormat(utf8Buffer, out int bytesWritten, &quot;N0&quot;, CultureInfo.InvariantCulture))
+{
+    ReadOnlySpan&lt;byte&gt; result = utf8Buffer[..bytesWritten];
+}
+</code></pre>
+<p>When no format string is provided (or it is <code>null</code>/empty), the canonical JSON representation is returned:</p>
+<pre><code class="language-csharp">// V5 — null/empty format returns the canonical JSON value
+string canonical = v5.DateOfBirth.ToString(null, null); // &quot;2024-03-15&quot;
+string name = v5.Name.ToString(null, null);             // &quot;Jo&quot;
+</code></pre>
+<hr />
+<h2 id="equality-and-comparison">Equality and Comparison</h2>
+<p>Both engines support <code>Equals()</code>, <code>==</code>, and <code>!=</code> with the same semantics.</p>
+<pre><code class="language-csharp">// V4
+bool equal = v4a.Equals(v4b);
+bool same = v4a == v4b;
+
+// V5 — identical signatures
+bool equal = v5a.Equals(v5b);
+bool same = v5a == v5b;
+</code></pre>
+<p>V5 additionally supports <code>==</code> and <code>!=</code> against <code>JsonElement</code>:</p>
+<pre><code class="language-csharp">// V5 only
+bool same = v5 == someJsonElement;
+</code></pre>
+<hr />
+<h2 id="validation">Validation</h2>
+<h3 id="basic-validation">Basic validation</h3>
+<p>V4 uses a <code>Validate()</code> method returning a <code>ValidationContext</code>. V5 uses <code>EvaluateSchema()</code> returning a <code>bool</code>.</p>
+<pre><code class="language-csharp">// V4
+ValidationContext result = v4.Validate(ValidationContext.ValidContext, ValidationLevel.Flag);
+bool isValid = result.IsValid;
+
+// V5
+bool isValid = v5.EvaluateSchema();
+</code></pre>
+<h3 id="collecting-detailed-results">Collecting detailed results</h3>
+<p>To enumerate validation errors with messages and locations, both V4 and V5 support a <code>ValidationLevel</code> higher than <code>Flag</code>.</p>
+<p><strong>V4</strong> — pass <code>ValidationLevel.Detailed</code> (or <code>Basic</code>/<code>Verbose</code>) and enumerate <code>result.Results</code>:</p>
+<pre><code class="language-csharp">using ParsedValue&lt;MigrationPerson&gt; parsed = ParsedValue&lt;MigrationPerson&gt;.Parse(
+    &quot;&quot;&quot;{&quot;age&quot;:200}&quot;&quot;&quot;);
+MigrationPerson v4 = parsed.Instance;
+
+ValidationContext result = v4.Validate(
+    ValidationContext.ValidContext,
+    ValidationLevel.Detailed);
+
+Assert.False(result.IsValid);
+
+foreach (ValidationResult r in result.Results)
+{
+    // r.Valid — whether this individual result passed
+    // r.Message — the error/success message
+}
+</code></pre>
+<p><strong>V5</strong> — create a <code>JsonSchemaResultsCollector</code> and pass it to <code>EvaluateSchema()</code>:</p>
+<pre><code class="language-csharp">using ParsedJsonDocument&lt;MigrationPerson&gt; parsed =
+    ParsedJsonDocument&lt;MigrationPerson&gt;.Parse(&quot;&quot;&quot;{&quot;age&quot;:200}&quot;&quot;&quot;);
+MigrationPerson v5 = parsed.RootElement;
+
+using JsonSchemaResultsCollector collector =
+    JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
+
+bool isValid = v5.EvaluateSchema(collector);
+
+Assert.False(isValid);
+
+foreach (JsonSchemaResultsCollector.Result r in collector.EnumerateResults())
+{
+    // r.IsMatch — whether this individual result passed
+    // r.GetMessageText() — the error/success message as a string
+    // r.GetDocumentEvaluationLocationText() — JSON pointer to the failing location
+    // r.GetSchemaEvaluationLocationText() — JSON pointer within the schema
+}
+</code></pre>
+<h3 id="validation-levels">Validation levels</h3>
+<table>
+<thead>
+<tr>
+<th>V4 <code>ValidationLevel</code></th>
+<th>V5 <code>JsonSchemaResultsLevel</code></th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Flag</code></td>
+<td><em>(no collector)</em></td>
+<td>Fastest — returns only <code>bool</code>, no result details</td>
+</tr>
+<tr>
+<td><code>Basic</code></td>
+<td><code>Basic</code></td>
+<td>Failure messages only</td>
+</tr>
+<tr>
+<td><code>Detailed</code></td>
+<td><code>Detailed</code></td>
+<td>Failure messages with schema and document locations</td>
+</tr>
+<tr>
+<td><code>Verbose</code></td>
+<td><code>Verbose</code></td>
+<td>All events including successful validations</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="creating-objects-from-scratch">Creating Objects from Scratch</h2>
+<h3 id="v4-static-create-method-with-typed-parameters">V4: Static <code>Create()</code> method with typed parameters</h3>
+<pre><code class="language-csharp">// V4 — functional construction with implicit conversions from primitives
+MigrationPerson v4 = MigrationPerson.Create(
+    name: &quot;Alice&quot;,
+    age: 30,
+    email: &quot;alice@test.com&quot;);
+</code></pre>
+<h3 id="v5-builder-pattern-with-createbuilder">V5: Builder pattern with <code>CreateBuilder()</code></h3>
+<pre><code class="language-csharp">// V5 — convenience overload with named parameters (preferred)
+using JsonWorkspace workspace = JsonWorkspace.Create();
+using JsonDocumentBuilder&lt;MigrationPerson.Mutable&gt; builder =
+    MigrationPerson.CreateBuilder(
+        workspace,
+        name: &quot;Alice&quot;,
+        age: 30,
+        email: &quot;alice@test.com&quot;);
+
+MigrationPerson.Mutable root = builder.RootElement;
+// Read values from the mutable instance
+string name = (string)root.Name; // &quot;Alice&quot;
+</code></pre>
+<p>For scenarios that require logic inside the builder (e.g., <code>From()</code> conversions, conditional properties), use the delegate overload:</p>
+<pre><code class="language-csharp">// V5 — delegate overload (for advanced scenarios)
+using var builder = MigrationPerson.CreateBuilder(
+    workspace,
+    (ref b) =&gt; b.Create(
+        name: &quot;Alice&quot;,
+        age: 30,
+        email: &quot;alice@test.com&quot;));
+</code></pre>
+<p>If all of an object's properties are optional, you can create an empty builder with no initializer:</p>
+<pre><code class="language-csharp">// V5 — empty object (all properties optional)
+using JsonWorkspace workspace = JsonWorkspace.Create();
+using var builder = MigrationPerson.CreateBuilder(workspace);
+MigrationPerson.Mutable root = builder.RootElement;
+// Set properties as needed
+root.Name = &quot;Alice&quot;;
+</code></pre>
+<blockquote>
+<p><strong>Key differences</strong>:</p>
+<ul>
+<li>V5 requires a <code>JsonWorkspace</code> for mutable operations</li>
+<li>The convenience <code>CreateBuilder()</code> overload takes named property parameters directly — similar ergonomics to V4's <code>Create()</code></li>
+<li>The delegate overload is available for advanced scenarios (e.g., <code>From()</code> conversions)</li>
+<li>The builder returns a <code>Mutable</code> nested type, not the immutable type itself</li>
+</ul>
+<p>Both V4 and V5 support implicit conversions from primitives (e.g., <code>&quot;Alice&quot;</code> rather than <code>(JsonString)&quot;Alice&quot;</code>).</p>
+</blockquote>
+<blockquote>
+<p><strong>Performance</strong>: The V5 builder pattern offers considerable performance and memory allocation benefits over V4's <code>ImmutableList</code>-based construction:</p>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th style="text-align: right;">Mean</th>
+<th style="text-align: right;">Allocated</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>V4 <code>Create()</code></td>
+<td style="text-align: right;">831.9 ns</td>
+<td style="text-align: right;">2,080 B</td>
+</tr>
+<tr>
+<td>V5 <code>CreateBuilder()</code></td>
+<td style="text-align: right;">631.0 ns</td>
+<td style="text-align: right;">136 B</td>
+</tr>
+</tbody>
+</table>
+</blockquote>
+<hr />
+<h2 id="building-nested-objects-and-arrays">Building Nested Objects and Arrays</h2>
+<h3 id="v4-compose-nested-values-with-create">V4: Compose nested values with <code>Create()</code></h3>
+<p>V4 uses <code>Create()</code> for each nested type, composing from the inside out:</p>
+<pre><code class="language-csharp">// V4 — build a nested object from scratch
+MigrationNested v4 = MigrationNested.Create(
+    address: MigrationNested.RequiredCityAndStreet.Create(
+        city: &quot;London&quot;,
+        street: &quot;221B Baker Street&quot;,
+        zipCode: &quot;12345&quot;),
+    name: &quot;Sherlock&quot;);
+</code></pre>
+<p>For arrays of objects, use <code>FromItems()</code>:</p>
+<pre><code class="language-csharp">// V4 — build an array of objects
+MigrationItemArray v4 = MigrationItemArray.FromItems(
+    MigrationItemArray.RequiredId.Create(id: 1, label: &quot;First&quot;),
+    MigrationItemArray.RequiredId.Create(id: 2, label: &quot;Second&quot;),
+    MigrationItemArray.RequiredId.Create(id: 3));
+</code></pre>
+<h3 id="v5-compose-nested-values-with-createbuilder">V5: Compose nested values with <code>CreateBuilder()</code></h3>
+<p>V5 uses the convenience <code>CreateBuilder()</code> overload with named parameters. For nested object properties, use <code>Build()</code> to compose the value as a parameter:</p>
+<pre><code class="language-csharp">// V5 — build a nested object from scratch
+using JsonWorkspace workspace = JsonWorkspace.Create();
+using var builder = MigrationNested.CreateBuilder(
+    workspace,
+    address: MigrationNested.RequiredCityAndStreet.Build(
+        (ref ab) =&gt; ab.Create(
+            city: &quot;London&quot;,
+            street: &quot;221B Baker Street&quot;,
+            zipCode: &quot;12345&quot;)),
+    name: &quot;Sherlock&quot;);
+
+MigrationNested.Mutable root = builder.RootElement;
+string city = (string)root.Address.City; // &quot;London&quot;
+</code></pre>
+<p>For arrays of objects, use <code>AddItem()</code> inside the build callback:</p>
+<pre><code class="language-csharp">// V5 — build an array of objects
+using JsonWorkspace workspace = JsonWorkspace.Create();
+using var builder = MigrationItemArray.CreateBuilder(
+    workspace,
+    MigrationItemArray.Build(
+        (ref b) =&gt;
+        {
+            b.AddItem(MigrationItemArray.RequiredId.Build(
+                (ref ib) =&gt; ib.Create(id: 1, label: &quot;First&quot;)));
+            b.AddItem(MigrationItemArray.RequiredId.Build(
+                (ref ib) =&gt; ib.Create(id: 2, label: &quot;Second&quot;)));
+            b.AddItem(MigrationItemArray.RequiredId.Build(
+                (ref ib) =&gt; ib.Create(id: 3)));
+        }));
+
+MigrationItemArray.Mutable root = builder.RootElement;
+int count = root.GetArrayLength(); // 3
+</code></pre>
+<hr />
+<h2 id="mutating-object-properties">Mutating Object Properties</h2>
+<p>The mutation model is one of the most significant changes between V4 and V5.</p>
+<p><strong>V4</strong> uses a <em>functional</em> (copy-on-write) model: every <code>With*()</code> call returns a new immutable instance. The original is unchanged, which is beneficial for a stateless, functional approach to processing. However, if you hang onto a stale reference instead of using the returned value, you silently work with outdated data — a common source of bugs.</p>
+<p><strong>V5</strong> uses an <em>imperative</em> (mutate-in-place) model: <code>Set*()</code> methods modify the underlying <code>JsonDocumentBuilder</code> directly. The builder tracks a version number, and every <code>Mutable</code> element reference records the version at which it was obtained. If the document is mutated after you captured a reference, attempting to use that stale reference throws an <code>InvalidOperationException</code> — protecting you from the class of silent-staleness bugs that V4 allowed. The versioning system also allows you to make multiple modifications to the same entity without having to refresh it from the root each time.</p>
+<p>Because mutation is in-place, you can set values deep into a nested object hierarchy without needing to rebuild every ancestor:</p>
+<pre><code class="language-csharp">// V5 — set a deeply nested property directly
+root.Address.SetCity(&quot;London&quot;); // mutates the builder in-place; no need to rebuild root
+</code></pre>
+<h3 id="v4-functional-with-methods">V4: Functional <code>With*()</code> methods</h3>
+<p>V4 generates <code>With*()</code> methods that return a <em>new</em> immutable instance:</p>
+<pre><code class="language-csharp">// V4 — returns new instance; original is unchanged
+MigrationPerson updated = v4.WithName(&quot;Bob&quot;);
+</code></pre>
+<h3 id="v5-imperative-set-methods-on-mutable">V5: Imperative <code>Set*()</code> methods on Mutable</h3>
+<p>V5 generates <code>Set*()</code> methods on the <code>Mutable</code> nested class that mutate in-place:</p>
+<pre><code class="language-csharp">// V5 — parse, create mutable builder, then mutate
+using JsonWorkspace workspace = JsonWorkspace.Create();
+using ParsedJsonDocument&lt;MigrationPerson&gt; doc =
+    ParsedJsonDocument&lt;MigrationPerson&gt;.Parse(json);
+using JsonDocumentBuilder&lt;MigrationPerson.Mutable&gt; builder =
+    doc.RootElement.CreateBuilder(workspace);
+
+MigrationPerson.Mutable root = builder.RootElement;
+root.SetName(&quot;Bob&quot;);
+</code></pre>
+<p>The standard mutation workflow is:</p>
+<ol>
+<li>Parse JSON into a <code>ParsedJsonDocument&lt;T&gt;</code></li>
+<li>Create a <code>JsonDocumentBuilder&lt;T.Mutable&gt;</code> via <code>.CreateBuilder(workspace)</code></li>
+<li>Get the <code>Mutable</code> root element from the builder</li>
+<li>Call <code>Set*()</code> methods on the mutable element</li>
+<li>Serialize via <code>root.WriteTo(writer)</code> or convert to immutable via <code>.Clone()</code></li>
+</ol>
+<blockquote>
+<p><strong>Tip — Root element caching:</strong> The root element (<code>builder.RootElement</code>) is always live because it is at index 0 and is never relocated by mutations. You can cache it once and use it as your navigation hub for multiple mutations:</p>
+<pre><code class="language-csharp">MigrationPerson.Mutable root = builder.RootElement;
+root.SetName(&quot;Alice&quot;);
+root.SetAge(25);
+root.SetEmail(&quot;alice@example.com&quot;);
+// All three mutations work because root is always live
+</code></pre>
+<p>See <a href="/Corvus.JsonSchema/pr-preview/pr-740/docs/json-document-builder.html#version-tracking-and-element-invalidation">Version Tracking and Element Invalidation</a> for the full version tracking rules, including limitations on intermediate child references.</p>
+</blockquote>
+<hr />
+<h2 id="removing-properties">Removing Properties</h2>
+<h3 id="v4-set-to-default-via-with">V4: Set to <code>default</code> via <code>With*()</code></h3>
+<pre><code class="language-csharp">// V4 — WithEmail(default) removes the optional property
+MigrationPerson updated = v4.WithEmail(default);
+</code></pre>
+<h3 id="v5-named-remove-methods">V5: Named <code>Remove*()</code> methods</h3>
+<pre><code class="language-csharp">// V5 — explicit remove methods for each optional property
+bool removed = root.RemoveEmail(); // returns true if the property was present
+</code></pre>
+<p>V5 also supports generic property removal via <code>RemoveProperty()</code> on <code>JsonElement.Mutable</code>:</p>
+<pre><code class="language-csharp">// V5 — generic removal on untyped elements
+root.RemoveProperty(&quot;email&quot;u8);
+</code></pre>
+<hr />
+<h2 id="default-property-values">Default Property Values</h2>
+<p>Both engines support schema-defined defaults. The access pattern is the same:</p>
+<pre><code class="language-csharp">// V4
+using ParsedValue&lt;MigrationWithDefaults&gt; parsed = ParsedValue&lt;MigrationWithDefaults&gt;.Parse(&quot;&quot;&quot;{&quot;name&quot;:&quot;Jo&quot;}&quot;&quot;&quot;);
+MigrationWithDefaults v4 = parsed.Instance;
+string status = (string)v4.Status; // &quot;active&quot; (schema default)
+
+// V5
+using var doc = ParsedJsonDocument&lt;MigrationWithDefaults&gt;.Parse(&quot;&quot;&quot;{&quot;name&quot;:&quot;Jo&quot;}&quot;&quot;&quot;);
+MigrationWithDefaults v5 = doc.RootElement;
+string status = (string)v5.Status; // &quot;active&quot; (schema default)
+</code></pre>
+<p>Entity-level defaults are accessible via <code>DefaultInstance</code>:</p>
+<pre><code class="language-csharp">// V5
+MigrationWithDefaults.StatusEntity defaultStatus =
+    MigrationWithDefaults.StatusEntity.DefaultInstance;
+defaultStatus.TryGetValue(out string? status); // &quot;active&quot;
+</code></pre>
+<hr />
+<h2 id="arrays">Arrays</h2>
+<h3 id="indexing-and-enumeration">Indexing and enumeration</h3>
+<pre><code class="language-csharp">// V4
+int id = (int)v4[0].Id;
+foreach (MigrationItemArray.RequiredId item in v4.EnumerateArray()) { ... }
+int length = v4.GetArrayLength();
+
+// V5 — identical pattern
+int id = (int)v5[0].Id;
+foreach (MigrationItemArray.RequiredId item in v5.EnumerateArray()) { ... }
+int length = v5.GetArrayLength();
+</code></pre>
+<h3 id="adding-items">Adding items</h3>
+<pre><code class="language-csharp">// V4 — functional: returns new array
+MigrationItemArray updated = v4.Add(newItem);
+
+// V5 — imperative: mutates in place
+using JsonWorkspace workspace = JsonWorkspace.Create();
+using var doc = ParsedJsonDocument&lt;MigrationItemArray&gt;.Parse(arrayJson);
+using var builder = doc.RootElement.CreateBuilder(workspace);
+MigrationItemArray.Mutable root = builder.RootElement;
+root.AddItem(newItem);
+</code></pre>
+<h3 id="inserting-items">Inserting items</h3>
+<pre><code class="language-csharp">// V4 — functional
+MigrationItemArray updated = v4.Insert(1, newItem);
+
+// V5 — imperative
+root.InsertItem(1, newItem);
+</code></pre>
+<h3 id="adding-multiple-items-range">Adding multiple items (range)</h3>
+<pre><code class="language-csharp">// V4 — functional: returns new array with all items appended
+MigrationItemArray updated = v4.AddRange(newItems);
+
+// V5 — imperative: mutates in place, uses a builder delegate
+root.AddRange(static (ref JsonElement.ArrayBuilder b) =&gt;
+{
+    b.AddItem(item1);
+    b.AddItem(item2);
+});
+</code></pre>
+<h3 id="inserting-multiple-items-range">Inserting multiple items (range)</h3>
+<pre><code class="language-csharp">// V4 — functional
+MigrationItemArray updated = v4.InsertRange(1, newItems);
+
+// V5 — imperative: inserts items at the specified index
+root.InsertRange(1, static (ref JsonElement.ArrayBuilder b) =&gt;
+{
+    b.AddItem(item1);
+    b.AddItem(item2);
+});
+</code></pre>
+<blockquote>
+<p><strong>Tip:</strong> If the items to insert depend on external state, use the <code>TContext</code> overload to avoid closure allocations:</p>
+<pre><code class="language-csharp">root.AddRange(myItems, static (in MyItems ctx, ref JsonElement.ArrayBuilder b) =&gt;
+{
+    foreach (var item in ctx)
+    {
+        b.AddItem(item);
+    }
+});
+</code></pre>
+</blockquote>
+<h3 id="replacing-items">Replacing items</h3>
+<pre><code class="language-csharp">// V4 — functional, by index
+MigrationItemArray updated = v4.SetItem(1, newItem);
+
+// V5 — imperative, by index
+root.SetItem(1, newItem);
+
+// V5 — imperative, by value (replaces the first matching item)
+bool replaced = root.Replace(oldItem, newItem);
+</code></pre>
+<blockquote>
+<p><strong>Note</strong>: <code>Replace()</code> uses deep equality to find the first matching element and replaces it in a single pass. If the replacement <code>Source</code> is undefined, the matched item is removed instead. Returns <code>false</code> if no match is found.</p>
+</blockquote>
+<h3 id="removing-items">Removing items</h3>
+<pre><code class="language-csharp">// V4 — by index
+MigrationItemArray updated = v4.RemoveAt(1);
+
+// V5 — by index
+root.RemoveAt(1);
+
+// V5 — by value (removes the first matching item)
+bool removed = root.Remove(oldItem);
+
+// V5 — by predicate (removes all matching items)
+int removedCount = root.RemoveWhere(
+    (in MigrationItemArray.RequiredId.Mutable item) =&gt; (int)item.Id == 2);
+</code></pre>
+<h3 id="creating-empty-arrays">Creating empty arrays</h3>
+<p>V5 provides an empty <code>CreateBuilder()</code> for array types:</p>
+<pre><code class="language-csharp">// V5
+using JsonWorkspace workspace = JsonWorkspace.Create();
+using var builder = MigrationItemArray.CreateBuilder(workspace);
+MigrationItemArray.Mutable root = builder.RootElement; // empty array
+root.AddItem(newItem);
+</code></pre>
+<hr />
+<h2 id="numeric-arrays-vectors">Numeric Arrays (Vectors)</h2>
+<p>Both engines support <code>TryGetNumericValues()</code> for efficient extraction:</p>
+<pre><code class="language-csharp">// V4
+Span&lt;int&gt; values = stackalloc int[3];
+v4.TryGetNumericValues(values, out int written);
+
+// V5 — identical
+Span&lt;int&gt; values = stackalloc int[3];
+v5.TryGetNumericValues(values, out int written);
+</code></pre>
+<p>Static metadata is also the same:</p>
+<pre><code class="language-csharp">// Both V4 and V5
+int rank = MigrationIntVector.Rank;       // 1
+int dim = MigrationIntVector.Dimension;   // 3
+int bufSize = MigrationIntVector.ValueBufferSize; // 3
+</code></pre>
+<h3 id="constructing-a-tensor-from-a-flat-span">Constructing a tensor from a flat span</h3>
+<p>V4 provided <code>FromValues(span)</code> to construct a tensor directly from numeric data. V5 provides a <code>CreateBuilder(workspace, ReadOnlySpan&lt;T&gt;)</code> convenience overload as the direct replacement:</p>
+<pre><code class="language-csharp">// V4
+MigrationIntVector v4 = MigrationIntVector.FromValues([1, 2, 3]);
+
+// V5 — CreateBuilder convenience (preferred: span → mutable document in one call)
+using JsonWorkspace workspace = JsonWorkspace.Create();
+using var builder = MigrationIntVector.CreateBuilder(workspace, [1, 2, 3]);
+MigrationIntVector v5 = builder.RootElement;
+</code></pre>
+<p>If you need to separate construction from materialisation, use <code>Build</code> + <code>CreateBuilder</code>:</p>
+<pre><code class="language-csharp">// V5 — two-step: Build + CreateBuilder
+MigrationIntVector.Source source = MigrationIntVector.Build([1, 2, 3]);
+using var builder = MigrationIntVector.CreateBuilder(workspace, source);
+</code></pre>
+<p>The delegate-based <code>Build</code> + <code>CreateTensor</code> pattern also works:</p>
+<pre><code class="language-csharp">// V5 — Build + CreateTensor (delegate route)
+using var builder = MigrationIntVector.CreateBuilder(
+    workspace,
+    MigrationIntVector.Build(
+        static (ref MigrationIntVector.Builder b) =&gt; b.CreateTensor([1, 2, 3])));
+</code></pre>
+<p>Use the convenience overload when you already have the data in a span. Use the delegate pattern when you need to combine tensor creation with other builder operations.</p>
+<h3 id="variable-length-numeric-arrays">Variable-length numeric arrays</h3>
+<p>The <code>Build(ReadOnlySpan&lt;T&gt;)</code> and <code>CreateBuilder(workspace, ReadOnlySpan&lt;T&gt;)</code> overloads are also available on <strong>variable-length</strong> numeric arrays (those without <code>minItems</code>/<code>maxItems</code> constraints, or with different min and max). The span can contain any number of elements:</p>
+<pre><code class="language-csharp">// Given a schema: { &quot;type&quot;: &quot;array&quot;, &quot;items&quot;: { &quot;type&quot;: &quot;number&quot;, &quot;format&quot;: &quot;double&quot; } }
+// The generated ScoresArray type gets Build and CreateBuilder overloads:
+
+using JsonWorkspace workspace = JsonWorkspace.Create();
+
+// CreateBuilder convenience — any length span
+using var builder = ScoresArray.CreateBuilder(workspace, [1.5, 2.5, 3.5, 4.5, 5.5]);
+ScoresArray scores = builder.RootElement;
+
+// Or two-step: Build + CreateBuilder
+ScoresArray.Source source = ScoresArray.Build([1.5, 2.5]);
+using var builder2 = ScoresArray.CreateBuilder(workspace, source);
+</code></pre>
+<blockquote>
+<p><strong>Note:</strong> For fixed-size tensors, the span must contain exactly <code>ValueBufferSize</code> elements. For variable-length arrays, any span length is accepted — including empty spans which produce <code>[]</code>.</p>
+</blockquote>
+<hr />
+<h2 id="tuples">Tuples</h2>
+<h3 id="accessing-tuple-elements">Accessing tuple elements</h3>
+<p>Both engines generate typed <code>Item1</code>, <code>Item2</code>, <code>Item3</code> (etc.) properties:</p>
+<pre><code class="language-csharp">// V4
+string first = (string)v4.Item1;
+int second = (int)v4.Item2;
+bool third = (bool)v4.Item3;
+
+// V5
+string first = (string)v5.Item1;
+int second = (int)v5.Item2;
+bool third = (bool)v5.Item3;
+</code></pre>
+<p>V5 also supports index access:</p>
+<pre><code class="language-csharp">// V5 only — int indexer returning JsonElement
+JsonElement first = v5[0];
+</code></pre>
+<h3 id="creating-tuples">Creating tuples</h3>
+<pre><code class="language-csharp">// V4 — static Create
+MigrationTuple v4 = MigrationTuple.Create(
+    &quot;hello&quot;,
+    42,
+    true);
+
+// V5 — CreateBuilder convenience (preferred for fixed-size tuples)
+using var builder = MigrationTuple.CreateBuilder(workspace, &quot;hello&quot;, 42, true);
+MigrationTuple result = builder.RootElement;
+
+// V5 — Build + CreateBuilder two-step
+MigrationTuple.Source source = MigrationTuple.Build(&quot;hello&quot;, 42, true);
+using var builder2 = MigrationTuple.CreateBuilder(workspace, source);
+
+// V5 — Build delegate + CreateTuple (required for open tuples)
+using var builder3 = MigrationTuple.CreateBuilder(
+    workspace,
+    MigrationTuple.Build(
+        static (ref b) =&gt; b.CreateTuple(
+            item1: &quot;hello&quot;,
+            item2: 42,
+            item3: true)));
+MigrationTuple result2 = builder2.RootElement;
+</code></pre>
+<p>The <code>Build</code> overload taking positional sources is the direct V5 replacement for <code>Create</code> — it takes positional <code>Source</code> parameters (with implicit conversions from the underlying .NET types) and returns a <code>Source</code> without delegate indirection. It is only available on <strong>pure tuple</strong> types (closed with <code>items: false</code> or <code>unevaluatedItems: false</code>).</p>
+<h3 id="valuetuple-decomposition">ValueTuple decomposition</h3>
+<pre><code class="language-csharp">// V4 — explicit cast to ValueTuple
+(JsonString first, MigrationTuple.PrefixItems1Entity second, JsonBoolean third) =
+    ((JsonString, MigrationTuple.PrefixItems1Entity, JsonBoolean))v4;
+
+// V5 — no ValueTuple operator; use typed properties instead
+string first = (string)v5.Item1;
+int second = (int)v5.Item2;
+bool third = (bool)v5.Item3;
+</code></pre>
+<hr />
+<h2 id="core-type-accessors">Core Type Accessors</h2>
+<h3 id="v4-asstring-asnumber-asboolean-asobject-asarray">V4: <code>AsString</code>, <code>AsNumber</code>, <code>AsBoolean</code>, <code>AsObject</code>, <code>AsArray</code></h3>
+<p>In V4, when a type composed multiple core types (e.g. a union of string and boolean), V4 would <em>not</em> emit value accessors (casts, <code>GetString()</code>, indexers, etc.) directly on that type. Instead, you used <code>AsString</code>, <code>AsNumber</code>, <code>AsBoolean</code>, etc. to reach a single-core-type that did have those accessors:</p>
+<pre><code class="language-csharp">// V4 — two-step: go via the core type accessor, then cast to the primitive
+JsonString asString = v4.AsString;
+string value = (string)asString;
+
+JsonNumber asNumber = v4.AsNumber;
+int number = (int)asNumber;
+
+JsonBoolean asBool = v4.AsBoolean;
+bool flag = (bool)asBool;
+
+JsonObject asObject = v4.AsObject;
+JsonArray asArray = v4.AsArray;
+</code></pre>
+<h3 id="v5-direct-value-access">V5: Direct value access</h3>
+<p>V5 emits value accessors for all composed core types directly on the type, so the <code>As*</code> indirection is no longer needed:</p>
+<pre><code class="language-csharp">// V5 — direct access: value accessors are on the type itself
+string value = (string)v5;                   // explicit operator string
+int number = (int)v5;                        // explicit operator int
+bool flag = (bool)v5;                        // explicit operator bool
+
+// Or with the TryGetValue/GetString pattern:
+if (v5.TryGetValue(out string? s)) { ... }
+if (v5.TryGetValue(out long n)) { ... }
+if (v5.TryGetValue(out bool b)) { ... }
+string? str = v5.GetString();
+</code></pre>
+<hr />
+<h2 id="composition-types-oneof-anyof-allof">Composition Types (<code>oneOf</code>, <code>anyOf</code>, <code>allOf</code>)</h2>
+<h3 id="allof-composition-multiple-interface-pattern"><code>allOf</code> — Composition (Multiple Interface Pattern)</h3>
+<p><code>allOf</code> represents composition — a type that satisfies <em>all</em> of the constituent schemas simultaneously (like implementing multiple interfaces in C#).</p>
+<p>Both V4 and V5 support <strong>implicit conversion</strong> from the composite type to any of its <code>allOf</code> constituents:</p>
+<pre><code class="language-csharp">// Schema: CompositeType = allOf [Documentation, Countable] + additional properties
+// V4
+V4.CompositeType v4Composite = V4.CompositeType.Parse(json);
+V4.Documentation v4Documentation = v4Composite;  // implicit
+V4.Countable v4Count = v4Composite;    // implicit
+
+// Access properties - note V4's &quot;Value&quot; suffix for &quot;count&quot;
+int count = (int)v4Count.CountValue;   // V4: disambiguated with &quot;Value&quot; suffix
+
+// V5
+using var v5Doc = ParsedJsonDocument&lt;V5.CompositeType&gt;.Parse(json);
+V5.CompositeType v5Composite = v5Doc.RootElement;
+V5.Documentation v5Documentation = v5Composite;  // implicit
+V5.Countable v5Countable = v5Composite;          // implicit
+
+// Access properties - V5 may not need the suffix here
+long count = v5Countable.Count;  // V5: &quot;count&quot; no longer conflicts
+</code></pre>
+<p><strong>Property naming note:</strong></p>
+<ul>
+<li>Both V4 and V5 use <strong>&quot;Value&quot; and &quot;Entity&quot; suffixes</strong> in their naming heuristics to disambiguate generated property and type names from reserved names (interface members, language keywords, etc.)</li>
+<li>V5 has <strong>different name reservations</strong> than V4, so some names that were previously disambiguated may now be available without a suffix (e.g. <code>Count</code> instead of <code>CountValue</code>), and vice versa</li>
+<li>This may cause some property or type renaming when migrating from V4 to V5</li>
+</ul>
+<p>Both also support <strong>explicit conversion</strong> in the reverse direction (from constituent to composite):</p>
+<pre><code class="language-csharp">// V4
+V4.CompositeType v4Composite = (V4.CompositeType)v4Documentation;  // explicit
+
+// V5
+V5.CompositeType v5Composite = (V5.CompositeType)v5Documentation;  // explicit
+</code></pre>
+<h3 id="oneof-anyof-discriminated-unions"><code>oneOf</code> / <code>anyOf</code> — Discriminated Unions</h3>
+<p>For <code>oneOf</code> and <code>anyOf</code>, the conversion operators are <strong>opposite</strong>: implicit <em>from</em> constituent types, explicit <em>to</em> constituent types.</p>
+<h3 id="pattern-matching-with-trygetas">Pattern matching with <code>TryGetAs*()</code></h3>
+<p>Both V4 and V5 emit <code>TryGetAs*()</code> methods for any union variant type — whether local or global. The method name is derived from whatever type the variant resolved to. V4 reduced unformatted simple types to framework globals from <code>Corvus.Json.ExtendedTypes</code> (<code>Corvus.Json.JsonString</code>, <code>Corvus.Json.JsonBoolean</code>, <code>Corvus.Json.JsonInteger</code>, etc.) and <code>&quot;type&quot;: &quot;number&quot;</code> with a numeric format to globals (<code>Corvus.Json.JsonInt32</code>, <code>Corvus.Json.JsonDouble</code>, etc.). However, V4 did <strong>not</strong> reduce <code>&quot;type&quot;: &quot;integer&quot;</code> with a format — those became custom entity types (e.g. <code>OneOf1Entity</code>). V4 also had no equivalent of V5's <code>Json&lt;Format&gt;NotAsserted</code> global types. V5 reduces <strong>all</strong> simple and format-typed variants to project-local global types:</p>
+<pre><code class="language-csharp">// V4 — string and boolean reduce to framework globals; integer+format does NOT
+if (v4.TryGetAsJsonString(out JsonString stringEntity)) { ... }
+if (v4.TryGetAsOneOf1Entity(out MigrationUnion.OneOf1Entity numberEntity)) { ... }
+if (v4.TryGetAsJsonBoolean(out JsonBoolean boolEntity)) { ... }
+
+// V5 — all variants reduce to project-local global types
+if (v5.TryGetAsJsonString(out JsonString stringEntity)) { ... }
+if (v5.TryGetAsJsonInt32(out JsonInt32 numberEntity)) { ... }
+if (v5.TryGetAsJsonBoolean(out JsonBoolean boolEntity)) { ... }
+</code></pre>
+<blockquote>
+<p><strong>Note</strong>: <code>allOf</code> types typically don't generate <code>TryGetAsAllOf*Entity()</code> methods because the composite type inherently <em>is</em> all constituents simultaneously. Use implicit conversion instead.</p>
+</blockquote>
+<h3 id="exhaustive-matching-with-match">Exhaustive matching with <code>Match</code></h3>
+<p>Both V4 and V5 support <code>Match</code> without a context parameter:</p>
+<pre><code class="language-csharp">// V4 — string/boolean are framework globals; integer+format is custom entity
+string result = v4.Match(
+    static (in JsonString s) =&gt; $&quot;string:{(string)s}&quot;,
+    static (in MigrationUnion.OneOf1Entity n) =&gt; $&quot;number:{(int)n}&quot;,
+    static (in JsonBoolean b) =&gt; $&quot;bool:{(bool)b}&quot;,
+    static (in MigrationUnion v) =&gt; &quot;none&quot;);
+
+// V5 — all variants are project-local global types
+string result = v5.Match(
+    static (in JsonString s) =&gt; $&quot;string:{(string)s}&quot;,
+    static (in JsonInt32 n) =&gt; $&quot;number:{(int)n}&quot;,
+    static (in JsonBoolean b) =&gt; $&quot;bool:{(bool)b}&quot;,
+    static (in MigrationUnion v) =&gt; &quot;none&quot;);
+</code></pre>
+<p>Both also support <code>Match</code> with a context parameter to avoid closures:</p>
+<pre><code class="language-csharp">// V4 — string/boolean are framework globals; integer+format is custom entity
+string result = v4.Match(
+    &quot;prefix&quot;,
+    static (in JsonString s, in string ctx) =&gt; $&quot;{ctx}:string:{(string)s}&quot;,
+    static (in MigrationUnion.OneOf1Entity n, in string ctx) =&gt; $&quot;{ctx}:number:{(int)n}&quot;,
+    static (in JsonBoolean b, in string ctx) =&gt; $&quot;{ctx}:bool:{(bool)b}&quot;,
+    static (in MigrationUnion v, in string ctx) =&gt; $&quot;{ctx}:none&quot;);
+
+// V5 — all variants are project-local global types
+string result = v5.Match(
+    &quot;prefix&quot;,
+    static (in JsonString s, in string ctx) =&gt; $&quot;{ctx}:string:{(string)s}&quot;,
+    static (in JsonInt32 n, in string ctx) =&gt; $&quot;{ctx}:number:{(int)n}&quot;,
+    static (in JsonBoolean b, in string ctx) =&gt; $&quot;{ctx}:bool:{(bool)b}&quot;,
+    static (in MigrationUnion v, in string ctx) =&gt; $&quot;{ctx}:none&quot;);
+</code></pre>
+<hr />
+<h2 id="enum-types">Enum Types</h2>
+<p>Both V4 and V5 handle string enums identically for reading:</p>
+<pre><code class="language-csharp">// V4
+using ParsedValue&lt;MigrationStatusEnum&gt; parsed = ParsedValue&lt;MigrationStatusEnum&gt;.Parse(&quot;\&quot;active\&quot;&quot;);
+MigrationStatusEnum v4 = parsed.Instance;
+string status = (string)v4; // &quot;active&quot;
+
+// V5
+using var doc = ParsedJsonDocument&lt;MigrationStatusEnum&gt;.Parse(&quot;\&quot;active\&quot;&quot;);
+MigrationStatusEnum v5 = doc.RootElement;
+string status = (string)v5; // &quot;active&quot;
+</code></pre>
+<p>Both V4 and V5 generate a public <code>EnumValues</code> class with named constants:</p>
+<pre><code class="language-csharp">// V4 and V5 — compile-time enum constants
+MigrationStatusEnum active = MigrationStatusEnum.EnumValues.Active;
+MigrationStatusEnum inactive = MigrationStatusEnum.EnumValues.Inactive;
+</code></pre>
+<p>Both V4 and V5 also generate <code>Match</code> methods for exhaustive matching over enum values. Each enum value gets a named delegate parameter:</p>
+<pre><code class="language-csharp">// V4 and V5 — Match without context
+string label = v5.Match(
+    static () =&gt; &quot;Status is active&quot;,
+    static () =&gt; &quot;Status is inactive&quot;,
+    static () =&gt; &quot;Status is pending&quot;,
+    static () =&gt; &quot;Unknown status&quot;);
+
+// V4 and V5 — Match with context (avoids closures)
+string label = v5.Match(
+    &quot;prefix&quot;,
+    static (string ctx) =&gt; $&quot;{ctx}: active&quot;,
+    static (string ctx) =&gt; $&quot;{ctx}: inactive&quot;,
+    static (string ctx) =&gt; $&quot;{ctx}: pending&quot;,
+    static (string ctx) =&gt; $&quot;{ctx}: unknown&quot;);
+</code></pre>
+<p>The delegate parameters are named after the enum values (<code>matchActive</code>, <code>matchInactive</code>, <code>matchPending</code>), plus a <code>defaultMatch</code> for values that don't match any declared entry.</p>
+<hr />
+<h2 id="memory-management">Memory Management</h2>
+<p>This is the most significant architectural change.</p>
+<h3 id="v4-jsondocument-backed-values">V4: JsonDocument-backed values</h3>
+<p>In V4, each parsed value either wraps a <code>System.Text.Json.JsonElement</code> (and its underlying <code>JsonDocument</code>) or an <code>ImmutableList&lt;JsonObjectProperty&gt;</code> for dotnet-backed values. The <code>JsonDocument</code> must be kept alive while values are in use.</p>
+<p>Using <code>ParsedValue&lt;T&gt;</code> was recommended:</p>
+<pre><code class="language-csharp">// V4
+using ParsedValue&lt;MigrationPerson&gt; parsed = ParsedValue&lt;MigrationPerson&gt;.Parse(json);
+MigrationPerson v4 = parsed.Instance;
+// Use v4... then parsed disposes the JsonDocument
+</code></pre>
+<h3 id="v5-parsedjsondocument-backed-values">V5: ParsedJsonDocument-backed values</h3>
+<p>In V5, values are indexes into a <code>ParsedJsonDocument&lt;T&gt;</code>. This document uses <code>ArrayPool&lt;byte&gt;</code> for efficient memory management. <strong>Always dispose the document.</strong></p>
+<pre><code class="language-csharp">// V5
+using ParsedJsonDocument&lt;MigrationPerson&gt; doc =
+    ParsedJsonDocument&lt;MigrationPerson&gt;.Parse(json);
+MigrationPerson v5 = doc.RootElement;
+// Use v5... then doc returns memory to the pool
+</code></pre>
+<h3 id="v5-jsonworkspace-for-mutation">V5: JsonWorkspace for mutation</h3>
+<p>Any mutation requires a <code>JsonWorkspace</code> (see <a href="/Corvus.JsonSchema/pr-preview/pr-740/docs/json-document-builder.html#understanding-the-workspace">Understanding the Workspace</a> in the JsonDocumentBuilder guide):</p>
+<pre><code class="language-csharp">using JsonWorkspace workspace = JsonWorkspace.Create();
+using var builder = doc.RootElement.CreateBuilder(workspace);
+// workspace must outlive all builders created from it
+</code></pre>
+<h3 id="disposal-hierarchy">Disposal hierarchy</h3>
+<pre><code>JsonWorkspace (outermost — create first, dispose last)
+  └─ JsonDocumentBuilder&lt;T.Mutable&gt;  (one or more per workspace)
+       └─ T.Mutable                  (lightweight, no disposal needed)
+
+ParsedJsonDocument&lt;T&gt;                (independent — for read-only parsing)
+  └─ T                               (lightweight, no disposal needed)
+</code></pre>
+<hr />
+<h2 id="code-generation">Code Generation</h2>
+<h3 id="cli-tool-rename-generatejsonschematypes-corvusjson">CLI tool rename: <code>generatejsonschematypes</code> → <code>corvusjson</code></h3>
+<p>The CLI tool has been renamed from <code>generatejsonschematypes</code> (package: <code>Corvus.Json.CodeGenerator</code>) to <code>corvusjson</code> (package: <code>Corvus.Json.Cli</code>). Schema generation is now a subcommand:</p>
+<pre><code class="language-bash"># Install the new tool
+dotnet tool install --global Corvus.Json.Cli
+
+# V5 generation (default engine for corvusjson)
+corvusjson jsonschema schema.json \
+  --rootNamespace MyApp.Models \
+  --outputPath generated/
+
+# V4 generation (requires --engine V4)
+corvusjson jsonschema schema.json \
+  --engine V4 \
+  --rootNamespace MyApp.Models \
+  --outputPath generated/
+</code></pre>
+<p>The legacy <code>generatejsonschematypes</code> command (package: <code>Corvus.Json.CodeGenerator</code>) still works as a shim and will display a deprecation warning. Note that the legacy shim defaults to the <strong>V4</strong> engine, while <code>corvusjson</code> defaults to <strong>V5</strong>.</p>
+<p>The <code>--engine</code> option accepts <code>V4</code> (generates <code>Corvus.Json.ExtendedTypes</code>-based code) or <code>V5</code> (generates <code>Corvus.Text.Json</code>-based code).</p>
+<p>All other options (<code>--rootNamespace</code>, <code>--outputPath</code>, <code>--outputRootTypeName</code>, <code>--optionalAsNullable</code>, etc.) work identically with both tools and both engines.</p>
+<h3 id="source-generator">Source generator</h3>
+<p>Both V4 and V5 provide a Roslyn incremental source generator that generates types at build time. The approach is the same in both versions: you declare a <code>partial struct</code> annotated with <code>JsonSchemaTypeGeneratorAttribute</code>, and the generator produces the implementation from the referenced JSON Schema file.</p>
+<pre><code class="language-csharp">// V4 and V5 — same attribute-driven approach
+[JsonSchemaTypeGenerator(&quot;person-schema.json&quot;)]
+public readonly partial struct Person;
+</code></pre>
+<p>The generator derives:</p>
+<ul>
+<li><strong>Namespace</strong> — from the containing namespace of the declared struct</li>
+<li><strong>Accessibility</strong> — from the declared accessibility of the struct (<code>public</code>, <code>internal</code>, or <code>private</code>)</li>
+<li><strong>Type name</strong> — from the struct name</li>
+</ul>
+<p>To set up the source generator, add the generator NuGet package and include your schema files as <code>AdditionalFiles</code>.</p>
+<p><strong>V4:</strong></p>
+<pre><code class="language-xml">&lt;ItemGroup&gt;
+  &lt;PackageReference Include=&quot;Corvus.Json.SourceGenerator&quot; Version=&quot;4.6.3&quot;&gt;
+    &lt;PrivateAssets&gt;all&lt;/PrivateAssets&gt;
+    &lt;IncludeAssets&gt;runtime; build; native; contentfiles; analyzers; buildtransitive&lt;/IncludeAssets&gt;
+  &lt;/PackageReference&gt;
+  &lt;PackageReference Include=&quot;Corvus.Json.ExtendedTypes&quot; Version=&quot;4.6.3&quot; /&gt;
+&lt;/ItemGroup&gt;
+
+&lt;ItemGroup&gt;
+  &lt;AdditionalFiles Include=&quot;person-schema.json&quot; /&gt;
+&lt;/ItemGroup&gt;
+</code></pre>
+<p><strong>V5:</strong></p>
+<pre><code class="language-xml">&lt;ItemGroup&gt;
+  &lt;PackageReference Include=&quot;Corvus.Text.Json.SourceGenerator&quot; Version=&quot;5.0.0&quot;&gt;
+      &lt;PrivateAssets&gt;all&lt;/PrivateAssets&gt;
+    &lt;IncludeAssets&gt;runtime; build; native; contentfiles; analyzers; buildtransitive&lt;/IncludeAssets&gt;
+  &lt;/PackageReference&gt;
+  &lt;PackageReference Include=&quot;Corvus.Text.Json&quot; Version=&quot;5.0.0&quot; /&gt;
+&lt;/ItemGroup&gt;
+
+&lt;ItemGroup&gt;
+  &lt;AdditionalFiles Include=&quot;person-schema.json&quot; /&gt;
+&lt;/ItemGroup&gt;
+</code></pre>
+<p>Additional generation options are controlled via MSBuild properties (e.g., <code>CorvusTextJsonOptionalAsNullable</code>, <code>CorvusTextJsonFallbackVocabulary</code>).</p>
+<hr />
+<h2 id="best-practices-and-patterns">Best Practices and Patterns</h2>
+<h3 id="prefer-convenience-overloads-for-tuples-and-numeric-arrays">Prefer convenience overloads for tuples and numeric arrays</h3>
+<p>For <strong>closed tuples</strong> and <strong>numeric arrays</strong>, prefer the convenience <code>CreateBuilder</code> overloads that accept values directly, avoiding the delegate indirection:</p>
+<pre><code class="language-csharp">// ✅ Preferred — convenience overload
+using var builder = MyTuple.CreateBuilder(workspace, &quot;hello&quot;, 42, true);
+using var vecBuilder = MyVector.CreateBuilder(workspace, [1, 2, 3]);
+
+// ✅ Also good — two-step Build + CreateBuilder (when you need the Source separately)
+MyTuple.Source source = MyTuple.Build(&quot;hello&quot;, 42, true);
+using var builder = MyTuple.CreateBuilder(workspace, source);
+
+// ⚠️ Verbose — use the delegate pattern only when required (open tuples, combining operations)
+using var builder = MyTuple.CreateBuilder(workspace,
+    MyTuple.Build(static (ref MyTuple.Builder b) =&gt; b.CreateTuple(&quot;hello&quot;, 42, true)));
+</code></pre>
+<h3 id="use-static-lambdas-where-possible">Use <code>static</code> lambdas where possible</h3>
+<p>When creating builder delegates or pattern matching lambdas that don't capture variables, mark them <code>static</code> for better performance:</p>
+<pre><code class="language-csharp">// Builder delegates with literals — use static
+using var doc = Person.CreateBuilder(
+    workspace,
+    Person.Build(
+        static (ref Person.Builder b) =&gt; b.Create(
+            familyName: &quot;Brontë&quot;,
+            givenName: &quot;Anne&quot;,
+            height: 1.57)));
+
+// Pattern matching without captured variables — use static
+string result = color.Match(
+    matchRed: static () =&gt; &quot;The color of fire&quot;,
+    matchGreen: static () =&gt; &quot;The color of grass&quot;,
+    matchBlue: static () =&gt; &quot;The color of sky&quot;,
+    defaultMatch: static () =&gt; &quot;Unknown color&quot;);
+
+// Pattern matching WITH context parameter — use static (context is a parameter, not captured)
+string result = status.Match(
+    requestCount,  // context parameter
+    matchActive: static (count) =&gt; $&quot;Processing {count} requests&quot;,
+    matchInactive: static (count) =&gt; $&quot;Cannot process {count} requests&quot;,
+    defaultMatch: static (count) =&gt; throw new InvalidOperationException());
+</code></pre>
+<p>Only omit <code>static</code> when the lambda genuinely captures variables from the enclosing scope:</p>
+<pre><code class="language-csharp">// Captures 'source' variable from outer scope — cannot be static
+using var targetBuilder = TargetType.CreateBuilder(workspace, (ref TargetType.Builder b) =&gt;
+{
+    if (source.Id.TryGetValue(out long idValue))
+    {
+        b.WithIdentifier(idValue);
+    }
+});
+</code></pre>
+<h3 id="work-with-generated-types-directly">Work with generated types directly</h3>
+<p>Prefer working with generated entity types throughout your code, only extracting to .NET primitives when necessary for operations:</p>
+<pre><code class="language-csharp">// ✅ Good — work with generated types
+Person person = parsedDoc.RootElement;
+string familyName = person.FamilyName;  // Generated type, supports formatting
+double height = person.Height;  // Implicit conversion where supported
+
+// ❌ Avoid unnecessary extraction
+string familyName = (string)person.FamilyName;  // Unnecessary when not doing string operations
+</code></pre>
+<p>Extract to primitives only when you need to:</p>
+<ul>
+<li>Perform arithmetic: <code>id.TryGetValue(out long value); value + 1000</code></li>
+<li>Manipulate strings: <code>name.TryGetValue(out string? str); str.ToUpperInvariant()</code></li>
+<li>Map between different schemas (see below)</li>
+</ul>
+<h3 id="cross-schema-mapping-does-not-requires-value-extraction-for-compatible-types">Cross-schema mapping does not requires value extraction for compatible types</h3>
+<p>When mapping between generated types from <strong>different schemas</strong>, entity types don't necessarily implicitly convert, but they can still b be compatible. Use <code>TargetType.From(sourceInstance)</code> and pass them to the builder:</p>
+<pre><code class="language-csharp">// SourceType and TargetType are from different schemas
+using var sourceDoc = ParsedJsonDocument&lt;SourceType&gt;.Parse(json);
+SourceType source = sourceDoc.RootElement;
+
+using JsonWorkspace workspace = JsonWorkspace.Create();
+using var targetBuilder = TargetType.CreateBuilder(workspace, (ref TargetType.Builder b) =&gt;
+{
+    b.Create(nameValue, TargetType.IdentifierEntity.From(idValue));
+});
+</code></pre>
+<p>While <code>SourceType.IdEntity</code> and <code>TargetType.IdentifierEntity</code> are different types they both represent integers with compatible constraints, so you can safely convert between them, without having to convert to an intermediate .NET value type.</p>
+<h3 id="pattern-matching-uses-named-parameters">Pattern matching uses named parameters</h3>
+<p>V5's <code>Match()</code> methods use named parameters for each variant, making the code more self-documenting:</p>
+<pre><code class="language-csharp">// Enum matching
+string desc = color.Match(
+    matchRed: static () =&gt; &quot;Fire&quot;,
+    matchGreen: static () =&gt; &quot;Grass&quot;,
+    matchBlue: static () =&gt; &quot;Sky&quot;,
+    defaultMatch: static () =&gt; &quot;Unknown&quot;);
+
+// Discriminated union matching (named by required properties)
+string result = shape.Match(
+    matchRequiredRadiusAndType: static (in circle) =&gt;
+        $&quot;Circle r={circle.Radius}&quot;,
+    matchRequiredHeightAndTypeAndWidth: static (in rect) =&gt;
+        $&quot;Rectangle {rect.Width}x{rect.Height}&quot;,
+    defaultMatch: static (in unknown) =&gt; &quot;Unknown shape&quot;);
+</code></pre>
+<p>The parameter names (<code>matchRed</code>, <code>matchRequiredRadiusAndType</code>) are generated from the schema and can be found in IntelliSense.</p>
+<h3 id="use-context-parameters-to-avoid-closures">Use context parameters to avoid closures</h3>
+<p>When pattern matching needs external state, pass it as a context parameter rather than capturing it:</p>
+<pre><code class="language-csharp">// ✅ Good — context parameter (no closure, can be static)
+double brightness = 0.8;
+string rgb = color.Match(
+    brightness,
+    matchRed: static (ctx) =&gt; $&quot;RGB({(int)(255 * ctx)}, 0, 0)&quot;,
+    matchGreen: static (ctx) =&gt; $&quot;RGB(0, {(int)(255 * ctx)}, 0)&quot;,
+    matchBlue: static (ctx) =&gt; $&quot;RGB(0, 0, {(int)(255 * ctx)})&quot;,
+    defaultMatch: static (ctx) =&gt; &quot;RGB(0, 0, 0)&quot;);
+
+// ❌ Avoid — capturing closure (cannot be static, allocates)
+double brightness = 0.8;
+string rgb = color.Match(
+    matchRed: () =&gt; $&quot;RGB({(int)(255 * brightness)}, 0, 0)&quot;,  // captures 'brightness'
+    matchGreen: () =&gt; $&quot;RGB(0, {(int)(255 * brightness)}, 0)&quot;,
+    matchBlue: () =&gt; $&quot;RGB(0, 0, {(int)(255 * brightness)})&quot;,
+    defaultMatch: () =&gt; &quot;RGB(0, 0, 0)&quot;);
+</code></pre>
+<p>Note that on .NET 9.0 and later, you can pass a <code>ref struct</code> as your context.</p>
+<hr />
+<h2 id="quick-reference-table">Quick Reference Table</h2>
+<table>
+<thead>
+<tr>
+<th>V4 Operation</th>
+<th>V5 Equivalent</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>MyType.Parse(json)</code></td>
+<td><code>ParsedJsonDocument&lt;MyType&gt;.Parse(json)</code> + <code>.RootElement</code></td>
+</tr>
+<tr>
+<td><code>ParsedValue&lt;T&gt;.Parse(json)</code></td>
+<td><code>ParsedJsonDocument&lt;T&gt;.Parse(json)</code></td>
+</tr>
+<tr>
+<td><code>parsed.Instance</code></td>
+<td><code>doc.RootElement</code></td>
+</tr>
+<tr>
+<td><code>MyType.ParseValue(json)</code></td>
+<td><code>MyType.ParseValue(json)</code> (same)</td>
+</tr>
+<tr>
+<td><code>v4.ValueKind</code></td>
+<td><code>v5.ValueKind</code> (same, but <code>Corvus.Text.Json.JsonValueKind</code>)</td>
+</tr>
+<tr>
+<td><code>v4.Count</code></td>
+<td><code>v5.GetPropertyCount()</code></td>
+</tr>
+<tr>
+<td><code>v4.Name</code> (typed property)</td>
+<td><code>v5.Name</code> (same)</td>
+</tr>
+<tr>
+<td><code>v4.GetString()</code></td>
+<td><code>v5.GetString()</code> (same)</td>
+</tr>
+<tr>
+<td><code>v4.TryGetString(out string?)</code></td>
+<td><code>v5.TryGetValue(out string?)</code></td>
+</tr>
+<tr>
+<td>N/A</td>
+<td><code>v5.GetUtf8String()</code> (V5 only — returns <code>UnescapedUtf8JsonString</code>)</td>
+</tr>
+<tr>
+<td>N/A</td>
+<td><code>v5.GetUtf16String()</code> (V5 only — returns <code>UnescapedUtf16JsonString</code>)</td>
+</tr>
+<tr>
+<td><code>v4.TryGetValue(state, (s, span) =&gt; ...)</code></td>
+<td><code>v5.GetUtf8String().Span</code> or <code>v5.GetUtf16String().Span</code></td>
+</tr>
+<tr>
+<td><code>v4.AsJsonElement</code></td>
+<td><code>(JsonElement)v5</code> (implicit operator)</td>
+</tr>
+<tr>
+<td><code>v4.AsAny</code></td>
+<td>N/A — implicitly cast to <code>JsonElement</code></td>
+</tr>
+<tr>
+<td><code>v4.AsObject</code></td>
+<td>N/A — V5 emits object accessors directly: typed properties, <code>TryGetProperty()</code>, <code>EnumerateObject()</code></td>
+</tr>
+<tr>
+<td><code>v4.AsString</code></td>
+<td>N/A — V5 emits value accessors directly: <code>(string)v5</code>, <code>v5.GetString()</code>, <code>v5.TryGetValue(out string?)</code></td>
+</tr>
+<tr>
+<td><code>v4.AsNumber</code></td>
+<td>N/A — V5 emits value accessors directly: <code>(int)v5</code>, <code>(long)v5</code>, <code>v5.TryGetValue(out int)</code></td>
+</tr>
+<tr>
+<td><code>v4.AsBoolean</code></td>
+<td>N/A — V5 emits value accessors directly: <code>(bool)v5</code>, <code>v5.TryGetValue(out bool)</code></td>
+</tr>
+<tr>
+<td><code>v4.AsArray</code></td>
+<td>N/A — V5 emits array accessors directly: <code>v5.GetArrayLength()</code>, <code>v5[0]</code>, <code>v5.EnumerateArray()</code></td>
+</tr>
+<tr>
+<td><code>v4.As&lt;TargetType&gt;()</code></td>
+<td><code>TargetType.From(v5)</code></td>
+</tr>
+<tr>
+<td><code>v4.Equals(v4b)</code></td>
+<td><code>v5.Equals(v5b)</code> (same)</td>
+</tr>
+<tr>
+<td><code>v4 == v4b</code></td>
+<td><code>v5 == v5b</code> (same)</td>
+</tr>
+<tr>
+<td><code>v4.Validate(ctx, level)</code></td>
+<td><code>v5.EvaluateSchema()</code> or <code>v5.EvaluateSchema(collector)</code></td>
+</tr>
+<tr>
+<td><code>v4.ToString()</code></td>
+<td><code>v5.ToString()</code> (same)</td>
+</tr>
+<tr>
+<td><code>v4.WriteTo(writer)</code></td>
+<td><code>v5.WriteTo(writer)</code> (different writer type!)</td>
+</tr>
+<tr>
+<td>N/A</td>
+<td><code>v5.ToString(format, provider)</code> (V5 only — <code>IFormattable</code>)</td>
+</tr>
+<tr>
+<td>N/A</td>
+<td><code>v5.TryFormat(charSpan, ...)</code> (V5 only — <code>ISpanFormattable</code>)</td>
+</tr>
+<tr>
+<td>N/A</td>
+<td><code>v5.TryFormat(byteSpan, ...)</code> (V5 only — <code>IUtf8SpanFormattable</code>)</td>
+</tr>
+<tr>
+<td><code>MyType.JsonPropertyNames.Name</code></td>
+<td><code>MyType.JsonPropertyNames.Name</code> (same)</td>
+</tr>
+<tr>
+<td><code>MyType.JsonPropertyNames.NameUtf8</code></td>
+<td><code>MyType.JsonPropertyNames.NameUtf8</code> (same)</td>
+</tr>
+<tr>
+<td><code>MyType.Create(...)</code></td>
+<td><code>MyType.CreateBuilder(workspace, (ref b) =&gt; b.Create(...))</code></td>
+</tr>
+<tr>
+<td><code>MyType.FromItems(item1, item2)</code></td>
+<td><code>MyType.CreateBuilder(workspace, MyType.Build((ref b) =&gt; { b.AddItem(...); }))</code></td>
+</tr>
+<tr>
+<td><code>v4.WithName(&quot;Bob&quot;)</code> (typed property)</td>
+<td><code>mutable.SetName(&quot;Bob&quot;)</code> (typed property, imperative)</td>
+</tr>
+<tr>
+<td><code>v4.WithEmail(default)</code> (typed property)</td>
+<td><code>mutable.RemoveEmail()</code> (typed property)</td>
+</tr>
+<tr>
+<td><code>v4.Add(item)</code></td>
+<td><code>mutable.AddItem(item)</code></td>
+</tr>
+<tr>
+<td><code>v4.AddRange(items)</code></td>
+<td><code>mutable.AddRange((ref b) =&gt; { b.AddItem(...); })</code></td>
+</tr>
+<tr>
+<td><code>v4.Insert(idx, item)</code></td>
+<td><code>mutable.InsertItem(idx, item)</code></td>
+</tr>
+<tr>
+<td><code>v4.InsertRange(idx, items)</code></td>
+<td><code>mutable.InsertRange(idx, (ref b) =&gt; { b.AddItem(...); })</code></td>
+</tr>
+<tr>
+<td><code>v4.SetItem(idx, item)</code></td>
+<td><code>mutable.SetItem(idx, item)</code></td>
+</tr>
+<tr>
+<td>N/A</td>
+<td><code>mutable.Replace(oldItem, newItem)</code> (V5 only — by value, first match)</td>
+</tr>
+<tr>
+<td><code>v4.RemoveAt(idx)</code></td>
+<td><code>mutable.RemoveAt(idx)</code></td>
+</tr>
+<tr>
+<td>N/A</td>
+<td><code>mutable.Remove(item)</code> (V5 only — by value, first match)</td>
+</tr>
+<tr>
+<td>N/A</td>
+<td><code>mutable.RemoveWhere(predicate)</code> (V5 only — by predicate, all matches)</td>
+</tr>
+<tr>
+<td><code>v4.GetArrayLength()</code></td>
+<td><code>v5.GetArrayLength()</code> (same)</td>
+</tr>
+<tr>
+<td><code>v4[0]</code> (array index)</td>
+<td><code>v5[0]</code> (same)</td>
+</tr>
+<tr>
+<td><code>v4.EnumerateArray()</code></td>
+<td><code>v5.EnumerateArray()</code> (same)</td>
+</tr>
+<tr>
+<td><code>v4.EnumerateObject()</code></td>
+<td><code>v5.EnumerateObject()</code> (same)</td>
+</tr>
+<tr>
+<td><code>v4.TryGetNumericValues(span, out written)</code></td>
+<td><code>v5.TryGetNumericValues(span, out written)</code> (same)</td>
+</tr>
+<tr>
+<td><code>MyTensor.FromValues(span)</code></td>
+<td><code>MyTensor.CreateBuilder(ws, span)</code>, <code>Build(span)</code>, or <code>Build((ref b) =&gt; b.CreateTensor(span))</code></td>
+</tr>
+<tr>
+<td>N/A</td>
+<td><code>MyNumericArray.CreateBuilder(ws, span)</code> or <code>Build(span)</code> (V5 only — variable-length numeric arrays)</td>
+</tr>
+<tr>
+<td><code>v4.Item1</code> (tuple)</td>
+<td><code>v5.Item1</code> (same)</td>
+</tr>
+<tr>
+<td><code>MigrationTuple.Create(a,b,c)</code></td>
+<td><code>MigrationTuple.CreateBuilder(ws,a,b,c)</code>, <code>Build(a,b,c)</code>, or <code>Build((ref b) =&gt; b.CreateTuple(a,b,c))</code></td>
+</tr>
+<tr>
+<td><code>v4.Match(...)</code> (composition)</td>
+<td><code>v5.Match(...)</code> (same for unformatted types; <code>&quot;type&quot;:&quot;integer&quot;</code> + format entity types become global names like <code>JsonInt32</code>)</td>
+</tr>
+<tr>
+<td><code>v4.Match(...)</code> (enum)</td>
+<td><code>v5.Match(...)</code> (same)</td>
+</tr>
+<tr>
+<td><code>MyType.EnumValues.Active</code></td>
+<td><code>MyType.EnumValues.Active</code> (same)</td>
+</tr>
+<tr>
+<td><code>MyType.DefaultInstance</code></td>
+<td><code>MyType.DefaultInstance</code> (same)</td>
+</tr>
+<tr>
+<td><code>MyType.FromJson(element)</code></td>
+<td><code>MyType.From(element)</code></td>
+</tr>
+<tr>
+<td><code>MyType.FromAny(any)</code></td>
+<td><code>MyType.From(element)</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="migration-checklist">Migration Checklist</h2>
+<ol>
+<li><strong>Update package references</strong> — replace <code>Corvus.Json</code> packages with <code>Corvus.Text.Json</code> packages</li>
+<li><strong>Update namespaces</strong> — replace <code>using Corvus.Json;</code> with <code>using Corvus.Text.Json;</code></li>
+<li><strong>Update parsing</strong> — replace <code>ParsedValue&lt;T&gt;.Parse()</code> and <code>JsonDocument</code>/<code>T.FromJson(doc.RootElement)</code> patterns with <code>ParsedJsonDocument&lt;T&gt;.Parse()</code></li>
+<li><strong>Convert <code>With*()</code> to <code>Set*()</code></strong> — create a <code>JsonWorkspace</code> and <code>JsonDocumentBuilder</code>, then use imperative <code>Set*()</code> methods</li>
+<li><strong>Update validation calls</strong> — replace <code>Validate(ctx, level)</code> with <code>EvaluateSchema()</code></li>
+<li><strong>Update union access</strong> — V4's <code>AsString</code>, <code>AsNumber</code>, <code>AsBoolean</code> existed because multi-core-type types didn't emit value accessors directly. V5 emits all value accessors on the type itself: <code>(string)v5</code>, <code>v5.TryGetValue(out int)</code>, <code>(bool)v5</code>, etc. The <code>TryGetAs*()</code> pattern is the same in both V4 and V5; for unformatted types the names match (e.g. <code>TryGetAsJsonString()</code>). For <code>&quot;type&quot;:&quot;integer&quot;</code> + format variants, V4 produced custom entity types (e.g. <code>OneOf1Entity</code>) while V5 reduces them to globals (e.g. <code>TryGetAsJsonInt32()</code>). Use <code>v5.Match()</code> for exhaustive union matching.</li>
+<li><strong>Update writer types</strong> — use <code>Corvus.Text.Json.Utf8JsonWriter</code> instead of <code>System.Text.Json.Utf8JsonWriter</code></li>
+<li><strong>Update tuple creation</strong> — replace <code>MyTuple.Create(a, b, c)</code> with <code>MyTuple.CreateBuilder(workspace, a, b, c)</code> for closed tuples, or the delegate pattern for open tuples</li>
+<li><strong>Update numeric array construction</strong> — replace <code>MyVector.FromValues(span)</code> with <code>MyVector.CreateBuilder(workspace, span)</code>; for variable-length arrays, use <code>MyArray.CreateBuilder(workspace, span)</code> or <code>MyArray.Build(span)</code></li>
+<li><strong>Regenerate types</strong> — run the V5 code generator against your JSON Schema files</li>
+<li><strong>Review generated names</strong> — V5 has different name reservations than V4, so some property and type names may change (e.g. <code>CountValue</code> → <code>Count</code>). Check for renamed properties and types after regenerating.</li>
+</ol>
+        </div>
+    </main>
+</div>
+
+    </div>
+    <footer class="site-footer">
+    <div class="site-footer__inner">
+        <div class="site-footer__sponsor">
+            Sponsored by
+            <a href="https://endjin.com" target="_blank" rel="noopener noreferrer">endjin</a>
+        </div>
+        <ul class="site-footer__links" role="list">
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/pr-preview/pr-740/getting-started/index.html">Getting Started</a></li>
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/pr-preview/pr-740/docs/index.html">Documentation</a></li>
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/pr-preview/pr-740/examples/index.html">Examples</a></li>
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/pr-preview/pr-740/api/index.html">API</a></li>
+            <li><a class="site-footer__link" href="https://github.com/corvus-dotnet/Corvus.JsonSchema" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+            <li><a class="site-footer__link" href="https://www.nuget.org/packages?q=Corvus.Json" target="_blank" rel="noopener noreferrer">NuGet</a></li>
+        </ul>
+        <p class="site-footer__copyright">&copy; 2026 endjin Ltd.</p>
+    </div>
+</footer>
+
+    <!-- highlight.js for syntax highlighting (CSS targets .hljs-* classes) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/csharp.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/json.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/bash.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/xml.min.js" defer></script>
+    <script>document.addEventListener('DOMContentLoaded',()=>hljs.highlightAll())</script>
+    <script src="/Corvus.JsonSchema/pr-preview/pr-740/assets/js/main.js" defer></script>
+    <script src="/Corvus.JsonSchema/pr-preview/pr-740/assets/js/sidebar-search.js" defer></script>
+    
+</body>
+</html>

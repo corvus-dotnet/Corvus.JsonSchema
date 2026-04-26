@@ -1,0 +1,1434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#1C1D21" />
+    <meta name="description" content="API documentation for JsonSByte.Explicit Operator in Corvus.Json" />
+    <meta name="keywords" content="API, Operator, JsonSByte, Corvus.Json" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:description" content="API documentation for JsonSByte.Explicit Operator" />
+    <meta name="twitter:image" content="/Corvus.JsonSchema/pr-preview/pr-740/assets/images/og-corvus.png" />
+    <meta name="twitter:title" content="JsonSByte.Explicit Operator &#x2014; Corvus.Json" />
+    <meta property="article:tag" content="API" />
+    <meta property="article:tag" content="Operator" />
+    <meta property="article:tag" content="JsonSByte" />
+    <meta property="article:tag" content="Corvus.Json" />
+    <meta property="og:description" content="API documentation for JsonSByte.Explicit Operator" />
+    <meta property="og:image" content="/Corvus.JsonSchema/pr-preview/pr-740/assets/images/og-corvus.png" />
+    <meta property="og:title" content="JsonSByte.Explicit Operator &#x2014; Corvus.Json" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://corvus-oss.org/corvus-json-schema/api/v4/corvus-json-jsonsbyte.op-explicit/" />
+    <title>JsonSByte.Explicit Operator &#x2014; Corvus.Json</title>
+    <link itemprop="url" href="https://corvus-oss.org/corvus-json-schema/api/v4/corvus-json-jsonsbyte.op-explicit/" />
+    <link rel="canonical" href="https://corvus-oss.org/corvus-json-schema/api/v4/corvus-json-jsonsbyte.op-explicit/" />
+    <link rel="sitemap" href="https://corvus-oss.org/corvus-json-schema/sitemap.xml" />
+    <!-- Styles -->
+    <link rel="stylesheet" href="/Corvus.JsonSchema/pr-preview/pr-740/main.css" />
+    <link rel="icon" type="image/svg+xml" href="/Corvus.JsonSchema/pr-preview/pr-740/assets/images/favicon.svg" />
+    
+</head>
+<body>
+    <a class="sr-only" href="#main-content">Skip to content</a>
+<header class="site-header">
+    <div class="site-header__inner">
+        <a class="site-header__brand" href="/Corvus.JsonSchema/pr-preview/pr-740/index.html" aria-label="Corvus.JsonSchema home">
+            <img src="/Corvus.JsonSchema/pr-preview/pr-740/assets/images/logo-corvus.svg" alt="" width="28" height="28" aria-hidden="true" />
+            Corvus<span style="color:var(--color-brand)">.</span>Json<span style="color:var(--color-brand)">Schema</span>
+        </a>
+        <nav class="site-header__nav-desktop" aria-label="Main navigation">
+                    <a href="/Corvus.JsonSchema/pr-preview/pr-740/getting-started/index.html"
+                       class="site-header__link "
+                       >Getting Started</a>
+                    <a href="/Corvus.JsonSchema/pr-preview/pr-740/docs/index.html"
+                       class="site-header__link "
+                       >Documentation</a>
+                    <a href="/Corvus.JsonSchema/pr-preview/pr-740/examples/index.html"
+                       class="site-header__link "
+                       >Examples</a>
+                    <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/index.html"
+                       class="site-header__link "
+                       >API</a>
+            <a href="/Corvus.JsonSchema/pr-preview/pr-740/playground/"
+               class="site-header__link"
+               target="_blank" rel="noopener noreferrer"
+               title="Interactive JSON Schema playground">Playground</a>
+            <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema"
+               class="site-header__link" target="_blank" rel="noopener noreferrer"
+               aria-label="View on GitHub">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+            </a>
+        </nav>
+        <button class="site-header__menu-toggle js-toggle-menu"
+                aria-expanded="false" aria-label="Toggle menu">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+            </svg>
+        </button>
+    </div>
+</header>
+<nav class="site-header__nav-mobile js-mobile-nav" aria-label="Mobile navigation">
+            <a href="/Corvus.JsonSchema/pr-preview/pr-740/getting-started/index.html" class="site-header__link">Getting Started</a>
+            <a href="/Corvus.JsonSchema/pr-preview/pr-740/docs/index.html" class="site-header__link">Documentation</a>
+            <a href="/Corvus.JsonSchema/pr-preview/pr-740/examples/index.html" class="site-header__link">Examples</a>
+            <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/index.html" class="site-header__link">API</a>
+    <a href="/Corvus.JsonSchema/pr-preview/pr-740/playground/" class="site-header__link" target="_blank" rel="noopener noreferrer">Playground</a>
+    <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema"
+       class="site-header__link" target="_blank" rel="noopener noreferrer">GitHub</a>
+</nav>
+
+    <div class="page-content">
+    <div class="layout-docs container">
+        <button class="sidebar-toggle" aria-label="Toggle navigation" aria-expanded="false"></button>
+    <div class="sidebar-backdrop"></div>
+    <aside class="sidebar" data-has-member-nav>
+        <div class="sidebar-search">
+            <svg class="sidebar-search__icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M11.5 7a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0Zm-.82 4.74a6 6 0 1 1 1.06-1.06l3.04 3.04a.75.75 0 1 1-1.06 1.06l-3.04-3.04Z"/></svg>
+            <input id="sidebar-search-input" class="sidebar-search__input" type="search" placeholder="Search" autocomplete="off" />
+            <div id="sidebar-search-dropdown" class="sidebar-search__dropdown" hidden></div>
+        </div>
+        <div class="sidebar__inner" data-sidebar-url="sidebar.html">
+        </div>
+    </aside>
+
+    <main id="main-content" class="layout-docs__main">
+        <div class="doc__content api-ref">
+            <h1>JsonSByte.Explicit Operator</h1>
+<h2 id="definition">Definition</h2>
+<p><strong>Namespace:</strong> Corvus.Json<br />
+<strong>Assembly:</strong> Corvus.Text.Json.dll</p>
+<h2 id="overloads">Overloads</h2>
+<table>
+<thead>
+<tr>
+<th>Operator</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="#explicit-operator-byte-jsonsbyte">explicit operator byte(JsonSByte)</a></td>
+<td>Conversion to byte.</td>
+</tr>
+<tr>
+<td><a href="#explicit-operator-jsonsbyte-byte">explicit operator JsonSByte(byte)</a></td>
+<td>Conversion from byte.</td>
+</tr>
+<tr>
+<td><a href="#explicit-operator-decimal-jsonsbyte">explicit operator decimal(JsonSByte)</a></td>
+<td>Conversion to decimal.</td>
+</tr>
+<tr>
+<td><a href="#explicit-operator-jsonsbyte-decimal">explicit operator JsonSByte(decimal)</a></td>
+<td>Conversion from decimal.</td>
+</tr>
+<tr>
+<td><a href="#explicit-operator-double-jsonsbyte">explicit operator double(JsonSByte)</a></td>
+<td>Conversion to double.</td>
+</tr>
+<tr>
+<td><a href="#explicit-operator-jsonsbyte-double">explicit operator JsonSByte(double)</a></td>
+<td>Conversion from double.</td>
+</tr>
+<tr>
+<td><a href="#explicit-operator-short-jsonsbyte">explicit operator short(JsonSByte)</a></td>
+<td>Conversion to short.</td>
+</tr>
+<tr>
+<td><a href="#explicit-operator-jsonsbyte-short">explicit operator JsonSByte(short)</a></td>
+<td>Conversion from short.</td>
+</tr>
+<tr>
+<td><a href="#explicit-operator-int-jsonsbyte">explicit operator int(JsonSByte)</a></td>
+<td>Conversion to int.</td>
+</tr>
+<tr>
+<td><a href="#explicit-operator-jsonsbyte-int">explicit operator JsonSByte(int)</a></td>
+<td>Conversion from int.</td>
+</tr>
+<tr>
+<td><a href="#explicit-operator-long-jsonsbyte">explicit operator long(JsonSByte)</a></td>
+<td>Conversion to long.</td>
+</tr>
+<tr>
+<td><a href="#explicit-operator-jsonsbyte-long">explicit operator JsonSByte(long)</a></td>
+<td>Conversion from long.</td>
+</tr>
+<tr>
+<td><a href="#explicit-operator-int128-jsonsbyte">explicit operator Int128(JsonSByte)</a></td>
+<td>Conversion to Int128.</td>
+</tr>
+<tr>
+<td><a href="#explicit-operator-jsonsbyte-int128">explicit operator JsonSByte(Int128)</a></td>
+<td>Conversion from Int128.</td>
+</tr>
+<tr>
+<td><a href="#explicit-operator-half-jsonsbyte">explicit operator Half(JsonSByte)</a></td>
+<td>Conversion to Half.</td>
+</tr>
+<tr>
+<td><a href="#explicit-operator-jsonsbyte-half">explicit operator JsonSByte(Half)</a></td>
+<td>Conversion from Half.</td>
+</tr>
+<tr>
+<td><a href="#explicit-operator-float-jsonsbyte">explicit operator float(JsonSByte)</a></td>
+<td>Conversion to float.</td>
+</tr>
+<tr>
+<td><a href="#explicit-operator-jsonsbyte-float">explicit operator JsonSByte(float)</a></td>
+<td>Conversion from float.</td>
+</tr>
+<tr>
+<td><a href="#explicit-operator-ushort-jsonsbyte">explicit operator ushort(JsonSByte)</a></td>
+<td>Conversion to ushort.</td>
+</tr>
+<tr>
+<td><a href="#explicit-operator-jsonsbyte-ushort">explicit operator JsonSByte(ushort)</a></td>
+<td>Conversion from ushort.</td>
+</tr>
+<tr>
+<td><a href="#explicit-operator-uint-jsonsbyte">explicit operator uint(JsonSByte)</a></td>
+<td>Conversion to uint.</td>
+</tr>
+<tr>
+<td><a href="#explicit-operator-jsonsbyte-uint">explicit operator JsonSByte(uint)</a></td>
+<td>Conversion from uint.</td>
+</tr>
+<tr>
+<td><a href="#explicit-operator-ulong-jsonsbyte">explicit operator ulong(JsonSByte)</a></td>
+<td>Conversion to ulong.</td>
+</tr>
+<tr>
+<td><a href="#explicit-operator-jsonsbyte-ulong">explicit operator JsonSByte(ulong)</a></td>
+<td>Conversion from ulong.</td>
+</tr>
+<tr>
+<td><a href="#explicit-operator-uint128-jsonsbyte">explicit operator UInt128(JsonSByte)</a></td>
+<td>Conversion to UInt128.</td>
+</tr>
+<tr>
+<td><a href="#explicit-operator-jsonsbyte-uint128">explicit operator JsonSByte(UInt128)</a></td>
+<td>Conversion from UInt128.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="explicit-operator-byte-jsonsbyte">explicit operator byte(JsonSByte)</h2>
+<p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/zf-migration/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/GeneratedCoreTypes/JsonSByte.Number.cs#L88">JsonSByte.Number.cs</a></p>
+<p>Conversion to byte.</p>
+<pre><code class="language-csharp">public static explicit operator byte(JsonSByte value)
+</code></pre>
+<h3 id="parameters">Parameters</h3>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>value</code></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-jsonsbyte.html"><code>JsonSByte</code></a></td>
+<td>The value from which to convert.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="returns">Returns</h3>
+<p><a href="https://learn.microsoft.com/dotnet/api/system.byte"><code>byte</code></a></p>
+<p>An instance of the byte.</p>
+<h2 id="applies-to">Applies To</h2>
+<table>
+<thead>
+<tr>
+<th>Product</th>
+<th>Versions</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>.NET</td>
+<td>9, 10</td>
+</tr>
+<tr>
+<td>.NET Standard</td>
+<td>2.0, 2.1</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="explicit-operator-jsonsbyte-byte">explicit operator JsonSByte(byte)</h2>
+<p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/zf-migration/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/GeneratedCoreTypes/JsonSByte.Number.cs#L88">JsonSByte.Number.cs</a></p>
+<p>Conversion from byte.</p>
+<pre><code class="language-csharp">public static explicit operator JsonSByte(byte value)
+</code></pre>
+<h3 id="parameters-1">Parameters</h3>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>value</code></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.byte"><code>byte</code></a></td>
+<td>The value from which to convert.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="returns-1">Returns</h3>
+<p><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-jsonsbyte.html"><code>JsonSByte</code></a></p>
+<p>An instance of the <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-jsonsbyte.html"><code>JsonSByte</code></a>.</p>
+<h2 id="applies-to-1">Applies To</h2>
+<table>
+<thead>
+<tr>
+<th>Product</th>
+<th>Versions</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>.NET</td>
+<td>9, 10</td>
+</tr>
+<tr>
+<td>.NET Standard</td>
+<td>2.0, 2.1</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="explicit-operator-decimal-jsonsbyte">explicit operator decimal(JsonSByte)</h2>
+<p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/zf-migration/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/GeneratedCoreTypes/JsonSByte.Number.cs#L88">JsonSByte.Number.cs</a></p>
+<p>Conversion to decimal.</p>
+<pre><code class="language-csharp">public static explicit operator decimal(JsonSByte value)
+</code></pre>
+<h3 id="parameters-2">Parameters</h3>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>value</code></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-jsonsbyte.html"><code>JsonSByte</code></a></td>
+<td>The value from which to convert.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="returns-2">Returns</h3>
+<p><a href="https://learn.microsoft.com/dotnet/api/system.decimal"><code>decimal</code></a></p>
+<p>An instance of the decimal.</p>
+<h2 id="applies-to-2">Applies To</h2>
+<table>
+<thead>
+<tr>
+<th>Product</th>
+<th>Versions</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>.NET</td>
+<td>9, 10</td>
+</tr>
+<tr>
+<td>.NET Standard</td>
+<td>2.0, 2.1</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="explicit-operator-jsonsbyte-decimal">explicit operator JsonSByte(decimal)</h2>
+<p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/zf-migration/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/GeneratedCoreTypes/JsonSByte.Number.cs#L88">JsonSByte.Number.cs</a></p>
+<p>Conversion from decimal.</p>
+<pre><code class="language-csharp">public static explicit operator JsonSByte(decimal value)
+</code></pre>
+<h3 id="parameters-3">Parameters</h3>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>value</code></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.decimal"><code>decimal</code></a></td>
+<td>The value from which to convert.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="returns-3">Returns</h3>
+<p><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-jsonsbyte.html"><code>JsonSByte</code></a></p>
+<p>An instance of the <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-jsonsbyte.html"><code>JsonSByte</code></a>.</p>
+<h2 id="applies-to-3">Applies To</h2>
+<table>
+<thead>
+<tr>
+<th>Product</th>
+<th>Versions</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>.NET</td>
+<td>9, 10</td>
+</tr>
+<tr>
+<td>.NET Standard</td>
+<td>2.0, 2.1</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="explicit-operator-double-jsonsbyte">explicit operator double(JsonSByte)</h2>
+<p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/zf-migration/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/GeneratedCoreTypes/JsonSByte.Number.cs#L88">JsonSByte.Number.cs</a></p>
+<p>Conversion to double.</p>
+<pre><code class="language-csharp">public static explicit operator double(JsonSByte value)
+</code></pre>
+<h3 id="parameters-4">Parameters</h3>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>value</code></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-jsonsbyte.html"><code>JsonSByte</code></a></td>
+<td>The value from which to convert.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="returns-4">Returns</h3>
+<p><a href="https://learn.microsoft.com/dotnet/api/system.double"><code>double</code></a></p>
+<p>An instance of the double.</p>
+<h2 id="applies-to-4">Applies To</h2>
+<table>
+<thead>
+<tr>
+<th>Product</th>
+<th>Versions</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>.NET</td>
+<td>9, 10</td>
+</tr>
+<tr>
+<td>.NET Standard</td>
+<td>2.0, 2.1</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="explicit-operator-jsonsbyte-double">explicit operator JsonSByte(double)</h2>
+<p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/zf-migration/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/GeneratedCoreTypes/JsonSByte.Number.cs#L88">JsonSByte.Number.cs</a></p>
+<p>Conversion from double.</p>
+<pre><code class="language-csharp">public static explicit operator JsonSByte(double value)
+</code></pre>
+<h3 id="parameters-5">Parameters</h3>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>value</code></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.double"><code>double</code></a></td>
+<td>The value from which to convert.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="returns-5">Returns</h3>
+<p><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-jsonsbyte.html"><code>JsonSByte</code></a></p>
+<p>An instance of the <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-jsonsbyte.html"><code>JsonSByte</code></a>.</p>
+<h2 id="applies-to-5">Applies To</h2>
+<table>
+<thead>
+<tr>
+<th>Product</th>
+<th>Versions</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>.NET</td>
+<td>9, 10</td>
+</tr>
+<tr>
+<td>.NET Standard</td>
+<td>2.0, 2.1</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="explicit-operator-short-jsonsbyte">explicit operator short(JsonSByte)</h2>
+<p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/zf-migration/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/GeneratedCoreTypes/JsonSByte.Number.cs#L88">JsonSByte.Number.cs</a></p>
+<p>Conversion to short.</p>
+<pre><code class="language-csharp">public static explicit operator short(JsonSByte value)
+</code></pre>
+<h3 id="parameters-6">Parameters</h3>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>value</code></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-jsonsbyte.html"><code>JsonSByte</code></a></td>
+<td>The value from which to convert.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="returns-6">Returns</h3>
+<p><a href="https://learn.microsoft.com/dotnet/api/system.int16"><code>short</code></a></p>
+<p>An instance of the short.</p>
+<h2 id="applies-to-6">Applies To</h2>
+<table>
+<thead>
+<tr>
+<th>Product</th>
+<th>Versions</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>.NET</td>
+<td>9, 10</td>
+</tr>
+<tr>
+<td>.NET Standard</td>
+<td>2.0, 2.1</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="explicit-operator-jsonsbyte-short">explicit operator JsonSByte(short)</h2>
+<p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/zf-migration/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/GeneratedCoreTypes/JsonSByte.Number.cs#L88">JsonSByte.Number.cs</a></p>
+<p>Conversion from short.</p>
+<pre><code class="language-csharp">public static explicit operator JsonSByte(short value)
+</code></pre>
+<h3 id="parameters-7">Parameters</h3>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>value</code></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.int16"><code>short</code></a></td>
+<td>The value from which to convert.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="returns-7">Returns</h3>
+<p><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-jsonsbyte.html"><code>JsonSByte</code></a></p>
+<p>An instance of the <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-jsonsbyte.html"><code>JsonSByte</code></a>.</p>
+<h2 id="applies-to-7">Applies To</h2>
+<table>
+<thead>
+<tr>
+<th>Product</th>
+<th>Versions</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>.NET</td>
+<td>9, 10</td>
+</tr>
+<tr>
+<td>.NET Standard</td>
+<td>2.0, 2.1</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="explicit-operator-int-jsonsbyte">explicit operator int(JsonSByte)</h2>
+<p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/zf-migration/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/GeneratedCoreTypes/JsonSByte.Number.cs#L88">JsonSByte.Number.cs</a></p>
+<p>Conversion to int.</p>
+<pre><code class="language-csharp">public static explicit operator int(JsonSByte value)
+</code></pre>
+<h3 id="parameters-8">Parameters</h3>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>value</code></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-jsonsbyte.html"><code>JsonSByte</code></a></td>
+<td>The value from which to convert.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="returns-8">Returns</h3>
+<p><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>int</code></a></p>
+<p>An instance of the int.</p>
+<h2 id="applies-to-8">Applies To</h2>
+<table>
+<thead>
+<tr>
+<th>Product</th>
+<th>Versions</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>.NET</td>
+<td>9, 10</td>
+</tr>
+<tr>
+<td>.NET Standard</td>
+<td>2.0, 2.1</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="explicit-operator-jsonsbyte-int">explicit operator JsonSByte(int)</h2>
+<p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/zf-migration/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/GeneratedCoreTypes/JsonSByte.Number.cs#L88">JsonSByte.Number.cs</a></p>
+<p>Conversion from int.</p>
+<pre><code class="language-csharp">public static explicit operator JsonSByte(int value)
+</code></pre>
+<h3 id="parameters-9">Parameters</h3>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>value</code></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>int</code></a></td>
+<td>The value from which to convert.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="returns-9">Returns</h3>
+<p><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-jsonsbyte.html"><code>JsonSByte</code></a></p>
+<p>An instance of the <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-jsonsbyte.html"><code>JsonSByte</code></a>.</p>
+<h2 id="applies-to-9">Applies To</h2>
+<table>
+<thead>
+<tr>
+<th>Product</th>
+<th>Versions</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>.NET</td>
+<td>9, 10</td>
+</tr>
+<tr>
+<td>.NET Standard</td>
+<td>2.0, 2.1</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="explicit-operator-long-jsonsbyte">explicit operator long(JsonSByte)</h2>
+<p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/zf-migration/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/GeneratedCoreTypes/JsonSByte.Number.cs#L88">JsonSByte.Number.cs</a></p>
+<p>Conversion to long.</p>
+<pre><code class="language-csharp">public static explicit operator long(JsonSByte value)
+</code></pre>
+<h3 id="parameters-10">Parameters</h3>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>value</code></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-jsonsbyte.html"><code>JsonSByte</code></a></td>
+<td>The value from which to convert.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="returns-10">Returns</h3>
+<p><a href="https://learn.microsoft.com/dotnet/api/system.int64"><code>long</code></a></p>
+<p>An instance of the long.</p>
+<h2 id="applies-to-10">Applies To</h2>
+<table>
+<thead>
+<tr>
+<th>Product</th>
+<th>Versions</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>.NET</td>
+<td>9, 10</td>
+</tr>
+<tr>
+<td>.NET Standard</td>
+<td>2.0, 2.1</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="explicit-operator-jsonsbyte-long">explicit operator JsonSByte(long)</h2>
+<p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/zf-migration/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/GeneratedCoreTypes/JsonSByte.Number.cs#L88">JsonSByte.Number.cs</a></p>
+<p>Conversion from long.</p>
+<pre><code class="language-csharp">public static explicit operator JsonSByte(long value)
+</code></pre>
+<h3 id="parameters-11">Parameters</h3>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>value</code></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.int64"><code>long</code></a></td>
+<td>The value from which to convert.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="returns-11">Returns</h3>
+<p><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-jsonsbyte.html"><code>JsonSByte</code></a></p>
+<p>An instance of the <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-jsonsbyte.html"><code>JsonSByte</code></a>.</p>
+<h2 id="applies-to-11">Applies To</h2>
+<table>
+<thead>
+<tr>
+<th>Product</th>
+<th>Versions</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>.NET</td>
+<td>9, 10</td>
+</tr>
+<tr>
+<td>.NET Standard</td>
+<td>2.0, 2.1</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="explicit-operator-int128-jsonsbyte">explicit operator Int128(JsonSByte)</h2>
+<p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/zf-migration/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/GeneratedCoreTypes/JsonSByte.Number.cs#L88">JsonSByte.Number.cs</a></p>
+<p>Conversion to Int128.</p>
+<pre><code class="language-csharp">public static explicit operator Int128(JsonSByte value)
+</code></pre>
+<h3 id="parameters-12">Parameters</h3>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>value</code></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-jsonsbyte.html"><code>JsonSByte</code></a></td>
+<td>The value from which to convert.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="returns-12">Returns</h3>
+<p><a href="https://learn.microsoft.com/dotnet/api/system.int128"><code>Int128</code></a></p>
+<p>An instance of the Int128.</p>
+<h2 id="applies-to-12">Applies To</h2>
+<table>
+<thead>
+<tr>
+<th>Product</th>
+<th>Versions</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>.NET</td>
+<td>9, 10</td>
+</tr>
+<tr>
+<td>.NET Standard</td>
+<td>2.1</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="explicit-operator-jsonsbyte-int128">explicit operator JsonSByte(Int128)</h2>
+<p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/zf-migration/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/GeneratedCoreTypes/JsonSByte.Number.cs#L88">JsonSByte.Number.cs</a></p>
+<p>Conversion from Int128.</p>
+<pre><code class="language-csharp">public static explicit operator JsonSByte(Int128 value)
+</code></pre>
+<h3 id="parameters-13">Parameters</h3>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>value</code></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.int128"><code>Int128</code></a></td>
+<td>The value from which to convert.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="returns-13">Returns</h3>
+<p><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-jsonsbyte.html"><code>JsonSByte</code></a></p>
+<p>An instance of the <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-jsonsbyte.html"><code>JsonSByte</code></a>.</p>
+<h2 id="applies-to-13">Applies To</h2>
+<table>
+<thead>
+<tr>
+<th>Product</th>
+<th>Versions</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>.NET</td>
+<td>9, 10</td>
+</tr>
+<tr>
+<td>.NET Standard</td>
+<td>2.1</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="explicit-operator-half-jsonsbyte">explicit operator Half(JsonSByte)</h2>
+<p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/zf-migration/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/GeneratedCoreTypes/JsonSByte.Number.cs#L88">JsonSByte.Number.cs</a></p>
+<p>Conversion to Half.</p>
+<pre><code class="language-csharp">public static explicit operator Half(JsonSByte value)
+</code></pre>
+<h3 id="parameters-14">Parameters</h3>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>value</code></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-jsonsbyte.html"><code>JsonSByte</code></a></td>
+<td>The value from which to convert.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="returns-14">Returns</h3>
+<p><a href="https://learn.microsoft.com/dotnet/api/system.half"><code>Half</code></a></p>
+<p>An instance of the Half.</p>
+<h2 id="applies-to-14">Applies To</h2>
+<table>
+<thead>
+<tr>
+<th>Product</th>
+<th>Versions</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>.NET</td>
+<td>9, 10</td>
+</tr>
+<tr>
+<td>.NET Standard</td>
+<td>2.1</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="explicit-operator-jsonsbyte-half">explicit operator JsonSByte(Half)</h2>
+<p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/zf-migration/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/GeneratedCoreTypes/JsonSByte.Number.cs#L88">JsonSByte.Number.cs</a></p>
+<p>Conversion from Half.</p>
+<pre><code class="language-csharp">public static explicit operator JsonSByte(Half value)
+</code></pre>
+<h3 id="parameters-15">Parameters</h3>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>value</code></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.half"><code>Half</code></a></td>
+<td>The value from which to convert.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="returns-15">Returns</h3>
+<p><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-jsonsbyte.html"><code>JsonSByte</code></a></p>
+<p>An instance of the <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-jsonsbyte.html"><code>JsonSByte</code></a>.</p>
+<h2 id="applies-to-15">Applies To</h2>
+<table>
+<thead>
+<tr>
+<th>Product</th>
+<th>Versions</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>.NET</td>
+<td>9, 10</td>
+</tr>
+<tr>
+<td>.NET Standard</td>
+<td>2.1</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="explicit-operator-float-jsonsbyte">explicit operator float(JsonSByte)</h2>
+<p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/zf-migration/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/GeneratedCoreTypes/JsonSByte.Number.cs#L88">JsonSByte.Number.cs</a></p>
+<p>Conversion to float.</p>
+<pre><code class="language-csharp">public static explicit operator float(JsonSByte value)
+</code></pre>
+<h3 id="parameters-16">Parameters</h3>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>value</code></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-jsonsbyte.html"><code>JsonSByte</code></a></td>
+<td>The value from which to convert.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="returns-16">Returns</h3>
+<p><a href="https://learn.microsoft.com/dotnet/api/system.single"><code>float</code></a></p>
+<p>An instance of the float.</p>
+<h2 id="applies-to-16">Applies To</h2>
+<table>
+<thead>
+<tr>
+<th>Product</th>
+<th>Versions</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>.NET</td>
+<td>9, 10</td>
+</tr>
+<tr>
+<td>.NET Standard</td>
+<td>2.0, 2.1</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="explicit-operator-jsonsbyte-float">explicit operator JsonSByte(float)</h2>
+<p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/zf-migration/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/GeneratedCoreTypes/JsonSByte.Number.cs#L88">JsonSByte.Number.cs</a></p>
+<p>Conversion from float.</p>
+<pre><code class="language-csharp">public static explicit operator JsonSByte(float value)
+</code></pre>
+<h3 id="parameters-17">Parameters</h3>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>value</code></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.single"><code>float</code></a></td>
+<td>The value from which to convert.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="returns-17">Returns</h3>
+<p><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-jsonsbyte.html"><code>JsonSByte</code></a></p>
+<p>An instance of the <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-jsonsbyte.html"><code>JsonSByte</code></a>.</p>
+<h2 id="applies-to-17">Applies To</h2>
+<table>
+<thead>
+<tr>
+<th>Product</th>
+<th>Versions</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>.NET</td>
+<td>9, 10</td>
+</tr>
+<tr>
+<td>.NET Standard</td>
+<td>2.0, 2.1</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="explicit-operator-ushort-jsonsbyte">explicit operator ushort(JsonSByte)</h2>
+<p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/zf-migration/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/GeneratedCoreTypes/JsonSByte.Number.cs#L88">JsonSByte.Number.cs</a></p>
+<p>Conversion to ushort.</p>
+<pre><code class="language-csharp">public static explicit operator ushort(JsonSByte value)
+</code></pre>
+<h3 id="parameters-18">Parameters</h3>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>value</code></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-jsonsbyte.html"><code>JsonSByte</code></a></td>
+<td>The value from which to convert.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="returns-18">Returns</h3>
+<p><a href="https://learn.microsoft.com/dotnet/api/system.uint16"><code>ushort</code></a></p>
+<p>An instance of the ushort.</p>
+<h2 id="applies-to-18">Applies To</h2>
+<table>
+<thead>
+<tr>
+<th>Product</th>
+<th>Versions</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>.NET</td>
+<td>9, 10</td>
+</tr>
+<tr>
+<td>.NET Standard</td>
+<td>2.0, 2.1</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="explicit-operator-jsonsbyte-ushort">explicit operator JsonSByte(ushort)</h2>
+<p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/zf-migration/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/GeneratedCoreTypes/JsonSByte.Number.cs#L88">JsonSByte.Number.cs</a></p>
+<p>Conversion from ushort.</p>
+<pre><code class="language-csharp">public static explicit operator JsonSByte(ushort value)
+</code></pre>
+<h3 id="parameters-19">Parameters</h3>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>value</code></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.uint16"><code>ushort</code></a></td>
+<td>The value from which to convert.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="returns-19">Returns</h3>
+<p><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-jsonsbyte.html"><code>JsonSByte</code></a></p>
+<p>An instance of the <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-jsonsbyte.html"><code>JsonSByte</code></a>.</p>
+<h2 id="applies-to-19">Applies To</h2>
+<table>
+<thead>
+<tr>
+<th>Product</th>
+<th>Versions</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>.NET</td>
+<td>9, 10</td>
+</tr>
+<tr>
+<td>.NET Standard</td>
+<td>2.0, 2.1</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="explicit-operator-uint-jsonsbyte">explicit operator uint(JsonSByte)</h2>
+<p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/zf-migration/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/GeneratedCoreTypes/JsonSByte.Number.cs#L88">JsonSByte.Number.cs</a></p>
+<p>Conversion to uint.</p>
+<pre><code class="language-csharp">public static explicit operator uint(JsonSByte value)
+</code></pre>
+<h3 id="parameters-20">Parameters</h3>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>value</code></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-jsonsbyte.html"><code>JsonSByte</code></a></td>
+<td>The value from which to convert.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="returns-20">Returns</h3>
+<p><a href="https://learn.microsoft.com/dotnet/api/system.uint32"><code>uint</code></a></p>
+<p>An instance of the uint.</p>
+<h2 id="applies-to-20">Applies To</h2>
+<table>
+<thead>
+<tr>
+<th>Product</th>
+<th>Versions</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>.NET</td>
+<td>9, 10</td>
+</tr>
+<tr>
+<td>.NET Standard</td>
+<td>2.0, 2.1</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="explicit-operator-jsonsbyte-uint">explicit operator JsonSByte(uint)</h2>
+<p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/zf-migration/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/GeneratedCoreTypes/JsonSByte.Number.cs#L88">JsonSByte.Number.cs</a></p>
+<p>Conversion from uint.</p>
+<pre><code class="language-csharp">public static explicit operator JsonSByte(uint value)
+</code></pre>
+<h3 id="parameters-21">Parameters</h3>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>value</code></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.uint32"><code>uint</code></a></td>
+<td>The value from which to convert.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="returns-21">Returns</h3>
+<p><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-jsonsbyte.html"><code>JsonSByte</code></a></p>
+<p>An instance of the <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-jsonsbyte.html"><code>JsonSByte</code></a>.</p>
+<h2 id="applies-to-21">Applies To</h2>
+<table>
+<thead>
+<tr>
+<th>Product</th>
+<th>Versions</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>.NET</td>
+<td>9, 10</td>
+</tr>
+<tr>
+<td>.NET Standard</td>
+<td>2.0, 2.1</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="explicit-operator-ulong-jsonsbyte">explicit operator ulong(JsonSByte)</h2>
+<p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/zf-migration/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/GeneratedCoreTypes/JsonSByte.Number.cs#L88">JsonSByte.Number.cs</a></p>
+<p>Conversion to ulong.</p>
+<pre><code class="language-csharp">public static explicit operator ulong(JsonSByte value)
+</code></pre>
+<h3 id="parameters-22">Parameters</h3>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>value</code></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-jsonsbyte.html"><code>JsonSByte</code></a></td>
+<td>The value from which to convert.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="returns-22">Returns</h3>
+<p><a href="https://learn.microsoft.com/dotnet/api/system.uint64"><code>ulong</code></a></p>
+<p>An instance of the ulong.</p>
+<h2 id="applies-to-22">Applies To</h2>
+<table>
+<thead>
+<tr>
+<th>Product</th>
+<th>Versions</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>.NET</td>
+<td>9, 10</td>
+</tr>
+<tr>
+<td>.NET Standard</td>
+<td>2.0, 2.1</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="explicit-operator-jsonsbyte-ulong">explicit operator JsonSByte(ulong)</h2>
+<p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/zf-migration/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/GeneratedCoreTypes/JsonSByte.Number.cs#L88">JsonSByte.Number.cs</a></p>
+<p>Conversion from ulong.</p>
+<pre><code class="language-csharp">public static explicit operator JsonSByte(ulong value)
+</code></pre>
+<h3 id="parameters-23">Parameters</h3>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>value</code></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.uint64"><code>ulong</code></a></td>
+<td>The value from which to convert.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="returns-23">Returns</h3>
+<p><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-jsonsbyte.html"><code>JsonSByte</code></a></p>
+<p>An instance of the <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-jsonsbyte.html"><code>JsonSByte</code></a>.</p>
+<h2 id="applies-to-23">Applies To</h2>
+<table>
+<thead>
+<tr>
+<th>Product</th>
+<th>Versions</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>.NET</td>
+<td>9, 10</td>
+</tr>
+<tr>
+<td>.NET Standard</td>
+<td>2.0, 2.1</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="explicit-operator-uint128-jsonsbyte">explicit operator UInt128(JsonSByte)</h2>
+<p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/zf-migration/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/GeneratedCoreTypes/JsonSByte.Number.cs#L88">JsonSByte.Number.cs</a></p>
+<p>Conversion to UInt128.</p>
+<pre><code class="language-csharp">public static explicit operator UInt128(JsonSByte value)
+</code></pre>
+<h3 id="parameters-24">Parameters</h3>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>value</code></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-jsonsbyte.html"><code>JsonSByte</code></a></td>
+<td>The value from which to convert.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="returns-24">Returns</h3>
+<p><a href="https://learn.microsoft.com/dotnet/api/system.uint128"><code>UInt128</code></a></p>
+<p>An instance of the UInt128.</p>
+<h2 id="applies-to-24">Applies To</h2>
+<table>
+<thead>
+<tr>
+<th>Product</th>
+<th>Versions</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>.NET</td>
+<td>9, 10</td>
+</tr>
+<tr>
+<td>.NET Standard</td>
+<td>2.1</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="explicit-operator-jsonsbyte-uint128">explicit operator JsonSByte(UInt128)</h2>
+<p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/zf-migration/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/GeneratedCoreTypes/JsonSByte.Number.cs#L88">JsonSByte.Number.cs</a></p>
+<p>Conversion from UInt128.</p>
+<pre><code class="language-csharp">public static explicit operator JsonSByte(UInt128 value)
+</code></pre>
+<h3 id="parameters-25">Parameters</h3>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>value</code></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.uint128"><code>UInt128</code></a></td>
+<td>The value from which to convert.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="returns-25">Returns</h3>
+<p><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-jsonsbyte.html"><code>JsonSByte</code></a></p>
+<p>An instance of the <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-jsonsbyte.html"><code>JsonSByte</code></a>.</p>
+<h2 id="applies-to-25">Applies To</h2>
+<table>
+<thead>
+<tr>
+<th>Product</th>
+<th>Versions</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>.NET</td>
+<td>9, 10</td>
+</tr>
+<tr>
+<td>.NET Standard</td>
+<td>2.1</td>
+</tr>
+</tbody>
+</table>
+<hr />
+        </div>
+        <div class="api-feedback">
+            <div class="api-feedback__inner">
+                <img src="/Corvus.JsonSchema/pr-preview/pr-740/assets/images/logo-corvus.svg" alt="Corvus" class="api-feedback__logo" />
+                <div class="api-feedback__text">
+                    <h3>Collaborate with us on GitHub</h3>
+                    <p>The source for this content can be found on <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema" target="_blank" rel="noopener noreferrer">GitHub</a>, where you can also create and review issues and pull requests.</p>
+                    <a class="api-feedback__link" href="https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/new" target="_blank" rel="noopener noreferrer">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor"><path d="M8 0c4.42 0 8 3.58 8 8a8.013 8.013 0 0 1-5.45 7.59c-.4.08-.55-.17-.55-.38 0-.27.01-1.13.01-2.2 0-.75-.25-1.23-.54-1.48 1.78-.2 3.65-.88 3.65-3.95 0-.88-.31-1.59-.82-2.15.08-.2.36-1.02-.08-2.12 0 0-.67-.22-2.2.82-.64-.18-1.32-.27-2-.27-.68 0-1.36.09-2 .27-1.53-1.03-2.2-.82-2.2-.82-.44 1.1-.16 1.92-.08 2.12-.51.56-.82 1.28-.82 2.15 0 3.06 1.86 3.75 3.64 3.95-.23.2-.44.55-.51 1.07-.46.21-1.61.55-2.33-.66-.15-.24-.6-.83-1.23-.82-.67.01-.27.38.01.53.34.19.73.9.82 1.13.16.45.68 1.31 2.69.94 0 .67.01 1.3.01 1.49 0 .21-.15.45-.55.38A7.995 7.995 0 0 1 0 8c0-4.42 3.58-8 8-8Z"/></svg>
+                        Open an issue
+                    </a>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+    </div>
+    <footer class="site-footer">
+    <div class="site-footer__inner">
+        <div class="site-footer__sponsor">
+            Sponsored by
+            <a href="https://endjin.com" target="_blank" rel="noopener noreferrer">endjin</a>
+        </div>
+        <ul class="site-footer__links" role="list">
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/pr-preview/pr-740/getting-started/index.html">Getting Started</a></li>
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/pr-preview/pr-740/docs/index.html">Documentation</a></li>
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/pr-preview/pr-740/examples/index.html">Examples</a></li>
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/pr-preview/pr-740/api/index.html">API</a></li>
+            <li><a class="site-footer__link" href="https://github.com/corvus-dotnet/Corvus.JsonSchema" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+            <li><a class="site-footer__link" href="https://www.nuget.org/packages?q=Corvus.Json" target="_blank" rel="noopener noreferrer">NuGet</a></li>
+        </ul>
+        <p class="site-footer__copyright">&copy; 2026 endjin Ltd.</p>
+    </div>
+</footer>
+
+    <!-- highlight.js for syntax highlighting (CSS targets .hljs-* classes) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/csharp.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/json.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/bash.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/xml.min.js" defer></script>
+    <script>document.addEventListener('DOMContentLoaded',()=>hljs.highlightAll())</script>
+    <script src="/Corvus.JsonSchema/pr-preview/pr-740/assets/js/main.js" defer></script>
+    <script src="/Corvus.JsonSchema/pr-preview/pr-740/assets/js/sidebar-search.js" defer></script>
+    
+</body>
+</html>

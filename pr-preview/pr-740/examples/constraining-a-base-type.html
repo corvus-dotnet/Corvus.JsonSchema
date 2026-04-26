@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#1C1D21" />
+    <meta name="description" content="This recipe demonstrates how to use `$ref` to base a new schema on an existing type and add tighter constraints to its properties, showing how JSON Schema composes constraints from both base and derived schemas." />
+    <meta name="keywords" content="recipe, JSON Schema, C#, constraining, base, type, $ref, properties, minimum, allOf, required, format, maximum, unevaluatedProperties, $defs, minLength, maxLength, CreateBuilder, EvaluateSchema, IsValid, From" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:description" content="This recipe demonstrates how to use `$ref` to base a new schema on an existing type and add tighter constraints to its properties, showing how JSON Schema composes constraints from both base and derived schemas." />
+    <meta name="twitter:image" content="/Corvus.JsonSchema/pr-preview/pr-740/assets/images/og-corvus.png" />
+    <meta name="twitter:title" content="Constraining a Base Type - Corvus.Text.Json Examples" />
+    <meta property="article:tag" content="recipe" />
+    <meta property="article:tag" content="JSON Schema" />
+    <meta property="article:tag" content="C#" />
+    <meta property="article:tag" content="constraining" />
+    <meta property="article:tag" content="base" />
+    <meta property="article:tag" content="type" />
+    <meta property="article:tag" content="$ref" />
+    <meta property="article:tag" content="properties" />
+    <meta property="article:tag" content="minimum" />
+    <meta property="article:tag" content="allOf" />
+    <meta property="article:tag" content="required" />
+    <meta property="article:tag" content="format" />
+    <meta property="article:tag" content="maximum" />
+    <meta property="article:tag" content="unevaluatedProperties" />
+    <meta property="article:tag" content="$defs" />
+    <meta property="article:tag" content="minLength" />
+    <meta property="article:tag" content="maxLength" />
+    <meta property="article:tag" content="CreateBuilder" />
+    <meta property="article:tag" content="EvaluateSchema" />
+    <meta property="article:tag" content="IsValid" />
+    <meta property="article:tag" content="From" />
+    <meta property="og:description" content="This recipe demonstrates how to use `$ref` to base a new schema on an existing type and add tighter constraints to its properties, showing how JSON Schema composes constraints from both base and derived schemas." />
+    <meta property="og:image" content="/Corvus.JsonSchema/pr-preview/pr-740/assets/images/og-corvus.png" />
+    <meta property="og:title" content="Constraining a Base Type - Corvus.Text.Json Examples" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://corvus-oss.org/corvus-json-schema/examples/constraining-a-base-type/" />
+    <title>Constraining a Base Type - Corvus.Text.Json Examples</title>
+    <link itemprop="url" href="https://corvus-oss.org/corvus-json-schema/examples/constraining-a-base-type/" />
+    <link rel="canonical" href="https://corvus-oss.org/corvus-json-schema/examples/constraining-a-base-type/" />
+    <link rel="sitemap" href="https://corvus-oss.org/corvus-json-schema/sitemap.xml" />
+    <!-- Styles -->
+    <link rel="stylesheet" href="/Corvus.JsonSchema/pr-preview/pr-740/main.css" />
+    <link rel="icon" type="image/svg+xml" href="/Corvus.JsonSchema/pr-preview/pr-740/assets/images/favicon.svg" />
+    
+</head>
+<body>
+    <a class="sr-only" href="#main-content">Skip to content</a>
+<header class="site-header">
+    <div class="site-header__inner">
+        <a class="site-header__brand" href="/Corvus.JsonSchema/pr-preview/pr-740/index.html" aria-label="Corvus.JsonSchema home">
+            <img src="/Corvus.JsonSchema/pr-preview/pr-740/assets/images/logo-corvus.svg" alt="" width="28" height="28" aria-hidden="true" />
+            Corvus<span style="color:var(--color-brand)">.</span>Json<span style="color:var(--color-brand)">Schema</span>
+        </a>
+        <nav class="site-header__nav-desktop" aria-label="Main navigation">
+                    <a href="/Corvus.JsonSchema/pr-preview/pr-740/getting-started/index.html"
+                       class="site-header__link "
+                       >Getting Started</a>
+                    <a href="/Corvus.JsonSchema/pr-preview/pr-740/docs/index.html"
+                       class="site-header__link "
+                       >Documentation</a>
+                    <a href="/Corvus.JsonSchema/pr-preview/pr-740/examples/index.html"
+                       class="site-header__link is-active"
+                       aria-current=page>Examples</a>
+                    <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/index.html"
+                       class="site-header__link "
+                       >API</a>
+            <a href="/Corvus.JsonSchema/pr-preview/pr-740/playground/"
+               class="site-header__link"
+               target="_blank" rel="noopener noreferrer"
+               title="Interactive JSON Schema playground">Playground</a>
+            <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema"
+               class="site-header__link" target="_blank" rel="noopener noreferrer"
+               aria-label="View on GitHub">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+            </a>
+        </nav>
+        <button class="site-header__menu-toggle js-toggle-menu"
+                aria-expanded="false" aria-label="Toggle menu">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+            </svg>
+        </button>
+    </div>
+</header>
+<nav class="site-header__nav-mobile js-mobile-nav" aria-label="Mobile navigation">
+            <a href="/Corvus.JsonSchema/pr-preview/pr-740/getting-started/index.html" class="site-header__link">Getting Started</a>
+            <a href="/Corvus.JsonSchema/pr-preview/pr-740/docs/index.html" class="site-header__link">Documentation</a>
+            <a href="/Corvus.JsonSchema/pr-preview/pr-740/examples/index.html" class="site-header__link">Examples</a>
+            <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/index.html" class="site-header__link">API</a>
+    <a href="/Corvus.JsonSchema/pr-preview/pr-740/playground/" class="site-header__link" target="_blank" rel="noopener noreferrer">Playground</a>
+    <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema"
+       class="site-header__link" target="_blank" rel="noopener noreferrer">GitHub</a>
+</nav>
+
+    <div class="page-content">
+    <div class="layout-docs container">
+    <button class="sidebar-toggle" aria-label="Toggle navigation" aria-expanded="false"></button>
+<div class="sidebar-backdrop"></div>
+<aside class="sidebar">
+    <div class="sidebar__inner">
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Getting Started</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                    <li class="sidebar__item"><a class="sidebar__link" href="/Corvus.JsonSchema/pr-preview/pr-740/getting-started/index.html">Tutorial</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Documentation</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/parsed-json-document.html">Parsing &amp; Reading JSON</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/json-document-builder.html">Building &amp; Mutating JSON</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/source-generator.html">Source Generator</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/code-generator.html">CLI Code Generation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/validator.html">Dynamic Schema Validation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/migrating-from-v4-to-v5.html">Migrating from V4</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/using-copilot-for-migration.html">Copilot Migration</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/migration-analyzers.html">Migration Analyzers</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/analyzers.html">Analyzers</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/schema-evaluator.html">Standalone Schema Evaluator</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/json-patch.html">JSON Patch (RFC 6902)</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/json-logic.html">JsonLogic Rule Engine</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/jsonata.html">JSONata Query Language</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/jmes-path.html">JMESPath Query Language</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/yaml.html">YAML Converter</a>
+                            </li>
+                </ul>
+            </div>
+        </div>
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Examples</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/data-object.html">Simple Data Objects</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/data-object-validation.html">Data Object Validation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/reusing-common-types.html">Reusing Common Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/open-versus-closed-types.html">Open Versus Closed Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/extending-a-base-type.html">Extending a Base Type</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link is-active" href="/Corvus.JsonSchema/pr-preview/pr-740/examples/constraining-a-base-type.html">Constraining a Base Type</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/creating-a-strongly-typed-array.html">Strongly Typed Arrays</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/creating-an-array-of-higher-rank.html">Multi-Dimensional Arrays</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/working-with-tensors.html">Working with Tensors</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/creating-tuples.html">Creating Tuples</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/interfaces-and-mix-in-types.html">Interfaces and Mix-In Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/pattern-matching.html">Pattern Matching and Discriminated Unions</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/polymorphism-with-discriminators.html">Polymorphism with Discriminator Properties</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/string-enumerations.html">String Enumerations and Pattern Matching</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/numeric-enumerations.html">Numeric Enumerations</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/maps.html">Maps of Strings to Strongly Typed Values</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/mapping-input-and-output-values.html">Mapping Input and Output Values</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/creating-and-mutating-objects.html">Creating and Mutating Objects</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/clone-and-freeze.html">Clone and Freeze</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/conditional-schemas.html">Conditional Schemas</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/default-values.html">Default Values</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/format-validation.html">Format Validation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/json-patch.html">JSON Patch (RFC 6902)</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/json-logic.html">JsonLogic Rule Evaluation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/jsonata.html">JSONata Expression Evaluation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/jmespath.html">JMESPath Query Evaluation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/yaml.html">YAML Conversion</a>
+                            </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</aside>
+
+    <main id="main-content" class="layout-docs__main">
+        <div class="doc__content">
+            <h1>Constraining a Base Type</h1>
+                <div class="card__tags" style="margin-bottom:1.5rem">
+                        <span class="card__tag">recipe</span>
+                        <span class="card__tag">JSON Schema</span>
+                        <span class="card__tag">C#</span>
+                        <span class="card__tag">constraining</span>
+                        <span class="card__tag">base</span>
+                        <span class="card__tag">type</span>
+                        <span class="card__tag">$ref</span>
+                        <span class="card__tag">properties</span>
+                        <span class="card__tag">minimum</span>
+                        <span class="card__tag">allOf</span>
+                        <span class="card__tag">required</span>
+                        <span class="card__tag">format</span>
+                        <span class="card__tag">maximum</span>
+                        <span class="card__tag">unevaluatedProperties</span>
+                        <span class="card__tag">$defs</span>
+                        <span class="card__tag">minLength</span>
+                        <span class="card__tag">maxLength</span>
+                        <span class="card__tag">CreateBuilder</span>
+                        <span class="card__tag">EvaluateSchema</span>
+                        <span class="card__tag">IsValid</span>
+                        <span class="card__tag">From</span>
+                </div>
+<p>This recipe demonstrates how to use <code>$ref</code> to base a new schema on an existing type and add tighter constraints to its properties, showing how JSON Schema composes constraints from both base and derived schemas.</p>
+<h2 id="the-pattern">The Pattern</h2>
+<p>Whether a type is <a href="/Corvus.JsonSchema/pr-preview/pr-740/examples/open-versus-closed-types.html">open or closed</a>, you can further constrain it in a schema.</p>
+<p>Remember that a closed type in JSON Schema is not like a &quot;sealed&quot; type in an OO language like C#. You can still base another schema on that type - it's just that it will not allow extra properties that are not present on the base type.</p>
+<p>In this case, we will use <code>$ref</code> to declare that we are basing our new schema on the <code>person-closed.json</code> schema.</p>
+<p>Notice how we can reference schema in external documents, not just the local schema document.</p>
+<div class="aside"><p>This would work equally well with the <code>person-open.json</code> we used when <a href="/Corvus.JsonSchema/pr-preview/pr-740/examples/extending-a-base-type.html">extending a base type.</a></p>
+</div>
+<p>We then constrain it by defining a new version of the <code>height</code> property.</p>
+<p>Again, we use <code>$ref</code> to base the new schema for the <code>height</code> property on the schema of the <code>height</code> property on the base schema. Then we add a new <code>minimum</code> value to constrain it to be greater than <code>2.0</code>.</p>
+<p>Notice how we don't just have to reference schemas defined in a <code>$defs</code> section. We can reference any schema defined in the document.</p>
+<p>I don't generally encourage this pattern; ideally if a type is <em>intended</em> to be shared and composed in this way, I like to indicate that by embedding it in the <code>$defs</code> section and documenting it properly.</p>
+<h2 id="the-schemas">The Schemas</h2>
+<p>File: <code>person-tall.json</code></p>
+<pre><code class="language-json">{
+  &quot;title&quot;: &quot;A tall person&quot;,
+  &quot;$ref&quot;: &quot;./person-closed.json&quot;,
+  &quot;properties&quot;: {
+    &quot;height&quot;: {
+      &quot;$ref&quot;: &quot;./person-closed.json#/properties/height&quot;,
+      &quot;minimum&quot;: 2.0
+    }
+  }
+}
+</code></pre>
+<div class="aside"><p>In draft 6 and draft 7, <code>$ref</code> cannot be used in this way. It acts as a reference to the target type and <em>ignores</em> the adjacent values. This is often a bit surprising! Instead, you can use <code>allOf</code> with a single value to get the same effect. It is a little clunkier to read, but works in the same way.
+<code>{ &quot;allOf&quot;: [{&quot;$ref&quot;: &quot;./person-closed.json&quot;}]}</code></p>
+</div>
+<p>File: <code>person-closed.json</code></p>
+<pre><code class="language-json">{
+  &quot;title&quot;: &quot;The person schema https://schema.org/Person&quot;,
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;required&quot;: [ &quot;familyName&quot;, &quot;givenName&quot;, &quot;birthDate&quot; ],
+  &quot;properties&quot;: {
+    &quot;familyName&quot;: { &quot;$ref&quot;: &quot;#/$defs/constrainedString&quot; },
+    &quot;givenName&quot;: { &quot;$ref&quot;: &quot;#/$defs/constrainedString&quot; },
+    &quot;otherNames&quot;: { &quot;$ref&quot;: &quot;#/$defs/constrainedString&quot; },
+    &quot;birthDate&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;format&quot;: &quot;date&quot;
+    },
+    &quot;height&quot;: {
+      &quot;type&quot;: &quot;number&quot;,
+      &quot;format&quot;: &quot;double&quot;,
+      &quot;exclusiveMinimum&quot;: 0.0,
+      &quot;maximum&quot;: 3.0
+    }
+  },
+
+  &quot;unevaluatedProperties&quot;: false,
+
+  &quot;$defs&quot;: {
+    &quot;constrainedString&quot;: {
+      &quot;type&quot;: &quot;string&quot;,
+      &quot;minLength&quot;: 1,
+      &quot;maxLength&quot;: 256
+    }
+  }
+}
+</code></pre>
+<p>When we validate, the <code>Height</code> property on <code>PersonTall</code> will be constrained <em>both</em> by characteristics of the base type (such that <code>0 &lt; height &lt;= 3.0</code>) <em>and</em> the new <code>height &gt;= 2.0</code>. The new constraints are composed from <em>both</em> the base <em>and</em> the derived schema.</p>
+<p>This &quot;composition&quot; behaviour is often surprising to people familiar with OO languages. You can't &quot;turn off&quot; the base constraints in the way you can with, say, C# virtual methods that do not call the base from the derived type, because they are composed together.</p>
+<p>You may also be surprised to learn that it is not even necessary to include this <code>$ref</code> to the base &quot;height&quot; schema to get the desired validation behaviour! If you just added the <code>minimum</code> constraint to the new <code>height</code> property, it would validate as desired. This is because the constraints are <em>composed</em> and all are applied. In fact, it is slightly more efficient <em>not</em> to include the $ref as it could cause those constraints to be evaluated twice.</p>
+<p>However, <code>$ref</code> is the way we describe to the code generator that we are basing this new <code>HeightEntity</code> type on the one from the base schema, rather than merely defining an isolated constraint. In that way, the generated type inherits all the other characteristics from the one on which it is based.</p>
+<h3 id="are-your-constraints-compatible">Are your constraints compatible?</h3>
+<p>Another consequence of this composition behaviour is that any additional constraints you apply should be compatible with the base type's existing constraints (if any).</p>
+<p>Neither JSON Schema itself, nor Corvus.Text.Json enforce this rule - but any schema that doesn't follow it will not be especially useful!</p>
+<p>Imagine, for example, defining a schema that <em>required</em> an entity to be both an <code>object</code> <em>and</em> a <code>string</code>. That's perfectly possible in JSON Schema; and the code generator will emit &quot;correct&quot; code that happily compiles. But no entity will ever be valid.</p>
+<p>(Contrast this with a constraint that an entity can be <em>either</em> an <code>object</code> <em>or</em> a <code>string</code> - that would be absolutely fine; this kind of &quot;sum type&quot; is common in e.g. typescript, but is unusual in .NET languages. We will see later how Corvus.Text.Json enables these kinds of structures in dotnet.)</p>
+<p>The code generator produces both <code>PersonTall</code> and <code>PersonClosed</code>; each has its own <code>HeightEntity</code>.</p>
+<h2 id="generated-code-usage">Generated Code Usage</h2>
+<h3 id="creating-a-constrained-type-and-validating">Creating a constrained type and validating</h3>
+<p><a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/v5/docs/ExampleRecipes/006-ConstrainingABaseType/Program.cs">Example code</a></p>
+<pre><code class="language-csharp">using Corvus.Text.Json;
+using ConstrainingABaseType.Models;
+using NodaTime;
+
+// Create a tall person, although Anne is not tall enough to be a valid tall person!
+using JsonWorkspace workspace = JsonWorkspace.Create();
+using var tallDoc = PersonTall.CreateBuilder(
+    workspace,
+    birthDate: new LocalDate(1820, 1, 17),
+    familyName: &quot;Brontë&quot;,
+    givenName: &quot;Anne&quot;,
+    height: 1.57);
+
+string json = tallDoc.RootElement.ToString();
+using var parsedTall = ParsedJsonDocument&lt;PersonTall&gt;.Parse(json);
+PersonTall personTall = parsedTall.RootElement;
+
+// personTall is not valid because of the additional constraint.
+if (personTall.EvaluateSchema())
+{
+    Console.WriteLine(&quot;personTall is valid&quot;);
+}
+else
+{
+    Console.WriteLine(&quot;personTall is not valid&quot;);
+}
+</code></pre>
+<h3 id="converting-to-the-less-constrained-base-type">Converting to the less-constrained base type</h3>
+<pre><code class="language-csharp">// Convert to the base type
+PersonClosed personClosedFromTall = PersonClosed.From(personTall);
+
+// But personClosedFromTall is valid because it does not have the
+// additional constraint.
+if (personClosedFromTall.EvaluateSchema())
+{
+    Console.WriteLine(&quot;personClosedFromTall is valid&quot;);
+}
+else
+{
+    Console.WriteLine(&quot;personClosedFromTall is not valid&quot;);
+}
+</code></pre>
+<h2 id="key-differences-from-v4">Key Differences from V4</h2>
+<h3 id="v4-corvus.json">V4 (Corvus.Json)</h3>
+<pre><code class="language-csharp">// Create directly with static Create method
+PersonTall personTall = PersonTall.Create(
+    birthDate: new LocalDate(1820, 1, 17),
+    familyName: &quot;Brontë&quot;,
+    givenName: &quot;Anne&quot;,
+    height: 1.57);
+
+// Validate
+bool isValid = personTall.IsValid();
+
+// Convert to the base type with As&lt;T&gt;()
+PersonClosed personClosed = personTall.As&lt;PersonClosed&gt;();
+</code></pre>
+<h3 id="v5-corvus.text.json">V5 (Corvus.Text.Json)</h3>
+<pre><code class="language-csharp">// Create with workspace and builder
+using JsonWorkspace workspace = JsonWorkspace.Create();
+using var tallDoc = PersonTall.CreateBuilder(
+    workspace,
+    birthDate: new LocalDate(1820, 1, 17),
+    familyName: &quot;Brontë&quot;,
+    givenName: &quot;Anne&quot;,
+    height: 1.57);
+
+// Parse for validation
+string json = tallDoc.RootElement.ToString();
+using var parsedTall = ParsedJsonDocument&lt;PersonTall&gt;.Parse(json);
+PersonTall personTall = parsedTall.RootElement;
+
+// Validate
+bool isValid = personTall.EvaluateSchema();
+
+// Convert to the base type with From()
+PersonClosed personClosed = PersonClosed.From(personTall);
+</code></pre>
+<p><strong>Key differences:</strong></p>
+<ul>
+<li>V5 uses <code>CreateBuilder(workspace, prop: value)</code> instead of V4's <code>Create()</code> static method</li>
+<li>V5 requires a <code>JsonWorkspace</code> for construction and manages lifetime with <code>using</code></li>
+<li>V5 uses <code>EvaluateSchema()</code> instead of <code>IsValid()</code> for schema validation</li>
+<li>V5 uses <code>From()</code> for type conversion instead of <code>As&lt;T&gt;()</code></li>
+<li>V5 uses <code>ParsedJsonDocument&lt;T&gt;.Parse()</code> for parsing JSON strings</li>
+</ul>
+<h2 id="running-the-example">Running the Example</h2>
+<pre><code class="language-bash">cd docs/ExampleRecipes/006-ConstrainingABaseType
+dotnet run
+</code></pre>
+<h2 id="related-patterns">Related Patterns</h2>
+<ul>
+<li><a href="/Corvus.JsonSchema/pr-preview/pr-740/examples/data-object-validation.html">002-DataObjectValidation</a> - Schema validation fundamentals</li>
+<li><a href="/Corvus.JsonSchema/pr-preview/pr-740/examples/open-versus-closed-types.html">004-OpenVersusClosedTypes</a> - Understanding open vs closed types</li>
+<li><a href="/Corvus.JsonSchema/pr-preview/pr-740/examples/extending-a-base-type.html">005-ExtendingABaseType</a> - Adding properties to a base type instead of constraints</li>
+</ul>
+<h2 id="frequently-asked-questions">Frequently Asked Questions</h2>
+<h3 id="how-does-constraint-composition-work-in-json-schema">How does constraint composition work in JSON Schema?</h3>
+<p>When you use <code>$ref</code> to base a new schema on an existing one, all constraints from both schemas are applied together during validation. For example, if the base defines <code>exclusiveMinimum: 0.0</code> and <code>maximum: 3.0</code> for <code>height</code>, and the derived schema adds <code>minimum: 2.0</code>, then a valid <code>height</code> must satisfy <em>all three</em>: greater than 0, at most 3.0, and at least 2.0. You cannot &quot;turn off&quot; base constraints — they always compose additively.</p>
+<h3 id="what-happens-if-i-define-incompatible-constraints">What happens if I define incompatible constraints?</h3>
+<p>JSON Schema does not prevent you from writing contradictory constraints (e.g., requiring a value to be both a <code>string</code> and an <code>object</code>). The code generator will produce valid, compilable C# code. However, no JSON document will ever satisfy both constraints simultaneously, so <code>EvaluateSchema()</code> will always return <code>false</code>. Always ensure your derived constraints are a subset of the base constraints — narrowing the valid range, not contradicting it.</p>
+<h3 id="why-use-ref-to-the-base-property-when-just-adding-a-new-constraint-would-also-validate-correctly">Why use <code>$ref</code> to the base property when just adding a new constraint would also validate correctly?</h3>
+<p>The <code>$ref</code> to the base property's schema is not strictly necessary for validation — the constraints compose regardless. However, <code>$ref</code> tells the code generator that the derived <code>HeightEntity</code> is based on the base <code>HeightEntity</code>, so the generated type inherits all the characteristics (format, type mappings, helper methods) from the original. Without the <code>$ref</code>, the code generator treats the new constraint as an independent definition and may not carry over the base type's code-generation behaviour.</p>
+<h3 id="can-i-constrain-a-closed-type-even-though-it-has-unevaluatedproperties-false">Can I constrain a closed type even though it has <code>unevaluatedProperties: false</code>?</h3>
+<p>Yes. A closed type prevents <em>new properties</em> from being added, but you can still narrow existing property constraints. This recipe does exactly that: <code>person-closed.json</code> has <code>unevaluatedProperties: false</code>, and <code>person-tall.json</code> references it while adding a <code>minimum: 2.0</code> constraint to the existing <code>height</code> property. No new properties are introduced, so the closed-type restriction is not violated.</p>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "How does constraint composition work in JSON Schema?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "When you use $ref to base a new schema on an existing one, all constraints from both schemas are applied together during validation. For example, if the base defines exclusiveMinimum: 0.0 and maximum: 3.0 for height, and the derived schema adds minimum: 2.0, then a valid height must satisfy *all three*: greater than 0, at most 3.0, and at least 2.0. You cannot \"turn off\" base constraints — they always compose additively."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What happens if I define incompatible constraints?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "JSON Schema does not prevent you from writing contradictory constraints (e.g., requiring a value to be both a string and an object). The code generator will produce valid, compilable C# code. However, no JSON document will ever satisfy both constraints simultaneously, so EvaluateSchema() will always return false. Always ensure your derived constraints are a subset of the base constraints — narrowing the valid range, not contradicting it."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Why use `$ref` to the base property when just adding a new constraint would also validate correctly?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "The $ref to the base property's schema is not strictly necessary for validation — the constraints compose regardless. However, $ref tells the code generator that the derived HeightEntity is based on the base HeightEntity, so the generated type inherits all the characteristics (format, type mappings, helper methods) from the original. Without the $ref, the code generator treats the new constraint as an independent definition and may not carry over the base type's code-generation behaviour."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Can I constrain a closed type even though it has `unevaluatedProperties: false`?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. A closed type prevents *new properties* from being added, but you can still narrow existing property constraints. This recipe does exactly that: person-closed.json has unevaluatedProperties: false, and person-tall.json references it while adding a minimum: 2.0 constraint to the existing height property. No new properties are introduced, so the closed-type restriction is not violated."
+      }
+    }
+  ]
+}
+</script>
+        </div>
+    </main>
+</div>
+
+    </div>
+    <footer class="site-footer">
+    <div class="site-footer__inner">
+        <div class="site-footer__sponsor">
+            Sponsored by
+            <a href="https://endjin.com" target="_blank" rel="noopener noreferrer">endjin</a>
+        </div>
+        <ul class="site-footer__links" role="list">
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/pr-preview/pr-740/getting-started/index.html">Getting Started</a></li>
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/pr-preview/pr-740/docs/index.html">Documentation</a></li>
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/pr-preview/pr-740/examples/index.html">Examples</a></li>
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/pr-preview/pr-740/api/index.html">API</a></li>
+            <li><a class="site-footer__link" href="https://github.com/corvus-dotnet/Corvus.JsonSchema" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+            <li><a class="site-footer__link" href="https://www.nuget.org/packages?q=Corvus.Json" target="_blank" rel="noopener noreferrer">NuGet</a></li>
+        </ul>
+        <p class="site-footer__copyright">&copy; 2026 endjin Ltd.</p>
+    </div>
+</footer>
+
+    <!-- highlight.js for syntax highlighting (CSS targets .hljs-* classes) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/csharp.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/json.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/bash.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/xml.min.js" defer></script>
+    <script>document.addEventListener('DOMContentLoaded',()=>hljs.highlightAll())</script>
+    <script src="/Corvus.JsonSchema/pr-preview/pr-740/assets/js/main.js" defer></script>
+    <script src="/Corvus.JsonSchema/pr-preview/pr-740/assets/js/sidebar-search.js" defer></script>
+    
+</body>
+</html>

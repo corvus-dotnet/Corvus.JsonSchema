@@ -1,0 +1,926 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#1C1D21" />
+    <meta name="description" content="Generate strongly-typed C# models from JSON Schema files using the `corvusjson` CLI tool. Same output as the source generator, for CI pipelines and pre-generation workflows." />
+    <meta name="keywords" content="documentation, Corvus.Text.Json" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:description" content="Generate strongly-typed C# models from JSON Schema files using the `corvusjson` CLI tool. Same output as the source generator, for CI pipelines and pre-generation workflows." />
+    <meta name="twitter:image" content="/Corvus.JsonSchema/pr-preview/pr-740/assets/images/og-corvus.png" />
+    <meta name="twitter:title" content="CLI Code Generation - Corvus.Text.Json" />
+    <meta property="article:tag" content="documentation" />
+    <meta property="article:tag" content="Corvus.Text.Json" />
+    <meta property="og:description" content="Generate strongly-typed C# models from JSON Schema files using the `corvusjson` CLI tool. Same output as the source generator, for CI pipelines and pre-generation workflows." />
+    <meta property="og:image" content="/Corvus.JsonSchema/pr-preview/pr-740/assets/images/og-corvus.png" />
+    <meta property="og:title" content="CLI Code Generation - Corvus.Text.Json" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://corvus-oss.org/corvus-json-schema/docs/code-generator/" />
+    <title>CLI Code Generation - Corvus.Text.Json</title>
+    <link itemprop="url" href="https://corvus-oss.org/corvus-json-schema/docs/code-generator/" />
+    <link rel="canonical" href="https://corvus-oss.org/corvus-json-schema/docs/code-generator/" />
+    <link rel="sitemap" href="https://corvus-oss.org/corvus-json-schema/sitemap.xml" />
+    <!-- Styles -->
+    <link rel="stylesheet" href="/Corvus.JsonSchema/pr-preview/pr-740/main.css" />
+    <link rel="icon" type="image/svg+xml" href="/Corvus.JsonSchema/pr-preview/pr-740/assets/images/favicon.svg" />
+    
+</head>
+<body>
+    <a class="sr-only" href="#main-content">Skip to content</a>
+<header class="site-header">
+    <div class="site-header__inner">
+        <a class="site-header__brand" href="/Corvus.JsonSchema/pr-preview/pr-740/index.html" aria-label="Corvus.JsonSchema home">
+            <img src="/Corvus.JsonSchema/pr-preview/pr-740/assets/images/logo-corvus.svg" alt="" width="28" height="28" aria-hidden="true" />
+            Corvus<span style="color:var(--color-brand)">.</span>Json<span style="color:var(--color-brand)">Schema</span>
+        </a>
+        <nav class="site-header__nav-desktop" aria-label="Main navigation">
+                    <a href="/Corvus.JsonSchema/pr-preview/pr-740/getting-started/index.html"
+                       class="site-header__link "
+                       >Getting Started</a>
+                    <a href="/Corvus.JsonSchema/pr-preview/pr-740/docs/index.html"
+                       class="site-header__link is-active"
+                       aria-current=page>Documentation</a>
+                    <a href="/Corvus.JsonSchema/pr-preview/pr-740/examples/index.html"
+                       class="site-header__link "
+                       >Examples</a>
+                    <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/index.html"
+                       class="site-header__link "
+                       >API</a>
+            <a href="/Corvus.JsonSchema/pr-preview/pr-740/playground/"
+               class="site-header__link"
+               target="_blank" rel="noopener noreferrer"
+               title="Interactive JSON Schema playground">Playground</a>
+            <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema"
+               class="site-header__link" target="_blank" rel="noopener noreferrer"
+               aria-label="View on GitHub">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+            </a>
+        </nav>
+        <button class="site-header__menu-toggle js-toggle-menu"
+                aria-expanded="false" aria-label="Toggle menu">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+            </svg>
+        </button>
+    </div>
+</header>
+<nav class="site-header__nav-mobile js-mobile-nav" aria-label="Mobile navigation">
+            <a href="/Corvus.JsonSchema/pr-preview/pr-740/getting-started/index.html" class="site-header__link">Getting Started</a>
+            <a href="/Corvus.JsonSchema/pr-preview/pr-740/docs/index.html" class="site-header__link">Documentation</a>
+            <a href="/Corvus.JsonSchema/pr-preview/pr-740/examples/index.html" class="site-header__link">Examples</a>
+            <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/index.html" class="site-header__link">API</a>
+    <a href="/Corvus.JsonSchema/pr-preview/pr-740/playground/" class="site-header__link" target="_blank" rel="noopener noreferrer">Playground</a>
+    <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema"
+       class="site-header__link" target="_blank" rel="noopener noreferrer">GitHub</a>
+</nav>
+
+    <div class="page-content">
+    <div class="layout-docs container">
+    <button class="sidebar-toggle" aria-label="Toggle navigation" aria-expanded="false"></button>
+<div class="sidebar-backdrop"></div>
+<aside class="sidebar">
+    <div class="sidebar__inner">
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Getting Started</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                    <li class="sidebar__item"><a class="sidebar__link" href="/Corvus.JsonSchema/pr-preview/pr-740/getting-started/index.html">Tutorial</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Documentation</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/parsed-json-document.html">Parsing &amp; Reading JSON</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/json-document-builder.html">Building &amp; Mutating JSON</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/source-generator.html">Source Generator</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link is-active" href="/Corvus.JsonSchema/pr-preview/pr-740/docs/code-generator.html">CLI Code Generation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/validator.html">Dynamic Schema Validation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/migrating-from-v4-to-v5.html">Migrating from V4</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/using-copilot-for-migration.html">Copilot Migration</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/migration-analyzers.html">Migration Analyzers</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/analyzers.html">Analyzers</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/schema-evaluator.html">Standalone Schema Evaluator</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/json-patch.html">JSON Patch (RFC 6902)</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/json-logic.html">JsonLogic Rule Engine</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/jsonata.html">JSONata Query Language</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/jmes-path.html">JMESPath Query Language</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/yaml.html">YAML Converter</a>
+                            </li>
+                </ul>
+            </div>
+        </div>
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Examples</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/data-object.html">Simple Data Objects</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/data-object-validation.html">Data Object Validation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/reusing-common-types.html">Reusing Common Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/open-versus-closed-types.html">Open Versus Closed Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/extending-a-base-type.html">Extending a Base Type</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/constraining-a-base-type.html">Constraining a Base Type</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/creating-a-strongly-typed-array.html">Strongly Typed Arrays</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/creating-an-array-of-higher-rank.html">Multi-Dimensional Arrays</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/working-with-tensors.html">Working with Tensors</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/creating-tuples.html">Creating Tuples</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/interfaces-and-mix-in-types.html">Interfaces and Mix-In Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/pattern-matching.html">Pattern Matching and Discriminated Unions</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/polymorphism-with-discriminators.html">Polymorphism with Discriminator Properties</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/string-enumerations.html">String Enumerations and Pattern Matching</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/numeric-enumerations.html">Numeric Enumerations</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/maps.html">Maps of Strings to Strongly Typed Values</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/mapping-input-and-output-values.html">Mapping Input and Output Values</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/creating-and-mutating-objects.html">Creating and Mutating Objects</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/clone-and-freeze.html">Clone and Freeze</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/conditional-schemas.html">Conditional Schemas</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/default-values.html">Default Values</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/format-validation.html">Format Validation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/json-patch.html">JSON Patch (RFC 6902)</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/json-logic.html">JsonLogic Rule Evaluation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/jsonata.html">JSONata Expression Evaluation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/jmespath.html">JMESPath Query Evaluation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/yaml.html">YAML Conversion</a>
+                            </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</aside>
+
+    <main id="main-content" class="layout-docs__main">
+        <div class="doc__content">
+            <h1>CLI Code Generation</h1>
+<h2 id="overview">Overview</h2>
+<p><code>corvusjson</code> is the .NET global tool that generates strongly-typed C# models from JSON Schema files. It produces the same output as the Roslyn incremental source generator, but runs ahead of time from the command line — making it suitable for CI/CD pipelines, pre-generation workflows, and scenarios where you need to inspect or version-control the generated code.</p>
+<p>The tool supports all major JSON Schema drafts (Draft 4, 6, 7, 2019-09, and 2020-12), OpenAPI 3.0, and YAML input.</p>
+<blockquote>
+<p><strong>Tip:</strong> If you only need validation and annotation collection without the full type system, use <code>--codeGenerationMode SchemaEvaluationOnly</code> to generate a <a href="/Corvus.JsonSchema/pr-preview/pr-740/docs/schema-evaluator.html">standalone schema evaluator</a>.</p>
+</blockquote>
+<h2 id="installation">Installation</h2>
+<pre><code class="language-bash">dotnet tool install --global Corvus.Json.Cli
+</code></pre>
+<p>Or as a local tool:</p>
+<pre><code class="language-bash">dotnet new tool-manifest
+dotnet tool install Corvus.Json.Cli
+</code></pre>
+<blockquote>
+<p><strong>Legacy shim:</strong> The previous package <code>Corvus.Json.CodeGenerator</code> (command: <code>generatejsonschematypes</code>) still works but defaults to the V4 engine and displays a deprecation warning. New projects should use <code>Corvus.Json.Cli</code>.</p>
+</blockquote>
+<h2 id="quick-start">Quick Start</h2>
+<p>Generate types from a schema file:</p>
+<pre><code class="language-bash">corvusjson jsonschema Schemas/person.json \
+    --rootNamespace MyApp.Models \
+    --outputPath Generated/
+</code></pre>
+<p>This reads <code>person.json</code>, generates one or more C# files into <code>Generated/</code>, and uses <code>MyApp.Models</code> as the root namespace.</p>
+<h2 id="commands">Commands</h2>
+<h3 id="generate-default"><code>generate</code> (Default)</h3>
+<p>Generate C# types from a single schema file. This is the default command when using the <code>jsonschema</code> subcommand — you can omit the command name.</p>
+<pre><code class="language-bash">corvusjson jsonschema &lt;schemaFile&gt; [OPTIONS]
+</code></pre>
+<p><strong>Required arguments:</strong></p>
+<ul>
+<li><code>&lt;schemaFile&gt;</code> — Path to the JSON Schema file</li>
+<li><code>--rootNamespace</code> — Root namespace for generated types</li>
+</ul>
+<p><strong>Common options:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--outputPath</code></td>
+<td>—</td>
+<td>Directory for generated <code>.cs</code> files</td>
+</tr>
+<tr>
+<td><code>--outputRootTypeName</code></td>
+<td>Derived</td>
+<td>Override the .NET type name for the root type. If omitted, the name is derived automatically using naming heuristics (see <a href="#naming-heuristics">Naming Heuristics</a> below).</td>
+</tr>
+<tr>
+<td><code>--rootPath</code></td>
+<td>—</td>
+<td>JSON Pointer to the root element (e.g., <code>#/definitions/Person</code>)</td>
+</tr>
+<tr>
+<td><code>--rebaseToRootPath</code></td>
+<td><code>false</code></td>
+<td>Rebase the document as if rooted at <code>--rootPath</code></td>
+</tr>
+<tr>
+<td><code>--useSchema</code></td>
+<td>Auto-detect</td>
+<td>Fallback schema draft: <code>Draft4</code>, <code>Draft6</code>, <code>Draft7</code>, <code>Draft201909</code>, <code>Draft202012</code>, <code>OpenApi30</code></td>
+</tr>
+<tr>
+<td><code>--assertFormat</code></td>
+<td><code>true</code></td>
+<td>Enforce <code>format</code> keyword as a validation assertion</td>
+</tr>
+<tr>
+<td><code>--optionalAsNullable</code></td>
+<td><code>None</code></td>
+<td>How to handle optional properties: <code>None</code> or <code>NullOrUndefined</code></td>
+</tr>
+<tr>
+<td><code>--useImplicitOperatorString</code></td>
+<td><code>false</code></td>
+<td>Use implicit (vs explicit) conversion to <code>string</code></td>
+</tr>
+<tr>
+<td><code>--disableOptionalNamingHeuristics</code></td>
+<td><code>false</code></td>
+<td>Disable all optional naming heuristics at once (see <a href="#naming-heuristics">Naming Heuristics</a>)</td>
+</tr>
+<tr>
+<td><code>--disableNamingHeuristic</code></td>
+<td>—</td>
+<td>Disable a specific naming heuristic by name (repeatable; see <a href="#naming-heuristics">Naming Heuristics</a>)</td>
+</tr>
+<tr>
+<td><code>--useUnixLineEndings</code></td>
+<td><code>false</code></td>
+<td>Use Unix line endings (<code>\n</code>) instead of Windows (<code>\r\n</code>) in generated files</td>
+</tr>
+<tr>
+<td><code>--yaml</code></td>
+<td><code>false</code></td>
+<td>Enable YAML schema support</td>
+</tr>
+<tr>
+<td><code>--addExplicitUsings</code></td>
+<td><code>false</code></td>
+<td>Include explicit <code>using</code> statements for standard implicit usings</td>
+</tr>
+<tr>
+<td><code>--engine</code></td>
+<td><code>V5</code></td>
+<td>Code generation engine: <code>V5</code> (Corvus.Text.Json) or <code>V4</code> (legacy Corvus.Json.ExtendedTypes)</td>
+</tr>
+<tr>
+<td><code>--codeGenerationMode</code></td>
+<td><code>TypeGeneration</code></td>
+<td><code>TypeGeneration</code> (types only), <code>SchemaEvaluationOnly</code> (<a href="/Corvus.JsonSchema/pr-preview/pr-740/docs/schema-evaluator.html">standalone evaluator</a> only), or <code>Both</code></td>
+</tr>
+<tr>
+<td><code>--outputMapFile</code></td>
+<td>—</td>
+<td>Write a JSON map of all generated files</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Examples:</strong></p>
+<pre><code class="language-bash"># Generate with a custom root type name
+corvusjson jsonschema Schemas/person.json \
+    --rootNamespace MyApp.Models \
+    --outputPath Generated/ \
+    --outputRootTypeName Person
+
+# Generate from a specific definition within a schema
+corvusjson jsonschema Schemas/api.json \
+    --rootNamespace MyApp.Models \
+    --outputPath Generated/ \
+    --rootPath &quot;#/definitions/Address&quot; \
+    --rebaseToRootPath
+
+# Treat optional properties as nullable
+corvusjson jsonschema Schemas/config.json \
+    --rootNamespace MyApp.Config \
+    --outputPath Generated/ \
+    --optionalAsNullable NullOrUndefined
+</code></pre>
+<h3 id="config"><code>config</code></h3>
+<p>Generate types from a configuration file that specifies multiple schemas and shared settings:</p>
+<pre><code class="language-bash">corvusjson config myconfig.json [--engine V5]
+</code></pre>
+<h4 id="example-configuration-file">Example configuration file</h4>
+<pre><code class="language-json">{
+    &quot;rootNamespace&quot;: &quot;MyApp.Models&quot;,
+    &quot;outputPath&quot;: &quot;Generated/&quot;,
+    &quot;useSchema&quot;: &quot;Draft202012&quot;,
+    &quot;assertFormat&quot;: true,
+    &quot;optionalAsNullable&quot;: &quot;None&quot;,
+    &quot;typesToGenerate&quot;: [
+        {
+            &quot;schemaFile&quot;: &quot;Schemas/person.json&quot;,
+            &quot;outputRootTypeName&quot;: &quot;Person&quot;
+        },
+        {
+            &quot;schemaFile&quot;: &quot;Schemas/order.json&quot;,
+            &quot;outputRootTypeName&quot;: &quot;Order&quot;,
+            &quot;outputRootNamespace&quot;: &quot;MyApp.Models.Orders&quot;
+        }
+    ],
+    &quot;additionalFiles&quot;: [
+        {
+            &quot;canonicalUri&quot;: &quot;https://example.com/schemas/address.json&quot;,
+            &quot;contentPath&quot;: &quot;Schemas/address.json&quot;
+        }
+    ],
+    &quot;namedTypes&quot;: [
+        {
+            &quot;reference&quot;: &quot;https://example.com/schemas/person.json#/$defs/Name&quot;,
+            &quot;dotnetTypeName&quot;: &quot;PersonName&quot;,
+            &quot;dotnetNamespace&quot;: &quot;MyApp.Models&quot;
+        }
+    ],
+    &quot;namespaces&quot;: {
+        &quot;https://example.com/schemas/&quot;: &quot;MyApp.ExternalModels&quot;
+    }
+}
+</code></pre>
+<p>The <code>config</code> command is ideal when you have multiple schemas to generate from, shared <code>$ref</code> dependencies, or you want to explicitly name generated types.</p>
+<h4 id="root-level-properties">Root-level properties</h4>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Required</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>rootNamespace</code></td>
+<td><strong>Yes</strong></td>
+<td>—</td>
+<td>The default .NET namespace for all generated types. Individual schemas can override this with <code>outputRootNamespace</code>.</td>
+</tr>
+<tr>
+<td><code>typesToGenerate</code></td>
+<td><strong>Yes</strong></td>
+<td>—</td>
+<td>Array of schemas to process. Each entry specifies a schema file and optional overrides (see below).</td>
+</tr>
+<tr>
+<td><code>outputPath</code></td>
+<td>No</td>
+<td>—</td>
+<td>Directory where generated <code>.cs</code> files are written.</td>
+</tr>
+<tr>
+<td><code>outputMapFile</code></td>
+<td>No</td>
+<td>—</td>
+<td>Path for a JSON manifest listing every generated file, useful for build systems that need to track outputs.</td>
+</tr>
+<tr>
+<td><code>useSchema</code></td>
+<td>No</td>
+<td><code>Draft202012</code></td>
+<td>Fallback schema draft when vocabulary analysis cannot determine the draft from the <code>$schema</code> keyword. Values: <code>Draft4</code>, <code>Draft6</code>, <code>Draft7</code>, <code>Draft201909</code>, <code>Draft202012</code>, <code>OpenApi30</code>.</td>
+</tr>
+<tr>
+<td><code>assertFormat</code></td>
+<td>No</td>
+<td><code>true</code></td>
+<td>When <code>true</code>, the <code>format</code> keyword is enforced as a validation assertion. When <code>false</code>, <code>format</code> is treated as an annotation only (per the JSON Schema specification).</td>
+</tr>
+<tr>
+<td><code>optionalAsNullable</code></td>
+<td>No</td>
+<td><code>None</code></td>
+<td>Controls how optional properties are represented in generated types. <code>None</code>: optional properties use the same type as required properties — you check for <code>Undefined</code> explicitly. <code>NullOrUndefined</code>: optional properties generate as .NET nullable types (<code>T?</code>), and both JSON <code>null</code> and missing properties map to C# <code>null</code>.</td>
+</tr>
+<tr>
+<td><code>additionalFiles</code></td>
+<td>No</td>
+<td>—</td>
+<td>Pre-load external schema files so <code>$ref</code> references can resolve without network access (see below).</td>
+</tr>
+<tr>
+<td><code>namedTypes</code></td>
+<td>No</td>
+<td>—</td>
+<td>Explicitly assign .NET names to specific schema definitions that would otherwise get auto-generated names (see below).</td>
+</tr>
+<tr>
+<td><code>namespaces</code></td>
+<td>No</td>
+<td>—</td>
+<td>A dictionary mapping schema base URIs to .NET namespaces. Any schema whose canonical URI starts with a given key is generated into the corresponding namespace. For example, <code>&quot;https://example.com/schemas/&quot;: &quot;MyApp.External&quot;</code> places all schemas under that URI prefix into <code>MyApp.External</code>.</td>
+</tr>
+<tr>
+<td><code>disableOptionalNameHeuristics</code></td>
+<td>No</td>
+<td><code>false</code></td>
+<td>When <code>true</code>, disables all optional naming heuristics at once. Cannot be combined with <code>disabledNamingHeuristics</code>.</td>
+</tr>
+<tr>
+<td><code>disabledNamingHeuristics</code></td>
+<td>No</td>
+<td>—</td>
+<td>An array of specific naming heuristic names to disable. Use <code>corvusjson listNameHeuristics</code> to see available names. Cannot be combined with <code>disableOptionalNameHeuristics</code>.</td>
+</tr>
+<tr>
+<td><code>useImplicitOperatorString</code></td>
+<td>No</td>
+<td><code>false</code></td>
+<td>When <code>true</code>, conversion operators to <code>string</code> are implicit rather than explicit. Use with care — implicit conversions can cause unintended string allocations.</td>
+</tr>
+<tr>
+<td><code>useUnixLineEndings</code></td>
+<td>No</td>
+<td><code>false</code></td>
+<td>When <code>true</code>, generated files use Unix line endings (<code>\n</code>) instead of Windows (<code>\r\n</code>).</td>
+</tr>
+<tr>
+<td><code>supportYaml</code></td>
+<td>No</td>
+<td><code>false</code></td>
+<td>When <code>true</code>, enables YAML support. Schema and document files can be YAML, JSON, or a mixture.</td>
+</tr>
+<tr>
+<td><code>addExplicitUsings</code></td>
+<td>No</td>
+<td><code>false</code></td>
+<td>When <code>true</code>, generated files include <code>using</code> statements for standard implicit usings. Enable this if your project does not use implicit usings.</td>
+</tr>
+</tbody>
+</table>
+<h4 id="typestogenerate-entries"><code>typesToGenerate</code> entries</h4>
+<p>Each entry in <code>typesToGenerate</code> specifies one schema to process:</p>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Required</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>schemaFile</code></td>
+<td><strong>Yes</strong></td>
+<td>—</td>
+<td>Path to the JSON Schema file to process, relative to the config file.</td>
+</tr>
+<tr>
+<td><code>outputRootTypeName</code></td>
+<td>No</td>
+<td>Derived</td>
+<td>The .NET type name for the root type generated from this schema. If omitted, the name is derived automatically using the standard naming heuristics — typically from the schema's <code>title</code> keyword, <code>$id</code> URI fragment, or the schema file name (see <a href="#naming-heuristics">Naming Heuristics</a>).</td>
+</tr>
+<tr>
+<td><code>outputRootNamespace</code></td>
+<td>No</td>
+<td><code>rootNamespace</code></td>
+<td>Override the .NET namespace for this schema's root type. Useful when different schemas should go into different namespaces.</td>
+</tr>
+<tr>
+<td><code>rootPath</code></td>
+<td>No</td>
+<td>—</td>
+<td>A JSON Pointer within the schema document to use as the root type. For example, <code>#/$defs/Address</code> generates types starting from the <code>Address</code> definition rather than the document root.</td>
+</tr>
+<tr>
+<td><code>rebaseToRootPath</code></td>
+<td>No</td>
+<td><code>false</code></td>
+<td>When <code>true</code> (and <code>rootPath</code> is set), the document is rebased as if the element at <code>rootPath</code> were the document root. This affects how <code>$ref</code> references within the extracted subtree are resolved.</td>
+</tr>
+</tbody>
+</table>
+<h4 id="additionalfiles-entries"><code>additionalFiles</code> entries</h4>
+<p>Pre-load schema files that other schemas reference via <code>$ref</code>. This avoids network calls during generation and ensures deterministic, reproducible builds — particularly important in CI/CD environments:</p>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>canonicalUri</code></td>
+<td><strong>Yes</strong></td>
+<td>The canonical URI that other schemas use in their <code>$ref</code> to reference this file. Must match the URI used in <code>$ref</code> exactly.</td>
+</tr>
+<tr>
+<td><code>contentPath</code></td>
+<td><strong>Yes</strong></td>
+<td>Local file path to the schema, relative to the config file.</td>
+</tr>
+</tbody>
+</table>
+<p>For example, if <code>person.json</code> contains <code>&quot;$ref&quot;: &quot;https://example.com/schemas/address.json&quot;</code>, add an entry with that URI pointing to your local copy of the address schema.</p>
+<h4 id="namedtypes-entries"><code>namedTypes</code> entries</h4>
+<p>By default, the generator derives .NET type names from the schema structure. Use <code>namedTypes</code> to override specific types with explicit names — useful when the auto-generated name is awkward or when you need a type to live in a specific namespace:</p>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>reference</code></td>
+<td><strong>Yes</strong></td>
+<td>The fully-qualified schema reference (base URI + JSON Pointer fragment), e.g. <code>https://example.com/schemas/person.json#/$defs/Name</code>.</td>
+</tr>
+<tr>
+<td><code>dotnetTypeName</code></td>
+<td><strong>Yes</strong></td>
+<td>The .NET type name to use, e.g. <code>PersonName</code>.</td>
+</tr>
+<tr>
+<td><code>dotnetNamespace</code></td>
+<td>No</td>
+<td>When set, the type is generated directly in this namespace rather than as a nested type of its containing schema type.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="validatedocument"><code>validateDocument</code></h3>
+<p>Validate a JSON or YAML document against a schema:</p>
+<pre><code class="language-bash">corvusjson validateDocument Schemas/person.json data.json
+</code></pre>
+<p>Output includes pass/fail status for each validation rule, with file path, line, column, and the schema evaluation location for failures.</p>
+<h3 id="listnameheuristics"><code>listNameHeuristics</code></h3>
+<p>List all available naming heuristics. Some are optional and can be disabled with <code>--disableNamingHeuristic</code>:</p>
+<pre><code class="language-bash">corvusjson listNameHeuristics
+</code></pre>
+<h3 id="version"><code>version</code></h3>
+<p>Display the tool version and build information:</p>
+<pre><code class="language-bash">corvusjson version
+</code></pre>
+<h2 id="source-generator-vs.cli-tool">Source Generator vs. CLI Tool</h2>
+<p>Both produce identical output — the same <code>readonly struct</code> types with the same property accessors, validation, serialization, and implicit conversions. The difference is when and how they run:</p>
+<table>
+<thead>
+<tr>
+<th>Aspect</th>
+<th>Source Generator</th>
+<th>CLI Tool</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>When</strong></td>
+<td>At build time, automatically</td>
+<td>On demand, from the command line</td>
+</tr>
+<tr>
+<td><strong>Triggered by</strong></td>
+<td><code>[JsonSchemaTypeGenerator]</code> attribute</td>
+<td>Explicit <code>corvusjson jsonschema</code> invocation</td>
+</tr>
+<tr>
+<td><strong>Output location</strong></td>
+<td><code>obj/</code> (not checked in)</td>
+<td>Any directory (can be checked in)</td>
+</tr>
+<tr>
+<td><strong>IDE integration</strong></td>
+<td>Full IntelliSense as you type</td>
+<td>IntelliSense after generation + build</td>
+</tr>
+<tr>
+<td><strong>Best for</strong></td>
+<td>Most projects</td>
+<td>CI pipelines, inspecting output, multi-schema configs</td>
+</tr>
+</tbody>
+</table>
+<h3 id="when-to-use-the-cli-tool">When to Use the CLI Tool</h3>
+<ul>
+<li>You want to <strong>inspect or version-control</strong> the generated code</li>
+<li>You have a <strong>multi-schema configuration</strong> file with shared settings</li>
+<li>You need to <strong>pre-generate</strong> types in a CI/CD pipeline before the build</li>
+<li>You want to <strong>validate</strong> documents against schemas from the command line</li>
+<li>You are migrating from V4 and want to compare V4 vs V5 output</li>
+</ul>
+<h3 id="when-to-use-the-source-generator">When to Use the Source Generator</h3>
+<ul>
+<li>You want <strong>zero-configuration</strong> code generation at build time</li>
+<li>You prefer generated code to stay out of source control</li>
+<li>You want <strong>instant IntelliSense</strong> as you edit schema files</li>
+</ul>
+<h2 id="generated-output">Generated Output</h2>
+<p>The tool generates <code>readonly struct</code> types that are thin wrappers over pooled JSON data. For a schema like:</p>
+<pre><code class="language-json">{
+    &quot;$schema&quot;: &quot;https://json-schema.org/draft/2020-12/schema&quot;,
+    &quot;type&quot;: &quot;object&quot;,
+    &quot;required&quot;: [&quot;name&quot;],
+    &quot;properties&quot;: {
+        &quot;name&quot;: { &quot;type&quot;: &quot;string&quot;, &quot;minLength&quot;: 1 },
+        &quot;age&quot;: { &quot;type&quot;: &quot;integer&quot;, &quot;format&quot;: &quot;int32&quot;, &quot;minimum&quot;: 0 }
+    }
+}
+</code></pre>
+<p>The tool generates:</p>
+<ul>
+<li><strong>Type-safe property accessors</strong>: <code>person.Name</code> returns a strongly-typed string value</li>
+<li><strong>Validation</strong>: <code>person.EvaluateSchema()</code> validates against the full schema</li>
+<li><strong>Implicit conversions</strong>: <code>(string)person.Name</code> extracts the .NET value</li>
+<li><strong>Mutable builder</strong>: <code>person.CreateBuilder(workspace)</code> creates a mutable copy</li>
+<li><strong>Pattern matching</strong>: <code>Match()</code> methods for <code>oneOf</code>/<code>anyOf</code> discriminated unions</li>
+<li><strong>Serialization</strong>: <code>WriteTo(Utf8JsonWriter)</code> for zero-allocation output</li>
+</ul>
+<h2 id="schema-draft-support">Schema Draft Support</h2>
+<table>
+<thead>
+<tr>
+<th>Draft</th>
+<th><code>$schema</code> URI</th>
+<th><code>--useSchema</code> Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Draft 4</td>
+<td><code>http://json-schema.org/draft-04/schema</code></td>
+<td><code>Draft4</code></td>
+</tr>
+<tr>
+<td>Draft 6</td>
+<td><code>http://json-schema.org/draft-06/schema</code></td>
+<td><code>Draft6</code></td>
+</tr>
+<tr>
+<td>Draft 7</td>
+<td><code>http://json-schema.org/draft-07/schema</code></td>
+<td><code>Draft7</code></td>
+</tr>
+<tr>
+<td>Draft 2019-09</td>
+<td><code>https://json-schema.org/draft/2019-09/schema</code></td>
+<td><code>Draft201909</code></td>
+</tr>
+<tr>
+<td>Draft 2020-12</td>
+<td><code>https://json-schema.org/draft/2020-12/schema</code></td>
+<td><code>Draft202012</code></td>
+</tr>
+<tr>
+<td>OpenAPI 3.0</td>
+<td>(custom vocabulary)</td>
+<td><code>OpenApi30</code></td>
+</tr>
+</tbody>
+</table>
+<p>The tool auto-detects the schema draft from the <code>$schema</code> keyword. Use <code>--useSchema</code> only as a fallback when the keyword is missing.</p>
+<h2 id="output-map-file">Output Map File</h2>
+<p>Use <code>--outputMapFile</code> to generate a JSON manifest of all generated files:</p>
+<pre><code class="language-bash">corvusjson jsonschema Schemas/person.json \
+    --rootNamespace MyApp.Models \
+    --outputPath Generated/ \
+    --outputMapFile generated.map.json
+</code></pre>
+<p>This is useful for build systems that need to track which files were generated.</p>
+<h2 id="naming-heuristics">Naming Heuristics</h2>
+<p>When <code>--outputRootTypeName</code> is not specified, the tool applies a chain of <strong>naming heuristics</strong> to derive an idiomatic C# type name from the schema. Heuristics are tried in priority order (lowest number first) and the first match wins. The same heuristics are also applied to nested types, sub-schemas, and property types throughout the generated code.</p>
+<h3 id="how-the-root-type-name-is-determined">How the root type name is determined</h3>
+<p>The tool tries these sources in order:</p>
+<ol>
+<li><strong>Explicit name</strong> (<code>--outputRootTypeName</code> or <code>outputRootTypeName</code> in config) — used as-is, no heuristics applied</li>
+<li><strong>Custom keywords</strong> (priority 100) — the <code>title</code> keyword or the last segment of the <code>$id</code> URI</li>
+<li><strong>Schema reference</strong> (priority 1000) — the last segment of the JSON Pointer fragment (e.g., <code>#/$defs/Address</code> → <code>Address</code>) or the schema file name without extension (e.g., <code>person.json</code> → <code>Person</code>)</li>
+<li><strong>Documentation</strong> (priority 1500, optional) — the schema <code>description</code> if it is short (under 64 characters) and unique within its parent</li>
+<li><strong>Fallback</strong> — a name derived from the file path</li>
+</ol>
+<p>For example, given this schema in <code>Schemas/person.json</code>:</p>
+<pre><code class="language-json">{
+    &quot;$schema&quot;: &quot;https://json-schema.org/draft/2020-12/schema&quot;,
+    &quot;title&quot;: &quot;Person&quot;,
+    &quot;type&quot;: &quot;object&quot;,
+    &quot;properties&quot;: {
+        &quot;name&quot;: { &quot;type&quot;: &quot;string&quot; }
+    }
+}
+</code></pre>
+<p>The root type name is <code>Person</code> (from the <code>title</code> keyword). If <code>title</code> were absent, it would be <code>Person</code> (from the file name <code>person.json</code>).</p>
+<h3 id="full-heuristic-list">Full heuristic list</h3>
+<p>Heuristics marked <strong>optional</strong> can be disabled with <code>--disableOptionalNamingHeuristics</code> (disables all optional) or <code>--disableNamingHeuristic &lt;name&gt;</code> (disables one at a time). Non-optional heuristics are always active.</p>
+<table>
+<thead>
+<tr>
+<th>Priority</th>
+<th>Heuristic</th>
+<th>Optional</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><code>WellKnownTypeNameHeuristic</code></td>
+<td>No</td>
+<td>Maps well-known schema patterns to built-in types (e.g., the &quot;any&quot; schema maps to <code>JsonElement</code>).</td>
+</tr>
+<tr>
+<td>2</td>
+<td><code>SimpleCoreTypeNameHeuristic</code></td>
+<td>No</td>
+<td>Maps simple schemas with a single core type and optional <code>format</code> to global types: <code>JsonString</code>, <code>JsonInt32</code>, <code>JsonUuid</code>, <code>JsonBoolean</code>, etc. These types are shared — no per-schema code is generated.</td>
+</tr>
+<tr>
+<td>2</td>
+<td><code>BuiltIn*TypeNameHeuristic</code></td>
+<td>No</td>
+<td>A family of heuristics (<code>BuiltInStringTypeNameHeuristic</code>, <code>BuiltInNumberTypeNameHeuristic</code>, etc.) that map bare <code>&quot;type&quot;: &quot;string&quot;</code>, <code>&quot;type&quot;: &quot;number&quot;</code>, <code>&quot;type&quot;: &quot;integer&quot;</code>, <code>&quot;type&quot;: &quot;boolean&quot;</code>, <code>&quot;type&quot;: &quot;null&quot;</code>, <code>&quot;type&quot;: &quot;object&quot;</code>, and <code>&quot;type&quot;: &quot;array&quot;</code> schemas to their respective global types.</td>
+</tr>
+<tr>
+<td>100</td>
+<td><code>CustomKeywordNameHeuristic</code></td>
+<td>No</td>
+<td>Extracts the name from the <code>title</code> keyword or the last segment of the <code>$id</code> URI. This is the most common source for root type names.</td>
+</tr>
+<tr>
+<td>1000</td>
+<td><code>BaseSchemaNameHeuristic</code></td>
+<td>No</td>
+<td>For root or <code>$defs</code>-level schemas: extracts the name from the JSON reference fragment (e.g., <code>#/$defs/Address</code> → <code>Address</code>) or the schema file name (e.g., <code>address.json</code> → <code>Address</code>).</td>
+</tr>
+<tr>
+<td>1500</td>
+<td><code>DocumentationNameHeuristic</code></td>
+<td><strong>Yes</strong></td>
+<td>Uses the schema <code>description</code> as the type name if it is short enough (under 64 characters) and unique within its parent.</td>
+</tr>
+<tr>
+<td>1500</td>
+<td><code>DefaultValueNameHeuristic</code></td>
+<td><strong>Yes</strong></td>
+<td>For schemas with only a <code>default</code> keyword: generates names like <code>DefaultValueTrue</code> or <code>DefaultValueActive</code>.</td>
+</tr>
+<tr>
+<td>1550</td>
+<td><code>RequiredPropertyNameHeuristic</code></td>
+<td><strong>Yes</strong></td>
+<td>For nested schemas: uses <code>Required</code> + property names, e.g., a schema requiring <code>id</code> and <code>name</code> becomes <code>RequiredIdAndName</code>.</td>
+</tr>
+<tr>
+<td>1600</td>
+<td><code>ConstPropertyNameHeuristic</code></td>
+<td><strong>Yes</strong></td>
+<td>For nested schemas with <code>const</code> properties: uses <code>With</code> + const values, e.g., <code>WithStatusActive</code>.</td>
+</tr>
+<tr>
+<td>1600</td>
+<td><code>SingleTypeArrayNameHeuristic</code></td>
+<td><strong>Yes</strong></td>
+<td>For array schemas: appends <code>Array</code> to the item type name, e.g., an array of <code>Item</code> becomes <code>ItemArray</code>.</td>
+</tr>
+<tr>
+<td>10000</td>
+<td><code>SubschemaNameHeuristic</code></td>
+<td>No</td>
+<td>For inline nested schemas: extracts the name from the JSON reference path segment.</td>
+</tr>
+<tr>
+<td>11000</td>
+<td><code>PathNameHeuristic</code></td>
+<td>No</td>
+<td>Final fallback for nested schemas: extracts the name from the last path segment of the JSON reference.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="collision-resolution">Collision resolution</h3>
+<p>When a derived name collides with its parent type or a sibling, the tool automatically appends a suffix based on the schema kind (<code>Object</code>, <code>Array</code>, <code>String</code>, etc.). For example, if both a parent and child would be named <code>User</code>, the child becomes <code>UserObject</code>.</p>
+<h3 id="disabling-heuristics">Disabling heuristics</h3>
+<pre><code class="language-bash"># Disable a specific heuristic by name
+corvusjson jsonschema Schemas/person.json \
+    --rootNamespace MyApp.Models \
+    --outputPath Generated/ \
+    --disableNamingHeuristic DocumentationNameHeuristic
+
+# Disable all optional heuristics at once
+corvusjson jsonschema Schemas/person.json \
+    --rootNamespace MyApp.Models \
+    --outputPath Generated/ \
+    --disableOptionalNamingHeuristics
+</code></pre>
+<p>Run <code>corvusjson listNameHeuristics</code> to see all available heuristics and which ones are optional.</p>
+        </div>
+    </main>
+</div>
+
+    </div>
+    <footer class="site-footer">
+    <div class="site-footer__inner">
+        <div class="site-footer__sponsor">
+            Sponsored by
+            <a href="https://endjin.com" target="_blank" rel="noopener noreferrer">endjin</a>
+        </div>
+        <ul class="site-footer__links" role="list">
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/pr-preview/pr-740/getting-started/index.html">Getting Started</a></li>
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/pr-preview/pr-740/docs/index.html">Documentation</a></li>
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/pr-preview/pr-740/examples/index.html">Examples</a></li>
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/pr-preview/pr-740/api/index.html">API</a></li>
+            <li><a class="site-footer__link" href="https://github.com/corvus-dotnet/Corvus.JsonSchema" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+            <li><a class="site-footer__link" href="https://www.nuget.org/packages?q=Corvus.Json" target="_blank" rel="noopener noreferrer">NuGet</a></li>
+        </ul>
+        <p class="site-footer__copyright">&copy; 2026 endjin Ltd.</p>
+    </div>
+</footer>
+
+    <!-- highlight.js for syntax highlighting (CSS targets .hljs-* classes) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/csharp.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/json.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/bash.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/xml.min.js" defer></script>
+    <script>document.addEventListener('DOMContentLoaded',()=>hljs.highlightAll())</script>
+    <script src="/Corvus.JsonSchema/pr-preview/pr-740/assets/js/main.js" defer></script>
+    <script src="/Corvus.JsonSchema/pr-preview/pr-740/assets/js/sidebar-search.js" defer></script>
+    
+</body>
+</html>

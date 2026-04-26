@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#1C1D21" />
+    <meta name="description" content="This recipe demonstrates how to use JSON Schema `additionalProperties` to create strongly-typed map/dictionary structures with string keys and typed values." />
+    <meta name="keywords" content="recipe, JSON Schema, C#, maps, strings, strongly, typed, values, type, additionalProperties, $ref, TryGetProperty, SetProperty, RemoveProperty" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:description" content="This recipe demonstrates how to use JSON Schema `additionalProperties` to create strongly-typed map/dictionary structures with string keys and typed values." />
+    <meta name="twitter:image" content="/Corvus.JsonSchema/pr-preview/pr-740/assets/images/og-corvus.png" />
+    <meta name="twitter:title" content="Maps of Strings to Strongly Typed Values - Corvus.Text.Json Examples" />
+    <meta property="article:tag" content="recipe" />
+    <meta property="article:tag" content="JSON Schema" />
+    <meta property="article:tag" content="C#" />
+    <meta property="article:tag" content="maps" />
+    <meta property="article:tag" content="strings" />
+    <meta property="article:tag" content="strongly" />
+    <meta property="article:tag" content="typed" />
+    <meta property="article:tag" content="values" />
+    <meta property="article:tag" content="type" />
+    <meta property="article:tag" content="additionalProperties" />
+    <meta property="article:tag" content="$ref" />
+    <meta property="article:tag" content="TryGetProperty" />
+    <meta property="article:tag" content="SetProperty" />
+    <meta property="article:tag" content="RemoveProperty" />
+    <meta property="og:description" content="This recipe demonstrates how to use JSON Schema `additionalProperties` to create strongly-typed map/dictionary structures with string keys and typed values." />
+    <meta property="og:image" content="/Corvus.JsonSchema/pr-preview/pr-740/assets/images/og-corvus.png" />
+    <meta property="og:title" content="Maps of Strings to Strongly Typed Values - Corvus.Text.Json Examples" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://corvus-oss.org/corvus-json-schema/examples/maps/" />
+    <title>Maps of Strings to Strongly Typed Values - Corvus.Text.Json Examples</title>
+    <link itemprop="url" href="https://corvus-oss.org/corvus-json-schema/examples/maps/" />
+    <link rel="canonical" href="https://corvus-oss.org/corvus-json-schema/examples/maps/" />
+    <link rel="sitemap" href="https://corvus-oss.org/corvus-json-schema/sitemap.xml" />
+    <!-- Styles -->
+    <link rel="stylesheet" href="/Corvus.JsonSchema/pr-preview/pr-740/main.css" />
+    <link rel="icon" type="image/svg+xml" href="/Corvus.JsonSchema/pr-preview/pr-740/assets/images/favicon.svg" />
+    
+</head>
+<body>
+    <a class="sr-only" href="#main-content">Skip to content</a>
+<header class="site-header">
+    <div class="site-header__inner">
+        <a class="site-header__brand" href="/Corvus.JsonSchema/pr-preview/pr-740/index.html" aria-label="Corvus.JsonSchema home">
+            <img src="/Corvus.JsonSchema/pr-preview/pr-740/assets/images/logo-corvus.svg" alt="" width="28" height="28" aria-hidden="true" />
+            Corvus<span style="color:var(--color-brand)">.</span>Json<span style="color:var(--color-brand)">Schema</span>
+        </a>
+        <nav class="site-header__nav-desktop" aria-label="Main navigation">
+                    <a href="/Corvus.JsonSchema/pr-preview/pr-740/getting-started/index.html"
+                       class="site-header__link "
+                       >Getting Started</a>
+                    <a href="/Corvus.JsonSchema/pr-preview/pr-740/docs/index.html"
+                       class="site-header__link "
+                       >Documentation</a>
+                    <a href="/Corvus.JsonSchema/pr-preview/pr-740/examples/index.html"
+                       class="site-header__link is-active"
+                       aria-current=page>Examples</a>
+                    <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/index.html"
+                       class="site-header__link "
+                       >API</a>
+            <a href="/Corvus.JsonSchema/pr-preview/pr-740/playground/"
+               class="site-header__link"
+               target="_blank" rel="noopener noreferrer"
+               title="Interactive JSON Schema playground">Playground</a>
+            <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema"
+               class="site-header__link" target="_blank" rel="noopener noreferrer"
+               aria-label="View on GitHub">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+            </a>
+        </nav>
+        <button class="site-header__menu-toggle js-toggle-menu"
+                aria-expanded="false" aria-label="Toggle menu">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+            </svg>
+        </button>
+    </div>
+</header>
+<nav class="site-header__nav-mobile js-mobile-nav" aria-label="Mobile navigation">
+            <a href="/Corvus.JsonSchema/pr-preview/pr-740/getting-started/index.html" class="site-header__link">Getting Started</a>
+            <a href="/Corvus.JsonSchema/pr-preview/pr-740/docs/index.html" class="site-header__link">Documentation</a>
+            <a href="/Corvus.JsonSchema/pr-preview/pr-740/examples/index.html" class="site-header__link">Examples</a>
+            <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/index.html" class="site-header__link">API</a>
+    <a href="/Corvus.JsonSchema/pr-preview/pr-740/playground/" class="site-header__link" target="_blank" rel="noopener noreferrer">Playground</a>
+    <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema"
+       class="site-header__link" target="_blank" rel="noopener noreferrer">GitHub</a>
+</nav>
+
+    <div class="page-content">
+    <div class="layout-docs container">
+    <button class="sidebar-toggle" aria-label="Toggle navigation" aria-expanded="false"></button>
+<div class="sidebar-backdrop"></div>
+<aside class="sidebar">
+    <div class="sidebar__inner">
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Getting Started</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                    <li class="sidebar__item"><a class="sidebar__link" href="/Corvus.JsonSchema/pr-preview/pr-740/getting-started/index.html">Tutorial</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Documentation</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/parsed-json-document.html">Parsing &amp; Reading JSON</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/json-document-builder.html">Building &amp; Mutating JSON</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/source-generator.html">Source Generator</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/code-generator.html">CLI Code Generation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/validator.html">Dynamic Schema Validation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/migrating-from-v4-to-v5.html">Migrating from V4</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/using-copilot-for-migration.html">Copilot Migration</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/migration-analyzers.html">Migration Analyzers</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/analyzers.html">Analyzers</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/schema-evaluator.html">Standalone Schema Evaluator</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/json-patch.html">JSON Patch (RFC 6902)</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/json-logic.html">JsonLogic Rule Engine</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/jsonata.html">JSONata Query Language</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/jmes-path.html">JMESPath Query Language</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/yaml.html">YAML Converter</a>
+                            </li>
+                </ul>
+            </div>
+        </div>
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Examples</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/data-object.html">Simple Data Objects</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/data-object-validation.html">Data Object Validation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/reusing-common-types.html">Reusing Common Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/open-versus-closed-types.html">Open Versus Closed Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/extending-a-base-type.html">Extending a Base Type</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/constraining-a-base-type.html">Constraining a Base Type</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/creating-a-strongly-typed-array.html">Strongly Typed Arrays</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/creating-an-array-of-higher-rank.html">Multi-Dimensional Arrays</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/working-with-tensors.html">Working with Tensors</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/creating-tuples.html">Creating Tuples</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/interfaces-and-mix-in-types.html">Interfaces and Mix-In Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/pattern-matching.html">Pattern Matching and Discriminated Unions</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/polymorphism-with-discriminators.html">Polymorphism with Discriminator Properties</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/string-enumerations.html">String Enumerations and Pattern Matching</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/numeric-enumerations.html">Numeric Enumerations</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link is-active" href="/Corvus.JsonSchema/pr-preview/pr-740/examples/maps.html">Maps of Strings to Strongly Typed Values</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/mapping-input-and-output-values.html">Mapping Input and Output Values</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/creating-and-mutating-objects.html">Creating and Mutating Objects</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/clone-and-freeze.html">Clone and Freeze</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/conditional-schemas.html">Conditional Schemas</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/default-values.html">Default Values</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/format-validation.html">Format Validation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/json-patch.html">JSON Patch (RFC 6902)</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/json-logic.html">JsonLogic Rule Evaluation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/jsonata.html">JSONata Expression Evaluation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/jmespath.html">JMESPath Query Evaluation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/yaml.html">YAML Conversion</a>
+                            </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</aside>
+
+    <main id="main-content" class="layout-docs__main">
+        <div class="doc__content">
+            <h1>Maps of Strings to Strongly Typed Values</h1>
+                <div class="card__tags" style="margin-bottom:1.5rem">
+                        <span class="card__tag">recipe</span>
+                        <span class="card__tag">JSON Schema</span>
+                        <span class="card__tag">C#</span>
+                        <span class="card__tag">maps</span>
+                        <span class="card__tag">strings</span>
+                        <span class="card__tag">strongly</span>
+                        <span class="card__tag">typed</span>
+                        <span class="card__tag">values</span>
+                        <span class="card__tag">type</span>
+                        <span class="card__tag">additionalProperties</span>
+                        <span class="card__tag">$ref</span>
+                        <span class="card__tag">TryGetProperty</span>
+                        <span class="card__tag">SetProperty</span>
+                        <span class="card__tag">RemoveProperty</span>
+                </div>
+<p>This recipe demonstrates how to use JSON Schema <code>additionalProperties</code> to create strongly-typed map/dictionary structures with string keys and typed values.</p>
+<h2 id="the-pattern">The Pattern</h2>
+<p>In .NET, we often use <code>IDictionary&lt;string, T&gt;</code> or <code>IReadOnlyDictionary&lt;string, T&gt;</code> to represent collections of key-value pairs where the keys are strings and the values are of a specific type.</p>
+<p>JSON Schema provides the <code>additionalProperties</code> keyword (or <code>unevaluatedProperties</code> in draft 2020-12 with composition) to define the schema for values in such a map.</p>
+<p>This is especially useful for:</p>
+<ul>
+<li>Configuration objects with arbitrary keys</li>
+<li>Flexible data structures where property names aren't known at design time</li>
+<li>API responses with dynamic property sets</li>
+</ul>
+<h2 id="the-schema">The Schema</h2>
+<p>File: <code>string-to-int-map.json</code></p>
+<pre><code class="language-json">{
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;additionalProperties&quot;: {
+    &quot;type&quot;: &quot;integer&quot;
+  }
+}
+</code></pre>
+<p>This schema:</p>
+<ul>
+<li>Defines an object type</li>
+<li>Allows any property names (string keys)</li>
+<li>Constrains all property values to be integers</li>
+</ul>
+<p>You could make this more complex by using a schema reference for the value type:</p>
+<pre><code class="language-json">{
+  &quot;type&quot;: &quot;object&quot;,
+  &quot;additionalProperties&quot;: {
+    &quot;$ref&quot;: &quot;./person.json&quot;
+  }
+}
+</code></pre>
+<h2 id="generated-code-usage">Generated Code Usage</h2>
+<h3 id="parsing-a-map">Parsing a map</h3>
+<pre><code class="language-csharp">string json = &quot;&quot;&quot;
+    {
+      &quot;foo&quot;: 1,
+      &quot;bar&quot;: 2,
+      &quot;baz&quot;: 3
+    }
+    &quot;&quot;&quot;;
+
+using var parsed = ParsedJsonDocument&lt;StringToIntMap&gt;.Parse(json);
+StringToIntMap map = parsed.RootElement;
+Console.WriteLine($&quot;Map: {map}&quot;);
+// Output: Map: {&quot;foo&quot;:1,&quot;bar&quot;:2,&quot;baz&quot;:3}
+</code></pre>
+<h3 id="accessing-map-values">Accessing map values</h3>
+<p>Use <code>TryGetProperty()</code> with UTF-8 byte literals for zero-allocation property access:</p>
+<pre><code class="language-csharp">if (map.TryGetProperty(&quot;foo&quot;u8, out var fooValue))
+{
+    Console.WriteLine($&quot;foo = {fooValue}&quot;);
+    // Output: foo = 1
+}
+</code></pre>
+<p>You can also use the indexer, which returns an <code>Undefined</code> value rather than throwing when the key doesn't exist:</p>
+<pre><code class="language-csharp">var barValue = map[&quot;bar&quot;u8];
+Console.WriteLine($&quot;bar = {barValue}&quot;);
+// Output: bar = 2
+
+var missing = map[&quot;noSuchKey&quot;u8];
+Console.WriteLine($&quot;missing is undefined: {missing.IsUndefined()}&quot;);
+// Output: missing is undefined: True
+</code></pre>
+<p>Both support UTF-8 byte literals (<code>&quot;foo&quot;u8</code>) for zero-allocation access, and string overloads for convenience.</p>
+<h3 id="enumerating-all-entries">Enumerating all entries</h3>
+<pre><code class="language-csharp">// Enumerate all key-value pairs
+Console.WriteLine(&quot;All entries:&quot;);
+foreach (var property in map.EnumerateObject())
+{
+    Console.WriteLine($&quot;  {property.Name} = {property.Value}&quot;);
+}
+// Output:
+// All entries:
+// foo = 1
+// bar = 2
+// baz = 3
+</code></pre>
+<h3 id="building-a-map-mutable">Building a map (mutable)</h3>
+<p>While this simple example shows readonly access, you can create maps using the mutable builder pattern:</p>
+<pre><code class="language-csharp">using JsonWorkspace workspace = JsonWorkspace.Create();
+using var builder = StringToIntMap.CreateBuilder(workspace);
+StringToIntMap.Mutable newMap = builder.RootElement;
+
+// Add properties to the map
+newMap.SetProperty(&quot;alpha&quot;u8, 10);
+newMap.SetProperty(&quot;beta&quot;u8, 20);
+newMap.SetProperty(&quot;gamma&quot;u8, 30);
+
+Console.WriteLine(newMap);
+// Output: {&quot;alpha&quot;:10,&quot;beta&quot;:20,&quot;gamma&quot;:30}
+</code></pre>
+<h3 id="mutating-an-existing-map">Mutating an existing map</h3>
+<p>You can also create a mutable builder from an existing map to modify its properties:</p>
+<pre><code class="language-csharp">// Create a builder from the parsed map
+using var mutatedBuilder = map.CreateBuilder(workspace);
+StringToIntMap.Mutable mutableMap = mutatedBuilder.RootElement;
+
+// Update an existing property
+mutableMap.SetProperty(&quot;foo&quot;u8, 100);
+
+// Add a new property
+mutableMap.SetProperty(&quot;qux&quot;u8, 4);
+
+// Remove a property
+mutableMap.RemoveProperty(&quot;bar&quot;u8);
+
+Console.WriteLine(mutableMap);
+// Output: {&quot;foo&quot;:100,&quot;baz&quot;:3,&quot;qux&quot;:4}
+</code></pre>
+<p>The mutable map allows you to dynamically add, update, and remove properties with <code>SetProperty()</code> and <code>RemoveProperty()</code>, providing a flexible way to construct and modify maps at runtime.</p>
+<h2 id="utf-8-string-literals-for-performance">UTF-8 String Literals for Performance</h2>
+<p>Notice the use of <code>&quot;foo&quot;u8</code> syntax. The <code>u8</code> suffix creates a UTF-8 encoded <code>ReadOnlySpan&lt;byte&gt;</code> at compile time, avoiding:</p>
+<ul>
+<li>String allocation</li>
+<li>UTF-16 to UTF-8 transcoding at runtime</li>
+</ul>
+<p>This is the preferred way to access properties in performance-sensitive code.</p>
+<p>For compatibility or convenience, you can also use regular strings:</p>
+<pre><code class="language-csharp">string key = GetKeyFromSomewhere();
+if (map.TryGetProperty(key, out var value))
+{
+    // ...
+}
+</code></pre>
+<p>But be aware this will allocate and transcode the string.</p>
+<h2 id="key-differences-from-v4">Key Differences from V4</h2>
+<p>Property access (<code>TryGetProperty()</code>, indexer), <code>EnumerateObject()</code>, and UTF-8 key overloads are available in both V4 and V5. The main difference is how maps are constructed.</p>
+<h3 id="v4-corvus.json">V4 (Corvus.Json)</h3>
+<pre><code class="language-csharp">// Create from property collection
+StringToIntMap map = StringToIntMap.FromProperties(
+    (&quot;foo&quot;, 1),
+    (&quot;bar&quot;, 2),
+    (&quot;baz&quot;, 3));
+</code></pre>
+<h3 id="v5-corvus.text.json">V5 (Corvus.Text.Json)</h3>
+<pre><code class="language-csharp">// Build with workspace
+using JsonWorkspace workspace = JsonWorkspace.Create();
+using var doc = StringToIntMap.CreateBuilder(workspace, 
+    StringToIntMap.Build((ref StringToIntMap.Builder b) =&gt;
+    {
+        b.SetProperty(&quot;foo&quot;u8, 1);
+        b.SetProperty(&quot;bar&quot;u8, 2);
+        b.SetProperty(&quot;baz&quot;u8, 3);
+    }));
+</code></pre>
+<p><strong>Key differences:</strong></p>
+<ul>
+<li>V5 uses the builder pattern instead of <code>FromProperties()</code> for constructing maps</li>
+<li>V5 uses <code>ParsedJsonDocument&lt;T&gt;</code> for parsing from external JSON input</li>
+</ul>
+<h2 id="running-the-example">Running the Example</h2>
+<pre><code class="language-bash">cd docs/ExampleRecipes/016-Maps
+dotnet run
+</code></pre>
+<h2 id="related-patterns">Related Patterns</h2>
+<ul>
+<li><a href="/Corvus.JsonSchema/pr-preview/pr-740/examples/open-versus-closed-types.html">004-OpenVersusClosedTypes</a> - Objects with <code>unevaluatedProperties: false</code></li>
+<li><a href="/Corvus.JsonSchema/pr-preview/pr-740/examples/interfaces-and-mix-in-types.html">011-InterfacesAndMixInTypes</a> - Composing object types</li>
+<li><a href="/Corvus.JsonSchema/pr-preview/pr-740/examples/mapping-input-and-output-values.html">017-MappingInputAndOutputValues</a> - Converting between different schemas</li>
+</ul>
+<h2 id="frequently-asked-questions">Frequently Asked Questions</h2>
+<h3 id="q-can-map-values-be-complex-types-objects-arrays">Q: Can map values be complex types (objects, arrays)?</h3>
+<p><strong>A:</strong> Yes. The <code>additionalProperties</code> keyword accepts any valid JSON Schema, so values can be objects, arrays, nested maps, or any other type. The generated code provides strongly-typed access to each value through <code>TryGetProperty()</code>, returning the value as the appropriate generated type.</p>
+<h3 id="q-how-do-i-validate-map-keys-against-a-pattern">Q: How do I validate map keys against a pattern?</h3>
+<p><strong>A:</strong> Use <code>patternProperties</code> instead of (or alongside) <code>additionalProperties</code>. With <code>patternProperties</code>, you define a regex pattern for the keys and a schema for the corresponding values. For example, <code>&quot;^[a-z]+$&quot;: { &quot;type&quot;: &quot;integer&quot; }</code> requires all matching keys to have integer values.</p>
+<h3 id="q-whats-the-difference-between-additionalproperties-and-patternproperties">Q: What's the difference between <code>additionalProperties</code> and <code>patternProperties</code>?</h3>
+<p><strong>A:</strong> <code>additionalProperties</code> applies to all properties not explicitly defined by <code>properties</code> or matched by <code>patternProperties</code>. <code>patternProperties</code> applies only to keys matching specific regex patterns. You can combine both — use <code>patternProperties</code> for keys with known patterns and <code>additionalProperties</code> for everything else (or set it to <code>false</code> to disallow unmatched keys).</p>
+<h3 id="q-can-i-use-maps-with-known-and-unknown-property-combinations">Q: Can I use maps with known and unknown property combinations?</h3>
+<p><strong>A:</strong> Yes. Define your known properties in the <code>properties</code> keyword and use <code>additionalProperties</code> to constrain the type of any extra properties. This gives you strongly-typed accessors for known properties while still allowing dynamic key-value entries. See <a href="/Corvus.JsonSchema/pr-preview/pr-740/examples/open-versus-closed-types.html">Recipe 004</a> for more on open versus closed types.</p>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "Q: Can map values be complex types (objects, arrays)?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "**A:** Yes. The additionalProperties keyword accepts any valid JSON Schema, so values can be objects, arrays, nested maps, or any other type. The generated code provides strongly-typed access to each value through TryGetProperty(), returning the value as the appropriate generated type."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Q: How do I validate map keys against a pattern?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "**A:** Use patternProperties instead of (or alongside) additionalProperties. With patternProperties, you define a regex pattern for the keys and a schema for the corresponding values. For example, \"^[a-z]+$\": { \"type\": \"integer\" } requires all matching keys to have integer values."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Q: What's the difference between `additionalProperties` and `patternProperties`?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "**A:** additionalProperties applies to all properties not explicitly defined by properties or matched by patternProperties. patternProperties applies only to keys matching specific regex patterns. You can combine both — use patternProperties for keys with known patterns and additionalProperties for everything else (or set it to false to disallow unmatched keys)."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Q: Can I use maps with known and unknown property combinations?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "**A:** Yes. Define your known properties in the properties keyword and use additionalProperties to constrain the type of any extra properties. This gives you strongly-typed accessors for known properties while still allowing dynamic key-value entries. See [Recipe 004](../004-OpenVersusClosedTypes/) for more on open versus closed types."
+      }
+    }
+  ]
+}
+</script>
+        </div>
+    </main>
+</div>
+
+    </div>
+    <footer class="site-footer">
+    <div class="site-footer__inner">
+        <div class="site-footer__sponsor">
+            Sponsored by
+            <a href="https://endjin.com" target="_blank" rel="noopener noreferrer">endjin</a>
+        </div>
+        <ul class="site-footer__links" role="list">
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/pr-preview/pr-740/getting-started/index.html">Getting Started</a></li>
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/pr-preview/pr-740/docs/index.html">Documentation</a></li>
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/pr-preview/pr-740/examples/index.html">Examples</a></li>
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/pr-preview/pr-740/api/index.html">API</a></li>
+            <li><a class="site-footer__link" href="https://github.com/corvus-dotnet/Corvus.JsonSchema" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+            <li><a class="site-footer__link" href="https://www.nuget.org/packages?q=Corvus.Json" target="_blank" rel="noopener noreferrer">NuGet</a></li>
+        </ul>
+        <p class="site-footer__copyright">&copy; 2026 endjin Ltd.</p>
+    </div>
+</footer>
+
+    <!-- highlight.js for syntax highlighting (CSS targets .hljs-* classes) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/csharp.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/json.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/bash.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/xml.min.js" defer></script>
+    <script>document.addEventListener('DOMContentLoaded',()=>hljs.highlightAll())</script>
+    <script src="/Corvus.JsonSchema/pr-preview/pr-740/assets/js/main.js" defer></script>
+    <script src="/Corvus.JsonSchema/pr-preview/pr-740/assets/js/sidebar-search.js" defer></script>
+    
+</body>
+</html>

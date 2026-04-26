@@ -1,0 +1,1202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#1C1D21" />
+    <meta name="description" content="Query and extract data from JSON documents using the JMESPath query language. Supports interpreted evaluation, Roslyn source generator, and CLI code generation with zero-allocation evaluation." />
+    <meta name="keywords" content="documentation, Corvus.Text.Json" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:description" content="Query and extract data from JSON documents using the JMESPath query language. Supports interpreted evaluation, Roslyn source generator, and CLI code generation with zero-allocation evaluation." />
+    <meta name="twitter:image" content="/Corvus.JsonSchema/pr-preview/pr-740/assets/images/og-corvus.png" />
+    <meta name="twitter:title" content="JMESPath Query Language - Corvus.Text.Json" />
+    <meta property="article:tag" content="documentation" />
+    <meta property="article:tag" content="Corvus.Text.Json" />
+    <meta property="og:description" content="Query and extract data from JSON documents using the JMESPath query language. Supports interpreted evaluation, Roslyn source generator, and CLI code generation with zero-allocation evaluation." />
+    <meta property="og:image" content="/Corvus.JsonSchema/pr-preview/pr-740/assets/images/og-corvus.png" />
+    <meta property="og:title" content="JMESPath Query Language - Corvus.Text.Json" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://corvus-oss.org/corvus-json-schema/docs/jmes-path/" />
+    <title>JMESPath Query Language - Corvus.Text.Json</title>
+    <link itemprop="url" href="https://corvus-oss.org/corvus-json-schema/docs/jmes-path/" />
+    <link rel="canonical" href="https://corvus-oss.org/corvus-json-schema/docs/jmes-path/" />
+    <link rel="sitemap" href="https://corvus-oss.org/corvus-json-schema/sitemap.xml" />
+    <!-- Styles -->
+    <link rel="stylesheet" href="/Corvus.JsonSchema/pr-preview/pr-740/main.css" />
+    <link rel="icon" type="image/svg+xml" href="/Corvus.JsonSchema/pr-preview/pr-740/assets/images/favicon.svg" />
+    
+</head>
+<body>
+    <a class="sr-only" href="#main-content">Skip to content</a>
+<header class="site-header">
+    <div class="site-header__inner">
+        <a class="site-header__brand" href="/Corvus.JsonSchema/pr-preview/pr-740/index.html" aria-label="Corvus.JsonSchema home">
+            <img src="/Corvus.JsonSchema/pr-preview/pr-740/assets/images/logo-corvus.svg" alt="" width="28" height="28" aria-hidden="true" />
+            Corvus<span style="color:var(--color-brand)">.</span>Json<span style="color:var(--color-brand)">Schema</span>
+        </a>
+        <nav class="site-header__nav-desktop" aria-label="Main navigation">
+                    <a href="/Corvus.JsonSchema/pr-preview/pr-740/getting-started/index.html"
+                       class="site-header__link "
+                       >Getting Started</a>
+                    <a href="/Corvus.JsonSchema/pr-preview/pr-740/docs/index.html"
+                       class="site-header__link is-active"
+                       aria-current=page>Documentation</a>
+                    <a href="/Corvus.JsonSchema/pr-preview/pr-740/examples/index.html"
+                       class="site-header__link "
+                       >Examples</a>
+                    <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/index.html"
+                       class="site-header__link "
+                       >API</a>
+            <a href="/Corvus.JsonSchema/pr-preview/pr-740/playground/"
+               class="site-header__link"
+               target="_blank" rel="noopener noreferrer"
+               title="Interactive JSON Schema playground">Playground</a>
+            <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema"
+               class="site-header__link" target="_blank" rel="noopener noreferrer"
+               aria-label="View on GitHub">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+            </a>
+        </nav>
+        <button class="site-header__menu-toggle js-toggle-menu"
+                aria-expanded="false" aria-label="Toggle menu">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+            </svg>
+        </button>
+    </div>
+</header>
+<nav class="site-header__nav-mobile js-mobile-nav" aria-label="Mobile navigation">
+            <a href="/Corvus.JsonSchema/pr-preview/pr-740/getting-started/index.html" class="site-header__link">Getting Started</a>
+            <a href="/Corvus.JsonSchema/pr-preview/pr-740/docs/index.html" class="site-header__link">Documentation</a>
+            <a href="/Corvus.JsonSchema/pr-preview/pr-740/examples/index.html" class="site-header__link">Examples</a>
+            <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/index.html" class="site-header__link">API</a>
+    <a href="/Corvus.JsonSchema/pr-preview/pr-740/playground/" class="site-header__link" target="_blank" rel="noopener noreferrer">Playground</a>
+    <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema"
+       class="site-header__link" target="_blank" rel="noopener noreferrer">GitHub</a>
+</nav>
+
+    <div class="page-content">
+    <div class="layout-docs container">
+    <button class="sidebar-toggle" aria-label="Toggle navigation" aria-expanded="false"></button>
+<div class="sidebar-backdrop"></div>
+<aside class="sidebar">
+    <div class="sidebar__inner">
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Getting Started</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                    <li class="sidebar__item"><a class="sidebar__link" href="/Corvus.JsonSchema/pr-preview/pr-740/getting-started/index.html">Tutorial</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Documentation</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/parsed-json-document.html">Parsing &amp; Reading JSON</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/json-document-builder.html">Building &amp; Mutating JSON</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/source-generator.html">Source Generator</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/code-generator.html">CLI Code Generation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/validator.html">Dynamic Schema Validation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/migrating-from-v4-to-v5.html">Migrating from V4</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/using-copilot-for-migration.html">Copilot Migration</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/migration-analyzers.html">Migration Analyzers</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/analyzers.html">Analyzers</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/schema-evaluator.html">Standalone Schema Evaluator</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/json-patch.html">JSON Patch (RFC 6902)</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/json-logic.html">JsonLogic Rule Engine</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/jsonata.html">JSONata Query Language</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link is-active" href="/Corvus.JsonSchema/pr-preview/pr-740/docs/jmes-path.html">JMESPath Query Language</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/yaml.html">YAML Converter</a>
+                            </li>
+                </ul>
+            </div>
+        </div>
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Examples</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/data-object.html">Simple Data Objects</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/data-object-validation.html">Data Object Validation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/reusing-common-types.html">Reusing Common Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/open-versus-closed-types.html">Open Versus Closed Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/extending-a-base-type.html">Extending a Base Type</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/constraining-a-base-type.html">Constraining a Base Type</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/creating-a-strongly-typed-array.html">Strongly Typed Arrays</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/creating-an-array-of-higher-rank.html">Multi-Dimensional Arrays</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/working-with-tensors.html">Working with Tensors</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/creating-tuples.html">Creating Tuples</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/interfaces-and-mix-in-types.html">Interfaces and Mix-In Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/pattern-matching.html">Pattern Matching and Discriminated Unions</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/polymorphism-with-discriminators.html">Polymorphism with Discriminator Properties</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/string-enumerations.html">String Enumerations and Pattern Matching</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/numeric-enumerations.html">Numeric Enumerations</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/maps.html">Maps of Strings to Strongly Typed Values</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/mapping-input-and-output-values.html">Mapping Input and Output Values</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/creating-and-mutating-objects.html">Creating and Mutating Objects</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/clone-and-freeze.html">Clone and Freeze</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/conditional-schemas.html">Conditional Schemas</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/default-values.html">Default Values</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/format-validation.html">Format Validation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/json-patch.html">JSON Patch (RFC 6902)</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/json-logic.html">JsonLogic Rule Evaluation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/jsonata.html">JSONata Expression Evaluation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/jmespath.html">JMESPath Query Evaluation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/yaml.html">YAML Conversion</a>
+                            </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</aside>
+
+    <main id="main-content" class="layout-docs__main">
+        <div class="doc__content">
+            <h1>JMESPath Query Language</h1>
+<blockquote>
+<p><strong><a href="/Corvus.JsonSchema/pr-preview/pr-740/playground-jmespath/">Try the JMESPath Playground</a></strong> — evaluate JMESPath expressions in your browser using the Corvus runtime.</p>
+</blockquote>
+<h2 id="overview">Overview</h2>
+<p><code>Corvus.Text.Json.JMESPath</code> implements <a href="https://jmespath.org/">JMESPath</a> for the Corvus.Text.Json document model — a high-performance query language that evaluates JMESPath expressions against JSON data with compiled delegate trees, pipe fusion, and pooled workspace memory.</p>
+<p><a href="https://jmespath.org/">JMESPath</a> is a query language for JSON. It supports path navigation, sub-expressions, index access, slicing, list and object projections, flatten, filter expressions, multiselect lists and hashes, pipe expressions, comparisons, and a full set of built-in functions. The Corvus implementation passes <strong>all 892</strong> conformance test cases in the official <a href="https://github.com/jmespath/jmespath.test">JMESPath Compliance Test Suite</a> (100% conformance). The test suite also contains 21 benchmark-only entries that are implemented as BenchmarkDotNet benchmarks with baseline comparison to JmesPath.Net; these are used for performance measurement, not conformance, and are excluded from the count.</p>
+<p>Three evaluation modes are available:</p>
+<table>
+<thead>
+<tr>
+<th>Mode</th>
+<th>When to use</th>
+<th>Package</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Interpreted</strong></td>
+<td>Expressions are dynamic, determined at runtime</td>
+<td><code>Corvus.Text.Json.JMESPath</code></td>
+</tr>
+<tr>
+<td><strong>Source generator</strong></td>
+<td>Expressions are known at build time, embedded in your project</td>
+<td><code>Corvus.Text.Json.JMESPath.SourceGenerator</code></td>
+</tr>
+<tr>
+<td><strong>CLI code generation</strong></td>
+<td>Expressions are known ahead of time, generated outside the build</td>
+<td><code>Corvus.Json.Cli</code> (the <code>jmespath</code> command)</td>
+</tr>
+</tbody>
+</table>
+<p>The source generator and CLI tool produce optimized static C# that eliminates delegate dispatch.</p>
+<blockquote>
+<p><strong>Choosing between JMESPath and JSONata:</strong> JMESPath is ideal for <strong>querying and extracting</strong> data from JSON — projections, filtering, slicing, and reshaping with a concise, standardized syntax. If you need <strong>arithmetic, string concatenation, user-defined functions, or complex transformations</strong>, see <a href="/Corvus.JsonSchema/pr-preview/pr-740/docs/jsonata.html">JSONata</a> instead. JMESPath is a pure query language with no side effects and no arithmetic operators.</p>
+</blockquote>
+<p><strong>Requirements:</strong> The runtime packages target <code>net9.0</code>, <code>net10.0</code>, <code>netstandard2.0</code>, and <code>netstandard2.1</code>. The source generator is an analyzer package and does not impose additional runtime requirements.</p>
+<h2 id="conformance">Conformance</h2>
+<p><img src="https://img.shields.io/badge/JMESPath_Runtime-892%2F892_(100%25)-brightgreen" alt="JMESPath Runtime Conformance" />
+<img src="https://img.shields.io/badge/JMESPath_CodeGen-892%2F892_(100%25)-brightgreen" alt="JMESPath CodeGen Conformance" /></p>
+<p>Both the runtime evaluator and the code generation pipeline pass all <strong>892</strong> official JMESPath compliance test cases (100% conformance) on .NET 10.0.</p>
+<h2 id="performance">Performance</h2>
+<p>All benchmarks use <a href="https://benchmarkdotnet.org/">BenchmarkDotNet</a> with <a href="https://github.com/jdevillard/JmesPath.Net">JmesPath.Net</a> as the baseline. The <strong>RT</strong> column is the interpreted runtime evaluator; the <strong>CG</strong> column is the source-generated code. Measurements are from a single-threaded run on .NET 10.0.</p>
+<table>
+<thead>
+<tr>
+<th>Benchmark</th>
+<th>Expression</th>
+<th style="text-align: right;">JmesPath.Net</th>
+<th style="text-align: right;">RT</th>
+<th style="text-align: right;">CG</th>
+<th style="text-align: right;">JmesPath.Net Alloc</th>
+<th style="text-align: right;">RT Alloc</th>
+<th style="text-align: right;">CG Alloc</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>SimpleField</td>
+<td><code>a</code></td>
+<td style="text-align: right;">8,905 ns</td>
+<td style="text-align: right;">49 ns</td>
+<td style="text-align: right;">44 ns</td>
+<td style="text-align: right;">45,688 B</td>
+<td style="text-align: right;">0 B</td>
+<td style="text-align: right;">0 B</td>
+</tr>
+<tr>
+<td>SimpleSubexpr</td>
+<td><code>a.b.c</code></td>
+<td style="text-align: right;">9,411 ns</td>
+<td style="text-align: right;">62 ns</td>
+<td style="text-align: right;">54 ns</td>
+<td style="text-align: right;">46,048 B</td>
+<td style="text-align: right;">0 B</td>
+<td style="text-align: right;">0 B</td>
+</tr>
+<tr>
+<td>SimpleOr</td>
+<td><code>a \|\| b</code></td>
+<td style="text-align: right;">10,174 ns</td>
+<td style="text-align: right;">99 ns</td>
+<td style="text-align: right;">87 ns</td>
+<td style="text-align: right;">46,080 B</td>
+<td style="text-align: right;">0 B</td>
+<td style="text-align: right;">0 B</td>
+</tr>
+<tr>
+<td>LongString</td>
+<td><code>foo</code> (1 KB value)</td>
+<td style="text-align: right;">2,936 ns</td>
+<td style="text-align: right;">42 ns</td>
+<td style="text-align: right;">7 ns</td>
+<td style="text-align: right;">36,008 B</td>
+<td style="text-align: right;">0 B</td>
+<td style="text-align: right;">0 B</td>
+</tr>
+<tr>
+<td>ChainedFilter</td>
+<td><code>a[?b==\</code>1`][?c==`2`]`</td>
+<td style="text-align: right;">7,430 ns</td>
+<td style="text-align: right;">18 ns</td>
+<td style="text-align: right;">12 ns</td>
+<td style="text-align: right;">34,952 B</td>
+<td style="text-align: right;">0 B</td>
+<td style="text-align: right;">0 B</td>
+</tr>
+<tr>
+<td>Field50</td>
+<td>50 chained fields</td>
+<td style="text-align: right;">16,372 ns</td>
+<td style="text-align: right;">434 ns</td>
+<td style="text-align: right;">52 ns</td>
+<td style="text-align: right;">51,576 B</td>
+<td style="text-align: right;">0 B</td>
+<td style="text-align: right;">0 B</td>
+</tr>
+<tr>
+<td>Index50</td>
+<td>50 chained indices</td>
+<td style="text-align: right;">15,911 ns</td>
+<td style="text-align: right;">426 ns</td>
+<td style="text-align: right;">53 ns</td>
+<td style="text-align: right;">59,224 B</td>
+<td style="text-align: right;">0 B</td>
+<td style="text-align: right;">0 B</td>
+</tr>
+<tr>
+<td>Pipe50</td>
+<td>50 chained pipes</td>
+<td style="text-align: right;">30,333 ns</td>
+<td style="text-align: right;">485 ns</td>
+<td style="text-align: right;">102 ns</td>
+<td style="text-align: right;">51,576 B</td>
+<td style="text-align: right;">0 B</td>
+<td style="text-align: right;">0 B</td>
+</tr>
+<tr>
+<td>DeepAnds</td>
+<td>Nested <code>&amp;&amp;</code></td>
+<td style="text-align: right;">14,791 ns</td>
+<td style="text-align: right;">2,311 ns</td>
+<td style="text-align: right;">2,155 ns</td>
+<td style="text-align: right;">52,568 B</td>
+<td style="text-align: right;">0 B</td>
+<td style="text-align: right;">0 B</td>
+</tr>
+<tr>
+<td>DeepOrs</td>
+<td>Nested <code>\|\|</code></td>
+<td style="text-align: right;">14,039 ns</td>
+<td style="text-align: right;">163 ns</td>
+<td style="text-align: right;">119 ns</td>
+<td style="text-align: right;">52,568 B</td>
+<td style="text-align: right;">0 B</td>
+<td style="text-align: right;">0 B</td>
+</tr>
+<tr>
+<td>DeepMatch</td>
+<td>Deep wildcard match</td>
+<td style="text-align: right;">9,904 ns</td>
+<td style="text-align: right;">299 ns</td>
+<td style="text-align: right;">278 ns</td>
+<td style="text-align: right;">51,216 B</td>
+<td style="text-align: right;">0 B</td>
+<td style="text-align: right;">0 B</td>
+</tr>
+<tr>
+<td>DeepNoMatch</td>
+<td>Deep wildcard miss</td>
+<td style="text-align: right;">10,783 ns</td>
+<td style="text-align: right;">317 ns</td>
+<td style="text-align: right;">267 ns</td>
+<td style="text-align: right;">52,320 B</td>
+<td style="text-align: right;">0 B</td>
+<td style="text-align: right;">0 B</td>
+</tr>
+<tr>
+<td>DeepProjection</td>
+<td><code>[*].[*].[*]</code></td>
+<td style="text-align: right;">58,225 ns</td>
+<td style="text-align: right;">223 ns</td>
+<td style="text-align: right;">10 ns</td>
+<td style="text-align: right;">122,352 B</td>
+<td style="text-align: right;">0 B</td>
+<td style="text-align: right;">0 B</td>
+</tr>
+<tr>
+<td>MultiList</td>
+<td>Multi-select list</td>
+<td style="text-align: right;">25,152 ns</td>
+<td style="text-align: right;">4,491 ns</td>
+<td style="text-align: right;">4,835 ns</td>
+<td style="text-align: right;">56,632 B</td>
+<td style="text-align: right;">136 B</td>
+<td style="text-align: right;">136 B</td>
+</tr>
+<tr>
+<td>SumArray</td>
+<td><code>sum(values(@))</code></td>
+<td style="text-align: right;">27,306 ns</td>
+<td style="text-align: right;">4,821 ns</td>
+<td style="text-align: right;">4,824 ns</td>
+<td style="text-align: right;">57,920 B</td>
+<td style="text-align: right;">0 B</td>
+<td style="text-align: right;">0 B</td>
+</tr>
+<tr>
+<td>NestedSum</td>
+<td>Nested <code>sum(...)</code></td>
+<td style="text-align: right;">61,010 ns</td>
+<td style="text-align: right;">4,804 ns</td>
+<td style="text-align: right;">4,805 ns</td>
+<td style="text-align: right;">111,416 B</td>
+<td style="text-align: right;">0 B</td>
+<td style="text-align: right;">0 B</td>
+</tr>
+<tr>
+<td>AvgArray</td>
+<td><code>avg(values(@))</code></td>
+<td style="text-align: right;">7,761 ns</td>
+<td style="text-align: right;">1,022 ns</td>
+<td style="text-align: right;">1,011 ns</td>
+<td style="text-align: right;">48,233 B</td>
+<td style="text-align: right;">272 B</td>
+<td style="text-align: right;">272 B</td>
+</tr>
+<tr>
+<td>MinArray</td>
+<td><code>min(values(@))</code></td>
+<td style="text-align: right;">14,432 ns</td>
+<td style="text-align: right;">2,060 ns</td>
+<td style="text-align: right;">2,039 ns</td>
+<td style="text-align: right;">48,601 B</td>
+<td style="text-align: right;">136 B</td>
+<td style="text-align: right;">136 B</td>
+</tr>
+<tr>
+<td>MaxArray</td>
+<td><code>max(values(@))</code></td>
+<td style="text-align: right;">7,704 ns</td>
+<td style="text-align: right;">2,398 ns</td>
+<td style="text-align: right;">2,363 ns</td>
+<td style="text-align: right;">48,705 B</td>
+<td style="text-align: right;">136 B</td>
+<td style="text-align: right;">136 B</td>
+</tr>
+<tr>
+<td>MinBy</td>
+<td><code>min_by(people, &amp;age)</code></td>
+<td style="text-align: right;">24,220 ns</td>
+<td style="text-align: right;">2,275 ns</td>
+<td style="text-align: right;">1,991 ns</td>
+<td style="text-align: right;">64,760 B</td>
+<td style="text-align: right;">0 B</td>
+<td style="text-align: right;">0 B</td>
+</tr>
+<tr>
+<td>MaxBy</td>
+<td><code>max_by(people, &amp;age)</code></td>
+<td style="text-align: right;">24,460 ns</td>
+<td style="text-align: right;">2,361 ns</td>
+<td style="text-align: right;">2,458 ns</td>
+<td style="text-align: right;">64,760 B</td>
+<td style="text-align: right;">0 B</td>
+<td style="text-align: right;">0 B</td>
+</tr>
+</tbody>
+</table>
+<p>All allocations in the RT and CG columns come from <code>JsonDocumentBuilder</code> results returned from aggregate functions (<code>values()</code>, <code>avg()</code>). Navigation, projection, filtering, and arithmetic benchmarks are zero-allocation. JmesPath.Net allocates 34–122 KB per evaluation because it materialises its own object model from System.Text.Json.</p>
+<h2 id="quick-start">Quick start</h2>
+<p>Install the packages:</p>
+<pre><code class="language-bash">dotnet add package Corvus.Text.Json
+dotnet add package Corvus.Text.Json.JMESPath
+</code></pre>
+<p><strong>Simplest approach — cloned result, no workspace management:</strong></p>
+<pre><code class="language-csharp">using Corvus.Text.Json.JMESPath;
+
+JsonElement result = JMESPathEvaluator.Default.Search(
+    &quot;locations[?state == 'WA'].name | sort(@) | {WashingtonCities: join(', ', @)}&quot;,
+    JsonElement.ParseValue(&quot;&quot;&quot;
+    {
+      &quot;locations&quot;: [
+        {&quot;name&quot;: &quot;Seattle&quot;, &quot;state&quot;: &quot;WA&quot;},
+        {&quot;name&quot;: &quot;New York&quot;, &quot;state&quot;: &quot;NY&quot;},
+        {&quot;name&quot;: &quot;Bellevue&quot;, &quot;state&quot;: &quot;WA&quot;},
+        {&quot;name&quot;: &quot;Olympia&quot;, &quot;state&quot;: &quot;WA&quot;}
+      ]
+    }
+    &quot;&quot;&quot;u8));
+
+Console.WriteLine(result); // {&quot;WashingtonCities&quot;:&quot;Bellevue, Olympia, Seattle&quot;}
+</code></pre>
+<p><code>Search(expression, data)</code> parses the input, evaluates the expression, and returns a cloned result that you own — no workspace management or disposal needed.</p>
+<p><strong>Full API — zero-allocation evaluation:</strong></p>
+<pre><code class="language-csharp">using Corvus.Text.Json;
+using Corvus.Text.Json.JMESPath;
+
+// Parse the input data (using statement ensures pooled memory is returned)
+using var dataDoc = ParsedJsonDocument&lt;JsonElement&gt;.Parse(
+    &quot;&quot;&quot;
+    {
+      &quot;people&quot;: [
+        {&quot;first&quot;: &quot;James&quot;, &quot;last&quot;: &quot;d&quot;},
+        {&quot;first&quot;: &quot;Jacob&quot;, &quot;last&quot;: &quot;e&quot;},
+        {&quot;first&quot;: &quot;Jayden&quot;, &quot;last&quot;: &quot;f&quot;},
+        {&quot;missing&quot;: &quot;different&quot;}
+      ],
+      &quot;foo&quot;: {&quot;bar&quot;: &quot;baz&quot;}
+    }
+    &quot;&quot;&quot;u8);
+
+// Create a workspace for zero-allocation evaluation
+using JsonWorkspace workspace = JsonWorkspace.Create();
+
+// Evaluate a JMESPath expression
+JsonElement result = JMESPathEvaluator.Default.Search(
+    &quot;people[*].first&quot;,
+    dataDoc.RootElement,
+    workspace);
+
+Console.WriteLine(result); // [&quot;James&quot;,&quot;Jacob&quot;,&quot;Jayden&quot;]
+</code></pre>
+<p>The evaluator compiles the expression into a delegate tree on first use and caches it. Subsequent evaluations of the same expression skip compilation entirely. Create one <code>JMESPathEvaluator</code> instance and reuse it — <code>JMESPathEvaluator.Default</code> provides a shared static instance.</p>
+<p>The workspace provides pooled memory for the result — <strong>zero GC allocation</strong> per evaluation for most expressions. The result remains valid until the workspace is disposed or reset.</p>
+<h2 id="evaluation-modes">Evaluation modes</h2>
+<p>Three evaluation modes are available. All three produce the same results for the same expression; they differ in when compilation happens and what overhead is incurred at evaluation time.</p>
+<h3 id="interpreted-runtime-evaluation">Interpreted (runtime evaluation)</h3>
+<p>Use <code>JMESPathEvaluator</code> when expressions are determined at runtime:</p>
+<pre><code class="language-csharp">using JsonWorkspace workspace = JsonWorkspace.Create();
+var evaluator = new JMESPathEvaluator();
+
+JsonElement result = evaluator.Search(
+    &quot;people[*].first&quot;,
+    dataDoc.RootElement,
+    workspace);
+</code></pre>
+<p>Create one <code>JMESPathEvaluator</code> instance and reuse it — it caches compiled delegate trees per expression string and is thread-safe. For simple cases, <code>JMESPathEvaluator.Default</code> provides a shared static instance.</p>
+<h3 id="source-generator-build-time-code-generation">Source generator (build-time code generation)</h3>
+<p>When expressions are known at build time, the source generator eliminates all runtime compilation overhead.</p>
+<p><strong>1. Install the source generator package:</strong></p>
+<pre><code class="language-bash">dotnet add package Corvus.Text.Json.JMESPath.SourceGenerator
+</code></pre>
+<p><strong>2. Create a <code>.jmespath</code> expression file</strong> (e.g. <code>Expressions/total-price.jmespath</code>):</p>
+<pre><code>sum(items[*].price)
+</code></pre>
+<p><strong>3. Declare a partial class with the <code>[JMESPathExpression]</code> attribute:</strong></p>
+<pre><code class="language-csharp">using Corvus.Text.Json.JMESPath;
+
+namespace MyApp.Queries;
+
+[JMESPathExpression(&quot;total-price.jmespath&quot;)]
+public static partial class TotalPrice;
+</code></pre>
+<p><strong>4. Include the expression file and packages in your <code>.csproj</code>:</strong></p>
+<pre><code class="language-xml">&lt;ItemGroup&gt;
+  &lt;AdditionalFiles Include=&quot;Expressions\total-price.jmespath&quot; /&gt;
+&lt;/ItemGroup&gt;
+
+&lt;ItemGroup&gt;
+  &lt;PackageReference Include=&quot;Corvus.Text.Json.JMESPath.SourceGenerator&quot;
+                    PrivateAssets=&quot;all&quot;
+                    ReferenceOutputAssembly=&quot;false&quot;
+                    OutputItemType=&quot;Analyzer&quot; /&gt;
+  &lt;PackageReference Include=&quot;Corvus.Text.Json&quot; /&gt;
+  &lt;PackageReference Include=&quot;Corvus.Text.Json.JMESPath&quot; /&gt;
+&lt;/ItemGroup&gt;
+</code></pre>
+<p><strong>5. Call the generated <code>Evaluate</code> method:</strong></p>
+<pre><code class="language-csharp">using JsonWorkspace workspace = JsonWorkspace.Create();
+JsonElement result = TotalPrice.Evaluate(dataDoc.RootElement, workspace);
+</code></pre>
+<p>The generated method is a static method that directly evaluates the expression without delegate dispatch.</p>
+<p><strong>Diagnostic messages:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Code</th>
+<th>Severity</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>JPSG001</td>
+<td>Error</td>
+<td>Expression file not found in <code>AdditionalFiles</code></td>
+</tr>
+<tr>
+<td>JPSG002</td>
+<td>Error</td>
+<td>Expression file is empty</td>
+</tr>
+<tr>
+<td>JPSG003</td>
+<td>Error</td>
+<td>Code generation failed (invalid expression or unsupported feature)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="cli-code-generation">CLI code generation</h3>
+<p>The <code>corvusjson</code> CLI tool includes a <code>jmespath</code> subcommand for ahead-of-time code generation outside the MSBuild pipeline:</p>
+<pre><code class="language-bash">dotnet tool install --global Corvus.Json.Cli
+</code></pre>
+<pre><code class="language-bash">corvusjson jmespath &lt;expressionFile&gt; \
+    --className &lt;ClassName&gt; \
+    --namespace &lt;Namespace&gt; \
+    [--outputPath &lt;output.cs&gt;]
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>Argument</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>&lt;expressionFile&gt;</code></td>
+<td>Yes</td>
+<td>Path to the <code>.jmespath</code> expression file</td>
+</tr>
+<tr>
+<td><code>--className</code></td>
+<td>Yes</td>
+<td>Name of the generated static class</td>
+</tr>
+<tr>
+<td><code>--namespace</code></td>
+<td>Yes</td>
+<td>Namespace for the generated class</td>
+</tr>
+<tr>
+<td><code>--outputPath</code></td>
+<td>No</td>
+<td>Output file path (defaults to <code>&lt;ClassName&gt;.cs</code>)</td>
+</tr>
+</tbody>
+</table>
+<p>Example:</p>
+<pre><code class="language-bash">corvusjson jmespath expressions/total-price.jmespath \
+    --className TotalPrice \
+    --namespace MyApp.Queries \
+    --outputPath Generated/TotalPrice.cs
+</code></pre>
+<p>This produces a self-contained <code>.cs</code> file with the same static <code>Evaluate</code> method as the source generator. Use the CLI tool when:</p>
+<ul>
+<li>You need to generate code outside the MSBuild pipeline</li>
+<li>You want to inspect or modify the generated code before committing it</li>
+<li>You are integrating with a non-.NET build system</li>
+</ul>
+<h2 id="how-to-guides">How-to guides</h2>
+<h3 id="workspace-and-memory-management">Workspace and memory management</h3>
+<p>The <code>JsonWorkspace</code> provides pooled memory for evaluation results and intermediate values. Using a caller-managed workspace is the recommended pattern for zero-allocation evaluation.</p>
+<p><strong>Single evaluation:</strong></p>
+<pre><code class="language-csharp">using JsonWorkspace workspace = JsonWorkspace.Create();
+JsonElement result = evaluator.Search(expression, data, workspace);
+// result is valid until workspace is disposed or reset
+</code></pre>
+<p><strong>Batch evaluation — reset the workspace between iterations:</strong></p>
+<pre><code class="language-csharp">var evaluator = new JMESPathEvaluator();
+using JsonWorkspace workspace = JsonWorkspace.Create();
+
+foreach (var item in items)
+{
+    workspace.Reset();
+    JsonElement result = evaluator.Search(expression, item, workspace);
+    ProcessResult(result);
+}
+</code></pre>
+<p>This pattern achieves <strong>zero GC allocation</strong> per evaluation for most expressions. The workspace pools memory internally via <code>ArrayPool&lt;byte&gt;</code> and reuses it across evaluations.</p>
+<p><strong>Without a workspace (convenience, allocates per call):</strong></p>
+<pre><code class="language-csharp">// Omit the workspace — the evaluator creates one internally and clones the result
+JsonElement result = evaluator.Search(expression, data);
+</code></pre>
+<p>This overload creates a workspace internally, evaluates the expression, clones the result into a standalone <code>JsonElement</code>, and disposes the workspace. It is convenient for one-off evaluations but allocates on every call.</p>
+<h3 id="error-handling">Error handling</h3>
+<p>All evaluation errors throw <code>JMESPathException</code> with a descriptive message:</p>
+<pre><code class="language-csharp">try
+{
+    JsonElement result = evaluator.Search(expression, data, workspace);
+}
+catch (JMESPathException ex)
+{
+    Console.WriteLine($&quot;JMESPath error: {ex.Message}&quot;);
+}
+</code></pre>
+<p>Common error scenarios:</p>
+<table>
+<thead>
+<tr>
+<th>Error</th>
+<th>Example</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Syntax error</td>
+<td><code>people[*</code></td>
+<td>Unterminated bracket or invalid syntax</td>
+</tr>
+<tr>
+<td>Type error</td>
+<td><code>abs('string')</code></td>
+<td>Function called with wrong argument type</td>
+</tr>
+<tr>
+<td>Arity error</td>
+<td><code>sum(a, b)</code></td>
+<td>Function called with wrong number of arguments</td>
+</tr>
+<tr>
+<td>Unknown function</td>
+<td><code>$custom(x)</code></td>
+<td>Unrecognised function name</td>
+</tr>
+</tbody>
+</table>
+<h2 id="expression-reference">Expression reference</h2>
+<p>JMESPath expressions follow the <a href="https://jmespath.org/specification.html">JMESPath specification</a>. This section summarises the key features with examples.</p>
+<h3 id="identifiers">Identifiers</h3>
+<p>Access a property by name:</p>
+<pre><code>// Expression: a
+// Data:       {&quot;a&quot;: &quot;foo&quot;, &quot;b&quot;: &quot;bar&quot;, &quot;c&quot;: &quot;baz&quot;}
+// Result:     &quot;foo&quot;
+</code></pre>
+<p>Quoted identifiers allow any string as a property name:</p>
+<pre><code>// Expression: &quot;with space&quot;
+// Data:       {&quot;with space&quot;: &quot;value&quot;}
+// Result:     &quot;value&quot;
+</code></pre>
+<h3 id="sub-expressions">Sub-expressions</h3>
+<p>Chain property access with <code>.</code>:</p>
+<pre><code>// Expression: a.b.c.d
+// Data:       {&quot;a&quot;: {&quot;b&quot;: {&quot;c&quot;: {&quot;d&quot;: &quot;value&quot;}}}}
+// Result:     &quot;value&quot;
+</code></pre>
+<p>If any key along the path does not exist, the result is <code>null</code>:</p>
+<pre><code>// Expression: a.b.c
+// Data:       {&quot;a&quot;: {&quot;b&quot;: {&quot;notc&quot;: &quot;value&quot;}}}
+// Result:     null
+</code></pre>
+<h3 id="index-expressions">Index expressions</h3>
+<p>Access array elements by zero-based index. Negative indices count from the end:</p>
+<pre><code>// Expression: [0]
+// Data:       [&quot;a&quot;, &quot;b&quot;, &quot;c&quot;, &quot;d&quot;, &quot;e&quot;, &quot;f&quot;]
+// Result:     &quot;a&quot;
+
+// Expression: [-1]
+// Data:       [&quot;a&quot;, &quot;b&quot;, &quot;c&quot;, &quot;d&quot;, &quot;e&quot;, &quot;f&quot;]
+// Result:     &quot;f&quot;
+</code></pre>
+<h3 id="slicing">Slicing</h3>
+<p>Extract a sub-array with <code>[start:stop:step]</code>:</p>
+<pre><code>// Expression: [0:5]
+// Data:       [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+// Result:     [0, 1, 2, 3, 4]
+
+// Expression: [5:10]
+// Data:       [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+// Result:     [5, 6, 7, 8, 9]
+
+// Expression: [::2]
+// Data:       [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+// Result:     [0, 2, 4, 6, 8]
+
+// Expression: [::-1]
+// Data:       [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+// Result:     [9, 8, 7, 6, 5, 4, 3, 2, 1, 0]
+</code></pre>
+<h3 id="projections">Projections</h3>
+<p>Projections evaluate an expression against each element in a collection.</p>
+<p><strong>List projections</strong> (<code>[*]</code>) — project over an array:</p>
+<pre><code>// Expression: people[*].first
+// Data:       {&quot;people&quot;: [{&quot;first&quot;: &quot;James&quot;, &quot;last&quot;: &quot;d&quot;},
+//                         {&quot;first&quot;: &quot;Jacob&quot;, &quot;last&quot;: &quot;e&quot;},
+//                         {&quot;first&quot;: &quot;Jayden&quot;, &quot;last&quot;: &quot;f&quot;},
+//                         {&quot;missing&quot;: &quot;different&quot;}]}
+// Result:     [&quot;James&quot;, &quot;Jacob&quot;, &quot;Jayden&quot;]
+</code></pre>
+<p>Note: <code>null</code> values (from missing keys) are excluded from projection results.</p>
+<p><strong>Object projections</strong> (<code>*</code>) — project over an object's values:</p>
+<pre><code>// Expression: ops.*.numArgs
+// Data:       {&quot;ops&quot;: {&quot;functionA&quot;: {&quot;numArgs&quot;: 2},
+//                      &quot;functionB&quot;: {&quot;numArgs&quot;: 3},
+//                      &quot;functionC&quot;: {&quot;variadic&quot;: true}}}
+// Result:     [2, 3]
+</code></pre>
+<p><strong>Flatten projections</strong> (<code>[]</code>) — flatten nested arrays by one level and project:</p>
+<pre><code>// Expression: reservations[].instances[].state
+// Data:       {&quot;reservations&quot;: [
+//               {&quot;instances&quot;: [{&quot;state&quot;: &quot;running&quot;}, {&quot;state&quot;: &quot;stopped&quot;}]},
+//               {&quot;instances&quot;: [{&quot;state&quot;: &quot;terminated&quot;}, {&quot;state&quot;: &quot;running&quot;}]}
+//             ]}
+// Result:     [&quot;running&quot;, &quot;stopped&quot;, &quot;terminated&quot;, &quot;running&quot;]
+</code></pre>
+<h3 id="filter-expressions">Filter expressions</h3>
+<p>Filter arrays with <code>[? &lt;expression&gt;]</code>:</p>
+<pre><code>// Expression: machines[?state == 'running'].name
+// Data:       {&quot;machines&quot;: [
+//               {&quot;name&quot;: &quot;a&quot;, &quot;state&quot;: &quot;running&quot;},
+//               {&quot;name&quot;: &quot;b&quot;, &quot;state&quot;: &quot;stopped&quot;},
+//               {&quot;name&quot;: &quot;c&quot;, &quot;state&quot;: &quot;running&quot;}
+//             ]}
+// Result:     [&quot;a&quot;, &quot;c&quot;]
+</code></pre>
+<p>Comparison operators: <code>==</code>, <code>!=</code>, <code>&lt;</code>, <code>&lt;=</code>, <code>&gt;</code>, <code>&gt;=</code>.</p>
+<p>Logical operators: <code>&amp;&amp;</code>, <code>||</code>, <code>!</code>.</p>
+<h3 id="pipe-expressions">Pipe expressions</h3>
+<p>The pipe operator (<code>|</code>) stops the current projection and passes the full result to the right-hand side:</p>
+<pre><code>// Expression: people[*].first | [0]
+// Data:       {&quot;people&quot;: [{&quot;first&quot;: &quot;James&quot;}, {&quot;first&quot;: &quot;Jacob&quot;}, {&quot;first&quot;: &quot;Jayden&quot;}]}
+// Result:     &quot;James&quot;
+</code></pre>
+<p>Without the pipe, <code>[0]</code> would be applied to each element of the projection (always returning the first character of each name). The pipe collapses the projection first, then applies <code>[0]</code> to the resulting array.</p>
+<h3 id="multiselect">Multiselect</h3>
+<p><strong>Multiselect list</strong> — create an array from multiple expressions:</p>
+<pre><code>// Expression: people[].[name, state.name]
+// Data:       {&quot;people&quot;: [
+//               {&quot;name&quot;: &quot;a&quot;, &quot;state&quot;: {&quot;name&quot;: &quot;WA&quot;}},
+//               {&quot;name&quot;: &quot;b&quot;, &quot;state&quot;: {&quot;name&quot;: &quot;NY&quot;}},
+//               {&quot;name&quot;: &quot;c&quot;, &quot;state&quot;: {&quot;name&quot;: &quot;WA&quot;}}
+//             ]}
+// Result:     [[&quot;a&quot;,&quot;WA&quot;],[&quot;b&quot;,&quot;NY&quot;],[&quot;c&quot;,&quot;WA&quot;]]
+</code></pre>
+<p><strong>Multiselect hash</strong> — create an object from multiple expressions:</p>
+<pre><code>// Expression: people[*].{Name: name, State: state.name}
+// Data:       {&quot;people&quot;: [
+//               {&quot;name&quot;: &quot;a&quot;, &quot;state&quot;: {&quot;name&quot;: &quot;WA&quot;}},
+//               {&quot;name&quot;: &quot;b&quot;, &quot;state&quot;: {&quot;name&quot;: &quot;NY&quot;}}
+//             ]}
+// Result:     [{&quot;Name&quot;:&quot;a&quot;,&quot;State&quot;:&quot;WA&quot;},{&quot;Name&quot;:&quot;b&quot;,&quot;State&quot;:&quot;NY&quot;}]
+</code></pre>
+<h3 id="literal-expressions">Literal expressions</h3>
+<p>Use backtick-quoted JSON for literal values in expressions:</p>
+<pre><code>// Expression: people[*].name | contains(@, `James`)
+// Data:       {&quot;people&quot;: [{&quot;name&quot;: &quot;James&quot;}, {&quot;name&quot;: &quot;Jacob&quot;}]}
+// Result:     true
+</code></pre>
+<h3 id="current-node">Current node (<code>@</code>)</h3>
+<p>The <code>@</code> token refers to the current node — useful inside functions and filter expressions:</p>
+<pre><code>// Expression: people[*].name | sort(@)
+// Data:       {&quot;people&quot;: [{&quot;name&quot;: &quot;b&quot;}, {&quot;name&quot;: &quot;a&quot;}, {&quot;name&quot;: &quot;c&quot;}]}
+// Result:     [&quot;a&quot;, &quot;b&quot;, &quot;c&quot;]
+</code></pre>
+<h2 id="built-in-functions">Built-in functions</h2>
+<p>The implementation supports the full set of <a href="https://jmespath.org/specification.html#built-in-functions">JMESPath built-in functions</a>:</p>
+<h3 id="numeric-functions">Numeric functions</h3>
+<table>
+<thead>
+<tr>
+<th>Function</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>abs(n)</code></td>
+<td>Absolute value</td>
+</tr>
+<tr>
+<td><code>ceil(n)</code></td>
+<td>Ceiling (round up)</td>
+</tr>
+<tr>
+<td><code>floor(n)</code></td>
+<td>Floor (round down)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="aggregate-functions">Aggregate functions</h3>
+<table>
+<thead>
+<tr>
+<th>Function</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>avg(array)</code></td>
+<td>Average of numeric values</td>
+</tr>
+<tr>
+<td><code>max(array)</code></td>
+<td>Maximum value (numbers or strings)</td>
+</tr>
+<tr>
+<td><code>min(array)</code></td>
+<td>Minimum value (numbers or strings)</td>
+</tr>
+<tr>
+<td><code>sum(array)</code></td>
+<td>Sum of numeric values</td>
+</tr>
+</tbody>
+</table>
+<h3 id="string-functions">String functions</h3>
+<table>
+<thead>
+<tr>
+<th>Function</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>contains(subject, search)</code></td>
+<td>Test if string contains substring, or array contains element</td>
+</tr>
+<tr>
+<td><code>ends_with(str, suffix)</code></td>
+<td>Test if string ends with suffix</td>
+</tr>
+<tr>
+<td><code>join(separator, array)</code></td>
+<td>Join array of strings with separator</td>
+</tr>
+<tr>
+<td><code>length(subject)</code></td>
+<td>Length of string, array, or object</td>
+</tr>
+<tr>
+<td><code>starts_with(str, prefix)</code></td>
+<td>Test if string starts with prefix</td>
+</tr>
+</tbody>
+</table>
+<h3 id="type-functions">Type functions</h3>
+<table>
+<thead>
+<tr>
+<th>Function</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>to_array(arg)</code></td>
+<td>Convert to array (wraps non-arrays in single-element array)</td>
+</tr>
+<tr>
+<td><code>to_number(arg)</code></td>
+<td>Convert to number</td>
+</tr>
+<tr>
+<td><code>to_string(arg)</code></td>
+<td>Convert to string</td>
+</tr>
+<tr>
+<td><code>type(arg)</code></td>
+<td>Returns the type name (<code>&quot;string&quot;</code>, <code>&quot;number&quot;</code>, <code>&quot;boolean&quot;</code>, <code>&quot;array&quot;</code>, <code>&quot;object&quot;</code>, <code>&quot;null&quot;</code>)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="collection-functions">Collection functions</h3>
+<table>
+<thead>
+<tr>
+<th>Function</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>keys(obj)</code></td>
+<td>Object keys as an array</td>
+</tr>
+<tr>
+<td><code>values(obj)</code></td>
+<td>Object values as an array</td>
+</tr>
+<tr>
+<td><code>merge(obj1, obj2, ...)</code></td>
+<td>Merge objects (later keys win)</td>
+</tr>
+<tr>
+<td><code>not_null(arg1, arg2, ...)</code></td>
+<td>Returns the first non-null argument</td>
+</tr>
+<tr>
+<td><code>reverse(array_or_string)</code></td>
+<td>Reverse an array or string</td>
+</tr>
+<tr>
+<td><code>sort(array)</code></td>
+<td>Sort an array of numbers or strings</td>
+</tr>
+</tbody>
+</table>
+<h3 id="expression-argument-functions">Expression-argument functions</h3>
+<p>These functions take an expression reference (<code>&amp;expr</code>) as an argument:</p>
+<table>
+<thead>
+<tr>
+<th>Function</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>map(&amp;expr, array)</code></td>
+<td>Apply expression to each element</td>
+</tr>
+<tr>
+<td><code>max_by(array, &amp;expr)</code></td>
+<td>Maximum element by expression key</td>
+</tr>
+<tr>
+<td><code>min_by(array, &amp;expr)</code></td>
+<td>Minimum element by expression key</td>
+</tr>
+<tr>
+<td><code>sort_by(array, &amp;expr)</code></td>
+<td>Sort array by expression key</td>
+</tr>
+</tbody>
+</table>
+<p>Example:</p>
+<pre><code>// Expression: max_by(people, &amp;age).name
+// Data:       {&quot;people&quot;: [{&quot;name&quot;: &quot;a&quot;, &quot;age&quot;: 20}, {&quot;name&quot;: &quot;b&quot;, &quot;age&quot;: 30}, {&quot;name&quot;: &quot;c&quot;, &quot;age&quot;: 10}]}
+// Result:     &quot;b&quot;
+</code></pre>
+<h2 id="common-pitfalls">Common pitfalls</h2>
+<h3 id="always-dispose-parsedjsondocument">Always dispose <code>ParsedJsonDocument</code></h3>
+<p><code>ParsedJsonDocument&lt;T&gt;</code> rents memory from <code>ArrayPool&lt;byte&gt;</code>. Forgetting to dispose it leaks pooled memory:</p>
+<pre><code class="language-csharp">// ❌ BAD — leaks pooled memory
+var doc = ParsedJsonDocument&lt;JsonElement&gt;.Parse(json);
+var result = evaluator.Search(expression, doc.RootElement, workspace);
+
+// ✅ GOOD — using statement returns memory to the pool
+using var doc = ParsedJsonDocument&lt;JsonElement&gt;.Parse(json);
+var result = evaluator.Search(expression, doc.RootElement, workspace);
+</code></pre>
+<h3 id="reset-the-workspace-in-loops">Reset the workspace in loops</h3>
+<p>Without <code>Reset()</code>, workspace memory grows with each evaluation. The workspace remains valid, but old results consume pooled memory unnecessarily:</p>
+<pre><code class="language-csharp">// ❌ BAD — workspace grows unboundedly
+foreach (var item in items)
+{
+    var result = evaluator.Search(expression, item, workspace);
+    ProcessResult(result);
+}
+
+// ✅ GOOD — reset frees previous results
+foreach (var item in items)
+{
+    workspace.Reset();
+    var result = evaluator.Search(expression, item, workspace);
+    ProcessResult(result);
+}
+</code></pre>
+<h3 id="dont-forget-additionalfiles-for-the-source-generator">Don't forget <code>AdditionalFiles</code> for the source generator</h3>
+<p>The source generator reads expression files from <code>AdditionalFiles</code>. Without the MSBuild item, the generator can't find the expression and produces diagnostic <code>JPSG001</code>:</p>
+<pre><code class="language-xml">&lt;!-- ❌ Missing — generator produces JPSG001 --&gt;
+&lt;ItemGroup&gt;
+  &lt;None Include=&quot;Expressions\query.jmespath&quot; /&gt;
+&lt;/ItemGroup&gt;
+
+&lt;!-- ✅ Correct --&gt;
+&lt;ItemGroup&gt;
+  &lt;AdditionalFiles Include=&quot;Expressions\query.jmespath&quot; /&gt;
+&lt;/ItemGroup&gt;
+</code></pre>
+<h3 id="result-lifetime-is-tied-to-the-workspace">Result lifetime is tied to the workspace</h3>
+<p>When you pass a workspace, the returned <code>JsonElement</code> is backed by that workspace's memory. Using the result after the workspace is disposed or reset produces undefined behavior:</p>
+<pre><code class="language-csharp">// ❌ BAD — result is invalid after workspace disposal
+JsonElement result;
+using (JsonWorkspace workspace = JsonWorkspace.Create())
+{
+    result = evaluator.Search(expression, data, workspace);
+}
+Console.WriteLine(result.GetRawText()); // undefined behavior
+
+// ✅ GOOD — use result before workspace is disposed
+using JsonWorkspace workspace = JsonWorkspace.Create();
+JsonElement result = evaluator.Search(expression, data, workspace);
+Console.WriteLine(result.GetRawText()); // safe
+</code></pre>
+<h2 id="comparison-with-other-libraries">Comparison with other libraries</h2>
+<table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>Corvus.Text.Json.JMESPath</th>
+<th>JmesPath.Net</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Evaluation model</td>
+<td>Compiled delegate tree (cached)</td>
+<td>Direct interpretation</td>
+</tr>
+<tr>
+<td>Code generation</td>
+<td>Source generator + CLI tool</td>
+<td>Not available</td>
+</tr>
+<tr>
+<td>JSON document model</td>
+<td><code>Corvus.Text.Json</code> (pooled, zero-copy)</td>
+<td><code>Newtonsoft.Json</code></td>
+</tr>
+<tr>
+<td>Memory model</td>
+<td>Pooled (<code>JsonWorkspace</code>, <code>ArrayPool</code>)</td>
+<td>GC-allocated</td>
+</tr>
+<tr>
+<td>Zero-allocation hot path</td>
+<td>Yes (with workspace)</td>
+<td>No</td>
+</tr>
+<tr>
+<td>Conformance (official suite)</td>
+<td>100%</td>
+<td>100%</td>
+</tr>
+<tr>
+<td>Supported frameworks</td>
+<td>net9.0+, netstandard2.0/2.1</td>
+<td>net45, net6.0+, netstandard2.0/2.1</td>
+</tr>
+</tbody>
+</table>
+        </div>
+    </main>
+</div>
+
+    </div>
+    <footer class="site-footer">
+    <div class="site-footer__inner">
+        <div class="site-footer__sponsor">
+            Sponsored by
+            <a href="https://endjin.com" target="_blank" rel="noopener noreferrer">endjin</a>
+        </div>
+        <ul class="site-footer__links" role="list">
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/pr-preview/pr-740/getting-started/index.html">Getting Started</a></li>
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/pr-preview/pr-740/docs/index.html">Documentation</a></li>
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/pr-preview/pr-740/examples/index.html">Examples</a></li>
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/pr-preview/pr-740/api/index.html">API</a></li>
+            <li><a class="site-footer__link" href="https://github.com/corvus-dotnet/Corvus.JsonSchema" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+            <li><a class="site-footer__link" href="https://www.nuget.org/packages?q=Corvus.Json" target="_blank" rel="noopener noreferrer">NuGet</a></li>
+        </ul>
+        <p class="site-footer__copyright">&copy; 2026 endjin Ltd.</p>
+    </div>
+</footer>
+
+    <!-- highlight.js for syntax highlighting (CSS targets .hljs-* classes) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/csharp.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/json.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/bash.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/xml.min.js" defer></script>
+    <script>document.addEventListener('DOMContentLoaded',()=>hljs.highlightAll())</script>
+    <script src="/Corvus.JsonSchema/pr-preview/pr-740/assets/js/main.js" defer></script>
+    <script src="/Corvus.JsonSchema/pr-preview/pr-740/assets/js/sidebar-search.js" defer></script>
+    
+</body>
+</html>

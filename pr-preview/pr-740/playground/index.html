@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Corvus.Text.Json Playground</title>
+    <base href="/Corvus.JsonSchema/pr-preview/pr-740/playground/" />
+    <link href="css/app.css" rel="stylesheet" />
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+    <script>
+        // Apply theme before first paint to prevent flash of wrong theme
+        (function() {
+            var pref = localStorage.getItem('playground-theme') || 'auto';
+            var theme = pref;
+            if (pref === 'auto') {
+                theme = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+            }
+            document.documentElement.setAttribute('data-theme', theme);
+            window.__playgroundResolvedTheme = theme;
+        })();
+    </script>
+</head>
+<body>
+    <div id="app">
+        <div id="boot-progress" style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;font-family:system-ui;gap:12px;">
+            <h2 style="margin:0;font-size:1.25rem;font-weight:600;">Corvus.Text.Json Playground</h2>
+            <p id="boot-status" style="margin:0;font-size:0.85rem;opacity:0.7;">Initializing&hellip;</p>
+            <div style="width:260px;height:6px;border-radius:3px;background:rgba(128,128,128,0.2);overflow:hidden;">
+                <div id="boot-bar" style="width:0%;height:100%;border-radius:3px;background:var(--accent-color,#0078d4);transition:width 0.15s ease;"></div>
+            </div>
+            <p id="boot-counter" style="margin:0;font-size:0.75rem;opacity:0.5;">0 / 0</p>
+        </div>
+    </div>
+
+    <script src="_content/BlazorMonaco/lib/monaco-editor/min/vs/loader.js"></script>
+    <script>
+        // Configure and start Monaco loading BEFORE jsInterop.js,
+        // which overwrites the AMD require with a plain config object.
+        require.config({ paths: { 'vs': '_content/BlazorMonaco/lib/monaco-editor/min/vs' } });
+        window.monacoReady = new Promise(function (resolve) {
+            require(['vs/editor/editor.main'], resolve);
+        });
+    </script>
+    <script src="_content/BlazorMonaco/jsInterop.js"></script>
+    <script src="js/playground-interop.js"></script>
+    <!-- Delay Blazor start until Monaco is fully loaded;
+         BlazorMonaco silently fails if monaco is undefined. -->
+    <script src="_framework/blazor.webassembly.js" autostart="false"></script>
+    <script>
+        window.monacoReady.then(function () {
+            var loaded = 0;
+            var total = 0;
+            var statusEl = document.getElementById('boot-status');
+            var barEl = document.getElementById('boot-bar');
+            var counterEl = document.getElementById('boot-counter');
+
+            function updateProgress() {
+                loaded++;
+                var pct = total > 0 ? Math.round(100 * loaded / total) : 0;
+                if (barEl) barEl.style.width = pct + '%';
+                if (counterEl) counterEl.textContent = loaded + ' / ' + total;
+                if (loaded >= total && statusEl) statusEl.textContent = 'Starting\u2026';
+            }
+
+            Blazor.start({
+                loadBootResource: function (type, name, defaultUri, integrity) {
+                    // Only track assembly and dotnetwasm downloads;
+                    // return null for dotnetjs/manifest/etc so Blazor handles them natively.
+                    if (type !== 'assembly' && type !== 'dotnetwasm') {
+                        return null;
+                    }
+
+                    total++;
+                    if (counterEl) counterEl.textContent = loaded + ' / ' + total;
+
+                    // Strip fingerprint hash from display name
+                    var displayName = name.replace(/\.[a-z0-9]{8,12}\.(dll|wasm)$/, '.$1');
+                    if (statusEl) statusEl.textContent = 'Loading ' + displayName + '\u2026';
+
+                    var fetchOpts = { cache: 'default' };
+                    if (integrity) fetchOpts.integrity = integrity;
+
+                    // Read the full body before counting as complete,
+                    // then return a new Response so Blazor can consume it.
+                    return fetch(defaultUri, fetchOpts).then(function (r) {
+                        return r.arrayBuffer().then(function (buf) {
+                            updateProgress();
+                            return new Response(buf, {
+                                status: r.status,
+                                statusText: r.statusText,
+                                headers: r.headers
+                            });
+                        });
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html>

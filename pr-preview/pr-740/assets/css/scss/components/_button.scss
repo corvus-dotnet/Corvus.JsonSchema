@@ -1,0 +1,108 @@
+// ==========================================================================
+// Buttons — Primary, secondary, sizes
+// ==========================================================================
+
+@use '../abstracts/mixins' as *;
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  padding: 0.65em 1.5em;
+  font-family: var(--font-family);
+  font-size: var(--font-size-rg);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-base);
+  text-decoration: none;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition:
+    background var(--transition-fast),
+    color var(--transition-fast),
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast),
+    transform var(--transition-fast);
+
+  &:focus-visible {
+    @include focus-ring;
+  }
+
+  &:active {
+    transform: translateY(1px);
+  }
+
+  // ---- Primary (brand green) ----
+  &--primary {
+    background: var(--color-brand);
+    color: var(--color-bg);
+    border-color: var(--color-brand);
+
+    &:hover {
+      background: var(--color-brand-hover);
+      border-color: var(--color-brand-hover);
+    }
+  }
+
+  // ---- Secondary (outline) ----
+  &--secondary {
+    background: transparent;
+    color: var(--color-gray-light);
+    border-color: var(--color-border-active);
+
+    &:hover {
+      background: var(--color-bg-raised);
+      border-color: var(--color-gray-med);
+      color: var(--color-white);
+    }
+  }
+
+  // ---- Ghost (no border, subtle) ----
+  &--ghost {
+    background: transparent;
+    color: var(--color-gray-med);
+    border-color: transparent;
+
+    &:hover {
+      background: var(--color-bg-raised);
+      color: var(--color-white);
+    }
+  }
+
+  // ---- Sizes ----
+  &--sm {
+    padding: 0.4em 1em;
+    font-size: var(--font-size-sm);
+  }
+
+  &--lg {
+    padding: 0.85em 2em;
+    font-size: var(--font-size-lg);
+  }
+
+  // ---- Full-width ----
+  &--full {
+    width: 100%;
+  }
+
+  // ---- Icon-only ----
+  &--icon {
+    padding: 0.5em;
+    min-width: 2.25rem;
+    min-height: 2.25rem;
+
+    svg {
+      width: 1.25rem;
+      height: 1.25rem;
+    }
+  }
+
+  // ---- Disabled state ----
+  &:disabled,
+  &[aria-disabled='true'] {
+    opacity: 0.4;
+    pointer-events: none;
+    cursor: not-allowed;
+  }
+}

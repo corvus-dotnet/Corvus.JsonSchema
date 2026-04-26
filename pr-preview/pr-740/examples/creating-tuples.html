@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#1C1D21" />
+    <meta name="description" content="This recipe demonstrates how to use JSON Schema `prefixItems` and `unevaluatedItems` to create strongly-typed tuple representations in .NET." />
+    <meta name="keywords" content="recipe, JSON Schema, C#, creating, tuples, type, prefixItems, format, unevaluatedItems, CreateTuple, CreateBuilder, Build" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:description" content="This recipe demonstrates how to use JSON Schema `prefixItems` and `unevaluatedItems` to create strongly-typed tuple representations in .NET." />
+    <meta name="twitter:image" content="/Corvus.JsonSchema/pr-preview/pr-740/assets/images/og-corvus.png" />
+    <meta name="twitter:title" content="Creating Tuples - Corvus.Text.Json Examples" />
+    <meta property="article:tag" content="recipe" />
+    <meta property="article:tag" content="JSON Schema" />
+    <meta property="article:tag" content="C#" />
+    <meta property="article:tag" content="creating" />
+    <meta property="article:tag" content="tuples" />
+    <meta property="article:tag" content="type" />
+    <meta property="article:tag" content="prefixItems" />
+    <meta property="article:tag" content="format" />
+    <meta property="article:tag" content="unevaluatedItems" />
+    <meta property="article:tag" content="CreateTuple" />
+    <meta property="article:tag" content="CreateBuilder" />
+    <meta property="article:tag" content="Build" />
+    <meta property="og:description" content="This recipe demonstrates how to use JSON Schema `prefixItems` and `unevaluatedItems` to create strongly-typed tuple representations in .NET." />
+    <meta property="og:image" content="/Corvus.JsonSchema/pr-preview/pr-740/assets/images/og-corvus.png" />
+    <meta property="og:title" content="Creating Tuples - Corvus.Text.Json Examples" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://corvus-oss.org/corvus-json-schema/examples/creating-tuples/" />
+    <title>Creating Tuples - Corvus.Text.Json Examples</title>
+    <link itemprop="url" href="https://corvus-oss.org/corvus-json-schema/examples/creating-tuples/" />
+    <link rel="canonical" href="https://corvus-oss.org/corvus-json-schema/examples/creating-tuples/" />
+    <link rel="sitemap" href="https://corvus-oss.org/corvus-json-schema/sitemap.xml" />
+    <!-- Styles -->
+    <link rel="stylesheet" href="/Corvus.JsonSchema/pr-preview/pr-740/main.css" />
+    <link rel="icon" type="image/svg+xml" href="/Corvus.JsonSchema/pr-preview/pr-740/assets/images/favicon.svg" />
+    
+</head>
+<body>
+    <a class="sr-only" href="#main-content">Skip to content</a>
+<header class="site-header">
+    <div class="site-header__inner">
+        <a class="site-header__brand" href="/Corvus.JsonSchema/pr-preview/pr-740/index.html" aria-label="Corvus.JsonSchema home">
+            <img src="/Corvus.JsonSchema/pr-preview/pr-740/assets/images/logo-corvus.svg" alt="" width="28" height="28" aria-hidden="true" />
+            Corvus<span style="color:var(--color-brand)">.</span>Json<span style="color:var(--color-brand)">Schema</span>
+        </a>
+        <nav class="site-header__nav-desktop" aria-label="Main navigation">
+                    <a href="/Corvus.JsonSchema/pr-preview/pr-740/getting-started/index.html"
+                       class="site-header__link "
+                       >Getting Started</a>
+                    <a href="/Corvus.JsonSchema/pr-preview/pr-740/docs/index.html"
+                       class="site-header__link "
+                       >Documentation</a>
+                    <a href="/Corvus.JsonSchema/pr-preview/pr-740/examples/index.html"
+                       class="site-header__link is-active"
+                       aria-current=page>Examples</a>
+                    <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/index.html"
+                       class="site-header__link "
+                       >API</a>
+            <a href="/Corvus.JsonSchema/pr-preview/pr-740/playground/"
+               class="site-header__link"
+               target="_blank" rel="noopener noreferrer"
+               title="Interactive JSON Schema playground">Playground</a>
+            <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema"
+               class="site-header__link" target="_blank" rel="noopener noreferrer"
+               aria-label="View on GitHub">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+            </a>
+        </nav>
+        <button class="site-header__menu-toggle js-toggle-menu"
+                aria-expanded="false" aria-label="Toggle menu">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+            </svg>
+        </button>
+    </div>
+</header>
+<nav class="site-header__nav-mobile js-mobile-nav" aria-label="Mobile navigation">
+            <a href="/Corvus.JsonSchema/pr-preview/pr-740/getting-started/index.html" class="site-header__link">Getting Started</a>
+            <a href="/Corvus.JsonSchema/pr-preview/pr-740/docs/index.html" class="site-header__link">Documentation</a>
+            <a href="/Corvus.JsonSchema/pr-preview/pr-740/examples/index.html" class="site-header__link">Examples</a>
+            <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/index.html" class="site-header__link">API</a>
+    <a href="/Corvus.JsonSchema/pr-preview/pr-740/playground/" class="site-header__link" target="_blank" rel="noopener noreferrer">Playground</a>
+    <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema"
+       class="site-header__link" target="_blank" rel="noopener noreferrer">GitHub</a>
+</nav>
+
+    <div class="page-content">
+    <div class="layout-docs container">
+    <button class="sidebar-toggle" aria-label="Toggle navigation" aria-expanded="false"></button>
+<div class="sidebar-backdrop"></div>
+<aside class="sidebar">
+    <div class="sidebar__inner">
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Getting Started</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                    <li class="sidebar__item"><a class="sidebar__link" href="/Corvus.JsonSchema/pr-preview/pr-740/getting-started/index.html">Tutorial</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Documentation</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/parsed-json-document.html">Parsing &amp; Reading JSON</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/json-document-builder.html">Building &amp; Mutating JSON</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/source-generator.html">Source Generator</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/code-generator.html">CLI Code Generation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/validator.html">Dynamic Schema Validation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/migrating-from-v4-to-v5.html">Migrating from V4</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/using-copilot-for-migration.html">Copilot Migration</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/migration-analyzers.html">Migration Analyzers</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/analyzers.html">Analyzers</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/schema-evaluator.html">Standalone Schema Evaluator</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/json-patch.html">JSON Patch (RFC 6902)</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/json-logic.html">JsonLogic Rule Engine</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/jsonata.html">JSONata Query Language</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/jmes-path.html">JMESPath Query Language</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/yaml.html">YAML Converter</a>
+                            </li>
+                </ul>
+            </div>
+        </div>
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Examples</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/data-object.html">Simple Data Objects</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/data-object-validation.html">Data Object Validation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/reusing-common-types.html">Reusing Common Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/open-versus-closed-types.html">Open Versus Closed Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/extending-a-base-type.html">Extending a Base Type</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/constraining-a-base-type.html">Constraining a Base Type</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/creating-a-strongly-typed-array.html">Strongly Typed Arrays</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/creating-an-array-of-higher-rank.html">Multi-Dimensional Arrays</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/working-with-tensors.html">Working with Tensors</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link is-active" href="/Corvus.JsonSchema/pr-preview/pr-740/examples/creating-tuples.html">Creating Tuples</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/interfaces-and-mix-in-types.html">Interfaces and Mix-In Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/pattern-matching.html">Pattern Matching and Discriminated Unions</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/polymorphism-with-discriminators.html">Polymorphism with Discriminator Properties</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/string-enumerations.html">String Enumerations and Pattern Matching</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/numeric-enumerations.html">Numeric Enumerations</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/maps.html">Maps of Strings to Strongly Typed Values</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/mapping-input-and-output-values.html">Mapping Input and Output Values</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/creating-and-mutating-objects.html">Creating and Mutating Objects</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/clone-and-freeze.html">Clone and Freeze</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/conditional-schemas.html">Conditional Schemas</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/default-values.html">Default Values</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/format-validation.html">Format Validation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/json-patch.html">JSON Patch (RFC 6902)</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/json-logic.html">JsonLogic Rule Evaluation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/jsonata.html">JSONata Expression Evaluation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/jmespath.html">JMESPath Query Evaluation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/yaml.html">YAML Conversion</a>
+                            </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</aside>
+
+    <main id="main-content" class="layout-docs__main">
+        <div class="doc__content">
+            <h1>Creating Tuples</h1>
+                <div class="card__tags" style="margin-bottom:1.5rem">
+                        <span class="card__tag">recipe</span>
+                        <span class="card__tag">JSON Schema</span>
+                        <span class="card__tag">C#</span>
+                        <span class="card__tag">creating</span>
+                        <span class="card__tag">tuples</span>
+                        <span class="card__tag">type</span>
+                        <span class="card__tag">prefixItems</span>
+                        <span class="card__tag">format</span>
+                        <span class="card__tag">unevaluatedItems</span>
+                        <span class="card__tag">CreateTuple</span>
+                        <span class="card__tag">CreateBuilder</span>
+                        <span class="card__tag">Build</span>
+                </div>
+<p>This recipe demonstrates how to use JSON Schema <code>prefixItems</code> and <code>unevaluatedItems</code> to create strongly-typed tuple representations in .NET.</p>
+<h2 id="the-pattern">The Pattern</h2>
+<p>.NET has the concept of a <a href="https://learn.microsoft.com/en-us/dotnet/api/system.valuetuple"><code>ValueTuple&lt;T1,...TN&gt;</code></a> - a lightweight type that can represent a small, strongly typed collection of values.</p>
+<p>We typically encounter it through the special C# syntax available to define and instantiate them:</p>
+<pre><code class="language-csharp">(int, string, bool) value = (3, &quot;hello&quot;, true);
+
+Console.WriteLine($&quot;{value.Item1}, {value.Item2}, {value.Item3}&quot;);
+</code></pre>
+<p>JSON Schema allows us to define an array whose items are constrained to a specific ordered list of schemas using the <code>prefixItems</code> keyword.</p>
+<p>To ensure that no other items are permitted than those in the ordered list, we also add <code>unevaluatedItems: false</code>.</p>
+<blockquote>
+<p><strong>Note:</strong> This is an area of divergence between draft 2020-12 and prior drafts. In those versions, you should use the array form of <code>items</code> and <code>additionalItems</code>.</p>
+</blockquote>
+<p>Notice that a tuple is in effect a <em>closed type</em> - you cannot add additional items to it. Just as <code>unevaluatedProperties: false</code> closes an <code>object</code> type, <code>unevaluatedItems: false</code> closes an array type.</p>
+<h2 id="the-schema">The Schema</h2>
+<p>File: <code>three-tuple.json</code></p>
+<pre><code class="language-json">{
+    &quot;title&quot;:  &quot;A tuple of int32, string, boolean&quot;,
+    &quot;type&quot;: &quot;array&quot;,
+    &quot;prefixItems&quot;: [
+        {
+            &quot;type&quot;: &quot;integer&quot;,
+            &quot;format&quot;: &quot;int32&quot;
+        },
+        {
+            &quot;type&quot;: &quot;string&quot;
+        },
+        {
+            &quot;type&quot;: &quot;boolean&quot;
+        }
+    ],
+    &quot;unevaluatedItems&quot;: false
+}
+</code></pre>
+<h2 id="generated-code-usage">Generated Code Usage</h2>
+<p>The generated <code>ThreeTuple</code> type provides:</p>
+<ul>
+<li><strong><code>Item1</code>, <code>Item2</code>, <code>Item3</code> properties</strong> for accessing tuple elements by position</li>
+<li><strong><code>CreateTuple(T1, T2, T3)</code> method</strong> on the builder for creating tuples</li>
+<li><strong>Parse and equality support</strong> like other generated types</li>
+</ul>
+<h3 id="parsing-a-tuple-from-json">Parsing a tuple from JSON</h3>
+<pre><code class="language-csharp">string threeTupleJson = &quot;&quot;&quot;
+    [3, &quot;Hello&quot;, false]
+    &quot;&quot;&quot;;
+
+using var parsedTuple = ParsedJsonDocument&lt;ThreeTuple&gt;.Parse(threeTupleJson);
+ThreeTuple threeTuple = parsedTuple.RootElement;
+
+Console.WriteLine(threeTuple);
+// Output: [3,&quot;Hello&quot;,false]
+</code></pre>
+<h3 id="accessing-tuple-items">Accessing tuple items</h3>
+<pre><code class="language-csharp">Console.WriteLine($&quot;Item1: {threeTuple.Item1}&quot;);  // Output: Item1: 3
+Console.WriteLine($&quot;Item2: {threeTuple.Item2}&quot;);  // Output: Item2: Hello
+Console.WriteLine($&quot;Item3: {threeTuple.Item3}&quot;);  // Output: Item3: False
+</code></pre>
+<h3 id="creating-a-tuple-with-the-builder">Creating a tuple with the builder</h3>
+<pre><code class="language-csharp">using JsonWorkspace workspace = JsonWorkspace.Create();
+using var builtDoc = ThreeTuple.CreateBuilder(workspace, ThreeTuple.Build(static (ref ThreeTuple.Builder b) =&gt;
+{
+    b.CreateTuple(42, &quot;World&quot;, true);
+}));
+ThreeTuple threeTuple2 = builtDoc.RootElement;
+
+Console.WriteLine(threeTuple2);
+// Output: [42,&quot;World&quot;,true]
+</code></pre>
+<h3 id="creating-a-tuple-directly-from-positional-sources">Creating a tuple directly from positional sources</h3>
+<p>For <strong>fixed-size tuples</strong> (those defined with <code>unevaluatedItems: false</code> or <code>items: false</code>), you can use the <code>CreateBuilder</code> convenience overload that takes positional values directly, without the delegate indirection:</p>
+<pre><code class="language-csharp">using var directDoc = ThreeTuple.CreateBuilder(workspace, 99, &quot;Direct&quot;, false);
+ThreeTuple threeTuple3 = directDoc.RootElement;
+
+Console.WriteLine(threeTuple3);
+// Output: [99,&quot;Direct&quot;,false]
+</code></pre>
+<p>Each parameter corresponds to a tuple item position, and accepts the <code>Source</code> type for that position (with implicit conversions from the underlying .NET type, e.g. <code>int</code>, <code>string</code>, <code>bool</code>).</p>
+<p>If you prefer to separate construction from materialisation (e.g., to pass the source to another method), use <code>Build()</code> + <code>CreateBuilder()</code>:</p>
+<pre><code class="language-csharp">ThreeTuple.Source tupleSource = ThreeTuple.Build(99, &quot;Direct&quot;, false);
+using var directDoc = ThreeTuple.CreateBuilder(workspace, tupleSource);
+</code></pre>
+<blockquote>
+<p><strong>Note:</strong> These convenience overloads are only available on <strong>pure tuple</strong> types (closed with <code>unevaluatedItems: false</code> or <code>items: false</code>). Tuples that allow additional items must still use the <code>Build</code> delegate + <code>CreateTuple</code> pattern.</p>
+</blockquote>
+<h3 id="comparing-tuples">Comparing tuples</h3>
+<pre><code class="language-csharp">if (threeTuple.Equals(threeTuple2))
+{
+    Console.WriteLine(&quot;The tuples are equal&quot;);
+}
+else
+{
+    Console.WriteLine(&quot;The tuples are not equal&quot;);
+}
+</code></pre>
+<h2 id="key-differences-from-v4">Key Differences from V4</h2>
+<h3 id="v4-corvus.json">V4 (Corvus.Json)</h3>
+<pre><code class="language-csharp">// Create from .NET tuple (implicit conversion)
+(int, string, bool) dotnetTuple = (3, &quot;Hello&quot;, false);
+ThreeTuple threeTuple = dotnetTuple;
+
+// Create directly
+ThreeTuple threeTuple2 = ThreeTuple.Create(3, &quot;Hello&quot;, false);
+
+// Convert to .NET tuple (implicit conversion)
+(int, JsonString, bool) dotnetTupleFromThreeTuple = threeTuple;
+</code></pre>
+<h3 id="v5-corvus.text.json">V5 (Corvus.Text.Json)</h3>
+<pre><code class="language-csharp">// Create directly (preferred for fixed-size tuples)
+using JsonWorkspace workspace = JsonWorkspace.Create();
+using var doc = ThreeTuple.CreateBuilder(workspace, 42, &quot;World&quot;, true);
+ThreeTuple threeTuple = doc.RootElement;
+
+// Or create via Build + CreateBuilder (two-step equivalent)
+ThreeTuple.Source source = ThreeTuple.Build(42, &quot;World&quot;, true);
+using var doc2 = ThreeTuple.CreateBuilder(workspace, source);
+
+// Or create via Build delegate + CreateTuple (required for tuples with additional items)
+using var doc3 = ThreeTuple.CreateBuilder(workspace, ThreeTuple.Build(static (ref ThreeTuple.Builder b) =&gt;
+{
+    b.CreateTuple(42, &quot;World&quot;, true);
+}));
+
+// Access items (same as V4)
+int item1 = threeTuple.Item1;
+string item2 = threeTuple.Item2;  // Formatting support - no explicit cast needed
+bool item3 = threeTuple.Item3;
+</code></pre>
+<p><strong>Important:</strong> V5 does not provide implicit conversions to/from <code>ValueTuple</code>. This is by design - the generated types support direct formatting and property access, eliminating the need for tuple conversions in most scenarios.</p>
+<h2 id="running-the-example">Running the Example</h2>
+<pre><code class="language-bash">cd docs/ExampleRecipes/010-CreatingTuples
+dotnet run
+</code></pre>
+<h2 id="related-patterns">Related Patterns</h2>
+<ul>
+<li><a href="/Corvus.JsonSchema/pr-preview/pr-740/examples/creating-a-strongly-typed-array.html">007-CreatingAStronglyTypedArray</a> - Arrays with uniform item types</li>
+<li><a href="/Corvus.JsonSchema/pr-preview/pr-740/examples/creating-an-array-of-higher-rank.html">008-CreatingAnArrayOfHigherRank</a> - Multi-dimensional arrays</li>
+<li><a href="/Corvus.JsonSchema/pr-preview/pr-740/examples/interfaces-and-mix-in-types.html">011-InterfacesAndMixInTypes</a> - Composing types with <code>allOf</code></li>
+</ul>
+<h2 id="frequently-asked-questions">Frequently Asked Questions</h2>
+<h3 id="q-whats-the-difference-between-a-tuple-and-a-fixed-size-array">Q: What's the difference between a tuple and a fixed-size array?</h3>
+<p><strong>A:</strong> A tuple uses <code>prefixItems</code> to define a specific type for each positional element (e.g., <code>[int, string, bool]</code>), while a fixed-size array uses <code>items</code> to constrain all elements to a single type. Tuples give you strongly-typed access to each item via <code>Item1</code>, <code>Item2</code>, etc., whereas arrays provide uniform element access through indexing.</p>
+<h3 id="q-can-i-create-open-tuples-that-allow-additional-items">Q: Can I create open tuples that allow additional items?</h3>
+<p><strong>A:</strong> Yes. By default, JSON Schema arrays allow additional items beyond those listed in <code>prefixItems</code>. To create a closed tuple that rejects extra items, add <code>&quot;unevaluatedItems&quot;: false</code> to your schema. Without that constraint, additional items of any type are permitted after the defined prefix items.</p>
+<h3 id="q-why-doesnt-v5-support-implicit-conversion-tofrom-valuetuple">Q: Why doesn't V5 support implicit conversion to/from ValueTuple?</h3>
+<p><strong>A:</strong> This is by design. V5 generated types support direct formatting and strongly-typed property access (<code>Item1</code>, <code>Item2</code>, etc.), which eliminates the need for <code>ValueTuple</code> conversions in most scenarios. Removing implicit conversions avoids hidden allocations and keeps the API surface explicit about when data copying occurs.</p>
+<h3 id="q-can-tuple-items-be-complex-types-objects-arrays">Q: Can tuple items be complex types (objects, arrays)?</h3>
+<p><strong>A:</strong> Absolutely. Each position in <code>prefixItems</code> can reference any valid JSON Schema, including objects with properties, nested arrays, <code>$ref</code> references to shared definitions, or even other tuples. The generated code will provide strongly-typed access to each item using the appropriate generated type.</p>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "Q: What's the difference between a tuple and a fixed-size array?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "**A:** A tuple uses prefixItems to define a specific type for each positional element (e.g., [int, string, bool]), while a fixed-size array uses items to constrain all elements to a single type. Tuples give you strongly-typed access to each item via Item1, Item2, etc., whereas arrays provide uniform element access through indexing."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Q: Can I create open tuples that allow additional items?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "**A:** Yes. By default, JSON Schema arrays allow additional items beyond those listed in prefixItems. To create a closed tuple that rejects extra items, add \"unevaluatedItems\": false to your schema. Without that constraint, additional items of any type are permitted after the defined prefix items."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Q: Why doesn't V5 support implicit conversion to/from ValueTuple?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "**A:** This is by design. V5 generated types support direct formatting and strongly-typed property access (Item1, Item2, etc.), which eliminates the need for ValueTuple conversions in most scenarios. Removing implicit conversions avoids hidden allocations and keeps the API surface explicit about when data copying occurs."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Q: Can tuple items be complex types (objects, arrays)?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "**A:** Absolutely. Each position in prefixItems can reference any valid JSON Schema, including objects with properties, nested arrays, $ref references to shared definitions, or even other tuples. The generated code will provide strongly-typed access to each item using the appropriate generated type."
+      }
+    }
+  ]
+}
+</script>
+        </div>
+    </main>
+</div>
+
+    </div>
+    <footer class="site-footer">
+    <div class="site-footer__inner">
+        <div class="site-footer__sponsor">
+            Sponsored by
+            <a href="https://endjin.com" target="_blank" rel="noopener noreferrer">endjin</a>
+        </div>
+        <ul class="site-footer__links" role="list">
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/pr-preview/pr-740/getting-started/index.html">Getting Started</a></li>
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/pr-preview/pr-740/docs/index.html">Documentation</a></li>
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/pr-preview/pr-740/examples/index.html">Examples</a></li>
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/pr-preview/pr-740/api/index.html">API</a></li>
+            <li><a class="site-footer__link" href="https://github.com/corvus-dotnet/Corvus.JsonSchema" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+            <li><a class="site-footer__link" href="https://www.nuget.org/packages?q=Corvus.Json" target="_blank" rel="noopener noreferrer">NuGet</a></li>
+        </ul>
+        <p class="site-footer__copyright">&copy; 2026 endjin Ltd.</p>
+    </div>
+</footer>
+
+    <!-- highlight.js for syntax highlighting (CSS targets .hljs-* classes) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/csharp.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/json.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/bash.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/xml.min.js" defer></script>
+    <script>document.addEventListener('DOMContentLoaded',()=>hljs.highlightAll())</script>
+    <script src="/Corvus.JsonSchema/pr-preview/pr-740/assets/js/main.js" defer></script>
+    <script src="/Corvus.JsonSchema/pr-preview/pr-740/assets/js/sidebar-search.js" defer></script>
+    
+</body>
+</html>

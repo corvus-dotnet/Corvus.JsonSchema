@@ -1,0 +1,1556 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#1C1D21" />
+    <meta name="description" content="Evaluate JSON-encoded logic rules against JSON data using the interpreted evaluator, Roslyn source generator, or CLI code generator. Supports all standard JsonLogic operators, extended numeric types, and zero-allocation evaluation." />
+    <meta name="keywords" content="documentation, Corvus.Text.Json" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:description" content="Evaluate JSON-encoded logic rules against JSON data using the interpreted evaluator, Roslyn source generator, or CLI code generator. Supports all standard JsonLogic operators, extended numeric types, and zero-allocation evaluation." />
+    <meta name="twitter:image" content="/Corvus.JsonSchema/pr-preview/pr-740/assets/images/og-corvus.png" />
+    <meta name="twitter:title" content="JsonLogic Rule Engine - Corvus.Text.Json" />
+    <meta property="article:tag" content="documentation" />
+    <meta property="article:tag" content="Corvus.Text.Json" />
+    <meta property="og:description" content="Evaluate JSON-encoded logic rules against JSON data using the interpreted evaluator, Roslyn source generator, or CLI code generator. Supports all standard JsonLogic operators, extended numeric types, and zero-allocation evaluation." />
+    <meta property="og:image" content="/Corvus.JsonSchema/pr-preview/pr-740/assets/images/og-corvus.png" />
+    <meta property="og:title" content="JsonLogic Rule Engine - Corvus.Text.Json" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://corvus-oss.org/corvus-json-schema/docs/json-logic/" />
+    <title>JsonLogic Rule Engine - Corvus.Text.Json</title>
+    <link itemprop="url" href="https://corvus-oss.org/corvus-json-schema/docs/json-logic/" />
+    <link rel="canonical" href="https://corvus-oss.org/corvus-json-schema/docs/json-logic/" />
+    <link rel="sitemap" href="https://corvus-oss.org/corvus-json-schema/sitemap.xml" />
+    <!-- Styles -->
+    <link rel="stylesheet" href="/Corvus.JsonSchema/pr-preview/pr-740/main.css" />
+    <link rel="icon" type="image/svg+xml" href="/Corvus.JsonSchema/pr-preview/pr-740/assets/images/favicon.svg" />
+    
+</head>
+<body>
+    <a class="sr-only" href="#main-content">Skip to content</a>
+<header class="site-header">
+    <div class="site-header__inner">
+        <a class="site-header__brand" href="/Corvus.JsonSchema/pr-preview/pr-740/index.html" aria-label="Corvus.JsonSchema home">
+            <img src="/Corvus.JsonSchema/pr-preview/pr-740/assets/images/logo-corvus.svg" alt="" width="28" height="28" aria-hidden="true" />
+            Corvus<span style="color:var(--color-brand)">.</span>Json<span style="color:var(--color-brand)">Schema</span>
+        </a>
+        <nav class="site-header__nav-desktop" aria-label="Main navigation">
+                    <a href="/Corvus.JsonSchema/pr-preview/pr-740/getting-started/index.html"
+                       class="site-header__link "
+                       >Getting Started</a>
+                    <a href="/Corvus.JsonSchema/pr-preview/pr-740/docs/index.html"
+                       class="site-header__link is-active"
+                       aria-current=page>Documentation</a>
+                    <a href="/Corvus.JsonSchema/pr-preview/pr-740/examples/index.html"
+                       class="site-header__link "
+                       >Examples</a>
+                    <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/index.html"
+                       class="site-header__link "
+                       >API</a>
+            <a href="/Corvus.JsonSchema/pr-preview/pr-740/playground/"
+               class="site-header__link"
+               target="_blank" rel="noopener noreferrer"
+               title="Interactive JSON Schema playground">Playground</a>
+            <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema"
+               class="site-header__link" target="_blank" rel="noopener noreferrer"
+               aria-label="View on GitHub">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+            </a>
+        </nav>
+        <button class="site-header__menu-toggle js-toggle-menu"
+                aria-expanded="false" aria-label="Toggle menu">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+            </svg>
+        </button>
+    </div>
+</header>
+<nav class="site-header__nav-mobile js-mobile-nav" aria-label="Mobile navigation">
+            <a href="/Corvus.JsonSchema/pr-preview/pr-740/getting-started/index.html" class="site-header__link">Getting Started</a>
+            <a href="/Corvus.JsonSchema/pr-preview/pr-740/docs/index.html" class="site-header__link">Documentation</a>
+            <a href="/Corvus.JsonSchema/pr-preview/pr-740/examples/index.html" class="site-header__link">Examples</a>
+            <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/index.html" class="site-header__link">API</a>
+    <a href="/Corvus.JsonSchema/pr-preview/pr-740/playground/" class="site-header__link" target="_blank" rel="noopener noreferrer">Playground</a>
+    <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema"
+       class="site-header__link" target="_blank" rel="noopener noreferrer">GitHub</a>
+</nav>
+
+    <div class="page-content">
+    <div class="layout-docs container">
+    <button class="sidebar-toggle" aria-label="Toggle navigation" aria-expanded="false"></button>
+<div class="sidebar-backdrop"></div>
+<aside class="sidebar">
+    <div class="sidebar__inner">
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Getting Started</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                    <li class="sidebar__item"><a class="sidebar__link" href="/Corvus.JsonSchema/pr-preview/pr-740/getting-started/index.html">Tutorial</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Documentation</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/parsed-json-document.html">Parsing &amp; Reading JSON</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/json-document-builder.html">Building &amp; Mutating JSON</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/source-generator.html">Source Generator</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/code-generator.html">CLI Code Generation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/validator.html">Dynamic Schema Validation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/migrating-from-v4-to-v5.html">Migrating from V4</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/using-copilot-for-migration.html">Copilot Migration</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/migration-analyzers.html">Migration Analyzers</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/analyzers.html">Analyzers</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/schema-evaluator.html">Standalone Schema Evaluator</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/json-patch.html">JSON Patch (RFC 6902)</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link is-active" href="/Corvus.JsonSchema/pr-preview/pr-740/docs/json-logic.html">JsonLogic Rule Engine</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/jsonata.html">JSONata Query Language</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/jmes-path.html">JMESPath Query Language</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/yaml.html">YAML Converter</a>
+                            </li>
+                </ul>
+            </div>
+        </div>
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Examples</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/data-object.html">Simple Data Objects</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/data-object-validation.html">Data Object Validation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/reusing-common-types.html">Reusing Common Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/open-versus-closed-types.html">Open Versus Closed Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/extending-a-base-type.html">Extending a Base Type</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/constraining-a-base-type.html">Constraining a Base Type</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/creating-a-strongly-typed-array.html">Strongly Typed Arrays</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/creating-an-array-of-higher-rank.html">Multi-Dimensional Arrays</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/working-with-tensors.html">Working with Tensors</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/creating-tuples.html">Creating Tuples</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/interfaces-and-mix-in-types.html">Interfaces and Mix-In Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/pattern-matching.html">Pattern Matching and Discriminated Unions</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/polymorphism-with-discriminators.html">Polymorphism with Discriminator Properties</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/string-enumerations.html">String Enumerations and Pattern Matching</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/numeric-enumerations.html">Numeric Enumerations</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/maps.html">Maps of Strings to Strongly Typed Values</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/mapping-input-and-output-values.html">Mapping Input and Output Values</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/creating-and-mutating-objects.html">Creating and Mutating Objects</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/clone-and-freeze.html">Clone and Freeze</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/conditional-schemas.html">Conditional Schemas</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/default-values.html">Default Values</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/format-validation.html">Format Validation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/json-patch.html">JSON Patch (RFC 6902)</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/json-logic.html">JsonLogic Rule Evaluation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/jsonata.html">JSONata Expression Evaluation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/jmespath.html">JMESPath Query Evaluation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/yaml.html">YAML Conversion</a>
+                            </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</aside>
+
+    <main id="main-content" class="layout-docs__main">
+        <div class="doc__content">
+            <h1>JsonLogic Rule Engine</h1>
+<h2 id="overview">Overview</h2>
+<p><code>Corvus.Text.Json.JsonLogic</code> implements <a href="https://jsonlogic.com/">JsonLogic</a> for the Corvus.Text.Json document model — a safe, side-effect-free rule engine that evaluates JSON-encoded logic rules against JSON data.</p>
+<p><a href="https://jsonlogic.com/">JsonLogic</a> is a standard for expressing business rules as JSON. Rules are portable, storable in databases, and safely evaluated without allowing arbitrary code execution. The Corvus implementation passes the full <a href="https://jsonlogic.com/tests.json">official test suite</a> and adds support for extended numeric types (<code>BigNumber</code>) via custom operators.</p>
+<blockquote>
+<p><strong>Choosing between JsonLogic and JSONata:</strong> JsonLogic is ideal for <strong>declarative business rules</strong> — branching logic, predicates, and simple calculations expressed as JSON. If you need to <strong>query, reshape, or transform</strong> JSON data (path navigation, filtering, object construction), see <a href="/Corvus.JsonSchema/pr-preview/pr-740/docs/jsonata.html">JSONata</a> instead.</p>
+</blockquote>
+<blockquote>
+<p><strong>Try it now:</strong> The <a href="/Corvus.JsonSchema/pr-preview/pr-740/playground-jsonlogic/">JSON Logic Playground</a> lets you build rules visually and evaluate them against live data — no setup required.</p>
+</blockquote>
+<p>Three evaluation modes are available:</p>
+<table>
+<thead>
+<tr>
+<th>Mode</th>
+<th>When to use</th>
+<th>Package</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Interpreted</strong></td>
+<td>Rules are dynamic, determined at runtime</td>
+<td><code>Corvus.Text.Json.JsonLogic</code></td>
+</tr>
+<tr>
+<td><strong>Source generator</strong></td>
+<td>Rules are known at build time, embedded in your project</td>
+<td><code>Corvus.Text.Json.JsonLogic.SourceGenerator</code></td>
+</tr>
+<tr>
+<td><strong>CLI code generation</strong></td>
+<td>Rules are known ahead of time, generated outside the build</td>
+<td><code>Corvus.Json.Cli</code> (the <code>jsonlogic</code> command)</td>
+</tr>
+</tbody>
+</table>
+<p>The source generator and CLI tool produce optimized static C# that eliminates delegate dispatch and can constant-fold literal expressions. Benchmarks show generated code is typically <strong>70–98% faster</strong> than JsonEverything across 19 scenarios, with zero or near-zero allocations (see <a href="#benchmark-summary">benchmark summary</a>).</p>
+<p><strong>Requirements:</strong> The runtime packages target <code>net9.0</code>, <code>net10.0</code>, <code>netstandard2.0</code>, and <code>netstandard2.1</code>. The source generator is an analyzer package and does not impose additional runtime requirements.</p>
+<h2 id="quick-start">Quick start</h2>
+<p>Install the packages:</p>
+<pre><code class="language-bash">dotnet add package Corvus.Text.Json
+dotnet add package Corvus.Text.Json.JsonLogic
+</code></pre>
+<p><strong>Simplest approach — string in, string out:</strong></p>
+<pre><code class="language-csharp">using Corvus.Text.Json.JsonLogic;
+
+string? result = JsonLogicEvaluator.Default.EvaluateToString(
+    &quot;&quot;&quot;{&quot;+&quot;:[{&quot;var&quot;:&quot;a&quot;},{&quot;var&quot;:&quot;b&quot;}]}&quot;&quot;&quot;,
+    &quot;&quot;&quot;{&quot;a&quot;:3,&quot;b&quot;:4}&quot;&quot;&quot;);
+
+Console.WriteLine(result); // &quot;7&quot;
+</code></pre>
+<p><code>EvaluateToString</code> parses the rule and data, evaluates the rule, and returns the result as a JSON string. It is the simplest way to get started — no document parsing, workspace management, or disposal needed.</p>
+<p><strong>Full API — zero-allocation evaluation:</strong></p>
+<pre><code class="language-csharp">using Corvus.Text.Json;
+using Corvus.Text.Json.JsonLogic;
+
+// Parse the rule and data (using statements ensure pooled memory is returned)
+using var ruleDoc = ParsedJsonDocument&lt;JsonElement&gt;.Parse(
+    &quot;&quot;&quot;{&quot;+&quot;:[{&quot;var&quot;:&quot;a&quot;},{&quot;var&quot;:&quot;b&quot;}]}&quot;&quot;&quot;u8);
+using var dataDoc = ParsedJsonDocument&lt;JsonElement&gt;.Parse(
+    &quot;&quot;&quot;{&quot;a&quot;:3,&quot;b&quot;:4}&quot;&quot;&quot;u8);
+
+// Create a workspace for zero-allocation evaluation
+using JsonWorkspace workspace = JsonWorkspace.Create();
+
+// Evaluate
+JsonLogicRule rule = new(ruleDoc.RootElement);
+JsonElement result = JsonLogicEvaluator.Default.Evaluate(
+    rule, dataDoc.RootElement, workspace);
+
+Console.WriteLine(result.GetRawText()); // &quot;7&quot;
+</code></pre>
+<p>The evaluator compiles the rule into a delegate tree on first use and caches it. Subsequent evaluations of the same rule skip compilation entirely. Create one <code>JsonLogicEvaluator</code> instance and reuse it — <code>JsonLogicEvaluator.Default</code> provides a shared static instance.</p>
+<p>The workspace provides pooled memory for the result — <strong>zero GC allocation</strong> per evaluation for most rules. The result remains valid until the workspace is disposed or reset.</p>
+<h2 id="installation">Installation</h2>
+<h3 id="interpreted-mode-runtime-evaluation">Interpreted mode (runtime evaluation)</h3>
+<pre><code class="language-bash">dotnet add package Corvus.Text.Json
+dotnet add package Corvus.Text.Json.JsonLogic
+</code></pre>
+<h3 id="source-generator-build-time-code-generation">Source generator (build-time code generation)</h3>
+<pre><code class="language-bash">dotnet add package Corvus.Text.Json
+dotnet add package Corvus.Text.Json.JsonLogic
+dotnet add package Corvus.Text.Json.JsonLogic.SourceGenerator
+</code></pre>
+<p>The source generator package is a development dependency — it runs at build time and produces C# source; the generated code depends on <code>Corvus.Text.Json</code> and <code>Corvus.Text.Json.JsonLogic</code> at runtime.</p>
+<h3 id="cli-tool">CLI tool</h3>
+<pre><code class="language-bash">dotnet tool install --global Corvus.Json.Cli
+</code></pre>
+<p>The <code>corvusjson</code> tool includes a <code>jsonlogic</code> subcommand. See <a href="#cli-code-generation">CLI code generation</a> below.</p>
+<h2 id="interpreted-evaluation">Interpreted evaluation</h2>
+<h3 id="basic-evaluation">Basic evaluation</h3>
+<p>Parse a rule, wrap it in a <code>JsonLogicRule</code>, and evaluate it against data:</p>
+<pre><code class="language-csharp">using Corvus.Text.Json;
+using Corvus.Text.Json.JsonLogic;
+
+// Parse the rule and data
+using var ruleDoc = ParsedJsonDocument&lt;JsonElement&gt;.Parse(
+    &quot;&quot;&quot;{&quot;+&quot;:[{&quot;var&quot;:&quot;a&quot;},{&quot;var&quot;:&quot;b&quot;}]}&quot;&quot;&quot;u8);
+using var dataDoc = ParsedJsonDocument&lt;JsonElement&gt;.Parse(
+    &quot;&quot;&quot;{&quot;a&quot;:3,&quot;b&quot;:4}&quot;&quot;&quot;u8);
+
+// Evaluate
+JsonLogicRule rule = new(ruleDoc.RootElement);
+JsonElement result = JsonLogicEvaluator.Default.Evaluate(rule, dataDoc.RootElement);
+
+// result is a number element with value 7
+Console.WriteLine(result.GetRawText()); // &quot;7&quot;
+</code></pre>
+<p>When you omit the workspace, the evaluator creates one internally and returns a cloned, self-contained result.</p>
+<h3 id="caller-managed-workspace">Caller-managed workspace</h3>
+<p>For zero-allocation evaluation on the hot path, provide your own <code>JsonWorkspace</code>:</p>
+<pre><code class="language-csharp">using JsonWorkspace workspace = JsonWorkspace.Create();
+
+JsonElement result = JsonLogicEvaluator.Default.Evaluate(
+    rule, dataDoc.RootElement, workspace);
+</code></pre>
+<p>When you provide a workspace, the result element is backed by the workspace's memory. It remains valid until the workspace is disposed or reset.</p>
+<h2 id="source-generator">Source generator</h2>
+<p>For rules known at build time, the source generator eliminates all runtime compilation overhead. Declare a partial class annotated with <code>[JsonLogicRule]</code>, pointing at a JSON rule file:</p>
+<pre><code class="language-csharp">using Corvus.Text.Json.JsonLogic;
+
+namespace MyApp.Rules;
+
+[JsonLogicRule(&quot;Rules/discount-rule.json&quot;)]
+internal static partial class DiscountRule
+{
+}
+</code></pre>
+<p>Include the JSON rule file as an <code>AdditionalFiles</code> item in your <code>.csproj</code>:</p>
+<pre><code class="language-xml">&lt;ItemGroup&gt;
+  &lt;AdditionalFiles Include=&quot;Rules\discount-rule.json&quot; /&gt;
+&lt;/ItemGroup&gt;
+</code></pre>
+<p>And reference the source generator:</p>
+<pre><code class="language-xml">&lt;ItemGroup&gt;
+  &lt;PackageReference Include=&quot;Corvus.Text.Json.JsonLogic.SourceGenerator&quot;
+                    PrivateAssets=&quot;all&quot;
+                    ReferenceOutputAssembly=&quot;false&quot;
+                    OutputItemType=&quot;Analyzer&quot; /&gt;
+  &lt;PackageReference Include=&quot;Corvus.Text.Json&quot; /&gt;
+  &lt;PackageReference Include=&quot;Corvus.Text.Json.JsonLogic&quot; /&gt;
+&lt;/ItemGroup&gt;
+</code></pre>
+<p>At build time, the generator reads <code>discount-rule.json</code> and emits an <code>Evaluate</code> method on the partial class:</p>
+<pre><code class="language-csharp">using Corvus.Text.Json;
+using Corvus.Text.Json.JsonLogic;
+
+using var dataDoc = ParsedJsonDocument&lt;JsonElement&gt;.Parse(
+    &quot;&quot;&quot;{&quot;price&quot;:100,&quot;memberLevel&quot;:&quot;gold&quot;}&quot;&quot;&quot;);
+
+using JsonWorkspace workspace = JsonWorkspace.Create();
+JsonElement result = DiscountRule.Evaluate(dataDoc.RootElement, workspace);
+</code></pre>
+<p>The generated <code>Evaluate</code> method is a static method that directly evaluates the rule without delegate dispatch. Literal sub-expressions are constant-folded at build time using <code>BigNumber</code> arithmetic.</p>
+<h3 id="diagnostic-messages">Diagnostic messages</h3>
+<table>
+<thead>
+<tr>
+<th>Code</th>
+<th>Severity</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>JLSG001</td>
+<td>Error</td>
+<td>Rule file not found in <code>AdditionalFiles</code></td>
+</tr>
+<tr>
+<td>JLSG002</td>
+<td>Error</td>
+<td>Rule file is empty</td>
+</tr>
+<tr>
+<td>JLSG003</td>
+<td>Error</td>
+<td>Code generation failed (invalid JSON or unsupported operator)</td>
+</tr>
+</tbody>
+</table>
+<h2 id="cli-code-generation">CLI code generation</h2>
+<p>The <code>corvusjson</code> CLI tool includes a <code>jsonlogic</code> subcommand for ahead-of-time code generation:</p>
+<pre><code class="language-bash">corvusjson jsonlogic &lt;ruleFile&gt; \
+    --className &lt;ClassName&gt; \
+    --namespace &lt;Namespace&gt; \
+    [--outputPath &lt;output.cs&gt;]
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>Argument</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>&lt;ruleFile&gt;</code></td>
+<td>Yes</td>
+<td>Path to the JSON rule file</td>
+</tr>
+<tr>
+<td><code>--className</code></td>
+<td>Yes</td>
+<td>Name of the generated static class</td>
+</tr>
+<tr>
+<td><code>--namespace</code></td>
+<td>Yes</td>
+<td>Namespace for the generated class</td>
+</tr>
+<tr>
+<td><code>--outputPath</code></td>
+<td>No</td>
+<td>Output file path (defaults to <code>&lt;ClassName&gt;.cs</code>)</td>
+</tr>
+</tbody>
+</table>
+<p>Example:</p>
+<pre><code class="language-bash">corvusjson jsonlogic rules/pricing.json \
+    --className PricingRule \
+    --namespace MyApp.Rules \
+    --outputPath Generated/PricingRule.cs
+</code></pre>
+<p>This produces a self-contained <code>.cs</code> file with a static <code>Evaluate</code> method, identical to what the source generator produces. Use the CLI tool when:</p>
+<ul>
+<li>You need to generate code outside the MSBuild pipeline</li>
+<li>You want to inspect or modify the generated code before committing it</li>
+<li>You are integrating with a non-.NET build system</li>
+</ul>
+<h2 id="supported-operators">Supported operators</h2>
+<p>The implementation supports all standard <a href="https://jsonlogic.com/operations.html">JsonLogic operators</a>:</p>
+<h3 id="data-access">Data access</h3>
+<table>
+<thead>
+<tr>
+<th>Operator</th>
+<th>Description</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>var</code></td>
+<td>Access a data value by path</td>
+<td><code>{&quot;var&quot;:&quot;user.name&quot;}</code></td>
+</tr>
+<tr>
+<td><code>missing</code></td>
+<td>Return array of missing keys</td>
+<td><code>{&quot;missing&quot;:[&quot;a&quot;,&quot;b&quot;]}</code></td>
+</tr>
+<tr>
+<td><code>missing_some</code></td>
+<td>Require at least N of the listed keys</td>
+<td><code>{&quot;missing_some&quot;:[1,[&quot;a&quot;,&quot;b&quot;,&quot;c&quot;]]}</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="logic">Logic</h3>
+<table>
+<thead>
+<tr>
+<th>Operator</th>
+<th>Description</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>if</code> / <code>?:</code></td>
+<td>Conditional (if/then/else chain)</td>
+<td><code>{&quot;if&quot;:[cond, then, else]}</code></td>
+</tr>
+<tr>
+<td><code>and</code></td>
+<td>Short-circuit logical AND</td>
+<td><code>{&quot;and&quot;:[true, {&quot;var&quot;:&quot;x&quot;}]}</code></td>
+</tr>
+<tr>
+<td><code>or</code></td>
+<td>Short-circuit logical OR</td>
+<td><code>{&quot;or&quot;:[false, {&quot;var&quot;:&quot;x&quot;}]}</code></td>
+</tr>
+<tr>
+<td><code>!</code></td>
+<td>Logical NOT</td>
+<td><code>{&quot;!&quot;:[true]}</code></td>
+</tr>
+<tr>
+<td><code>!!</code></td>
+<td>Double NOT (coerce to boolean)</td>
+<td><code>{&quot;!!&quot;:[&quot;&quot;]}</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="comparison">Comparison</h3>
+<table>
+<thead>
+<tr>
+<th>Operator</th>
+<th>Description</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>==</code></td>
+<td>Loose equality (with type coercion)</td>
+<td><code>{&quot;==&quot;:[1,&quot;1&quot;]}</code></td>
+</tr>
+<tr>
+<td><code>===</code></td>
+<td>Strict equality (no coercion)</td>
+<td><code>{&quot;===&quot;:[1,1]}</code></td>
+</tr>
+<tr>
+<td><code>!=</code></td>
+<td>Loose inequality</td>
+<td><code>{&quot;!=&quot;:[1,2]}</code></td>
+</tr>
+<tr>
+<td><code>!==</code></td>
+<td>Strict inequality</td>
+<td><code>{&quot;!==&quot;:[1,&quot;1&quot;]}</code></td>
+</tr>
+<tr>
+<td><code>&lt;</code></td>
+<td>Less than (supports 3-arg between)</td>
+<td><code>{&quot;&lt;&quot;:[1,2,3]}</code></td>
+</tr>
+<tr>
+<td><code>&lt;=</code></td>
+<td>Less than or equal</td>
+<td><code>{&quot;&lt;=&quot;:[1,1]}</code></td>
+</tr>
+<tr>
+<td><code>&gt;</code></td>
+<td>Greater than</td>
+<td><code>{&quot;&gt;&quot;:[2,1]}</code></td>
+</tr>
+<tr>
+<td><code>&gt;=</code></td>
+<td>Greater than or equal</td>
+<td><code>{&quot;&gt;=&quot;:[2,2]}</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="arithmetic">Arithmetic</h3>
+<table>
+<thead>
+<tr>
+<th>Operator</th>
+<th>Description</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>+</code></td>
+<td>Addition (n-ary)</td>
+<td><code>{&quot;+&quot;:[1,2,3]}</code></td>
+</tr>
+<tr>
+<td><code>-</code></td>
+<td>Subtraction or unary negation</td>
+<td><code>{&quot;-&quot;:[10,3]}</code></td>
+</tr>
+<tr>
+<td><code>*</code></td>
+<td>Multiplication (n-ary)</td>
+<td><code>{&quot;*&quot;:[2,3,4]}</code></td>
+</tr>
+<tr>
+<td><code>/</code></td>
+<td>Division</td>
+<td><code>{&quot;/&quot;:[10,3]}</code></td>
+</tr>
+<tr>
+<td><code>%</code></td>
+<td>Modulo</td>
+<td><code>{&quot;%&quot;:[10,3]}</code></td>
+</tr>
+<tr>
+<td><code>min</code></td>
+<td>Minimum of values</td>
+<td><code>{&quot;min&quot;:[1,2,3]}</code></td>
+</tr>
+<tr>
+<td><code>max</code></td>
+<td>Maximum of values</td>
+<td><code>{&quot;max&quot;:[1,2,3]}</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="string">String</h3>
+<table>
+<thead>
+<tr>
+<th>Operator</th>
+<th>Description</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>cat</code></td>
+<td>Concatenation</td>
+<td><code>{&quot;cat&quot;:[&quot;hello&quot;,&quot; &quot;,&quot;world&quot;]}</code></td>
+</tr>
+<tr>
+<td><code>in</code></td>
+<td>Substring test or array membership</td>
+<td><code>{&quot;in&quot;:[&quot;a&quot;,&quot;abc&quot;]}</code></td>
+</tr>
+<tr>
+<td><code>substr</code></td>
+<td>Substring extraction</td>
+<td><code>{&quot;substr&quot;:[&quot;hello&quot;,1,3]}</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="array">Array</h3>
+<table>
+<thead>
+<tr>
+<th>Operator</th>
+<th>Description</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>filter</code></td>
+<td>Filter array by predicate</td>
+<td><code>{&quot;filter&quot;:[data, test]}</code></td>
+</tr>
+<tr>
+<td><code>map</code></td>
+<td>Transform each element</td>
+<td><code>{&quot;map&quot;:[data, transform]}</code></td>
+</tr>
+<tr>
+<td><code>reduce</code></td>
+<td>Fold array to single value</td>
+<td><code>{&quot;reduce&quot;:[data, reducer, initial]}</code></td>
+</tr>
+<tr>
+<td><code>merge</code></td>
+<td>Flatten/concatenate arrays</td>
+<td><code>{&quot;merge&quot;:[[1],[2],[3]]}</code></td>
+</tr>
+<tr>
+<td><code>all</code></td>
+<td>All elements satisfy predicate</td>
+<td><code>{&quot;all&quot;:[data, test]}</code></td>
+</tr>
+<tr>
+<td><code>some</code></td>
+<td>At least one element matches</td>
+<td><code>{&quot;some&quot;:[data, test]}</code></td>
+</tr>
+<tr>
+<td><code>none</code></td>
+<td>No elements match</td>
+<td><code>{&quot;none&quot;:[data, test]}</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="miscellaneous">Miscellaneous</h3>
+<table>
+<thead>
+<tr>
+<th>Operator</th>
+<th>Description</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>log</code></td>
+<td>Pass-through (for debugging)</td>
+<td><code>{&quot;log&quot;:{&quot;var&quot;:&quot;x&quot;}}</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="extended-operators">Extended operators</h2>
+<p>The Corvus implementation adds operators for explicit numeric type conversion, useful when working with <code>BigNumber</code> precision:</p>
+<table>
+<thead>
+<tr>
+<th>Operator</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>asDouble</code></td>
+<td>Coerce a value to a double-precision number</td>
+</tr>
+<tr>
+<td><code>asLong</code></td>
+<td>Coerce a value to a 64-bit integer</td>
+</tr>
+<tr>
+<td><code>asBigNumber</code></td>
+<td>Coerce a value to arbitrary-precision <code>BigNumber</code></td>
+</tr>
+<tr>
+<td><code>asBigInteger</code></td>
+<td>Coerce a value to arbitrary-precision <code>BigInteger</code> (truncated)</td>
+</tr>
+</tbody>
+</table>
+<p>These operators are not part of the standard <a href="https://jsonlogic.com/">JsonLogic</a> specification but are safe to use with any evaluation mode (interpreted, source generator, or CLI).</p>
+<h2 id="runtime-custom-operators-ioperatorcompiler">Runtime custom operators (IOperatorCompiler)</h2>
+<p>The interpreted evaluator supports user-defined operators at runtime via the <code>IOperatorCompiler</code> interface. This lets you extend the operator set — or override built-in operators — without code generation.</p>
+<h3 id="overview-1">Overview</h3>
+<p>When the evaluator compiles a rule, it walks the JSON tree and produces a delegate tree. For each operator it encounters, it looks up the operator name in a dispatch table. Custom operators are checked <strong>before</strong> the built-in operators, so you can override standard behaviour such as <code>+</code>, <code>var</code>, or <code>if</code>.</p>
+<h3 id="implementing-an-operator">Implementing an operator</h3>
+<p>Implement <code>IOperatorCompiler</code>. The <code>Compile</code> method receives the pre-compiled operand delegates and returns a single <code>RuleEvaluator</code> delegate that applies the operator:</p>
+<pre><code class="language-csharp">using Corvus.Text.Json.JsonLogic;
+
+public sealed class DoubleItCompiler : IOperatorCompiler
+{
+    public RuleEvaluator Compile(RuleEvaluator[] operands)
+    {
+        // Capture the single operand
+        RuleEvaluator operand = operands[0];
+
+        return (in JsonElement data, JsonWorkspace workspace) =&gt;
+        {
+            EvalResult val = operand(data, workspace);
+            if (val.TryGetDouble(out double d))
+            {
+                return EvalResult.FromDouble(d * 2);
+            }
+
+            return EvalResult.FromDouble(0);
+        };
+    }
+}
+</code></pre>
+<h3 id="registering-operators">Registering operators</h3>
+<p>Pass a dictionary of operator name → compiler to the <code>JsonLogicEvaluator</code> constructor:</p>
+<pre><code class="language-csharp">var customOps = new Dictionary&lt;string, IOperatorCompiler&gt;
+{
+    [&quot;double_it&quot;] = new DoubleItCompiler(),
+};
+
+JsonLogicEvaluator evaluator = new(customOps);
+</code></pre>
+<p>Then use the evaluator as normal. Rules can reference the custom operator by name:</p>
+<pre><code class="language-csharp">using var ruleDoc = ParsedJsonDocument&lt;JsonElement&gt;.Parse(
+    &quot;&quot;&quot;{&quot;double_it&quot;:[{&quot;var&quot;:&quot;x&quot;}]}&quot;&quot;&quot;);
+using var dataDoc = ParsedJsonDocument&lt;JsonElement&gt;.Parse(
+    &quot;&quot;&quot;{&quot;x&quot;:5}&quot;&quot;&quot;);
+
+JsonLogicRule rule = new(ruleDoc.RootElement);
+JsonElement result = evaluator.Evaluate(rule, dataDoc.RootElement);
+// result = 10
+</code></pre>
+<p>Custom operators compose freely with built-in operators:</p>
+<pre><code class="language-csharp">// {&quot;+&quot;:[{&quot;double_it&quot;:[{&quot;var&quot;:&quot;x&quot;}]}, {&quot;var&quot;:&quot;y&quot;}]}
+// → double_it(3) + 4 = 6 + 4 = 10
+</code></pre>
+<h3 id="overriding-built-in-operators">Overriding built-in operators</h3>
+<p>Because custom operators are dispatched first, you can replace any standard operator:</p>
+<pre><code class="language-csharp">var customOps = new Dictionary&lt;string, IOperatorCompiler&gt;
+{
+    [&quot;+&quot;] = new AlwaysFortyTwoCompiler(),
+};
+
+JsonLogicEvaluator evaluator = new(customOps);
+// All &quot;+&quot; rules now return 42, regardless of operands
+</code></pre>
+<h3 id="key-types">Key types</h3>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>IOperatorCompiler</code></td>
+<td>Interface to implement. Single method: <code>RuleEvaluator Compile(RuleEvaluator[] operands)</code></td>
+</tr>
+<tr>
+<td><code>RuleEvaluator</code></td>
+<td>Delegate: <code>EvalResult RuleEvaluator(in JsonElement data, JsonWorkspace workspace)</code></td>
+</tr>
+<tr>
+<td><code>EvalResult</code></td>
+<td>Discriminated union — holds either a native <code>double</code> or a <code>JsonElement</code></td>
+</tr>
+<tr>
+<td><code>JsonLogicEvaluator</code></td>
+<td>Evaluator. Use the constructor overload accepting <code>IReadOnlyDictionary&lt;string, IOperatorCompiler&gt;</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="working-with-evalresult">Working with EvalResult</h3>
+<p><code>EvalResult</code> is a dual-track value type that avoids the double → JSON → double round-trip for arithmetic:</p>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>EvalResult.FromDouble(double)</code></td>
+<td>Create a result wrapping a native double</td>
+</tr>
+<tr>
+<td><code>EvalResult.FromElement(in JsonElement)</code></td>
+<td>Create a result wrapping a JSON element</td>
+</tr>
+<tr>
+<td><code>TryGetDouble(out double)</code></td>
+<td>Attempt to extract a double (coercing from JSON number/bool/string if needed)</td>
+</tr>
+<tr>
+<td><code>AsElement(JsonWorkspace)</code></td>
+<td>Materialize the result as a <code>JsonElement</code> (writing the double to the workspace if necessary)</td>
+</tr>
+<tr>
+<td><code>IsTruthy()</code></td>
+<td><a href="https://jsonlogic.com/truthy.html">JsonLogic truthiness</a> test</td>
+</tr>
+<tr>
+<td><code>IsNullOrUndefined()</code></td>
+<td>True for JSON <code>null</code> or <code>Undefined</code></td>
+</tr>
+<tr>
+<td><code>ValueKind</code></td>
+<td><code>JsonValueKind.Number</code> for doubles; the element's kind otherwise</td>
+</tr>
+</tbody>
+</table>
+<p>When implementing operators that do arithmetic, prefer the double fast path and fall back to <code>BigNumber</code> for arbitrary-precision values. The following example shows how the built-in <code>+</code> operator is implemented internally — custom operators can follow the same pattern:</p>
+<pre><code class="language-csharp">using Corvus.Numerics;
+
+public sealed class AddCompiler : IOperatorCompiler
+{
+    public RuleEvaluator Compile(RuleEvaluator[] operands)
+    {
+        if (operands.Length &lt; 2)
+        {
+            // Too few arguments — return zero (see error handling below)
+            return static (in JsonElement data, JsonWorkspace workspace) =&gt;
+                EvalResult.FromDouble(0);
+        }
+
+        RuleEvaluator left = operands[0];
+        RuleEvaluator right = operands[1];
+
+        return (in JsonElement data, JsonWorkspace workspace) =&gt;
+        {
+            EvalResult l = left(data, workspace);
+            EvalResult r = right(data, workspace);
+
+            // Fast path: both operands fit in a double
+            if (l.TryGetDouble(out double a) &amp;&amp; r.TryGetDouble(out double b))
+            {
+                return EvalResult.FromDouble(a + b);
+            }
+
+            // Slow path: fall back to BigNumber for full precision
+            BigNumber lb = CoerceToBigNumber(l.AsElement(workspace));
+            BigNumber rb = CoerceToBigNumber(r.AsElement(workspace));
+            return EvalResult.FromElement(
+                BigNumberToElement(lb + rb, workspace));
+        };
+    }
+
+    private static BigNumber CoerceToBigNumber(in JsonElement element)
+    {
+        if (element.ValueKind == JsonValueKind.Number)
+        {
+            using var raw = JsonMarshal.GetRawUtf8Value(element);
+            if (BigNumber.TryParse(raw.Span, out BigNumber result))
+            {
+                return result;
+            }
+        }
+
+        if (element.ValueKind == JsonValueKind.True) return BigNumber.One;
+        if (element.ValueKind == JsonValueKind.False
+            || element.ValueKind == JsonValueKind.Null) return BigNumber.Zero;
+
+        return BigNumber.Zero;
+    }
+
+    private static JsonElement BigNumberToElement(
+        BigNumber value, JsonWorkspace workspace)
+    {
+        Span&lt;byte&gt; buffer = stackalloc byte[64];
+        if (value.TryFormat(buffer, out int bytesWritten))
+        {
+            return JsonLogicHelpers.NumberFromSpan(
+                buffer.Slice(0, bytesWritten), workspace);
+        }
+
+        return JsonLogicHelpers.Zero();
+    }
+}
+</code></pre>
+<h3 id="error-handling">Error handling</h3>
+<p><a href="https://jsonlogic.com/">JsonLogic</a> follows a philosophy of <strong>graceful degradation</strong> — operators never throw exceptions at evaluation time. All built-in operators in the Corvus implementation follow this convention, and custom operators should do the same:</p>
+<table>
+<thead>
+<tr>
+<th>Situation</th>
+<th>Convention</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Too few arguments</td>
+<td>Return <code>null</code> or <code>0</code></td>
+<td><code>{&quot;/&quot;:[]}</code> → <code>null</code></td>
+</tr>
+<tr>
+<td>Wrong type (non-numeric for arithmetic)</td>
+<td>Coerce if possible, fall back to <code>0</code></td>
+<td><code>{&quot;+&quot;:[true, &quot;3&quot;]}</code> → <code>4</code></td>
+</tr>
+<tr>
+<td>Division / modulo by zero</td>
+<td>Return <code>null</code></td>
+<td><code>{&quot;/&quot;:[1, 0]}</code> → <code>null</code></td>
+</tr>
+<tr>
+<td>Missing or undefined data</td>
+<td>Return <code>null</code></td>
+<td><code>{&quot;var&quot;:&quot;no.such.path&quot;}</code> → <code>null</code></td>
+</tr>
+</tbody>
+</table>
+<p>Use <code>JsonLogicHelpers.NullElement()</code> to return a JSON <code>null</code>, and <code>JsonLogicHelpers.Zero()</code> to return the number <code>0</code>. Both are allocation-free.</p>
+<pre><code class="language-csharp">// Too few arguments — return null
+if (operands.Length &lt; 2)
+{
+    return static (in JsonElement data, JsonWorkspace workspace) =&gt;
+        EvalResult.FromElement(JsonLogicHelpers.NullElement());
+}
+
+// Non-numeric operand — coerce or fall back to zero
+if (!val.TryGetDouble(out double d))
+{
+    d = 0;
+}
+</code></pre>
+<p>This means rules with mistakes produce deterministic fallback values rather than aborting evaluation. If your use case requires strict validation, you can throw from <code>Compile</code> (which runs once at compilation time) to reject rules with a known-wrong number of operands — but the evaluation delegate itself should not throw.</p>
+<p>When your operator produces a non-numeric result, use <code>AsElement</code> to get operand values and <code>FromElement</code> to return a <code>JsonElement</code>:</p>
+<pre><code class="language-csharp">return (in JsonElement data, JsonWorkspace workspace) =&gt;
+{
+    JsonElement value = operands[0](data, workspace).AsElement(workspace);
+    // ... produce a JsonElement result ...
+    return EvalResult.FromElement(result);
+};
+</code></pre>
+<h3 id="zero-argument-operators">Zero-argument operators</h3>
+<p>Operators that take no arguments are supported — the <code>operands</code> array will be empty:</p>
+<pre><code class="language-csharp">public sealed class PiCompiler : IOperatorCompiler
+{
+    public RuleEvaluator Compile(RuleEvaluator[] operands)
+    {
+        return static (in JsonElement data, JsonWorkspace workspace) =&gt;
+            EvalResult.FromDouble(3.14159265358979);
+    }
+}
+</code></pre>
+<p>Rule: <code>{&quot;pi&quot;:[]}</code> — the empty array is required by the <a href="https://jsonlogic.com/">JsonLogic</a> format.</p>
+<h3 id="caching">Caching</h3>
+<p>Compiled rules are cached by the evaluator. A custom operator's <code>Compile</code> method is called once per unique rule text, not once per evaluation. The returned <code>RuleEvaluator</code> delegate is invoked on every evaluation. This means:</p>
+<ul>
+<li>Expensive setup in <code>Compile</code> is acceptable — it runs at compilation time.</li>
+<li>The returned delegate should be allocation-free on the hot path.</li>
+<li>Any data captured by the delegate's closure — including the <code>operands</code> array and any values derived from it — is also cached for the lifetime of the evaluator (or until <code>ClearCache()</code> is called). This is by design: the operand delegates form the compiled expression tree and are reused across evaluations with different data.</li>
+</ul>
+<h2 id="custom-operator-templates.jlops">Custom operator templates (.jlops)</h2>
+<p>The code generator and source generator support user-defined operators via <code>.jlops</code> template files. Custom operators extend the standard operator set with C# expression or block bodies that are emitted directly into the generated code.</p>
+<h3 id="format">Format</h3>
+<p>A <code>.jlops</code> file contains one or more operator definitions. Two forms are supported:</p>
+<p><strong>Expression form</strong> (single line):</p>
+<pre><code>op discount(price, percent) =&gt; BigNumberToElement(CoerceToBigNumber(price) * (BigNumber.One - CoerceToBigNumber(percent) / (BigNumber)100), workspace);
+</code></pre>
+<p><strong>Block form</strong> (multi-line):</p>
+<pre><code>op clamp(value, lo, hi)
+{
+    BigNumber v = CoerceToBigNumber(value);
+    BigNumber low = CoerceToBigNumber(lo);
+    BigNumber high = CoerceToBigNumber(hi);
+    BigNumber clamped = v &lt; low ? low : v &gt; high ? high : v;
+    return BigNumberToElement(clamped, workspace);
+}
+</code></pre>
+<p>Lines starting with <code>//</code> are comments. Blank lines are ignored.</p>
+<p>Each parameter receives a <code>JsonElement</code> value at runtime. The implicit <code>workspace</code> parameter is always available. The body has access to all helper methods in the generated class, including <code>CoerceToBigNumber()</code>, <code>BigNumberToElement()</code>, and <code>JsonLogicHelpers.*</code>.</p>
+<h3 id="using-with-the-source-generator">Using with the source generator</h3>
+<p>Include <code>.jlops</code> files as <code>AdditionalFiles</code> alongside your JSON rule files:</p>
+<pre><code class="language-xml">&lt;ItemGroup&gt;
+  &lt;AdditionalFiles Include=&quot;Rules\*.json&quot; /&gt;
+  &lt;AdditionalFiles Include=&quot;Operators\*.jlops&quot; /&gt;
+&lt;/ItemGroup&gt;
+</code></pre>
+<p>All custom operators from all <code>.jlops</code> files are available to all <code>[JsonLogicRule]</code>-annotated types in the project. Use the custom operator in a rule just like a built-in one:</p>
+<pre><code class="language-json">{&quot;+&quot;:[{&quot;discount&quot;:[{&quot;var&quot;:&quot;price&quot;}, 20]}, {&quot;var&quot;:&quot;tax&quot;}]}
+</code></pre>
+<h3 id="using-with-the-cli-tool">Using with the CLI tool</h3>
+<p>Pass the <code>--operators</code> flag pointing to a <code>.jlops</code> file:</p>
+<pre><code class="language-bash">corvusjson jsonlogic rules/pricing.json \
+    --className PricingRule \
+    --namespace MyApp.Rules \
+    --operators operators/custom-ops.jlops
+</code></pre>
+<h3 id="argument-count-validation">Argument count validation</h3>
+<p>The code generator validates that each use of a custom operator passes the exact number of arguments declared in the <code>.jlops</code> definition. A mismatch produces a build error (source generator) or an exception (CLI tool).</p>
+<h3 id="diagnostic-messages-1">Diagnostic messages</h3>
+<table>
+<thead>
+<tr>
+<th>Code</th>
+<th>Severity</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>JLSG004</td>
+<td>Error</td>
+<td>Failed to parse a <code>.jlops</code> file (invalid syntax)</td>
+</tr>
+</tbody>
+</table>
+<h2 id="workspace-and-memory-management">Workspace and memory management</h2>
+<p><code>JsonWorkspace</code> is the pooled memory container used throughout Corvus.Text.Json. When evaluating JsonLogic rules:</p>
+<ul>
+<li><strong>With workspace</strong>: Results are allocated from the workspace. No heap allocations on the hot path. The caller is responsible for disposing the workspace.</li>
+<li><strong>Without workspace</strong>: The evaluator creates a temporary workspace internally and clones the result before disposing it.</li>
+</ul>
+<p>For best performance in tight loops or request-processing pipelines, reuse a workspace and call <code>Reset()</code> between iterations:</p>
+<pre><code class="language-csharp">using JsonWorkspace workspace = JsonWorkspace.Create();
+
+foreach (var request in requests)
+{
+    workspace.Reset();
+    using var dataDoc = ParsedJsonDocument&lt;JsonElement&gt;.Parse(request.Json);
+    JsonElement result = JsonLogicEvaluator.Default.Evaluate(
+        rule, dataDoc.RootElement, workspace);
+    ProcessResult(result);
+}
+</code></pre>
+<p>This pattern achieves <strong>zero GC allocation</strong> per evaluation for most rules. The workspace pools memory internally via <code>ArrayPool&lt;byte&gt;</code> and reuses it across evaluations.</p>
+<p><strong>Clearing the expression cache:</strong></p>
+<p>The evaluator caches compiled delegate trees per rule. If your application dynamically generates many unique rules over time, the cache can grow unbounded. Use <code>ClearCache()</code> to release all cached compilations:</p>
+<pre><code class="language-csharp">var evaluator = new JsonLogicEvaluator();
+// ... many evaluations with unique rules ...
+
+evaluator.ClearCache(); // releases all cached delegate trees
+</code></pre>
+<h2 id="common-pitfalls">Common pitfalls</h2>
+<h3 id="always-dispose-parsedjsondocument">Always dispose <code>ParsedJsonDocument</code></h3>
+<p><code>ParsedJsonDocument&lt;T&gt;</code> rents memory from <code>ArrayPool&lt;byte&gt;</code>. Forgetting to dispose it leaks pooled memory:</p>
+<pre><code class="language-csharp">// ❌ BAD — leaks pooled memory
+var doc = ParsedJsonDocument&lt;JsonElement&gt;.Parse(json);
+var result = evaluator.Evaluate(rule, doc.RootElement);
+
+// ✅ GOOD — using statement returns memory to the pool
+using var doc = ParsedJsonDocument&lt;JsonElement&gt;.Parse(json);
+var result = evaluator.Evaluate(rule, doc.RootElement);
+</code></pre>
+<h3 id="reset-the-workspace-in-loops">Reset the workspace in loops</h3>
+<p>Without <code>Reset()</code>, workspace memory grows with each evaluation. The workspace remains valid, but old results consume pooled memory unnecessarily:</p>
+<pre><code class="language-csharp">// ❌ BAD — workspace grows unboundedly
+foreach (var item in items)
+{
+    var result = evaluator.Evaluate(rule, item, workspace);
+    ProcessResult(result);
+}
+
+// ✅ GOOD — reset frees previous results
+foreach (var item in items)
+{
+    workspace.Reset();
+    var result = evaluator.Evaluate(rule, item, workspace);
+    ProcessResult(result);
+}
+</code></pre>
+<h3 id="dont-forget-additionalfiles-for-the-source-generator">Don't forget <code>AdditionalFiles</code> for the source generator</h3>
+<p>The source generator reads rule files from <code>AdditionalFiles</code>. Without the MSBuild item, the generator can't find the rule and produces diagnostic <code>JLSG001</code>:</p>
+<pre><code class="language-xml">&lt;!-- ❌ Missing — generator produces JLSG001 --&gt;
+&lt;ItemGroup&gt;
+  &lt;None Include=&quot;Rules\discount.json&quot; /&gt;
+&lt;/ItemGroup&gt;
+
+&lt;!-- ✅ Correct --&gt;
+&lt;ItemGroup&gt;
+  &lt;AdditionalFiles Include=&quot;Rules\discount.json&quot; /&gt;
+&lt;/ItemGroup&gt;
+</code></pre>
+<h3 id="result-lifetime-is-tied-to-the-workspace">Result lifetime is tied to the workspace</h3>
+<p>When you pass a workspace, the returned <code>JsonElement</code> is backed by that workspace's memory. Using the result after the workspace is disposed or reset produces undefined behavior:</p>
+<pre><code class="language-csharp">// ❌ BAD — result is invalid after workspace disposal
+JsonElement result;
+using (JsonWorkspace workspace = JsonWorkspace.Create())
+{
+    result = evaluator.Evaluate(rule, data, workspace);
+}
+Console.WriteLine(result.GetRawText()); // undefined behavior
+
+// ✅ GOOD — use result before workspace is disposed
+using JsonWorkspace workspace = JsonWorkspace.Create();
+JsonElement result = evaluator.Evaluate(rule, data, workspace);
+Console.WriteLine(result.GetRawText()); // safe
+</code></pre>
+<h2 id="comparison-with-other-libraries">Comparison with other libraries</h2>
+<p>The Corvus JsonLogic implementation is designed for high-throughput scenarios where rules are evaluated millions of times. Key differences from other .NET implementations:</p>
+<table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>Corvus.Text.Json.JsonLogic</th>
+<th>JsonEverything</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Evaluation model</td>
+<td>Compiled delegate tree (cached)</td>
+<td>Direct interpretation</td>
+</tr>
+<tr>
+<td>Code generation</td>
+<td>Source generator + CLI tool</td>
+<td>Not available</td>
+</tr>
+<tr>
+<td>Numeric precision</td>
+<td><code>BigNumber</code> (arbitrary precision)</td>
+<td><code>decimal</code></td>
+</tr>
+<tr>
+<td>Memory model</td>
+<td>Pooled (<code>JsonWorkspace</code>)</td>
+<td>GC-allocated</td>
+</tr>
+<tr>
+<td>Zero-allocation hot path</td>
+<td>Yes (with workspace)</td>
+<td>No</td>
+</tr>
+<tr>
+<td>Extended operators</td>
+<td><code>asDouble</code>, <code>asLong</code>, <code>asBigNumber</code>, <code>asBigInteger</code></td>
+<td>Custom operator API</td>
+</tr>
+<tr>
+<td>Runtime extensibility</td>
+<td><code>IOperatorCompiler</code> (can override built-ins)</td>
+<td>Custom operator API</td>
+</tr>
+<tr>
+<td>Code-gen extensibility</td>
+<td><code>.jlops</code> custom operator templates</td>
+<td>Not available</td>
+</tr>
+</tbody>
+</table>
+<h3 id="benchmark-summary">Benchmark summary</h3>
+<p>Measured on .NET 10.0 (13th Gen Intel Core i7-13800H) across 19 scenarios. <strong>RT</strong> = Corvus runtime (interpreted), <strong>CG</strong> = Corvus code-gen (source generator), <strong>JE</strong> = JsonEverything. Ratios &lt; 1 mean faster than JE; lower is better.</p>
+<h4 id="time-comparison">Time comparison</h4>
+<table>
+<thead>
+<tr>
+<th>Scenario</th>
+<th style="text-align: right;">JE (ns)</th>
+<th style="text-align: right;">RT (ns)</th>
+<th style="text-align: right;">CG (ns)</th>
+<th style="text-align: right;">RT/JE</th>
+<th style="text-align: right;">CG/JE</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Simple var</td>
+<td style="text-align: right;">136</td>
+<td style="text-align: right;">38</td>
+<td style="text-align: right;">34</td>
+<td style="text-align: right;">0.28</td>
+<td style="text-align: right;">0.25</td>
+</tr>
+<tr>
+<td>Comparison</td>
+<td style="text-align: right;">373</td>
+<td style="text-align: right;">78</td>
+<td style="text-align: right;">35</td>
+<td style="text-align: right;">0.21</td>
+<td style="text-align: right;">0.09</td>
+</tr>
+<tr>
+<td>Arithmetic</td>
+<td style="text-align: right;">663</td>
+<td style="text-align: right;">202</td>
+<td style="text-align: right;">181</td>
+<td style="text-align: right;">0.30</td>
+<td style="text-align: right;">0.27</td>
+</tr>
+<tr>
+<td>String cat</td>
+<td style="text-align: right;">356</td>
+<td style="text-align: right;">148</td>
+<td style="text-align: right;">136</td>
+<td style="text-align: right;">0.42</td>
+<td style="text-align: right;">0.38</td>
+</tr>
+<tr>
+<td>Substr</td>
+<td style="text-align: right;">398</td>
+<td style="text-align: right;">113</td>
+<td style="text-align: right;">108</td>
+<td style="text-align: right;">0.28</td>
+<td style="text-align: right;">0.27</td>
+</tr>
+<tr>
+<td>Min/max</td>
+<td style="text-align: right;">34</td>
+<td style="text-align: right;">327</td>
+<td style="text-align: right;">386</td>
+<td style="text-align: right;"><strong>9.75</strong></td>
+<td style="text-align: right;"><strong>11.5</strong></td>
+</tr>
+<tr>
+<td>In (array)</td>
+<td style="text-align: right;">513</td>
+<td style="text-align: right;">117</td>
+<td style="text-align: right;">107</td>
+<td style="text-align: right;">0.23</td>
+<td style="text-align: right;">0.21</td>
+</tr>
+<tr>
+<td>Logic short-circuit</td>
+<td style="text-align: right;">648</td>
+<td style="text-align: right;">165</td>
+<td style="text-align: right;">110</td>
+<td style="text-align: right;">0.25</td>
+<td style="text-align: right;">0.17</td>
+</tr>
+<tr>
+<td>Quantifier (all)</td>
+<td style="text-align: right;">2,488</td>
+<td style="text-align: right;">453</td>
+<td style="text-align: right;">388</td>
+<td style="text-align: right;">0.18</td>
+<td style="text-align: right;">0.16</td>
+</tr>
+<tr>
+<td>Complex rule</td>
+<td style="text-align: right;">903</td>
+<td style="text-align: right;">219</td>
+<td style="text-align: right;">165</td>
+<td style="text-align: right;">0.24</td>
+<td style="text-align: right;">0.18</td>
+</tr>
+<tr>
+<td>Deep nested</td>
+<td style="text-align: right;">5,242</td>
+<td style="text-align: right;">106</td>
+<td style="text-align: right;">94</td>
+<td style="text-align: right;">0.02</td>
+<td style="text-align: right;">0.02</td>
+</tr>
+<tr>
+<td>Missing data</td>
+<td style="text-align: right;">1,782</td>
+<td style="text-align: right;">474</td>
+<td style="text-align: right;">358</td>
+<td style="text-align: right;">0.27</td>
+<td style="text-align: right;">0.20</td>
+</tr>
+<tr>
+<td>Merge (constant)</td>
+<td style="text-align: right;">1,185</td>
+<td style="text-align: right;">170</td>
+<td style="text-align: right;">7</td>
+<td style="text-align: right;">0.14</td>
+<td style="text-align: right;"><strong>0.006</strong></td>
+</tr>
+<tr>
+<td>Merge (mixed)</td>
+<td style="text-align: right;">1,231</td>
+<td style="text-align: right;">242</td>
+<td style="text-align: right;">254</td>
+<td style="text-align: right;">0.20</td>
+<td style="text-align: right;">0.21</td>
+</tr>
+<tr>
+<td>Reduce (strings)</td>
+<td style="text-align: right;">5,699</td>
+<td style="text-align: right;">4,015</td>
+<td style="text-align: right;">5,239</td>
+<td style="text-align: right;">0.71</td>
+<td style="text-align: right;">0.92</td>
+</tr>
+<tr>
+<td>Array filter</td>
+<td style="text-align: right;">3,741</td>
+<td style="text-align: right;">804</td>
+<td style="text-align: right;">672</td>
+<td style="text-align: right;">0.22</td>
+<td style="text-align: right;">0.18</td>
+</tr>
+<tr>
+<td>Object filter</td>
+<td style="text-align: right;">4,890</td>
+<td style="text-align: right;">1,201</td>
+<td style="text-align: right;">969</td>
+<td style="text-align: right;">0.25</td>
+<td style="text-align: right;">0.20</td>
+</tr>
+<tr>
+<td>Map (strings)</td>
+<td style="text-align: right;">1,108</td>
+<td style="text-align: right;">366</td>
+<td style="text-align: right;">352</td>
+<td style="text-align: right;">0.33</td>
+<td style="text-align: right;">0.32</td>
+</tr>
+<tr>
+<td>Array map/reduce</td>
+<td style="text-align: right;">10,017</td>
+<td style="text-align: right;">1,146</td>
+<td style="text-align: right;">536</td>
+<td style="text-align: right;">0.11</td>
+<td style="text-align: right;">0.05</td>
+</tr>
+</tbody>
+</table>
+<h4 id="memory-comparison">Memory comparison</h4>
+<table>
+<thead>
+<tr>
+<th>Scenario</th>
+<th style="text-align: right;">JE (B)</th>
+<th style="text-align: right;">RT (B)</th>
+<th style="text-align: right;">CG (B)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Simple var</td>
+<td style="text-align: right;">248</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td>Comparison</td>
+<td style="text-align: right;">512</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td>Arithmetic</td>
+<td style="text-align: right;">656</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td>String cat</td>
+<td style="text-align: right;">728</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td>Substr</td>
+<td style="text-align: right;">560</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td>Min/max</td>
+<td style="text-align: right;">136</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td>In (array)</td>
+<td style="text-align: right;">1,472</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td>Logic short-circuit</td>
+<td style="text-align: right;">1,304</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td>Quantifier (all)</td>
+<td style="text-align: right;">2,776</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td>Complex rule</td>
+<td style="text-align: right;">2,040</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td>Deep nested</td>
+<td style="text-align: right;">10,120</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td>Missing data</td>
+<td style="text-align: right;">2,184</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td>Merge (constant)</td>
+<td style="text-align: right;">4,376</td>
+<td style="text-align: right;">136</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td>Merge (mixed)</td>
+<td style="text-align: right;">3,800</td>
+<td style="text-align: right;">136</td>
+<td style="text-align: right;">136</td>
+</tr>
+<tr>
+<td>Reduce (strings)</td>
+<td style="text-align: right;">9,368</td>
+<td style="text-align: right;">136</td>
+<td style="text-align: right;">136</td>
+</tr>
+<tr>
+<td>Array filter</td>
+<td style="text-align: right;">4,032</td>
+<td style="text-align: right;">136</td>
+<td style="text-align: right;">136</td>
+</tr>
+<tr>
+<td>Object filter</td>
+<td style="text-align: right;">6,280</td>
+<td style="text-align: right;">136</td>
+<td style="text-align: right;">136</td>
+</tr>
+<tr>
+<td>Map (strings)</td>
+<td style="text-align: right;">2,912</td>
+<td style="text-align: right;">136</td>
+<td style="text-align: right;">136</td>
+</tr>
+<tr>
+<td>Array map/reduce</td>
+<td style="text-align: right;">12,856</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+</tr>
+</tbody>
+</table>
+<h4 id="summary">Summary</h4>
+<ul>
+<li><strong>RT is faster than JE in 18/19 scenarios</strong> (0.02×–0.71× JE), with a geometric mean of <strong>0.21× JE</strong> across those 18.</li>
+<li><strong>CG is faster than JE in 18/19 scenarios</strong> (0.006×–0.92× JE), with a geometric mean of <strong>0.16× JE</strong> across those 18.</li>
+<li><strong>Min/max</strong> is the notable outlier where JE is faster: JE's <code>JsonNode</code> stores pre-parsed <code>double</code> values, while Corvus's <code>JsonElement</code> re-parses UTF-8 bytes to <code>double</code> on each call. Both RT and CG still allocate 0 B vs JE's 136 B.</li>
+<li><strong>Reduce (strings)</strong> is the closest scenario at 0.71× (RT) and 0.92× (CG).</li>
+<li><strong>Memory</strong>: RT allocates 0 B in 13/19 scenarios, CG in 14/19. The remaining scenarios allocate exactly 136 B (a single <code>JsonDocumentBuilder</code>). JE allocates 136–12,856 B in every scenario.</li>
+<li><strong>Merge (constant)</strong> showcases compile-time constant folding: CG evaluates at 12 ns (0.007× JE) by pre-computing the entire merged array as a static field.</li>
+</ul>
+        </div>
+    </main>
+</div>
+
+    </div>
+    <footer class="site-footer">
+    <div class="site-footer__inner">
+        <div class="site-footer__sponsor">
+            Sponsored by
+            <a href="https://endjin.com" target="_blank" rel="noopener noreferrer">endjin</a>
+        </div>
+        <ul class="site-footer__links" role="list">
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/pr-preview/pr-740/getting-started/index.html">Getting Started</a></li>
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/pr-preview/pr-740/docs/index.html">Documentation</a></li>
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/pr-preview/pr-740/examples/index.html">Examples</a></li>
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/pr-preview/pr-740/api/index.html">API</a></li>
+            <li><a class="site-footer__link" href="https://github.com/corvus-dotnet/Corvus.JsonSchema" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+            <li><a class="site-footer__link" href="https://www.nuget.org/packages?q=Corvus.Json" target="_blank" rel="noopener noreferrer">NuGet</a></li>
+        </ul>
+        <p class="site-footer__copyright">&copy; 2026 endjin Ltd.</p>
+    </div>
+</footer>
+
+    <!-- highlight.js for syntax highlighting (CSS targets .hljs-* classes) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/csharp.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/json.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/bash.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/xml.min.js" defer></script>
+    <script>document.addEventListener('DOMContentLoaded',()=>hljs.highlightAll())</script>
+    <script src="/Corvus.JsonSchema/pr-preview/pr-740/assets/js/main.js" defer></script>
+    <script src="/Corvus.JsonSchema/pr-preview/pr-740/assets/js/sidebar-search.js" defer></script>
+    
+</body>
+</html>

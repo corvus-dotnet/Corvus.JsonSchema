@@ -1,0 +1,1158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#1C1D21" />
+    <meta name="description" content="Step-by-step guide to installing Corvus.Text.Json, defining a JSON Schema, generating strongly-typed C# classes, creating and mutating documents, and running validation." />
+    <meta name="keywords" content="getting started, installation, JSON Schema, source generator, C#, tutorial, quickstart" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:description" content="Step-by-step guide to installing Corvus.Text.Json, defining a JSON Schema, and generating strongly-typed C# classes." />
+    <meta name="twitter:image" content="/Corvus.JsonSchema/pr-preview/pr-740/assets/images/og-corvus.png" />
+    <meta name="twitter:title" content="Getting Started &#x2014; Corvus.Text.Json" />
+    <meta property="article:tag" content="getting started" />
+    <meta property="article:tag" content="installation" />
+    <meta property="article:tag" content="JSON Schema" />
+    <meta property="article:tag" content="source generator" />
+    <meta property="article:tag" content="C#" />
+    <meta property="article:tag" content="tutorial" />
+    <meta property="article:tag" content="quickstart" />
+    <meta property="og:description" content="Step-by-step guide to installing Corvus.Text.Json, defining a JSON Schema, and generating strongly-typed C# classes." />
+    <meta property="og:image" content="/Corvus.JsonSchema/pr-preview/pr-740/assets/images/og-corvus.png" />
+    <meta property="og:title" content="Getting Started &#x2014; Corvus.Text.Json" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://corvus-oss.org/corvus-json-schema/getting-started/" />
+    <title>Getting Started &#x2014; Corvus.Text.Json</title>
+    <link itemprop="url" href="https://corvus-oss.org/corvus-json-schema/getting-started/" />
+    <link rel="canonical" href="https://corvus-oss.org/corvus-json-schema/getting-started/" />
+    <link rel="sitemap" href="https://corvus-oss.org/corvus-json-schema/sitemap.xml" />
+    <!-- Styles -->
+    <link rel="stylesheet" href="/Corvus.JsonSchema/pr-preview/pr-740/main.css" />
+    <link rel="icon" type="image/svg+xml" href="/Corvus.JsonSchema/pr-preview/pr-740/assets/images/favicon.svg" />
+    
+</head>
+<body>
+    <a class="sr-only" href="#main-content">Skip to content</a>
+<header class="site-header">
+    <div class="site-header__inner">
+        <a class="site-header__brand" href="/Corvus.JsonSchema/pr-preview/pr-740/index.html" aria-label="Corvus.JsonSchema home">
+            <img src="/Corvus.JsonSchema/pr-preview/pr-740/assets/images/logo-corvus.svg" alt="" width="28" height="28" aria-hidden="true" />
+            Corvus<span style="color:var(--color-brand)">.</span>Json<span style="color:var(--color-brand)">Schema</span>
+        </a>
+        <nav class="site-header__nav-desktop" aria-label="Main navigation">
+                    <a href="/Corvus.JsonSchema/pr-preview/pr-740/getting-started/index.html"
+                       class="site-header__link is-active"
+                       aria-current=page>Getting Started</a>
+                    <a href="/Corvus.JsonSchema/pr-preview/pr-740/docs/index.html"
+                       class="site-header__link "
+                       >Documentation</a>
+                    <a href="/Corvus.JsonSchema/pr-preview/pr-740/examples/index.html"
+                       class="site-header__link "
+                       >Examples</a>
+                    <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/index.html"
+                       class="site-header__link "
+                       >API</a>
+            <a href="/Corvus.JsonSchema/pr-preview/pr-740/playground/"
+               class="site-header__link"
+               target="_blank" rel="noopener noreferrer"
+               title="Interactive JSON Schema playground">Playground</a>
+            <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema"
+               class="site-header__link" target="_blank" rel="noopener noreferrer"
+               aria-label="View on GitHub">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+            </a>
+        </nav>
+        <button class="site-header__menu-toggle js-toggle-menu"
+                aria-expanded="false" aria-label="Toggle menu">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+            </svg>
+        </button>
+    </div>
+</header>
+<nav class="site-header__nav-mobile js-mobile-nav" aria-label="Mobile navigation">
+            <a href="/Corvus.JsonSchema/pr-preview/pr-740/getting-started/index.html" class="site-header__link">Getting Started</a>
+            <a href="/Corvus.JsonSchema/pr-preview/pr-740/docs/index.html" class="site-header__link">Documentation</a>
+            <a href="/Corvus.JsonSchema/pr-preview/pr-740/examples/index.html" class="site-header__link">Examples</a>
+            <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/index.html" class="site-header__link">API</a>
+    <a href="/Corvus.JsonSchema/pr-preview/pr-740/playground/" class="site-header__link" target="_blank" rel="noopener noreferrer">Playground</a>
+    <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema"
+       class="site-header__link" target="_blank" rel="noopener noreferrer">GitHub</a>
+</nav>
+
+    <div class="page-content">
+    <div class="layout-docs container">
+    <aside class="sidebar">
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Getting Started</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                    <li class="sidebar__item"><a class="sidebar__link is-active" href="/Corvus.JsonSchema/pr-preview/pr-740/getting-started/index.html">Tutorial</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Documentation</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                            <li class="sidebar__item">
+                                <a class="sidebar__link" href="/Corvus.JsonSchema/pr-preview/pr-740/docs/parsed-json-document.html">Parsing &amp; Reading JSON</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link" href="/Corvus.JsonSchema/pr-preview/pr-740/docs/json-document-builder.html">Building &amp; Mutating JSON</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link" href="/Corvus.JsonSchema/pr-preview/pr-740/docs/source-generator.html">Source Generator</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link" href="/Corvus.JsonSchema/pr-preview/pr-740/docs/code-generator.html">CLI Code Generation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link" href="/Corvus.JsonSchema/pr-preview/pr-740/docs/validator.html">Dynamic Schema Validation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link" href="/Corvus.JsonSchema/pr-preview/pr-740/docs/migrating-from-v4-to-v5.html">Migrating from V4</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link" href="/Corvus.JsonSchema/pr-preview/pr-740/docs/using-copilot-for-migration.html">Copilot Migration</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link" href="/Corvus.JsonSchema/pr-preview/pr-740/docs/migration-analyzers.html">Migration Analyzers</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link" href="/Corvus.JsonSchema/pr-preview/pr-740/docs/analyzers.html">Analyzers</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link" href="/Corvus.JsonSchema/pr-preview/pr-740/docs/schema-evaluator.html">Standalone Schema Evaluator</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link" href="/Corvus.JsonSchema/pr-preview/pr-740/docs/json-patch.html">JSON Patch (RFC 6902)</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link" href="/Corvus.JsonSchema/pr-preview/pr-740/docs/json-logic.html">JsonLogic Rule Engine</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link" href="/Corvus.JsonSchema/pr-preview/pr-740/docs/jsonata.html">JSONata Query Language</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link" href="/Corvus.JsonSchema/pr-preview/pr-740/docs/jmes-path.html">JMESPath Query Language</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link" href="/Corvus.JsonSchema/pr-preview/pr-740/docs/yaml.html">YAML Converter</a>
+                            </li>
+                </ul>
+            </div>
+        </div>
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Examples</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                    <li class="sidebar__item"><a class="sidebar__link" href="/Corvus.JsonSchema/pr-preview/pr-740/examples/index.html">All Recipes</a></li>
+                </ul>
+            </div>
+        </div>
+    </aside>
+    <main id="main-content" class="layout-docs__main">
+        <div class="doc__content">
+<h2 id="introduction">Introduction</h2>
+<blockquote>
+<p><strong>Looking for the V4 engine?</strong> See the <a href="/Corvus.JsonSchema/pr-preview/pr-740/getting-started-v4/index.html">V4 Getting Started guide</a>.</p>
+</blockquote>
+<p>In this tutorial, you will learn how to define a JSON Schema, generate strongly-typed C# structs from it, and use those types to parse, query, create, mutate, serialize, and validate JSON data — all with zero-allocation performance on the hot path.</p>
+<p>We will cover:</p>
+<ul>
+<li><strong>Defining a schema</strong> — writing a JSON Schema that describes a <code>Person</code> with nested objects, arrays, and composition types</li>
+<li><strong>Project setup</strong> — installing the NuGet package and configuring the source generator</li>
+<li><strong>Using generated types</strong> — parsing JSON, accessing properties, working with arrays, pattern matching on <code>oneOf</code> variants, and converting to .NET types</li>
+<li><strong>Creating and mutating</strong> — building documents from scratch, modifying properties and arrays, copying values between documents, and serializing with pooled writers</li>
+<li><strong>Validation</strong> — checking data against the schema and collecting detailed error reports</li>
+</ul>
+<h2 id="our-example-schema">Our example schema</h2>
+<p>This is the JSON Schema file we will work with throughout this Getting Started guide. It defines a <code>Person</code> type with nested structures, constrained values, and formatted strings — a realistic example that exercises many of the features Corvus.Text.Json provides.</p>
+<p>Create a JSON Schema file, for example <code>Schemas/person.json</code>:</p>
+<pre><code class="language-json">{
+    &quot;$schema&quot;: &quot;https://json-schema.org/draft/2020-12/schema&quot;,
+    &quot;title&quot;: &quot;Person&quot;,
+    &quot;$defs&quot;: {
+        &quot;PersonName&quot;: {
+            &quot;type&quot;: &quot;object&quot;,
+            &quot;description&quot;: &quot;A name of a person.&quot;,
+            &quot;required&quot;: [&quot;familyName&quot;],
+            &quot;properties&quot;: {
+                &quot;givenName&quot;: {
+                    &quot;$ref&quot;: &quot;#/$defs/PersonNameElement&quot;,
+                    &quot;description&quot;: &quot;The person's given name.&quot;
+                },
+                &quot;familyName&quot;: {
+                    &quot;$ref&quot;: &quot;#/$defs/PersonNameElement&quot;,
+                    &quot;description&quot;: &quot;The person's family name.&quot;
+                },
+                &quot;otherNames&quot;: {
+                    &quot;$ref&quot;: &quot;#/$defs/OtherNames&quot;,
+                    &quot;description&quot;: &quot;Other (middle) names.&quot;
+                }
+            }
+        },
+        &quot;OtherNames&quot;: {
+            &quot;oneOf&quot;: [
+                { &quot;$ref&quot;: &quot;#/$defs/PersonNameElement&quot; },
+                { &quot;$ref&quot;: &quot;#/$defs/PersonNameElementArray&quot; }
+            ]
+        },
+        &quot;PersonNameElementArray&quot;: {
+            &quot;type&quot;: &quot;array&quot;,
+            &quot;items&quot;: { &quot;$ref&quot;: &quot;#/$defs/PersonNameElement&quot; }
+        },
+        &quot;PersonNameElement&quot;: {
+            &quot;type&quot;: &quot;string&quot;,
+            &quot;minLength&quot;: 1,
+            &quot;maxLength&quot;: 256
+        },
+        &quot;Address&quot;: {
+            &quot;allOf&quot;: [
+                { &quot;$ref&quot;: &quot;#/$defs/Location&quot; },
+                {
+                    &quot;type&quot;: &quot;object&quot;,
+                    &quot;properties&quot;: {
+                        &quot;street&quot;: { &quot;type&quot;: &quot;string&quot; },
+                        &quot;zipCode&quot;: { &quot;type&quot;: &quot;string&quot; }
+                    }
+                }
+            ]
+        },
+        &quot;Location&quot;: {
+            &quot;type&quot;: &quot;object&quot;,
+            &quot;properties&quot;: {
+                &quot;city&quot;: { &quot;type&quot;: &quot;string&quot; },
+                &quot;country&quot;: { &quot;type&quot;: &quot;string&quot; }
+            }
+        }
+    },
+    &quot;type&quot;: &quot;object&quot;,
+    &quot;required&quot;: [&quot;name&quot;],
+    &quot;properties&quot;: {
+        &quot;name&quot;: { &quot;$ref&quot;: &quot;#/$defs/PersonName&quot; },
+        &quot;dateOfBirth&quot;: {
+            &quot;type&quot;: &quot;string&quot;,
+            &quot;format&quot;: &quot;date&quot;
+        },
+        &quot;age&quot;: {
+            &quot;type&quot;: &quot;integer&quot;,
+            &quot;format&quot;: &quot;int32&quot;,
+            &quot;minimum&quot;: 0,
+            &quot;maximum&quot;: 150
+        },
+        &quot;email&quot;: {
+            &quot;type&quot;: &quot;string&quot;,
+            &quot;format&quot;: &quot;email&quot;
+        },
+        &quot;address&quot;: { &quot;$ref&quot;: &quot;#/$defs/Address&quot; },
+        &quot;hobbies&quot;: {
+            &quot;type&quot;: &quot;array&quot;,
+            &quot;items&quot;: { &quot;type&quot;: &quot;string&quot; }
+        }
+    }
+}
+</code></pre>
+<p>Both draft 2020-12 and draft 2019-09 are supported. If your schema does not declare a <code>$schema</code> keyword, you can set the fallback vocabulary via MSBuild properties.</p>
+<h2 id="understanding-the-schema">Understanding the schema</h2>
+<p>The <code>Person</code> type is an object with a required <code>name</code> property and several optional properties: <code>dateOfBirth</code> (a formatted date string), <code>age</code> (an integer from 0 to 150), <code>email</code>, <code>address</code> (a composed object), and <code>hobbies</code> (an array of strings). The <code>name</code> property references a <code>PersonName</code> definition via <code>$ref</code>.</p>
+<p><code>PersonName</code> has a required <code>familyName</code> and optional <code>givenName</code> — both constrained to 1–256 character strings via the <code>PersonNameElement</code> definition. The <code>otherNames</code> property uses <code>oneOf</code> to accept <em>either</em> a single string <em>or</em> an array of strings. This is a common JSON Schema pattern for backwards-compatible API evolution:</p>
+<pre><code class="language-json">// A single string
+{ &quot;familyName&quot;: &quot;Oldroyd&quot;, &quot;givenName&quot;: &quot;Michael&quot;, &quot;otherNames&quot;: &quot;Francis James&quot; }
+
+// Or an array of strings
+{ &quot;familyName&quot;: &quot;Oldroyd&quot;, &quot;givenName&quot;: &quot;Michael&quot;, &quot;otherNames&quot;: [&quot;Francis&quot;, &quot;James&quot;] }
+</code></pre>
+<p>The <code>Address</code> type uses <code>allOf</code> to compose a base <code>Location</code> (with <code>city</code> and <code>country</code>) with address-specific properties (<code>street</code> and <code>zipCode</code>). The generated type merges all properties from both schemas into a single struct:</p>
+<pre><code class="language-json">{ &quot;street&quot;: &quot;123 Main St&quot;, &quot;zipCode&quot;: &quot;SP1 1AA&quot;, &quot;city&quot;: &quot;Springfield&quot;, &quot;country&quot;: &quot;UK&quot; }
+</code></pre>
+<h2 id="how-generated-types-work">How generated types work</h2>
+<p>Generated types are <code>readonly struct</code> values that act as thin wrappers over the underlying JSON data. When you parse a JSON document, the data is stored as UTF-8 bytes in pooled memory. The generated struct is essentially an index into that data — it doesn't copy or deserialize the JSON upfront.</p>
+<p>Values are converted to .NET primitives like <code>string</code>, <code>int</code>, or <code>LocalDate</code> only at the point of use, when you access a property or perform a cast. This &quot;just-in-time&quot; model means:</p>
+<ul>
+<li><strong>No allocation on construction</strong> — creating a <code>Person</code> from a parsed document is essentially free (a small struct on the stack).</li>
+<li><strong>No redundant copying</strong> — the underlying UTF-8 bytes are shared, not cloned.</li>
+<li><strong>Conversion cost is deferred</strong> — you only pay for what you access.</li>
+</ul>
+<p>The code generator walks the schema tree from the root type and generates C# for every schema it encounters. Each schema element typically produces multiple partial-class files by concern (e.g., <code>Person.cs</code>, <code>Person.JsonSchema.cs</code>, <code>Person.Mutable.cs</code>). Nested entity types like <code>PersonName</code> become nested structs within the parent type (e.g., <code>Person.PersonNameEntity</code>).</p>
+<h2 id="source-generator-recommended">Source generator (recommended)</h2>
+<p>Add the source generator and runtime packages to your <code>.csproj</code>:</p>
+<pre><code class="language-xml">&lt;ItemGroup&gt;
+  &lt;PackageReference Include=&quot;Corvus.Text.Json.SourceGenerator&quot; Version=&quot;5.0.0&quot;&gt;
+    &lt;PrivateAssets&gt;all&lt;/PrivateAssets&gt;
+    &lt;IncludeAssets&gt;runtime; build; native; contentfiles; analyzers; buildtransitive&lt;/IncludeAssets&gt;
+  &lt;/PackageReference&gt;
+  &lt;PackageReference Include=&quot;Corvus.Text.Json&quot; Version=&quot;5.0.0&quot; /&gt;
+&lt;/ItemGroup&gt;
+</code></pre>
+<p>Register your JSON Schema files as <code>AdditionalFiles</code>:</p>
+<pre><code class="language-xml">&lt;ItemGroup&gt;
+  &lt;AdditionalFiles Include=&quot;Schemas\person.json&quot; /&gt;
+&lt;/ItemGroup&gt;
+</code></pre>
+<p>Then declare a <code>partial struct</code> annotated with <code>JsonSchemaTypeGenerator</code>:</p>
+<pre><code class="language-csharp">using Corvus.Text.Json;
+
+namespace MyApp.Models;
+
+[JsonSchemaTypeGenerator(&quot;Schemas/person.json&quot;)]
+public readonly partial struct Person;
+</code></pre>
+<p>Build the project. The generator produces the full implementation, deriving the <strong>namespace</strong>, <strong>accessibility</strong>, and <strong>type name</strong> from this declaration.</p>
+<h2 id="cli-tool">CLI tool</h2>
+<p>If you prefer ahead-of-time code generation, install the <code>corvusjson</code> .NET tool globally:</p>
+<pre><code class="language-bash">dotnet tool install --global Corvus.Json.Cli
+</code></pre>
+<p>Generate code from a schema:</p>
+<pre><code class="language-bash">corvusjson jsonschema \
+  --rootNamespace MyApp.Models \
+  --outputPath Generated/ \
+  Schemas/person.json
+</code></pre>
+<p>The CLI tool and the source generator share the same code generation engine and produce identical output. Choose the CLI tool when you need to generate code outside of the build process, or when integrating with non-MSBuild workflows.</p>
+<h2 id="parsing">Parsing</h2>
+<h3 id="parsedjsondocument-preferred">ParsedJsonDocument (preferred)</h3>
+<p><code>ParsedJsonDocument&lt;T&gt;</code> manages a pooled-memory document. Dispose it when you're done:</p>
+<pre><code class="language-csharp">using ParsedJsonDocument&lt;Person&gt; doc =
+    ParsedJsonDocument&lt;Person&gt;.Parse(
+        &quot;&quot;&quot;{&quot;name&quot;:{&quot;familyName&quot;:&quot;Oldroyd&quot;,&quot;givenName&quot;:&quot;Michael&quot;},&quot;age&quot;:30}&quot;&quot;&quot;);
+Person person = doc.RootElement;
+</code></pre>
+<h3 id="parsevalue-convenience">ParseValue (convenience)</h3>
+<p>Returns a self-owned value — no explicit disposal needed, but the backing memory is not shared:</p>
+<pre><code class="language-csharp">Person person = Person.ParseValue(
+    &quot;&quot;&quot;{&quot;name&quot;:{&quot;familyName&quot;:&quot;Oldroyd&quot;,&quot;givenName&quot;:&quot;Michael&quot;},&quot;age&quot;:30}&quot;&quot;&quot;);
+</code></pre>
+<h3 id="other-sources">Other sources</h3>
+<pre><code class="language-csharp">// From UTF-8 bytes
+Person person = Person.ParseValue(
+    &quot;&quot;&quot;{&quot;name&quot;:{&quot;familyName&quot;:&quot;Oldroyd&quot;},&quot;age&quot;:30}&quot;&quot;&quot;u8);
+
+// From a stream
+using FileStream stream = File.OpenRead(&quot;person.json&quot;);
+using ParsedJsonDocument&lt;Person&gt; doc = ParsedJsonDocument&lt;Person&gt;.Parse(stream);
+</code></pre>
+<h2 id="property-access">Property access</h2>
+<p>Each schema property generates a typed accessor returning a nested entity struct:</p>
+<pre><code class="language-csharp">Person person = doc.RootElement;
+
+// Required property — name is a nested PersonName object
+// Strings require an explicit cast (or GetString())
+string familyName = (string)person.Name.FamilyName;
+
+// Value types like int support implicit conversion — no cast needed
+if (person.Age.IsNotUndefined())
+{
+    int age = person.Age;
+}
+
+if (person.Email.IsNotUndefined())
+{
+    string email = (string)person.Email;
+}
+</code></pre>
+<h3 id="property-indexers">Property indexers</h3>
+<p>Access properties dynamically by name, returning a <code>JsonElement</code>:</p>
+<pre><code class="language-csharp">// UTF-8 string literal (preferred — avoids transcoding)
+JsonElement name = person[&quot;name&quot;u8];
+
+// String overload also available (transcodes to UTF-8 internally)
+JsonElement age = person[&quot;age&quot;];
+</code></pre>
+<h3 id="trygetproperty">TryGetProperty</h3>
+<pre><code class="language-csharp">if (person.TryGetProperty(&quot;email&quot;u8, out JsonElement email))
+{
+    Console.WriteLine((string)email);
+}
+</code></pre>
+<h2 id="array-access">Array access</h2>
+<p>Our Person schema has two array types: <code>hobbies</code> is a simple <code>&quot;type&quot;: &quot;array&quot;</code> with <code>&quot;items&quot;: { &quot;type&quot;: &quot;string&quot; }</code>, and <code>PersonNameElementArray</code> (used by <code>otherNames</code> via <code>oneOf</code>) is an array of <code>PersonNameElement</code> strings. The code generator produces strongly-typed array wrappers for both.</p>
+<h3 id="enumerating-array-elements">Enumerating array elements</h3>
+<p>The generated type supports <code>foreach</code> via <code>EnumerateArray()</code>:</p>
+<pre><code class="language-csharp">foreach (var hobby in person.Hobbies.EnumerateArray())
+{
+    Console.WriteLine((string)hobby);
+}
+</code></pre>
+<p>When <code>otherNames</code> is an array (rather than a single string), you can enumerate it in the same way:</p>
+<pre><code class="language-csharp">// otherNames uses oneOf — it can be a single string or an array
+// Use AsPersonNameElementArray to access the array variant
+foreach (var name in person.Name.OtherNames.AsPersonNameElementArray.EnumerateArray())
+{
+    Console.WriteLine((string)name);
+}
+</code></pre>
+<p>The enumerator also supports LINQ:</p>
+<pre><code class="language-csharp">var hobbies = person.Hobbies.EnumerateArray()
+    .Select(h =&gt; (string)h)
+    .ToList();
+</code></pre>
+<h3 id="array-length-and-indexing">Array length and indexing</h3>
+<pre><code class="language-csharp">int count = person.Hobbies.GetArrayLength();
+
+// Access by index
+var first = person.Hobbies[0];
+string firstHobby = (string)first;
+</code></pre>
+<h2 id="how-schema-properties-map-to.net-types">How schema properties map to .NET types</h2>
+<h3 id="string-types">String types</h3>
+<table>
+<thead>
+<tr>
+<th>Schema type</th>
+<th>Format</th>
+<th>.NET type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>&quot;type&quot;: &quot;string&quot;</code></td>
+<td><em>(none)</em></td>
+<td><code>string</code> via <code>GetString()</code> or explicit cast</td>
+</tr>
+<tr>
+<td><code>&quot;type&quot;: &quot;string&quot;</code></td>
+<td><code>date</code></td>
+<td><code>LocalDate</code> (NodaTime)</td>
+</tr>
+<tr>
+<td><code>&quot;type&quot;: &quot;string&quot;</code></td>
+<td><code>date-time</code></td>
+<td><code>OffsetDateTime</code> (NodaTime) / <code>DateTimeOffset</code></td>
+</tr>
+<tr>
+<td><code>&quot;type&quot;: &quot;string&quot;</code></td>
+<td><code>time</code></td>
+<td><code>OffsetTime</code> (NodaTime)</td>
+</tr>
+<tr>
+<td><code>&quot;type&quot;: &quot;string&quot;</code></td>
+<td><code>duration</code></td>
+<td><code>Period</code> (NodaTime)</td>
+</tr>
+<tr>
+<td><code>&quot;type&quot;: &quot;string&quot;</code></td>
+<td><code>uuid</code></td>
+<td><code>Guid</code></td>
+</tr>
+<tr>
+<td><code>&quot;type&quot;: &quot;string&quot;</code></td>
+<td><code>uri</code></td>
+<td><code>Utf8UriValue</code></td>
+</tr>
+<tr>
+<td><code>&quot;type&quot;: &quot;string&quot;</code></td>
+<td><code>uri-reference</code></td>
+<td><code>Utf8UriReferenceValue</code></td>
+</tr>
+<tr>
+<td><code>&quot;type&quot;: &quot;string&quot;</code></td>
+<td><code>uri-template</code></td>
+<td><code>string</code></td>
+</tr>
+<tr>
+<td><code>&quot;type&quot;: &quot;string&quot;</code></td>
+<td><code>iri</code></td>
+<td><code>Utf8IriValue</code></td>
+</tr>
+<tr>
+<td><code>&quot;type&quot;: &quot;string&quot;</code></td>
+<td><code>iri-reference</code></td>
+<td><code>Utf8IriReferenceValue</code></td>
+</tr>
+<tr>
+<td><code>&quot;type&quot;: &quot;string&quot;</code></td>
+<td><code>email</code></td>
+<td><code>string</code> (RFC 5322 validated)</td>
+</tr>
+<tr>
+<td><code>&quot;type&quot;: &quot;string&quot;</code></td>
+<td><code>idn-email</code></td>
+<td><code>string</code> (internationalized email)</td>
+</tr>
+<tr>
+<td><code>&quot;type&quot;: &quot;string&quot;</code></td>
+<td><code>hostname</code></td>
+<td><code>string</code> (RFC 1123 validated)</td>
+</tr>
+<tr>
+<td><code>&quot;type&quot;: &quot;string&quot;</code></td>
+<td><code>idn-hostname</code></td>
+<td><code>string</code> (internationalized hostname)</td>
+</tr>
+<tr>
+<td><code>&quot;type&quot;: &quot;string&quot;</code></td>
+<td><code>ipv4</code></td>
+<td><code>string</code> (IPv4 validated)</td>
+</tr>
+<tr>
+<td><code>&quot;type&quot;: &quot;string&quot;</code></td>
+<td><code>ipv6</code></td>
+<td><code>string</code> (IPv6 validated)</td>
+</tr>
+<tr>
+<td><code>&quot;type&quot;: &quot;string&quot;</code></td>
+<td><code>json-pointer</code></td>
+<td><code>string</code> (RFC 6901 validated)</td>
+</tr>
+<tr>
+<td><code>&quot;type&quot;: &quot;string&quot;</code></td>
+<td><code>relative-json-pointer</code></td>
+<td><code>string</code></td>
+</tr>
+<tr>
+<td><code>&quot;type&quot;: &quot;string&quot;</code></td>
+<td><code>regex</code></td>
+<td><code>string</code> (ECMAScript regex)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="integer-types">Integer types</h3>
+<table>
+<thead>
+<tr>
+<th>Schema type</th>
+<th>Format</th>
+<th>.NET type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>&quot;type&quot;: &quot;integer&quot;</code></td>
+<td><em>(none)</em></td>
+<td><code>long</code> via <code>GetInt64()</code></td>
+</tr>
+<tr>
+<td><code>&quot;type&quot;: &quot;integer&quot;</code></td>
+<td><code>byte</code></td>
+<td><code>byte</code></td>
+</tr>
+<tr>
+<td><code>&quot;type&quot;: &quot;integer&quot;</code></td>
+<td><code>sbyte</code></td>
+<td><code>sbyte</code></td>
+</tr>
+<tr>
+<td><code>&quot;type&quot;: &quot;integer&quot;</code></td>
+<td><code>int16</code></td>
+<td><code>short</code></td>
+</tr>
+<tr>
+<td><code>&quot;type&quot;: &quot;integer&quot;</code></td>
+<td><code>int32</code></td>
+<td><code>int</code></td>
+</tr>
+<tr>
+<td><code>&quot;type&quot;: &quot;integer&quot;</code></td>
+<td><code>int64</code></td>
+<td><code>long</code></td>
+</tr>
+<tr>
+<td><code>&quot;type&quot;: &quot;integer&quot;</code></td>
+<td><code>int128</code></td>
+<td><code>Int128</code> (.NET 7+)</td>
+</tr>
+<tr>
+<td><code>&quot;type&quot;: &quot;integer&quot;</code></td>
+<td><code>uint16</code></td>
+<td><code>ushort</code></td>
+</tr>
+<tr>
+<td><code>&quot;type&quot;: &quot;integer&quot;</code></td>
+<td><code>uint32</code></td>
+<td><code>uint</code></td>
+</tr>
+<tr>
+<td><code>&quot;type&quot;: &quot;integer&quot;</code></td>
+<td><code>uint64</code></td>
+<td><code>ulong</code></td>
+</tr>
+<tr>
+<td><code>&quot;type&quot;: &quot;integer&quot;</code></td>
+<td><code>uint128</code></td>
+<td><code>UInt128</code> (.NET 7+)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="number-types">Number types</h3>
+<table>
+<thead>
+<tr>
+<th>Schema type</th>
+<th>Format</th>
+<th>.NET type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>&quot;type&quot;: &quot;number&quot;</code></td>
+<td><em>(none)</em></td>
+<td><code>double</code> via <code>GetDouble()</code></td>
+</tr>
+<tr>
+<td><code>&quot;type&quot;: &quot;number&quot;</code></td>
+<td><code>half</code></td>
+<td><code>Half</code> (.NET 5+)</td>
+</tr>
+<tr>
+<td><code>&quot;type&quot;: &quot;number&quot;</code></td>
+<td><code>single</code></td>
+<td><code>float</code></td>
+</tr>
+<tr>
+<td><code>&quot;type&quot;: &quot;number&quot;</code></td>
+<td><code>double</code></td>
+<td><code>double</code></td>
+</tr>
+<tr>
+<td><code>&quot;type&quot;: &quot;number&quot;</code></td>
+<td><code>decimal</code></td>
+<td><code>decimal</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="other-types">Other types</h3>
+<table>
+<thead>
+<tr>
+<th>Schema type</th>
+<th>Format</th>
+<th>.NET type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>&quot;type&quot;: &quot;boolean&quot;</code></td>
+<td><em>(none)</em></td>
+<td><code>bool</code></td>
+</tr>
+<tr>
+<td><code>&quot;type&quot;: &quot;object&quot;</code></td>
+<td><em>(none)</em></td>
+<td>Generated nested struct</td>
+</tr>
+<tr>
+<td><code>&quot;type&quot;: &quot;array&quot;</code></td>
+<td><em>(none)</em></td>
+<td>Generated array type with enumeration</td>
+</tr>
+</tbody>
+</table>
+<h2 id="converting-to.net-types">Converting to .NET types</h2>
+<h3 id="implicit-conversions-value-types">Implicit conversions (value types)</h3>
+<p>For .NET value types (<code>int</code>, <code>double</code>, <code>bool</code>, <code>DateTime</code>, etc.), the generated types support <strong>implicit</strong> conversion — no cast syntax needed:</p>
+<pre><code class="language-csharp">int age = person.Age;
+double score = person.Score;
+bool isActive = person.IsActive;
+</code></pre>
+<p>This is the most concise approach and works for all value types.</p>
+<h3 id="explicit-cast-strings">Explicit cast (strings)</h3>
+<p><code>string</code> requires an <strong>explicit</strong> cast by default, because every conversion allocates a new <code>string</code>:</p>
+<pre><code class="language-csharp">string familyName = (string)person.Name.FamilyName;
+</code></pre>
+<blockquote>
+<p><strong>Tip:</strong> You can opt in to implicit <code>string</code> conversion via the <code>--useImplicitOperatorString</code> flag on the CLI tool, or the <code>CorvusTextJsonUseImplicitOperatorString</code> MSBuild property in your <code>.csproj</code> for the source generator. This trades allocation safety for convenience — use it when you know you need the string and are not in a hot path.</p>
+</blockquote>
+<h3 id="trygetvalue">TryGetValue</h3>
+<p>A safe, non-throwing alternative that returns <code>false</code> if the value is absent or cannot be converted:</p>
+<pre><code class="language-csharp">if (person.Age.TryGetValue(out int age)) { ... }
+if (person.Name.FamilyName.TryGetValue(out string? name)) { ... }
+</code></pre>
+<h3 id="getstring-getutf8string-and-getutf16string">GetString, GetUtf8String, and GetUtf16String</h3>
+<p>For string-valued properties:</p>
+<pre><code class="language-csharp">// As a .NET string (allocates)
+string familyName = person.Name.FamilyName.GetString();
+
+// As an UnescapedUtf8JsonString (avoids allocation — always dispose)
+using UnescapedUtf8JsonString utf8Name = person.Name.FamilyName.GetUtf8String();
+ReadOnlySpan&lt;byte&gt; bytes = utf8Name.Span;
+
+// As an UnescapedUtf16JsonString (avoids allocation — always dispose)
+using UnescapedUtf16JsonString utf16Name = person.Name.FamilyName.GetUtf16String();
+ReadOnlySpan&lt;char&gt; chars = utf16Name.Span;
+</code></pre>
+<p><code>GetUtf8String()</code> gives you the unescaped UTF-8 bytes without allocating a <code>string</code>. <code>GetUtf16String()</code> gives you a <code>char</code> span — useful when you need to interop with APIs that expect <code>ReadOnlySpan&lt;char&gt;</code> without paying for a <code>string</code> allocation. Both return disposable types that must be disposed to return their buffers to the pool.</p>
+<h2 id="values-null-and-undefined">Values, Null, and Undefined</h2>
+<p>JSON values exist in three states:</p>
+<pre><code class="language-json">{ &quot;foo&quot;: 3.14 }   // Present with a value
+{ &quot;foo&quot;: null }    // Present but null
+{}                 // Not present (&quot;undefined&quot;)
+</code></pre>
+<p>Generated types expose this three-state model:</p>
+<pre><code class="language-csharp">if (person.Email.IsNotUndefined())
+{
+    // The property exists in the JSON (may still be null)
+    string email = (string)person.Email;
+}
+
+person.Email.IsUndefined()          // true if the property is absent
+person.Email.IsNull()               // true if the property is present but null
+person.Email.IsNullOrUndefined()    // true if null or absent
+person.Email.IsNotNullOrUndefined() // true if present with a non-null value
+</code></pre>
+<p>When you attempt to cast an undefined or null value to a .NET type, it throws an <code>InvalidOperationException</code>. Always check before casting optional properties.</p>
+<h2 id="equality-and-comparison">Equality and comparison</h2>
+<p>Generated types support value equality:</p>
+<pre><code class="language-csharp">Person a = Person.ParseValue(json);
+Person b = Person.ParseValue(json);
+
+bool equal = a.Equals(b);  // true — deep JSON equality
+bool same  = a == b;        // operator overload
+</code></pre>
+<h2 id="composition-types-and-pattern-matching">Composition types and pattern matching</h2>
+<p>JSON Schema supports composition keywords like <code>oneOf</code>, <code>anyOf</code>, and <code>allOf</code> that let a value match one of several shapes. In our schema, <code>OtherNames</code> uses <code>oneOf</code> — it can be <em>either</em> a single <code>PersonNameElement</code> string <em>or</em> a <code>PersonNameElementArray</code>:</p>
+<pre><code class="language-json">&quot;OtherNames&quot;: {
+    &quot;oneOf&quot;: [
+        { &quot;$ref&quot;: &quot;#/$defs/PersonNameElement&quot; },
+        { &quot;$ref&quot;: &quot;#/$defs/PersonNameElementArray&quot; }
+    ]
+}
+</code></pre>
+<p>The generated type provides a <code>Match()</code> method that dispatches to a typed delegate for each variant. Each variant gets its own named parameter, and a <code>defaultMatch</code> fallback handles values that don't conform to any variant:</p>
+<pre><code class="language-csharp">string result = person.Name.OtherNames.Match(
+    matchPersonNameElement: static (v) =&gt; $&quot;Single name: {(string)v}&quot;,
+    matchPersonNameElementArray: static (v)
+        =&gt; $&quot;Multiple names: {string.Join(&quot;, &quot;, v.EnumerateArray().Select(n =&gt; (string)n))}&quot;,
+    defaultMatch: static (_) =&gt; &quot;Unknown format&quot;);
+
+Console.WriteLine(result);
+</code></pre>
+<p><code>Match()</code> evaluates each variant's schema in order, calls the first matching delegate, and returns the result. All delegates must return the same type (<code>TResult</code>), which the compiler infers from usage.</p>
+<p>There is also a context-passing overload for when you need to pass state into the matchers without capturing:</p>
+<pre><code class="language-csharp">string result = person.Name.OtherNames.Match(
+    separator,  // context passed to each matcher
+    matchPersonNameElement: static (v, sep) =&gt; (string)v,
+    matchPersonNameElementArray: static (v, sep)
+        =&gt; string.Join(sep, v.EnumerateArray().Select(n =&gt; (string)n)),
+    defaultMatch: static (_, sep) =&gt; string.Empty);
+</code></pre>
+<h2 id="creating-objects-from-scratch">Creating objects from scratch</h2>
+<p>Use the convenience <code>CreateBuilder()</code> overload with named property parameters:</p>
+<pre><code class="language-csharp">using JsonWorkspace workspace = JsonWorkspace.Create();
+
+using var builder = Person.CreateBuilder(
+    workspace,
+    name: Person.PersonNameEntity.Build(
+        (ref nb) =&gt; nb.Create(familyName: &quot;Oldroyd&quot;u8, givenName: &quot;Michael&quot;u8)),
+    age: 30,
+    email: &quot;michael@example.com&quot;u8);
+
+Console.WriteLine(builder.RootElement.ToString());
+// {&quot;name&quot;:{&quot;familyName&quot;:&quot;Oldroyd&quot;,&quot;givenName&quot;:&quot;Michael&quot;},&quot;age&quot;:30,&quot;email&quot;:&quot;michael@example.com&quot;}
+</code></pre>
+<p>Required parameters must be provided; optional ones can be omitted. Always use named parameters for clarity and resilience to schema evolution.</p>
+<h3 id="nested-objects">Nested objects</h3>
+<p>Use <code>NestedType.Build()</code> to compose nested values as parameters:</p>
+<pre><code class="language-csharp">using var builder = Person.CreateBuilder(
+    workspace,
+    name: Person.PersonNameEntity.Build(
+        (ref nb) =&gt; nb.Create(familyName: &quot;Oldroyd&quot;u8, givenName: &quot;Michael&quot;u8)),
+    age: 30,
+    address: Person.AddressEntity.Build((ref ab) =&gt; ab.Create(
+        street: &quot;123 Main St&quot;u8,
+        city: &quot;Springfield&quot;u8)));
+</code></pre>
+<h3 id="array-properties">Array properties</h3>
+<p>Build array properties by adding elements inside the builder delegate:</p>
+<pre><code class="language-csharp">using var builder = Person.CreateBuilder(
+    workspace,
+    name: Person.PersonNameEntity.Build(
+        (ref nb) =&gt; nb.Create(familyName: &quot;Oldroyd&quot;u8, givenName: &quot;Michael&quot;u8)),
+    hobbies: Person.HobbiesEntity.Build((ref hb) =&gt;
+    {
+        hb.AddItem(&quot;reading&quot;u8);
+        hb.AddItem(&quot;hiking&quot;u8);
+        hb.AddItem(&quot;coding&quot;u8);
+    }));
+</code></pre>
+<h3 id="advanced-delegate-pattern">Advanced: delegate pattern</h3>
+<p>For scenarios that require logic inside the builder (e.g., conditional properties, <code>From()</code> conversions), use the delegate overload:</p>
+<pre><code class="language-csharp">using var builder = TargetType.CreateBuilder(workspace, (ref TargetType.Builder b) =&gt;
+{
+    b.Create(
+        fullName: TargetType.FullNameEntity.From(source.Name),
+        identifier: TargetType.IdentifierEntity.From(source.Id));
+});
+</code></pre>
+<h2 id="mutating-properties">Mutating properties</h2>
+<p>Generated types are immutable by default. To mutate, create a <code>JsonDocumentBuilder</code> via a <code>JsonWorkspace</code>:</p>
+<pre><code class="language-csharp">using JsonWorkspace workspace = JsonWorkspace.Create();
+using ParsedJsonDocument&lt;Person&gt; doc =
+    ParsedJsonDocument&lt;Person&gt;.Parse(
+        &quot;&quot;&quot;
+        {
+          &quot;name&quot;: { &quot;familyName&quot;: &quot;Oldroyd&quot;, &quot;givenName&quot;: &quot;Michael&quot; },
+          &quot;age&quot;: 30
+        }
+        &quot;&quot;&quot;);
+using var builder = doc.RootElement.CreateBuilder(workspace);
+
+Person.Mutable root = builder.RootElement;
+root.SetAge(31);
+root.SetEmail(&quot;michael@example.com&quot;u8);
+
+Console.WriteLine(root.ToString());
+// {&quot;name&quot;:{&quot;familyName&quot;:&quot;Oldroyd&quot;,&quot;givenName&quot;:&quot;Michael&quot;},&quot;age&quot;:31,&quot;email&quot;:&quot;michael@example.com&quot;}
+</code></pre>
+<blockquote>
+<p><strong>Tip:</strong> If you don't need to retain an immutable copy of the original document (e.g., for comparison or auditing), you can parse directly into the builder for better performance:</p>
+<pre><code class="language-csharp">using var builder = JsonDocumentBuilder&lt;Person.Mutable&gt;.Parse(workspace, json);
+</code></pre>
+<p>This avoids the intermediate document allocation and second pass over the data. See <a href="/Corvus.JsonSchema/pr-preview/pr-740/docs/json-document-builder.html#direct-parse-to-builder-recommended">Building &amp; Mutating JSON</a> for details.</p>
+</blockquote>
+<h3 id="version-tracking">Version tracking</h3>
+<p>The builder tracks a version number, and every <code>Mutable</code> element reference records the version at which it was obtained. If the document structure changes after you captured a reference, attempting to use that stale reference throws an <code>InvalidOperationException</code>.</p>
+<p>You can make multiple modifications to the <em>same</em> entity without re-obtaining it:</p>
+<pre><code class="language-csharp">Person.Mutable root = builder.RootElement;
+root.SetAge(31);
+root.SetEmail(&quot;michael@example.com&quot;u8);
+root.Address.SetCity(&quot;London&quot;u8);
+</code></pre>
+<p>A root element is always live, so it never needs to be re-obtained. Intermediate child references, however, <em>will</em> be invalidated by sibling mutations — always navigate from the root to access different children:</p>
+<pre><code class="language-csharp">Person.Mutable root = builder.RootElement;  // always live — cache freely
+root.RemoveEmail();              // structural change
+root.Address.SetCity(&quot;London&quot;u8); // still valid — root is always live
+</code></pre>
+<p>To avoid expensive lookups, you can make multiple modifications to the <em>same</em> entity. Its own version is refreshed when it is modified.</p>
+<pre><code class="language-csharp">Person.Mutable root = builder.RootElement;  // always live — cache freely
+root.RemoveEmail();              // structural change
+Person.AddressEntity.Mutable address = root.Address;
+address.SetCity(&quot;London&quot;u8); // still valid — root is always live
+address.SetZipCode(&quot;SE3&quot;u8); // still valid — root is always live
+</code></pre>
+<h2 id="removing-properties">Removing properties</h2>
+<p>Optional properties can be removed from mutable instances:</p>
+<pre><code class="language-csharp">root.RemoveEmail();
+</code></pre>
+<h2 id="copying-values-between-documents">Copying values between documents</h2>
+<p>When the source and target properties share the same generated type, you can assign the value directly:</p>
+<pre><code class="language-csharp">using ParsedJsonDocument&lt;Person&gt; sourceDoc =
+    ParsedJsonDocument&lt;Person&gt;.Parse(sourceJson);
+using var targetBuilder = targetDoc.RootElement.CreateBuilder(workspace);
+
+Person.Mutable target = targetBuilder.RootElement;
+
+// Both documents use the same PersonNameEntity type — direct assignment
+target.SetName(sourceDoc.RootElement.Name);
+</code></pre>
+<p>In practice, you often need to map between types generated from <em>different</em> schemas. Imagine a CRM system that defines its own <code>Employee</code> schema:</p>
+<pre><code class="language-json">{
+    &quot;$schema&quot;: &quot;https://json-schema.org/draft/2020-12/schema&quot;,
+    &quot;type&quot;: &quot;object&quot;,
+    &quot;properties&quot;: {
+        &quot;employeeId&quot;: { &quot;type&quot;: &quot;integer&quot;, &quot;format&quot;: &quot;int32&quot; },
+        &quot;fullName&quot;: { &quot;type&quot;: &quot;string&quot; },
+        &quot;workEmail&quot;: { &quot;type&quot;: &quot;string&quot;, &quot;format&quot;: &quot;email&quot;, &quot;maxLength&quot;: 254 },
+        &quot;department&quot;: { &quot;type&quot;: &quot;string&quot; }
+    },
+    &quot;required&quot;: [&quot;employeeId&quot;, &quot;fullName&quot;, &quot;workEmail&quot;]
+}
+</code></pre>
+<p>Both schemas have an email property based on <code>&quot;type&quot;: &quot;string&quot;, &quot;format&quot;: &quot;email&quot;</code>, but the Employee schema adds a <code>maxLength</code> constraint. That extra constraint means the code generator produces a distinct <code>Employee.WorkEmailEntity</code> type rather than reusing the shared global email type. Because the underlying JSON is structurally compatible, you can use <code>TTarget.From()</code> to reinterpret the value without copying:</p>
+<pre><code class="language-csharp">using ParsedJsonDocument&lt;Employee&gt; employeeDoc =
+    ParsedJsonDocument&lt;Employee&gt;.Parse(employeeJson);
+using var personBuilder = personDoc.RootElement.CreateBuilder(workspace);
+
+Person.Mutable person = personBuilder.RootElement;
+
+// Employee.WorkEmailEntity and Person.EmailEntity are different C# types
+// but both wrap &quot;type&quot;: &quot;string&quot;, &quot;format&quot;: &quot;email&quot; — From() bridges them
+person.SetEmail(Person.EmailEntity.From(employeeDoc.RootElement.WorkEmail));
+
+// Simple string values can also be assigned directly via implicit conversion
+person.Name.SetGivenName(employeeDoc.RootElement.FullName);
+</code></pre>
+<p><code>From()</code> performs a zero-copy reinterpretation of the underlying JSON — no parsing or allocation occurs. It works for any structurally compatible types, including nested objects and arrays.</p>
+<blockquote>
+<p><strong>Important:</strong> Setting a value in the target document does not copy the backing JSON data. Under the covers, it creates a reference to the relevant segment of the original UTF-8 JSON text. This makes cross-document property transfer very efficient for typical document processing pipelines — even for large nested objects or arrays, the cost is constant regardless of the size of the value.</p>
+</blockquote>
+<h2 id="composing-objects-with-apply">Composing objects with Apply()</h2>
+<p>When a schema uses <code>allOf</code> to compose multiple object definitions, the generated type exposes an <code>Apply()</code> method on its <code>Mutable</code> variant. This lets you merge properties from a composed type into the current object.</p>
+<p>In our schema, <code>Address</code> is composed from a base <code>Location</code> (with <code>city</code> and <code>country</code>) and additional address properties (<code>street</code>, <code>zipCode</code>). You can build the location separately and apply it:</p>
+<pre><code class="language-csharp">using JsonWorkspace workspace = JsonWorkspace.Create();
+using ParsedJsonDocument&lt;Person&gt; doc =
+    ParsedJsonDocument&lt;Person&gt;.Parse(
+        &quot;&quot;&quot;
+        {
+          &quot;name&quot;: { &quot;familyName&quot;: &quot;Oldroyd&quot; },
+          &quot;address&quot;: { &quot;street&quot;: &quot;123 Main St&quot;, &quot;zipCode&quot;: &quot;SP1 1AA&quot; }
+        }
+        &quot;&quot;&quot;);
+using var builder = doc.RootElement.CreateBuilder(workspace);
+
+// Parse a Location with city and country
+using ParsedJsonDocument&lt;Person.AddressEntity.LocationEntity&gt; locationDoc =
+    ParsedJsonDocument&lt;Person.AddressEntity.LocationEntity&gt;.Parse(
+        &quot;&quot;&quot;
+        {
+          &quot;city&quot;: &quot;Springfield&quot;,
+          &quot;country&quot;: &quot;UK&quot;
+        }
+        &quot;&quot;&quot;);
+
+// Apply merges the location properties into the address
+Person.Mutable root = builder.RootElement;
+root.Address.Apply(locationDoc.RootElement);
+
+Console.WriteLine(root.Address.ToString());
+// {&quot;street&quot;:&quot;123 Main St&quot;,&quot;zipCode&quot;:&quot;SP1 1AA&quot;,&quot;city&quot;:&quot;Springfield&quot;,&quot;country&quot;:&quot;UK&quot;}
+</code></pre>
+<p><code>Apply()</code> iterates the properties of the composed type and merges them into the target object. If a property already exists, it is overwritten. You can call <code>Apply()</code> multiple times to layer properties from different composed types — this is the mutable equivalent of JSON Schema's <code>allOf</code> composition.</p>
+<h2 id="mutating-arrays">Mutating arrays</h2>
+<p>Array properties on a <code>Mutable</code> element support in-place modification:</p>
+<pre><code class="language-csharp">Person.Mutable root = builder.RootElement;
+
+// Add an item to the end
+root.Hobbies.AddItem(&quot;gardening&quot;u8);
+
+// Insert at a specific index
+root.Hobbies.InsertItem(0, &quot;cooking&quot;u8);
+
+// Replace an item at an index
+root.Hobbies.SetItem(1, &quot;swimming&quot;u8);
+
+// Remove by index
+root.Hobbies.RemoveAt(0);
+
+// Add multiple items at once
+root.Hobbies.AddRange(static (ref JsonElement.ArrayBuilder b) =&gt;
+{
+    b.AddItem(&quot;yoga&quot;u8);
+    b.AddItem(&quot;hiking&quot;u8);
+});
+
+// Insert multiple items at a specific index
+root.Hobbies.InsertRange(1, static (ref JsonElement.ArrayBuilder b) =&gt;
+{
+    b.AddItem(&quot;painting&quot;u8);
+    b.AddItem(&quot;music&quot;u8);
+});
+</code></pre>
+<p>The standard mutation workflow is:</p>
+<ol>
+<li>Parse JSON into a <code>ParsedJsonDocument&lt;T&gt;</code></li>
+<li>Create a <code>JsonDocumentBuilder&lt;T.Mutable&gt;</code> via <code>.CreateBuilder(workspace)</code></li>
+<li>Get the <code>Mutable</code> root element from the builder</li>
+<li>Call <code>Set*()</code> / <code>Remove*()</code> methods on the mutable element</li>
+<li>Convert to immutable via <code>.Clone()</code> or <code>.Freeze()</code>, or serialize via <code>root.WriteTo(writer)</code> or <code>root.ToString()</code></li>
+</ol>
+<h2 id="converting-to-immutable-clone-and-freeze">Converting to immutable: Clone() and Freeze()</h2>
+<p>After building or mutating a document, you may need an immutable snapshot. There are two ways to do this, each with different trade-offs. Both can be called on any element — root or nested — and both return the strongly-typed immutable form (e.g., <code>Person</code> from <code>Person.Mutable</code>), not <code>JsonElement</code>.</p>
+<h3 id="clone">Clone()</h3>
+<p><code>Clone()</code> allocates new backing storage on the heap. The result is completely independent — it outlives the workspace and the source document, and will be cleaned up by garbage collection when it goes out of scope:</p>
+<pre><code class="language-csharp">using JsonWorkspace workspace = JsonWorkspace.Create();
+using var doc = ParsedJsonDocument&lt;Person&gt;.Parse(json);
+using var builder = doc.RootElement.CreateBuilder(workspace);
+
+builder.RootElement.SetAge(31);
+
+// Clone produces a standalone immutable value
+Person snapshot = builder.RootElement.Clone();
+
+// snapshot is valid even after the workspace is disposed
+</code></pre>
+<p>Use <code>Clone()</code> when you need a value to escape the scope of the workspace — for example, returning a result from a method, storing it in a cache, or passing it to another thread.</p>
+<h3 id="freeze">Freeze()</h3>
+<p><code>Freeze()</code> creates a cheap immutable copy within the same workspace. It copies only the metadata and value backing arrays — no JSON serialization or re-parsing occurs. You can freeze any element, not just the root:</p>
+<pre><code class="language-csharp">using JsonWorkspace workspace = JsonWorkspace.Create();
+using var doc = ParsedJsonDocument&lt;Person&gt;.Parse(json);
+using var builder = doc.RootElement.CreateBuilder(workspace);
+
+builder.RootElement.SetAge(31);
+
+// Freeze the root element
+Person frozen = builder.RootElement.Freeze();
+
+// Or freeze a nested element to get a standalone immutable snapshot of just that subtree
+Person.PersonNameEntity frozenName = builder.RootElement.Name.Freeze();
+
+// Both are valid for the lifetime of the workspace
+</code></pre>
+<p>Use <code>Freeze()</code> when you need an immutable reference that stays within the workspace lifetime — for example, caching intermediate results while building a complex document, or taking a snapshot before further mutations.</p>
+<p><code>Freeze()</code> also works on immutable elements: if the element is already backed by an immutable document, it returns the same instance without any copying.</p>
+<h3 id="choosing-between-clone-and-freeze">Choosing between Clone() and Freeze()</h3>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>Clone()</th>
+<th>Freeze()</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Cost</strong></td>
+<td>O(JSON size) — heap allocation</td>
+<td>O(metadata size) — cheap blit</td>
+</tr>
+<tr>
+<td><strong>Lifetime</strong></td>
+<td>Standalone — outlives the workspace</td>
+<td>Workspace-scoped</td>
+</tr>
+<tr>
+<td><strong>Use when</strong></td>
+<td>Value must escape the workspace</td>
+<td>Value stays within the workspace</td>
+</tr>
+</tbody>
+</table>
+<h2 id="serialization">Serialization</h2>
+<p>Any generated type — whether parsed, built from scratch, or mutated — can be written back to JSON. The simplest approach allocates a <code>string</code>:</p>
+<pre><code class="language-csharp">// To a JSON string (allocates)
+string json = person.ToString();
+</code></pre>
+<p>This is convenient for logging, debugging, or any situation where a managed <code>string</code> is required.</p>
+<h3 id="zero-allocation-writing-with-pooled-writers">Zero-allocation writing with pooled writers</h3>
+<p>For high-throughput scenarios where you want to avoid allocating strings, rent a <code>Utf8JsonWriter</code> and buffer from the workspace. The workspace manages a thread-local cache of writers and buffers, so repeated rent/return cycles are allocation-free:</p>
+<pre><code class="language-csharp">using JsonWorkspace workspace = JsonWorkspace.Create();
+
+Utf8JsonWriter writer = workspace.RentWriterAndBuffer(
+    defaultBufferSize: 1024,
+    out IByteBufferWriter bufferWriter);
+try
+{
+    person.WriteTo(writer);
+    writer.Flush();
+
+    // bufferWriter.WrittenSpan contains the UTF-8 JSON bytes
+    ReadOnlySpan&lt;byte&gt; utf8Json = bufferWriter.WrittenSpan;
+}
+finally
+{
+    workspace.ReturnWriterAndBuffer(writer, bufferWriter);
+}
+</code></pre>
+<p>Always return the writer and buffer in a <code>finally</code> block to ensure they are returned to the cache even if an exception occurs.</p>
+<h3 id="bring-your-own-buffer">Bring your own buffer</h3>
+<p>If you already have your own <code>IBufferWriter&lt;byte&gt;</code> (e.g. writing directly to a network stream or a pipeline), you can rent just the writer:</p>
+<pre><code class="language-csharp">var buffer = new ArrayBufferWriter&lt;byte&gt;();
+Utf8JsonWriter writer = workspace.RentWriter(buffer);
+try
+{
+    person.WriteTo(writer);
+    writer.Flush();
+}
+finally
+{
+    workspace.ReturnWriter(writer);
+}
+</code></pre>
+<p>Writer options such as indentation are configured once on the workspace via its <code>Options</code> property and applied to every rented writer automatically — no need to pass <code>JsonWriterOptions</code> each time.</p>
+<h2 id="schema-validation-and-error-reporting">Schema validation and error reporting</h2>
+<p>JSON Schema uses a duck-typing model rather than a rigid type system. It describes the <em>shape</em> of valid data with constraints like &quot;it must have these properties&quot;, &quot;it must match one of these shapes&quot;, or &quot;this value must be between 0 and 150&quot;. When you construct a generated type from JSON data, you can safely use it through that type <strong>if and only if</strong> the data is valid according to the schema.</p>
+<p>Constructing a generated type from invalid JSON does <strong>not</strong> throw — the type is permissive. You can still access the parts of the data that <em>are</em> present. This is valuable for error reporting, diagnostics, and self-healing systems where you need to inspect malformed data.</p>
+<p>This permissive model is also what makes composition types work. As we saw in the <a href="#composition-types-and-pattern-matching">Composition types and pattern matching</a> section, a <code>oneOf</code> type like <code>OtherNames</code> can hold data matching <em>any</em> of its variants. The <code>Match()</code> method uses schema validation internally to determine which variant the data conforms to, and dispatches accordingly. Without permissive parsing, you wouldn't be able to hold the data in the first place before determining its shape.</p>
+<h2 id="basic-validation">Basic validation</h2>
+<pre><code class="language-csharp">bool isValid = person.EvaluateSchema();
+</code></pre>
+<h2 id="detailed-results">Detailed results</h2>
+<p>Pass a <code>JsonSchemaResultsCollector</code> to collect error messages and locations:</p>
+<pre><code class="language-csharp">using JsonSchemaResultsCollector collector =
+    JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
+
+bool isValid = person.EvaluateSchema(collector);
+
+if (!isValid)
+{
+    foreach (JsonSchemaResultsCollector.Result r in collector.EnumerateResults())
+    {
+        if (!r.IsMatch)
+        {
+            Console.WriteLine(
+                $&quot;Error at {r.GetDocumentEvaluationLocationText()}: {r.GetMessageText()}&quot;);
+        }
+    }
+}
+</code></pre>
+<h2 id="validation-levels">Validation levels</h2>
+<table>
+<thead>
+<tr>
+<th>Level</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><em>(no collector)</em></td>
+<td>Fastest — returns only <code>bool</code></td>
+</tr>
+<tr>
+<td><code>JsonSchemaResultsLevel.Basic</code></td>
+<td>Records failures with location information, but without error messages</td>
+</tr>
+<tr>
+<td><code>JsonSchemaResultsLevel.Detailed</code></td>
+<td>Records failures with location information and error messages</td>
+</tr>
+<tr>
+<td><code>JsonSchemaResultsLevel.Verbose</code></td>
+<td>Records all events — successes, failures, and ignored keywords — with full messages</td>
+</tr>
+</tbody>
+</table>
+<h2 id="example-validating-input">Example: validating input</h2>
+<pre><code class="language-csharp">using ParsedJsonDocument&lt;Person&gt; doc =
+    ParsedJsonDocument&lt;Person&gt;.Parse(&quot;&quot;&quot;{&quot;age&quot;:200}&quot;&quot;&quot;);
+Person person = doc.RootElement;
+
+using JsonSchemaResultsCollector collector =
+    JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
+
+bool isValid = person.EvaluateSchema(collector);
+// isValid is false — &quot;name&quot; is required and age exceeds maximum of 150
+
+foreach (JsonSchemaResultsCollector.Result r in collector.EnumerateResults())
+{
+    if (!r.IsMatch)
+    {
+        Console.WriteLine(
+            $&quot;{r.GetDocumentEvaluationLocationText()}: {r.GetMessageText()}&quot;);
+    }
+}
+</code></pre>
+<p>The collector provides:</p>
+<ul>
+<li><strong><code>r.IsMatch</code></strong> — whether this individual constraint passed</li>
+<li><strong><code>r.GetMessageText()</code></strong> — the error or success message</li>
+<li><strong><code>r.GetDocumentEvaluationLocationText()</code></strong> — JSON pointer to the failing location in the document</li>
+<li><strong><code>r.GetSchemaEvaluationLocationText()</code></strong> — JSON pointer to the constraint within the schema</li>
+</ul>
+        </div>
+    </main>
+</div>
+    </div>
+    <footer class="site-footer">
+    <div class="site-footer__inner">
+        <div class="site-footer__sponsor">
+            Sponsored by
+            <a href="https://endjin.com" target="_blank" rel="noopener noreferrer">endjin</a>
+        </div>
+        <ul class="site-footer__links" role="list">
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/pr-preview/pr-740/getting-started/index.html">Getting Started</a></li>
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/pr-preview/pr-740/docs/index.html">Documentation</a></li>
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/pr-preview/pr-740/examples/index.html">Examples</a></li>
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/pr-preview/pr-740/api/index.html">API</a></li>
+            <li><a class="site-footer__link" href="https://github.com/corvus-dotnet/Corvus.JsonSchema" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+            <li><a class="site-footer__link" href="https://www.nuget.org/packages?q=Corvus.Json" target="_blank" rel="noopener noreferrer">NuGet</a></li>
+        </ul>
+        <p class="site-footer__copyright">&copy; 2026 endjin Ltd.</p>
+    </div>
+</footer>
+
+    <!-- highlight.js for syntax highlighting (CSS targets .hljs-* classes) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/csharp.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/json.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/bash.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/xml.min.js" defer></script>
+    <script>document.addEventListener('DOMContentLoaded',()=>hljs.highlightAll())</script>
+    <script src="/Corvus.JsonSchema/pr-preview/pr-740/assets/js/main.js" defer></script>
+    <script src="/Corvus.JsonSchema/pr-preview/pr-740/assets/js/sidebar-search.js" defer></script>
+    
+</body>
+</html>

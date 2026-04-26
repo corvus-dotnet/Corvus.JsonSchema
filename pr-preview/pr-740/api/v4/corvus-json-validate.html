@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#1C1D21" />
+    <meta name="description" content="API documentation for Validate in Corvus.Json" />
+    <meta name="keywords" content="API, class, Validate, Corvus.Json" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:description" content="API documentation for Validate" />
+    <meta name="twitter:image" content="/Corvus.JsonSchema/pr-preview/pr-740/assets/images/og-corvus.png" />
+    <meta name="twitter:title" content="Validate &#x2014; Corvus.Json" />
+    <meta property="article:tag" content="API" />
+    <meta property="article:tag" content="class" />
+    <meta property="article:tag" content="Validate" />
+    <meta property="article:tag" content="Corvus.Json" />
+    <meta property="og:description" content="API documentation for Validate" />
+    <meta property="og:image" content="/Corvus.JsonSchema/pr-preview/pr-740/assets/images/og-corvus.png" />
+    <meta property="og:title" content="Validate &#x2014; Corvus.Json" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://corvus-oss.org/corvus-json-schema/api/v4/corvus-json-validate/" />
+    <title>Validate &#x2014; Corvus.Json</title>
+    <link itemprop="url" href="https://corvus-oss.org/corvus-json-schema/api/v4/corvus-json-validate/" />
+    <link rel="canonical" href="https://corvus-oss.org/corvus-json-schema/api/v4/corvus-json-validate/" />
+    <link rel="sitemap" href="https://corvus-oss.org/corvus-json-schema/sitemap.xml" />
+    <!-- Styles -->
+    <link rel="stylesheet" href="/Corvus.JsonSchema/pr-preview/pr-740/main.css" />
+    <link rel="icon" type="image/svg+xml" href="/Corvus.JsonSchema/pr-preview/pr-740/assets/images/favicon.svg" />
+    
+</head>
+<body>
+    <a class="sr-only" href="#main-content">Skip to content</a>
+<header class="site-header">
+    <div class="site-header__inner">
+        <a class="site-header__brand" href="/Corvus.JsonSchema/pr-preview/pr-740/index.html" aria-label="Corvus.JsonSchema home">
+            <img src="/Corvus.JsonSchema/pr-preview/pr-740/assets/images/logo-corvus.svg" alt="" width="28" height="28" aria-hidden="true" />
+            Corvus<span style="color:var(--color-brand)">.</span>Json<span style="color:var(--color-brand)">Schema</span>
+        </a>
+        <nav class="site-header__nav-desktop" aria-label="Main navigation">
+                    <a href="/Corvus.JsonSchema/pr-preview/pr-740/getting-started/index.html"
+                       class="site-header__link "
+                       >Getting Started</a>
+                    <a href="/Corvus.JsonSchema/pr-preview/pr-740/docs/index.html"
+                       class="site-header__link "
+                       >Documentation</a>
+                    <a href="/Corvus.JsonSchema/pr-preview/pr-740/examples/index.html"
+                       class="site-header__link "
+                       >Examples</a>
+                    <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/index.html"
+                       class="site-header__link "
+                       >API</a>
+            <a href="/Corvus.JsonSchema/pr-preview/pr-740/playground/"
+               class="site-header__link"
+               target="_blank" rel="noopener noreferrer"
+               title="Interactive JSON Schema playground">Playground</a>
+            <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema"
+               class="site-header__link" target="_blank" rel="noopener noreferrer"
+               aria-label="View on GitHub">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+            </a>
+        </nav>
+        <button class="site-header__menu-toggle js-toggle-menu"
+                aria-expanded="false" aria-label="Toggle menu">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+            </svg>
+        </button>
+    </div>
+</header>
+<nav class="site-header__nav-mobile js-mobile-nav" aria-label="Mobile navigation">
+            <a href="/Corvus.JsonSchema/pr-preview/pr-740/getting-started/index.html" class="site-header__link">Getting Started</a>
+            <a href="/Corvus.JsonSchema/pr-preview/pr-740/docs/index.html" class="site-header__link">Documentation</a>
+            <a href="/Corvus.JsonSchema/pr-preview/pr-740/examples/index.html" class="site-header__link">Examples</a>
+            <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/index.html" class="site-header__link">API</a>
+    <a href="/Corvus.JsonSchema/pr-preview/pr-740/playground/" class="site-header__link" target="_blank" rel="noopener noreferrer">Playground</a>
+    <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema"
+       class="site-header__link" target="_blank" rel="noopener noreferrer">GitHub</a>
+</nav>
+
+    <div class="page-content">
+    <div class="layout-docs container">
+        <button class="sidebar-toggle" aria-label="Toggle navigation" aria-expanded="false"></button>
+    <div class="sidebar-backdrop"></div>
+    <aside class="sidebar" data-has-member-nav>
+        <div class="sidebar-search">
+            <svg class="sidebar-search__icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M11.5 7a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0Zm-.82 4.74a6 6 0 1 1 1.06-1.06l3.04 3.04a.75.75 0 1 1-1.06 1.06l-3.04-3.04Z"/></svg>
+            <input id="sidebar-search-input" class="sidebar-search__input" type="search" placeholder="Search" autocomplete="off" />
+            <div id="sidebar-search-dropdown" class="sidebar-search__dropdown" hidden></div>
+        </div>
+        <div class="sidebar__inner" data-sidebar-url="sidebar.html">
+        </div>
+    </aside>
+
+    <main id="main-content" class="layout-docs__main">
+        <div class="doc__content api-ref">
+            <h1>Validate</h1>
+<h2 id="definition">Definition</h2>
+<p><strong>Namespace:</strong> Corvus.Json<br />
+<strong>Assembly:</strong> Corvus.Text.Json.dll<br />
+<strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/zf-migration/src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/Validate.cs#L1">Validate.cs</a></p>
+<p>JsonSchema validation errors.</p>
+<pre><code class="language-csharp">public static class Validate
+</code></pre>
+<h2 id="inheritance">Inheritance</h2>
+<p><a href="https://learn.microsoft.com/dotnet/api/system.object"><code>Object</code></a> → <strong>Validate</strong></p>
+<h2 id="methods">Methods</h2>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-validate.countrunes.html#countrunes-readonlyspan-char">CountRunes(ReadOnlySpan&lt;char&gt;)</a> <code>static</code></td>
+<td>Count the runes in a <a href="https://learn.microsoft.com/dotnet/api/system.readonlyspan-1"><code>ReadOnlySpan</code></a>.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-validate.typearray.html#typearray-jsonvaluekind-ref-validationcontext-validationlevel-string">TypeArray(JsonValueKind, ref ValidationContext, ValidationLevel, string)</a> <code>static</code></td>
+<td>Validate an array type value.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-validate.typebase64content.html#typebase64content-ref-tvalue-ref-validationcontext-validationlevel-bool-string">TypeBase64Content(ref TValue, ref ValidationContext, ValidationLevel, bool, string)</a> <code>static</code></td>
+<td>Validates a base64Content value.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-validate.typebase64contentpre201909.html#typebase64contentpre201909-ref-tvalue-ref-validationcontext-validationlevel-string">TypeBase64ContentPre201909(ref TValue, ref ValidationContext, ValidationLevel, string)</a> <code>static</code></td>
+<td>Validates a base64Content value.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-validate.typebase64string.html#typebase64string-ref-tvalue-ref-validationcontext-validationlevel-bool-string">TypeBase64String(ref TValue, ref ValidationContext, ValidationLevel, bool, string)</a> <code>static</code></td>
+<td>Validates a base64 value.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-validate.typebase64stringpre201909.html#typebase64stringpre201909-ref-tvalue-ref-validationcontext-validationlevel-string">TypeBase64StringPre201909(ref TValue, ref ValidationContext, ValidationLevel, string)</a> <code>static</code></td>
+<td>Validates a base64 value.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-validate.typeboolean.html#typeboolean-jsonvaluekind-ref-validationcontext-validationlevel-string">TypeBoolean(JsonValueKind, ref ValidationContext, ValidationLevel, string)</a> <code>static</code></td>
+<td>Validate a boolean type value.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-validate.typebyte.html#typebyte-ref-t-ref-validationcontext-validationlevel-string-string">TypeByte(ref T, ref ValidationContext, ValidationLevel, string, string)</a> <code>static</code></td>
+<td>Validates the format byte.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-validate.typecontent.html#typecontent-ref-tvalue-ref-validationcontext-validationlevel-bool-string">TypeContent(ref TValue, ref ValidationContext, ValidationLevel, bool, string)</a> <code>static</code></td>
+<td>Validates a content value.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-validate.typecontentpre201909.html#typecontentpre201909-ref-tvalue-ref-validationcontext-validationlevel-string">TypeContentPre201909(ref TValue, ref ValidationContext, ValidationLevel, string)</a> <code>static</code></td>
+<td>Validates a content value.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-validate.typedate.html#typedate-ref-t-ref-validationcontext-validationlevel-string-string">TypeDate(ref T, ref ValidationContext, ValidationLevel, string, string)</a> <code>static</code></td>
+<td>Validates the format date.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-validate.typedatetime.html#typedatetime-ref-t-ref-validationcontext-validationlevel-string-string">TypeDateTime(ref T, ref ValidationContext, ValidationLevel, string, string)</a> <code>static</code></td>
+<td>Validates the format datetime.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-validate.typedecimal.html#typedecimal-ref-t-ref-validationcontext-validationlevel-string-string">TypeDecimal(ref T, ref ValidationContext, ValidationLevel, string, string)</a> <code>static</code></td>
+<td>Validates the format decimal.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-validate.typedouble.html#typedouble-ref-t-ref-validationcontext-validationlevel-string-string">TypeDouble(ref T, ref ValidationContext, ValidationLevel, string, string)</a> <code>static</code></td>
+<td>Validates the format double.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-validate.typeduration.html#typeduration-ref-t-ref-validationcontext-validationlevel-string-string">TypeDuration(ref T, ref ValidationContext, ValidationLevel, string, string)</a> <code>static</code></td>
+<td>Validates the format duration.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-validate.typeemail.html#typeemail-ref-t-ref-validationcontext-validationlevel-string-string">TypeEmail(ref T, ref ValidationContext, ValidationLevel, string, string)</a> <code>static</code></td>
+<td>Validates the format email.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-validate.typehalf.html#typehalf-ref-t-ref-validationcontext-validationlevel-string-string">TypeHalf(ref T, ref ValidationContext, ValidationLevel, string, string)</a> <code>static</code></td>
+<td>Validates the format half.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-validate.typehostname.html#typehostname-ref-t-ref-validationcontext-validationlevel-string-string">TypeHostname(ref T, ref ValidationContext, ValidationLevel, string, string)</a> <code>static</code></td>
+<td>Validates the format hostname.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-validate.typeidnemail.html#typeidnemail-ref-t-ref-validationcontext-validationlevel-string-string">TypeIdnEmail(ref T, ref ValidationContext, ValidationLevel, string, string)</a> <code>static</code></td>
+<td>Validates the format idn-email.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-validate.typeidnhostname.html#typeidnhostname-ref-t-ref-validationcontext-validationlevel-string-string">TypeIdnHostName(ref T, ref ValidationContext, ValidationLevel, string, string)</a> <code>static</code></td>
+<td>Validates the format idn-hostname.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-validate.typeint128.html#typeint128-ref-t-ref-validationcontext-validationlevel-string-string">TypeInt128(ref T, ref ValidationContext, ValidationLevel, string, string)</a> <code>static</code></td>
+<td>Validates the format int128.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-validate.typeint16.html#typeint16-ref-t-ref-validationcontext-validationlevel-string-string">TypeInt16(ref T, ref ValidationContext, ValidationLevel, string, string)</a> <code>static</code></td>
+<td>Validates the format int16.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-validate.typeint32.html#typeint32-ref-t-ref-validationcontext-validationlevel-string-string">TypeInt32(ref T, ref ValidationContext, ValidationLevel, string, string)</a> <code>static</code></td>
+<td>Validates the format int32.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-validate.typeint64.html#typeint64-ref-t-ref-validationcontext-validationlevel-string-string">TypeInt64(ref T, ref ValidationContext, ValidationLevel, string, string)</a> <code>static</code></td>
+<td>Validates the format int64.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-validate.typeinteger.html#typeinteger-ref-t-ref-validationcontext-validationlevel-string">TypeInteger(ref T, ref ValidationContext, ValidationLevel, string)</a> <code>static</code></td>
+<td>Validates the format integer.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-validate.typeipv4.html#typeipv4-ref-t-ref-validationcontext-validationlevel-string-string">TypeIpV4(ref T, ref ValidationContext, ValidationLevel, string, string)</a> <code>static</code></td>
+<td>Validates the format ipv4.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-validate.typeipv6.html#typeipv6-ref-t-ref-validationcontext-validationlevel-string-string">TypeIpV6(ref T, ref ValidationContext, ValidationLevel, string, string)</a> <code>static</code></td>
+<td>Validates the format ipv6.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-validate.typeiri.html#typeiri-ref-t-ref-validationcontext-validationlevel-string-string">TypeIri(ref T, ref ValidationContext, ValidationLevel, string, string)</a> <code>static</code></td>
+<td>Validates the format iri.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-validate.typeirireference.html#typeirireference-ref-t-ref-validationcontext-validationlevel-string-string">TypeIriReference(ref T, ref ValidationContext, ValidationLevel, string, string)</a> <code>static</code></td>
+<td>Validates the format iri-reference.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-validate.typenull.html#typenull-jsonvaluekind-ref-validationcontext-validationlevel-string">TypeNull(JsonValueKind, ref ValidationContext, ValidationLevel, string)</a> <code>static</code></td>
+<td>Validate a null type value.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-validate.typenumber.html#typenumber-jsonvaluekind-ref-validationcontext-validationlevel-string">TypeNumber(JsonValueKind, ref ValidationContext, ValidationLevel, string)</a> <code>static</code></td>
+<td>Validate a number type value.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-validate.typeobject.html#typeobject-jsonvaluekind-ref-validationcontext-validationlevel-string">TypeObject(JsonValueKind, ref ValidationContext, ValidationLevel, string)</a> <code>static</code></td>
+<td>Validate an object type value.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-validate.typepointer.html#typepointer-ref-t-ref-validationcontext-validationlevel-string-string">TypePointer(ref T, ref ValidationContext, ValidationLevel, string, string)</a> <code>static</code></td>
+<td>Validates the format json-pointer.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-validate.typeregex.html#typeregex-ref-t-ref-validationcontext-validationlevel-string-string">TypeRegex(ref T, ref ValidationContext, ValidationLevel, string, string)</a> <code>static</code></td>
+<td>Validates the format regex.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-validate.typerelativepointer.html#typerelativepointer-ref-t-ref-validationcontext-validationlevel-string-string">TypeRelativePointer(ref T, ref ValidationContext, ValidationLevel, string, string)</a> <code>static</code></td>
+<td>Validates the format relative-json-pointer.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-validate.typesbyte.html#typesbyte-ref-t-ref-validationcontext-validationlevel-string-string">TypeSByte(ref T, ref ValidationContext, ValidationLevel, string, string)</a> <code>static</code></td>
+<td>Validates the format sbyte.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-validate.typesingle.html#typesingle-ref-t-ref-validationcontext-validationlevel-string-string">TypeSingle(ref T, ref ValidationContext, ValidationLevel, string, string)</a> <code>static</code></td>
+<td>Validates the format single.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-validate.typestring.html#typestring-jsonvaluekind-ref-validationcontext-validationlevel-string">TypeString(JsonValueKind, ref ValidationContext, ValidationLevel, string)</a> <code>static</code></td>
+<td>Validate a string type value.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-validate.typetime.html#typetime-ref-t-ref-validationcontext-validationlevel-string-string">TypeTime(ref T, ref ValidationContext, ValidationLevel, string, string)</a> <code>static</code></td>
+<td>Validates the format time.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-validate.typeuint128.html#typeuint128-ref-t-ref-validationcontext-validationlevel-string-string">TypeUInt128(ref T, ref ValidationContext, ValidationLevel, string, string)</a> <code>static</code></td>
+<td>Validates the format uint128.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-validate.typeuint16.html#typeuint16-ref-t-ref-validationcontext-validationlevel-string-string">TypeUInt16(ref T, ref ValidationContext, ValidationLevel, string, string)</a> <code>static</code></td>
+<td>Validates the format uint16.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-validate.typeuint32.html#typeuint32-ref-t-ref-validationcontext-validationlevel-string-string">TypeUInt32(ref T, ref ValidationContext, ValidationLevel, string, string)</a> <code>static</code></td>
+<td>Validates the format uint32.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-validate.typeuint64.html#typeuint64-ref-t-ref-validationcontext-validationlevel-string-string">TypeUInt64(ref T, ref ValidationContext, ValidationLevel, string, string)</a> <code>static</code></td>
+<td>Validates the format uint64.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-validate.typeuri.html#typeuri-ref-t-ref-validationcontext-validationlevel-string-string">TypeUri(ref T, ref ValidationContext, ValidationLevel, string, string)</a> <code>static</code></td>
+<td>Validates the format uri.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-validate.typeurireference.html#typeurireference-ref-t-ref-validationcontext-validationlevel-string-string">TypeUriReference(ref T, ref ValidationContext, ValidationLevel, string, string)</a> <code>static</code></td>
+<td>Validates the format uri-reference.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-validate.typeuritemplate.html#typeuritemplate-ref-t-ref-validationcontext-validationlevel-string-string">TypeUriTemplate(ref T, ref ValidationContext, ValidationLevel, string, string)</a> <code>static</code></td>
+<td>Validates the format uri-template.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-validate.typeuuid.html#typeuuid-ref-t-ref-validationcontext-validationlevel-string-string">TypeUuid(ref T, ref ValidationContext, ValidationLevel, string, string)</a> <code>static</code></td>
+<td>Validates the format uuid.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-validate.validateconst.html#validateconst-ref-t-ref-validationcontext-validationlevel-ref-t">ValidateConst(ref T, ref ValidationContext, ValidationLevel, ref T)</a> <code>static</code></td>
+<td>Validate a const value.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-validate.validateenum.html">ValidateEnum</a> <code>static</code></td>
+<td>Validate an enumeration.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-validate.validatenumber.html#validatenumber-ref-tvalue-ref-validationcontext-validationlevel-ref-binaryjsonnumber-ref-binaryjsonnumber-ref-binaryjsonnumber-ref-binaryjsonnumber-ref-binaryjsonnumber">ValidateNumber(ref TValue, ref ValidationContext, ValidationLevel, ref BinaryJsonNumber, ref BinaryJsonNumber, ref BinaryJsonNumber, ref BinaryJsonNumber, ref BinaryJsonNumber)</a> <code>static</code></td>
+<td>Perform numeric validation on the value.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v4/corvus-json-validate.validatestring.html#validatestring-ref-tvalue-ref-validationcontext-validationlevel-nullable-int-nullable-int-regex">ValidateString(ref TValue, ref ValidationContext, ValidationLevel, Nullable&lt;int&gt;, Nullable&lt;int&gt;, Regex)</a> <code>static</code></td>
+<td>Validates a string value.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="applies-to">Applies To</h2>
+<table>
+<thead>
+<tr>
+<th>Product</th>
+<th>Versions</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>.NET</td>
+<td>9, 10</td>
+</tr>
+<tr>
+<td>.NET Standard</td>
+<td>2.0, 2.1</td>
+</tr>
+</tbody>
+</table>
+        </div>
+        <div class="api-feedback">
+            <div class="api-feedback__inner">
+                <img src="/Corvus.JsonSchema/pr-preview/pr-740/assets/images/logo-corvus.svg" alt="Corvus" class="api-feedback__logo" />
+                <div class="api-feedback__text">
+                    <h3>Collaborate with us on GitHub</h3>
+                    <p>The source for this content can be found on <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema" target="_blank" rel="noopener noreferrer">GitHub</a>, where you can also create and review issues and pull requests.</p>
+                    <a class="api-feedback__link" href="https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/new" target="_blank" rel="noopener noreferrer">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor"><path d="M8 0c4.42 0 8 3.58 8 8a8.013 8.013 0 0 1-5.45 7.59c-.4.08-.55-.17-.55-.38 0-.27.01-1.13.01-2.2 0-.75-.25-1.23-.54-1.48 1.78-.2 3.65-.88 3.65-3.95 0-.88-.31-1.59-.82-2.15.08-.2.36-1.02-.08-2.12 0 0-.67-.22-2.2.82-.64-.18-1.32-.27-2-.27-.68 0-1.36.09-2 .27-1.53-1.03-2.2-.82-2.2-.82-.44 1.1-.16 1.92-.08 2.12-.51.56-.82 1.28-.82 2.15 0 3.06 1.86 3.75 3.64 3.95-.23.2-.44.55-.51 1.07-.46.21-1.61.55-2.33-.66-.15-.24-.6-.83-1.23-.82-.67.01-.27.38.01.53.34.19.73.9.82 1.13.16.45.68 1.31 2.69.94 0 .67.01 1.3.01 1.49 0 .21-.15.45-.55.38A7.995 7.995 0 0 1 0 8c0-4.42 3.58-8 8-8Z"/></svg>
+                        Open an issue
+                    </a>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+    </div>
+    <footer class="site-footer">
+    <div class="site-footer__inner">
+        <div class="site-footer__sponsor">
+            Sponsored by
+            <a href="https://endjin.com" target="_blank" rel="noopener noreferrer">endjin</a>
+        </div>
+        <ul class="site-footer__links" role="list">
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/pr-preview/pr-740/getting-started/index.html">Getting Started</a></li>
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/pr-preview/pr-740/docs/index.html">Documentation</a></li>
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/pr-preview/pr-740/examples/index.html">Examples</a></li>
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/pr-preview/pr-740/api/index.html">API</a></li>
+            <li><a class="site-footer__link" href="https://github.com/corvus-dotnet/Corvus.JsonSchema" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+            <li><a class="site-footer__link" href="https://www.nuget.org/packages?q=Corvus.Json" target="_blank" rel="noopener noreferrer">NuGet</a></li>
+        </ul>
+        <p class="site-footer__copyright">&copy; 2026 endjin Ltd.</p>
+    </div>
+</footer>
+
+    <!-- highlight.js for syntax highlighting (CSS targets .hljs-* classes) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/csharp.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/json.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/bash.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/xml.min.js" defer></script>
+    <script>document.addEventListener('DOMContentLoaded',()=>hljs.highlightAll())</script>
+    <script src="/Corvus.JsonSchema/pr-preview/pr-740/assets/js/main.js" defer></script>
+    <script src="/Corvus.JsonSchema/pr-preview/pr-740/assets/js/sidebar-search.js" defer></script>
+    
+</body>
+</html>

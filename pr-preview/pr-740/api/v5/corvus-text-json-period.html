@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#1C1D21" />
+    <meta name="description" content="API documentation for Period in Corvus.Text.Json" />
+    <meta name="keywords" content="API, struct, Period, Corvus.Text.Json" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:description" content="API documentation for Period" />
+    <meta name="twitter:image" content="/Corvus.JsonSchema/pr-preview/pr-740/assets/images/og-corvus.png" />
+    <meta name="twitter:title" content="Period &#x2014; Corvus.Text.Json" />
+    <meta property="article:tag" content="API" />
+    <meta property="article:tag" content="struct" />
+    <meta property="article:tag" content="Period" />
+    <meta property="article:tag" content="Corvus.Text.Json" />
+    <meta property="og:description" content="API documentation for Period" />
+    <meta property="og:image" content="/Corvus.JsonSchema/pr-preview/pr-740/assets/images/og-corvus.png" />
+    <meta property="og:title" content="Period &#x2014; Corvus.Text.Json" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://corvus-oss.org/corvus-json-schema/api/v5/corvus-text-json-period/" />
+    <title>Period &#x2014; Corvus.Text.Json</title>
+    <link itemprop="url" href="https://corvus-oss.org/corvus-json-schema/api/v5/corvus-text-json-period/" />
+    <link rel="canonical" href="https://corvus-oss.org/corvus-json-schema/api/v5/corvus-text-json-period/" />
+    <link rel="sitemap" href="https://corvus-oss.org/corvus-json-schema/sitemap.xml" />
+    <!-- Styles -->
+    <link rel="stylesheet" href="/Corvus.JsonSchema/pr-preview/pr-740/main.css" />
+    <link rel="icon" type="image/svg+xml" href="/Corvus.JsonSchema/pr-preview/pr-740/assets/images/favicon.svg" />
+    
+</head>
+<body>
+    <a class="sr-only" href="#main-content">Skip to content</a>
+<header class="site-header">
+    <div class="site-header__inner">
+        <a class="site-header__brand" href="/Corvus.JsonSchema/pr-preview/pr-740/index.html" aria-label="Corvus.JsonSchema home">
+            <img src="/Corvus.JsonSchema/pr-preview/pr-740/assets/images/logo-corvus.svg" alt="" width="28" height="28" aria-hidden="true" />
+            Corvus<span style="color:var(--color-brand)">.</span>Json<span style="color:var(--color-brand)">Schema</span>
+        </a>
+        <nav class="site-header__nav-desktop" aria-label="Main navigation">
+                    <a href="/Corvus.JsonSchema/pr-preview/pr-740/getting-started/index.html"
+                       class="site-header__link "
+                       >Getting Started</a>
+                    <a href="/Corvus.JsonSchema/pr-preview/pr-740/docs/index.html"
+                       class="site-header__link "
+                       >Documentation</a>
+                    <a href="/Corvus.JsonSchema/pr-preview/pr-740/examples/index.html"
+                       class="site-header__link "
+                       >Examples</a>
+                    <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/index.html"
+                       class="site-header__link "
+                       >API</a>
+            <a href="/Corvus.JsonSchema/pr-preview/pr-740/playground/"
+               class="site-header__link"
+               target="_blank" rel="noopener noreferrer"
+               title="Interactive JSON Schema playground">Playground</a>
+            <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema"
+               class="site-header__link" target="_blank" rel="noopener noreferrer"
+               aria-label="View on GitHub">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+            </a>
+        </nav>
+        <button class="site-header__menu-toggle js-toggle-menu"
+                aria-expanded="false" aria-label="Toggle menu">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+            </svg>
+        </button>
+    </div>
+</header>
+<nav class="site-header__nav-mobile js-mobile-nav" aria-label="Mobile navigation">
+            <a href="/Corvus.JsonSchema/pr-preview/pr-740/getting-started/index.html" class="site-header__link">Getting Started</a>
+            <a href="/Corvus.JsonSchema/pr-preview/pr-740/docs/index.html" class="site-header__link">Documentation</a>
+            <a href="/Corvus.JsonSchema/pr-preview/pr-740/examples/index.html" class="site-header__link">Examples</a>
+            <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/index.html" class="site-header__link">API</a>
+    <a href="/Corvus.JsonSchema/pr-preview/pr-740/playground/" class="site-header__link" target="_blank" rel="noopener noreferrer">Playground</a>
+    <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema"
+       class="site-header__link" target="_blank" rel="noopener noreferrer">GitHub</a>
+</nav>
+
+    <div class="page-content">
+    <div class="layout-docs container">
+        <button class="sidebar-toggle" aria-label="Toggle navigation" aria-expanded="false"></button>
+    <div class="sidebar-backdrop"></div>
+    <aside class="sidebar" data-has-member-nav>
+        <div class="sidebar-search">
+            <svg class="sidebar-search__icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path d="M11.5 7a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0Zm-.82 4.74a6 6 0 1 1 1.06-1.06l3.04 3.04a.75.75 0 1 1-1.06 1.06l-3.04-3.04Z"/></svg>
+            <input id="sidebar-search-input" class="sidebar-search__input" type="search" placeholder="Search" autocomplete="off" />
+            <div id="sidebar-search-dropdown" class="sidebar-search__dropdown" hidden></div>
+        </div>
+        <div class="sidebar__inner" data-sidebar-url="sidebar.html">
+        </div>
+    </aside>
+
+    <main id="main-content" class="layout-docs__main">
+        <div class="doc__content api-ref">
+            <h1>Period</h1>
+<h2 id="definition">Definition</h2>
+<p><strong>Namespace:</strong> Corvus.Text.Json<br />
+<strong>Assembly:</strong> Corvus.Text.Json.dll<br />
+<strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/zf-migration/src/Corvus.Text.Json/Corvus/NodaTimeExtensions/Period.cs#L58">Period.cs</a></p>
+<p>Represents a period of time expressed in human chronological terms: hours, days, weeks, months and so on.</p>
+<pre><code class="language-csharp">public readonly struct Period : IEquatable&lt;Period&gt;
+</code></pre>
+<h2 id="remarks">Remarks</h2>
+<p>A <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-period.html"><code>Period</code></a> contains a set of properties such as <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-period.years.html"><code>Years</code></a>, <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-period.months.html"><code>Months</code></a>, and so on that return the number of each unit contained within this period. Note that these properties are not normalized in any way by default, and so a <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-period.html"><code>Period</code></a> may contain values such as &quot;2 hours and 90 minutes&quot;. The <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-period.normalize.html"><code>Normalize</code></a> method will convert equivalent periods into a standard representation. Periods can contain negative units as well as positive units (&quot;+2 hours, -43 minutes, +10 seconds&quot;), but do not differentiate between properties that are zero and those that are absent (i.e. a period created as &quot;10 years&quot; and one created as &quot;10 years, zero months&quot; are equal periods; the <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-period.months.html"><code>Months</code></a> property returns zero in both cases). <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-period.html"><code>Period</code></a> equality is implemented by comparing each property's values individually, without any normalization. (For example, a period of &quot;24 hours&quot; is not considered equal to a period of &quot;1 day&quot;.) The static <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-period.normalizingequalitycomparer.html"><code>NormalizingEqualityComparer</code></a> comparer provides an equality comparer which performs normalization before comparisons. There is no natural ordering for periods, but <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-period.createcomparer.html"><code>CreateComparer</code></a> can be used to create a comparer which orders periods according to a reference date, by adding each period to that date and comparing the results. Periods operate on calendar-related types such as <a href="https://www.nodatime.org/3.3.x/api/NodaTime.LocalDateTime.html"><code>LocalDateTime</code></a> whereas <a href="https://www.nodatime.org/3.3.x/api/NodaTime.Duration.html"><code>Duration</code></a> operates on instants on the time line. (Note that although <a href="https://www.nodatime.org/3.3.x/api/NodaTime.ZonedDateTime.html"><code>ZonedDateTime</code></a> includes both concepts, it only supports duration-based arithmetic.) The complexity of each method in this type is hard to document precisely, and often depends on the calendar system involved in performing the actual calculations. Operations do not depend on the magnitude of the units in the period, other than for optimizations for values of zero or occasionally for particularly small values. For example, adding 10,000 days to a date does not require greater algorithmic complexity than adding 1,000 days to the same date.</p>
+<h2 id="implements">Implements</h2>
+<p><a href="https://learn.microsoft.com/dotnet/api/system.iequatable-1"><code>IEquatable&lt;Period&gt;</code></a></p>
+<h2 id="properties">Properties</h2>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-period.days.html">Days</a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>int</code></a></td>
+<td>Gets the number of days within this period.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-period.hasdatecomponent.html">HasDateComponent</a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.boolean"><code>bool</code></a></td>
+<td>Gets a value indicating whether or not this period contains any non-zero date-based properties (days or higher).</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-period.hastimecomponent.html">HasTimeComponent</a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.boolean"><code>bool</code></a></td>
+<td>Gets a value indicating whether or not this period contains any non-zero-valued time-based properties (hours or lower).</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-period.hours.html">Hours</a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.int64"><code>long</code></a></td>
+<td>Gets the number of hours within this period.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-period.maxvalue.html">MaxValue</a> <code>static</code></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-period.html"><code>Period</code></a></td>
+<td>A period containing the maximum value for all properties.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-period.milliseconds.html">Milliseconds</a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.int64"><code>long</code></a></td>
+<td>Gets the number of milliseconds within this period.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-period.minutes.html">Minutes</a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.int64"><code>long</code></a></td>
+<td>Gets the number of minutes within this period.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-period.minvalue.html">MinValue</a> <code>static</code></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-period.html"><code>Period</code></a></td>
+<td>A period containing the minimum value for all properties.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-period.months.html">Months</a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>int</code></a></td>
+<td>Gets the number of months within this period.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-period.nanoseconds.html">Nanoseconds</a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.int64"><code>long</code></a></td>
+<td>Gets the number of nanoseconds within this period.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-period.normalizingequalitycomparer.html">NormalizingEqualityComparer</a> <code>static</code></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.collections.generic.iequalitycomparer-1"><code>IEqualityComparer&lt;Period&gt;</code></a></td>
+<td>Gets an equality comparer which compares periods by first normalizing them - so 24 hours is deemed equal to 1 day, and so on. Note that as per the...</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-period.seconds.html">Seconds</a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.int64"><code>long</code></a></td>
+<td>Gets the number of seconds within this period.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-period.ticks.html">Ticks</a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.int64"><code>long</code></a></td>
+<td>Gets the number of ticks within this period.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-period.weeks.html">Weeks</a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>int</code></a></td>
+<td>Gets the number of weeks within this period.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-period.years.html">Years</a></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.int32"><code>int</code></a></td>
+<td>Gets the number of years within this period.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-period.zero.html">Zero</a> <code>static</code></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-period.html"><code>Period</code></a></td>
+<td>Gets a period containing only zero-valued properties.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="methods">Methods</h2>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-period.add.html#add-period-period">Add(Period, Period)</a> <code>static</code></td>
+<td>Adds two periods together, by simply adding the values for each property.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-period.createcomparer.html#createcomparer-localdatetime">CreateComparer(LocalDateTime)</a> <code>static</code></td>
+<td>Creates an <a href="https://learn.microsoft.com/dotnet/api/system.collections.generic.icomparer-1"><code>IComparer</code></a> for periods, using the given &quot;base&quot; local date/time.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-period.daysbetween.html#daysbetween-localdate-localdate">DaysBetween(LocalDate, LocalDate)</a> <code>static</code></td>
+<td>Returns the number of days between two <a href="https://www.nodatime.org/3.3.x/api/NodaTime.LocalDate.html"><code>LocalDate</code></a> objects.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-period.equals.html">Equals</a></td>
+<td>Compares the given object for equality with this one, as per <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-period.equals.html"><code>Equals</code></a>. See the type documentation for a description of equality semantics.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-period.fromdays.html#fromdays-int">FromDays(int)</a> <code>static</code></td>
+<td>Creates a period representing the specified number of days.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-period.fromhours.html#fromhours-long">FromHours(long)</a> <code>static</code></td>
+<td>Creates a period representing the specified number of hours.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-period.frommilliseconds.html#frommilliseconds-long">FromMilliseconds(long)</a> <code>static</code></td>
+<td>Creates a period representing the specified number of milliseconds.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-period.fromminutes.html#fromminutes-long">FromMinutes(long)</a> <code>static</code></td>
+<td>Creates a period representing the specified number of minutes.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-period.frommonths.html#frommonths-int">FromMonths(int)</a> <code>static</code></td>
+<td>Creates a period representing the specified number of months.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-period.fromnanoseconds.html#fromnanoseconds-long">FromNanoseconds(long)</a> <code>static</code></td>
+<td>Creates a period representing the specified number of nanoseconds.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-period.fromseconds.html#fromseconds-long">FromSeconds(long)</a> <code>static</code></td>
+<td>Creates a period representing the specified number of seconds.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-period.fromticks.html#fromticks-long">FromTicks(long)</a> <code>static</code></td>
+<td>Creates a period representing the specified number of ticks.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-period.fromweeks.html#fromweeks-int">FromWeeks(int)</a> <code>static</code></td>
+<td>Creates a period representing the specified number of weeks.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-period.fromyears.html#fromyears-int">FromYears(int)</a> <code>static</code></td>
+<td>Creates a period representing the specified number of years.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-period.gethashcode.html#gethashcode">GetHashCode()</a></td>
+<td>Returns the hash code for this period, consistent with <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-period.equals.html"><code>Equals</code></a>. See the type documentation for a description of equality semantics.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-period.normalize.html#normalize">Normalize()</a></td>
+<td>Returns a normalized version of this period, such that equivalent (but potentially non-equal) periods are changed to the same representation.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-period.periodparser.html#periodparser-readonlyspan-byte-ref-periodbuilder">PeriodParser(ReadOnlySpan&lt;byte&gt;, ref PeriodBuilder)</a> <code>static</code></td>
+<td>A parser for a json period.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-period.subtract.html#subtract-period-period">Subtract(Period, Period)</a> <code>static</code></td>
+<td>Subtracts one period from another, by simply subtracting each property value.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-period.toduration.html#toduration">ToDuration()</a></td>
+<td>For periods that do not contain a non-zero number of years or months, returns a duration for this period assuming a standard 7-day week, 24-hour day, 60-minute hour etc.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-period.tostring.html#tostring">ToString()</a></td>
+<td>Returns this string formatted according to the ISO8601 duration specification used by JSON schema.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-period.tryparse.html#tryparse-readonlyspan-byte-ref-period">TryParse(ReadOnlySpan&lt;byte&gt;, ref Period)</a> <code>static</code></td>
+<td>Parses a string into a Period.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="operators">Operators</h2>
+<table>
+<thead>
+<tr>
+<th>Operator</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-period.op-addition.html#operator-period-period">operator +(Period, Period)</a></td>
+<td>Adds two periods together, by simply adding the values for each property.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-period.op-equality.html#operator-period-period">operator ==(Period, Period)</a></td>
+<td>Implements the operator == (equality). See the type documentation for a description of equality semantics.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-period.op-implicit.html">Implicit</a></td>
+<td>Convert to a NodaTime.Period.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-period.op-inequality.html#operator-period-period">operator !=(Period, Period)</a></td>
+<td>Implements the operator != (inequality). See the type documentation for a description of equality semantics.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-740/api/v5/corvus-text-json-period.op-subtraction.html#operator-period-period">operator -(Period, Period)</a></td>
+<td>Subtracts one period from another, by simply subtracting each property value.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="applies-to">Applies To</h2>
+<table>
+<thead>
+<tr>
+<th>Product</th>
+<th>Versions</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>.NET</td>
+<td>9, 10</td>
+</tr>
+<tr>
+<td>.NET Standard</td>
+<td>2.0, 2.1</td>
+</tr>
+</tbody>
+</table>
+        </div>
+        <div class="api-feedback">
+            <div class="api-feedback__inner">
+                <img src="/Corvus.JsonSchema/pr-preview/pr-740/assets/images/logo-corvus.svg" alt="Corvus" class="api-feedback__logo" />
+                <div class="api-feedback__text">
+                    <h3>Collaborate with us on GitHub</h3>
+                    <p>The source for this content can be found on <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema" target="_blank" rel="noopener noreferrer">GitHub</a>, where you can also create and review issues and pull requests.</p>
+                    <a class="api-feedback__link" href="https://github.com/corvus-dotnet/Corvus.JsonSchema/issues/new" target="_blank" rel="noopener noreferrer">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16" fill="currentColor"><path d="M8 0c4.42 0 8 3.58 8 8a8.013 8.013 0 0 1-5.45 7.59c-.4.08-.55-.17-.55-.38 0-.27.01-1.13.01-2.2 0-.75-.25-1.23-.54-1.48 1.78-.2 3.65-.88 3.65-3.95 0-.88-.31-1.59-.82-2.15.08-.2.36-1.02-.08-2.12 0 0-.67-.22-2.2.82-.64-.18-1.32-.27-2-.27-.68 0-1.36.09-2 .27-1.53-1.03-2.2-.82-2.2-.82-.44 1.1-.16 1.92-.08 2.12-.51.56-.82 1.28-.82 2.15 0 3.06 1.86 3.75 3.64 3.95-.23.2-.44.55-.51 1.07-.46.21-1.61.55-2.33-.66-.15-.24-.6-.83-1.23-.82-.67.01-.27.38.01.53.34.19.73.9.82 1.13.16.45.68 1.31 2.69.94 0 .67.01 1.3.01 1.49 0 .21-.15.45-.55.38A7.995 7.995 0 0 1 0 8c0-4.42 3.58-8 8-8Z"/></svg>
+                        Open an issue
+                    </a>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+    </div>
+    <footer class="site-footer">
+    <div class="site-footer__inner">
+        <div class="site-footer__sponsor">
+            Sponsored by
+            <a href="https://endjin.com" target="_blank" rel="noopener noreferrer">endjin</a>
+        </div>
+        <ul class="site-footer__links" role="list">
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/pr-preview/pr-740/getting-started/index.html">Getting Started</a></li>
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/pr-preview/pr-740/docs/index.html">Documentation</a></li>
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/pr-preview/pr-740/examples/index.html">Examples</a></li>
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/pr-preview/pr-740/api/index.html">API</a></li>
+            <li><a class="site-footer__link" href="https://github.com/corvus-dotnet/Corvus.JsonSchema" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+            <li><a class="site-footer__link" href="https://www.nuget.org/packages?q=Corvus.Json" target="_blank" rel="noopener noreferrer">NuGet</a></li>
+        </ul>
+        <p class="site-footer__copyright">&copy; 2026 endjin Ltd.</p>
+    </div>
+</footer>
+
+    <!-- highlight.js for syntax highlighting (CSS targets .hljs-* classes) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/csharp.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/json.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/bash.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/xml.min.js" defer></script>
+    <script>document.addEventListener('DOMContentLoaded',()=>hljs.highlightAll())</script>
+    <script src="/Corvus.JsonSchema/pr-preview/pr-740/assets/js/main.js" defer></script>
+    <script src="/Corvus.JsonSchema/pr-preview/pr-740/assets/js/sidebar-search.js" defer></script>
+    
+</body>
+</html>

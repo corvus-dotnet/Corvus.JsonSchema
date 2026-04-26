@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#1C1D21" />
+    <meta name="description" content="This recipe demonstrates how JSON Schema `format` keywords map to strongly-typed .NET values, and how format-specific validation catches semantic errors in string properties." />
+    <meta name="keywords" content="recipe, JSON Schema, C#, format, validation, type, required, properties, EvaluateSchema, IsValid, TryGetValue" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:description" content="This recipe demonstrates how JSON Schema `format` keywords map to strongly-typed .NET values, and how format-specific validation catches semantic errors in string properties." />
+    <meta name="twitter:image" content="/Corvus.JsonSchema/pr-preview/pr-740/assets/images/og-corvus.png" />
+    <meta name="twitter:title" content="Format Validation - Corvus.Text.Json Examples" />
+    <meta property="article:tag" content="recipe" />
+    <meta property="article:tag" content="JSON Schema" />
+    <meta property="article:tag" content="C#" />
+    <meta property="article:tag" content="format" />
+    <meta property="article:tag" content="validation" />
+    <meta property="article:tag" content="type" />
+    <meta property="article:tag" content="required" />
+    <meta property="article:tag" content="properties" />
+    <meta property="article:tag" content="EvaluateSchema" />
+    <meta property="article:tag" content="IsValid" />
+    <meta property="article:tag" content="TryGetValue" />
+    <meta property="og:description" content="This recipe demonstrates how JSON Schema `format` keywords map to strongly-typed .NET values, and how format-specific validation catches semantic errors in string properties." />
+    <meta property="og:image" content="/Corvus.JsonSchema/pr-preview/pr-740/assets/images/og-corvus.png" />
+    <meta property="og:title" content="Format Validation - Corvus.Text.Json Examples" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://corvus-oss.org/corvus-json-schema/examples/format-validation/" />
+    <title>Format Validation - Corvus.Text.Json Examples</title>
+    <link itemprop="url" href="https://corvus-oss.org/corvus-json-schema/examples/format-validation/" />
+    <link rel="canonical" href="https://corvus-oss.org/corvus-json-schema/examples/format-validation/" />
+    <link rel="sitemap" href="https://corvus-oss.org/corvus-json-schema/sitemap.xml" />
+    <!-- Styles -->
+    <link rel="stylesheet" href="/Corvus.JsonSchema/pr-preview/pr-740/main.css" />
+    <link rel="icon" type="image/svg+xml" href="/Corvus.JsonSchema/pr-preview/pr-740/assets/images/favicon.svg" />
+    
+</head>
+<body>
+    <a class="sr-only" href="#main-content">Skip to content</a>
+<header class="site-header">
+    <div class="site-header__inner">
+        <a class="site-header__brand" href="/Corvus.JsonSchema/pr-preview/pr-740/index.html" aria-label="Corvus.JsonSchema home">
+            <img src="/Corvus.JsonSchema/pr-preview/pr-740/assets/images/logo-corvus.svg" alt="" width="28" height="28" aria-hidden="true" />
+            Corvus<span style="color:var(--color-brand)">.</span>Json<span style="color:var(--color-brand)">Schema</span>
+        </a>
+        <nav class="site-header__nav-desktop" aria-label="Main navigation">
+                    <a href="/Corvus.JsonSchema/pr-preview/pr-740/getting-started/index.html"
+                       class="site-header__link "
+                       >Getting Started</a>
+                    <a href="/Corvus.JsonSchema/pr-preview/pr-740/docs/index.html"
+                       class="site-header__link "
+                       >Documentation</a>
+                    <a href="/Corvus.JsonSchema/pr-preview/pr-740/examples/index.html"
+                       class="site-header__link is-active"
+                       aria-current=page>Examples</a>
+                    <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/index.html"
+                       class="site-header__link "
+                       >API</a>
+            <a href="/Corvus.JsonSchema/pr-preview/pr-740/playground/"
+               class="site-header__link"
+               target="_blank" rel="noopener noreferrer"
+               title="Interactive JSON Schema playground">Playground</a>
+            <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema"
+               class="site-header__link" target="_blank" rel="noopener noreferrer"
+               aria-label="View on GitHub">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+            </a>
+        </nav>
+        <button class="site-header__menu-toggle js-toggle-menu"
+                aria-expanded="false" aria-label="Toggle menu">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+            </svg>
+        </button>
+    </div>
+</header>
+<nav class="site-header__nav-mobile js-mobile-nav" aria-label="Mobile navigation">
+            <a href="/Corvus.JsonSchema/pr-preview/pr-740/getting-started/index.html" class="site-header__link">Getting Started</a>
+            <a href="/Corvus.JsonSchema/pr-preview/pr-740/docs/index.html" class="site-header__link">Documentation</a>
+            <a href="/Corvus.JsonSchema/pr-preview/pr-740/examples/index.html" class="site-header__link">Examples</a>
+            <a href="/Corvus.JsonSchema/pr-preview/pr-740/api/index.html" class="site-header__link">API</a>
+    <a href="/Corvus.JsonSchema/pr-preview/pr-740/playground/" class="site-header__link" target="_blank" rel="noopener noreferrer">Playground</a>
+    <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema"
+       class="site-header__link" target="_blank" rel="noopener noreferrer">GitHub</a>
+</nav>
+
+    <div class="page-content">
+    <div class="layout-docs container">
+    <button class="sidebar-toggle" aria-label="Toggle navigation" aria-expanded="false"></button>
+<div class="sidebar-backdrop"></div>
+<aside class="sidebar">
+    <div class="sidebar__inner">
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Getting Started</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                    <li class="sidebar__item"><a class="sidebar__link" href="/Corvus.JsonSchema/pr-preview/pr-740/getting-started/index.html">Tutorial</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Documentation</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/parsed-json-document.html">Parsing &amp; Reading JSON</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/json-document-builder.html">Building &amp; Mutating JSON</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/source-generator.html">Source Generator</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/code-generator.html">CLI Code Generation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/validator.html">Dynamic Schema Validation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/migrating-from-v4-to-v5.html">Migrating from V4</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/using-copilot-for-migration.html">Copilot Migration</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/migration-analyzers.html">Migration Analyzers</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/analyzers.html">Analyzers</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/schema-evaluator.html">Standalone Schema Evaluator</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/json-patch.html">JSON Patch (RFC 6902)</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/json-logic.html">JsonLogic Rule Engine</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/jsonata.html">JSONata Query Language</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/jmes-path.html">JMESPath Query Language</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/docs/yaml.html">YAML Converter</a>
+                            </li>
+                </ul>
+            </div>
+        </div>
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Examples</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/data-object.html">Simple Data Objects</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/data-object-validation.html">Data Object Validation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/reusing-common-types.html">Reusing Common Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/open-versus-closed-types.html">Open Versus Closed Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/extending-a-base-type.html">Extending a Base Type</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/constraining-a-base-type.html">Constraining a Base Type</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/creating-a-strongly-typed-array.html">Strongly Typed Arrays</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/creating-an-array-of-higher-rank.html">Multi-Dimensional Arrays</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/working-with-tensors.html">Working with Tensors</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/creating-tuples.html">Creating Tuples</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/interfaces-and-mix-in-types.html">Interfaces and Mix-In Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/pattern-matching.html">Pattern Matching and Discriminated Unions</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/polymorphism-with-discriminators.html">Polymorphism with Discriminator Properties</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/string-enumerations.html">String Enumerations and Pattern Matching</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/numeric-enumerations.html">Numeric Enumerations</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/maps.html">Maps of Strings to Strongly Typed Values</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/mapping-input-and-output-values.html">Mapping Input and Output Values</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/creating-and-mutating-objects.html">Creating and Mutating Objects</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/clone-and-freeze.html">Clone and Freeze</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/conditional-schemas.html">Conditional Schemas</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/default-values.html">Default Values</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link is-active" href="/Corvus.JsonSchema/pr-preview/pr-740/examples/format-validation.html">Format Validation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/json-patch.html">JSON Patch (RFC 6902)</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/json-logic.html">JsonLogic Rule Evaluation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/jsonata.html">JSONata Expression Evaluation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/jmespath.html">JMESPath Query Evaluation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-740/examples/yaml.html">YAML Conversion</a>
+                            </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</aside>
+
+    <main id="main-content" class="layout-docs__main">
+        <div class="doc__content">
+            <h1>Format Validation</h1>
+                <div class="card__tags" style="margin-bottom:1.5rem">
+                        <span class="card__tag">recipe</span>
+                        <span class="card__tag">JSON Schema</span>
+                        <span class="card__tag">C#</span>
+                        <span class="card__tag">format</span>
+                        <span class="card__tag">validation</span>
+                        <span class="card__tag">type</span>
+                        <span class="card__tag">required</span>
+                        <span class="card__tag">properties</span>
+                        <span class="card__tag">EvaluateSchema</span>
+                        <span class="card__tag">IsValid</span>
+                        <span class="card__tag">TryGetValue</span>
+                </div>
+<p>This recipe demonstrates how JSON Schema <code>format</code> keywords map to strongly-typed .NET values, and how format-specific validation catches semantic errors in string properties.</p>
+<h2 id="the-pattern">The Pattern</h2>
+<p>The JSON Schema <code>format</code> keyword annotates string properties with a specific semantic meaning — such as <code>date-time</code>, <code>date</code>, <code>duration</code>, <code>uri</code>, <code>uuid</code>, or <code>email</code>. The Corvus.Text.Json code generator maps these formats to strongly-typed .NET accessors:</p>
+<ul>
+<li>Date/time formats produce implicit conversions to <a href="https://nodatime.org/">NodaTime</a> types, giving you type-safe, zero-allocation access to temporal values.</li>
+<li>URI and IRI formats generate types with explicit conversions to <code>Utf8UriValue</code>, <code>Utf8UriReferenceValue</code>, <code>Utf8IriValue</code>, and <code>Utf8IriReferenceValue</code> — giving you zero-allocation access to parsed URI/IRI components.</li>
+<li>UUID and email formats generate validated string types with implicit conversion to <code>System.Guid</code> and explicit conversion to <code>string</code>, respectively.</li>
+</ul>
+<p>When you call <code>EvaluateSchema()</code>, the generated code validates not just the JSON structure but also the <em>content</em> of each formatted string — rejecting values like <code>&quot;not-a-date&quot;</code> for a <code>date</code> field or <code>&quot;://missing-scheme&quot;</code> for a <code>uri</code> field.</p>
+<h3 id="format-assertion-vs-annotation">Format assertion vs annotation</h3>
+<p>In JSON Schema Draft 2020-12, the <code>format</code> keyword is an <em>annotation</em> by default — it describes the expected format but does not cause validation to fail if the value doesn't match. Corvus.Text.Json overrides this default and <strong>enables format assertion</strong> for all schema drafts, so <code>format</code> is validated by default.</p>
+<p>If you need the standard annotation-only behaviour, you can disable format assertion via code generation options:</p>
+<ul>
+<li><strong>Source Generator:</strong> set <code>&lt;CorvusTextJsonAlwaysAssertFormat&gt;false&lt;/CorvusTextJsonAlwaysAssertFormat&gt;</code> in the <code>.csproj</code> file.</li>
+<li><strong>CLI tool (<code>corvusjson</code>):</strong> pass the <code>--assertFormat false</code> flag (e.g., <code>corvusjson jsonschema schema.json --assertFormat false</code>)</li>
+</ul>
+<h2 id="format-mapping">Format Mapping</h2>
+<table>
+<thead>
+<tr>
+<th>JSON Schema Format</th>
+<th>.NET Type</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>date-time</code></td>
+<td><code>NodaTime.OffsetDateTime</code></td>
+<td>Full date-time with timezone offset (RFC 3339)</td>
+</tr>
+<tr>
+<td><code>date</code></td>
+<td><code>NodaTime.LocalDate</code></td>
+<td>Calendar date without time</td>
+</tr>
+<tr>
+<td><code>duration</code></td>
+<td><code>Corvus.Text.Json.Period</code></td>
+<td>ISO 8601 duration (implicit conversion from <code>NodaTime.Period</code>)</td>
+</tr>
+<tr>
+<td><code>uri</code></td>
+<td><code>Utf8UriValue</code> → <code>Utf8Uri</code></td>
+<td>Absolute URI (RFC 3986); zero-allocation component access</td>
+</tr>
+<tr>
+<td><code>uri-reference</code></td>
+<td><code>Utf8UriReferenceValue</code> → <code>Utf8UriReference</code></td>
+<td>Absolute or relative URI (RFC 3986)</td>
+</tr>
+<tr>
+<td><code>iri</code></td>
+<td><code>Utf8IriValue</code> → <code>Utf8Iri</code></td>
+<td>Absolute IRI with Unicode support (RFC 3987)</td>
+</tr>
+<tr>
+<td><code>iri-reference</code></td>
+<td><code>Utf8IriReferenceValue</code> → <code>Utf8IriReference</code></td>
+<td>Absolute or relative IRI (RFC 3987)</td>
+</tr>
+<tr>
+<td><code>uuid</code></td>
+<td><code>System.Guid</code></td>
+<td>Implicit conversion to <code>Guid</code></td>
+</tr>
+<tr>
+<td><code>email</code></td>
+<td>String with email validation</td>
+<td>Access via explicit string conversion</td>
+</tr>
+</tbody>
+</table>
+<h2 id="uri-and-iri-types">URI and IRI Types</h2>
+<p>For <code>uri</code>, <code>uri-reference</code>, <code>iri</code>, and <code>iri-reference</code> formats, the generated type exposes two access patterns:</p>
+<h3 id="explicit-cast-to-utf8value">Explicit cast to <code>Utf8*Value</code></h3>
+<p>The <code>Utf8UriValue</code>, <code>Utf8UriReferenceValue</code>, <code>Utf8IriValue</code>, and <code>Utf8IriReferenceValue</code> types are <code>IDisposable</code> wrappers that may rent memory from the <code>ArrayPool</code>. Always use them in a <code>using</code> declaration:</p>
+<pre><code class="language-csharp">using (Utf8UriValue uriValue = (Utf8UriValue)validEvent.Website)
+{
+    Utf8Uri uri = uriValue.Uri;
+    Console.WriteLine(Encoding.UTF8.GetString(uri.Scheme));    // &quot;https&quot;
+    Console.WriteLine(Encoding.UTF8.GetString(uri.Host));      // &quot;example.com&quot;
+    Console.WriteLine(Encoding.UTF8.GetString(uri.Path));      // &quot;/conference&quot;
+    Console.WriteLine(Encoding.UTF8.GetString(uri.Query));     // &quot;year=2025&quot;
+    Console.WriteLine(Encoding.UTF8.GetString(uri.Fragment));  // &quot;schedule&quot;
+}
+</code></pre>
+<p>The inner <code>Utf8Uri</code> (and its variants) is a <code>readonly ref struct</code> that provides zero-allocation access to all URI components via <code>ReadOnlySpan&lt;byte&gt;</code> properties:</p>
+<ul>
+<li><code>Scheme</code>, <code>Authority</code>, <code>User</code>, <code>Host</code>, <code>Port</code>, <code>Path</code>, <code>Query</code>, <code>Fragment</code></li>
+<li><code>HasScheme</code>, <code>HasAuthority</code>, <code>HasHost</code>, <code>HasPort</code>, <code>HasPath</code>, <code>HasQuery</code>, <code>HasFragment</code></li>
+<li><code>IsRelative</code>, <code>IsValid</code>, <code>IsDefaultPort</code>, <code>PortValue</code></li>
+<li><code>GetUri()</code> — converts to <code>System.Uri</code> (allocating)</li>
+<li><code>TryFormatDisplay()</code> / <code>TryFormatCanonical()</code> — write to a <code>Span&lt;byte&gt;</code> buffer</li>
+<li><code>TryApply()</code> — resolves a URI reference against this base URI (RFC 3986 §5.2)</li>
+<li><code>TryMakeRelative()</code> — creates a relative reference from two absolute URIs</li>
+</ul>
+<h3 id="trygetvalue-non-throwing-alternative">TryGetValue — non-throwing alternative</h3>
+<p>If the JSON value might not be a valid URI, use the non-throwing <code>TryGetValue</code> pattern:</p>
+<pre><code class="language-csharp">if (validEvent.Website.TryGetValue(out Utf8UriValue uriValue))
+{
+    // uriValue is valid — use it
+    uriValue.Dispose();
+}
+</code></pre>
+<h3 id="valueequals-zero-allocation-comparison">ValueEquals — zero-allocation comparison</h3>
+<p>For simple equality checks you don't need to parse into <code>Utf8UriValue</code> at all:</p>
+<pre><code class="language-csharp">bool match = validEvent.Website.ValueEquals(&quot;https://example.com/conference&quot;);
+</code></pre>
+<h2 id="the-schema">The Schema</h2>
+<p>File: <code>event.json</code></p>
+<pre><code class="language-json">{
+    &quot;title&quot;: &quot;Event&quot;,
+    &quot;type&quot;: &quot;object&quot;,
+    &quot;required&quot;: [&quot;name&quot;, &quot;startTime&quot;],
+    &quot;properties&quot;: {
+        &quot;name&quot;: { &quot;type&quot;: &quot;string&quot; },
+        &quot;startTime&quot;: { &quot;type&quot;: &quot;string&quot;, &quot;format&quot;: &quot;date-time&quot; },
+        &quot;date&quot;: { &quot;type&quot;: &quot;string&quot;, &quot;format&quot;: &quot;date&quot; },
+        &quot;duration&quot;: { &quot;type&quot;: &quot;string&quot;, &quot;format&quot;: &quot;duration&quot; },
+        &quot;website&quot;: { &quot;type&quot;: &quot;string&quot;, &quot;format&quot;: &quot;uri&quot; },
+        &quot;relatedLink&quot;: { &quot;type&quot;: &quot;string&quot;, &quot;format&quot;: &quot;uri-reference&quot; },
+        &quot;intlHomepage&quot;: { &quot;type&quot;: &quot;string&quot;, &quot;format&quot;: &quot;iri&quot; },
+        &quot;intlRelatedLink&quot;: { &quot;type&quot;: &quot;string&quot;, &quot;format&quot;: &quot;iri-reference&quot; },
+        &quot;eventId&quot;: { &quot;type&quot;: &quot;string&quot;, &quot;format&quot;: &quot;uuid&quot; },
+        &quot;hostEmail&quot;: { &quot;type&quot;: &quot;string&quot;, &quot;format&quot;: &quot;email&quot; }
+    }
+}
+</code></pre>
+<p>The generated .NET properties are:</p>
+<ul>
+<li><code>Name</code> — of type <code>Event.NameEntity</code> (a string type)</li>
+<li><code>StartTime</code> — of type <code>Event.StartTimeEntity</code> (a date-time-formatted string type, with implicit conversion to <code>NodaTime.OffsetDateTime</code>)</li>
+<li><code>Date</code> — of type <code>Event.DateEntity</code> (a date-formatted string type, with implicit conversion to <code>NodaTime.LocalDate</code>)</li>
+<li><code>Duration</code> — of type <code>Event.DurationEntity</code> (a duration-formatted string type, with implicit conversion to <code>Corvus.Text.Json.Period</code>)</li>
+<li><code>Website</code> — of type <code>Event.WebsiteEntity</code> (a URI-formatted string type, with explicit conversion to <code>Utf8UriValue</code>)</li>
+<li><code>RelatedLink</code> — of type <code>Event.RelatedLinkEntity</code> (a URI-reference-formatted string type, with explicit conversion to <code>Utf8UriReferenceValue</code>)</li>
+<li><code>IntlHomepage</code> — of type <code>Event.IntlHomepageEntity</code> (an IRI-formatted string type, with explicit conversion to <code>Utf8IriValue</code>)</li>
+<li><code>IntlRelatedLink</code> — of type <code>Event.IntlRelatedLinkEntity</code> (an IRI-reference-formatted string type, with explicit conversion to <code>Utf8IriReferenceValue</code>)</li>
+<li><code>EventId</code> — of type <code>Event.EventIdEntity</code> (a UUID-formatted string type, with implicit conversion to <code>System.Guid</code>)</li>
+<li><code>HostEmail</code> — of type <code>Event.HostEmailEntity</code> (an email-formatted string type)</li>
+</ul>
+<h2 id="generated-code-usage">Generated Code Usage</h2>
+<p><a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/v5/docs/ExampleRecipes/022-FormatValidation/Program.cs">Example code</a></p>
+<h3 id="parsing-and-accessing-strongly-typed-values">Parsing and accessing strongly-typed values</h3>
+<pre><code class="language-csharp">using ParsedJsonDocument&lt;Event&gt; validDoc = ParsedJsonDocument&lt;Event&gt;.Parse(validJson);
+Event validEvent = validDoc.RootElement;
+
+// Implicit conversion to NodaTime types (zero-allocation)
+OffsetDateTime startTime = validEvent.StartTime;
+LocalDate date = validEvent.Date;
+Corvus.Text.Json.Period duration = validEvent.Duration;
+
+// Implicit conversion to Guid for UUID
+Guid eventId = validEvent.EventId;
+string email = (string)validEvent.HostEmail;
+</code></pre>
+<h3 id="accessing-uriiri-components">Accessing URI/IRI components</h3>
+<pre><code class="language-csharp">// Explicit cast to Utf8UriValue — always use a using declaration
+using (Utf8UriValue uriValue = (Utf8UriValue)validEvent.Website)
+{
+    Utf8Uri uri = uriValue.Uri;
+    Console.WriteLine($&quot;Scheme: {Encoding.UTF8.GetString(uri.Scheme)}&quot;);  // &quot;https&quot;
+    Console.WriteLine($&quot;Host:   {Encoding.UTF8.GetString(uri.Host)}&quot;);    // &quot;example.com&quot;
+    Console.WriteLine($&quot;Path:   {Encoding.UTF8.GetString(uri.Path)}&quot;);    // &quot;/conference&quot;
+    Console.WriteLine($&quot;Full:   {uri.GetUri()}&quot;);                         // System.Uri
+}
+
+// URI-references can be relative (no scheme)
+using (Utf8UriReferenceValue uriRefValue = (Utf8UriReferenceValue)validEvent.RelatedLink)
+{
+    Console.WriteLine($&quot;IsRelative: {uriRefValue.UriReference.IsRelative}&quot;);
+}
+
+// IRIs allow Unicode characters (RFC 3987)
+using (Utf8IriValue iriValue = (Utf8IriValue)validEvent.IntlHomepage)
+{
+    Console.WriteLine($&quot;Host: {Encoding.UTF8.GetString(iriValue.Iri.Host)}&quot;);  // &quot;例え.jp&quot;
+}
+</code></pre>
+<h3 id="schema-validation-with-format-checking">Schema validation with format checking</h3>
+<pre><code class="language-csharp">// Fast boolean-only validation
+bool isValid = validEvent.EvaluateSchema();
+
+// Detailed validation with results collector
+using JsonSchemaResultsCollector collector =
+    JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
+
+malformedEvent.EvaluateSchema(collector);
+
+foreach (JsonSchemaResultsCollector.Result result in collector.EnumerateResults())
+{
+    if (!result.IsMatch)
+    {
+        Console.WriteLine($&quot;  Message:  {result.GetMessageText()}&quot;);
+        Console.WriteLine($&quot;  Path:     {result.GetDocumentEvaluationLocationText()}&quot;);
+        Console.WriteLine($&quot;  Schema:   {result.GetSchemaEvaluationLocationText()}&quot;);
+    }
+}
+</code></pre>
+<p>Format validation catches semantic errors — for example, <code>&quot;not-a-date-time&quot;</code> for a <code>date-time</code> field, <code>&quot;://missing-scheme&quot;</code> for a <code>uri</code> field, or <code>&quot;not-a-uuid&quot;</code> for a <code>uuid</code> field.</p>
+<h2 id="running-the-example">Running the Example</h2>
+<pre><code class="language-bash">cd docs/ExampleRecipes/022-FormatValidation
+dotnet run
+</code></pre>
+<h2 id="related-patterns">Related Patterns</h2>
+<ul>
+<li><a href="/Corvus.JsonSchema/pr-preview/pr-740/examples/data-object.html">001-DataObject</a> - Defining simple data objects with primitive and formatted properties</li>
+<li><a href="/Corvus.JsonSchema/pr-preview/pr-740/examples/data-object-validation.html">002-DataObjectValidation</a> - Adding validation constraints to data objects</li>
+</ul>
+        </div>
+    </main>
+</div>
+
+    </div>
+    <footer class="site-footer">
+    <div class="site-footer__inner">
+        <div class="site-footer__sponsor">
+            Sponsored by
+            <a href="https://endjin.com" target="_blank" rel="noopener noreferrer">endjin</a>
+        </div>
+        <ul class="site-footer__links" role="list">
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/pr-preview/pr-740/getting-started/index.html">Getting Started</a></li>
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/pr-preview/pr-740/docs/index.html">Documentation</a></li>
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/pr-preview/pr-740/examples/index.html">Examples</a></li>
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/pr-preview/pr-740/api/index.html">API</a></li>
+            <li><a class="site-footer__link" href="https://github.com/corvus-dotnet/Corvus.JsonSchema" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+            <li><a class="site-footer__link" href="https://www.nuget.org/packages?q=Corvus.Json" target="_blank" rel="noopener noreferrer">NuGet</a></li>
+        </ul>
+        <p class="site-footer__copyright">&copy; 2026 endjin Ltd.</p>
+    </div>
+</footer>
+
+    <!-- highlight.js for syntax highlighting (CSS targets .hljs-* classes) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/csharp.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/json.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/bash.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/xml.min.js" defer></script>
+    <script>document.addEventListener('DOMContentLoaded',()=>hljs.highlightAll())</script>
+    <script src="/Corvus.JsonSchema/pr-preview/pr-740/assets/js/main.js" defer></script>
+    <script src="/Corvus.JsonSchema/pr-preview/pr-740/assets/js/sidebar-search.js" defer></script>
+    
+</body>
+</html>
