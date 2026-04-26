@@ -1704,6 +1704,12 @@ public abstract partial class JsonDocument
 
                     currentRowIndex = GetArrayIndexElementUnsafe(currentRowIndex, targetArrayIndex);
                 }
+                else
+                {
+                    // Current element is a scalar — cannot navigate further.
+                    resultIndex = -1;
+                    return false;
+                }
             }
 
             resultIndex = currentRowIndex;

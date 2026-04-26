@@ -62,6 +62,24 @@ public readonly ref struct Utf8JsonPointer
     }
 
     /// <summary>
+    /// Returns an enumerator that yields the encoded reference tokens (segments) of this JSON Pointer.
+    /// </summary>
+    /// <returns>A <see cref="JsonPointerEncodedSegmentEnumerator"/> that yields each segment as a
+    /// <see cref="ReadOnlySpan{T}">ReadOnlySpan&lt;byte&gt;</see>. Escape sequences (<c>~0</c>, <c>~1</c>)
+    /// are preserved; use <see cref="DecodeSegment(ReadOnlySpan{byte}, Span{byte})"/> to decode them.</returns>
+    /// <remarks>
+    /// <para>
+    /// An empty pointer (root) yields zero segments. The pointer <c>"/"</c> yields a single empty segment
+    /// (the property whose name is the empty string). See <see cref="JsonPointerEncodedSegmentEnumerator"/>
+    /// for full enumeration semantics.
+    /// </para>
+    /// </remarks>
+    public JsonPointerEncodedSegmentEnumerator EnumerateEncodedSegments()
+    {
+        return new JsonPointerEncodedSegmentEnumerator(_jsonPointer);
+    }
+
+    /// <summary>
     /// Decodes a single JSON Pointer segment, unescaping <c>~1</c> to <c>/</c> and <c>~0</c> to <c>~</c>
     /// as specified by RFC 6901.
     /// </summary>

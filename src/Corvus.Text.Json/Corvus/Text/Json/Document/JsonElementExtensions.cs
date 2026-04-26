@@ -15,7 +15,7 @@ namespace Corvus.Text.Json;
 /// Extension methods for <see cref="IJsonElement"/>.
 /// </summary>
 [CLSCompliant(false)]
-public static class JsonElementExtensions
+public static partial class JsonElementExtensions
 {
     /// <summary>
     /// Gets a value indicating whether this value is not null.
