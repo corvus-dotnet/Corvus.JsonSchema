@@ -7,6 +7,7 @@
 // https://github.com/dotnet/runtime/blob/388a7c4814cb0d6e344621d017507b357902043a/LICENSE.TXT
 // </licensing>
 using System.Buffers;
+using System.Collections.Generic;
 using Corvus.Text.Json.Internal;
 
 namespace Corvus.Text.Json;
@@ -19,6 +20,8 @@ public class JsonWorkspace : IDisposable
     private static readonly JsonWriterOptions s_internalWriterOptions = new() { Indented = false };
 
     private IJsonDocument[] _documents;
+
+    private Dictionary<IJsonDocument, int>? _documentIndices;
 
     private int _length;
 
@@ -170,6 +173,7 @@ public class JsonWorkspace : IDisposable
         }
 
         _length = 0;
+        _documentIndices?.Clear();
         _generation++;
     }
 
@@ -249,12 +253,23 @@ public class JsonWorkspace : IDisposable
             return document.CachedWorkspaceDocumentIndex;
         }
 
-        // Linear scan fallback — fast for typical workspace sizes (< 16 documents).
-        for (int i = 0; i < _length; i++)
+        // When a dictionary exists (large workspace), use O(1) lookup.
+        if (_documentIndices is not null)
         {
-            if (ReferenceEquals(_documents[i], document))
+            if (_documentIndices.TryGetValue(document, out int dictIndex))
             {
-                return i;
+                return dictIndex;
+            }
+        }
+        else
+        {
+            // Linear scan for small workspaces (no dictionary yet).
+            for (int i = 0; i < _length; i++)
+            {
+                if (ReferenceEquals(_documents[i], document))
+                {
+                    return i;
+                }
             }
         }
 
@@ -269,6 +284,21 @@ public class JsonWorkspace : IDisposable
 
         int result = _length;
         _documents[_length++] = document;
+
+        // Lazily create the dictionary when the workspace grows beyond
+        // the size where linear scan is cheap.
+        if (_documentIndices is not null)
+        {
+            _documentIndices.Add(document, result);
+        }
+        else if (_length > 16)
+        {
+            _documentIndices = new Dictionary<IJsonDocument, int>(_length);
+            for (int i = 0; i < _length; i++)
+            {
+                _documentIndices.Add(_documents[i], i);
+            }
+        }
 
         // Cache the first workspace, or update when the same workspace advances generation.
         if (document.CachedWorkspace is null || ReferenceEquals(document.CachedWorkspace, this))
@@ -303,6 +333,7 @@ public class JsonWorkspace : IDisposable
         }
 
         _length = 0;
+        _documentIndices?.Clear();
         _generation++;
     }
 
@@ -317,6 +348,7 @@ public class JsonWorkspace : IDisposable
 
             Array.Clear(_documents, 0, _length);
             _length = -1;
+            _documentIndices?.Clear();
             _generation++;
             return;
         }
