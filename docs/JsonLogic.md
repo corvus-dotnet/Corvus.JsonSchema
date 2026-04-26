@@ -422,7 +422,7 @@ JsonLogicEvaluator evaluator = new(customOps);
 | `IsNullOrUndefined()` | True for JSON `null` or `Undefined` |
 | `ValueKind` | `JsonValueKind.Number` for doubles; the element's kind otherwise |
 
-When implementing operators that do arithmetic, prefer the double fast path and fall back to `BigNumber` for arbitrary-precision values:
+When implementing operators that do arithmetic, prefer the double fast path and fall back to `BigNumber` for arbitrary-precision values. The following example shows how the built-in `+` operator is implemented internally — custom operators can follow the same pattern:
 
 ```csharp
 using Corvus.Numerics;

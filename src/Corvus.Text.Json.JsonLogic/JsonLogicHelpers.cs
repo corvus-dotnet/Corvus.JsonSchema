@@ -786,9 +786,13 @@ public static class JsonLogicHelpers
     /// </summary>
     public static BigNumber CoerceToBigNumber(in JsonElement element)
     {
-        if (element.ValueKind == JsonValueKind.Number && BigNumber.TryParse(element.GetRawText(), out BigNumber result))
+        if (element.ValueKind == JsonValueKind.Number)
         {
-            return result;
+            using RawUtf8JsonString raw = JsonMarshal.GetRawUtf8Value(element);
+            if (BigNumber.TryParse(raw.Span, out BigNumber result))
+            {
+                return result;
+            }
         }
 
         if (element.ValueKind == JsonValueKind.True)
@@ -801,9 +805,13 @@ public static class JsonLogicHelpers
             return BigNumber.Zero;
         }
 
-        if (element.ValueKind == JsonValueKind.String && TryCoerceToNumber(element, out JsonElement numElem) && BigNumber.TryParse(numElem.GetRawText(), out BigNumber numResult))
+        if (element.ValueKind == JsonValueKind.String && TryCoerceToNumber(element, out JsonElement numElem))
         {
-            return numResult;
+            using RawUtf8JsonString raw = JsonMarshal.GetRawUtf8Value(numElem);
+            if (BigNumber.TryParse(raw.Span, out BigNumber result))
+            {
+                return result;
+            }
         }
 
         return BigNumber.Zero;
