@@ -2440,7 +2440,7 @@
     "Title": "JsonElementExtensions",
     "Description": "Extension methods for [`IJsonElement`](/api/v5/corvus-text-json-internal-ijsonelement.html).",
     "Keywords": "JsonElementExtensions class Corvus.Text.Json",
-    "Body": "Extension methods for [`IJsonElement`](/api/v5/corvus-text-json-internal-ijsonelement.html).\r\nIsNotNull: Gets a value indicating whether this value is not null.\r\nIsNotNullOrUndefined: Gets a value indicating whether this value is neither null nor undefined.\r\nIsNotUndefined: Gets a value indicating whether this value is not undefined.\r\nIsNull: Gets a value indicating whether this value is null.\r\nIsNullOrUndefined: Gets a value indicating whether this value is null or undefined.\r\nIsUndefined: Gets a value indicating whether this value is undefined."
+    "Body": "Extension methods for [`IJsonElement`](/api/v5/corvus-text-json-internal-ijsonelement.html).\r\nIsNotNull: Gets a value indicating whether this value is not null.\r\nIsNotNullOrUndefined: Gets a value indicating whether this value is neither null nor undefined.\r\nIsNotUndefined: Gets a value indicating whether this value is not undefined.\r\nIsNull: Gets a value indicating whether this value is null.\r\nIsNullOrUndefined: Gets a value indicating whether this value is null or undefined.\r\nIsUndefined: Gets a value indicating whether this value is undefined.\r\nTryResolvePointer: Tries to resolve the specified JSON Pointer (RFC 6901) against this element, returning the value at the target path if it exists.\r\nTryResolvePointer: Tries to resolve the specified JSON Pointer (RFC 6901) against this element, returning the value at the target path if it exists.\r\nTryResolvePointer: Tries to resolve the specified JSON Pointer (RFC 6901) against this element, returning the value at the target path if it exists."
   },
   {
     "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonelementextensions.isnotnull.html",
@@ -2483,6 +2483,13 @@
     "Description": "Gets a value indicating whether this value is undefined.",
     "Keywords": "JsonElementExtensions IsUndefined method Corvus.Text.Json",
     "Body": "Gets a value indicating whether this value is undefined."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonelementextensions.tryresolvepointer.html",
+    "Title": "JsonElementExtensions.TryResolvePointer",
+    "Description": "Tries to resolve the specified JSON Pointer (RFC 6901) against this element, returning the value at the target path if it exists.",
+    "Keywords": "JsonElementExtensions TryResolvePointer method Corvus.Text.Json",
+    "Body": "Tries to resolve the specified JSON Pointer (RFC 6901) against this element, returning the value at the target path if it exists. Tries to resolve the specified JSON Pointer (RFC 6901) against this element, returning the value at the target path if it exists. Tries to resolve the specified JSON Pointer (RFC 6901) against this element, returning the value at the target path if it exists."
   },
   {
     "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonelementforbooleanfalseschema.html",
@@ -2812,6 +2819,34 @@
     "Description": "Gets the path within the JSON where the exception was encountered.",
     "Keywords": "JsonException Path property Corvus.Text.Json",
     "Body": "Gets the path within the JSON where the exception was encountered."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonpointerencodedsegmentenumerator.html",
+    "Title": "JsonPointerEncodedSegmentEnumerator",
+    "Description": "A zero-allocation enumerator that yields the encoded reference tokens (segments) of a JSON Pointer as defined by RFC 6901.",
+    "Keywords": "JsonPointerEncodedSegmentEnumerator struct Corvus.Text.Json",
+    "Body": "A zero-allocation enumerator that yields the encoded reference tokens (segments) of a JSON Pointer as defined by RFC 6901.\r\nEach yielded [`ReadOnlySpan`](https://learn.microsoft.com/dotnet/api/system.readonlyspan-1) is an encoded segment: `~0` and `~1` escape sequences are preserved as-is. Callers that need decoded property names must pass each segment through [`DecodeSegment`](/api/v5/corvus-text-json-utf8jsonpointer.decodesegment.html). Enumeration semantics: - `\"\"` (empty pointer, root document) — yields zero segments. - `\"/\"` — yields one empty segment (the property whose name is the empty string). - `\"//\"` — yields two empty segments. - `\"/a/\"` — yields segments `\"a\"` and `\"\"`.\r\nCurrent: Gets the current encoded segment.\r\nGetEnumerator: Returns this instance as its own enumerator, enabling `foreach` usage.\r\nMoveNext: Advances the enumerator to the next encoded segment."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonpointerencodedsegmentenumerator.current.html",
+    "Title": "JsonPointerEncodedSegmentEnumerator.Current",
+    "Description": "Gets the current encoded segment.",
+    "Keywords": "JsonPointerEncodedSegmentEnumerator Current property Corvus.Text.Json",
+    "Body": "Gets the current encoded segment."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonpointerencodedsegmentenumerator.getenumerator.html",
+    "Title": "JsonPointerEncodedSegmentEnumerator.GetEnumerator",
+    "Description": "Returns this instance as its own enumerator, enabling `foreach` usage.",
+    "Keywords": "JsonPointerEncodedSegmentEnumerator GetEnumerator method Corvus.Text.Json",
+    "Body": "Returns this instance as its own enumerator, enabling `foreach` usage."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonpointerencodedsegmentenumerator.movenext.html",
+    "Title": "JsonPointerEncodedSegmentEnumerator.MoveNext",
+    "Description": "Advances the enumerator to the next encoded segment.",
+    "Keywords": "JsonPointerEncodedSegmentEnumerator MoveNext method Corvus.Text.Json",
+    "Body": "Advances the enumerator to the next encoded segment."
   },
   {
     "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonpredicate-t.html",
@@ -4771,7 +4806,7 @@
     "Title": "Utf8JsonPointer",
     "Description": "",
     "Keywords": "Utf8JsonPointer struct Corvus.Text.Json",
-    "Body": "IsValid: Gets a value indicating whether this is a valid IRI.\r\nTryCreateJsonPointer: Tries to create a new UTF-8 JSON Pointer from the specified UTF-8 bytes.\r\nTryResolve: Try to resolve the path specified by this JSON Pointer against the provided JSON element, returning the value at that path if it exists.\r\nDecodeSegment: Decodes a single JSON Pointer segment, unescaping `~1` to `/` and `~0` to `~` as specified by RFC 6901.\r\nTryGetLineAndOffset: Try to resolve the path specified by this JSON Pointer against the provided JSON element, returning the 1-based line number and character offset of the target element in the original source document."
+    "Body": "IsValid: Gets a value indicating whether this is a valid IRI.\r\nTryCreateJsonPointer: Tries to create a new UTF-8 JSON Pointer from the specified UTF-8 bytes.\r\nTryResolve: Try to resolve the path specified by this JSON Pointer against the provided JSON element, returning the value at that path if it exists.\r\nEnumerateEncodedSegments: Returns an enumerator that yields the encoded reference tokens (segments) of this JSON Pointer.\r\nDecodeSegment: Decodes a single JSON Pointer segment, unescaping `~1` to `/` and `~0` to `~` as specified by RFC 6901.\r\nTryGetLineAndOffset: Try to resolve the path specified by this JSON Pointer against the provided JSON element, returning the 1-based line number and character offset of the target element in the original source document."
   },
   {
     "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-utf8jsonpointer.isvalid.html",
@@ -4793,6 +4828,13 @@
     "Description": "Try to resolve the path specified by this JSON Pointer against the provided JSON element, returning the value at that path if it exists.",
     "Keywords": "Utf8JsonPointer TryResolve method Corvus.Text.Json",
     "Body": "Try to resolve the path specified by this JSON Pointer against the provided JSON element, returning the value at that path if it exists."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-utf8jsonpointer.enumerateencodedsegments.html",
+    "Title": "Utf8JsonPointer.EnumerateEncodedSegments",
+    "Description": "Returns an enumerator that yields the encoded reference tokens (segments) of this JSON Pointer.",
+    "Keywords": "Utf8JsonPointer EnumerateEncodedSegments method Corvus.Text.Json",
+    "Body": "Returns an enumerator that yields the encoded reference tokens (segments) of this JSON Pointer."
   },
   {
     "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-utf8jsonpointer.decodesegment.html",
@@ -11834,6 +11876,20 @@
     "Title": "RuleEvaluator.EndInvoke",
     "Description": "",
     "Keywords": "RuleEvaluator EndInvoke method Corvus.Text.Json.JsonLogic",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-patch-jsonmergepatchextensions.html",
+    "Title": "JsonMergePatchExtensions",
+    "Description": "Provides extension methods for applying RFC 7396 JSON Merge Patch operations.",
+    "Keywords": "JsonMergePatchExtensions class Corvus.Text.Json.Patch",
+    "Body": "Provides extension methods for applying RFC 7396 JSON Merge Patch operations."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-patch-jsonmergepatchextensions.applymergepatch.html",
+    "Title": "JsonMergePatchExtensions.ApplyMergePatch",
+    "Description": "",
+    "Keywords": "JsonMergePatchExtensions ApplyMergePatch method Corvus.Text.Json.Patch",
     "Body": ""
   },
   {
