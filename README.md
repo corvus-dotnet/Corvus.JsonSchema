@@ -14,7 +14,7 @@ High-performance, source-generated, strongly-typed C# models from JSON Schema �
 - **Pattern Matching** — Type-safe `Match()` for `oneOf`/`anyOf` discriminated unions with exhaustive dispatch.
 - **[JSONata](#jsonata)** — Full [JSONata](https://jsonata.org/) query and transformation language with 100% test-suite conformance. Interpreted and code-generated evaluation modes.
 - **[JMESPath](#jmespath)** — Full [JMESPath](https://jmespath.org/) query language with 100% conformance against the official test suite. Interpreted and code-generated evaluation modes.
-- **JsonLogic** — Complete [JsonLogic](https://jsonlogic.com/) rule engine for evaluating business rules against JSON data with interpreted and code-generated modes.
+- **[JsonLogic](#jsonlogic)** — Complete [JsonLogic](https://jsonlogic.com/) rule engine for evaluating business rules against JSON data with interpreted and code-generated modes.
 - **JSON Patch** — RFC 6902 JSON Patch with pooled-memory operations on `JsonElement`.
 - **[YAML](#yaml)** — High-performance YAML 1.2 to JSON converter with 100% yaml-test-suite conformance. Zero-allocation `ref struct` tokenizer.
 
@@ -129,6 +129,7 @@ Then open http://localhost:5000.
 - [Dynamic Schema Validation](docs/Validator.md)
 - [JSONata Query & Transformation](docs/Jsonata.md)
 - [JMESPath Query Language](docs/JMESPath.md)
+- [JsonLogic Rule Engine](docs/JsonLogic.md)
 - [YAML to JSON Converter](docs/Yaml.md)
 - [Migrating from V4](docs/MigratingFromV4ToV5.md)
 
@@ -205,6 +206,30 @@ Console.WriteLine(result); // {"WashingtonCities":"Bellevue, Olympia, Seattle"}
 ```
 
 See [JMESPath documentation](docs/JMESPath.md) for the full API, code generation, and performance benchmarks.
+
+## JsonLogic
+
+`Corvus.Text.Json.JsonLogic` implements [JsonLogic](https://jsonlogic.com/) — a standard for expressing business rules as JSON. Rules are portable, storable in databases, and safely evaluated without allowing arbitrary code execution. It supports all standard operators, plus extended numeric types (`BigNumber`) via custom operators.
+
+- **100% conformance** — passes the full [official JsonLogic test suite](https://jsonlogic.com/tests.json)
+- **70–98% faster** than [JsonEverything](https://json-everything.net/) across 19 benchmark scenarios with zero or near-zero allocations
+- **Code-generated evaluation** — source generator and CLI tool produce optimized static C#
+- **Zero-allocation hot path** — pooled workspace memory with `ArrayPool`-backed evaluation
+
+```csharp
+using Corvus.Text.Json.JsonLogic;
+
+JsonElement ruleElement = JsonElement.ParseValue(
+    """{"if": [{">":[{"var":"temp"}, 100]}, "too hot", "ok"]}"""u8);
+JsonElement data = JsonElement.ParseValue("""{"temp": 110}"""u8);
+
+JsonLogicRule rule = new(ruleElement);
+using JsonWorkspace workspace = JsonWorkspace.Create();
+JsonElement result = JsonLogicEvaluator.Default.Evaluate(rule, data, workspace);
+Console.WriteLine(result); // "too hot"
+```
+
+See [JsonLogic documentation](docs/JsonLogic.md) for the full API, code generation, and performance benchmarks.
 
 ## YAML
 
