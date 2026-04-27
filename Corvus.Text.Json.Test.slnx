@@ -76,8 +76,6 @@
     <Project Path="tests/Corvus.Text.Json.JsonLogic.Tests/Corvus.Text.Json.JsonLogic.Tests.csproj" />
     <Project Path="tests/Corvus.Text.Json.JMESPath.Tests/Corvus.Text.Json.JMESPath.Tests.csproj" />
     <Project Path="tests/Corvus.Text.Json.JsonPath.Tests/Corvus.Text.Json.JsonPath.Tests.csproj" />
-    <Project Path="tests/Corvus.Text.Json.JsonPath.CodeGeneration.Tests/Corvus.Text.Json.JsonPath.CodeGeneration.Tests.csproj" />
-    <Project Path="tests/Corvus.Text.Json.JsonPath.SourceGenerator.Tests/Corvus.Text.Json.JsonPath.SourceGenerator.Tests.csproj" />
     <Project Path="tests/Corvus.Text.Json.Patch.Tests/Corvus.Text.Json.Patch.Tests.csproj" />
   </Folder>
   <Folder Name="/v5/">
