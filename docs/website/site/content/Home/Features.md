@@ -31,3 +31,12 @@ Type-safe `Match()` for `oneOf`/`anyOf` discriminated unions with exhaustive del
 ## 🔧 JSON Operations
 
 [JSON Patch (RFC 6902)](https://datatracker.ietf.org/doc/html/rfc6902) with a fluent `PatchBuilder`, [JSON Merge Patch (RFC 7396)](https://datatracker.ietf.org/doc/html/rfc7396) for simple document merging, JSON diff for computing patches between documents, and [JSON Canonicalization (RFC 8785)](https://datatracker.ietf.org/doc/html/rfc8785) for deterministic serialization. All operations work with the zero-allocation mutable document infrastructure.
+
+## 🔍 Query Languages
+
+Four query and transformation languages for extracting, filtering, and reshaping JSON data — all with interpreted and source-generated evaluation modes:
+
+- **[JSONata](/docs/jsonata.html)** — Expressive, Turing-complete functional query and transformation language with 100% test-suite conformance. Up to 8× faster than Jsonata.Net.Native.
+- **[JMESPath](/docs/jmespath.html)** — Standardized query language with projections, filtering, slicing, and built-in functions. 100% conformance, up to 150× faster than JmesPath.Net.
+- **[JSONPath](/docs/jsonpath.html)** — IETF-standardized [RFC 9535](https://www.rfc-editor.org/rfc/rfc9535) query language with recursive descent, filters, and function extensions. 100% conformance, faster than JsonEverything with 13–16× less allocation.
+- **[JsonLogic](/docs/json-logic.html)** — Portable business rule engine for evaluating rules stored as JSON. 100% conformance, 70–98% faster than JsonEverything.

@@ -27,6 +27,8 @@ The markdown files in this directory are the source content for the website. The
 | [JsonCanonicalization.md](./JsonCanonicalization.md) | Docs — JSON Canonicalization (RFC 8785) |
 | [JsonLogic.md](./JsonLogic.md) | Docs — JsonLogic |
 | [Jsonata.md](./Jsonata.md) | Docs — JSONata |
+| [JMESPath.md](./JMESPath.md) | Docs — JMESPath |
+| [JsonPath.md](./JsonPath.md) | Docs — JSONPath |
 | [MigratingFromV4ToV5.md](./MigratingFromV4ToV5.md) | Docs — Migrating from V4 |
 | [UsingCopilotForMigration.md](./UsingCopilotForMigration.md) | Docs — Copilot Migration |
 | [MigrationAnalyzers.md](./MigrationAnalyzers.md) | Docs — Migration Analyzers |
@@ -55,6 +57,7 @@ The markdown files in this directory are the source content for the website. The
 - **[copilot/](./copilot/)** — Copilot migration instructions referenced by the migration guide
 - **[playground/](./playground/)** — Blazor WASM JSON Schema validation playground
 - **[playground-jsonata/](./playground-jsonata/)** — Blazor WASM JSONata expression playground
+- **[playground-jsonpath/](./playground-jsonpath/)** — Blazor WASM JSONPath query playground
 - **[playground-yaml/](./playground-yaml/)** — Blazor WASM YAML ↔ JSON conversion playground
 - **[V4/](./V4/)** — Legacy V4 documentation (for reference during migration back to Corvus.JsonSchema)
 - **[V4MigrationExample/](./V4MigrationExample/)** — Worked V4-to-V5 migration example

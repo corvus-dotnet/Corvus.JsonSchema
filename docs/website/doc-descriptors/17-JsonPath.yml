@@ -1,0 +1,3 @@
+source: JsonPath.md
+navTitle: "JSONPath Query Language"
+description: "Query and extract values from JSON documents using the JSONPath query language (RFC 9535). Supports interpreted evaluation, Roslyn source generator, and CLI code generation with zero-allocation evaluation."

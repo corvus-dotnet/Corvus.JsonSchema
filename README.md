@@ -15,6 +15,7 @@ High-performance, source-generated, strongly-typed C# models from JSON Schema �
 - **[JSONata](#jsonata)** — Full [JSONata](https://jsonata.org/) query and transformation language with 100% test-suite conformance. Interpreted and code-generated evaluation modes.
 - **[JMESPath](#jmespath)** — Full [JMESPath](https://jmespath.org/) query language with 100% conformance against the official test suite. Interpreted and code-generated evaluation modes.
 - **[JsonLogic](#jsonlogic)** — Complete [JsonLogic](https://jsonlogic.com/) rule engine for evaluating business rules against JSON data with interpreted and code-generated modes.
+- **[JSONPath](#jsonpath)** — Full [JSONPath (RFC 9535)](https://www.rfc-editor.org/rfc/rfc9535) query language with 100% conformance against the official compliance test suite. Interpreted and code-generated evaluation modes.
 - **JSON Pointer** — RFC 6901 JSON Pointer for navigating and resolving paths within JSON documents.
 - **JSON Patch, Merge Patch & Diff** — RFC 6902 JSON Patch, RFC 7396 Merge Patch, and diff with zero-allocation operations on `JsonElement`.
 - **JSON Canonicalization** — RFC 8785 JSON Canonicalization Scheme (JCS) for deterministic serialization. Zero heap allocation.
@@ -74,6 +75,8 @@ Console.WriteLine(root.ToString());
 | **Corvus.Text.Json.JMESPath.SourceGenerator** | Roslyn source generator for compile-time JMESPath code generation. |
 | **Corvus.Text.Json.JsonLogic** | JsonLogic rule engine — interpreted runtime evaluator. |
 | **Corvus.Text.Json.JsonLogic.SourceGenerator** | Roslyn source generator for compile-time JsonLogic code generation. |
+| **Corvus.Text.Json.JsonPath** | JSONPath (RFC 9535) query language — interpreted runtime evaluator. |
+| **Corvus.Text.Json.JsonPath.SourceGenerator** | Roslyn source generator for compile-time JSONPath code generation. |
 | **Corvus.Text.Json.Patch** | RFC 6902 JSON Patch, RFC 7396 Merge Patch, and diff. |
 | **Corvus.Text.Json.Yaml** | YAML 1.2 to JSON converter with Corvus document model integration. |
 | **Corvus.Yaml.SystemTextJson** | YAML 1.2 to JSON converter using only System.Text.Json (no Corvus dependency). |
@@ -131,6 +134,7 @@ Then open http://localhost:5000.
 - [Dynamic Schema Validation](docs/Validator.md)
 - [JSONata Query & Transformation](docs/Jsonata.md)
 - [JMESPath Query Language](docs/JMESPath.md)
+- [JSONPath Query Language](docs/JsonPath.md)
 - [JsonLogic Rule Engine](docs/JsonLogic.md)
 - [JSON Patch, Merge Patch & Diff](docs/JsonPatch.md)
 - [JSON Canonicalization (RFC 8785)](docs/JsonCanonicalization.md)
@@ -234,6 +238,26 @@ Console.WriteLine(result); // "too hot"
 ```
 
 See [JsonLogic documentation](docs/JsonLogic.md) for the full API, code generation, and performance benchmarks.
+
+## JSONPath
+
+`Corvus.Text.Json.JsonPath` implements [JSONPath (RFC 9535)](https://www.rfc-editor.org/rfc/rfc9535) — an IETF-standardized query language for extracting values from JSON documents. It supports property access, wildcards, array slicing, filter expressions with comparisons and logical operators, recursive descent, and function extensions.
+
+- **100% conformance** — passes all 723 tests in the official [JSONPath Compliance Test Suite](https://github.com/jsonpath-standard/jsonpath-compliance-test-suite)
+- **Faster than JsonEverything** on 5 of 6 benchmark scenarios with 13–16× less memory allocation
+- **Code-generated evaluation** — an optional source generator and CLI tool produce optimized static C# for expressions known at build time
+- **Zero-allocation hot path** — stack-allocated result buffers with `ArrayPool` overflow
+
+```csharp
+using Corvus.Text.Json.JsonPath;
+
+JsonElement result = JsonPathEvaluator.Default.Query(
+    "$.store.book[?@.price<10].title",
+    JsonElement.ParseValue("""{"store":{"book":[{"title":"A","price":8.95},{"title":"B","price":12.99}]}}"""u8));
+// result: ["A"]
+```
+
+See [JSONPath documentation](docs/JsonPath.md) for the full API, code generation, and performance benchmarks.
 
 ## YAML
 
