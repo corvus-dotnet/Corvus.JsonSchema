@@ -3,7 +3,6 @@
 // </copyright>
 
 using System.Buffers;
-using System.Collections.Generic;
 
 namespace Corvus.Text.Json.Canonicalization;
 
@@ -189,8 +188,9 @@ public static class JsonCanonicalizer
                     i++;
                 }
 
-                // Sort indices by property name using UTF-16 code unit ordinal comparison
-                Array.Sort(indices, 0, count, Utf16MemoryIndexComparer.Create(utf16Names));
+                // Sort indices by property name using UTF-16 code unit ordinal comparison.
+                // Insertion sort avoids IComparer<T> heap allocation; optimal for small N (object property counts).
+                SortIndicesByUtf16Name(indices.AsSpan(0, count), utf16Names);
 
                 // Check for duplicate property names (I-JSON requirement)
                 for (int j = 1; j < count; j++)
@@ -412,19 +412,27 @@ public static class JsonCanonicalizer
     }
 
     /// <summary>
-    /// Compares indices by their corresponding UTF-16 char memory using ordinal comparison.
+    /// Sorts indices by their corresponding UTF-16 property names using insertion sort.
     /// </summary>
-    private sealed class Utf16MemoryIndexComparer : IComparer<int>
+    /// <remarks>
+    /// Insertion sort is used instead of <c>Array.Sort</c> with an <c>IComparer&lt;T&gt;</c>
+    /// to avoid the comparer heap allocation. For typical object property counts
+    /// (small N), insertion sort is both faster and allocation-free.
+    /// </remarks>
+    private static void SortIndicesByUtf16Name(Span<int> indices, ReadOnlyMemory<char>[] names)
     {
-        private readonly ReadOnlyMemory<char>[] names;
-
-        private Utf16MemoryIndexComparer(ReadOnlyMemory<char>[] names)
+        for (int i = 1; i < indices.Length; i++)
         {
-            this.names = names;
+            int key = indices[i];
+            ReadOnlySpan<char> keyName = names[key].Span;
+            int j = i - 1;
+            while (j >= 0 && names[indices[j]].Span.SequenceCompareTo(keyName) > 0)
+            {
+                indices[j + 1] = indices[j];
+                j--;
+            }
+
+            indices[j + 1] = key;
         }
-
-        public static Utf16MemoryIndexComparer Create(ReadOnlyMemory<char>[] names) => new(names);
-
-        public int Compare(int x, int y) => this.names[x].Span.SequenceCompareTo(this.names[y].Span);
     }
 }
