@@ -30,13 +30,13 @@ public class BenchmarkArraySlice : JsonPathBenchmarkBase
     }
 
     /// <summary>
-    /// Evaluate using Corvus JSONPath runtime.
+    /// Evaluate using Corvus JSONPath runtime (zero-alloc node query).
     /// </summary>
     [Benchmark]
-    public void Corvus_RT()
+    public int Corvus_RT()
     {
-        using JsonWorkspace workspace = JsonWorkspace.Create();
-        JsonPathEvaluator.Default.Query(this.Expression, this.CorvusData, workspace);
+        using JsonPathResult result = JsonPathEvaluator.Default.QueryNodes(this.Expression, this.CorvusData);
+        return result.Count;
     }
 
     /// <summary>

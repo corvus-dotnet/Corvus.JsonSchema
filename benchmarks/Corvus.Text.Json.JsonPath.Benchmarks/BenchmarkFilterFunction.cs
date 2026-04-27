@@ -22,13 +22,13 @@ public class BenchmarkFilterFunction : JsonPathBenchmarkBase
     public void GlobalSetup() => this.Setup(ExpressionText, BookstoreJson);
 
     /// <summary>
-    /// Evaluate using Corvus JSONPath runtime.
+    /// Evaluate using Corvus JSONPath runtime (zero-alloc node query).
     /// </summary>
     [Benchmark(Baseline = true)]
-    public void Corvus_RT()
+    public int Corvus_RT()
     {
-        using JsonWorkspace workspace = JsonWorkspace.Create();
-        JsonPathEvaluator.Default.Query(this.Expression, this.CorvusData, workspace);
+        using JsonPathResult result = JsonPathEvaluator.Default.QueryNodes(this.Expression, this.CorvusData);
+        return result.Count;
     }
 
     /// <summary>

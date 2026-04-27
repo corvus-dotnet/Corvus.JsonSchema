@@ -58,6 +58,35 @@ public static class JsonPathCodeGenHelpers
     }
 
     /// <summary>
+    /// Builds a JSON array from a read-only span of elements.
+    /// </summary>
+    /// <param name="nodes">The source span of elements.</param>
+    /// <param name="workspace">The workspace for intermediate document allocation.</param>
+    /// <returns>A JSON array element.</returns>
+    public static JsonElement BuildArrayFromSpan(ReadOnlySpan<JsonElement> nodes, JsonWorkspace workspace)
+    {
+        if (nodes.Length == 0)
+        {
+            return EmptyArrayElement;
+        }
+
+        JsonPathSequenceBuilder builder = default;
+        try
+        {
+            for (int i = 0; i < nodes.Length; i++)
+            {
+                builder.Add(nodes[i]);
+            }
+
+            return builder.ToElement(workspace);
+        }
+        finally
+        {
+            builder.ReturnArray();
+        }
+    }
+
+    /// <summary>
     /// Builds a JSON array from the first <paramref name="count"/> elements of
     /// <paramref name="nodes"/>.
     /// </summary>

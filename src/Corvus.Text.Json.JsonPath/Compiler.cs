@@ -13,85 +13,95 @@ namespace Corvus.Text.Json.JsonPath;
 /// <summary>
 /// Compiles JSONPath expression strings into delegate trees for efficient evaluation.
 /// </summary>
-internal static partial class Compiler
+internal static class Compiler
 {
     /// <summary>
-    /// Compiles a JSONPath expression string into an evaluation delegate.
+    /// Compiles a JSONPath expression string into a <see cref="CompiledJsonPath"/>.
     /// </summary>
     /// <param name="expression">The JSONPath expression.</param>
-    /// <returns>A compiled evaluation delegate.</returns>
-    public static JsonPathEval Compile(string expression)
+    /// <returns>A compiled query that can be executed against JSON data.</returns>
+    public static CompiledJsonPath Compile(string expression)
     {
         byte[] utf8 = Encoding.UTF8.GetBytes(expression);
         return Compile(utf8);
     }
 
     /// <summary>
-    /// Compiles a UTF-8 JSONPath expression into an evaluation delegate.
+    /// Compiles a UTF-8 JSONPath expression into a <see cref="CompiledJsonPath"/>.
     /// </summary>
     /// <param name="utf8Expression">The UTF-8 encoded JSONPath expression.</param>
-    /// <returns>A compiled evaluation delegate.</returns>
-    public static JsonPathEval Compile(byte[] utf8Expression)
+    /// <returns>A compiled query that can be executed against JSON data.</returns>
+    public static CompiledJsonPath Compile(byte[] utf8Expression)
     {
         QueryNode ast = Parser.Parse(utf8Expression);
-        return CompileQuery(ast);
+
+        if (ast.Segments.Length == 0)
+        {
+            return new CompiledJsonPath(null);
+        }
+
+        SegmentEval[] pipeline = new SegmentEval[ast.Segments.Length];
+        for (int i = 0; i < ast.Segments.Length; i++)
+        {
+            pipeline[i] = CompileSegment(ast.Segments[i]);
+        }
+
+        return new CompiledJsonPath(pipeline);
     }
 
-    private static JsonPathEval CompileQuery(QueryNode query)
+    /// <summary>
+    /// A compiled JSONPath query. Holds the segment pipeline and provides
+    /// zero-allocation execution via <see cref="ExecuteNodes"/>.
+    /// </summary>
+    internal sealed class CompiledJsonPath
     {
-        if (query.Segments.Length == 0)
+        private readonly SegmentEval[]? _pipeline;
+
+        internal CompiledJsonPath(SegmentEval[]? pipeline) => _pipeline = pipeline;
+
+        /// <summary>
+        /// Executes the query, writing matched nodes into <paramref name="result"/>.
+        /// </summary>
+        internal void ExecuteNodes(in JsonElement root, ref JsonPathResult result)
         {
-            return static (in JsonElement root, JsonWorkspace workspace) =>
+            if (_pipeline is null)
             {
-                return JsonPathCodeGenHelpers.SingletonArray(root, workspace);
-            };
-        }
+                result.Append(root);
+                return;
+            }
 
-        SegmentEval[] pipeline = new SegmentEval[query.Segments.Length];
-        for (int i = 0; i < query.Segments.Length; i++)
-        {
-            pipeline[i] = CompileSegment(query.Segments[i]);
-        }
-
-        return (in JsonElement root, JsonWorkspace workspace) =>
-        {
-            JsonElement[] a = ArrayPool<JsonElement>.Shared.Rent(16);
-            JsonElement[] b = ArrayPool<JsonElement>.Shared.Rent(16);
-            int aCount = 1;
-            a[0] = root;
+            // Internal ping-pong buffer backed by ArrayPool so it is safe
+            // to return to the caller via the ref parameter after swapping.
+            JsonPathResult b = JsonPathResult.CreatePooled(16);
+            result.Append(root);
 
             try
             {
-                for (int i = 0; i < pipeline.Length; i++)
+                for (int i = 0; i < _pipeline.Length; i++)
                 {
-                    int bCount = 0;
-                    pipeline[i](root, a, aCount, ref b, ref bCount, workspace);
+                    b.Clear();
+                    _pipeline[i](root, ref result, ref b);
 
-                    if (bCount == 0)
+                    if (b.Count == 0)
                     {
-                        return JsonPathCodeGenHelpers.EmptyArrayElement;
+                        result.Clear();
+                        return;
                     }
 
-                    (a, b) = (b, a);
-                    aCount = bCount;
+                    SwapResults(ref result, ref b);
                 }
-
-                return JsonPathCodeGenHelpers.BuildArray(a, aCount, workspace);
             }
             finally
             {
-                a.AsSpan(0, Math.Min(aCount, a.Length)).Clear();
-                ArrayPool<JsonElement>.Shared.Return(a);
-                ArrayPool<JsonElement>.Shared.Return(b, clearArray: true);
+                b.Dispose();
             }
-        };
+        }
     }
 
-    private delegate void SegmentEval(
+    internal delegate void SegmentEval(
         in JsonElement root,
-        JsonElement[] input, int inputCount,
-        ref JsonElement[] output, ref int outputCount,
-        JsonWorkspace workspace);
+        ref JsonPathResult input,
+        ref JsonPathResult output);
 
     private static SegmentEval CompileSegment(SegmentNode segment)
     {
@@ -103,46 +113,44 @@ internal static partial class Compiler
 
         if (segment is DescendantSegmentNode)
         {
-            return (in JsonElement root, JsonElement[] input, int inputCount,
-                    ref JsonElement[] output, ref int outputCount, JsonWorkspace workspace) =>
+            return (in JsonElement root, ref JsonPathResult input, ref JsonPathResult output) =>
             {
-                EvalDescendantSegment(root, input, inputCount, selectors, ref output, ref outputCount, workspace);
+                EvalDescendantSegment(root, ref input, selectors, ref output);
             };
         }
 
-        return (in JsonElement root, JsonElement[] input, int inputCount,
-                ref JsonElement[] output, ref int outputCount, JsonWorkspace workspace) =>
+        return (in JsonElement root, ref JsonPathResult input, ref JsonPathResult output) =>
         {
-            EvalChildSegment(root, input, inputCount, selectors, ref output, ref outputCount, workspace);
+            EvalChildSegment(root, ref input, selectors, ref output);
         };
     }
 
     private static void EvalChildSegment(
         in JsonElement root,
-        JsonElement[] input, int inputCount,
+        ref JsonPathResult input,
         SelectorEval[] selectors,
-        ref JsonElement[] output, ref int outputCount,
-        JsonWorkspace workspace)
+        ref JsonPathResult output)
     {
-        for (int i = 0; i < inputCount; i++)
+        ReadOnlySpan<JsonElement> inputNodes = input.Nodes;
+        for (int i = 0; i < inputNodes.Length; i++)
         {
             for (int j = 0; j < selectors.Length; j++)
             {
-                selectors[j](root, input[i], ref output, ref outputCount, workspace);
+                selectors[j](root, inputNodes[i], ref output);
             }
         }
     }
 
     private static void EvalDescendantSegment(
         in JsonElement root,
-        JsonElement[] input, int inputCount,
+        ref JsonPathResult input,
         SelectorEval[] selectors,
-        ref JsonElement[] output, ref int outputCount,
-        JsonWorkspace workspace)
+        ref JsonPathResult output)
     {
-        for (int i = 0; i < inputCount; i++)
+        ReadOnlySpan<JsonElement> inputNodes = input.Nodes;
+        for (int i = 0; i < inputNodes.Length; i++)
         {
-            VisitDescendants(root, input[i], selectors, ref output, ref outputCount, workspace);
+            VisitDescendants(root, inputNodes[i], selectors, ref output);
         }
     }
 
@@ -150,8 +158,7 @@ internal static partial class Compiler
         in JsonElement root,
         in JsonElement node,
         SelectorEval[] selectors,
-        ref JsonElement[] output, ref int outputCount,
-        JsonWorkspace workspace)
+        ref JsonPathResult output)
     {
         // Iterative DFS with an explicit stack to avoid stack overflow on deep documents.
         int stackCapacity = 64;
@@ -168,10 +175,9 @@ internal static partial class Compiler
 
                 for (int i = 0; i < selectors.Length; i++)
                 {
-                    selectors[i](root, current, ref output, ref outputCount, workspace);
+                    selectors[i](root, current, ref output);
                 }
 
-                // Push children in reverse order so they are visited in document order
                 if (current.ValueKind == JsonValueKind.Object)
                 {
                     int childStart = stackSize;
@@ -232,22 +238,18 @@ internal static partial class Compiler
         }
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static void SwapResults(ref JsonPathResult a, ref JsonPathResult b)
+    {
+        JsonPathResult tmp = a;
+        a = b;
+        b = tmp;
+    }
+
     private delegate void SelectorEval(
         in JsonElement root,
         in JsonElement node,
-        ref JsonElement[] output, ref int count,
-        JsonWorkspace workspace);
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static void AddToOutput(ref JsonElement[] output, ref int count, in JsonElement value)
-    {
-        if (count == output.Length)
-        {
-            JsonPathCodeGenHelpers.Grow(ref output);
-        }
-
-        output[count++] = value;
-    }
+        ref JsonPathResult output);
 
     private static SelectorEval CompileSelector(SelectorNode selector)
     {
@@ -265,32 +267,32 @@ internal static partial class Compiler
     private static SelectorEval CompileNameSelector(NameSelectorNode name)
     {
         byte[] utf8Name = name.Name;
-        return (in JsonElement root, in JsonElement node, ref JsonElement[] output, ref int count, JsonWorkspace workspace) =>
+        return (in JsonElement root, in JsonElement node, ref JsonPathResult output) =>
         {
             if (node.ValueKind == JsonValueKind.Object &&
                 node.TryGetProperty(utf8Name, out JsonElement value))
             {
-                AddToOutput(ref output, ref count, value);
+                output.Append(value);
             }
         };
     }
 
     private static SelectorEval CompileWildcardSelector()
     {
-        return static (in JsonElement root, in JsonElement node, ref JsonElement[] output, ref int count, JsonWorkspace workspace) =>
+        return static (in JsonElement root, in JsonElement node, ref JsonPathResult output) =>
         {
             if (node.ValueKind == JsonValueKind.Object)
             {
                 foreach (JsonProperty<JsonElement> prop in node.EnumerateObject())
                 {
-                    AddToOutput(ref output, ref count, prop.Value);
+                    output.Append(prop.Value);
                 }
             }
             else if (node.ValueKind == JsonValueKind.Array)
             {
                 foreach (JsonElement item in node.EnumerateArray())
                 {
-                    AddToOutput(ref output, ref count, item);
+                    output.Append(item);
                 }
             }
         };
@@ -299,7 +301,7 @@ internal static partial class Compiler
     private static SelectorEval CompileIndexSelector(IndexSelectorNode idx)
     {
         long index = idx.Index;
-        return (in JsonElement root, in JsonElement node, ref JsonElement[] output, ref int count, JsonWorkspace workspace) =>
+        return (in JsonElement root, in JsonElement node, ref JsonPathResult output) =>
         {
             if (node.ValueKind != JsonValueKind.Array)
             {
@@ -310,7 +312,7 @@ internal static partial class Compiler
             long resolved = index >= 0 ? index : len + index;
             if (resolved >= 0 && resolved < len)
             {
-                AddToOutput(ref output, ref count, node[(int)resolved]);
+                output.Append(node[(int)resolved]);
             }
         };
     }
@@ -321,7 +323,7 @@ internal static partial class Compiler
         long? endVal = slice.End;
         long? stepVal = slice.Step;
 
-        return (in JsonElement root, in JsonElement node, ref JsonElement[] output, ref int count, JsonWorkspace workspace) =>
+        return (in JsonElement root, in JsonElement node, ref JsonPathResult output) =>
         {
             if (node.ValueKind != JsonValueKind.Array)
             {
@@ -349,7 +351,7 @@ internal static partial class Compiler
 
                 for (long i = lower; i < upper; i += s)
                 {
-                    AddToOutput(ref output, ref count, node[(int)i]);
+                    output.Append(node[(int)i]);
                 }
             }
             else
@@ -362,7 +364,7 @@ internal static partial class Compiler
 
                 for (long i = upper; i > lower; i += s)
                 {
-                    AddToOutput(ref output, ref count, node[(int)i]);
+                    output.Append(node[(int)i]);
                 }
             }
         };
@@ -378,15 +380,15 @@ internal static partial class Compiler
     {
         FilterEval compiledFilter = CompileFilterExpression(filter.Expression);
 
-        return (in JsonElement root, in JsonElement node, ref JsonElement[] output, ref int count, JsonWorkspace workspace) =>
+        return (in JsonElement root, in JsonElement node, ref JsonPathResult output) =>
         {
             if (node.ValueKind == JsonValueKind.Array)
             {
                 foreach (JsonElement item in node.EnumerateArray())
                 {
-                    if (EvalFilterAsTruthy(compiledFilter, root, item, workspace))
+                    if (EvalFilterAsTruthy(compiledFilter, root, item))
                     {
-                        AddToOutput(ref output, ref count, item);
+                        output.Append(item);
                     }
                 }
             }
@@ -394,16 +396,16 @@ internal static partial class Compiler
             {
                 foreach (JsonProperty<JsonElement> prop in node.EnumerateObject())
                 {
-                    if (EvalFilterAsTruthy(compiledFilter, root, prop.Value, workspace))
+                    if (EvalFilterAsTruthy(compiledFilter, root, prop.Value))
                     {
-                        AddToOutput(ref output, ref count, prop.Value);
+                        output.Append(prop.Value);
                     }
                 }
             }
         };
     }
 
-    private delegate FilterResult FilterEval(in JsonElement root, in JsonElement current, JsonWorkspace workspace);
+    private delegate FilterResult FilterEval(in JsonElement root, in JsonElement current);
 
     private readonly struct FilterResult
     {
@@ -472,9 +474,9 @@ internal static partial class Compiler
         }
     }
 
-    private static bool EvalFilterAsTruthy(FilterEval filter, in JsonElement root, in JsonElement current, JsonWorkspace workspace)
+    private static bool EvalFilterAsTruthy(FilterEval filter, in JsonElement root, in JsonElement current)
     {
-        FilterResult result = filter(root, current, workspace);
+        FilterResult result = filter(root, current);
         return result.AsTruthy();
     }
 
@@ -499,15 +501,15 @@ internal static partial class Compiler
         FilterEval left = CompileFilterExpression(and.Left);
         FilterEval right = CompileFilterExpression(and.Right);
 
-        return (in JsonElement root, in JsonElement current, JsonWorkspace workspace) =>
+        return (in JsonElement root, in JsonElement current) =>
         {
-            FilterResult l = left(root, current, workspace);
+            FilterResult l = left(root, current);
             if (!l.AsTruthy())
             {
                 return FilterResult.FromLogical(false);
             }
 
-            FilterResult r = right(root, current, workspace);
+            FilterResult r = right(root, current);
             return FilterResult.FromLogical(r.AsTruthy());
         };
     }
@@ -517,15 +519,15 @@ internal static partial class Compiler
         FilterEval left = CompileFilterExpression(or.Left);
         FilterEval right = CompileFilterExpression(or.Right);
 
-        return (in JsonElement root, in JsonElement current, JsonWorkspace workspace) =>
+        return (in JsonElement root, in JsonElement current) =>
         {
-            FilterResult l = left(root, current, workspace);
+            FilterResult l = left(root, current);
             if (l.AsTruthy())
             {
                 return FilterResult.FromLogical(true);
             }
 
-            FilterResult r = right(root, current, workspace);
+            FilterResult r = right(root, current);
             return FilterResult.FromLogical(r.AsTruthy());
         };
     }
@@ -534,9 +536,9 @@ internal static partial class Compiler
     {
         FilterEval operand = CompileFilterExpression(not.Operand);
 
-        return (in JsonElement root, in JsonElement current, JsonWorkspace workspace) =>
+        return (in JsonElement root, in JsonElement current) =>
         {
-            FilterResult result = operand(root, current, workspace);
+            FilterResult result = operand(root, current);
             return FilterResult.FromLogical(!result.AsTruthy());
         };
     }
@@ -547,13 +549,11 @@ internal static partial class Compiler
         FilterEval right = CompileFilterExpression(cmp.Right);
         int op = (int)cmp.Op;
 
-        return (in JsonElement root, in JsonElement current, JsonWorkspace workspace) =>
+        return (in JsonElement root, in JsonElement current) =>
         {
-            FilterResult l = left(root, current, workspace).AsComparable();
-            FilterResult r = right(root, current, workspace).AsComparable();
+            FilterResult l = left(root, current).AsComparable();
+            FilterResult r = right(root, current).AsComparable();
 
-            // When Kind == Nothing, Value is default(JsonElement) with ValueKind == Undefined,
-            // which the shared CompareValues treats as "Nothing".
             return FilterResult.FromLogical(
                 JsonPathCodeGenHelpers.CompareValues(l.Value, r.Value, op));
         };
@@ -571,44 +571,41 @@ internal static partial class Compiler
 
         if (pipeline.Length == 0)
         {
-            return (in JsonElement root, in JsonElement current, JsonWorkspace workspace) =>
+            return (in JsonElement root, in JsonElement current) =>
             {
                 JsonElement target = isRelative ? current : root;
                 return FilterResult.FromNodes(1, target);
             };
         }
 
-        return (in JsonElement root, in JsonElement current, JsonWorkspace workspace) =>
+        return (in JsonElement root, in JsonElement current) =>
         {
             JsonElement target = isRelative ? current : root;
-            JsonElement[] a = ArrayPool<JsonElement>.Shared.Rent(16);
-            JsonElement[] b = ArrayPool<JsonElement>.Shared.Rent(16);
-            int aCount = 1;
-            a[0] = target;
+            JsonPathResult a = JsonPathResult.CreatePooled(16);
+            JsonPathResult b = JsonPathResult.CreatePooled(16);
+            a.Append(target);
 
             try
             {
                 for (int i = 0; i < pipeline.Length; i++)
                 {
-                    int bCount = 0;
-                    pipeline[i](root, a, aCount, ref b, ref bCount, workspace);
+                    b.Clear();
+                    pipeline[i](root, ref a, ref b);
 
-                    if (bCount == 0)
+                    if (b.Count == 0)
                     {
                         return FilterResult.FromNodes(0, default);
                     }
 
-                    (a, b) = (b, a);
-                    aCount = bCount;
+                    SwapResults(ref a, ref b);
                 }
 
-                return FilterResult.FromNodes(aCount, a[0]);
+                return FilterResult.FromNodes(a.Count, a[0]);
             }
             finally
             {
-                a.AsSpan(0, Math.Min(aCount, a.Length)).Clear();
-                ArrayPool<JsonElement>.Shared.Return(a);
-                ArrayPool<JsonElement>.Shared.Return(b, clearArray: true);
+                a.Dispose();
+                b.Dispose();
             }
         };
     }
@@ -616,7 +613,7 @@ internal static partial class Compiler
     private static FilterEval CompileLiteral(LiteralNode lit)
     {
         JsonElement value = JsonElement.ParseValue(Encoding.UTF8.GetBytes(lit.RawJson));
-        return (in JsonElement root, in JsonElement current, JsonWorkspace workspace) =>
+        return (in JsonElement root, in JsonElement current) =>
         {
             return FilterResult.FromValue(value);
         };
@@ -650,9 +647,9 @@ internal static partial class Compiler
 
         FilterEval arg = args[0];
 
-        return (in JsonElement root, in JsonElement current, JsonWorkspace workspace) =>
+        return (in JsonElement root, in JsonElement current) =>
         {
-            FilterResult result = arg(root, current, workspace).AsComparable();
+            FilterResult result = arg(root, current).AsComparable();
             if (result.Kind != FilterResult.FilterResultKind.ValueType)
             {
                 return FilterResult.NothingResult;
@@ -679,9 +676,9 @@ internal static partial class Compiler
 
         FilterEval arg = args[0];
 
-        return (in JsonElement root, in JsonElement current, JsonWorkspace workspace) =>
+        return (in JsonElement root, in JsonElement current) =>
         {
-            FilterResult result = arg(root, current, workspace);
+            FilterResult result = arg(root, current);
             if (result.Kind != FilterResult.FilterResultKind.NodesType)
             {
                 return FilterResult.NothingResult;
@@ -701,9 +698,9 @@ internal static partial class Compiler
 
         FilterEval arg = args[0];
 
-        return (in JsonElement root, in JsonElement current, JsonWorkspace workspace) =>
+        return (in JsonElement root, in JsonElement current) =>
         {
-            FilterResult result = arg(root, current, workspace);
+            FilterResult result = arg(root, current);
             if (result.Kind != FilterResult.FilterResultKind.NodesType)
             {
                 return FilterResult.NothingResult;
@@ -730,7 +727,6 @@ internal static partial class Compiler
         FilterEval strArg = args[0];
         FilterEval patternArg = args[1];
 
-        // If the pattern argument is a literal string, pre-compile the regex at compile time.
         if (patternAstNode is LiteralNode patLit && patLit.Kind == LiteralKind.String)
         {
             JsonElement patElement = JsonElement.ParseValue(Encoding.UTF8.GetBytes(patLit.RawJson));
@@ -739,13 +735,13 @@ internal static partial class Compiler
 
             if (compiled is null)
             {
-                return (in JsonElement root, in JsonElement current, JsonWorkspace workspace) =>
+                return static (in JsonElement root, in JsonElement current) =>
                     FilterResult.NothingResult;
             }
 
-            return (in JsonElement root, in JsonElement current, JsonWorkspace workspace) =>
+            return (in JsonElement root, in JsonElement current) =>
             {
-                FilterResult strResult = strArg(root, current, workspace).AsComparable();
+                FilterResult strResult = strArg(root, current).AsComparable();
                 if (strResult.Kind != FilterResult.FilterResultKind.ValueType ||
                     strResult.Value.ValueKind != JsonValueKind.String)
                 {
@@ -756,11 +752,10 @@ internal static partial class Compiler
             };
         }
 
-        // Dynamic pattern — cache compiled regex instances.
-        return (in JsonElement root, in JsonElement current, JsonWorkspace workspace) =>
+        return (in JsonElement root, in JsonElement current) =>
         {
-            FilterResult strResult = strArg(root, current, workspace).AsComparable();
-            FilterResult patResult = patternArg(root, current, workspace).AsComparable();
+            FilterResult strResult = strArg(root, current).AsComparable();
+            FilterResult patResult = patternArg(root, current).AsComparable();
 
             if (strResult.Kind != FilterResult.FilterResultKind.ValueType ||
                 patResult.Kind != FilterResult.FilterResultKind.ValueType ||

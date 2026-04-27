@@ -100,8 +100,7 @@ public abstract class JsonPathBenchmarkBase
         this.corvusData = CorvusJsonElement.ParseValue(Encoding.UTF8.GetBytes(dataJsonText));
 
         // Pre-warm the Corvus compilation cache
-        using JsonWorkspace w = JsonWorkspace.Create();
-        JsonPathEvaluator.Default.Query(this.expression, this.corvusData, w);
+        JsonPathEvaluator.Default.Query(this.expression, this.corvusData);
 
         // JsonCons setup
         this.jsonConsDocument = JsonDocument.Parse(dataJsonText);
