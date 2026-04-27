@@ -4,6 +4,7 @@
 
 using System.Buffers;
 using System.Collections.Concurrent;
+using System.Collections.Immutable;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -11,8 +12,16 @@ using System.Text.RegularExpressions;
 namespace Corvus.Text.Json.JsonPath;
 
 /// <summary>
-/// Compiles JSONPath expression strings into delegate trees for efficient evaluation.
+/// Compiles JSONPath expression strings into streaming delegate trees for efficient evaluation.
 /// </summary>
+/// <remarks>
+/// <para>
+/// The compiler builds a push-based streaming pipeline: each segment processes a single input
+/// node and chains matching results directly to the next segment downstream, eliminating
+/// intermediate materialization buffers. The terminal segment writes to the output
+/// <see cref="JsonPathResult"/>.
+/// </para>
+/// </remarks>
 internal static class Compiler
 {
     /// <summary>
@@ -37,130 +46,110 @@ internal static class Compiler
 
         if (ast.Segments.Length == 0)
         {
-            return new CompiledJsonPath(null);
+            return new CompiledJsonPath(static (in JsonElement root, in JsonElement node, ref JsonPathResult result) =>
+            {
+                result.Append(node);
+            });
         }
 
-        SegmentEval[] pipeline = new SegmentEval[ast.Segments.Length];
-        for (int i = 0; i < ast.Segments.Length; i++)
+        // Build the pipeline bottom-up: the terminal action appends to the result,
+        // and each segment wraps the downstream action.
+        NodeEval downstream = static (in JsonElement root, in JsonElement node, ref JsonPathResult result) =>
         {
-            pipeline[i] = CompileSegment(ast.Segments[i]);
+            result.Append(node);
+        };
+
+        for (int i = ast.Segments.Length - 1; i >= 0; i--)
+        {
+            downstream = CompileSegment(ast.Segments[i], downstream);
         }
 
-        return new CompiledJsonPath(pipeline);
+        return new CompiledJsonPath(downstream);
     }
 
     /// <summary>
-    /// A compiled JSONPath query. Holds the segment pipeline and provides
+    /// A compiled JSONPath query. Holds the streaming entry point and provides
     /// zero-allocation execution via <see cref="ExecuteNodes"/>.
     /// </summary>
     internal sealed class CompiledJsonPath
     {
-        private readonly SegmentEval[]? _pipeline;
+        private readonly NodeEval _entryPoint;
 
-        internal CompiledJsonPath(SegmentEval[]? pipeline) => _pipeline = pipeline;
+        internal CompiledJsonPath(NodeEval entryPoint) => _entryPoint = entryPoint;
 
         /// <summary>
         /// Executes the query, writing matched nodes into <paramref name="result"/>.
         /// </summary>
         internal void ExecuteNodes(in JsonElement root, ref JsonPathResult result)
         {
-            if (_pipeline is null)
-            {
-                result.Append(root);
-                return;
-            }
-
-            // Internal ping-pong buffer backed by ArrayPool so it is safe
-            // to return to the caller via the ref parameter after swapping.
-            JsonPathResult b = JsonPathResult.CreatePooled(16);
-            result.Append(root);
-
-            try
-            {
-                for (int i = 0; i < _pipeline.Length; i++)
-                {
-                    b.Clear();
-                    _pipeline[i](root, ref result, ref b);
-
-                    if (b.Count == 0)
-                    {
-                        result.Clear();
-                        return;
-                    }
-
-                    SwapResults(ref result, ref b);
-                }
-            }
-            finally
-            {
-                b.Dispose();
-            }
+            _entryPoint(root, root, ref result);
         }
     }
 
-    internal delegate void SegmentEval(
+    /// <summary>
+    /// Processes a single input node and writes matched results downstream.
+    /// </summary>
+    internal delegate void NodeEval(
         in JsonElement root,
-        ref JsonPathResult input,
-        ref JsonPathResult output);
+        in JsonElement node,
+        ref JsonPathResult result);
 
-    private static SegmentEval CompileSegment(SegmentNode segment)
+    private static NodeEval CompileSegment(SegmentNode segment, NodeEval downstream)
     {
-        SelectorEval[] selectors = new SelectorEval[segment.Selectors.Length];
-        for (int i = 0; i < segment.Selectors.Length; i++)
-        {
-            selectors[i] = CompileSelector(segment.Selectors[i]);
-        }
-
         if (segment is DescendantSegmentNode)
         {
-            return (in JsonElement root, ref JsonPathResult input, ref JsonPathResult output) =>
+            return CompileDescendantSegment(segment.Selectors, downstream);
+        }
+
+        return CompileChildSegment(segment.Selectors, downstream);
+    }
+
+    private static NodeEval CompileChildSegment(ImmutableArray<SelectorNode> selectors, NodeEval downstream)
+    {
+        NodeEval[] compiledSelectors = new NodeEval[selectors.Length];
+        for (int i = 0; i < selectors.Length; i++)
+        {
+            compiledSelectors[i] = CompileSelector(selectors[i], downstream);
+        }
+
+        if (compiledSelectors.Length == 1)
+        {
+            NodeEval single = compiledSelectors[0];
+            return (in JsonElement root, in JsonElement node, ref JsonPathResult result) =>
             {
-                EvalDescendantSegment(root, ref input, selectors, ref output);
+                single(root, node, ref result);
             };
         }
 
-        return (in JsonElement root, ref JsonPathResult input, ref JsonPathResult output) =>
+        return (in JsonElement root, in JsonElement node, ref JsonPathResult result) =>
         {
-            EvalChildSegment(root, ref input, selectors, ref output);
+            for (int i = 0; i < compiledSelectors.Length; i++)
+            {
+                compiledSelectors[i](root, node, ref result);
+            }
         };
     }
 
-    private static void EvalChildSegment(
-        in JsonElement root,
-        ref JsonPathResult input,
-        SelectorEval[] selectors,
-        ref JsonPathResult output)
+    private static NodeEval CompileDescendantSegment(ImmutableArray<SelectorNode> selectors, NodeEval downstream)
     {
-        ReadOnlySpan<JsonElement> inputNodes = input.Nodes;
-        for (int i = 0; i < inputNodes.Length; i++)
+        NodeEval[] compiledSelectors = new NodeEval[selectors.Length];
+        for (int i = 0; i < selectors.Length; i++)
         {
-            for (int j = 0; j < selectors.Length; j++)
-            {
-                selectors[j](root, inputNodes[i], ref output);
-            }
+            compiledSelectors[i] = CompileSelector(selectors[i], downstream);
         }
-    }
 
-    private static void EvalDescendantSegment(
-        in JsonElement root,
-        ref JsonPathResult input,
-        SelectorEval[] selectors,
-        ref JsonPathResult output)
-    {
-        ReadOnlySpan<JsonElement> inputNodes = input.Nodes;
-        for (int i = 0; i < inputNodes.Length; i++)
+        return (in JsonElement root, in JsonElement node, ref JsonPathResult result) =>
         {
-            VisitDescendants(root, inputNodes[i], selectors, ref output);
-        }
+            VisitDescendants(root, node, compiledSelectors, ref result);
+        };
     }
 
     private static void VisitDescendants(
         in JsonElement root,
         in JsonElement node,
-        SelectorEval[] selectors,
-        ref JsonPathResult output)
+        NodeEval[] selectors,
+        ref JsonPathResult result)
     {
-        // Iterative DFS with an explicit stack to avoid stack overflow on deep documents.
         int stackCapacity = 64;
         JsonElement[] rentedStack = ArrayPool<JsonElement>.Shared.Rent(stackCapacity);
 
@@ -173,9 +162,10 @@ internal static class Compiler
             {
                 JsonElement current = rentedStack[--stackSize];
 
+                // Apply selectors — each chains to downstream internally.
                 for (int i = 0; i < selectors.Length; i++)
                 {
-                    selectors[i](root, current, ref output);
+                    selectors[i](root, current, ref result);
                 }
 
                 if (current.ValueKind == JsonValueKind.Object)
@@ -221,7 +211,7 @@ internal static class Compiler
         int newCapacity = capacity * 2;
         JsonElement[] newArray = ArrayPool<JsonElement>.Shared.Rent(newCapacity);
         Array.Copy(rentedStack, newArray, currentSize);
-        ArrayPool<JsonElement>.Shared.Return(rentedStack);
+        ArrayPool<JsonElement>.Shared.Return(rentedStack, clearArray: true);
         rentedStack = newArray;
         capacity = newCapacity;
     }
@@ -238,70 +228,57 @@ internal static class Compiler
         }
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static void SwapResults(ref JsonPathResult a, ref JsonPathResult b)
-    {
-        JsonPathResult tmp = a;
-        a = b;
-        b = tmp;
-    }
-
-    private delegate void SelectorEval(
-        in JsonElement root,
-        in JsonElement node,
-        ref JsonPathResult output);
-
-    private static SelectorEval CompileSelector(SelectorNode selector)
+    private static NodeEval CompileSelector(SelectorNode selector, NodeEval downstream)
     {
         return selector switch
         {
-            NameSelectorNode name => CompileNameSelector(name),
-            WildcardSelectorNode => CompileWildcardSelector(),
-            IndexSelectorNode idx => CompileIndexSelector(idx),
-            SliceSelectorNode slice => CompileSliceSelector(slice),
-            FilterSelectorNode filter => CompileFilterSelector(filter),
+            NameSelectorNode name => CompileNameSelector(name, downstream),
+            WildcardSelectorNode => CompileWildcardSelector(downstream),
+            IndexSelectorNode idx => CompileIndexSelector(idx, downstream),
+            SliceSelectorNode slice => CompileSliceSelector(slice, downstream),
+            FilterSelectorNode filter => CompileFilterSelector(filter, downstream),
             _ => throw new JsonPathException($"Unknown selector type: {selector.GetType().Name}"),
         };
     }
 
-    private static SelectorEval CompileNameSelector(NameSelectorNode name)
+    private static NodeEval CompileNameSelector(NameSelectorNode name, NodeEval downstream)
     {
         byte[] utf8Name = name.Name;
-        return (in JsonElement root, in JsonElement node, ref JsonPathResult output) =>
+        return (in JsonElement root, in JsonElement node, ref JsonPathResult result) =>
         {
             if (node.ValueKind == JsonValueKind.Object &&
                 node.TryGetProperty(utf8Name, out JsonElement value))
             {
-                output.Append(value);
+                downstream(root, value, ref result);
             }
         };
     }
 
-    private static SelectorEval CompileWildcardSelector()
+    private static NodeEval CompileWildcardSelector(NodeEval downstream)
     {
-        return static (in JsonElement root, in JsonElement node, ref JsonPathResult output) =>
+        return (in JsonElement root, in JsonElement node, ref JsonPathResult result) =>
         {
             if (node.ValueKind == JsonValueKind.Object)
             {
                 foreach (JsonProperty<JsonElement> prop in node.EnumerateObject())
                 {
-                    output.Append(prop.Value);
+                    downstream(root, prop.Value, ref result);
                 }
             }
             else if (node.ValueKind == JsonValueKind.Array)
             {
                 foreach (JsonElement item in node.EnumerateArray())
                 {
-                    output.Append(item);
+                    downstream(root, item, ref result);
                 }
             }
         };
     }
 
-    private static SelectorEval CompileIndexSelector(IndexSelectorNode idx)
+    private static NodeEval CompileIndexSelector(IndexSelectorNode idx, NodeEval downstream)
     {
         long index = idx.Index;
-        return (in JsonElement root, in JsonElement node, ref JsonPathResult output) =>
+        return (in JsonElement root, in JsonElement node, ref JsonPathResult result) =>
         {
             if (node.ValueKind != JsonValueKind.Array)
             {
@@ -312,18 +289,18 @@ internal static class Compiler
             long resolved = index >= 0 ? index : len + index;
             if (resolved >= 0 && resolved < len)
             {
-                output.Append(node[(int)resolved]);
+                downstream(root, node[(int)resolved], ref result);
             }
         };
     }
 
-    private static SelectorEval CompileSliceSelector(SliceSelectorNode slice)
+    private static NodeEval CompileSliceSelector(SliceSelectorNode slice, NodeEval downstream)
     {
         long? startVal = slice.Start;
         long? endVal = slice.End;
         long? stepVal = slice.Step;
 
-        return (in JsonElement root, in JsonElement node, ref JsonPathResult output) =>
+        return (in JsonElement root, in JsonElement node, ref JsonPathResult result) =>
         {
             if (node.ValueKind != JsonValueKind.Array)
             {
@@ -351,7 +328,7 @@ internal static class Compiler
 
                 for (long i = lower; i < upper; i += s)
                 {
-                    output.Append(node[(int)i]);
+                    downstream(root, node[(int)i], ref result);
                 }
             }
             else
@@ -364,7 +341,7 @@ internal static class Compiler
 
                 for (long i = upper; i > lower; i += s)
                 {
-                    output.Append(node[(int)i]);
+                    downstream(root, node[(int)i], ref result);
                 }
             }
         };
@@ -376,11 +353,11 @@ internal static class Compiler
         return index >= 0 ? index : len + index;
     }
 
-    private static SelectorEval CompileFilterSelector(FilterSelectorNode filter)
+    private static NodeEval CompileFilterSelector(FilterSelectorNode filter, NodeEval downstream)
     {
         FilterEval compiledFilter = CompileFilterExpression(filter.Expression);
 
-        return (in JsonElement root, in JsonElement node, ref JsonPathResult output) =>
+        return (in JsonElement root, in JsonElement node, ref JsonPathResult result) =>
         {
             if (node.ValueKind == JsonValueKind.Array)
             {
@@ -388,7 +365,7 @@ internal static class Compiler
                 {
                     if (EvalFilterAsTruthy(compiledFilter, root, item))
                     {
-                        output.Append(item);
+                        downstream(root, item, ref result);
                     }
                 }
             }
@@ -398,7 +375,7 @@ internal static class Compiler
                 {
                     if (EvalFilterAsTruthy(compiledFilter, root, prop.Value))
                     {
-                        output.Append(prop.Value);
+                        downstream(root, prop.Value, ref result);
                     }
                 }
             }
@@ -474,6 +451,7 @@ internal static class Compiler
         }
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static bool EvalFilterAsTruthy(FilterEval filter, in JsonElement root, in JsonElement current)
     {
         FilterResult result = filter(root, current);
@@ -559,17 +537,39 @@ internal static class Compiler
         };
     }
 
-    private static FilterEval CompileFilterQuery(FilterQueryNode query)
+    /// <summary>
+    /// Determines whether a filter query is a singular query — i.e., each segment
+    /// has exactly one selector that is a name or index. Singular queries can only
+    /// produce 0 or 1 nodes and don't need intermediate buffers.
+    /// </summary>
+    private static bool IsSingularQuery(ImmutableArray<SegmentNode> segments)
     {
-        SegmentEval[] pipeline = new SegmentEval[query.Segments.Length];
-        for (int i = 0; i < query.Segments.Length; i++)
+        for (int i = 0; i < segments.Length; i++)
         {
-            pipeline[i] = CompileSegment(query.Segments[i]);
+            if (segments[i] is not ChildSegmentNode)
+            {
+                return false;
+            }
+
+            if (segments[i].Selectors.Length != 1)
+            {
+                return false;
+            }
+
+            if (segments[i].Selectors[0] is not (NameSelectorNode or IndexSelectorNode))
+            {
+                return false;
+            }
         }
 
+        return true;
+    }
+
+    private static FilterEval CompileFilterQuery(FilterQueryNode query)
+    {
         bool isRelative = query.IsRelative;
 
-        if (pipeline.Length == 0)
+        if (query.Segments.Length == 0)
         {
             return (in JsonElement root, in JsonElement current) =>
             {
@@ -578,34 +578,115 @@ internal static class Compiler
             };
         }
 
+        // Fast path: singular queries (e.g. @.price, @.a.b, $[0].name)
+        // use direct property/index chain — no buffers at all.
+        if (IsSingularQuery(query.Segments))
+        {
+            return CompileSingularFilterQuery(query.Segments, isRelative);
+        }
+
+        // General path: non-singular queries use streaming pipeline.
+        return CompileGeneralFilterQuery(query.Segments, isRelative);
+    }
+
+    private static FilterEval CompileSingularFilterQuery(
+        ImmutableArray<SegmentNode> segments, bool isRelative)
+    {
+        // Build a chain of lookup steps: (node) → TryGetProperty/index → node → ...
+        SingularStep[] steps = new SingularStep[segments.Length];
+        for (int i = 0; i < segments.Length; i++)
+        {
+            SelectorNode sel = segments[i].Selectors[0];
+            steps[i] = sel switch
+            {
+                NameSelectorNode name => new SingularStep(name.Name, 0, isName: true),
+                IndexSelectorNode idx => new SingularStep(null, idx.Index, isName: false),
+                _ => throw new JsonPathException("Unexpected selector in singular query."),
+            };
+        }
+
         return (in JsonElement root, in JsonElement current) =>
         {
-            JsonElement target = isRelative ? current : root;
-            JsonPathResult a = JsonPathResult.CreatePooled(16);
-            JsonPathResult b = JsonPathResult.CreatePooled(16);
-            a.Append(target);
-
-            try
+            JsonElement node = isRelative ? current : root;
+            for (int i = 0; i < steps.Length; i++)
             {
-                for (int i = 0; i < pipeline.Length; i++)
+                ref readonly SingularStep step = ref steps[i];
+                if (step.IsName)
                 {
-                    b.Clear();
-                    pipeline[i](root, ref a, ref b);
-
-                    if (b.Count == 0)
+                    if (node.ValueKind != JsonValueKind.Object ||
+                        !node.TryGetProperty(step.Name!, out node))
+                    {
+                        return FilterResult.FromNodes(0, default);
+                    }
+                }
+                else
+                {
+                    if (node.ValueKind != JsonValueKind.Array)
                     {
                         return FilterResult.FromNodes(0, default);
                     }
 
-                    SwapResults(ref a, ref b);
-                }
+                    int len = node.GetArrayLength();
+                    long resolved = step.Index >= 0 ? step.Index : len + step.Index;
+                    if (resolved < 0 || resolved >= len)
+                    {
+                        return FilterResult.FromNodes(0, default);
+                    }
 
-                return FilterResult.FromNodes(a.Count, a[0]);
+                    node = node[(int)resolved];
+                }
+            }
+
+            return FilterResult.FromNodes(1, node);
+        };
+    }
+
+    private readonly struct SingularStep
+    {
+        public SingularStep(byte[]? name, long index, bool isName)
+        {
+            Name = name;
+            Index = index;
+            IsName = isName;
+        }
+
+        public byte[]? Name { get; }
+
+        public long Index { get; }
+
+        public bool IsName { get; }
+    }
+
+    private static FilterEval CompileGeneralFilterQuery(
+        ImmutableArray<SegmentNode> segments, bool isRelative)
+    {
+        // Build a streaming pipeline for the inner query, collecting into a
+        // temporary JsonPathResult.
+        NodeEval terminal = static (in JsonElement root, in JsonElement node, ref JsonPathResult result) =>
+        {
+            result.Append(node);
+        };
+
+        NodeEval chain = terminal;
+        for (int i = segments.Length - 1; i >= 0; i--)
+        {
+            chain = CompileSegment(segments[i], chain);
+        }
+
+        NodeEval innerPipeline = chain;
+
+        return (in JsonElement root, in JsonElement current) =>
+        {
+            JsonElement target = isRelative ? current : root;
+            JsonPathResult innerResult = JsonPathResult.CreatePooled(16);
+            try
+            {
+                innerPipeline(root, target, ref innerResult);
+                return FilterResult.FromNodes(innerResult.Count, innerResult.Count > 0 ? innerResult[0] : default);
             }
             finally
             {
-                a.Dispose();
-                b.Dispose();
+                innerResult.Dispose();
             }
         };
     }
