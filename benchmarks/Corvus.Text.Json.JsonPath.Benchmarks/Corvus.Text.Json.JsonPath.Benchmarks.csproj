@@ -15,6 +15,7 @@
     <PackageReference Include="BenchmarkDotNet" />
     <PackageReference Include="BenchmarkDotNet.Diagnostics.Windows" />
     <PackageReference Include="JsonCons.JsonPath" />
+    <PackageReference Include="JsonPath.Net" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\Corvus.Text.Json.JsonPath\Corvus.Text.Json.JsonPath.csproj" />

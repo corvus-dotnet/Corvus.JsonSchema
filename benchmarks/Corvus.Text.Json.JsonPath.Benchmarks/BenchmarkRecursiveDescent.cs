@@ -3,6 +3,7 @@
 // </copyright>
 
 using BenchmarkDotNet.Attributes;
+using Json.Path;
 
 namespace Corvus.Text.Json.JsonPath.Benchmarks;
 
@@ -27,6 +28,15 @@ public class BenchmarkRecursiveDescent : JsonPathBenchmarkBase
     public IList<System.Text.Json.JsonElement> JsonCons()
     {
         return this.JsonConsSelector.Select(this.JsonConsDocument.RootElement);
+    }
+
+    /// <summary>
+    /// Evaluate using JsonPath.Net (json-everything).
+    /// </summary>
+    [Benchmark]
+    public PathResult JsonEverything()
+    {
+        return this.JsonEverythingPath.Evaluate(this.JsonEverythingNode);
     }
 
     /// <summary>

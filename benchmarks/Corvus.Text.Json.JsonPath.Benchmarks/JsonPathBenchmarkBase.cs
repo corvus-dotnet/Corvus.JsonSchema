@@ -4,14 +4,16 @@
 
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using JsonCons.JsonPath;
 
 using CorvusJsonElement = Corvus.Text.Json.JsonElement;
+using JEJsonPath = Json.Path.JsonPath;
 
 namespace Corvus.Text.Json.JsonPath.Benchmarks;
 
 /// <summary>
-/// Base class for JSONPath benchmarks comparing Corvus, JsonCons, and System.Text.Json.
+/// Base class for JSONPath benchmarks comparing Corvus, JsonCons, JsonEverything, and System.Text.Json.
 /// </summary>
 public abstract class JsonPathBenchmarkBase
 {
@@ -58,10 +60,12 @@ public abstract class JsonPathBenchmarkBase
         """;
 
     private JsonDocument? jsonConsDocument;
+    private JsonNode? jsonEverythingNode;
     private string dataJson = string.Empty;
     private CorvusJsonElement corvusData;
     private string expression = string.Empty;
     private JsonSelector? jsonConsSelector;
+    private JEJsonPath? jsonEverythingPath;
 
     /// <summary>
     /// Gets the raw JSON string.
@@ -89,6 +93,16 @@ public abstract class JsonPathBenchmarkBase
     protected JsonSelector JsonConsSelector => this.jsonConsSelector!;
 
     /// <summary>
+    /// Gets the JsonEverything (JsonPath.Net) parsed node.
+    /// </summary>
+    protected JsonNode JsonEverythingNode => this.jsonEverythingNode!;
+
+    /// <summary>
+    /// Gets the pre-parsed JsonEverything path.
+    /// </summary>
+    protected JEJsonPath JsonEverythingPath => this.jsonEverythingPath!;
+
+    /// <summary>
     /// Sets up all libraries and pre-warms caches.
     /// </summary>
     protected void Setup(string expressionText, string dataJsonText, string? jsonConsExpression = null)
@@ -105,5 +119,9 @@ public abstract class JsonPathBenchmarkBase
         // JsonCons setup
         this.jsonConsDocument = JsonDocument.Parse(dataJsonText);
         this.jsonConsSelector = JsonSelector.Parse(jsonConsExpression ?? expressionText);
+
+        // JsonEverything (JsonPath.Net) setup — uses JsonNode
+        this.jsonEverythingNode = JsonNode.Parse(dataJsonText);
+        this.jsonEverythingPath = JEJsonPath.Parse(expressionText);
     }
 }
