@@ -31,6 +31,7 @@ public static class CliAppFactory
                 c.AddCommand<JsonLogicCommand>("jsonlogic");
                 c.AddCommand<JsonataCommand>("jsonata");
                 c.AddCommand<JMESPathCommand>("jmespath");
+                c.AddCommand<JsonPathCommand>("jsonpath");
             });
         return app;
     }
