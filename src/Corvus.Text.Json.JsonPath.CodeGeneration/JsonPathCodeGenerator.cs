@@ -828,7 +828,6 @@ public static class JsonPathCodeGenerator
             string capVar = $"_dCap{c}";
             string sizeVar = $"_dSz{c}";
             string curVar = $"_dCur{c}";
-            string propVar = $"_dn{c}";
             string csVar = $"_dCs{c}";
 
             L(body, indent, $"int {capVar} = 64;");
@@ -845,25 +844,26 @@ public static class JsonPathCodeGenerator
             string wi = ti + "    ";
             L(body, wi, $"JsonElement {curVar} = {stackVar}[--{sizeVar}];");
 
-            // Inline name selector — only objects can match
+            // Inline name selector — single-pass: check name and push containers in one enumeration
             L(body, wi, $"if ({curVar}.ValueKind == JsonValueKind.Object)");
             L(body, wi, "{");
 
             string oi = wi + "    ";
-            L(body, oi, $"if ({curVar}.TryGetProperty({nameField}, out JsonElement {propVar}))");
-            L(body, oi, "{");
-            this.EmitStreamingChain(body, segments, nextIndex, oi + "    ", propVar, counterTarget);
-            L(body, oi, "}");
-
-            // Push container children only
             L(body, oi, $"int {csVar} = {sizeVar};");
             L(body, oi, $"foreach (var _dp{c} in {curVar}.EnumerateObject())");
             L(body, oi, "{");
-            L(body, oi, $"    if (_dp{c}.Value.ValueKind == JsonValueKind.Object || _dp{c}.Value.ValueKind == JsonValueKind.Array)");
-            L(body, oi, "    {");
-            L(body, oi, $"        if ({sizeVar} >= {capVar}) {{ {H}.GrowStack(ref {stackVar}, ref {capVar}, {sizeVar}); }}");
-            L(body, oi, $"        {stackVar}[{sizeVar}++] = _dp{c}.Value;");
-            L(body, oi, "    }");
+
+            string fi = oi + "    ";
+            L(body, fi, $"if (_dp{c}.NameEquals({nameField}))");
+            L(body, fi, "{");
+            this.EmitStreamingChain(body, segments, nextIndex, fi + "    ", $"_dp{c}.Value", counterTarget);
+            L(body, fi, "}");
+            L(body, fi, $"if (_dp{c}.Value.ValueKind == JsonValueKind.Object || _dp{c}.Value.ValueKind == JsonValueKind.Array)");
+            L(body, fi, "{");
+            L(body, fi, $"    if ({sizeVar} >= {capVar}) {{ {H}.GrowStack(ref {stackVar}, ref {capVar}, {sizeVar}); }}");
+            L(body, fi, $"    {stackVar}[{sizeVar}++] = _dp{c}.Value;");
+            L(body, fi, "}");
+
             L(body, oi, "}");
             L(body, oi, $"{H}.ReverseRegion({stackVar}, {csVar}, {sizeVar} - {csVar});");
 

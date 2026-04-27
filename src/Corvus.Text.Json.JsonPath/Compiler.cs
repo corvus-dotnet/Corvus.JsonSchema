@@ -163,13 +163,14 @@ internal static class Compiler
     {
         if (node.ValueKind == JsonValueKind.Object)
         {
-            if (node.TryGetProperty(utf8Name, out JsonElement value))
-            {
-                downstream(root, value, ref result);
-            }
-
+            // Single-pass: check name and recurse into containers in one enumeration.
             foreach (JsonProperty<JsonElement> prop in node.EnumerateObject())
             {
+                if (prop.NameEquals(utf8Name))
+                {
+                    downstream(root, prop.Value, ref result);
+                }
+
                 JsonElement child = prop.Value;
                 if (child.ValueKind == JsonValueKind.Object || child.ValueKind == JsonValueKind.Array)
                 {

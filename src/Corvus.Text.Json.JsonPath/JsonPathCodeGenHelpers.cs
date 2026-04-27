@@ -535,13 +535,14 @@ public static class JsonPathCodeGenHelpers
     {
         if (node.ValueKind == JsonValueKind.Object)
         {
-            if (node.TryGetProperty(propertyName, out JsonElement value))
-            {
-                result.Append(value);
-            }
-
+            // Single-pass: check name and recurse into containers in one enumeration.
             foreach (JsonProperty<JsonElement> prop in node.EnumerateObject())
             {
+                if (prop.NameEquals(propertyName))
+                {
+                    result.Append(prop.Value);
+                }
+
                 JsonElement child = prop.Value;
                 if (child.ValueKind == JsonValueKind.Object || child.ValueKind == JsonValueKind.Array)
                 {
@@ -580,18 +581,19 @@ public static class JsonPathCodeGenHelpers
     {
         if (node.ValueKind == JsonValueKind.Object)
         {
-            if (node.TryGetProperty(propertyName, out JsonElement value))
-            {
-                if (count == 0)
-                {
-                    first = value;
-                }
-
-                count++;
-            }
-
+            // Single-pass: check name and recurse into containers in one enumeration.
             foreach (JsonProperty<JsonElement> prop in node.EnumerateObject())
             {
+                if (prop.NameEquals(propertyName))
+                {
+                    if (count == 0)
+                    {
+                        first = prop.Value;
+                    }
+
+                    count++;
+                }
+
                 JsonElement child = prop.Value;
                 if (child.ValueKind == JsonValueKind.Object || child.ValueKind == JsonValueKind.Array)
                 {
