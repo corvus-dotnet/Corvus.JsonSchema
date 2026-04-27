@@ -110,7 +110,6 @@ internal static class PlanInterpreter
     {
         if (current.ValueKind == JsonValueKind.Object)
         {
-            current.EnsurePropertyMap();
             if (current.TryGetProperty(step.Utf8Name, out JsonElement value))
             {
                 ExecuteStep(step.Continuation, root, value, ref result);
@@ -148,7 +147,6 @@ internal static class PlanInterpreter
                     return;
                 }
 
-                node.EnsurePropertyMap();
                 if (!node.TryGetProperty(nav.Utf8Name!, out node))
                 {
                     return;
