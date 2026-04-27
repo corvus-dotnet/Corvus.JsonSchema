@@ -595,6 +595,32 @@ public interface IJsonDocument : IDisposable
     int GetDbSize(int index, bool includeEndElement);
 
     /// <summary>
+    /// Advances a linear scan over the subtree rooted at the element at
+    /// <paramref name="elementIndex"/>, returning the next property value whose
+    /// unescaped name matches <paramref name="utf8PropertyName"/>.
+    /// </summary>
+    /// <param name="elementIndex">The index of the root element of the subtree to scan.</param>
+    /// <param name="scanIndex">
+    /// On entry, the current scan cursor (initialize to <c>elementIndex + DbRow.Size</c>
+    /// before the first call). On exit, updated so the next call resumes where this one
+    /// left off.
+    /// </param>
+    /// <param name="utf8PropertyName">The unescaped UTF-8 property name to search for.</param>
+    /// <param name="valueIndex">
+    /// When this method returns <see langword="true"/>, the metadata-DB index of the
+    /// matched property's value. When it returns <see langword="false"/>, set to <c>-1</c>.
+    /// </param>
+    /// <returns>
+    /// <see langword="true"/> if a matching property was found;
+    /// <see langword="false"/> if the scan is complete.
+    /// </returns>
+    bool TryFindNextDescendantPropertyValue(
+        int elementIndex,
+        ref int scanIndex,
+        ReadOnlySpan<byte> utf8PropertyName,
+        out int valueIndex);
+
+    /// <summary>
     /// Gets the start index of the element from the end index.
     /// </summary>
     /// <param name="endIndex">The end index of the element.</param>

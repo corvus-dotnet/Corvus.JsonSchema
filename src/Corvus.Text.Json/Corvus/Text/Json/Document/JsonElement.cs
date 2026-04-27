@@ -2184,6 +2184,36 @@ public readonly partial struct JsonElement
     }
 
     /// <summary>
+    /// Returns an enumerator that yields the values of all descendant properties whose
+    /// unescaped name equals <paramref name="utf8PropertyName"/>.
+    /// </summary>
+    /// <param name="utf8PropertyName">The unescaped UTF-8 property name to search for.</param>
+    /// <returns>
+    /// A <see cref="DescendantPropertyEnumerator"/> that iterates the matching values
+    /// in document order.
+    /// </returns>
+    /// <remarks>
+    /// <para>
+    /// This method performs a flat linear scan over the metadata DB. It does not
+    /// construct intermediate enumerators, check <see cref="ValueKind"/>, or recurse.
+    /// For recursive-descent JSONPath queries (<c>$..name</c>), this is substantially
+    /// faster than recursive <c>EnumerateObject</c> traversal.
+    /// </para>
+    /// <para>
+    /// If the element is a scalar (not an object or array), the enumerator yields
+    /// zero results.
+    /// </para>
+    /// </remarks>
+    /// <exception cref="InvalidOperationException">
+    /// The element does not belong to a valid document instance.
+    /// </exception>
+    public DescendantPropertyEnumerator EnumerateDescendantProperties(ReadOnlySpan<byte> utf8PropertyName)
+    {
+        CheckValidInstance();
+        return new DescendantPropertyEnumerator(_parent, _idx, utf8PropertyName);
+    }
+
+    /// <summary>
     /// Gets a string representation for the current value appropriate to the value type.
     /// </summary>
     /// <remarks>

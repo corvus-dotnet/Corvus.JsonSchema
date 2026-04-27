@@ -184,6 +184,102 @@ public abstract partial class JsonDocument
     private protected abstract ReadOnlyMemory<byte> GetRawSimpleValueFromRowUnsafe(in DbRow row);
 
     /// <summary>
+    /// Scans the flat metadata DB forward from <paramref name="scanIndex"/> within the
+    /// subtree rooted at <paramref name="elementIndex"/>, returning the first property
+    /// whose unescaped name equals <paramref name="utf8PropertyName"/>.
+    /// </summary>
+    /// <param name="elementIndex">The root element index (used to compute the end boundary).</param>
+    /// <param name="scanIndex">
+    /// Current scan cursor; advanced past the matched value on success or to the end boundary
+    /// on exhaustion.
+    /// </param>
+    /// <param name="utf8PropertyName">The unescaped UTF-8 property name to match.</param>
+    /// <param name="valueIndex">
+    /// Set to the metadata-DB index of the matched property's value on success, or <c>-1</c>
+    /// when no more matches exist.
+    /// </param>
+    /// <returns>
+    /// <see langword="true"/> when a match was found; <see langword="false"/> when the
+    /// subtree is exhausted.
+    /// </returns>
+    protected virtual bool TryFindNextDescendantPropertyValueUnsafe(
+        int elementIndex,
+        ref int scanIndex,
+        ReadOnlySpan<byte> utf8PropertyName,
+        out int valueIndex)
+    {
+        int endIndex = elementIndex + GetDbSizeUnsafe(elementIndex, includeEndElement: false);
+        int idx = scanIndex;
+
+        while (idx < endIndex)
+        {
+            DbRow row = _parsedData.Get(idx);
+
+            if (row.TokenType == JsonTokenType.PropertyName)
+            {
+                ReadOnlySpan<byte> propName = GetRawSimpleValueFromRowUnsafe(in row).Span;
+
+                bool matches;
+                if (row.HasComplexChildren)
+                {
+                    // Escaped property name — unescape-and-compare.
+                    matches = CompareEscapedPropertyName(propName, utf8PropertyName);
+                }
+                else
+                {
+                    matches = propName.SequenceEqual(utf8PropertyName);
+                }
+
+                if (matches)
+                {
+                    int valIdx = idx + DbRow.Size;
+                    valueIndex = valIdx;
+                    scanIndex = valIdx;
+                    return true;
+                }
+            }
+
+            idx += DbRow.Size;
+        }
+
+        scanIndex = endIndex;
+        valueIndex = -1;
+        return false;
+    }
+
+    /// <summary>
+    /// Compares an escaped raw property name against an unescaped target.
+    /// </summary>
+    private static bool CompareEscapedPropertyName(
+        ReadOnlySpan<byte> escapedRaw,
+        ReadOnlySpan<byte> unescapedTarget)
+    {
+        // An escaped form is always longer than the unescaped form.
+        if ((uint)unescapedTarget.Length > (uint)escapedRaw.Length)
+        {
+            return false;
+        }
+
+        // A \uXXXX sequence in the escaped form can expand to at most
+        // MaxExpansionFactorWhileEscaping bytes when unescaped. If the target
+        // is shorter than the minimum unescaped length, it can't match.
+        if ((uint)unescapedTarget.Length < (uint)(escapedRaw.Length / JsonConstants.MaxExpansionFactorWhileEscaping))
+        {
+            return false;
+        }
+
+        int bsIdx = escapedRaw.IndexOf(JsonConstants.BackSlash);
+        Debug.Assert(bsIdx >= 0);
+
+        if (!escapedRaw.Slice(0, bsIdx).SequenceEqual(unescapedTarget.Slice(0, bsIdx)))
+        {
+            return false;
+        }
+
+        return JsonReaderHelper.UnescapeAndCompare(escapedRaw.Slice(bsIdx), unescapedTarget.Slice(bsIdx));
+    }
+
+    /// <summary>
     /// Checks that the actual token type matches the expected token type, throwing an exception if not.
     /// </summary>
     /// <param name="expected">The expected token type.</param>

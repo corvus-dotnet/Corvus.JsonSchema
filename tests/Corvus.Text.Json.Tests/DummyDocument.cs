@@ -286,6 +286,7 @@ internal class DummyDocument : IJsonDocument
     JsonElement IJsonDocument.CloneElement(int index) => throw new NotImplementedException();
     TElement IJsonDocument.CloneElement<TElement>(int index) => throw new NotImplementedException();
     int IJsonDocument.GetDbSize(int index, bool includeEndElement) => throw new NotImplementedException();
+    bool IJsonDocument.TryFindNextDescendantPropertyValue(int elementIndex, ref int scanIndex, ReadOnlySpan<byte> utf8PropertyName, out int valueIndex) { valueIndex = -1; return false; }
     int IJsonDocument.GetStartIndex(int endIndex) => throw new NotImplementedException();
     int IJsonDocument.BuildRentedMetadataDb(int parentDocumentIndex, JsonWorkspace workspace, out byte[] rentedBacking) => throw new NotImplementedException();
     void IJsonDocument.AppendElementToMetadataDb(int index, JsonWorkspace workspace, ref MetadataDb db) => throw new NotImplementedException();

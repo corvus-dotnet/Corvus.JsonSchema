@@ -414,34 +414,9 @@ internal static class PlanInterpreter
     // ── Descendant traversal ─────────────────────────────────────────
     private static void ExecuteDescendantName(DescendantNameStep step, in JsonElement root, in JsonElement current, ref JsonPathResult result)
     {
-        if (current.ValueKind == JsonValueKind.Object)
+        foreach (JsonElement value in current.EnumerateDescendantProperties(step.Utf8Name))
         {
-            // Single-pass: enumerate once, checking each property name and
-            // recursing into container children in the same iteration.
-            byte[] utf8Name = step.Utf8Name;
-            foreach (JsonProperty<JsonElement> prop in current.EnumerateObject())
-            {
-                if (prop.NameEquals(utf8Name))
-                {
-                    ExecuteStep(step.Continuation, root, prop.Value, ref result);
-                }
-
-                JsonElement child = prop.Value;
-                if (child.ValueKind == JsonValueKind.Object || child.ValueKind == JsonValueKind.Array)
-                {
-                    ExecuteDescendantName(step, root, child, ref result);
-                }
-            }
-        }
-        else if (current.ValueKind == JsonValueKind.Array)
-        {
-            foreach (JsonElement item in current.EnumerateArray())
-            {
-                if (item.ValueKind == JsonValueKind.Object || item.ValueKind == JsonValueKind.Array)
-                {
-                    ExecuteDescendantName(step, root, item, ref result);
-                }
-            }
+            ExecuteStep(step.Continuation, root, value, ref result);
         }
     }
 

@@ -183,6 +183,13 @@ public sealed class FixedJsonValueDocument<T> : IJsonDocument, IWorkspaceManaged
         return DbRow.Size;
     }
 
+    bool IJsonDocument.TryFindNextDescendantPropertyValue(int elementIndex, ref int scanIndex, ReadOnlySpan<byte> utf8PropertyName, out int valueIndex)
+    {
+        // Single-value document — no descendants.
+        valueIndex = -1;
+        return false;
+    }
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     int IJsonDocument.GetHashCode(int index)
     {

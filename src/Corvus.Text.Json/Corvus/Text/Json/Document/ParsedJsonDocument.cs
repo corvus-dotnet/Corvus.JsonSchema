@@ -249,6 +249,17 @@ public sealed partial class ParsedJsonDocument<T> : JsonDocument, IJsonDocument,
     }
 
     /// <inheritdoc />
+    bool IJsonDocument.TryFindNextDescendantPropertyValue(
+        int elementIndex,
+        ref int scanIndex,
+        ReadOnlySpan<byte> utf8PropertyName,
+        out int valueIndex)
+    {
+        CheckNotDisposed();
+        return TryFindNextDescendantPropertyValueUnsafe(elementIndex, ref scanIndex, utf8PropertyName, out valueIndex);
+    }
+
+    /// <inheritdoc />
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     int IJsonDocument.GetStartIndex(int endIndex)
     {

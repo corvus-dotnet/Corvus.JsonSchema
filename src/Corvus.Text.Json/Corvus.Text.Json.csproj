@@ -216,6 +216,7 @@
     <Compile Include="Corvus\Text\Json\JsonSchema\Internal\JsonSchemaEvaluation.Null.cs" />
     <Compile Include="Corvus\Text\Json\JsonSchema\Internal\JsonSchemaEvaluation.Boolean.cs" />
     <Compile Include="Corvus\Text\Json\JsonSchema\Internal\JsonSchemaMatcher.cs" />
+    <Compile Include="Corvus\Text\Json\Document\DescendantPropertyEnumerator.cs" />
     <Compile Include="Corvus\Text\Json\Document\ObjectEnumerator{T}.cs" />
     <Compile Include="Corvus\Text\Json\Document\Internal\ObjectEnumerator.cs" />
     <Compile Include="Corvus\Text\Json\Document\ParsedJsonDocument.cs" />
