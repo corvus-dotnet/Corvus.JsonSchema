@@ -27,3 +27,7 @@ Full JSON Schema draft 4, 6, 7, 2019-09, and 2020-12 validation with `EvaluateSc
 ## 🧩 Pattern Matching
 
 Type-safe `Match()` for `oneOf`/`anyOf` discriminated unions with exhaustive delegate-per-variant dispatch. Full `allOf` composition with `From()` conversion between generated types. String and numeric enumerations with `Match()` support, including context-passing overloads that avoid closure allocations.
+
+## 🔧 JSON Operations
+
+[JSON Patch (RFC 6902)](https://datatracker.ietf.org/doc/html/rfc6902) with a fluent `PatchBuilder`, [JSON Merge Patch (RFC 7396)](https://datatracker.ietf.org/doc/html/rfc7396) for simple document merging, JSON diff for computing patches between documents, and [JSON Canonicalization (RFC 8785)](https://datatracker.ietf.org/doc/html/rfc8785) for deterministic serialization. All operations work with the zero-allocation mutable document infrastructure.

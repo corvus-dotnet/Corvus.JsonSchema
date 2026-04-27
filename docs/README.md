@@ -23,7 +23,8 @@ The markdown files in this directory are the source content for the website. The
 | [CodeGenerator.md](./CodeGenerator.md) | Docs — CLI Code Generation |
 | [Validator.md](./Validator.md) | Docs — Dynamic Schema Validation |
 | [SchemaEvaluator.md](./SchemaEvaluator.md) | Docs — Standalone Schema Evaluator |
-| [JsonPatch.md](./JsonPatch.md) | Docs — JSON Patch |
+| [JsonPatch.md](./JsonPatch.md) | Docs — JSON Patch, Merge Patch & Diff |
+| [JsonCanonicalization.md](./JsonCanonicalization.md) | Docs — JSON Canonicalization (RFC 8785) |
 | [JsonLogic.md](./JsonLogic.md) | Docs — JsonLogic |
 | [Jsonata.md](./Jsonata.md) | Docs — JSONata |
 | [MigratingFromV4ToV5.md](./MigratingFromV4ToV5.md) | Docs — Migrating from V4 |

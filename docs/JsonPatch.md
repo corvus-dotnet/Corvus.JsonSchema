@@ -255,3 +255,129 @@ When `TryApplyPatch` returns `false`, the document may be in a partially-modifie
 ## See Also
 
 - [JsonDocumentBuilder](JsonDocumentBuilder.md) — Mutable document builder with snapshot/restore
+
+---
+
+## JSON Merge Patch (RFC 7396)
+
+### Overview
+
+`Corvus.Text.Json.Patch` implements [RFC 7396 JSON Merge Patch](https://datatracker.ietf.org/doc/html/rfc7396), a simpler alternative to JSON Patch for describing changes to a JSON document. Instead of specifying individual operations, a merge patch is a JSON document whose structure mirrors the target — properties present in the patch are set or replaced in the target, and properties with `null` values are removed.
+
+### Quick Start
+
+```csharp
+using Corvus.Text.Json;
+using Corvus.Text.Json.Patch;
+
+string targetJson = """{"title": "Goodbye!", "author": {"givenName": "John"}, "tags": ["a"]}""";
+string patchJson = """{"title": "Hello!", "author": {"givenName": null}, "tags": ["b", "c"]}""";
+
+using var targetDoc = ParsedJsonDocument<JsonElement>.Parse(targetJson);
+using var patchDoc = ParsedJsonDocument<JsonElement>.Parse(patchJson);
+using JsonWorkspace workspace = JsonWorkspace.Create();
+using var builder = targetDoc.RootElement.CreateBuilder(workspace);
+
+JsonElement.Mutable root = builder.RootElement;
+JsonMergePatchExtensions.ApplyMergePatch(ref root, patchDoc.RootElement);
+
+Console.WriteLine(builder.RootElement);
+// {"title":"Hello!","author":{},"tags":["b","c"]}
+```
+
+### Merge semantics
+
+The RFC 7396 algorithm works as follows:
+
+- If the patch is **not an object**, the target is replaced entirely by the patch value.
+- If the patch **is an object**, each property is merged into the target:
+  - A patch property with a `null` value **removes** the corresponding target property.
+  - A patch property with an object value **merges recursively** into the target property (creating it as an empty object if it doesn't exist or isn't an object).
+  - Any other patch property **sets or replaces** the corresponding target property.
+- **Arrays are replaced wholesale** — they are never merged element-by-element.
+
+### Limitations
+
+Merge Patch cannot express all possible changes that JSON Patch can:
+
+- It cannot set a property to `null` (because `null` means "remove").
+- It cannot rearrange array elements — arrays are always replaced entirely.
+- It cannot express operations like `move` or `copy`.
+
+For these use cases, use the full [JSON Patch](#applying-a-patch-document) API instead.
+
+---
+
+## JSON Diff (RFC 6902 Patch Generation)
+
+### Overview
+
+The diff feature computes a [JSON Patch (RFC 6902)](https://datatracker.ietf.org/doc/html/rfc6902) that transforms one JSON element into another. This is useful for change tracking, audit logging, or synchronizing JSON documents across systems.
+
+### Quick Start
+
+```csharp
+using Corvus.Text.Json;
+using Corvus.Text.Json.Patch;
+
+string sourceJson = """{"name": "Alice", "age": 30}""";
+string targetJson = """{"name": "Bob", "age": 30, "email": "bob@example.com"}""";
+
+using var sourceDoc = ParsedJsonDocument<JsonElement>.Parse(sourceJson);
+using var targetDoc = ParsedJsonDocument<JsonElement>.Parse(targetJson);
+using JsonWorkspace workspace = JsonWorkspace.Create();
+
+JsonPatchDocument patch = JsonDiffExtensions.CreatePatch(
+    sourceDoc.RootElement,
+    targetDoc.RootElement,
+    workspace);
+
+// Apply the patch to verify it produces the target
+using var builder = sourceDoc.RootElement.CreateBuilder(workspace);
+JsonElement.Mutable root = builder.RootElement;
+bool success = root.TryApplyPatch(patch);
+
+Console.WriteLine(success);             // True
+Console.WriteLine(builder.RootElement); // {"name":"Bob","age":30,"email":"bob@example.com"}
+```
+
+### Diff strategy
+
+The diff algorithm operates on semantic JSON equality:
+
+- **Objects** are diffed property-by-property. Properties present in both are recursively compared; properties only in the source produce `remove` operations; properties only in the target produce `add` operations. Property order is not significant.
+- **Arrays** are compared element-by-element when lengths match. When array lengths differ, the entire array is replaced. A future version may implement LCS-based array diffing for more compact patches.
+- **Scalars** (strings, numbers, booleans, null) are compared for value equality. Different values produce a `replace` operation.
+
+### Array handling
+
+When two arrays have the **same length**, the diff compares elements at each index and produces targeted operations for changed elements:
+
+```csharp
+// Source: {"items": [1, 2, 3]}  →  Target: {"items": [1, 99, 3]}
+// Patch:  [{"op":"replace","path":"/items/1","value":99}]
+```
+
+Nested objects within same-length arrays are also diffed recursively:
+
+```csharp
+// Source: {"people": [{"name": "Alice"}, {"name": "Bob"}]}
+// Target: {"people": [{"name": "Alice"}, {"name": "Charlie"}]}
+// Patch:  [{"op":"replace","path":"/people/1/name","value":"Charlie"}]
+```
+
+When arrays have **different lengths**, the entire array is replaced:
+
+```csharp
+// Source: {"tags": ["a", "b"]}  →  Target: {"tags": ["a", "b", "c"]}
+// Patch:  [{"op":"replace","path":"/tags","value":["a","b","c"]}]
+```
+
+### Workspace lifetime
+
+The returned `JsonPatchDocument` is backed by the workspace. The caller must keep the workspace alive for the lifetime of the returned document. If you need the patch to outlive the workspace, serialize it to JSON first:
+
+```csharp
+JsonPatchDocument patch = JsonDiffExtensions.CreatePatch(source, target, workspace);
+string patchJson = patch.ToString();
+```

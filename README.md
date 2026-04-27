@@ -15,7 +15,9 @@ High-performance, source-generated, strongly-typed C# models from JSON Schema �
 - **[JSONata](#jsonata)** — Full [JSONata](https://jsonata.org/) query and transformation language with 100% test-suite conformance. Interpreted and code-generated evaluation modes.
 - **[JMESPath](#jmespath)** — Full [JMESPath](https://jmespath.org/) query language with 100% conformance against the official test suite. Interpreted and code-generated evaluation modes.
 - **[JsonLogic](#jsonlogic)** — Complete [JsonLogic](https://jsonlogic.com/) rule engine for evaluating business rules against JSON data with interpreted and code-generated modes.
-- **JSON Patch** — RFC 6902 JSON Patch with pooled-memory operations on `JsonElement`.
+- **JSON Pointer** — RFC 6901 JSON Pointer for navigating and resolving paths within JSON documents.
+- **JSON Patch, Merge Patch & Diff** — RFC 6902 JSON Patch, RFC 7396 Merge Patch, and diff with zero-allocation operations on `JsonElement`.
+- **JSON Canonicalization** — RFC 8785 JSON Canonicalization Scheme (JCS) for deterministic serialization. Zero heap allocation.
 - **[YAML](#yaml)** — High-performance YAML 1.2 to JSON converter with 100% yaml-test-suite conformance. Zero-allocation `ref struct` tokenizer.
 
 ## Quick Start
@@ -72,7 +74,7 @@ Console.WriteLine(root.ToString());
 | **Corvus.Text.Json.JMESPath.SourceGenerator** | Roslyn source generator for compile-time JMESPath code generation. |
 | **Corvus.Text.Json.JsonLogic** | JsonLogic rule engine — interpreted runtime evaluator. |
 | **Corvus.Text.Json.JsonLogic.SourceGenerator** | Roslyn source generator for compile-time JsonLogic code generation. |
-| **Corvus.Text.Json.Patch** | RFC 6902 JSON Patch with pooled-memory operations. |
+| **Corvus.Text.Json.Patch** | RFC 6902 JSON Patch, RFC 7396 Merge Patch, and diff. |
 | **Corvus.Text.Json.Yaml** | YAML 1.2 to JSON converter with Corvus document model integration. |
 | **Corvus.Yaml.SystemTextJson** | YAML 1.2 to JSON converter using only System.Text.Json (no Corvus dependency). |
 
@@ -130,6 +132,8 @@ Then open http://localhost:5000.
 - [JSONata Query & Transformation](docs/Jsonata.md)
 - [JMESPath Query Language](docs/JMESPath.md)
 - [JsonLogic Rule Engine](docs/JsonLogic.md)
+- [JSON Patch, Merge Patch & Diff](docs/JsonPatch.md)
+- [JSON Canonicalization (RFC 8785)](docs/JsonCanonicalization.md)
 - [YAML to JSON Converter](docs/Yaml.md)
 - [Migrating from V4](docs/MigratingFromV4ToV5.md)
 

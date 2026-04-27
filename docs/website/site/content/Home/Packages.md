@@ -42,3 +42,11 @@ Library for dynamically loading, compiling, and validating JSON against JSON Sch
 ```bash
 dotnet add package Corvus.Text.Json.Validator
 ```
+
+### Corvus.Text.Json.Patch
+
+JSON Patch (RFC 6902), Merge Patch (RFC 7396), and diff. Apply, construct, and compute patches on mutable documents with zero allocation. See the [JSON Patch, Merge Patch & Diff](/docs/json-patch.html) guide.
+
+```bash
+dotnet add package Corvus.Text.Json.Patch
+```

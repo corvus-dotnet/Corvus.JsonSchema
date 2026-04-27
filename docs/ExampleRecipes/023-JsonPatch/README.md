@@ -1,6 +1,6 @@
-# JSON Schema Patterns in .NET - JSON Patch (RFC 6902)
+# JSON Schema Patterns in .NET - JSON Patch, Merge Patch, and Diff
 
-This recipe demonstrates how to apply [RFC 6902 JSON Patch](https://datatracker.ietf.org/doc/html/rfc6902) operations to mutable documents using the `Corvus.Text.Json.Patch` library. It covers building patches fluently, applying individual operations, conditional patches with `test`, and parsing patches from raw JSON.
+This recipe demonstrates [RFC 6902 JSON Patch](https://datatracker.ietf.org/doc/html/rfc6902), [RFC 7396 JSON Merge Patch](https://datatracker.ietf.org/doc/html/rfc7396), and JSON Diff using the `Corvus.Text.Json.Patch` library. It covers building patches fluently, applying individual operations, conditional patches with `test`, parsing patches from raw JSON, applying merge patches, and computing diffs between documents.
 
 ## The Pattern
 
@@ -147,3 +147,63 @@ dotnet run
 
 - [018-CreatingAndMutatingObjects](../018-CreatingAndMutatingObjects/) — Mutable document lifecycle
 - [019-CloneAndFreeze](../019-CloneAndFreeze/) — Cloning mutable elements into independent immutable documents
+
+### JSON Merge Patch (RFC 7396)
+
+Merge Patch is a simpler alternative to JSON Patch. Instead of individual operations, the patch itself is a JSON document that mirrors the target structure. Properties in the patch are merged into the target; `null` values remove properties; arrays are replaced wholesale.
+
+```csharp
+string targetJson = """{"title": "Goodbye!", "author": {"givenName": "John"}, "tags": ["a"]}""";
+string mergePatchJson = """{"title": "Hello!", "author": {"givenName": null}, "tags": ["b", "c"]}""";
+
+using var mergeTargetDoc = ParsedJsonDocument<JsonElement>.Parse(targetJson);
+using var mergePatchDoc = ParsedJsonDocument<JsonElement>.Parse(mergePatchJson);
+using JsonWorkspace mergeWorkspace = JsonWorkspace.Create();
+using var mergeBuilder = mergeTargetDoc.RootElement.CreateBuilder(mergeWorkspace);
+
+JsonElement.Mutable mergeRoot = mergeBuilder.RootElement;
+JsonMergePatchExtensions.ApplyMergePatch(ref mergeRoot, mergePatchDoc.RootElement);
+// Result: {"title":"Hello!","author":{},"tags":["b","c"]}
+```
+
+The `givenName` property is removed (patch value is `null`), `title` is replaced, and `tags` is replaced wholesale.
+
+### JSON Diff (RFC 6902 Patch Generation)
+
+The diff feature computes an RFC 6902 patch that transforms one JSON element into another:
+
+```csharp
+string diffSourceJson = """{"name": "Alice", "age": 30, "email": "alice@example.com"}""";
+string diffTargetJson = """{"name": "Bob", "age": 30, "active": true}""";
+
+using var diffSourceDoc = ParsedJsonDocument<JsonElement>.Parse(diffSourceJson);
+using var diffTargetDoc = ParsedJsonDocument<JsonElement>.Parse(diffTargetJson);
+using JsonWorkspace diffWorkspace = JsonWorkspace.Create();
+
+JsonPatchDocument diffPatch = JsonDiffExtensions.CreatePatch(
+    diffSourceDoc.RootElement,
+    diffTargetDoc.RootElement,
+    diffWorkspace);
+
+// Apply the diff patch to verify round-trip correctness
+using var diffBuilder = diffSourceDoc.RootElement.CreateBuilder(diffWorkspace);
+JsonElement.Mutable diffRoot = diffBuilder.RootElement;
+bool success = diffRoot.TryApplyPatch(diffPatch);
+// Result: {"name":"Bob","age":30,"active":true}
+```
+
+The diff produces `replace` for changed values, `remove` for deleted properties, and `add` for new properties.
+
+Same-length arrays are diffed element-by-element, producing targeted operations:
+
+```csharp
+// Source: {"items": [1, 2, 3]}  →  Target: {"items": [1, 99, 3]}
+// Patch:  [{"op":"replace","path":"/items/1","value":99}]
+```
+
+Different-length arrays are replaced wholesale:
+
+```csharp
+// Source: {"tags": ["a", "b"]}  →  Target: {"tags": ["a", "b", "c"]}
+// Patch:  [{"op":"replace","path":"/tags","value":["a","b","c"]}]
+```

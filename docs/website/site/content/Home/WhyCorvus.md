@@ -26,3 +26,4 @@ If you're building APIs, data pipelines, or any system that processes JSON at vo
 | Date/Time Types | System.DateTime, DateTimeOffset | All .NET types (DateTime, DateOnly, TimeOnly where available) plus NodaTime (LocalDate, OffsetDateTime, Period) |
 | Numeric Precision | decimal (28 digits); Int128, UInt128, Half via custom serializers | BigNumber (arbitrary precision) plus native Int128, UInt128, and Half support where available |
 | Strings & URIs | Allocates .NET strings; System.Uri for URI handling | Allocation-free access to UTF-8 and UTF-16 unescaped strings; UTF-8 Uri/Iri with display and canonical formatting without string allocation |
+| JSON Operations | No built-in patch, diff, or canonicalization | JSON Patch (RFC 6902), Merge Patch (RFC 7396), diff, and JSON Canonicalization (RFC 8785) — all zero-allocation |

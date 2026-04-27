@@ -145,3 +145,51 @@ JsonPatchDocument parsedPatch = JsonPatchDocument.ParseValue(
 success = root.TryValidateAndApplyPatch(parsedPatch);
 Console.WriteLine($"Parsed patch applied: {success}");
 Console.WriteLine(builder.RootElement);
+Console.WriteLine();
+
+// ------------------------------------------------------------------
+// JSON Merge Patch (RFC 7396)
+// ------------------------------------------------------------------
+Console.WriteLine("=== JSON Merge Patch (RFC 7396) ===");
+Console.WriteLine();
+
+string targetJson = """{"title": "Goodbye!", "author": {"givenName": "John"}, "tags": ["a"]}""";
+string mergePatchJson = """{"title": "Hello!", "author": {"givenName": null}, "tags": ["b", "c"]}""";
+
+using var mergeTargetDoc = ParsedJsonDocument<JsonElement>.Parse(targetJson);
+using var mergePatchDoc = ParsedJsonDocument<JsonElement>.Parse(mergePatchJson);
+using JsonWorkspace mergeWorkspace = JsonWorkspace.Create();
+using var mergeBuilder = mergeTargetDoc.RootElement.CreateBuilder(mergeWorkspace);
+
+JsonElement.Mutable mergeRoot = mergeBuilder.RootElement;
+Console.WriteLine($"Before merge patch: {mergeBuilder.RootElement}");
+JsonMergePatchExtensions.ApplyMergePatch(ref mergeRoot, mergePatchDoc.RootElement);
+Console.WriteLine($"After merge patch:  {mergeBuilder.RootElement}");
+Console.WriteLine();
+
+// ------------------------------------------------------------------
+// JSON Diff (RFC 6902 Patch Generation)
+// ------------------------------------------------------------------
+Console.WriteLine("=== JSON Diff ===");
+Console.WriteLine();
+
+string diffSourceJson = """{"name": "Alice", "age": 30, "email": "alice@example.com"}""";
+string diffTargetJson = """{"name": "Bob", "age": 30, "active": true}""";
+
+using var diffSourceDoc = ParsedJsonDocument<JsonElement>.Parse(diffSourceJson);
+using var diffTargetDoc = ParsedJsonDocument<JsonElement>.Parse(diffTargetJson);
+using JsonWorkspace diffWorkspace = JsonWorkspace.Create();
+
+JsonPatchDocument diffPatch = JsonDiffExtensions.CreatePatch(
+    diffSourceDoc.RootElement,
+    diffTargetDoc.RootElement,
+    diffWorkspace);
+
+Console.WriteLine($"Diff patch: {diffPatch}");
+
+// Apply the diff patch to verify it produces the target
+using var diffBuilder = diffSourceDoc.RootElement.CreateBuilder(diffWorkspace);
+JsonElement.Mutable diffRoot = diffBuilder.RootElement;
+success = diffRoot.TryApplyPatch(diffPatch);
+Console.WriteLine($"Patch applied: {success}");
+Console.WriteLine($"Result: {diffBuilder.RootElement}");
