@@ -378,6 +378,17 @@ public static class JsonPathCodeGenHelpers
     }
 
     /// <summary>
+    /// Returns the count of nodes from a buffer-based node list.
+    /// </summary>
+    /// <param name="nodes">The node array.</param>
+    /// <param name="count">The number of valid elements in <paramref name="nodes"/>.</param>
+    /// <returns>The count.</returns>
+    public static int CountNodesFromBuffer(JsonElement[] nodes, int count)
+    {
+        return count;
+    }
+
+    /// <summary>
     /// Returns the single value from a node list, or <c>default</c> (Undefined) if
     /// the list does not contain exactly one element.
     /// </summary>
@@ -394,6 +405,18 @@ public static class JsonPathCodeGenHelpers
         }
 
         return default;
+    }
+
+    /// <summary>
+    /// Returns the single value from a buffer-based node list, or <c>default</c>
+    /// (Undefined) if it does not contain exactly one element.
+    /// </summary>
+    /// <param name="nodes">The node array.</param>
+    /// <param name="count">The number of valid elements.</param>
+    /// <returns>The single element, or <c>default</c>.</returns>
+    public static JsonElement ValueOfNodesFromBuffer(JsonElement[] nodes, int count)
+    {
+        return count == 1 ? nodes[0] : default;
     }
 
     private static readonly JsonElement[] IntCache = BuildIntCache();

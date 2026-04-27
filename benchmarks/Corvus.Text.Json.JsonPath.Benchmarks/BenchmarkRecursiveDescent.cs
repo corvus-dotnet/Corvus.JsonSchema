@@ -43,9 +43,9 @@ public class BenchmarkRecursiveDescent : JsonPathBenchmarkBase
     /// Evaluate using Corvus code-generated evaluator.
     /// </summary>
     [Benchmark]
-    public void Corvus_CG()
+    public int Corvus_CG()
     {
-        using JsonWorkspace workspace = JsonWorkspace.Create();
-        RecursiveDescentCodeGen.Evaluate(this.CorvusData, workspace);
+        using JsonPathResult result = RecursiveDescentCodeGen.QueryNodes(this.CorvusData);
+        return result.Count;
     }
 }

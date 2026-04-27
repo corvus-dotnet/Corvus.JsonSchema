@@ -43,9 +43,9 @@ public class BenchmarkArraySlice : JsonPathBenchmarkBase
     /// Evaluate using Corvus code-generated evaluator.
     /// </summary>
     [Benchmark]
-    public void Corvus_CG()
+    public int Corvus_CG()
     {
-        using JsonWorkspace workspace = JsonWorkspace.Create();
-        ArraySliceCodeGen.Evaluate(this.CorvusData, workspace);
+        using JsonPathResult result = ArraySliceCodeGen.QueryNodes(this.CorvusData);
+        return result.Count;
     }
 }

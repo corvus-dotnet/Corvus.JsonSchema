@@ -81,16 +81,15 @@ public ref struct JsonPathResult
     /// Gets a value indicating whether the result overflowed the initial buffer
     /// and rented from <see cref="ArrayPool{T}"/>.
     /// </summary>
-    internal readonly bool HasSpilled => _arrayFromPool is not null;
+    public readonly bool HasSpilled => _arrayFromPool is not null;
 
     /// <summary>
     /// Creates a <see cref="JsonPathResult"/> backed entirely by an
-    /// <see cref="ArrayPool{T}"/> rental. Used for internal ping-pong
-    /// buffers whose lifetime is managed by the caller.
+    /// <see cref="ArrayPool{T}"/> rental.
     /// </summary>
     /// <param name="initialCapacity">The minimum capacity to rent.</param>
     /// <returns>A pooled <see cref="JsonPathResult"/>.</returns>
-    internal static JsonPathResult CreatePooled(int initialCapacity)
+    public static JsonPathResult CreatePooled(int initialCapacity)
     {
         JsonElement[] array = ArrayPool<JsonElement>.Shared.Rent(initialCapacity);
         JsonPathResult result = default;
@@ -104,7 +103,7 @@ public ref struct JsonPathResult
     /// </summary>
     /// <param name="value">The element to append.</param>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal void Append(in JsonElement value)
+    public void Append(in JsonElement value)
     {
         int pos = _pos;
         Span<JsonElement> span = _span;
@@ -122,7 +121,7 @@ public ref struct JsonPathResult
     /// <summary>
     /// Resets the count to zero so the buffer can be reused.
     /// </summary>
-    internal void Clear()
+    public void Clear()
     {
         _span.Slice(0, _pos).Clear();
         _pos = 0;

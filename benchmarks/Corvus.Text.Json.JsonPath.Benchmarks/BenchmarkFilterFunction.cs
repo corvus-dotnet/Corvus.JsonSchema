@@ -35,9 +35,9 @@ public class BenchmarkFilterFunction : JsonPathBenchmarkBase
     /// Evaluate using Corvus code-generated evaluator.
     /// </summary>
     [Benchmark]
-    public void Corvus_CG()
+    public int Corvus_CG()
     {
-        using JsonWorkspace workspace = JsonWorkspace.Create();
-        FilterFunctionCodeGen.Evaluate(this.CorvusData, workspace);
+        using JsonPathResult result = FilterFunctionCodeGen.QueryNodes(this.CorvusData);
+        return result.Count;
     }
 }
