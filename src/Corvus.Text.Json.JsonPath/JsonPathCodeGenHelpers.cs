@@ -3,7 +3,9 @@
 // </copyright>
 
 using System.Buffers;
+using System.Buffers.Text;
 using System.Text;
+using Corvus.Text.Json.Internal;
 
 namespace Corvus.Text.Json.JsonPath;
 
@@ -290,7 +292,9 @@ public static class JsonPathCodeGenHelpers
 
         if (lk == JsonValueKind.String)
         {
-            int cmp = string.CompareOrdinal(left.GetString(), right.GetString());
+            using UnescapedUtf8JsonString leftUtf8 = left.GetUtf8String();
+            using UnescapedUtf8JsonString rightUtf8 = right.GetUtf8String();
+            int cmp = leftUtf8.Span.SequenceCompareTo(rightUtf8.Span);
             return op switch
             {
                 2 => cmp < 0,
@@ -320,9 +324,14 @@ public static class JsonPathCodeGenHelpers
     /// </returns>
     public static int LengthValue(in JsonElement val)
     {
+        if (val.ValueKind == JsonValueKind.String)
+        {
+            using UnescapedUtf8JsonString utf8 = val.GetUtf8String();
+            return JsonElementHelpers.GetUtf8StringLength(utf8.Span);
+        }
+
         return val.ValueKind switch
         {
-            JsonValueKind.String => val.GetString()!.Length,
             JsonValueKind.Array => val.GetArrayLength(),
             JsonValueKind.Object => val.GetPropertyCount(),
             _ => -1,
@@ -358,6 +367,21 @@ public static class JsonPathCodeGenHelpers
         return default;
     }
 
+    private static readonly JsonElement[] IntCache = BuildIntCache();
+
+    private static JsonElement[] BuildIntCache()
+    {
+        JsonElement[] cache = new JsonElement[256];
+        Span<byte> buf = stackalloc byte[4];
+        for (int i = 0; i < cache.Length; i++)
+        {
+            Utf8Formatter.TryFormat(i, buf, out int written);
+            cache[i] = JsonElement.ParseValue(buf.Slice(0, written));
+        }
+
+        return cache;
+    }
+
     /// <summary>
     /// Converts an integer to a <see cref="JsonElement"/> number.
     /// </summary>
@@ -365,9 +389,14 @@ public static class JsonPathCodeGenHelpers
     /// <returns>A JSON number element.</returns>
     public static JsonElement IntToElement(int value)
     {
-        byte[] utf8 = Encoding.UTF8.GetBytes(
-            value.ToString(System.Globalization.CultureInfo.InvariantCulture));
-        return JsonElement.ParseValue(utf8);
+        if ((uint)value < (uint)IntCache.Length)
+        {
+            return IntCache[value];
+        }
+
+        Span<byte> buf = stackalloc byte[16];
+        Utf8Formatter.TryFormat(value, buf, out int written);
+        return JsonElement.ParseValue(buf.Slice(0, written));
     }
 
     /// <summary>
