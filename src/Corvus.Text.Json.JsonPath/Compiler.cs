@@ -44,46 +44,26 @@ internal static class Compiler
     public static CompiledJsonPath Compile(byte[] utf8Expression)
     {
         QueryNode ast = Parser.Parse(utf8Expression);
-
-        if (ast.Segments.Length == 0)
-        {
-            return new CompiledJsonPath(static (in JsonElement root, in JsonElement node, ref JsonPathResult result) =>
-            {
-                result.Append(node);
-            });
-        }
-
-        // Build the pipeline bottom-up: the terminal action appends to the result,
-        // and each segment wraps the downstream action.
-        NodeEval downstream = static (in JsonElement root, in JsonElement node, ref JsonPathResult result) =>
-        {
-            result.Append(node);
-        };
-
-        for (int i = ast.Segments.Length - 1; i >= 0; i--)
-        {
-            downstream = CompileSegment(ast.Segments[i], downstream);
-        }
-
-        return new CompiledJsonPath(downstream);
+        PlanNode plan = Planner.Plan(ast);
+        return new CompiledJsonPath(plan);
     }
 
     /// <summary>
-    /// A compiled JSONPath query. Holds the streaming entry point and provides
+    /// A compiled JSONPath query. Holds the execution plan and provides
     /// zero-allocation execution via <see cref="ExecuteNodes"/>.
     /// </summary>
     internal sealed class CompiledJsonPath
     {
-        private readonly NodeEval _entryPoint;
+        private readonly PlanNode _plan;
 
-        internal CompiledJsonPath(NodeEval entryPoint) => _entryPoint = entryPoint;
+        internal CompiledJsonPath(PlanNode plan) => _plan = plan;
 
         /// <summary>
         /// Executes the query, writing matched nodes into <paramref name="result"/>.
         /// </summary>
         internal void ExecuteNodes(in JsonElement root, ref JsonPathResult result)
         {
-            _entryPoint(root, root, ref result);
+            PlanInterpreter.Execute(_plan, root, ref result);
         }
     }
 
