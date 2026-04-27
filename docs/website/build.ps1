@@ -115,6 +115,7 @@ $v5Projects = @(
     "Corvus.Text.Json.Jsonata",
     "Corvus.Text.Json.JMESPath",
     "Corvus.Text.Json.JsonLogic",
+    "Corvus.Text.Json.JsonPath",
     "Corvus.Text.Json.Patch"
 )
 
@@ -942,6 +943,48 @@ $jsonlogicSize = (Get-ChildItem $jsonlogicOutputDir -Recurse -File | Measure-Obj
 Write-Host "  JSON Logic Playground: $([math]::Round($jsonlogicSize/1MB, 1)) MB" -ForegroundColor Gray
 Write-StepDuration "JSON Logic Playground build" $sw
 
+# -- Step 9f: Build JSONPath Playground (Blazor WASM) ---------------------------
+Write-Host "`n[9f/10] Building JSONPath Playground..." -ForegroundColor Cyan
+$sw = [System.Diagnostics.Stopwatch]::StartNew()
+
+# Bundle monaco-jsonpath (npm)
+$jsonpathPlaygroundRoot = Join-Path $repoRoot "docs\playground-jsonpath"
+Push-Location $jsonpathPlaygroundRoot
+try {
+    & npm ci --ignore-scripts --no-audit --no-fund 2>&1 | Out-Null
+    & node esbuild.mjs
+    if ($LASTEXITCODE -ne 0) { throw "monaco-jsonpath bundle failed" }
+} finally {
+    Pop-Location
+}
+
+$jsonpathProject = Join-Path $repoRoot "docs\playground-jsonpath\src\Corvus.Text.Json.JsonPath.Playground\Corvus.Text.Json.JsonPath.Playground.csproj"
+$jsonpathPublishDir = Join-Path $here ".playground-jsonpath-publish"
+$jsonpathOutputDir = Join-Path $outputDir "playground-jsonpath"
+
+& dotnet publish $jsonpathProject -c Release -o $jsonpathPublishDir --nologo
+if ($LASTEXITCODE -ne 0) { throw "JSONPath Playground publish failed" }
+
+$jsonpathWwwroot = Join-Path $jsonpathPublishDir "wwwroot"
+if (!(Test-Path $jsonpathWwwroot)) {
+    throw "JSONPath Playground wwwroot not found at $jsonpathWwwroot"
+}
+Copy-Item -Path $jsonpathWwwroot -Destination $jsonpathOutputDir -Recurse -Force
+
+$jsonpathIndex = Join-Path $jsonpathOutputDir "index.html"
+if (Test-Path $jsonpathIndex) {
+    $indexContent = [System.IO.File]::ReadAllText($jsonpathIndex)
+    $indexContent = $indexContent -replace '<base href="/" />', "<base href=`"$BasePathPrefix/playground-jsonpath/`" />"
+    [System.IO.File]::WriteAllText($jsonpathIndex, $indexContent)
+    Write-Host "  Updated base href to $BasePathPrefix/playground-jsonpath/" -ForegroundColor Gray
+}
+
+Remove-Item $jsonpathPublishDir -Recurse -Force -ErrorAction SilentlyContinue
+
+$jsonpathSize = (Get-ChildItem $jsonpathOutputDir -Recurse -File | Measure-Object -Property Length -Sum).Sum
+Write-Host "  JSONPath Playground: $([math]::Round($jsonpathSize/1MB, 1)) MB" -ForegroundColor Gray
+Write-StepDuration "JSONPath Playground build" $sw
+
 # Tell Jekyll to include _-prefixed directories needed by the Blazor playground.
 # We cannot use .nojekyll (which bypasses Jekyll entirely) because the resulting
 # unprocessed artifact exceeds GitHub Pages deployment limits.
@@ -997,6 +1040,7 @@ $lycheeArgs = @(
     "--exclude-path", "playground-jsonata"
     "--exclude-path", "playground-jmespath"
     "--exclude-path", "playground-jsonlogic"
+    "--exclude-path", "playground-jsonpath"
     "--exclude-path", "playground-yaml"
     "."
 )
@@ -1021,7 +1065,7 @@ if ($BasePathPrefix) {
 
     # Rewrite HTML files (excluding playgrounds which use <base href>)
     $htmlFiles = Get-ChildItem $outputDir -Filter "*.html" -Recurse -File |
-        Where-Object { $_.FullName -notlike "*\playground\*" -and $_.FullName -notlike "*\playground-jsonata\*" -and $_.FullName -notlike "*\playground-jmespath\*" -and $_.FullName -notlike "*\playground-jsonlogic\*" -and $_.FullName -notlike "*\playground-yaml\*" }
+        Where-Object { $_.FullName -notlike "*\playground\*" -and $_.FullName -notlike "*\playground-jsonata\*" -and $_.FullName -notlike "*\playground-jmespath\*" -and $_.FullName -notlike "*\playground-jsonlogic\*" -and $_.FullName -notlike "*\playground-jsonpath\*" -and $_.FullName -notlike "*\playground-yaml\*" }
     $rewriteCount = 0
     foreach ($htmlFile in $htmlFiles) {
         $content = [System.IO.File]::ReadAllText($htmlFile.FullName)
@@ -1045,7 +1089,7 @@ if ($BasePathPrefix) {
         $original = $content
 
         # Rewrite string literals containing root-relative paths: '/api/', '/search-index.json', etc.
-        $content = $content -replace "(['""])(/(?!/)(?:api|search|docs|examples|getting-started|assets|playground|playground-jsonata|playground-jmespath|playground-jsonlogic|playground-yaml))", "`$1$BasePathPrefix`$2"
+        $content = $content -replace "(['""])(/(?!/)(?:api|search|docs|examples|getting-started|assets|playground|playground-jsonata|playground-jmespath|playground-jsonlogic|playground-jsonpath|playground-yaml))", "`$1$BasePathPrefix`$2"
 
         if ($content -ne $original) {
             [System.IO.File]::WriteAllText($jsFile.FullName, $content)
@@ -1087,7 +1131,7 @@ $defaultGitHubUrl = "https://github.com/corvus-dotnet/Corvus.JsonSchema"
 if ($canonicalRepoUrl -ne $defaultGitHubUrl) {
     Write-Host "`n  Rewriting GitHub URLs: $defaultGitHubUrl -> $canonicalRepoUrl" -ForegroundColor Cyan
     $htmlFiles = Get-ChildItem $outputDir -Filter "*.html" -Recurse -File |
-        Where-Object { $_.FullName -notlike "*\playground\*" -and $_.FullName -notlike "*\playground-jsonata\*" -and $_.FullName -notlike "*\playground-jmespath\*" -and $_.FullName -notlike "*\playground-jsonlogic\*" -and $_.FullName -notlike "*\playground-yaml\*" }
+        Where-Object { $_.FullName -notlike "*\playground\*" -and $_.FullName -notlike "*\playground-jsonata\*" -and $_.FullName -notlike "*\playground-jmespath\*" -and $_.FullName -notlike "*\playground-jsonlogic\*" -and $_.FullName -notlike "*\playground-jsonpath\*" -and $_.FullName -notlike "*\playground-yaml\*" }
     $ghRewriteCount = 0
     foreach ($htmlFile in $htmlFiles) {
         $content = [System.IO.File]::ReadAllText($htmlFile.FullName)

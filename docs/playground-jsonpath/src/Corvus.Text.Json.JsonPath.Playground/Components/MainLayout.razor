@@ -1,0 +1,730 @@
+@inherits LayoutComponentBase
+@implements IDisposable
+@page "/"
+@inject EvaluationService EvalService
+@inject IJSRuntime JSRuntime
+
+<div class="playground-toolbar">
+    <h1>JSONPath Playground</h1>
+    <button class="toolbar-btn secondary" @onclick="NewProjectAsync" title="New blank project">📄 New</button>
+    <select class="toolbar-select" value="@(activeSampleId ?? "")" @onchange="OnSampleChanged">
+        @if (activeSampleId is null)
+        {
+            <option value="" disabled>— Custom —</option>
+        }
+        @foreach (var sample in SampleRegistry.All)
+        {
+            <option value="@sample.Id">@sample.DisplayName</option>
+        }
+    </select>
+    <div class="spacer"></div>
+    <button class="theme-toggle-btn" @onclick="CycleTheme" title="@themeTooltip">@themeIcon</button>
+</div>
+
+<div class="jsonpath-grid @(maximizedPanel is not null ? "has-maximized" : "")">
+    @* Left column: JSON data (full height) *@
+    <div class="playground-panel panel-data @(GetPanelClass("data"))">
+        <div class="panel-header">
+            JSON Data
+            <div class="spacer"></div>
+            <button class="panel-copy-btn" @onclick="CopyData" title="Copy data">📋</button>
+            <button class="panel-maximize-btn" @onclick='() => ToggleMaximize("data")' title="@(maximizedPanel == "data" ? "Restore" : "Maximize")">
+                @(maximizedPanel == "data" ? "⊟" : "⊞")
+            </button>
+        </div>
+        <div class="panel-body">
+            <StandaloneCodeEditor @ref="dataEditor"
+                                  Id="data-editor"
+                                  ConstructionOptions="DataEditorOptions"
+                                  OnDidChangeModelContent="OnDataChanged" />
+        </div>
+    </div>
+
+    @* Top-right: JSONPath expression *@
+    <div class="playground-panel panel-expression @(GetPanelClass("expression"))">
+        <div class="panel-header">
+            JSONPath Expression
+            <div class="spacer"></div>
+            <button class="panel-copy-btn" @onclick="CopyExpression" title="Copy expression">📋</button>
+            <button class="panel-maximize-btn" @onclick='() => ToggleMaximize("expression")' title="@(maximizedPanel == "expression" ? "Restore" : "Maximize")">
+                @(maximizedPanel == "expression" ? "⊟" : "⊞")
+            </button>
+        </div>
+        <div class="panel-body">
+            <StandaloneCodeEditor @ref="expressionEditor"
+                                  Id="expression-editor"
+                                  ConstructionOptions="ExpressionEditorOptions"
+                                  OnDidChangeModelContent="OnExpressionChanged" />
+        </div>
+    </div>
+
+    @* Bottom-right: Result output *@
+    <div class="playground-panel panel-output @(GetPanelClass("output"))">
+        <div class="panel-header">
+            Result
+            <div class="spacer"></div>
+            @if (lastResult is not null)
+            {
+                <span style="font-weight:normal;text-transform:none;">
+                    @(lastResult.Success ? "✓" : "✗")
+                    @($"{lastResult.ElapsedMs:F1}ms")
+                </span>
+            }
+            <button class="panel-copy-btn" @onclick="CopyResult" title="Copy result">📋</button>
+            <button class="panel-maximize-btn" @onclick='() => ToggleMaximize("output")' title="@(maximizedPanel == "output" ? "Restore" : "Maximize")">
+                @(maximizedPanel == "output" ? "⊟" : "⊞")
+            </button>
+        </div>
+        <div class="panel-body" style="@(lastResult is not null && !lastResult.Success ? "display:none" : "")">
+            <StandaloneCodeEditor @ref="outputEditor"
+                                  Id="output-editor"
+                                  ConstructionOptions="OutputEditorOptions" />
+        </div>
+        @if (lastResult is not null && !lastResult.Success)
+        {
+            <div class="panel-body">
+                <div class="error-output">@lastResult.ErrorMessage</div>
+            </div>
+        }
+    </div>
+</div>
+
+@if (showDirtyConfirmation)
+{
+    <div class="modal-overlay" @onclick="CancelDirtyConfirmation">
+        <div class="modal-dialog" @onclick:stopPropagation="true">
+            <h3>Unsaved Changes</h3>
+            <p>Your editors have been modified. Do you want to discard these changes?</p>
+            <ul class="dirty-file-list">
+                @foreach (string name in GetDirtyEditorNames())
+                {
+                    <li>@name</li>
+                }
+            </ul>
+            <div class="modal-actions">
+                <button class="toolbar-btn secondary" @onclick="CancelDirtyConfirmation">Cancel</button>
+                <button class="toolbar-btn primary" @onclick="ConfirmDirtyAction">Discard Changes</button>
+            </div>
+        </div>
+    </div>
+}
+
+<div class="status-bar @(lastResult is not null && !lastResult.Success ? "error" : "")">
+    <span>Corvus.Text.Json.JsonPath — Interpreted Runtime</span>
+    <div class="spacer"></div>
+    @if (isEvaluating)
+    {
+        <span>Evaluating…</span>
+    }
+    else if (lastResult is not null)
+    {
+        <span>@(lastResult.Success ? "OK" : "Error") — @($"{lastResult.ElapsedMs:F1}ms")</span>
+    }
+    else
+    {
+        <span>Ready</span>
+    }
+</div>
+
+@code {
+    private StandaloneCodeEditor dataEditor = null!;
+    private StandaloneCodeEditor expressionEditor = null!;
+    private StandaloneCodeEditor outputEditor = null!;
+
+    private string? activeSampleId;
+    private EvaluationResult? lastResult;
+    private bool isEvaluating;
+    private bool isInitializing = true;
+    private bool isLoadingSample;
+    private string? maximizedPanel;
+
+    // Dirty checking
+    private bool showDirtyConfirmation;
+    private Func<Task>? pendingDirtyAction;
+    private string cleanData = "";
+    private string cleanExpression = "";
+    private List<string> dirtyEditorSnapshot = new();
+
+    // Theme state
+    private string themePref = "auto";
+    private string resolvedTheme = "dark";
+    private string themeIcon = "🌙";
+    private string themeTooltip = "Toggle theme";
+    private DotNetObjectReference<MainLayout>? dotNetRef;
+
+    // Debounce
+    private CancellationTokenSource? evaluateDebounce;
+    private CancellationTokenSource? saveDebounce;
+
+    private const string DataStorageKey = "jsonpath-playground-data";
+    private const string ExpressionStorageKey = "jsonpath-playground-expression";
+    private const string ThemeStorageKey = "jsonpath-playground-theme";
+
+    // ── Editor options ──
+
+    private StandaloneEditorConstructionOptions DataEditorOptions(StandaloneCodeEditor editor) => new()
+    {
+        Language = "json",
+        Theme = resolvedTheme == "light" ? "vs" : "vs-dark",
+        Value = initialData,
+        AutomaticLayout = true,
+        Minimap = new EditorMinimapOptions { Enabled = false },
+        FontSize = 13,
+        TabSize = 2,
+        ScrollBeyondLastLine = false,
+    };
+
+    private StandaloneEditorConstructionOptions ExpressionEditorOptions(StandaloneCodeEditor editor) => new()
+    {
+        Language = "jsonpath",
+        Theme = resolvedTheme == "light" ? "vs" : "vs-dark",
+        Value = initialExpression,
+        AutomaticLayout = true,
+        Minimap = new EditorMinimapOptions { Enabled = false },
+        FontSize = 14,
+        TabSize = 2,
+        ScrollBeyondLastLine = false,
+        WordWrap = "on",
+    };
+
+    private StandaloneEditorConstructionOptions OutputEditorOptions(StandaloneCodeEditor editor) => new()
+    {
+        Language = "json",
+        Theme = resolvedTheme == "light" ? "vs" : "vs-dark",
+        Value = "",
+        AutomaticLayout = true,
+        Minimap = new EditorMinimapOptions { Enabled = false },
+        FontSize = 13,
+        TabSize = 2,
+        ReadOnly = true,
+        ScrollBeyondLastLine = false,
+    };
+
+    // ── Initial values (set before render) ──
+    private string initialData = SampleRegistry.All[0].Data;
+    private string initialExpression = SampleRegistry.All[0].Expression;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            dotNetRef = DotNetObjectReference.Create(this);
+            await JSRuntime.InvokeVoidAsync("registerPlaygroundShortcuts", dotNetRef);
+            await JSRuntime.InvokeVoidAsync("onSystemThemeChange", dotNetRef);
+
+            // Load saved theme preference
+            var savedTheme = await GetLocalStorage(ThemeStorageKey);
+            if (!string.IsNullOrEmpty(savedTheme))
+            {
+                themePref = savedTheme;
+            }
+
+            resolvedTheme = await JSRuntime.InvokeAsync<string>("getInitialTheme");
+            UpdateThemeIcon();
+
+            // Load saved data
+            var savedData = await GetLocalStorage(DataStorageKey);
+            var savedExpr = await GetLocalStorage(ExpressionStorageKey);
+
+            if (!string.IsNullOrEmpty(savedData) || !string.IsNullOrEmpty(savedExpr))
+            {
+                activeSampleId = null;
+                if (!string.IsNullOrEmpty(savedData))
+                {
+                    await dataEditor.SetValue(savedData);
+                }
+
+                if (!string.IsNullOrEmpty(savedExpr))
+                {
+                    await expressionEditor.SetValue(savedExpr);
+                }
+            }
+            else
+            {
+                activeSampleId = SampleRegistry.All[0].Id;
+            }
+
+            StateHasChanged();
+
+            // Initialization complete — sync clean baselines, enable change handlers, then evaluate
+            isInitializing = false;
+            await SyncCleanBaselines();
+            await EvaluateAsync();
+        }
+    }
+
+    // ── Event handlers ──
+
+    private void OnDataChanged(ModelContentChangedEvent e)
+    {
+        if (isInitializing || isLoadingSample) { return; }
+
+        activeSampleId = null;
+        _ = ClearDataMarkers();
+        DebounceEvaluate();
+        DebounceSave();
+    }
+
+    private void OnExpressionChanged(ModelContentChangedEvent e)
+    {
+        if (isInitializing || isLoadingSample) { return; }
+
+        activeSampleId = null;
+        DebounceEvaluate();
+        DebounceSave();
+    }
+
+    private async Task OnSampleChanged(ChangeEventArgs e)
+    {
+        var sampleId = e.Value?.ToString();
+        var sample = SampleRegistry.All.FirstOrDefault(s => s.Id == sampleId);
+        if (sample is null)
+        {
+            return;
+        }
+
+        await CheckDirtyAndConfirm(async () =>
+        {
+            await LoadSample(sample);
+        });
+    }
+
+    private async Task NewProjectAsync()
+    {
+        await CheckDirtyAndConfirm(async () =>
+        {
+            isLoadingSample = true;
+            try
+            {
+                activeSampleId = null;
+                await dataEditor.SetValue("{}");
+                await expressionEditor.SetValue("/* Enter a JSONPath expression */");
+            }
+            finally
+            {
+                isLoadingSample = false;
+            }
+
+            await SyncCleanBaselines();
+            await ClearLocalStorage();
+            await ClearAllMarkers();
+            lastResult = null;
+            if (outputEditor is not null)
+            {
+                await outputEditor.SetValue("");
+            }
+
+            StateHasChanged();
+        });
+    }
+
+    private async Task LoadSample(Sample sample)
+    {
+        isLoadingSample = true;
+        try
+        {
+            activeSampleId = sample.Id;
+            await dataEditor.SetValue(sample.Data);
+            await expressionEditor.SetValue(sample.Expression);
+        }
+        finally
+        {
+            isLoadingSample = false;
+        }
+
+        await SyncCleanBaselines();
+        await ClearLocalStorage();
+        await ClearAllMarkers();
+        await EvaluateAsync();
+    }
+
+    // ── Dirty checking ──
+
+    private async Task CheckDirtyAndConfirm(Func<Task> action)
+    {
+        var currentData = await dataEditor.GetValue();
+        var currentExpr = await expressionEditor.GetValue();
+
+        bool dataDirty = currentData != cleanData;
+        bool exprDirty = currentExpr != cleanExpression;
+
+        if (!dataDirty && !exprDirty)
+        {
+            await action();
+            return;
+        }
+
+        // Snapshot which editors are dirty for synchronous rendering
+        dirtyEditorSnapshot = new List<string>();
+        if (dataDirty) { dirtyEditorSnapshot.Add("JSON Data"); }
+        if (exprDirty) { dirtyEditorSnapshot.Add("JSONPath Expression"); }
+
+        pendingDirtyAction = action;
+        showDirtyConfirmation = true;
+        StateHasChanged();
+    }
+
+    private async Task ConfirmDirtyAction()
+    {
+        showDirtyConfirmation = false;
+        var action = pendingDirtyAction;
+        pendingDirtyAction = null;
+
+        if (action is not null)
+        {
+            await action();
+        }
+    }
+
+    private async Task CancelDirtyConfirmation()
+    {
+        showDirtyConfirmation = false;
+        pendingDirtyAction = null;
+
+        // The browser already updated the <select> natively; reset it to match our state
+        await JSRuntime.InvokeVoidAsync("resetSampleSelect", activeSampleId ?? "");
+    }
+
+    private List<string> GetDirtyEditorNames() => dirtyEditorSnapshot;
+
+    private async Task SyncCleanBaselines()
+    {
+        cleanData = await dataEditor.GetValue();
+        cleanExpression = await expressionEditor.GetValue();
+    }
+
+    // ── Copy helpers ──
+
+    private async Task CopyData()
+    {
+        var text = await dataEditor.GetValue();
+        await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", text);
+    }
+
+    private async Task CopyExpression()
+    {
+        var text = await expressionEditor.GetValue();
+        await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", text);
+    }
+
+    private async Task CopyResult()
+    {
+        if (lastResult is not null && !lastResult.Success)
+        {
+            await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", lastResult.ErrorMessage ?? "");
+        }
+        else if (outputEditor is not null)
+        {
+            var text = await outputEditor.GetValue();
+            await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", text);
+        }
+    }
+
+    [JSInvokable]
+    public async Task OnEvaluateShortcut()
+    {
+        await EvaluateAsync();
+    }
+
+    [JSInvokable]
+    public void OnSystemThemeChanged(string systemTheme)
+    {
+        if (themePref == "auto")
+        {
+            resolvedTheme = systemTheme;
+            UpdateThemeIcon();
+            _ = JSRuntime.InvokeVoidAsync("applyTheme", resolvedTheme);
+            StateHasChanged();
+        }
+    }
+
+    // ── Evaluation ──
+
+    private async Task EvaluateAsync()
+    {
+        if (isEvaluating)
+        {
+            return;
+        }
+
+        isEvaluating = true;
+        StateHasChanged();
+
+        try
+        {
+            var data = await dataEditor.GetValue();
+            var expression = await expressionEditor.GetValue();
+
+            lastResult = await EvalService.EvaluateAsync(expression, data);
+
+            if (lastResult.Success)
+            {
+                await ClearDataMarkers();
+                await ClearExpressionMarkers();
+                if (outputEditor is not null)
+                {
+                    await outputEditor.SetValue(lastResult.ResultJson ?? "");
+                }
+            }
+            else
+            {
+                switch (lastResult.ErrorSource)
+                {
+                    case ErrorSource.Data:
+                        await ClearExpressionMarkers();
+                        await SetDataMarkers(lastResult);
+                        break;
+                    case ErrorSource.Expression:
+                        await ClearDataMarkers();
+                        await SetExpressionMarkers(lastResult);
+                        break;
+                    default:
+                        await ClearDataMarkers();
+                        await ClearExpressionMarkers();
+                        break;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            lastResult = new EvaluationResult
+            {
+                Success = false,
+                ErrorMessage = ex.Message,
+                ElapsedMs = 0,
+            };
+        }
+        finally
+        {
+            isEvaluating = false;
+            StateHasChanged();
+        }
+    }
+
+    // ── Debounce helpers ──
+
+    private void DebounceEvaluate()
+    {
+        evaluateDebounce?.Cancel();
+        evaluateDebounce = new CancellationTokenSource();
+        var token = evaluateDebounce.Token;
+
+        _ = Task.Delay(300, token).ContinueWith(async _ =>
+        {
+            if (!token.IsCancellationRequested)
+            {
+                await InvokeAsync(EvaluateAsync);
+            }
+        }, token, TaskContinuationOptions.OnlyOnRanToCompletion, TaskScheduler.Current);
+    }
+
+    private void DebounceSave()
+    {
+        saveDebounce?.Cancel();
+        saveDebounce = new CancellationTokenSource();
+        var token = saveDebounce.Token;
+
+        _ = Task.Delay(2000, token).ContinueWith(async _ =>
+        {
+            if (!token.IsCancellationRequested)
+            {
+                await InvokeAsync(SaveToLocalStorage);
+            }
+        }, token, TaskContinuationOptions.OnlyOnRanToCompletion, TaskScheduler.Current);
+    }
+
+    private async Task SaveToLocalStorage()
+    {
+        try
+        {
+            var data = await dataEditor.GetValue();
+            var expr = await expressionEditor.GetValue();
+            await SetLocalStorage(DataStorageKey, data);
+            await SetLocalStorage(ExpressionStorageKey, expr);
+        }
+        catch
+        {
+            // localStorage may be unavailable
+        }
+    }
+
+    // ── Theme ──
+
+    private async Task CycleTheme()
+    {
+        themePref = themePref switch
+        {
+            "dark" => "light",
+            "light" => "auto",
+            _ => "dark",
+        };
+
+        if (themePref == "auto")
+        {
+            resolvedTheme = await JSRuntime.InvokeAsync<string>("getSystemTheme");
+        }
+        else
+        {
+            resolvedTheme = themePref;
+        }
+
+        UpdateThemeIcon();
+        await JSRuntime.InvokeVoidAsync("applyTheme", resolvedTheme);
+        await SetLocalStorage(ThemeStorageKey, themePref);
+    }
+
+    private void UpdateThemeIcon()
+    {
+        (themeIcon, themeTooltip) = themePref switch
+        {
+            "dark" => ("🌙", "Theme: Dark (click for Light)"),
+            "light" => ("☀️", "Theme: Light (click for System)"),
+            _ => ("🖥️", "Theme: System (click for Dark)"),
+        };
+    }
+
+    // ── localStorage helpers ──
+
+    private async Task<string?> GetLocalStorage(string key)
+    {
+        try
+        {
+            return await JSRuntime.InvokeAsync<string?>("localStorage.getItem", key);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private async Task SetLocalStorage(string key, string value)
+    {
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("localStorage.setItem", key, value);
+        }
+        catch
+        {
+            // ignore
+        }
+    }
+
+    private async Task ClearLocalStorage()
+    {
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("localStorage.removeItem", DataStorageKey);
+            await JSRuntime.InvokeVoidAsync("localStorage.removeItem", ExpressionStorageKey);
+        }
+        catch
+        {
+            // ignore
+        }
+    }
+
+    // ── Maximize/minimize panels ──
+
+    private void ToggleMaximize(string panelName)
+    {
+        maximizedPanel = maximizedPanel == panelName ? null : panelName;
+    }
+
+    private string GetPanelClass(string panelName)
+    {
+        if (maximizedPanel is null)
+        {
+            return "";
+        }
+
+        return maximizedPanel == panelName ? "maximized" : "hidden";
+    }
+
+    // ── Monaco editor markers ──
+
+    private async Task SetDataMarkers(EvaluationResult result)
+    {
+        var model = await dataEditor.GetModel();
+        if (model is null || result.ErrorLine is not int line || result.ErrorColumn is not int col)
+        {
+            return;
+        }
+
+        var markers = new List<MarkerData>
+        {
+            new MarkerData
+            {
+                Message = result.ErrorMessage ?? "Error",
+                Severity = MarkerSeverity.Error,
+                StartLineNumber = line,
+                StartColumn = col,
+                EndLineNumber = line,
+                EndColumn = col + 1,
+            },
+        };
+
+        await BlazorMonaco.Editor.Global.SetModelMarkers(
+            JSRuntime, model, "data-errors", markers);
+    }
+
+    private async Task ClearDataMarkers()
+    {
+        var model = await dataEditor.GetModel();
+        if (model is not null)
+        {
+            await BlazorMonaco.Editor.Global.SetModelMarkers(
+                JSRuntime, model, "data-errors", []);
+        }
+    }
+
+    private async Task ClearAllMarkers()
+    {
+        await ClearDataMarkers();
+        await ClearExpressionMarkers();
+    }
+
+    private async Task SetExpressionMarkers(EvaluationResult result)
+    {
+        var model = await expressionEditor.GetModel();
+        if (model is null || result.ErrorLine is not int line || result.ErrorColumn is not int col)
+        {
+            return;
+        }
+
+        var markers = new List<MarkerData>
+        {
+            new MarkerData
+            {
+                Message = result.ErrorMessage ?? "Error",
+                Severity = MarkerSeverity.Error,
+                StartLineNumber = line,
+                StartColumn = col,
+                EndLineNumber = line,
+                EndColumn = col + 1,
+            },
+        };
+
+        await BlazorMonaco.Editor.Global.SetModelMarkers(
+            JSRuntime, model, "expression-errors", markers);
+    }
+
+    private async Task ClearExpressionMarkers()
+    {
+        var model = await expressionEditor.GetModel();
+        if (model is not null)
+        {
+            await BlazorMonaco.Editor.Global.SetModelMarkers(
+                JSRuntime, model, "expression-errors", []);
+        }
+    }
+
+    // ── Dispose ──
+
+    public void Dispose()
+    {
+        evaluateDebounce?.Cancel();
+        evaluateDebounce?.Dispose();
+        saveDebounce?.Cancel();
+        saveDebounce?.Dispose();
+        dotNetRef?.Dispose();
+    }
+}
