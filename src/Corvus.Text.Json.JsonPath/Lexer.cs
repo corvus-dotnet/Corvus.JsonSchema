@@ -340,6 +340,15 @@ internal ref struct Lexer
         if (this.position < this.source.Length && this.source[this.position] == (byte)'.')
         {
             this.position++;
+
+            // RFC 9535 / JSON number grammar: frac = "." 1*DIGIT
+            if (this.position >= this.source.Length ||
+                this.source[this.position] < (byte)'0' ||
+                this.source[this.position] > (byte)'9')
+            {
+                throw new JsonPathException("Expected digit after '.' in number literal.", this.position);
+            }
+
             while (this.position < this.source.Length &&
                    this.source[this.position] >= (byte)'0' &&
                    this.source[this.position] <= (byte)'9')
@@ -356,6 +365,14 @@ internal ref struct Lexer
                 (this.source[this.position] == (byte)'+' || this.source[this.position] == (byte)'-'))
             {
                 this.position++;
+            }
+
+            // RFC 9535 / JSON number grammar: exp = "e" ["-" / "+"] 1*DIGIT
+            if (this.position >= this.source.Length ||
+                this.source[this.position] < (byte)'0' ||
+                this.source[this.position] > (byte)'9')
+            {
+                throw new JsonPathException("Expected digit in exponent of number literal.", this.position);
             }
 
             while (this.position < this.source.Length &&
