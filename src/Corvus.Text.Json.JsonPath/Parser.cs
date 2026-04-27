@@ -19,6 +19,11 @@ internal static class Parser
     private const long MaxInt = (1L << 53) - 1;
     private const long MinInt = -((1L << 53) - 1);
 
+#if !BUILDING_SOURCE_GENERATOR
+    [ThreadStatic]
+    private static IReadOnlyDictionary<string, IJsonPathFunction>? t_customFunctions;
+#endif
+
     /// <summary>
     /// Parses a UTF-8 JSONPath expression string into an AST.
     /// </summary>
@@ -26,6 +31,35 @@ internal static class Parser
     /// <returns>The parsed query AST.</returns>
     /// <exception cref="JsonPathException">Thrown if the expression is syntactically invalid.</exception>
     public static QueryNode Parse(ReadOnlySpan<byte> utf8Expression)
+    {
+        return ParseCore(utf8Expression);
+    }
+
+#if !BUILDING_SOURCE_GENERATOR
+    /// <summary>
+    /// Parses a UTF-8 JSONPath expression string into an AST with custom function support.
+    /// </summary>
+    /// <param name="utf8Expression">The UTF-8 encoded JSONPath expression.</param>
+    /// <param name="customFunctions">Optional registry of custom functions for well-typedness validation.</param>
+    /// <returns>The parsed query AST.</returns>
+    /// <exception cref="JsonPathException">Thrown if the expression is syntactically invalid.</exception>
+    public static QueryNode Parse(
+        ReadOnlySpan<byte> utf8Expression,
+        IReadOnlyDictionary<string, IJsonPathFunction>? customFunctions)
+    {
+        t_customFunctions = customFunctions;
+        try
+        {
+            return ParseCore(utf8Expression);
+        }
+        finally
+        {
+            t_customFunctions = null;
+        }
+    }
+#endif
+
+    private static QueryNode ParseCore(ReadOnlySpan<byte> utf8Expression)
     {
         // RFC 9535: no leading whitespace allowed
         if (utf8Expression.Length > 0 && IsWhitespace(utf8Expression[0]))
@@ -902,8 +936,30 @@ internal static class Parser
         "value" => FilterResultType.ValueType,
         "match" => FilterResultType.LogicalType,
         "search" => FilterResultType.LogicalType,
+#if !BUILDING_SOURCE_GENERATOR
+        _ => GetCustomFunctionReturnType(name),
+#else
         _ => throw new JsonPathException($"Unknown function: '{name}'."),
+#endif
     };
+
+#if !BUILDING_SOURCE_GENERATOR
+    private static FilterResultType GetCustomFunctionReturnType(string name)
+    {
+        if (t_customFunctions is not null && t_customFunctions.TryGetValue(name, out IJsonPathFunction? func))
+        {
+            return func.ReturnType switch
+            {
+                JsonPathFunctionType.ValueType => FilterResultType.ValueType,
+                JsonPathFunctionType.LogicalType => FilterResultType.LogicalType,
+                JsonPathFunctionType.NodesType => FilterResultType.NodesType,
+                _ => throw new JsonPathException($"Unknown return type for custom function '{name}'."),
+            };
+        }
+
+        throw new JsonPathException($"Unknown function: '{name}'.");
+    }
+#endif
 
     /// <summary>
     /// Validates function argument types per RFC 9535 well-typedness rules.
@@ -955,9 +1011,44 @@ internal static class Parser
                 break;
 
             default:
+#if !BUILDING_SOURCE_GENERATOR
+                ValidateCustomFunctionTypes(node);
+                break;
+#else
                 throw new JsonPathException($"Unknown function: '{node.Name}'.");
+#endif
         }
     }
+
+#if !BUILDING_SOURCE_GENERATOR
+    private static void ValidateCustomFunctionTypes(FunctionCallNode node)
+    {
+        if (t_customFunctions is null || !t_customFunctions.TryGetValue(node.Name, out IJsonPathFunction? func))
+        {
+            throw new JsonPathException($"Unknown function: '{node.Name}'.");
+        }
+
+        ReadOnlySpan<JsonPathFunctionType> paramTypes = func.ParameterTypes;
+        if (node.Arguments.Length != paramTypes.Length)
+        {
+            throw new JsonPathException(
+                $"{node.Name}() requires exactly {paramTypes.Length} argument(s) but got {node.Arguments.Length}.");
+        }
+
+        for (int i = 0; i < paramTypes.Length; i++)
+        {
+            FunctionArgType expected = paramTypes[i] switch
+            {
+                JsonPathFunctionType.ValueType => FunctionArgType.ValueType,
+                JsonPathFunctionType.LogicalType => FunctionArgType.LogicalType,
+                JsonPathFunctionType.NodesType => FunctionArgType.NodesType,
+                _ => FunctionArgType.ValueType,
+            };
+
+            ValidateFunctionArgType(node.Arguments[i], node.Name, expected);
+        }
+    }
+#endif
 
     private enum FunctionArgType
     {

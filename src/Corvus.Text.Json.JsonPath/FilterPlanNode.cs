@@ -329,3 +329,34 @@ internal sealed class FilterMatchFunctionPlan : FilterPlanNode
     /// <summary>Gets a value indicating whether this is <c>match()</c> (true) or <c>search()</c> (false).</summary>
     internal bool FullMatch { get; }
 }
+
+/// <summary>
+/// A custom function call. Stores the <see cref="IJsonPathFunction"/> reference directly
+/// so the plan interpreter can dispatch without a registry lookup.
+/// </summary>
+internal sealed class FilterCustomFunctionPlan : FilterPlanNode
+{
+    internal FilterCustomFunctionPlan(
+        string name,
+        IJsonPathFunction function,
+        FilterPlanNode[] arguments,
+        JsonPathFunctionType[] parameterTypes)
+    {
+        Name = name;
+        Function = function;
+        Arguments = arguments;
+        ParameterTypes = parameterTypes;
+    }
+
+    /// <summary>Gets the function name (for diagnostics).</summary>
+    internal string Name { get; }
+
+    /// <summary>Gets the function implementation.</summary>
+    internal IJsonPathFunction Function { get; }
+
+    /// <summary>Gets the planned argument nodes.</summary>
+    internal FilterPlanNode[] Arguments { get; }
+
+    /// <summary>Gets the declared parameter types (parallel to <see cref="Arguments"/>).</summary>
+    internal JsonPathFunctionType[] ParameterTypes { get; }
+}

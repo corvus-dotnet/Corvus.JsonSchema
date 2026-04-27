@@ -15,6 +15,39 @@ public sealed class JsonPathEvaluator
     private static readonly JsonPathEvaluator DefaultInstance = new();
     private static readonly JsonElement EmptyArray = JsonElement.ParseValue("[]"u8);
     private readonly ConcurrentDictionary<string, Compiler.CompiledJsonPath> cache = new();
+    private readonly IReadOnlyDictionary<string, IJsonPathFunction>? customFunctions;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="JsonPathEvaluator"/> class
+    /// with no custom functions.
+    /// </summary>
+    public JsonPathEvaluator()
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="JsonPathEvaluator"/> class
+    /// with the specified custom function registry.
+    /// </summary>
+    /// <param name="customFunctions">
+    /// A dictionary mapping function names to their implementations.
+    /// The built-in function names (<c>length</c>, <c>count</c>, <c>value</c>,
+    /// <c>match</c>, <c>search</c>) are reserved and cannot be overridden.
+    /// </param>
+    /// <exception cref="ArgumentException">
+    /// Thrown if any key conflicts with a built-in function name.
+    /// </exception>
+    /// <remarks>
+    /// <para>
+    /// Custom functions participate in RFC 9535 well-typedness checking at parse time.
+    /// Implementations must be thread-safe.
+    /// </para>
+    /// </remarks>
+    public JsonPathEvaluator(IReadOnlyDictionary<string, IJsonPathFunction> customFunctions)
+    {
+        ValidateNoBuiltInOverrides(customFunctions);
+        this.customFunctions = customFunctions;
+    }
 
     /// <summary>
     /// Gets the default shared evaluator instance.
@@ -113,7 +146,7 @@ public sealed class JsonPathEvaluator
         Compiler.CompiledJsonPath compiled;
         try
         {
-            compiled = Compiler.Compile(expression);
+            compiled = Compiler.Compile(expression, this.customFunctions);
         }
         catch (Exception ex) when (ex is not JsonPathException)
         {
@@ -122,5 +155,19 @@ public sealed class JsonPathEvaluator
 
         this.cache.TryAdd(expression, compiled);
         return compiled;
+    }
+
+    private static void ValidateNoBuiltInOverrides(IReadOnlyDictionary<string, IJsonPathFunction> functions)
+    {
+        ReadOnlySpan<string> reserved = ["length", "count", "value", "match", "search"];
+        foreach (string name in reserved)
+        {
+            if (functions.ContainsKey(name))
+            {
+                throw new ArgumentException(
+                    $"Cannot override built-in function '{name}'. Built-in function names are reserved.",
+                    nameof(functions));
+            }
+        }
     }
 }

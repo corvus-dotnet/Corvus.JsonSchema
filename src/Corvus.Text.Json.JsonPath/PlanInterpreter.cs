@@ -536,6 +536,7 @@ internal static class PlanInterpreter
             FilterCountFunctionPlan countFn => EvalCountFunction(countFn, root, current),
             FilterValueFunctionPlan valFn => EvalValueFunction(valFn, root, current),
             FilterMatchFunctionPlan matchFn => EvalMatchFunction(matchFn, root, current),
+            FilterCustomFunctionPlan customFn => EvalCustomFunction(customFn, root, current),
             _ => throw new JsonPathException($"Unknown filter plan node type: {plan.GetType().Name}"),
         };
     }
@@ -767,6 +768,165 @@ internal static class PlanInterpreter
         }
 
         return FilterResult.FromLogical(MatchInput(regex, strResult.Value));
+    }
+
+    // ── Custom functions ─────────────────────────────────────────────
+    private static FilterResult EvalCustomFunction(
+        FilterCustomFunctionPlan plan,
+        in JsonElement root,
+        in JsonElement current)
+    {
+        int argCount = plan.Arguments.Length;
+
+        // Rent an array for args (can't stackalloc managed structs)
+        JsonPathFunctionArgument[]? rentedArgs = null;
+        JsonPathFunctionArgument[] args = argCount <= 8
+            ? new JsonPathFunctionArgument[argCount]
+            : (rentedArgs = ArrayPool<JsonPathFunctionArgument>.Shared.Rent(argCount));
+
+        // Track pool-rented backing arrays from NodesType evaluations
+        JsonElement[]?[]? rentedNodeArrays = null;
+        int rentedNodeArrayCount = 0;
+
+        try
+        {
+            for (int i = 0; i < argCount; i++)
+            {
+                FilterResult argResult = EvalFilter(plan.Arguments[i], root, current);
+
+                switch (plan.ParameterTypes[i])
+                {
+                    case JsonPathFunctionType.ValueType:
+                        FilterResult comparable = argResult.AsComparable();
+                        args[i] = comparable.Kind == FilterResult.FilterResultKind.ValueType
+                            ? JsonPathFunctionArgument.CreateValue(comparable.Value)
+                            : JsonPathFunctionArgument.CreateValue(default);
+                        break;
+
+                    case JsonPathFunctionType.LogicalType:
+                        args[i] = JsonPathFunctionArgument.CreateLogical(argResult.AsTruthy());
+                        break;
+
+                    case JsonPathFunctionType.NodesType:
+                        EvalNodesTypeArg(
+                            plan.Arguments[i],
+                            argResult,
+                            root,
+                            current,
+                            ref args[i],
+                            ref rentedNodeArrays,
+                            ref rentedNodeArrayCount,
+                            argCount);
+                        break;
+                }
+            }
+
+            JsonPathFunctionResult result = plan.Function.Evaluate(
+                new ReadOnlySpan<JsonPathFunctionArgument>(args, 0, argCount));
+
+            return result.Kind switch
+            {
+                JsonPathFunctionResult.JsonPathFunctionResultKind.Value =>
+                    FilterResult.FromValue(result.Value),
+                JsonPathFunctionResult.JsonPathFunctionResultKind.Logical =>
+                    FilterResult.FromLogical(result.Logical),
+                _ => FilterResult.NothingResult,
+            };
+        }
+        finally
+        {
+            // Return all pool-rented node arrays
+            if (rentedNodeArrays is not null)
+            {
+                for (int i = 0; i < rentedNodeArrayCount; i++)
+                {
+                    if (rentedNodeArrays[i] is JsonElement[] arr)
+                    {
+                        ArrayPool<JsonElement>.Shared.Return(arr);
+                    }
+                }
+            }
+
+            if (rentedArgs is not null)
+            {
+                ArrayPool<JsonPathFunctionArgument>.Shared.Return(rentedArgs);
+            }
+        }
+    }
+
+    private static void EvalNodesTypeArg(
+        FilterPlanNode argPlan,
+        FilterResult argResult,
+        in JsonElement root,
+        in JsonElement current,
+        ref JsonPathFunctionArgument arg,
+        ref JsonElement[]?[]? rentedNodeArrays,
+        ref int rentedNodeArrayCount,
+        int maxArgs)
+    {
+        if (argPlan is FilterGeneralQueryPlan gq)
+        {
+            JsonElement target = gq.IsRelative ? current : root;
+            JsonPathResult nodesResult = JsonPathResult.CreatePooled(16);
+            ExecuteStep(gq.InnerPlan, root, target, ref nodesResult);
+
+            TrackNodeArray(ref rentedNodeArrays, ref rentedNodeArrayCount, maxArgs, nodesResult.BackingArray);
+            arg = JsonPathFunctionArgument.CreateNodes(nodesResult.BackingArray!, nodesResult.Count);
+        }
+        else if (argPlan is FilterSingularQueryPlan sq)
+        {
+            if (TryNavigateSingularPath(sq.Steps, sq.IsRelative, root, current, out JsonElement node))
+            {
+                JsonPathResult nodesResult = JsonPathResult.CreatePooled(1);
+                nodesResult.Append(node);
+
+                TrackNodeArray(ref rentedNodeArrays, ref rentedNodeArrayCount, maxArgs, nodesResult.BackingArray);
+                arg = JsonPathFunctionArgument.CreateNodes(nodesResult.BackingArray!, nodesResult.Count);
+            }
+            else
+            {
+                arg = JsonPathFunctionArgument.CreateNodes(Array.Empty<JsonElement>(), 0);
+            }
+        }
+        else if (argPlan is FilterEmptyQueryPlan eq)
+        {
+            JsonElement target = eq.IsRelative ? current : root;
+            JsonPathResult nodesResult = JsonPathResult.CreatePooled(1);
+            nodesResult.Append(target);
+
+            TrackNodeArray(ref rentedNodeArrays, ref rentedNodeArrayCount, maxArgs, nodesResult.BackingArray);
+            arg = JsonPathFunctionArgument.CreateNodes(nodesResult.BackingArray!, nodesResult.Count);
+        }
+        else
+        {
+            // Fallback: wrap count/first into a single-node or empty list
+            if (argResult.Kind == FilterResult.FilterResultKind.NodesType && argResult.NodeCount > 0)
+            {
+                JsonPathResult nodesResult = JsonPathResult.CreatePooled(1);
+                nodesResult.Append(argResult.FirstNode);
+
+                TrackNodeArray(ref rentedNodeArrays, ref rentedNodeArrayCount, maxArgs, nodesResult.BackingArray);
+                arg = JsonPathFunctionArgument.CreateNodes(nodesResult.BackingArray!, nodesResult.Count);
+            }
+            else
+            {
+                arg = JsonPathFunctionArgument.CreateNodes(Array.Empty<JsonElement>(), 0);
+            }
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static void TrackNodeArray(
+        ref JsonElement[]?[]? rentedNodeArrays,
+        ref int rentedNodeArrayCount,
+        int maxArgs,
+        JsonElement[]? backingArray)
+    {
+        if (backingArray is not null)
+        {
+            rentedNodeArrays ??= new JsonElement[]?[maxArgs];
+            rentedNodeArrays[rentedNodeArrayCount++] = backingArray;
+        }
     }
 
     // ── Shared helpers ───────────────────────────────────────────────

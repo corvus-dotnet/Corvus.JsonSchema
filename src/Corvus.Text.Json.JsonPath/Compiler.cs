@@ -22,22 +22,28 @@ internal static class Compiler
     /// Compiles a JSONPath expression string into a <see cref="CompiledJsonPath"/>.
     /// </summary>
     /// <param name="expression">The JSONPath expression.</param>
+    /// <param name="customFunctions">Optional custom function registry.</param>
     /// <returns>A compiled query that can be executed against JSON data.</returns>
-    public static CompiledJsonPath Compile(string expression)
+    public static CompiledJsonPath Compile(
+        string expression,
+        IReadOnlyDictionary<string, IJsonPathFunction>? customFunctions = null)
     {
         byte[] utf8 = Encoding.UTF8.GetBytes(expression);
-        return Compile(utf8);
+        return Compile(utf8, customFunctions);
     }
 
     /// <summary>
     /// Compiles a UTF-8 JSONPath expression into a <see cref="CompiledJsonPath"/>.
     /// </summary>
     /// <param name="utf8Expression">The UTF-8 encoded JSONPath expression.</param>
+    /// <param name="customFunctions">Optional custom function registry.</param>
     /// <returns>A compiled query that can be executed against JSON data.</returns>
-    public static CompiledJsonPath Compile(byte[] utf8Expression)
+    public static CompiledJsonPath Compile(
+        byte[] utf8Expression,
+        IReadOnlyDictionary<string, IJsonPathFunction>? customFunctions = null)
     {
-        QueryNode ast = Parser.Parse(utf8Expression);
-        PlanNode plan = Planner.Plan(ast);
+        QueryNode ast = Parser.Parse(utf8Expression, customFunctions);
+        PlanNode plan = Planner.Plan(ast, customFunctions);
         return new CompiledJsonPath(plan);
     }
 

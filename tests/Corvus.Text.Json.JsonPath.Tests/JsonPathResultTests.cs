@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Buffers;
 using Corvus.Text.Json.JsonPath;
 using Xunit;
 
@@ -143,6 +144,65 @@ public class JsonPathResultTests
         for (int i = 0; i < result.Count; i++)
         {
             Assert.Equal(result[i].GetString(), nodes[i].GetString());
+        }
+    }
+
+    /// <summary>
+    /// Verifies that when a caller-rented buffer spills, the caller can still
+    /// safely return the original buffer to the pool without a double-return.
+    /// <see cref="JsonPathResult.Dispose"/> only returns the internally-rented
+    /// overflow array; the caller's original buffer is untouched.
+    /// </summary>
+    [Fact]
+    public void QueryNodes_CallerRentedBuffer_SpillDoesNotDoubleReturn()
+    {
+        JsonElement data = JsonElement.ParseValue(BookstoreJson);
+
+        // Rent a buffer that is too small (2 slots, but 4 results)
+        JsonElement[] callerBuf = ArrayPool<JsonElement>.Shared.Rent(2);
+        try
+        {
+            using JsonPathResult result = JsonPathEvaluator.Default.QueryNodes(
+                "$.store.book[*].author", data, callerBuf.AsSpan(0, 2));
+
+            Assert.Equal(4, result.Count);
+            Assert.True(result.HasSpilled);
+
+            // Verify all results are correct even after spill
+            Assert.Equal("Nigel Rees", result[0].GetString());
+            Assert.Equal("J. R. R. Tolkien", result[3].GetString());
+        }
+        finally
+        {
+            // This must succeed — the caller's buffer was NOT returned by Dispose
+            ArrayPool<JsonElement>.Shared.Return(callerBuf);
+        }
+    }
+
+    /// <summary>
+    /// Verifies that when a caller-rented buffer spills multiple times (tiny buffer,
+    /// many results), only the final overflow array is returned by Dispose and the
+    /// caller's original buffer remains theirs to return.
+    /// </summary>
+    [Fact]
+    public void QueryNodes_CallerRentedBuffer_MultiGrowDoesNotDoubleReturn()
+    {
+        JsonElement data = JsonElement.ParseValue(BookstoreJson);
+
+        // Rent a tiny buffer — forces multiple grow operations
+        JsonElement[] callerBuf = ArrayPool<JsonElement>.Shared.Rent(1);
+        try
+        {
+            using JsonPathResult result = JsonPathEvaluator.Default.QueryNodes(
+                "$..*", data, callerBuf.AsSpan(0, 1));
+
+            Assert.True(result.Count > 16, $"Expected more than 16 results; got {result.Count}");
+            Assert.True(result.HasSpilled);
+        }
+        finally
+        {
+            // Must succeed without double-return
+            ArrayPool<JsonElement>.Shared.Return(callerBuf);
         }
     }
 

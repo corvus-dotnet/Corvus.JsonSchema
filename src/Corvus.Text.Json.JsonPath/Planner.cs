@@ -18,19 +18,32 @@ namespace Corvus.Text.Json.JsonPath;
 /// </summary>
 internal static class Planner
 {
+    [ThreadStatic]
+    private static IReadOnlyDictionary<string, IJsonPathFunction>? t_customFunctions;
+
     /// <summary>
     /// Compiles a <see cref="QueryNode"/> AST into a <see cref="PlanNode"/> tree.
     /// </summary>
-    internal static PlanNode Plan(QueryNode ast)
+    internal static PlanNode Plan(
+        QueryNode ast,
+        IReadOnlyDictionary<string, IJsonPathFunction>? customFunctions = null)
     {
-        ImmutableArray<SegmentNode> segments = ast.Segments;
-
-        if (segments.Length == 0)
+        t_customFunctions = customFunctions;
+        try
         {
-            return EmitStep.Instance;
-        }
+            ImmutableArray<SegmentNode> segments = ast.Segments;
 
-        return PlanSegments(segments, 0);
+            if (segments.Length == 0)
+            {
+                return EmitStep.Instance;
+            }
+
+            return PlanSegments(segments, 0);
+        }
+        finally
+        {
+            t_customFunctions = null;
+        }
     }
 
     /// <summary>
@@ -395,8 +408,28 @@ internal static class Planner
             "search" when func.Arguments.Length == 2 =>
                 PlanMatchFunction(func, fullMatch: false),
 
-            _ => throw new JsonPathException($"Unknown function or wrong arity: '{func.Name}'."),
+            _ => PlanCustomFunctionCall(func),
         };
+    }
+
+    private static FilterCustomFunctionPlan PlanCustomFunctionCall(FunctionCallNode func)
+    {
+        if (t_customFunctions is null || !t_customFunctions.TryGetValue(func.Name, out IJsonPathFunction? function))
+        {
+            throw new JsonPathException($"Unknown function or wrong arity: '{func.Name}'.");
+        }
+
+        ReadOnlySpan<JsonPathFunctionType> paramTypes = function.ParameterTypes;
+        FilterPlanNode[] args = new FilterPlanNode[func.Arguments.Length];
+        JsonPathFunctionType[] types = new JsonPathFunctionType[paramTypes.Length];
+
+        for (int i = 0; i < func.Arguments.Length; i++)
+        {
+            args[i] = PlanFilterExpression(func.Arguments[i]);
+            types[i] = paramTypes[i];
+        }
+
+        return new FilterCustomFunctionPlan(func.Name, function, args, types);
     }
 
     private static FilterMatchFunctionPlan PlanMatchFunction(FunctionCallNode func, bool fullMatch)

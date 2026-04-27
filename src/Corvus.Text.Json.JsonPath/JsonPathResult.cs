@@ -84,6 +84,13 @@ public ref struct JsonPathResult
     public readonly bool HasSpilled => _arrayFromPool is not null;
 
     /// <summary>
+    /// Gets the backing array from the pool, or <see langword="null"/> if the result
+    /// has not spilled. Used internally to pass a node list to a custom function
+    /// without copying.
+    /// </summary>
+    internal readonly JsonElement[]? BackingArray => _arrayFromPool;
+
+    /// <summary>
     /// Creates a <see cref="JsonPathResult"/> backed entirely by an
     /// <see cref="ArrayPool{T}"/> rental.
     /// </summary>
