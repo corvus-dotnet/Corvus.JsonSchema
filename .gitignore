@@ -378,11 +378,13 @@ coverage.cobertura.xml
 *.ncrunchsolution
 *.ncrunchproject
 
-# Scripted build artifacts
-/_codeCoverage
-/_packages
+# Ignore build outputs
+.zf/.cache/
+.zf/extensions/
+_codeCoverage/
+_packages/
 *.sbom.*
 benchmarks/baseline-results/
-
+image-tag
 # Local NuGet packages produced by build-local-packages.ps1
 local-packages/

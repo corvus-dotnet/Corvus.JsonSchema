@@ -56,6 +56,22 @@ param (
 $ErrorActionPreference = 'Stop'
 $InformationPreference = 'Continue'
 
+# Check that the Github CLI is available
+if (!(Get-Command gh -CommandType application -ErrorAction SilentlyContinue)) {
+    Write-Error "The GitHub CLI was not found, but is required to build the web site - see https://cli.github.com/ for more details."
+}
+# Ensure the GH CLI is logged-in
+& gh auth status | Out-Null
+if ($LASTEXITCODE -eq 1) {
+    Write-Error "You are not logged into the GitHub CLI - run 'gh auth login'"
+}
+# Ensure we have access to the Vellum SSG repo, if not skip the build with a warning rather than a hard error
+& gh repo view endjin/Endjin.StaticSiteGen --json id | Out-Null
+if ($LASTEXITCODE -ne 0) {
+    Write-Warning "Skipping web site build - unable to access to the currently closed-source Vellum SSG tooling"
+    exit 0
+}
+
 $here = Split-Path -Parent $PSCommandPath
 $repoRoot = Resolve-Path (Join-Path $here "..\..")
 $siteDir = Join-Path $here "site"
