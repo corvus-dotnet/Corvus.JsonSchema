@@ -13,3 +13,6 @@
 [submodule "yaml-test-suite"]
 	path = yaml-test-suite
 	url = https://github.com/yaml/yaml-test-suite.git
+[submodule "jsonpath-compliance-test-suite"]
+	path = jsonpath-compliance-test-suite
+	url = https://github.com/jsonpath-standard/jsonpath-compliance-test-suite.git
