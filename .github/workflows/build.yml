@@ -91,6 +91,7 @@ jobs:
         Jsonata-Test-Suite
         yaml-test-suite
         tests/json-patch-tests
+        jsonpath-compliance-test-suite
         docs/website/.endjin
         docs/website/.output
         **/bin
