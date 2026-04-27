@@ -520,6 +520,98 @@ public static class JsonPathCodeGenHelpers
     }
 
     /// <summary>
+    /// Recursively visits all descendants of <paramref name="node"/>, appending
+    /// matching named property values to <paramref name="result"/>. Specialized
+    /// for descendant-name patterns (e.g. <c>$..author</c>). Only recurses
+    /// into container children (objects and arrays), skipping primitives.
+    /// </summary>
+    /// <param name="node">The current node to visit.</param>
+    /// <param name="propertyName">The UTF-8 property name to search for.</param>
+    /// <param name="result">The result to append matching values to.</param>
+    public static void DescendantsForName(
+        in JsonElement node,
+        ReadOnlySpan<byte> propertyName,
+        ref JsonPathResult result)
+    {
+        if (node.ValueKind == JsonValueKind.Object)
+        {
+            if (node.TryGetProperty(propertyName, out JsonElement value))
+            {
+                result.Append(value);
+            }
+
+            foreach (JsonProperty<JsonElement> prop in node.EnumerateObject())
+            {
+                JsonElement child = prop.Value;
+                if (child.ValueKind == JsonValueKind.Object || child.ValueKind == JsonValueKind.Array)
+                {
+                    DescendantsForName(child, propertyName, ref result);
+                }
+            }
+        }
+        else if (node.ValueKind == JsonValueKind.Array)
+        {
+            foreach (JsonElement item in node.EnumerateArray())
+            {
+                if (item.ValueKind == JsonValueKind.Object || item.ValueKind == JsonValueKind.Array)
+                {
+                    DescendantsForName(item, propertyName, ref result);
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// Recursively visits all descendants of <paramref name="node"/>, counting
+    /// matching named property values and capturing the first match. Specialized
+    /// for descendant-name patterns in filter sub-queries.
+    /// </summary>
+    /// <param name="node">The current node to visit.</param>
+    /// <param name="propertyName">The UTF-8 property name to search for.</param>
+    /// <param name="count">The running count of matched nodes.</param>
+    /// <param name="first">
+    /// Receives the first matched element (set when <paramref name="count"/> transitions from 0).
+    /// </param>
+    public static void DescendantsForNameCount(
+        in JsonElement node,
+        ReadOnlySpan<byte> propertyName,
+        ref int count,
+        ref JsonElement first)
+    {
+        if (node.ValueKind == JsonValueKind.Object)
+        {
+            if (node.TryGetProperty(propertyName, out JsonElement value))
+            {
+                if (count == 0)
+                {
+                    first = value;
+                }
+
+                count++;
+            }
+
+            foreach (JsonProperty<JsonElement> prop in node.EnumerateObject())
+            {
+                JsonElement child = prop.Value;
+                if (child.ValueKind == JsonValueKind.Object || child.ValueKind == JsonValueKind.Array)
+                {
+                    DescendantsForNameCount(child, propertyName, ref count, ref first);
+                }
+            }
+        }
+        else if (node.ValueKind == JsonValueKind.Array)
+        {
+            foreach (JsonElement item in node.EnumerateArray())
+            {
+                if (item.ValueKind == JsonValueKind.Object || item.ValueKind == JsonValueKind.Array)
+                {
+                    DescendantsForNameCount(item, propertyName, ref count, ref first);
+                }
+            }
+        }
+    }
+
+    /// <summary>
     /// Collects all descendant elements (and the root itself) via an iterative
     /// depth-first search. Elements are added to <paramref name="buffer"/> in
     /// document order.

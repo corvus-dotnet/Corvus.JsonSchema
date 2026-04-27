@@ -132,6 +132,16 @@ internal static class Compiler
 
     private static NodeEval CompileDescendantSegment(ImmutableArray<SelectorNode> selectors, NodeEval downstream)
     {
+        // Specialization: single name selector → recursive DFS with direct TryGetProperty
+        if (selectors.Length == 1 && selectors[0] is NameSelectorNode nameSelector)
+        {
+            byte[] utf8Name = nameSelector.Name;
+            return (in JsonElement root, in JsonElement node, ref JsonPathResult result) =>
+            {
+                VisitDescendantsForName(root, node, utf8Name, downstream, ref result);
+            };
+        }
+
         NodeEval[] compiledSelectors = new NodeEval[selectors.Length];
         for (int i = 0; i < selectors.Length; i++)
         {
@@ -142,6 +152,41 @@ internal static class Compiler
         {
             VisitDescendants(root, node, compiledSelectors, ref result);
         };
+    }
+
+    private static void VisitDescendantsForName(
+        in JsonElement root,
+        in JsonElement node,
+        byte[] utf8Name,
+        NodeEval downstream,
+        ref JsonPathResult result)
+    {
+        if (node.ValueKind == JsonValueKind.Object)
+        {
+            if (node.TryGetProperty(utf8Name, out JsonElement value))
+            {
+                downstream(root, value, ref result);
+            }
+
+            foreach (JsonProperty<JsonElement> prop in node.EnumerateObject())
+            {
+                JsonElement child = prop.Value;
+                if (child.ValueKind == JsonValueKind.Object || child.ValueKind == JsonValueKind.Array)
+                {
+                    VisitDescendantsForName(root, child, utf8Name, downstream, ref result);
+                }
+            }
+        }
+        else if (node.ValueKind == JsonValueKind.Array)
+        {
+            foreach (JsonElement item in node.EnumerateArray())
+            {
+                if (item.ValueKind == JsonValueKind.Object || item.ValueKind == JsonValueKind.Array)
+                {
+                    VisitDescendantsForName(root, item, utf8Name, downstream, ref result);
+                }
+            }
+        }
     }
 
     private static void VisitDescendants(
@@ -156,7 +201,7 @@ internal static class Compiler
             selectors[i](root, node, ref result);
         }
 
-        // Recurse into children in document order.
+        // Recurse into container children only — primitives have no children.
         if (node.ValueKind == JsonValueKind.Object)
         {
             foreach (JsonProperty<JsonElement> prop in node.EnumerateObject())

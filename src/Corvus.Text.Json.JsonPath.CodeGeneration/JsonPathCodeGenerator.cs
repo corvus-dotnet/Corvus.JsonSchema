@@ -488,8 +488,8 @@ public static class JsonPathCodeGenerator
         /// <summary>
         /// Emits a streaming chain of segments starting at <paramref name="segmentIndex"/>.
         /// Each segment generates a loop or check, nesting the remaining segments inside.
-        /// When <paramref name="bufferTarget"/> is null, the terminal writes to <c>result.Append(...)</c>.
-        /// When set, the terminal writes to the specified array/count buffer (used by helper methods).
+        /// When <paramref name="counterTarget"/> is null, the terminal writes to <c>result.Append(...)</c>.
+        /// When set, the terminal increments the count and captures the first element (used by helper methods).
         /// </summary>
         private void EmitStreamingChain(
             StringBuilder body,
@@ -497,14 +497,14 @@ public static class JsonPathCodeGenerator
             int segmentIndex,
             string indent,
             string inputVar,
-            (string Array, string Count)? bufferTarget = null)
+            (string Count, string First)? counterTarget = null)
         {
             if (segmentIndex >= segments.Length)
             {
-                if (bufferTarget is var (arr, cnt))
+                if (counterTarget is var (cnt, first))
                 {
-                    L(body, indent, $"if ({cnt} >= {arr}.Length) {{ {H}.Grow(ref {arr}); }}");
-                    L(body, indent, $"{arr}[{cnt}++] = {inputVar};");
+                    L(body, indent, $"if ({cnt} == 0) {{ {first} = {inputVar}; }}");
+                    L(body, indent, $"{cnt}++;");
                 }
                 else
                 {
@@ -518,13 +518,13 @@ public static class JsonPathCodeGenerator
 
             if (segment is DescendantSegmentNode)
             {
-                this.EmitDescendantStreaming(body, segment.Selectors, segments, segmentIndex, indent, inputVar, bufferTarget);
+                this.EmitDescendantStreaming(body, segment.Selectors, segments, segmentIndex, indent, inputVar, counterTarget);
             }
             else
             {
                 for (int i = 0; i < segment.Selectors.Length; i++)
                 {
-                    this.EmitSelectorStreaming(body, segment.Selectors[i], segments, segmentIndex + 1, indent, inputVar, bufferTarget);
+                    this.EmitSelectorStreaming(body, segment.Selectors[i], segments, segmentIndex + 1, indent, inputVar, counterTarget);
                 }
             }
         }
@@ -536,24 +536,24 @@ public static class JsonPathCodeGenerator
             int nextSegmentIndex,
             string indent,
             string nodeVar,
-            (string Array, string Count)? bufferTarget)
+            (string Count, string First)? counterTarget)
         {
             switch (selector)
             {
                 case NameSelectorNode name:
-                    this.EmitNameSelectorStreaming(body, name, segments, nextSegmentIndex, indent, nodeVar, bufferTarget);
+                    this.EmitNameSelectorStreaming(body, name, segments, nextSegmentIndex, indent, nodeVar, counterTarget);
                     break;
                 case IndexSelectorNode idx:
-                    this.EmitIndexSelectorStreaming(body, idx, segments, nextSegmentIndex, indent, nodeVar, bufferTarget);
+                    this.EmitIndexSelectorStreaming(body, idx, segments, nextSegmentIndex, indent, nodeVar, counterTarget);
                     break;
                 case WildcardSelectorNode:
-                    this.EmitWildcardSelectorStreaming(body, segments, nextSegmentIndex, indent, nodeVar, bufferTarget);
+                    this.EmitWildcardSelectorStreaming(body, segments, nextSegmentIndex, indent, nodeVar, counterTarget);
                     break;
                 case SliceSelectorNode slice:
-                    this.EmitSliceSelectorStreaming(body, slice, segments, nextSegmentIndex, indent, nodeVar, bufferTarget);
+                    this.EmitSliceSelectorStreaming(body, slice, segments, nextSegmentIndex, indent, nodeVar, counterTarget);
                     break;
                 case FilterSelectorNode filter:
-                    this.EmitFilterSelectorStreaming(body, filter, segments, nextSegmentIndex, indent, nodeVar, bufferTarget);
+                    this.EmitFilterSelectorStreaming(body, filter, segments, nextSegmentIndex, indent, nodeVar, counterTarget);
                     break;
             }
         }
@@ -565,13 +565,13 @@ public static class JsonPathCodeGenerator
             int nextSegmentIndex,
             string indent,
             string nodeVar,
-            (string Array, string Count)? bufferTarget)
+            (string Count, string First)? counterTarget)
         {
             string nameField = this.EmitNameField(name.Name);
             string propVar = $"_prop{this.varCounter++}";
             L(body, indent, $"if ({nodeVar}.ValueKind == JsonValueKind.Object && {nodeVar}.TryGetProperty({nameField}, out JsonElement {propVar}))");
             L(body, indent, "{");
-            this.EmitStreamingChain(body, segments, nextSegmentIndex, indent + "    ", propVar, bufferTarget);
+            this.EmitStreamingChain(body, segments, nextSegmentIndex, indent + "    ", propVar, counterTarget);
             L(body, indent, "}");
         }
 
@@ -582,7 +582,7 @@ public static class JsonPathCodeGenerator
             int nextSegmentIndex,
             string indent,
             string nodeVar,
-            (string Array, string Count)? bufferTarget)
+            (string Count, string First)? counterTarget)
         {
             string c = this.varCounter++.ToString();
             L(body, indent, $"if ({nodeVar}.ValueKind == JsonValueKind.Array)");
@@ -593,7 +593,7 @@ public static class JsonPathCodeGenerator
             L(body, ii, $"int _idx{c} = {H}.NormalizeIndex({idx.Index}L, _len{c});");
             L(body, ii, $"if (_idx{c} >= 0 && _idx{c} < _len{c})");
             L(body, ii, "{");
-            this.EmitStreamingChain(body, segments, nextSegmentIndex, ii + "    ", $"{nodeVar}[_idx{c}]", bufferTarget);
+            this.EmitStreamingChain(body, segments, nextSegmentIndex, ii + "    ", $"{nodeVar}[_idx{c}]", counterTarget);
             L(body, ii, "}");
 
             L(body, indent, "}");
@@ -605,21 +605,21 @@ public static class JsonPathCodeGenerator
             int nextSegmentIndex,
             string indent,
             string nodeVar,
-            (string Array, string Count)? bufferTarget)
+            (string Count, string First)? counterTarget)
         {
             string c = this.varCounter++.ToString();
             L(body, indent, $"if ({nodeVar}.ValueKind == JsonValueKind.Object)");
             L(body, indent, "{");
             L(body, indent, $"    foreach (var _wp{c} in {nodeVar}.EnumerateObject())");
             L(body, indent, "    {");
-            this.EmitStreamingChain(body, segments, nextSegmentIndex, indent + "        ", $"_wp{c}.Value", bufferTarget);
+            this.EmitStreamingChain(body, segments, nextSegmentIndex, indent + "        ", $"_wp{c}.Value", counterTarget);
             L(body, indent, "    }");
             L(body, indent, "}");
             L(body, indent, $"else if ({nodeVar}.ValueKind == JsonValueKind.Array)");
             L(body, indent, "{");
             L(body, indent, $"    foreach (JsonElement _wi{c} in {nodeVar}.EnumerateArray())");
             L(body, indent, "    {");
-            this.EmitStreamingChain(body, segments, nextSegmentIndex, indent + "        ", $"_wi{c}", bufferTarget);
+            this.EmitStreamingChain(body, segments, nextSegmentIndex, indent + "        ", $"_wi{c}", counterTarget);
             L(body, indent, "    }");
             L(body, indent, "}");
         }
@@ -631,7 +631,7 @@ public static class JsonPathCodeGenerator
             int nextSegmentIndex,
             string indent,
             string nodeVar,
-            (string Array, string Count)? bufferTarget)
+            (string Count, string First)? counterTarget)
         {
             string c = this.varCounter++.ToString();
             string startExpr = slice.Start.HasValue ? $"{slice.Start.Value}L" : "null";
@@ -648,14 +648,14 @@ public static class JsonPathCodeGenerator
             L(body, ii, "{");
             L(body, ii, $"    for (int _sI{c} = _slice{c}.Start; _sI{c} < _slice{c}.End; _sI{c} += _slice{c}.Step)");
             L(body, ii, "    {");
-            this.EmitStreamingChain(body, segments, nextSegmentIndex, ii + "        ", $"{nodeVar}[_sI{c}]", bufferTarget);
+            this.EmitStreamingChain(body, segments, nextSegmentIndex, ii + "        ", $"{nodeVar}[_sI{c}]", counterTarget);
             L(body, ii, "    }");
             L(body, ii, "}");
             L(body, ii, $"else if (_slice{c}.Step < 0)");
             L(body, ii, "{");
             L(body, ii, $"    for (int _sI{c} = _slice{c}.Start; _sI{c} > _slice{c}.End; _sI{c} += _slice{c}.Step)");
             L(body, ii, "    {");
-            this.EmitStreamingChain(body, segments, nextSegmentIndex, ii + "        ", $"{nodeVar}[_sI{c}]", bufferTarget);
+            this.EmitStreamingChain(body, segments, nextSegmentIndex, ii + "        ", $"{nodeVar}[_sI{c}]", counterTarget);
             L(body, ii, "    }");
             L(body, ii, "}");
 
@@ -669,7 +669,7 @@ public static class JsonPathCodeGenerator
             int nextSegmentIndex,
             string indent,
             string nodeVar,
-            (string Array, string Count)? bufferTarget)
+            (string Count, string First)? counterTarget)
         {
             string c = this.varCounter++.ToString();
 
@@ -684,7 +684,7 @@ public static class JsonPathCodeGenerator
             string boolVar = this.EmitFilterBool(body, filter.Expression, filterIndent, itemVar);
             L(body, filterIndent, $"if ({boolVar})");
             L(body, filterIndent, "{");
-            this.EmitStreamingChain(body, segments, nextSegmentIndex, filterIndent + "    ", itemVar, bufferTarget);
+            this.EmitStreamingChain(body, segments, nextSegmentIndex, filterIndent + "    ", itemVar, counterTarget);
             L(body, filterIndent, "}");
 
             L(body, indent, "    }");
@@ -700,7 +700,7 @@ public static class JsonPathCodeGenerator
             string boolVar2 = this.EmitFilterBool(body, filter.Expression, filterIndent, $"{propVar}.Value");
             L(body, filterIndent, $"if ({boolVar2})");
             L(body, filterIndent, "{");
-            this.EmitStreamingChain(body, segments, nextSegmentIndex, filterIndent + "    ", $"{propVar}.Value", bufferTarget);
+            this.EmitStreamingChain(body, segments, nextSegmentIndex, filterIndent + "    ", $"{propVar}.Value", counterTarget);
             L(body, filterIndent, "}");
 
             L(body, indent, "    }");
@@ -714,10 +714,16 @@ public static class JsonPathCodeGenerator
             int segmentIndex,
             string indent,
             string inputVar,
-            (string Array, string Count)? bufferTarget)
+            (string Count, string First)? counterTarget)
         {
-            // Inline iterative DFS: pop node, apply selectors, push children.
-            // No separate collect step — selectors are applied at each node.
+            // Specialization: descendant with single name selector
+            if (selectors.Length == 1 && selectors[0] is NameSelectorNode nameSelector)
+            {
+                this.EmitDescendantForNameStreaming(body, nameSelector, segments, segmentIndex, indent, inputVar, counterTarget);
+                return;
+            }
+
+            // General DFS: pop node, apply selectors, push container children only.
             string c = this.varCounter++.ToString();
             string stackVar = $"_dStk{c}";
             string capVar = $"_dCap{c}";
@@ -742,10 +748,10 @@ public static class JsonPathCodeGenerator
             // Apply selectors at this node — streaming into downstream
             for (int i = 0; i < selectors.Length; i++)
             {
-                this.EmitSelectorStreaming(body, selectors[i], segments, segmentIndex + 1, wi, curVar, bufferTarget);
+                this.EmitSelectorStreaming(body, selectors[i], segments, segmentIndex + 1, wi, curVar, counterTarget);
             }
 
-            // Push children in reverse for document order
+            // Push container children only — skip primitives
             string csVar = $"_dCs{c}";
             L(body, wi, $"if ({curVar}.ValueKind == JsonValueKind.Object)");
             L(body, wi, "{");
@@ -754,8 +760,11 @@ public static class JsonPathCodeGenerator
             L(body, oi, $"int {csVar} = {sizeVar};");
             L(body, oi, $"foreach (var _dp{c} in {curVar}.EnumerateObject())");
             L(body, oi, "{");
-            L(body, oi, $"    if ({sizeVar} >= {capVar}) {{ {H}.GrowStack(ref {stackVar}, ref {capVar}, {sizeVar}); }}");
-            L(body, oi, $"    {stackVar}[{sizeVar}++] = _dp{c}.Value;");
+            L(body, oi, $"    if (_dp{c}.Value.ValueKind == JsonValueKind.Object || _dp{c}.Value.ValueKind == JsonValueKind.Array)");
+            L(body, oi, "    {");
+            L(body, oi, $"        if ({sizeVar} >= {capVar}) {{ {H}.GrowStack(ref {stackVar}, ref {capVar}, {sizeVar}); }}");
+            L(body, oi, $"        {stackVar}[{sizeVar}++] = _dp{c}.Value;");
+            L(body, oi, "    }");
             L(body, oi, "}");
             L(body, oi, $"{H}.ReverseRegion({stackVar}, {csVar}, {sizeVar} - {csVar});");
 
@@ -767,13 +776,114 @@ public static class JsonPathCodeGenerator
             L(body, ai, $"int {csVar} = {sizeVar};");
             L(body, ai, $"foreach (JsonElement _da{c} in {curVar}.EnumerateArray())");
             L(body, ai, "{");
-            L(body, ai, $"    if ({sizeVar} >= {capVar}) {{ {H}.GrowStack(ref {stackVar}, ref {capVar}, {sizeVar}); }}");
-            L(body, ai, $"    {stackVar}[{sizeVar}++] = _da{c};");
+            L(body, ai, $"    if (_da{c}.ValueKind == JsonValueKind.Object || _da{c}.ValueKind == JsonValueKind.Array)");
+            L(body, ai, "    {");
+            L(body, ai, $"        if ({sizeVar} >= {capVar}) {{ {H}.GrowStack(ref {stackVar}, ref {capVar}, {sizeVar}); }}");
+            L(body, ai, $"        {stackVar}[{sizeVar}++] = _da{c};");
+            L(body, ai, "    }");
             L(body, ai, "}");
             L(body, ai, $"{H}.ReverseRegion({stackVar}, {csVar}, {sizeVar} - {csVar});");
 
             L(body, wi, "}");
 
+            L(body, ti, "}");
+
+            L(body, indent, "}");
+            L(body, indent, "finally");
+            L(body, indent, "{");
+            L(body, indent, $"    ArrayPool<JsonElement>.Shared.Return({stackVar});");
+            L(body, indent, "}");
+        }
+
+        private void EmitDescendantForNameStreaming(
+            StringBuilder body,
+            NameSelectorNode name,
+            ImmutableArray<SegmentNode> segments,
+            int segmentIndex,
+            string indent,
+            string inputVar,
+            (string Count, string First)? counterTarget)
+        {
+            string nameField = this.EmitNameField(name.Name);
+            int nextIndex = segmentIndex + 1;
+
+            // Terminal segment: use recursive helper (no ArrayPool at all)
+            if (nextIndex >= segments.Length)
+            {
+                if (counterTarget is var (cnt, first))
+                {
+                    L(body, indent, $"{H}.DescendantsForNameCount({inputVar}, {nameField}, ref {cnt}, ref {first});");
+                }
+                else
+                {
+                    L(body, indent, $"{H}.DescendantsForName({inputVar}, {nameField}, ref result);");
+                }
+
+                return;
+            }
+
+            // Non-terminal: optimized iterative DFS, only push containers, inline name check
+            string c = this.varCounter++.ToString();
+            string stackVar = $"_dStk{c}";
+            string capVar = $"_dCap{c}";
+            string sizeVar = $"_dSz{c}";
+            string curVar = $"_dCur{c}";
+            string propVar = $"_dn{c}";
+            string csVar = $"_dCs{c}";
+
+            L(body, indent, $"int {capVar} = 64;");
+            L(body, indent, $"JsonElement[] {stackVar} = ArrayPool<JsonElement>.Shared.Rent({capVar});");
+            L(body, indent, "try");
+            L(body, indent, "{");
+
+            string ti = indent + "    ";
+            L(body, ti, $"int {sizeVar} = 0;");
+            L(body, ti, $"{stackVar}[{sizeVar}++] = {inputVar};");
+            L(body, ti, $"while ({sizeVar} > 0)");
+            L(body, ti, "{");
+
+            string wi = ti + "    ";
+            L(body, wi, $"JsonElement {curVar} = {stackVar}[--{sizeVar}];");
+
+            // Inline name selector — only objects can match
+            L(body, wi, $"if ({curVar}.ValueKind == JsonValueKind.Object)");
+            L(body, wi, "{");
+
+            string oi = wi + "    ";
+            L(body, oi, $"if ({curVar}.TryGetProperty({nameField}, out JsonElement {propVar}))");
+            L(body, oi, "{");
+            this.EmitStreamingChain(body, segments, nextIndex, oi + "    ", propVar, counterTarget);
+            L(body, oi, "}");
+
+            // Push container children only
+            L(body, oi, $"int {csVar} = {sizeVar};");
+            L(body, oi, $"foreach (var _dp{c} in {curVar}.EnumerateObject())");
+            L(body, oi, "{");
+            L(body, oi, $"    if (_dp{c}.Value.ValueKind == JsonValueKind.Object || _dp{c}.Value.ValueKind == JsonValueKind.Array)");
+            L(body, oi, "    {");
+            L(body, oi, $"        if ({sizeVar} >= {capVar}) {{ {H}.GrowStack(ref {stackVar}, ref {capVar}, {sizeVar}); }}");
+            L(body, oi, $"        {stackVar}[{sizeVar}++] = _dp{c}.Value;");
+            L(body, oi, "    }");
+            L(body, oi, "}");
+            L(body, oi, $"{H}.ReverseRegion({stackVar}, {csVar}, {sizeVar} - {csVar});");
+
+            L(body, wi, "}");
+            L(body, wi, $"else if ({curVar}.ValueKind == JsonValueKind.Array)");
+            L(body, wi, "{");
+
+            string ai = wi + "    ";
+            L(body, ai, $"int {csVar} = {sizeVar};");
+            L(body, ai, $"foreach (JsonElement _da{c} in {curVar}.EnumerateArray())");
+            L(body, ai, "{");
+            L(body, ai, $"    if (_da{c}.ValueKind == JsonValueKind.Object || _da{c}.ValueKind == JsonValueKind.Array)");
+            L(body, ai, "    {");
+            L(body, ai, $"        if ({sizeVar} >= {capVar}) {{ {H}.GrowStack(ref {stackVar}, ref {capVar}, {sizeVar}); }}");
+            L(body, ai, $"        {stackVar}[{sizeVar}++] = _da{c};");
+            L(body, ai, "    }");
+            L(body, ai, "}");
+            L(body, ai, $"{H}.ReverseRegion({stackVar}, {csVar}, {sizeVar} - {csVar});");
+
+            L(body, wi, "}");
             L(body, ti, "}");
 
             L(body, indent, "}");
@@ -908,9 +1018,8 @@ public static class JsonPathCodeGenerator
             }
             else
             {
-                // Non-singular: evaluate as node buffer, check count > 0
-                (string arrayVar, string countVar) = this.EmitFilterQueryAsNodes(body, query, indent, currentVar);
-                L(body, indent, $"ArrayPool<JsonElement>.Shared.Return({arrayVar});");
+                // Non-singular: evaluate with counter, check count > 0
+                (string countVar, string _) = this.EmitFilterQueryCounter(body, query, indent, currentVar);
                 string resultVar = this.NextVar();
                 L(body, indent, $"bool {resultVar} = {countVar} > 0;");
                 return resultVar;
@@ -966,16 +1075,15 @@ public static class JsonPathCodeGenerator
             }
             else
             {
-                // Non-singular as comparable: evaluate as node buffer, unwrap with ValueOfNodesFromBuffer
-                (string arrayVar, string countVar) = this.EmitFilterQueryAsNodes(body, query, indent, currentVar);
+                // Non-singular as comparable: count==1 → first, else Undefined
+                (string countVar, string firstVar) = this.EmitFilterQueryCounter(body, query, indent, currentVar);
                 string resultVar = this.NextVar();
-                L(body, indent, $"JsonElement {resultVar} = {H}.ValueOfNodesFromBuffer({arrayVar}, {countVar});");
-                L(body, indent, $"ArrayPool<JsonElement>.Shared.Return({arrayVar});");
+                L(body, indent, $"JsonElement {resultVar} = {countVar} == 1 ? {firstVar} : default;");
                 return resultVar;
             }
         }
 
-        private (string ArrayVar, string CountVar) EmitFilterQueryAsNodes(
+        private (string CountVar, string FirstVar) EmitFilterQueryCounter(
             StringBuilder body,
             FilterQueryNode query,
             string indent,
@@ -986,12 +1094,12 @@ public static class JsonPathCodeGenerator
             this.GenerateFilterQueryHelper(query, methodName);
 
             string source = query.IsRelative ? currentVar : this.rootVarName;
-            string arrayVar = this.NextVar();
             string countVar = this.NextVar();
-            L(body, indent, $"JsonElement[] {arrayVar} = ArrayPool<JsonElement>.Shared.Rent(16);");
+            string firstVar = this.NextVar();
             L(body, indent, $"int {countVar} = 0;");
-            L(body, indent, $"{methodName}({source}, {this.rootVarName}, ref {arrayVar}, ref {countVar});");
-            return (arrayVar, countVar);
+            L(body, indent, $"JsonElement {firstVar} = default;");
+            L(body, indent, $"{methodName}({source}, {this.rootVarName}, ref {countVar}, ref {firstVar});");
+            return (countVar, firstVar);
         }
 
         // ── Function emission ────────────────────────────────────────────
@@ -1041,8 +1149,7 @@ public static class JsonPathCodeGenerator
             string countVar;
             if (func.Arguments[0] is FilterQueryNode fq)
             {
-                (string arrayVar, string cVar) = this.EmitFilterQueryAsNodes(body, fq, indent, currentVar);
-                L(body, indent, $"ArrayPool<JsonElement>.Shared.Return({arrayVar});");
+                (string cVar, string _) = this.EmitFilterQueryCounter(body, fq, indent, currentVar);
                 countVar = cVar;
             }
             else
@@ -1065,10 +1172,9 @@ public static class JsonPathCodeGenerator
         {
             if (func.Arguments[0] is FilterQueryNode fq)
             {
-                (string arrayVar, string countVar) = this.EmitFilterQueryAsNodes(body, fq, indent, currentVar);
+                (string countVar, string firstVar) = this.EmitFilterQueryCounter(body, fq, indent, currentVar);
                 string resultVar = this.NextVar();
-                L(body, indent, $"JsonElement {resultVar} = {H}.ValueOfNodesFromBuffer({arrayVar}, {countVar});");
-                L(body, indent, $"ArrayPool<JsonElement>.Shared.Return({arrayVar});");
+                L(body, indent, $"JsonElement {resultVar} = {countVar} == 1 ? {firstVar} : default;");
                 return resultVar;
             }
             else
@@ -1195,27 +1301,27 @@ public static class JsonPathCodeGenerator
             StringBuilder mb = new(2048);
             const string methodIndent = "    ";
 
-            L(mb, methodIndent, $"private static void {methodName}(in JsonElement source, in JsonElement root, ref JsonElement[] nodes, ref int count)");
+            L(mb, methodIndent, $"private static void {methodName}(in JsonElement source, in JsonElement root, ref int count, ref JsonElement first)");
             L(mb, methodIndent, "{");
 
             const string bodyIndent = methodIndent + "    ";
 
             if (query.Segments.Length == 0)
             {
-                L(mb, bodyIndent, "if (count >= nodes.Length) { JsonPathCodeGenHelpers.Grow(ref nodes); }");
-                L(mb, bodyIndent, "nodes[count++] = source;");
+                L(mb, bodyIndent, "if (count == 0) { first = source; }");
+                L(mb, bodyIndent, "count++;");
                 L(mb, methodIndent, "}");
                 this.HelperMethods.Add(mb.ToString());
                 return;
             }
 
-            // Use streaming chain with bufferTarget to write directly to nodes/count.
+            // Use streaming chain with counterTarget to write directly to count/first.
             // Set rootVarName to "root" for the helper method scope.
             string savedRootVarName = this.rootVarName;
             this.rootVarName = "root";
             try
             {
-                this.EmitStreamingChain(mb, query.Segments, 0, bodyIndent, "source", bufferTarget: ("nodes", "count"));
+                this.EmitStreamingChain(mb, query.Segments, 0, bodyIndent, "source", counterTarget: ("count", "first"));
             }
             finally
             {
