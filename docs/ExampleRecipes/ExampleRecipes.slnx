@@ -83,4 +83,7 @@
   <Folder Name="/027-Yaml/">
     <Project Path="027-Yaml\Yaml.csproj" />
   </Folder>
+  <Folder Name="/028-JsonPath/">
+    <Project Path="028-JsonPath\JsonPath.csproj" />
+  </Folder>
 </Solution>
