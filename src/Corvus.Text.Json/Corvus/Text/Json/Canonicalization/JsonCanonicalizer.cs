@@ -27,6 +27,7 @@ namespace Corvus.Text.Json.Canonicalization;
 public static class JsonCanonicalizer
 {
     private const int MaxDepth = 64;
+    private const int MaxStackallocIndices = 32;
 
     /// <summary>
     /// Canonicalizes a JSON element per RFC 8785 and writes the result to a byte span.
@@ -155,13 +156,7 @@ public static class JsonCanonicalizer
         {
             this.WriteByte((byte)'{');
 
-            // First pass: count properties
-            int count = 0;
-            ObjectEnumerator<JsonElement> counter = element.EnumerateObject();
-            while (counter.MoveNext())
-            {
-                count++;
-            }
+            int count = element.GetPropertyCount();
 
             if (count == 0)
             {
@@ -169,11 +164,15 @@ public static class JsonCanonicalizer
                 return;
             }
 
-            // Rent arrays for properties, UTF-16 sort keys, and sort indices
+            // Rent arrays for properties and sort entries (combines UTF-16 names + rented char tracking)
             JsonProperty<JsonElement>[] properties = ArrayPool<JsonProperty<JsonElement>>.Shared.Rent(count);
-            ReadOnlyMemory<char>[] utf16Names = ArrayPool<ReadOnlyMemory<char>>.Shared.Rent(count);
-            char[]?[] rentedNameChars = ArrayPool<char[]?>.Shared.Rent(count);
-            int[] indices = ArrayPool<int>.Shared.Rent(count);
+            Utf16SortEntry[] sortEntries = ArrayPool<Utf16SortEntry>.Shared.Rent(count);
+
+            // Stackalloc indices for typical object sizes, rent for unusually large objects
+            int[]? rentedIndices = null;
+            Span<int> indices = count <= MaxStackallocIndices
+                ? stackalloc int[MaxStackallocIndices]
+                : (rentedIndices = ArrayPool<int>.Shared.Rent(count));
 
             try
             {
@@ -183,19 +182,19 @@ public static class JsonCanonicalizer
                 {
                     properties[i] = prop;
                     UnescapedUtf16JsonString utf16Name = prop.Utf16NameSpan;
-                    utf16Names[i] = utf16Name.TakeOwnership(out rentedNameChars[i]);
+                    sortEntries[i].Name = utf16Name.TakeOwnership(out sortEntries[i].RentedChars);
                     indices[i] = i;
                     i++;
                 }
 
                 // Sort indices by property name using UTF-16 code unit ordinal comparison.
                 // Insertion sort avoids IComparer<T> heap allocation; optimal for small N (object property counts).
-                SortIndicesByUtf16Name(indices.AsSpan(0, count), utf16Names);
+                SortIndicesByUtf16Name(indices.Slice(0, count), sortEntries);
 
                 // Check for duplicate property names (I-JSON requirement)
                 for (int j = 1; j < count; j++)
                 {
-                    if (utf16Names[indices[j]].Span.SequenceEqual(utf16Names[indices[j - 1]].Span))
+                    if (sortEntries[indices[j]].Name.Span.SequenceEqual(sortEntries[indices[j - 1]].Name.Span))
                     {
                         throw new InvalidOperationException("Duplicate property name detected. JCS requires I-JSON compliant input (RFC 7493).");
                     }
@@ -223,17 +222,20 @@ public static class JsonCanonicalizer
                 // Return rented char arrays from TakeOwnership
                 for (int j = 0; j < count; j++)
                 {
-                    if (rentedNameChars[j] != null)
+                    if (sortEntries[j].RentedChars != null)
                     {
-                        rentedNameChars[j]!.AsSpan(0, utf16Names[j].Length).Clear();
-                        ArrayPool<char>.Shared.Return(rentedNameChars[j]!);
+                        sortEntries[j].RentedChars!.AsSpan(0, sortEntries[j].Name.Length).Clear();
+                        ArrayPool<char>.Shared.Return(sortEntries[j].RentedChars!);
                     }
                 }
 
                 ArrayPool<JsonProperty<JsonElement>>.Shared.Return(properties, clearArray: true);
-                ArrayPool<ReadOnlyMemory<char>>.Shared.Return(utf16Names, clearArray: true);
-                ArrayPool<char[]?>.Shared.Return(rentedNameChars, clearArray: true);
-                ArrayPool<int>.Shared.Return(indices);
+                ArrayPool<Utf16SortEntry>.Shared.Return(sortEntries, clearArray: true);
+
+                if (rentedIndices != null)
+                {
+                    ArrayPool<int>.Shared.Return(rentedIndices);
+                }
             }
 
             this.WriteByte((byte)'}');
@@ -419,14 +421,14 @@ public static class JsonCanonicalizer
     /// to avoid the comparer heap allocation. For typical object property counts
     /// (small N), insertion sort is both faster and allocation-free.
     /// </remarks>
-    private static void SortIndicesByUtf16Name(Span<int> indices, ReadOnlyMemory<char>[] names)
+    private static void SortIndicesByUtf16Name(Span<int> indices, Utf16SortEntry[] entries)
     {
         for (int i = 1; i < indices.Length; i++)
         {
             int key = indices[i];
-            ReadOnlySpan<char> keyName = names[key].Span;
+            ReadOnlySpan<char> keyName = entries[key].Name.Span;
             int j = i - 1;
-            while (j >= 0 && names[indices[j]].Span.SequenceCompareTo(keyName) > 0)
+            while (j >= 0 && entries[indices[j]].Name.Span.SequenceCompareTo(keyName) > 0)
             {
                 indices[j + 1] = indices[j];
                 j--;
@@ -434,5 +436,14 @@ public static class JsonCanonicalizer
 
             indices[j + 1] = key;
         }
+    }
+
+    /// <summary>
+    /// Combines a UTF-16 property name with its rented char array for cleanup.
+    /// </summary>
+    private struct Utf16SortEntry
+    {
+        public ReadOnlyMemory<char> Name;
+        public char[]? RentedChars;
     }
 }
