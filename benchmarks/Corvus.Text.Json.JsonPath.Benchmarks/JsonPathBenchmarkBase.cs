@@ -62,6 +62,7 @@ public abstract class JsonPathBenchmarkBase
     private JsonDocument? jsonConsDocument;
     private JsonNode? jsonEverythingNode;
     private string dataJson = string.Empty;
+    private ParsedJsonDocument<CorvusJsonElement>? corvusDocument;
     private CorvusJsonElement corvusData;
     private string expression = string.Empty;
     private JsonSelector? jsonConsSelector;
@@ -110,8 +111,10 @@ public abstract class JsonPathBenchmarkBase
         this.expression = expressionText;
         this.dataJson = dataJsonText;
 
-        // Corvus setup
-        this.corvusData = CorvusJsonElement.ParseValue(Encoding.UTF8.GetBytes(dataJsonText));
+        // Corvus setup — use a disposable ParsedJsonDocument so property maps
+        // can be built, matching JE's parse-time dictionary construction.
+        this.corvusDocument = ParsedJsonDocument<CorvusJsonElement>.Parse(dataJsonText);
+        this.corvusData = this.corvusDocument.RootElement;
 
         // Pre-warm the Corvus compilation cache
         JsonPathEvaluator.Default.Query(this.expression, this.corvusData);
