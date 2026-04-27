@@ -715,7 +715,7 @@ internal static partial class Compiler
 
     private static FilterEval CompileLiteral(LiteralNode lit)
     {
-        JsonElement value = lit.Value;
+        JsonElement value = JsonElement.ParseValue(Encoding.UTF8.GetBytes(lit.RawJson));
         return (in JsonElement root, in JsonElement current, JsonWorkspace workspace) =>
         {
             return FilterResult.FromValue(value);

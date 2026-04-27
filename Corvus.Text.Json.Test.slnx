@@ -76,6 +76,8 @@
     <Project Path="tests/Corvus.Text.Json.JsonLogic.Tests/Corvus.Text.Json.JsonLogic.Tests.csproj" />
     <Project Path="tests/Corvus.Text.Json.JMESPath.Tests/Corvus.Text.Json.JMESPath.Tests.csproj" />
     <Project Path="tests/Corvus.Text.Json.JsonPath.Tests/Corvus.Text.Json.JsonPath.Tests.csproj" />
+    <Project Path="tests/Corvus.Text.Json.JsonPath.CodeGeneration.Tests/Corvus.Text.Json.JsonPath.CodeGeneration.Tests.csproj" />
+    <Project Path="tests/Corvus.Text.Json.JsonPath.SourceGenerator.Tests/Corvus.Text.Json.JsonPath.SourceGenerator.Tests.csproj" />
     <Project Path="tests/Corvus.Text.Json.Patch.Tests/Corvus.Text.Json.Patch.Tests.csproj" />
   </Folder>
   <Folder Name="/v5/">
@@ -86,6 +88,8 @@
     <Project Path="src/Corvus.Text.Json.JsonLogic.CodeGeneration/Corvus.Text.Json.JsonLogic.CodeGeneration.csproj" />
     <Project Path="src/Corvus.Text.Json.JsonLogic.SourceGenerator/Corvus.Text.Json.JsonLogic.SourceGenerator.csproj" />
     <Project Path="src/Corvus.Text.Json.JsonPath/Corvus.Text.Json.JsonPath.csproj" />
+    <Project Path="src/Corvus.Text.Json.JsonPath.CodeGeneration/Corvus.Text.Json.JsonPath.CodeGeneration.csproj" />
+    <Project Path="src/Corvus.Text.Json.JsonPath.SourceGenerator/Corvus.Text.Json.JsonPath.SourceGenerator.csproj" />
     <Project Path="src/Corvus.Text.Json.Migration.Analyzers/Corvus.Text.Json.Migration.Analyzers.csproj" />
     <Project Path="src/Corvus.Text.Json.SourceGenerator/Corvus.Text.Json.SourceGenerator.csproj" />
     <Project Path="src/Corvus.Text.Json.Validator/Corvus.Text.Json.Validator.csproj" />

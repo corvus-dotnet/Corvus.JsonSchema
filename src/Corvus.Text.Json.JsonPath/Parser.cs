@@ -368,15 +368,15 @@ internal static class Parser
 
             case TokenType.True:
                 lexer.NextToken();
-                return new LiteralNode(JsonElement.ParseValue("true"u8));
+                return new LiteralNode("true");
 
             case TokenType.False:
                 lexer.NextToken();
-                return new LiteralNode(JsonElement.ParseValue("false"u8));
+                return new LiteralNode("false");
 
             case TokenType.Null:
                 lexer.NextToken();
-                return new LiteralNode(JsonElement.ParseValue("null"u8));
+                return new LiteralNode("null");
 
             default:
                 throw new JsonPathException(
@@ -387,29 +387,17 @@ internal static class Parser
     private static LiteralNode CreateStringLiteral(byte[] utf8Bytes)
     {
         string strValue = Encoding.UTF8.GetString(utf8Bytes);
-        try
-        {
-            JsonElement element = JsonElement.ParseValue(
-                Encoding.UTF8.GetBytes($"\"{EscapeJsonString(strValue)}\""));
-            return new LiteralNode(element);
-        }
-        catch (Exception ex) when (ex is not JsonPathException)
-        {
-            throw new JsonPathException($"Invalid string literal: {ex.Message}");
-        }
+        return new LiteralNode($"\"{EscapeJsonString(strValue)}\"");
     }
 
     private static LiteralNode CreateNumericLiteral(ReadOnlySpan<byte> utf8)
     {
-        try
-        {
-            JsonElement element = JsonElement.ParseValue(utf8);
-            return new LiteralNode(element);
-        }
-        catch (Exception ex) when (ex is not JsonPathException)
-        {
-            throw new JsonPathException($"Invalid numeric literal: {ex.Message}");
-        }
+#if NETSTANDARD2_0
+        string text = Encoding.UTF8.GetString(utf8.ToArray());
+#else
+        string text = Encoding.UTF8.GetString(utf8);
+#endif
+        return new LiteralNode(text);
     }
 
     private static FilterExpressionNode ParseFilterQuery(ref Lexer lexer, ReadOnlySpan<byte> source)

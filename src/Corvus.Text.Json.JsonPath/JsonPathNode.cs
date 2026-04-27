@@ -262,16 +262,53 @@ internal sealed class FunctionCallNode : FilterExpressionNode
 
 /// <summary>
 /// A literal value in a filter expression: string, number, true, false, or null.
-/// Stored as a pre-parsed <see cref="JsonElement"/>.
+/// Stored as raw JSON text so the AST has no dependency on a specific JSON
+/// element type.
 /// </summary>
 internal sealed class LiteralNode : FilterExpressionNode
 {
-    public LiteralNode(JsonElement value)
+    public LiteralNode(string rawJson)
     {
-        Value = value;
+        RawJson = rawJson;
     }
 
-    public JsonElement Value { get; }
+    /// <summary>
+    /// Gets the raw JSON text of the literal (e.g. <c>"hello"</c>, <c>42</c>, <c>null</c>).
+    /// </summary>
+    public string RawJson { get; }
+
+    /// <summary>
+    /// Gets a value indicating the kind of literal.
+    /// </summary>
+    public LiteralKind Kind => RawJson switch
+    {
+        "null" => LiteralKind.Null,
+        "true" => LiteralKind.True,
+        "false" => LiteralKind.False,
+        _ when RawJson.Length > 0 && RawJson[0] == '"' => LiteralKind.String,
+        _ => LiteralKind.Number,
+    };
+}
+
+/// <summary>
+/// The kind of a JSON literal in a filter expression.
+/// </summary>
+internal enum LiteralKind
+{
+    /// <summary>A null literal.</summary>
+    Null,
+
+    /// <summary>A true literal.</summary>
+    True,
+
+    /// <summary>A false literal.</summary>
+    False,
+
+    /// <summary>A string literal.</summary>
+    String,
+
+    /// <summary>A number literal.</summary>
+    Number,
 }
 
 /// <summary>
