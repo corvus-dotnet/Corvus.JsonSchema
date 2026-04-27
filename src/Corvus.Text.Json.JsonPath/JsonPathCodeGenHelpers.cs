@@ -595,7 +595,13 @@ public static class JsonPathCodeGenHelpers
         return index >= 0 ? index : len + index;
     }
 
-    private static void GrowStack(ref JsonElement[] stack, ref int capacity, int currentSize)
+    /// <summary>
+    /// Doubles the capacity of a DFS stack, returning the old array to the pool.
+    /// </summary>
+    /// <param name="stack">The current stack array (replaced on return).</param>
+    /// <param name="capacity">The current capacity (doubled on return).</param>
+    /// <param name="currentSize">The number of elements currently in use.</param>
+    public static void GrowStack(ref JsonElement[] stack, ref int capacity, int currentSize)
     {
         int newCapacity = capacity * 2;
         JsonElement[] newArray = ArrayPool<JsonElement>.Shared.Rent(newCapacity);
@@ -605,7 +611,13 @@ public static class JsonPathCodeGenHelpers
         capacity = newCapacity;
     }
 
-    private static void ReverseRegion(JsonElement[] array, int start, int length)
+    /// <summary>
+    /// Reverses a region of elements in-place (for document-order DFS).
+    /// </summary>
+    /// <param name="array">The array.</param>
+    /// <param name="start">The start index of the region.</param>
+    /// <param name="length">The number of elements to reverse.</param>
+    public static void ReverseRegion(JsonElement[] array, int start, int length)
     {
         int lo = start;
         int hi = start + length - 1;

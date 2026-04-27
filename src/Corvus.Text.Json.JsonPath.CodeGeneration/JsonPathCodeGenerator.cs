@@ -716,36 +716,70 @@ public static class JsonPathCodeGenerator
             string inputVar,
             (string Array, string Count)? bufferTarget)
         {
+            // Inline iterative DFS: pop node, apply selectors, push children.
+            // No separate collect step — selectors are applied at each node.
             string c = this.varCounter++.ToString();
-            string descVar = $"_desc{c}";
-            string descCountVar = $"_descC{c}";
-            L(body, indent, $"JsonElement[] {descVar} = ArrayPool<JsonElement>.Shared.Rent(64);");
-            L(body, indent, $"int {descCountVar} = 0;");
+            string stackVar = $"_dStk{c}";
+            string capVar = $"_dCap{c}";
+            string sizeVar = $"_dSz{c}";
+            string curVar = $"_dCur{c}";
+
+            L(body, indent, $"int {capVar} = 64;");
+            L(body, indent, $"JsonElement[] {stackVar} = ArrayPool<JsonElement>.Shared.Rent({capVar});");
             L(body, indent, "try");
             L(body, indent, "{");
 
             string ti = indent + "    ";
-            L(body, ti, $"{H}.CollectDescendantsAndSelf({inputVar}, ref {descVar}, ref {descCountVar});");
+            L(body, ti, $"int {sizeVar} = 0;");
+            L(body, ti, $"{stackVar}[{sizeVar}++] = {inputVar};");
 
-            string diVar = $"_di{c}";
-            string dNodeVar = $"_dn{c}";
-            L(body, ti, $"for (int {diVar} = 0; {diVar} < {descCountVar}; {diVar}++)");
+            L(body, ti, $"while ({sizeVar} > 0)");
             L(body, ti, "{");
 
-            string li = ti + "    ";
-            L(body, li, $"JsonElement {dNodeVar} = {descVar}[{diVar}];");
+            string wi = ti + "    ";
+            L(body, wi, $"JsonElement {curVar} = {stackVar}[--{sizeVar}];");
 
+            // Apply selectors at this node — streaming into downstream
             for (int i = 0; i < selectors.Length; i++)
             {
-                this.EmitSelectorStreaming(body, selectors[i], segments, segmentIndex + 1, li, dNodeVar, bufferTarget);
+                this.EmitSelectorStreaming(body, selectors[i], segments, segmentIndex + 1, wi, curVar, bufferTarget);
             }
+
+            // Push children in reverse for document order
+            string csVar = $"_dCs{c}";
+            L(body, wi, $"if ({curVar}.ValueKind == JsonValueKind.Object)");
+            L(body, wi, "{");
+
+            string oi = wi + "    ";
+            L(body, oi, $"int {csVar} = {sizeVar};");
+            L(body, oi, $"foreach (var _dp{c} in {curVar}.EnumerateObject())");
+            L(body, oi, "{");
+            L(body, oi, $"    if ({sizeVar} >= {capVar}) {{ {H}.GrowStack(ref {stackVar}, ref {capVar}, {sizeVar}); }}");
+            L(body, oi, $"    {stackVar}[{sizeVar}++] = _dp{c}.Value;");
+            L(body, oi, "}");
+            L(body, oi, $"{H}.ReverseRegion({stackVar}, {csVar}, {sizeVar} - {csVar});");
+
+            L(body, wi, "}");
+            L(body, wi, $"else if ({curVar}.ValueKind == JsonValueKind.Array)");
+            L(body, wi, "{");
+
+            string ai = wi + "    ";
+            L(body, ai, $"int {csVar} = {sizeVar};");
+            L(body, ai, $"foreach (JsonElement _da{c} in {curVar}.EnumerateArray())");
+            L(body, ai, "{");
+            L(body, ai, $"    if ({sizeVar} >= {capVar}) {{ {H}.GrowStack(ref {stackVar}, ref {capVar}, {sizeVar}); }}");
+            L(body, ai, $"    {stackVar}[{sizeVar}++] = _da{c};");
+            L(body, ai, "}");
+            L(body, ai, $"{H}.ReverseRegion({stackVar}, {csVar}, {sizeVar} - {csVar});");
+
+            L(body, wi, "}");
 
             L(body, ti, "}");
 
             L(body, indent, "}");
             L(body, indent, "finally");
             L(body, indent, "{");
-            L(body, indent, $"    ArrayPool<JsonElement>.Shared.Return({descVar});");
+            L(body, indent, $"    ArrayPool<JsonElement>.Shared.Return({stackVar});");
             L(body, indent, "}");
         }
 

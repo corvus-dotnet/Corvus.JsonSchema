@@ -150,81 +150,26 @@ internal static class Compiler
         NodeEval[] selectors,
         ref JsonPathResult result)
     {
-        int stackCapacity = 64;
-        JsonElement[] rentedStack = ArrayPool<JsonElement>.Shared.Rent(stackCapacity);
-
-        try
+        // Apply selectors at this node.
+        for (int i = 0; i < selectors.Length; i++)
         {
-            int stackSize = 0;
-            rentedStack[stackSize++] = node;
+            selectors[i](root, node, ref result);
+        }
 
-            while (stackSize > 0)
+        // Recurse into children in document order.
+        if (node.ValueKind == JsonValueKind.Object)
+        {
+            foreach (JsonProperty<JsonElement> prop in node.EnumerateObject())
             {
-                JsonElement current = rentedStack[--stackSize];
-
-                // Apply selectors — each chains to downstream internally.
-                for (int i = 0; i < selectors.Length; i++)
-                {
-                    selectors[i](root, current, ref result);
-                }
-
-                if (current.ValueKind == JsonValueKind.Object)
-                {
-                    int childStart = stackSize;
-                    foreach (JsonProperty<JsonElement> prop in current.EnumerateObject())
-                    {
-                        if (stackSize >= stackCapacity)
-                        {
-                            GrowStack(ref rentedStack, ref stackCapacity, stackSize);
-                        }
-
-                        rentedStack[stackSize++] = prop.Value;
-                    }
-
-                    ReverseSpan(rentedStack.AsSpan(childStart, stackSize - childStart));
-                }
-                else if (current.ValueKind == JsonValueKind.Array)
-                {
-                    int childStart = stackSize;
-                    foreach (JsonElement item in current.EnumerateArray())
-                    {
-                        if (stackSize >= stackCapacity)
-                        {
-                            GrowStack(ref rentedStack, ref stackCapacity, stackSize);
-                        }
-
-                        rentedStack[stackSize++] = item;
-                    }
-
-                    ReverseSpan(rentedStack.AsSpan(childStart, stackSize - childStart));
-                }
+                VisitDescendants(root, prop.Value, selectors, ref result);
             }
         }
-        finally
+        else if (node.ValueKind == JsonValueKind.Array)
         {
-            ArrayPool<JsonElement>.Shared.Return(rentedStack, clearArray: true);
-        }
-    }
-
-    private static void GrowStack(ref JsonElement[] rentedStack, ref int capacity, int currentSize)
-    {
-        int newCapacity = capacity * 2;
-        JsonElement[] newArray = ArrayPool<JsonElement>.Shared.Rent(newCapacity);
-        Array.Copy(rentedStack, newArray, currentSize);
-        ArrayPool<JsonElement>.Shared.Return(rentedStack, clearArray: true);
-        rentedStack = newArray;
-        capacity = newCapacity;
-    }
-
-    private static void ReverseSpan(Span<JsonElement> span)
-    {
-        int lo = 0;
-        int hi = span.Length - 1;
-        while (lo < hi)
-        {
-            (span[lo], span[hi]) = (span[hi], span[lo]);
-            lo++;
-            hi--;
+            foreach (JsonElement item in node.EnumerateArray())
+            {
+                VisitDescendants(root, item, selectors, ref result);
+            }
         }
     }
 
