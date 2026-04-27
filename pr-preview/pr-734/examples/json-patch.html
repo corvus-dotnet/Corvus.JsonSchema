@@ -4,31 +4,31 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#1C1D21" />
-    <meta name="description" content="This recipe demonstrates how to apply [RFC 6902 JSON Patch](https://datatracker.ietf.org/doc/html/rfc6902) operations to mutable documents using the `Corvus.Text.Json.Patch` library." />
-    <meta name="keywords" content="recipe, JSON Schema, C#, json, patch, rfc, 6902, type, required, properties, format, items" />
+    <meta name="description" content="This recipe demonstrates [RFC 6902 JSON Patch](https://datatracker.ietf.org/doc/html/rfc6902), [RFC 7396 JSON Merge Patch](https://datatracker.ietf.org/doc/html/rfc7396), and JSON Diff using the `Corvus.Text.Json.Patch` library." />
+    <meta name="keywords" content="recipe, JSON Schema, C#, json, patch, merge, diff, type, required, properties, format, items" />
     <meta name="robots" content="noindex, nofollow" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:description" content="This recipe demonstrates how to apply [RFC 6902 JSON Patch](https://datatracker.ietf.org/doc/html/rfc6902) operations to mutable documents using the `Corvus.Text.Json.Patch` library." />
+    <meta name="twitter:description" content="This recipe demonstrates [RFC 6902 JSON Patch](https://datatracker.ietf.org/doc/html/rfc6902), [RFC 7396 JSON Merge Patch](https://datatracker.ietf.org/doc/html/rfc7396), and JSON Diff using the `Corvus.Text.Json.Patch` library." />
     <meta name="twitter:image" content="/Corvus.JsonSchema/pr-preview/pr-734/assets/images/og-corvus.png" />
-    <meta name="twitter:title" content="JSON Patch (RFC 6902) - Corvus.Text.Json Examples" />
+    <meta name="twitter:title" content="JSON Patch, Merge Patch, and Diff - Corvus.Text.Json Examples" />
     <meta property="article:tag" content="recipe" />
     <meta property="article:tag" content="JSON Schema" />
     <meta property="article:tag" content="C#" />
     <meta property="article:tag" content="json" />
     <meta property="article:tag" content="patch" />
-    <meta property="article:tag" content="rfc" />
-    <meta property="article:tag" content="6902" />
+    <meta property="article:tag" content="merge" />
+    <meta property="article:tag" content="diff" />
     <meta property="article:tag" content="type" />
     <meta property="article:tag" content="required" />
     <meta property="article:tag" content="properties" />
     <meta property="article:tag" content="format" />
     <meta property="article:tag" content="items" />
-    <meta property="og:description" content="This recipe demonstrates how to apply [RFC 6902 JSON Patch](https://datatracker.ietf.org/doc/html/rfc6902) operations to mutable documents using the `Corvus.Text.Json.Patch` library." />
+    <meta property="og:description" content="This recipe demonstrates [RFC 6902 JSON Patch](https://datatracker.ietf.org/doc/html/rfc6902), [RFC 7396 JSON Merge Patch](https://datatracker.ietf.org/doc/html/rfc7396), and JSON Diff using the `Corvus.Text.Json.Patch` library." />
     <meta property="og:image" content="/Corvus.JsonSchema/pr-preview/pr-734/assets/images/og-corvus.png" />
-    <meta property="og:title" content="JSON Patch (RFC 6902) - Corvus.Text.Json Examples" />
+    <meta property="og:title" content="JSON Patch, Merge Patch, and Diff - Corvus.Text.Json Examples" />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://corvus-oss.org/corvus-json-schema/examples/json-patch/" />
-    <title>JSON Patch (RFC 6902) - Corvus.Text.Json Examples</title>
+    <title>JSON Patch, Merge Patch, and Diff - Corvus.Text.Json Examples</title>
     <link itemprop="url" href="https://corvus-oss.org/corvus-json-schema/examples/json-patch/" />
     <link rel="canonical" href="https://corvus-oss.org/corvus-json-schema/examples/json-patch/" />
     <link rel="sitemap" href="https://corvus-oss.org/corvus-json-schema/sitemap.xml" />
@@ -136,7 +136,7 @@
                                 <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/docs/schema-evaluator.html">Standalone Schema Evaluator</a>
                             </li>
                             <li class="sidebar__item">
-                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/docs/json-patch.html">JSON Patch (RFC 6902)</a>
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/docs/json-patch.html">JSON Patch, Merge Patch &amp; Diff</a>
                             </li>
                             <li class="sidebar__item">
                                 <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/docs/json-logic.html">JsonLogic Rule Engine</a>
@@ -149,6 +149,9 @@
                             </li>
                             <li class="sidebar__item">
                                 <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/docs/yaml.html">YAML Converter</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/docs/json-canonicalization.html">JSON Canonicalization (JCS)</a>
                             </li>
                 </ul>
             </div>
@@ -224,7 +227,7 @@
                                 <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/format-validation.html">Format Validation</a>
                             </li>
                             <li class="sidebar__item">
-                                <a class="sidebar__link is-active" href="/Corvus.JsonSchema/pr-preview/pr-734/examples/json-patch.html">JSON Patch (RFC 6902)</a>
+                                <a class="sidebar__link is-active" href="/Corvus.JsonSchema/pr-preview/pr-734/examples/json-patch.html">JSON Patch, Merge Patch, and Diff</a>
                             </li>
                             <li class="sidebar__item">
                                 <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/json-logic.html">JsonLogic Rule Evaluation</a>
@@ -238,6 +241,9 @@
                             <li class="sidebar__item">
                                 <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/yaml.html">YAML Conversion</a>
                             </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/json-canonicalization.html">JSON Canonicalization (RFC 8785)</a>
+                            </li>
                 </ul>
             </div>
         </div>
@@ -246,22 +252,22 @@
 
     <main id="main-content" class="layout-docs__main">
         <div class="doc__content">
-            <h1>JSON Patch (RFC 6902)</h1>
+            <h1>JSON Patch, Merge Patch, and Diff</h1>
                 <div class="card__tags" style="margin-bottom:1.5rem">
                         <span class="card__tag">recipe</span>
                         <span class="card__tag">JSON Schema</span>
                         <span class="card__tag">C#</span>
                         <span class="card__tag">json</span>
                         <span class="card__tag">patch</span>
-                        <span class="card__tag">rfc</span>
-                        <span class="card__tag">6902</span>
+                        <span class="card__tag">merge</span>
+                        <span class="card__tag">diff</span>
                         <span class="card__tag">type</span>
                         <span class="card__tag">required</span>
                         <span class="card__tag">properties</span>
                         <span class="card__tag">format</span>
                         <span class="card__tag">items</span>
                 </div>
-<p>This recipe demonstrates how to apply <a href="https://datatracker.ietf.org/doc/html/rfc6902">RFC 6902 JSON Patch</a> operations to mutable documents using the <code>Corvus.Text.Json.Patch</code> library. It covers building patches fluently, applying individual operations, conditional patches with <code>test</code>, and parsing patches from raw JSON.</p>
+<p>This recipe demonstrates <a href="https://datatracker.ietf.org/doc/html/rfc6902">RFC 6902 JSON Patch</a>, <a href="https://datatracker.ietf.org/doc/html/rfc7396">RFC 7396 JSON Merge Patch</a>, and JSON Diff using the <code>Corvus.Text.Json.Patch</code> library. It covers building patches fluently, applying individual operations, conditional patches with <code>test</code>, parsing patches from raw JSON, applying merge patches, and computing diffs between documents.</p>
 <h2 id="the-pattern">The Pattern</h2>
 <p>JSON Patch is a standard format for describing modifications to a JSON document. A patch is a JSON array of operation objects, each specifying an <code>op</code> (add, remove, replace, move, copy, or test), a <code>path</code> (a JSON Pointer per RFC 6901), and optionally a <code>value</code> or <code>from</code> field.</p>
 <p>In Corvus.Text.Json, patches are applied to mutable elements (<code>JsonElement.Mutable</code>) obtained from a <code>JsonDocumentBuilder</code>. You can construct patches programmatically with the fluent <code>PatchBuilder</code>, parse them from JSON, or apply individual operations directly.</p>
@@ -366,6 +372,50 @@ dotnet run
 <li><a href="/Corvus.JsonSchema/pr-preview/pr-734/examples/creating-and-mutating-objects.html">018-CreatingAndMutatingObjects</a> — Mutable document lifecycle</li>
 <li><a href="/Corvus.JsonSchema/pr-preview/pr-734/examples/clone-and-freeze.html">019-CloneAndFreeze</a> — Cloning mutable elements into independent immutable documents</li>
 </ul>
+<h3 id="json-merge-patch-rfc-7396">JSON Merge Patch (RFC 7396)</h3>
+<p>Merge Patch is a simpler alternative to JSON Patch. Instead of individual operations, the patch itself is a JSON document that mirrors the target structure. Properties in the patch are merged into the target; <code>null</code> values remove properties; arrays are replaced wholesale.</p>
+<pre><code class="language-csharp">string targetJson = &quot;&quot;&quot;{&quot;title&quot;: &quot;Goodbye!&quot;, &quot;author&quot;: {&quot;givenName&quot;: &quot;John&quot;}, &quot;tags&quot;: [&quot;a&quot;]}&quot;&quot;&quot;;
+string mergePatchJson = &quot;&quot;&quot;{&quot;title&quot;: &quot;Hello!&quot;, &quot;author&quot;: {&quot;givenName&quot;: null}, &quot;tags&quot;: [&quot;b&quot;, &quot;c&quot;]}&quot;&quot;&quot;;
+
+using var mergeTargetDoc = ParsedJsonDocument&lt;JsonElement&gt;.Parse(targetJson);
+using var mergePatchDoc = ParsedJsonDocument&lt;JsonElement&gt;.Parse(mergePatchJson);
+using JsonWorkspace mergeWorkspace = JsonWorkspace.Create();
+using var mergeBuilder = mergeTargetDoc.RootElement.CreateBuilder(mergeWorkspace);
+
+JsonElement.Mutable mergeRoot = mergeBuilder.RootElement;
+JsonMergePatchExtensions.ApplyMergePatch(ref mergeRoot, mergePatchDoc.RootElement);
+// Result: {&quot;title&quot;:&quot;Hello!&quot;,&quot;author&quot;:{},&quot;tags&quot;:[&quot;b&quot;,&quot;c&quot;]}
+</code></pre>
+<p>The <code>givenName</code> property is removed (patch value is <code>null</code>), <code>title</code> is replaced, and <code>tags</code> is replaced wholesale.</p>
+<h3 id="json-diff-rfc-6902-patch-generation">JSON Diff (RFC 6902 Patch Generation)</h3>
+<p>The diff feature computes an RFC 6902 patch that transforms one JSON element into another:</p>
+<pre><code class="language-csharp">string diffSourceJson = &quot;&quot;&quot;{&quot;name&quot;: &quot;Alice&quot;, &quot;age&quot;: 30, &quot;email&quot;: &quot;alice@example.com&quot;}&quot;&quot;&quot;;
+string diffTargetJson = &quot;&quot;&quot;{&quot;name&quot;: &quot;Bob&quot;, &quot;age&quot;: 30, &quot;active&quot;: true}&quot;&quot;&quot;;
+
+using var diffSourceDoc = ParsedJsonDocument&lt;JsonElement&gt;.Parse(diffSourceJson);
+using var diffTargetDoc = ParsedJsonDocument&lt;JsonElement&gt;.Parse(diffTargetJson);
+using JsonWorkspace diffWorkspace = JsonWorkspace.Create();
+
+JsonPatchDocument diffPatch = JsonDiffExtensions.CreatePatch(
+    diffSourceDoc.RootElement,
+    diffTargetDoc.RootElement,
+    diffWorkspace);
+
+// Apply the diff patch to verify round-trip correctness
+using var diffBuilder = diffSourceDoc.RootElement.CreateBuilder(diffWorkspace);
+JsonElement.Mutable diffRoot = diffBuilder.RootElement;
+bool success = diffRoot.TryApplyPatch(diffPatch);
+// Result: {&quot;name&quot;:&quot;Bob&quot;,&quot;age&quot;:30,&quot;active&quot;:true}
+</code></pre>
+<p>The diff produces <code>replace</code> for changed values, <code>remove</code> for deleted properties, and <code>add</code> for new properties.</p>
+<p>Same-length arrays are diffed element-by-element, producing targeted operations:</p>
+<pre><code class="language-csharp">// Source: {&quot;items&quot;: [1, 2, 3]}  →  Target: {&quot;items&quot;: [1, 99, 3]}
+// Patch:  [{&quot;op&quot;:&quot;replace&quot;,&quot;path&quot;:&quot;/items/1&quot;,&quot;value&quot;:99}]
+</code></pre>
+<p>Different-length arrays are replaced wholesale:</p>
+<pre><code class="language-csharp">// Source: {&quot;tags&quot;: [&quot;a&quot;, &quot;b&quot;]}  →  Target: {&quot;tags&quot;: [&quot;a&quot;, &quot;b&quot;, &quot;c&quot;]}
+// Patch:  [{&quot;op&quot;:&quot;replace&quot;,&quot;path&quot;:&quot;/tags&quot;,&quot;value&quot;:[&quot;a&quot;,&quot;b&quot;,&quot;c&quot;]}]
+</code></pre>
         </div>
     </main>
 </div>

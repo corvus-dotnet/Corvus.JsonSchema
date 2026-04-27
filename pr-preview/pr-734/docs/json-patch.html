@@ -4,16 +4,16 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#1C1D21" />
-    <meta name="description" content="Apply RFC 6902 JSON Patch operations to mutable documents. Build patches fluently with PatchBuilder or apply individual add, remove, replace, move, copy, and test operations via extension methods." />
+    <meta name="description" content="Apply RFC 6902 JSON Patch operations, RFC 7396 JSON Merge Patch, and compute diffs between documents. Build patches fluently with PatchBuilder, merge documents with ApplyMergePatch, or generate patches with CreatePatch." />
     <meta name="keywords" content="documentation, Corvus.Text.Json" />
     <meta name="robots" content="noindex, nofollow" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:description" content="Apply RFC 6902 JSON Patch operations to mutable documents. Build patches fluently with PatchBuilder or apply individual add, remove, replace, move, copy, and test operations via extension methods." />
+    <meta name="twitter:description" content="Apply RFC 6902 JSON Patch operations, RFC 7396 JSON Merge Patch, and compute diffs between documents. Build patches fluently with PatchBuilder, merge documents with ApplyMergePatch, or generate patches with CreatePatch." />
     <meta name="twitter:image" content="/Corvus.JsonSchema/pr-preview/pr-734/assets/images/og-corvus.png" />
     <meta name="twitter:title" content="JSON Patch (RFC 6902) - Corvus.Text.Json" />
     <meta property="article:tag" content="documentation" />
     <meta property="article:tag" content="Corvus.Text.Json" />
-    <meta property="og:description" content="Apply RFC 6902 JSON Patch operations to mutable documents. Build patches fluently with PatchBuilder or apply individual add, remove, replace, move, copy, and test operations via extension methods." />
+    <meta property="og:description" content="Apply RFC 6902 JSON Patch operations, RFC 7396 JSON Merge Patch, and compute diffs between documents. Build patches fluently with PatchBuilder, merge documents with ApplyMergePatch, or generate patches with CreatePatch." />
     <meta property="og:image" content="/Corvus.JsonSchema/pr-preview/pr-734/assets/images/og-corvus.png" />
     <meta property="og:title" content="JSON Patch (RFC 6902) - Corvus.Text.Json" />
     <meta property="og:type" content="website" />
@@ -126,7 +126,7 @@
                                 <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/docs/schema-evaluator.html">Standalone Schema Evaluator</a>
                             </li>
                             <li class="sidebar__item">
-                                <a class="sidebar__link is-active" href="/Corvus.JsonSchema/pr-preview/pr-734/docs/json-patch.html">JSON Patch (RFC 6902)</a>
+                                <a class="sidebar__link is-active" href="/Corvus.JsonSchema/pr-preview/pr-734/docs/json-patch.html">JSON Patch, Merge Patch &amp; Diff</a>
                             </li>
                             <li class="sidebar__item">
                                 <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/docs/json-logic.html">JsonLogic Rule Engine</a>
@@ -139,6 +139,9 @@
                             </li>
                             <li class="sidebar__item">
                                 <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/docs/yaml.html">YAML Converter</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/docs/json-canonicalization.html">JSON Canonicalization (JCS)</a>
                             </li>
                 </ul>
             </div>
@@ -214,7 +217,7 @@
                                 <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/format-validation.html">Format Validation</a>
                             </li>
                             <li class="sidebar__item">
-                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/json-patch.html">JSON Patch (RFC 6902)</a>
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/json-patch.html">JSON Patch, Merge Patch, and Diff</a>
                             </li>
                             <li class="sidebar__item">
                                 <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/json-logic.html">JsonLogic Rule Evaluation</a>
@@ -227,6 +230,9 @@
                             </li>
                             <li class="sidebar__item">
                                 <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/yaml.html">YAML Conversion</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/json-canonicalization.html">JSON Canonicalization (RFC 8785)</a>
                             </li>
                 </ul>
             </div>
@@ -472,6 +478,103 @@ bool success = root.TryApplyPatch(guardedPatch);
 <ul>
 <li><a href="/Corvus.JsonSchema/pr-preview/pr-734/docs/json-document-builder.html">JsonDocumentBuilder</a> — Mutable document builder with snapshot/restore</li>
 </ul>
+<hr />
+<h2 id="json-merge-patch-rfc-7396">JSON Merge Patch (RFC 7396)</h2>
+<h3 id="overview-1">Overview</h3>
+<p><code>Corvus.Text.Json.Patch</code> implements <a href="https://datatracker.ietf.org/doc/html/rfc7396">RFC 7396 JSON Merge Patch</a>, a simpler alternative to JSON Patch for describing changes to a JSON document. Instead of specifying individual operations, a merge patch is a JSON document whose structure mirrors the target — properties present in the patch are set or replaced in the target, and properties with <code>null</code> values are removed.</p>
+<h3 id="quick-start-1">Quick Start</h3>
+<pre><code class="language-csharp">using Corvus.Text.Json;
+using Corvus.Text.Json.Patch;
+
+string targetJson = &quot;&quot;&quot;{&quot;title&quot;: &quot;Goodbye!&quot;, &quot;author&quot;: {&quot;givenName&quot;: &quot;John&quot;}, &quot;tags&quot;: [&quot;a&quot;]}&quot;&quot;&quot;;
+string patchJson = &quot;&quot;&quot;{&quot;title&quot;: &quot;Hello!&quot;, &quot;author&quot;: {&quot;givenName&quot;: null}, &quot;tags&quot;: [&quot;b&quot;, &quot;c&quot;]}&quot;&quot;&quot;;
+
+using var targetDoc = ParsedJsonDocument&lt;JsonElement&gt;.Parse(targetJson);
+using var patchDoc = ParsedJsonDocument&lt;JsonElement&gt;.Parse(patchJson);
+using JsonWorkspace workspace = JsonWorkspace.Create();
+using var builder = targetDoc.RootElement.CreateBuilder(workspace);
+
+JsonElement.Mutable root = builder.RootElement;
+JsonMergePatchExtensions.ApplyMergePatch(ref root, patchDoc.RootElement);
+
+Console.WriteLine(builder.RootElement);
+// {&quot;title&quot;:&quot;Hello!&quot;,&quot;author&quot;:{},&quot;tags&quot;:[&quot;b&quot;,&quot;c&quot;]}
+</code></pre>
+<h3 id="merge-semantics">Merge semantics</h3>
+<p>The RFC 7396 algorithm works as follows:</p>
+<ul>
+<li>If the patch is <strong>not an object</strong>, the target is replaced entirely by the patch value.</li>
+<li>If the patch <strong>is an object</strong>, each property is merged into the target:
+<ul>
+<li>A patch property with a <code>null</code> value <strong>removes</strong> the corresponding target property.</li>
+<li>A patch property with an object value <strong>merges recursively</strong> into the target property (creating it as an empty object if it doesn't exist or isn't an object).</li>
+<li>Any other patch property <strong>sets or replaces</strong> the corresponding target property.</li>
+</ul>
+</li>
+<li><strong>Arrays are replaced wholesale</strong> — they are never merged element-by-element.</li>
+</ul>
+<h3 id="limitations">Limitations</h3>
+<p>Merge Patch cannot express all possible changes that JSON Patch can:</p>
+<ul>
+<li>It cannot set a property to <code>null</code> (because <code>null</code> means &quot;remove&quot;).</li>
+<li>It cannot rearrange array elements — arrays are always replaced entirely.</li>
+<li>It cannot express operations like <code>move</code> or <code>copy</code>.</li>
+</ul>
+<p>For these use cases, use the full <a href="#applying-a-patch-document">JSON Patch</a> API instead.</p>
+<hr />
+<h2 id="json-diff-rfc-6902-patch-generation">JSON Diff (RFC 6902 Patch Generation)</h2>
+<h3 id="overview-2">Overview</h3>
+<p>The diff feature computes a <a href="https://datatracker.ietf.org/doc/html/rfc6902">JSON Patch (RFC 6902)</a> that transforms one JSON element into another. This is useful for change tracking, audit logging, or synchronizing JSON documents across systems.</p>
+<h3 id="quick-start-2">Quick Start</h3>
+<pre><code class="language-csharp">using Corvus.Text.Json;
+using Corvus.Text.Json.Patch;
+
+string sourceJson = &quot;&quot;&quot;{&quot;name&quot;: &quot;Alice&quot;, &quot;age&quot;: 30}&quot;&quot;&quot;;
+string targetJson = &quot;&quot;&quot;{&quot;name&quot;: &quot;Bob&quot;, &quot;age&quot;: 30, &quot;email&quot;: &quot;bob@example.com&quot;}&quot;&quot;&quot;;
+
+using var sourceDoc = ParsedJsonDocument&lt;JsonElement&gt;.Parse(sourceJson);
+using var targetDoc = ParsedJsonDocument&lt;JsonElement&gt;.Parse(targetJson);
+using JsonWorkspace workspace = JsonWorkspace.Create();
+
+JsonPatchDocument patch = JsonDiffExtensions.CreatePatch(
+    sourceDoc.RootElement,
+    targetDoc.RootElement,
+    workspace);
+
+// Apply the patch to verify it produces the target
+using var builder = sourceDoc.RootElement.CreateBuilder(workspace);
+JsonElement.Mutable root = builder.RootElement;
+bool success = root.TryApplyPatch(patch);
+
+Console.WriteLine(success);             // True
+Console.WriteLine(builder.RootElement); // {&quot;name&quot;:&quot;Bob&quot;,&quot;age&quot;:30,&quot;email&quot;:&quot;bob@example.com&quot;}
+</code></pre>
+<h3 id="diff-strategy">Diff strategy</h3>
+<p>The diff algorithm operates on semantic JSON equality:</p>
+<ul>
+<li><strong>Objects</strong> are diffed property-by-property. Properties present in both are recursively compared; properties only in the source produce <code>remove</code> operations; properties only in the target produce <code>add</code> operations. Property order is not significant.</li>
+<li><strong>Arrays</strong> are compared element-by-element when lengths match. When array lengths differ, the entire array is replaced. A future version may implement LCS-based array diffing for more compact patches.</li>
+<li><strong>Scalars</strong> (strings, numbers, booleans, null) are compared for value equality. Different values produce a <code>replace</code> operation.</li>
+</ul>
+<h3 id="array-handling">Array handling</h3>
+<p>When two arrays have the <strong>same length</strong>, the diff compares elements at each index and produces targeted operations for changed elements:</p>
+<pre><code class="language-csharp">// Source: {&quot;items&quot;: [1, 2, 3]}  →  Target: {&quot;items&quot;: [1, 99, 3]}
+// Patch:  [{&quot;op&quot;:&quot;replace&quot;,&quot;path&quot;:&quot;/items/1&quot;,&quot;value&quot;:99}]
+</code></pre>
+<p>Nested objects within same-length arrays are also diffed recursively:</p>
+<pre><code class="language-csharp">// Source: {&quot;people&quot;: [{&quot;name&quot;: &quot;Alice&quot;}, {&quot;name&quot;: &quot;Bob&quot;}]}
+// Target: {&quot;people&quot;: [{&quot;name&quot;: &quot;Alice&quot;}, {&quot;name&quot;: &quot;Charlie&quot;}]}
+// Patch:  [{&quot;op&quot;:&quot;replace&quot;,&quot;path&quot;:&quot;/people/1/name&quot;,&quot;value&quot;:&quot;Charlie&quot;}]
+</code></pre>
+<p>When arrays have <strong>different lengths</strong>, the entire array is replaced:</p>
+<pre><code class="language-csharp">// Source: {&quot;tags&quot;: [&quot;a&quot;, &quot;b&quot;]}  →  Target: {&quot;tags&quot;: [&quot;a&quot;, &quot;b&quot;, &quot;c&quot;]}
+// Patch:  [{&quot;op&quot;:&quot;replace&quot;,&quot;path&quot;:&quot;/tags&quot;,&quot;value&quot;:[&quot;a&quot;,&quot;b&quot;,&quot;c&quot;]}]
+</code></pre>
+<h3 id="workspace-lifetime">Workspace lifetime</h3>
+<p>The returned <code>JsonPatchDocument</code> is backed by the workspace. The caller must keep the workspace alive for the lifetime of the returned document. If you need the patch to outlive the workspace, serialize it to JSON first:</p>
+<pre><code class="language-csharp">JsonPatchDocument patch = JsonDiffExtensions.CreatePatch(source, target, workspace);
+string patchJson = patch.ToString();
+</code></pre>
         </div>
     </main>
 </div>
