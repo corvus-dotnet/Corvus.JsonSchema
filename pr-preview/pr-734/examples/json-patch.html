@@ -301,14 +301,14 @@ using var builder = parsedDoc.RootElement.CreateBuilder(workspace);
 Person.Mutable root = builder.RootElement;
 </code></pre>
 <h3 id="building-and-applying-a-patch-with-patchbuilder">Building and applying a patch with PatchBuilder</h3>
-<p>The <code>PatchBuilder</code> provides a fluent API for constructing patch documents. Call <code>BeginPatch()</code> to start, chain operations, and call <code>GetPatchAndDispose()</code> to finalize:</p>
-<pre><code class="language-csharp">JsonPatchDocument patch = root.BeginPatch()
+<p>The <code>PatchBuilder</code> provides a fluent API for constructing patch documents. Call <code>BeginPatch(workspace)</code> to start, chain operations, and call <code>GetPatchAndDispose()</code> to finalize:</p>
+<pre><code class="language-csharp">JsonPatchDocument patch = root.BeginPatch(workspace)
     .Replace(&quot;/name&quot;u8, &quot;Bob&quot;)
     .Add(&quot;/tags/-&quot;u8, &quot;admin&quot;)
     .Remove(&quot;/email&quot;u8)
     .GetPatchAndDispose();
 
-bool success = root.TryApplyPatch(in patch);
+bool success = root.TryApplyPatch(patch);
 // Result: {&quot;name&quot;:&quot;Bob&quot;,&quot;age&quot;:30,&quot;tags&quot;:[&quot;user&quot;,&quot;admin&quot;]}
 </code></pre>
 <h3 id="applying-individual-operations">Applying individual operations</h3>
@@ -330,12 +330,12 @@ bool fails   = root.TryTest(&quot;/name&quot;u8, JsonElement.ParseValue(&quot;&q
 </code></pre>
 <h3 id="conditional-patches-with-test-guards">Conditional patches with Test guards</h3>
 <p>When <code>test</code> is used in a patch document, a failing test aborts the entire patch. This enables optimistic concurrency patterns:</p>
-<pre><code class="language-csharp">JsonPatchDocument guardedPatch = root.BeginPatch()
+<pre><code class="language-csharp">JsonPatchDocument guardedPatch = root.BeginPatch(workspace)
     .Test(&quot;/name&quot;u8, &quot;Bob&quot;)           // guard: only apply if name is Bob
     .Replace(&quot;/name&quot;u8, &quot;Charlie&quot;)    // update name
     .GetPatchAndDispose();
 
-bool success = root.TryApplyPatch(in guardedPatch);
+bool success = root.TryApplyPatch(guardedPatch);
 // success is true only if /name was &quot;Bob&quot;
 </code></pre>
 <h3 id="parsing-patches-from-json">Parsing patches from JSON</h3>
@@ -348,7 +348,7 @@ bool success = root.TryApplyPatch(in guardedPatch);
     ]
     &quot;&quot;&quot;u8);
 
-root.TryApplyPatch(in parsedPatch);
+root.TryApplyPatch(parsedPatch);
 </code></pre>
 <h2 id="faq">FAQ</h2>
 <h3 id="what-happens-if-a-patch-operation-fails">What happens if a patch operation fails?</h3>

@@ -255,17 +255,17 @@ using var builder = parsedDoc.RootElement.CreateBuilder(workspace);
 
 JsonElement.Mutable root = builder.RootElement;
 
-bool applied = root.TryValidateAndApplyPatch(in patch);
+bool applied = root.TryValidateAndApplyPatch(patch);
 </code></pre>
 <h3 id="building-a-patch-with-patchbuilder">Building a patch with PatchBuilder</h3>
 <p>For locally-constructed patches that don't need validation, use <code>PatchBuilder</code>:</p>
-<pre><code class="language-csharp">JsonPatchDocument patch = root.BeginPatch()
+<pre><code class="language-csharp">JsonPatchDocument patch = root.BeginPatch(workspace)
     .Replace(&quot;/name&quot;u8, &quot;Charlie&quot;)
     .Add(&quot;/tags/-&quot;u8, &quot;admin&quot;)
     .Remove(&quot;/temp&quot;u8)
     .GetPatchAndDispose();
 
-root.TryApplyPatch(in patch);
+root.TryApplyPatch(patch);
 </code></pre>
 <h2 id="applies-to">Applies To</h2>
 <table>

@@ -261,14 +261,14 @@ using var builder = parsedDoc.RootElement.CreateBuilder(workspace);
 JsonElement.Mutable root = builder.RootElement;
 
 // Build a patch document
-JsonPatchDocument patch = root.BeginPatch()
+JsonPatchDocument patch = root.BeginPatch(workspace)
     .Replace(&quot;/name&quot;u8, &quot;Bob&quot;)
     .Add(&quot;/email&quot;u8, &quot;bob@example.com&quot;)
     .Remove(&quot;/age&quot;u8)
     .GetPatchAndDispose();
 
 // Apply the patch
-bool success = root.TryApplyPatch(in patch);
+bool success = root.TryApplyPatch(patch);
 
 Console.WriteLine(success);             // True
 Console.WriteLine(builder.RootElement); // {&quot;name&quot;:&quot;Bob&quot;,&quot;email&quot;:&quot;bob@example.com&quot;}
@@ -276,7 +276,7 @@ Console.WriteLine(builder.RootElement); // {&quot;name&quot;:&quot;Bob&quot;,&qu
 <h2 id="applying-a-patch-document">Applying a Patch Document</h2>
 <h3 id="validated-application">Validated application</h3>
 <p>If you have received a patch document from an external source (e.g. an HTTP request body, a file, or user input) and have not already validated it, use <code>TryValidateAndApplyPatch</code>. This validates the patch against its JSON Schema before applying it, returning <code>false</code> if the document is structurally invalid:</p>
-<pre><code class="language-csharp">JsonPatchDocument patch = JsonPatchDocument.ParseValue(
+<pre><code class="language-csharp">JsonPatchDocument parsedPatch = JsonPatchDocument.ParseValue(
     &quot;&quot;&quot;
     [
         { &quot;op&quot;: &quot;replace&quot;, &quot;path&quot;: &quot;/name&quot;, &quot;value&quot;: &quot;Charlie&quot; },
@@ -284,16 +284,16 @@ Console.WriteLine(builder.RootElement); // {&quot;name&quot;:&quot;Bob&quot;,&qu
     ]
     &quot;&quot;&quot;u8);
 
-bool success = root.TryValidateAndApplyPatch(in patch);
+bool success = root.TryValidateAndApplyPatch(parsedPatch);
 </code></pre>
 <h3 id="direct-application-skip-validation">Direct application (skip validation)</h3>
 <p>If you constructed the patch locally via <code>PatchBuilder</code>, or have already validated it as part of request processing, you can call <code>TryApplyPatch</code> directly to avoid the cost of redundant schema validation:</p>
-<pre><code class="language-csharp">JsonPatchDocument patch = root.BeginPatch()
+<pre><code class="language-csharp">JsonPatchDocument patch = root.BeginPatch(workspace)
     .Replace(&quot;/name&quot;u8, &quot;Charlie&quot;)
     .Add(&quot;/active&quot;u8, true)
     .GetPatchAndDispose();
 
-bool success = root.TryApplyPatch(in patch);
+bool success = root.TryApplyPatch(patch);
 </code></pre>
 <blockquote>
 <p><strong>Note:</strong> <code>TryApplyPatch</code> assumes the patch is a valid RFC 6902 document. Behaviour for invalid documents is undefined. A <code>Debug.Assert</code> verifies validity in debug builds.</p>
@@ -302,17 +302,17 @@ bool success = root.TryApplyPatch(in patch);
 <p><strong>Note:</strong> If an operation fails partway through, earlier operations in the patch will already have been applied. The document is left in a partially-patched state. If you need atomic all-or-nothing semantics, take a snapshot before applying (see <a href="/Corvus.JsonSchema/pr-preview/pr-734/docs/json-document-builder.html">JsonDocumentBuilder</a> for snapshot/restore).</p>
 </blockquote>
 <h2 id="building-patches-with-patchbuilder">Building Patches with PatchBuilder</h2>
-<p>The <code>PatchBuilder</code> provides a fluent API for constructing patch documents programmatically. Create one by calling <code>BeginPatch()</code> on any mutable element, chain operations, then call <code>GetPatchAndDispose()</code> to finalize:</p>
-<pre><code class="language-csharp">JsonPatchDocument patch = root.BeginPatch()
+<p>The <code>PatchBuilder</code> provides a fluent API for constructing patch documents programmatically. Create one by calling <code>BeginPatch(workspace)</code> on any mutable element, chain operations, then call <code>GetPatchAndDispose()</code> to finalize:</p>
+<pre><code class="language-csharp">JsonPatchDocument patch = root.BeginPatch(workspace)
     .Add(&quot;/tags/0&quot;u8, &quot;urgent&quot;)
     .Replace(&quot;/status&quot;u8, &quot;active&quot;)
     .Move(&quot;/old_name&quot;u8, &quot;/name&quot;u8)
     .Test(&quot;/version&quot;u8, 2)
     .GetPatchAndDispose();
 </code></pre>
-<p>The builder manages its own <code>JsonWorkspace</code> internally. Calling <code>GetPatchAndDispose()</code> writes the closing array bracket, parses the result into a <code>JsonPatchDocument</code>, and disposes the workspace. You must not use the builder after calling <code>GetPatchAndDispose()</code>.</p>
+<p>The caller provides a <code>JsonWorkspace</code> that the builder uses for internal buffer management. Calling <code>GetPatchAndDispose()</code> finalizes the array, transfers metadata to the backing document builder, and returns a <code>JsonPatchDocument</code> backed by the workspace. The caller must keep the workspace alive for the lifetime of the patch. You must not use the builder after calling <code>GetPatchAndDispose()</code>.</p>
 <p>If you need to abandon a partially-built patch, call <code>Dispose()</code> directly:</p>
-<pre><code class="language-csharp">PatchBuilder builder = root.BeginPatch();
+<pre><code class="language-csharp">PatchBuilder builder = root.BeginPatch(workspace);
 try
 {
     builder.Add(&quot;/foo&quot;u8, someValue);
@@ -376,13 +376,14 @@ root.TryCopy(&quot;/items/0&quot;u8, &quot;/items/-&quot;u8);
     &quot;&quot;&quot;u8));
 </code></pre>
 <p>This is useful in patch documents for conditional application — if the test fails, the entire patch fails:</p>
-<pre><code class="language-csharp">JsonPatchDocument patch = root.BeginPatch()
+<pre><code class="language-csharp">```csharp
+JsonPatchDocument guardedPatch = root.BeginPatch(workspace)
     .Test(&quot;/version&quot;u8, 1)           // guard: only apply if version is 1
     .Replace(&quot;/version&quot;u8, 2)        // update version
     .Add(&quot;/migrated&quot;u8, true)        // add new field
     .GetPatchAndDispose();
 
-bool success = root.TryApplyPatch(in patch);
+bool success = root.TryApplyPatch(guardedPatch);
 // success is false if /version was not 1
 </code></pre>
 <h2 id="json-pointer-paths">JSON Pointer Paths</h2>

@@ -20143,7 +20143,7 @@
     "Title": "PatchBuilder",
     "Description": "A fluent builder for constructing RFC 6902 JSON Patch documents.",
     "Keywords": "PatchBuilder struct Corvus.Text.Json.Patch",
-    "Body": "A fluent builder for constructing RFC 6902 JSON Patch documents.\r\nCreate a [`PatchBuilder`](/api/v5/corvus-text-json-patch-patchbuilder.html) by calling [`BeginPatch`](/api/v5/corvus-text-json-patch-jsonpatchextensions.beginpatch.html), chain operations, then call [`GetPatchAndDispose`](/api/v5/corvus-text-json-patch-patchbuilder.getpatchanddispose.html) to finalize and dispose the builder. ```csharp JsonPatchDocument patch = target.BeginPatch() .Add(\"/foo/bar\"u8, JsonElement.ParseValue(\"42\")) .Remove(\"/baz\"u8) .GetPatchAndDispose(); bool success = target.TryApplyPatch(in patch); ```\r\nGetPatchAndDispose: Finalizes the patch document and disposes the builder's resources.\r\nRemove: Adds a \"remove\" operation to the patch.\r\nRemove: Adds a \"remove\" operation to the patch.\r\nRemove: Adds a \"remove\" operation to the patch.\r\nMove: Adds a \"move\" operation to the patch.\r\nMove: Adds a \"move\" operation to the patch.\r\nMove: Adds a \"move\" operation to the patch.\r\nCopy: Adds a \"copy\" operation to the patch.\r\nCopy: Adds a \"copy\" operation to the patch.\r\nCopy: Adds a \"copy\" operation to the patch."
+    "Body": "A fluent builder for constructing RFC 6902 JSON Patch documents.\r\nCreate a [`PatchBuilder`](/api/v5/corvus-text-json-patch-patchbuilder.html) by calling [`BeginPatch`](/api/v5/corvus-text-json-patch-jsonpatchextensions.beginpatch.html), chain operations, then call [`GetPatchAndDispose`](/api/v5/corvus-text-json-patch-patchbuilder.getpatchanddispose.html) to finalize the builder. The returned [`JsonPatchDocument`](/api/v5/corvus-text-json-patch-jsonpatchdocument.html) is backed by the [`JsonWorkspace`](/api/v5/corvus-text-json-jsonworkspace.html) passed to the constructor. The caller must keep the workspace alive for the lifetime of the patch. ```csharp JsonPatchDocument patch = target.BeginPatch(workspace) .Add(\"/foo/bar\"u8, JsonElement.ParseValue(\"42\")) .Remove(\"/baz\"u8) .GetPatchAndDispose(); bool success = target.TryApplyPatch(in patch); ```\r\nGetPatchAndDispose: Finalizes the patch document and disposes the builder's resources.\r\nRemove: Adds a \"remove\" operation to the patch.\r\nRemove: Adds a \"remove\" operation to the patch.\r\nRemove: Adds a \"remove\" operation to the patch.\r\nMove: Adds a \"move\" operation to the patch.\r\nMove: Adds a \"move\" operation to the patch.\r\nMove: Adds a \"move\" operation to the patch.\r\nCopy: Adds a \"copy\" operation to the patch.\r\nCopy: Adds a \"copy\" operation to the patch.\r\nCopy: Adds a \"copy\" operation to the patch.\r\nDispose: Disposes the builder, transferring any outstanding metadata to the backing document so pooled memory is returned."
   },
   {
     "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-patch-patchbuilder.getpatchanddispose.html",
@@ -20197,9 +20197,9 @@
   {
     "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-patch-patchbuilder.dispose.html",
     "Title": "PatchBuilder.Dispose",
-    "Description": "",
+    "Description": "Disposes the builder, transferring any outstanding metadata to the backing document so pooled memory is returned.",
     "Keywords": "PatchBuilder Dispose method Corvus.Text.Json.Patch",
-    "Body": ""
+    "Body": "Disposes the builder, transferring any outstanding metadata to the backing document so pooled memory is returned."
   },
   {
     "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-yaml-duplicatekeybehavior.html",

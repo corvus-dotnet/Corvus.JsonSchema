@@ -103,7 +103,7 @@
 <pre><code class="language-csharp">public readonly struct PatchBuilder : IDisposable
 </code></pre>
 <h2 id="remarks">Remarks</h2>
-<p>Create a <a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-patch-patchbuilder.html"><code>PatchBuilder</code></a> by calling <a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-patch-jsonpatchextensions.beginpatch.html"><code>BeginPatch</code></a>, chain operations, then call <a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-patch-patchbuilder.getpatchanddispose.html"><code>GetPatchAndDispose</code></a> to finalize and dispose the builder. <code>csharp JsonPatchDocument patch = target.BeginPatch() .Add(&quot;/foo/bar&quot;u8, JsonElement.ParseValue(&quot;42&quot;)) .Remove(&quot;/baz&quot;u8) .GetPatchAndDispose(); bool success = target.TryApplyPatch(in patch); </code></p>
+<p>Create a <a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-patch-patchbuilder.html"><code>PatchBuilder</code></a> by calling <a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-patch-jsonpatchextensions.beginpatch.html"><code>BeginPatch</code></a>, chain operations, then call <a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-patch-patchbuilder.getpatchanddispose.html"><code>GetPatchAndDispose</code></a> to finalize the builder. The returned <a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-patch-jsonpatchdocument.html"><code>JsonPatchDocument</code></a> is backed by the <a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonworkspace.html"><code>JsonWorkspace</code></a> passed to the constructor. The caller must keep the workspace alive for the lifetime of the patch. <code>csharp JsonPatchDocument patch = target.BeginPatch(workspace) .Add(&quot;/foo/bar&quot;u8, JsonElement.ParseValue(&quot;42&quot;)) .Remove(&quot;/baz&quot;u8) .GetPatchAndDispose(); bool success = target.TryApplyPatch(in patch); </code></p>
 <h2 id="implements">Implements</h2>
 <p><a href="https://learn.microsoft.com/dotnet/api/system.idisposable"><code>IDisposable</code></a></p>
 <h2 id="methods">Methods</h2>
@@ -125,7 +125,7 @@
 </tr>
 <tr>
 <td><a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-patch-patchbuilder.dispose.html#dispose">Dispose()</a></td>
-<td></td>
+<td>Disposes the builder, transferring any outstanding metadata to the backing document so pooled memory is returned.</td>
 </tr>
 <tr>
 <td><a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-patch-patchbuilder.getpatchanddispose.html#getpatchanddispose">GetPatchAndDispose()</a></td>
@@ -150,7 +150,7 @@
 </tbody>
 </table>
 <h2 id="examples">Examples</h2>
-<p>Build an RFC 6902 JSON Patch document using the fluent builder API. Create a builder by calling <code>BeginPatch()</code> on a mutable element, chain operations, then call <code>GetPatchAndDispose()</code> to produce the final <code>JsonPatchDocument</code>.</p>
+<p>Build an RFC 6902 JSON Patch document using the fluent builder API. Create a builder by calling <code>BeginPatch(workspace)</code> on a mutable element, chain operations, then call <code>GetPatchAndDispose()</code> to produce a <code>JsonPatchDocument</code>.</p>
 <pre><code class="language-csharp">using Corvus.Text.Json;
 using Corvus.Text.Json.Patch;
 
@@ -161,33 +161,33 @@ using var builder = parsedDoc.RootElement.CreateBuilder(workspace);
 
 JsonElement.Mutable root = builder.RootElement;
 
-JsonPatchDocument patch = root.BeginPatch()
+JsonPatchDocument patch = root.BeginPatch(workspace)
     .Replace(&quot;/name&quot;u8, &quot;Bob&quot;)
     .Add(&quot;/email&quot;u8, &quot;bob@example.com&quot;)
     .Add(&quot;/tags/-&quot;u8, &quot;admin&quot;)
     .Remove(&quot;/age&quot;u8)
     .GetPatchAndDispose();
 
-root.TryApplyPatch(in patch);
+root.TryApplyPatch(patch);
 // root is now: {&quot;name&quot;:&quot;Bob&quot;,&quot;tags&quot;:[&quot;user&quot;,&quot;admin&quot;],&quot;email&quot;:&quot;bob@example.com&quot;}
 </code></pre>
 <h3 id="conditional-patches-with-test">Conditional patches with test</h3>
 <p>The <code>Test</code> operation verifies a value before proceeding. If the test fails, the entire patch is rejected:</p>
-<pre><code class="language-csharp">JsonPatchDocument guardedPatch = root.BeginPatch()
+<pre><code class="language-csharp">JsonPatchDocument guardedPatch = root.BeginPatch(workspace)
     .Test(&quot;/version&quot;u8, 1)
     .Replace(&quot;/version&quot;u8, 2)
     .GetPatchAndDispose();
 
-bool applied = root.TryApplyPatch(in guardedPatch);
+bool applied = root.TryApplyPatch(guardedPatch);
 // applied is false if /version was not 1
 </code></pre>
 <h3 id="move-and-copy-operations">Move and copy operations</h3>
-<pre><code class="language-csharp">JsonPatchDocument reorgPatch = root.BeginPatch()
+<pre><code class="language-csharp">JsonPatchDocument reorgPatch = root.BeginPatch(workspace)
     .Move(&quot;/tags&quot;u8, &quot;/labels&quot;u8)
     .Copy(&quot;/name&quot;u8, &quot;/display_name&quot;u8)
     .GetPatchAndDispose();
 
-root.TryApplyPatch(in reorgPatch);
+root.TryApplyPatch(reorgPatch);
 </code></pre>
 <h2 id="applies-to">Applies To</h2>
 <table>

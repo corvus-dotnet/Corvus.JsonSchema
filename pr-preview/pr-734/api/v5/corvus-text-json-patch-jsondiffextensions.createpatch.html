@@ -99,9 +99,9 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Text.Json.Patch<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll</p>
-<h2 id="createpatch-ref-jsonelement-ref-jsonelement">CreatePatch(ref JsonElement, ref JsonElement)</h2>
+<h2 id="createpatch-ref-jsonelement-ref-jsonelement-jsonworkspace">CreatePatch(ref JsonElement, ref JsonElement, JsonWorkspace)</h2>
 <p>Creates a <a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-patch-jsonpatchdocument.html"><code>JsonPatchDocument</code></a> that transforms <code>source</code> into <code>target</code>.</p>
-<pre><code class="language-csharp">public static JsonPatchDocument CreatePatch(ref JsonElement source, ref JsonElement target)
+<pre><code class="language-csharp">public static JsonPatchDocument CreatePatch(ref JsonElement source, ref JsonElement target, JsonWorkspace workspace)
 </code></pre>
 <h3 id="parameters">Parameters</h3>
 <table>
@@ -123,11 +123,16 @@
 <td><a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonelement.html"><code>ref JsonElement</code></a></td>
 <td>The desired JSON element.</td>
 </tr>
+<tr>
+<td><code>workspace</code></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonworkspace.html"><code>JsonWorkspace</code></a></td>
+<td>The workspace to use for buffer management. The caller retains ownership.</td>
+</tr>
 </tbody>
 </table>
 <h3 id="returns">Returns</h3>
 <p><a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-patch-jsonpatchdocument.html"><code>JsonPatchDocument</code></a></p>
-<p>A <a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-patch-jsonpatchdocument.html"><code>JsonPatchDocument</code></a> containing the operations needed to transform <code>source</code> into <code>target</code>.</p>
+<p>A <a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-patch-jsonpatchdocument.html"><code>JsonPatchDocument</code></a> containing the patch operations needed to transform <code>source</code> into <code>target</code>. The result is backed by the <code>workspace</code>; the caller must keep the workspace alive for the lifetime of the returned document.</p>
 <h2 id="applies-to">Applies To</h2>
 <table>
 <thead>

@@ -114,7 +114,7 @@
 </thead>
 <tbody>
 <tr>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-patch-jsonpatchextensions.beginpatch.html#beginpatch-ref-jsonelement-mutable">BeginPatch(ref JsonElement.Mutable)</a> <code>static</code></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-patch-jsonpatchextensions.beginpatch.html#beginpatch-ref-jsonelement-mutable-jsonworkspace">BeginPatch(ref JsonElement.Mutable, JsonWorkspace)</a> <code>static</code></td>
 <td></td>
 </tr>
 <tr>
@@ -164,7 +164,7 @@ using var builder = parsedDoc.RootElement.CreateBuilder(workspace);
 
 JsonElement.Mutable root = builder.RootElement;
 
-JsonPatchDocument patch = root.BeginPatch()
+JsonPatchDocument patch = root.BeginPatch(workspace)
     .Replace(&quot;/name&quot;u8, &quot;Bob&quot;)
     .Add(&quot;/email&quot;u8, &quot;bob@example.com&quot;)
     .Add(&quot;/tags/-&quot;u8, &quot;admin&quot;)
@@ -172,7 +172,7 @@ JsonPatchDocument patch = root.BeginPatch()
     .GetPatchAndDispose();
 
 // Use TryApplyPatch directly — the patch was built locally so it's known to be valid.
-bool success = root.TryApplyPatch(in patch);
+bool success = root.TryApplyPatch(patch);
 // root is now: {&quot;name&quot;:&quot;Bob&quot;,&quot;tags&quot;:[&quot;user&quot;,&quot;admin&quot;],&quot;email&quot;:&quot;bob@example.com&quot;}
 </code></pre>
 <h3 id="individual-operations">Individual operations</h3>
@@ -185,12 +185,12 @@ root.TryCopy(&quot;/name&quot;u8, &quot;/display_name&quot;u8);
 </code></pre>
 <h3 id="conditional-patches-with-test">Conditional patches with test</h3>
 <p>The <code>test</code> operation checks a value without mutating the document. When used in a patch document, a failing test aborts the entire patch:</p>
-<pre><code class="language-csharp">JsonPatchDocument guardedPatch = root.BeginPatch()
+<pre><code class="language-csharp">JsonPatchDocument guardedPatch = root.BeginPatch(workspace)
     .Test(&quot;/version&quot;u8, 1)
     .Replace(&quot;/version&quot;u8, 2)
     .GetPatchAndDispose();
 
-bool applied = root.TryApplyPatch(in guardedPatch);
+bool applied = root.TryApplyPatch(guardedPatch);
 // applied is false if /version was not 1
 </code></pre>
 <h3 id="parsing-a-patch-from-json">Parsing a patch from JSON</h3>
