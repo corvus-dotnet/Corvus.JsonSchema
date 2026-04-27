@@ -810,7 +810,7 @@ public static class JsonPathCodeGenerator
             string nameField = this.EmitNameField(name.Name);
             int nextIndex = segmentIndex + 1;
 
-            // Terminal segment: use recursive helper (no ArrayPool at all)
+            // Terminal segment: use flat-scan helper (no ArrayPool at all)
             if (nextIndex >= segments.Length)
             {
                 if (counterTarget is var (cnt, first))
@@ -825,74 +825,13 @@ public static class JsonPathCodeGenerator
                 return;
             }
 
-            // Non-terminal: optimized iterative DFS, only push containers, inline name check
+            // Non-terminal: flat metadata-DB scan via EnumerateDescendantProperties
             string c = this.varCounter++.ToString();
-            string stackVar = $"_dStk{c}";
-            string capVar = $"_dCap{c}";
-            string sizeVar = $"_dSz{c}";
-            string curVar = $"_dCur{c}";
-            string csVar = $"_dCs{c}";
+            string valVar = $"_dv{c}";
 
-            L(body, indent, $"int {capVar} = 64;");
-            L(body, indent, $"JsonElement[] {stackVar} = ArrayPool<JsonElement>.Shared.Rent({capVar});");
-            L(body, indent, "try");
+            L(body, indent, $"foreach (JsonElement {valVar} in {inputVar}.EnumerateDescendantProperties({nameField}))");
             L(body, indent, "{");
-
-            string ti = indent + "    ";
-            L(body, ti, $"int {sizeVar} = 0;");
-            L(body, ti, $"{stackVar}[{sizeVar}++] = {inputVar};");
-            L(body, ti, $"while ({sizeVar} > 0)");
-            L(body, ti, "{");
-
-            string wi = ti + "    ";
-            L(body, wi, $"JsonElement {curVar} = {stackVar}[--{sizeVar}];");
-
-            // Inline name selector — single-pass: check name and push containers in one enumeration
-            L(body, wi, $"if ({curVar}.ValueKind == JsonValueKind.Object)");
-            L(body, wi, "{");
-
-            string oi = wi + "    ";
-            L(body, oi, $"int {csVar} = {sizeVar};");
-            L(body, oi, $"foreach (var _dp{c} in {curVar}.EnumerateObject())");
-            L(body, oi, "{");
-
-            string fi = oi + "    ";
-            L(body, fi, $"if (_dp{c}.NameEquals({nameField}))");
-            L(body, fi, "{");
-            this.EmitStreamingChain(body, segments, nextIndex, fi + "    ", $"_dp{c}.Value", counterTarget);
-            L(body, fi, "}");
-            L(body, fi, $"if (_dp{c}.Value.ValueKind == JsonValueKind.Object || _dp{c}.Value.ValueKind == JsonValueKind.Array)");
-            L(body, fi, "{");
-            L(body, fi, $"    if ({sizeVar} >= {capVar}) {{ {H}.GrowStack(ref {stackVar}, ref {capVar}, {sizeVar}); }}");
-            L(body, fi, $"    {stackVar}[{sizeVar}++] = _dp{c}.Value;");
-            L(body, fi, "}");
-
-            L(body, oi, "}");
-            L(body, oi, $"{H}.ReverseRegion({stackVar}, {csVar}, {sizeVar} - {csVar});");
-
-            L(body, wi, "}");
-            L(body, wi, $"else if ({curVar}.ValueKind == JsonValueKind.Array)");
-            L(body, wi, "{");
-
-            string ai = wi + "    ";
-            L(body, ai, $"int {csVar} = {sizeVar};");
-            L(body, ai, $"foreach (JsonElement _da{c} in {curVar}.EnumerateArray())");
-            L(body, ai, "{");
-            L(body, ai, $"    if (_da{c}.ValueKind == JsonValueKind.Object || _da{c}.ValueKind == JsonValueKind.Array)");
-            L(body, ai, "    {");
-            L(body, ai, $"        if ({sizeVar} >= {capVar}) {{ {H}.GrowStack(ref {stackVar}, ref {capVar}, {sizeVar}); }}");
-            L(body, ai, $"        {stackVar}[{sizeVar}++] = _da{c};");
-            L(body, ai, "    }");
-            L(body, ai, "}");
-            L(body, ai, $"{H}.ReverseRegion({stackVar}, {csVar}, {sizeVar} - {csVar});");
-
-            L(body, wi, "}");
-            L(body, ti, "}");
-
-            L(body, indent, "}");
-            L(body, indent, "finally");
-            L(body, indent, "{");
-            L(body, indent, $"    ArrayPool<JsonElement>.Shared.Return({stackVar});");
+            this.EmitStreamingChain(body, segments, nextIndex, indent + "    ", valVar, counterTarget);
             L(body, indent, "}");
         }
 

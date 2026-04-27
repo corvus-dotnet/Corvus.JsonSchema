@@ -463,32 +463,9 @@ public static class JsonPathCodeGenHelpers
         ReadOnlySpan<byte> propertyName,
         ref JsonPathResult result)
     {
-        if (node.ValueKind == JsonValueKind.Object)
+        foreach (JsonElement value in node.EnumerateDescendantProperties(propertyName))
         {
-            // Single-pass: check name and recurse into containers in one enumeration.
-            foreach (JsonProperty<JsonElement> prop in node.EnumerateObject())
-            {
-                if (prop.NameEquals(propertyName))
-                {
-                    result.Append(prop.Value);
-                }
-
-                JsonElement child = prop.Value;
-                if (child.ValueKind == JsonValueKind.Object || child.ValueKind == JsonValueKind.Array)
-                {
-                    DescendantsForName(child, propertyName, ref result);
-                }
-            }
-        }
-        else if (node.ValueKind == JsonValueKind.Array)
-        {
-            foreach (JsonElement item in node.EnumerateArray())
-            {
-                if (item.ValueKind == JsonValueKind.Object || item.ValueKind == JsonValueKind.Array)
-                {
-                    DescendantsForName(item, propertyName, ref result);
-                }
-            }
+            result.Append(value);
         }
     }
 
@@ -509,37 +486,14 @@ public static class JsonPathCodeGenHelpers
         ref int count,
         ref JsonElement first)
     {
-        if (node.ValueKind == JsonValueKind.Object)
+        foreach (JsonElement value in node.EnumerateDescendantProperties(propertyName))
         {
-            // Single-pass: check name and recurse into containers in one enumeration.
-            foreach (JsonProperty<JsonElement> prop in node.EnumerateObject())
+            if (count == 0)
             {
-                if (prop.NameEquals(propertyName))
-                {
-                    if (count == 0)
-                    {
-                        first = prop.Value;
-                    }
-
-                    count++;
-                }
-
-                JsonElement child = prop.Value;
-                if (child.ValueKind == JsonValueKind.Object || child.ValueKind == JsonValueKind.Array)
-                {
-                    DescendantsForNameCount(child, propertyName, ref count, ref first);
-                }
+                first = value;
             }
-        }
-        else if (node.ValueKind == JsonValueKind.Array)
-        {
-            foreach (JsonElement item in node.EnumerateArray())
-            {
-                if (item.ValueKind == JsonValueKind.Object || item.ValueKind == JsonValueKind.Array)
-                {
-                    DescendantsForNameCount(item, propertyName, ref count, ref first);
-                }
-            }
+
+            count++;
         }
     }
 
