@@ -5,6 +5,7 @@
 using System.Buffers;
 using System.Collections.Concurrent;
 using System.Collections.Immutable;
+using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -514,6 +515,12 @@ internal static class Compiler
 
     private static FilterEval CompileComparison(ComparisonNode cmp)
     {
+        FilterEval? specialized = TryCompileSpecializedComparison(cmp);
+        if (specialized is not null)
+        {
+            return specialized;
+        }
+
         FilterEval left = CompileFilterExpression(cmp.Left);
         FilterEval right = CompileFilterExpression(cmp.Right);
         int op = (int)cmp.Op;
@@ -526,6 +533,262 @@ internal static class Compiler
             return FilterResult.FromLogical(
                 JsonPathCodeGenHelpers.CompareValues(l.Value, r.Value, op));
         };
+    }
+
+    private static FilterEval? TryCompileSpecializedComparison(ComparisonNode cmp)
+    {
+        // Normalize: literal on right
+        FilterExpressionNode exprSide;
+        LiteralNode? literalSide;
+        ComparisonOp op;
+
+        if (cmp.Right is LiteralNode rightLit)
+        {
+            exprSide = cmp.Left;
+            literalSide = rightLit;
+            op = cmp.Op;
+        }
+        else if (cmp.Left is LiteralNode leftLit)
+        {
+            exprSide = cmp.Right;
+            literalSide = leftLit;
+            op = FlipOp(cmp.Op);
+        }
+        else
+        {
+            return null;
+        }
+
+        while (exprSide is ParenExpressionNode paren)
+        {
+            exprSide = paren.Inner;
+        }
+
+        if (literalSide.Kind == LiteralKind.Number)
+        {
+            if (!double.TryParse(literalSide.RawJson, NumberStyles.Any, CultureInfo.InvariantCulture, out double literalValue))
+            {
+                return null;
+            }
+
+            // length(expr) op number
+            if (exprSide is FunctionCallNode { Name: "length" } lenFunc && lenFunc.Arguments.Length == 1)
+            {
+                return CompileLengthNumericComparison(lenFunc.Arguments[0], literalValue, op);
+            }
+
+            // General: expr op number — eliminates CompareValues + right-side delegate
+            return CompileExprNumericComparison(exprSide, literalValue, op);
+        }
+
+        if (literalSide.Kind is LiteralKind.Null or LiteralKind.True or LiteralKind.False)
+        {
+            JsonValueKind targetKind = literalSide.Kind switch
+            {
+                LiteralKind.Null => JsonValueKind.Null,
+                LiteralKind.True => JsonValueKind.True,
+                _ => JsonValueKind.False,
+            };
+            return CompileExprKindComparison(exprSide, targetKind, op);
+        }
+
+        if (literalSide.Kind == LiteralKind.String && op is ComparisonOp.Equal or ComparisonOp.NotEqual)
+        {
+            return CompileExprStringEqualityComparison(exprSide, literalSide, op);
+        }
+
+        return null;
+    }
+
+    private static FilterEval CompileExprNumericComparison(
+        FilterExpressionNode expr, double literalValue, ComparisonOp op)
+    {
+        // Try to inline singular query navigation for maximum performance
+        if (expr is FilterQueryNode query && IsSingularQuery(query.Segments))
+        {
+            SingularStep[] steps = BuildSingularSteps(query.Segments);
+            bool isRelative = query.IsRelative;
+
+            return (in JsonElement root, in JsonElement current) =>
+            {
+                if (!TryNavigateSingularPath(steps, isRelative, root, current, out JsonElement node))
+                {
+                    return FilterResult.FromLogical(op == ComparisonOp.NotEqual);
+                }
+
+                if (node.ValueKind != JsonValueKind.Number)
+                {
+                    return FilterResult.FromLogical(op == ComparisonOp.NotEqual);
+                }
+
+                return FilterResult.FromLogical(CompareDouble(node.GetDouble(), literalValue, op));
+            };
+        }
+
+        // Non-singular: compile expression, then compare without CompareValues
+        FilterEval exprEval = CompileFilterExpression(expr);
+
+        return (in JsonElement root, in JsonElement current) =>
+        {
+            FilterResult exprResult = exprEval(root, current).AsComparable();
+            if (exprResult.Kind != FilterResult.FilterResultKind.ValueType ||
+                exprResult.Value.ValueKind != JsonValueKind.Number)
+            {
+                return FilterResult.FromLogical(op == ComparisonOp.NotEqual);
+            }
+
+            return FilterResult.FromLogical(CompareDouble(exprResult.Value.GetDouble(), literalValue, op));
+        };
+    }
+
+    private static FilterEval CompileLengthNumericComparison(
+        FilterExpressionNode lengthArg, double literalValue, ComparisonOp op)
+    {
+        FilterEval argEval = CompileFilterExpression(lengthArg);
+
+        return (in JsonElement root, in JsonElement current) =>
+        {
+            FilterResult argResult = argEval(root, current).AsComparable();
+            if (argResult.Kind != FilterResult.FilterResultKind.ValueType)
+            {
+                return FilterResult.FromLogical(op == ComparisonOp.NotEqual);
+            }
+
+            int len = JsonPathCodeGenHelpers.LengthValue(argResult.Value);
+            if (len < 0)
+            {
+                return FilterResult.FromLogical(op == ComparisonOp.NotEqual);
+            }
+
+            return FilterResult.FromLogical(CompareDouble(len, literalValue, op));
+        };
+    }
+
+    private static FilterEval CompileExprKindComparison(
+        FilterExpressionNode expr, JsonValueKind targetKind, ComparisonOp op)
+    {
+        FilterEval exprEval = CompileFilterExpression(expr);
+
+        return (in JsonElement root, in JsonElement current) =>
+        {
+            FilterResult exprResult = exprEval(root, current).AsComparable();
+            JsonValueKind vk = exprResult.Kind == FilterResult.FilterResultKind.ValueType
+                ? exprResult.Value.ValueKind
+                : JsonValueKind.Undefined;
+
+            bool result = op switch
+            {
+                ComparisonOp.Equal or ComparisonOp.LessThanOrEqual or ComparisonOp.GreaterThanOrEqual
+                    => vk == targetKind,
+                ComparisonOp.NotEqual => vk != targetKind,
+                _ => false,
+            };
+            return FilterResult.FromLogical(result);
+        };
+    }
+
+    private static FilterEval CompileExprStringEqualityComparison(
+        FilterExpressionNode expr, LiteralNode literal, ComparisonOp op)
+    {
+        JsonElement literalElement = JsonElement.ParseValue(Encoding.UTF8.GetBytes(literal.RawJson));
+        FilterEval exprEval = CompileFilterExpression(expr);
+
+        return (in JsonElement root, in JsonElement current) =>
+        {
+            FilterResult exprResult = exprEval(root, current).AsComparable();
+            if (exprResult.Kind != FilterResult.FilterResultKind.ValueType)
+            {
+                return FilterResult.FromLogical(op == ComparisonOp.NotEqual);
+            }
+
+            bool eq = JsonPathCodeGenHelpers.DeepEquals(exprResult.Value, literalElement);
+            return FilterResult.FromLogical(op == ComparisonOp.Equal ? eq : !eq);
+        };
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static bool CompareDouble(double left, double right, ComparisonOp op)
+    {
+        return op switch
+        {
+            ComparisonOp.Equal => left == right,
+            ComparisonOp.NotEqual => left != right,
+            ComparisonOp.LessThan => left < right,
+            ComparisonOp.LessThanOrEqual => left <= right,
+            ComparisonOp.GreaterThan => left > right,
+            ComparisonOp.GreaterThanOrEqual => left >= right,
+            _ => false,
+        };
+    }
+
+    private static ComparisonOp FlipOp(ComparisonOp op)
+    {
+        return op switch
+        {
+            ComparisonOp.LessThan => ComparisonOp.GreaterThan,
+            ComparisonOp.LessThanOrEqual => ComparisonOp.GreaterThanOrEqual,
+            ComparisonOp.GreaterThan => ComparisonOp.LessThan,
+            ComparisonOp.GreaterThanOrEqual => ComparisonOp.LessThanOrEqual,
+            _ => op,
+        };
+    }
+
+    private static SingularStep[] BuildSingularSteps(ImmutableArray<SegmentNode> segments)
+    {
+        SingularStep[] steps = new SingularStep[segments.Length];
+        for (int i = 0; i < segments.Length; i++)
+        {
+            SelectorNode sel = segments[i].Selectors[0];
+            steps[i] = sel switch
+            {
+                NameSelectorNode name => new SingularStep(name.Name, 0, isName: true),
+                IndexSelectorNode idx => new SingularStep(null, idx.Index, isName: false),
+                _ => throw new JsonPathException("Unexpected selector in singular query."),
+            };
+        }
+
+        return steps;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static bool TryNavigateSingularPath(
+        SingularStep[] steps,
+        bool isRelative,
+        in JsonElement root,
+        in JsonElement current,
+        out JsonElement result)
+    {
+        result = isRelative ? current : root;
+        for (int i = 0; i < steps.Length; i++)
+        {
+            ref readonly SingularStep step = ref steps[i];
+            if (step.IsName)
+            {
+                if (result.ValueKind != JsonValueKind.Object ||
+                    !result.TryGetProperty(step.Name!, out result))
+                {
+                    return false;
+                }
+            }
+            else
+            {
+                if (result.ValueKind != JsonValueKind.Array)
+                {
+                    return false;
+                }
+
+                int len = result.GetArrayLength();
+                long resolved = step.Index >= 0 ? step.Index : len + step.Index;
+                if (resolved < 0 || resolved >= len)
+                {
+                    return false;
+                }
+
+                result = result[(int)resolved];
+            }
+        }
+
+        return true;
     }
 
     /// <summary>

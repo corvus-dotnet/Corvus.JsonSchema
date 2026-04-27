@@ -3,6 +3,7 @@
 // </copyright>
 
 using System.Collections.Immutable;
+using System.Globalization;
 using System.Text;
 using Corvus.Text.Json.JsonPath;
 
@@ -386,6 +387,8 @@ public static class JsonPathCodeGenerator
         private int regexCounter;
         private int filterQueryCounter;
         private string rootVarName = "data";
+        private readonly Dictionary<string, string> nameFieldCache = [];
+        private readonly Dictionary<string, string> literalFieldCache = [];
 
         public List<(string FieldName, string Declaration)> StaticFields { get; } = [];
 
@@ -931,12 +934,283 @@ public static class JsonPathCodeGenerator
             string indent,
             string currentVar)
         {
+            // Try specialized pattern first
+            string? specialized = this.TryEmitSpecializedComparison(body, cmp, indent, currentVar);
+            if (specialized is not null)
+            {
+                return specialized;
+            }
+
+            // General fallback
             string leftVar = this.EmitFilterValue(body, cmp.Left, indent, currentVar);
             string rightVar = this.EmitFilterValue(body, cmp.Right, indent, currentVar);
             int opInt = (int)cmp.Op;
             string resultVar = this.NextVar();
             L(body, indent, $"bool {resultVar} = {H}.CompareValues({leftVar}, {rightVar}, {opInt});");
             return resultVar;
+        }
+
+        private string? TryEmitSpecializedComparison(
+            StringBuilder body,
+            ComparisonNode cmp,
+            string indent,
+            string currentVar)
+        {
+            // Normalize: put literal on the right side
+            FilterExpressionNode exprSide;
+            LiteralNode literalSide;
+            ComparisonOp op;
+
+            if (cmp.Right is LiteralNode rightLit)
+            {
+                exprSide = cmp.Left;
+                literalSide = rightLit;
+                op = cmp.Op;
+            }
+            else if (cmp.Left is LiteralNode leftLit)
+            {
+                exprSide = cmp.Right;
+                literalSide = leftLit;
+                op = FlipOp(cmp.Op);
+            }
+            else
+            {
+                return null;
+            }
+
+            // Unwrap parentheses
+            while (exprSide is ParenExpressionNode paren)
+            {
+                exprSide = paren.Inner;
+            }
+
+            return literalSide.Kind switch
+            {
+                LiteralKind.Number => this.EmitNumericLiteralComparison(body, exprSide, literalSide, op, indent, currentVar),
+                LiteralKind.Null => this.EmitConstantLiteralComparison(body, exprSide, "Null", op, indent, currentVar),
+                LiteralKind.True => this.EmitConstantLiteralComparison(body, exprSide, "True", op, indent, currentVar),
+                LiteralKind.False => this.EmitConstantLiteralComparison(body, exprSide, "False", op, indent, currentVar),
+                LiteralKind.String when op is ComparisonOp.Equal or ComparisonOp.NotEqual
+                    => this.EmitStringEqualityComparison(body, exprSide, literalSide, op, indent, currentVar),
+                _ => null,
+            };
+        }
+
+        private string EmitNumericLiteralComparison(
+            StringBuilder body,
+            FilterExpressionNode expr,
+            LiteralNode literal,
+            ComparisonOp op,
+            string indent,
+            string currentVar)
+        {
+            double literalValue = double.Parse(literal.RawJson, CultureInfo.InvariantCulture);
+
+            // length(expr) op number — pure int/double comparison, no IntToElement
+            if (expr is FunctionCallNode { Name: "length" } lenFunc && lenFunc.Arguments.Length == 1)
+            {
+                return this.EmitLengthNumericComparison(body, lenFunc.Arguments[0], literalValue, op, indent, currentVar);
+            }
+
+            // count(query) op number — pure int comparison, no IntToElement
+            if (expr is FunctionCallNode { Name: "count" } countFunc && countFunc.Arguments.Length == 1)
+            {
+                return this.EmitCountNumericComparison(body, countFunc, literalValue, op, indent, currentVar);
+            }
+
+            // General: expr op number — skip CompareValues, inline numeric check
+            string exprVar = this.EmitFilterValue(body, expr, indent, currentVar);
+            string resultVar = this.NextVar();
+            string dbl = FormatDouble(literalValue);
+
+            if (op == ComparisonOp.NotEqual)
+            {
+                L(body, indent, $"bool {resultVar} = {exprVar}.ValueKind != JsonValueKind.Number || {exprVar}.GetDouble() != {dbl};");
+            }
+            else
+            {
+                L(body, indent, $"bool {resultVar} = {exprVar}.ValueKind == JsonValueKind.Number && {exprVar}.GetDouble() {OpToSymbol(op)} {dbl};");
+            }
+
+            return resultVar;
+        }
+
+        private string EmitLengthNumericComparison(
+            StringBuilder body,
+            FilterExpressionNode lengthArg,
+            double literalValue,
+            ComparisonOp op,
+            string indent,
+            string currentVar)
+        {
+            string argVar = this.EmitFilterValue(body, lengthArg, indent, currentVar);
+            string lenVar = this.NextVar();
+            L(body, indent, $"int {lenVar} = {H}.LengthValue({argVar});");
+
+            string resultVar = this.NextVar();
+            bool isIntegral = literalValue == Math.Floor(literalValue) &&
+                              literalValue >= int.MinValue && literalValue <= int.MaxValue;
+
+            if (op == ComparisonOp.NotEqual)
+            {
+                if (isIntegral)
+                {
+                    L(body, indent, $"bool {resultVar} = {lenVar} < 0 || {lenVar} != {(int)literalValue};");
+                }
+                else
+                {
+                    L(body, indent, $"bool {resultVar} = {lenVar} < 0 || (double){lenVar} != {FormatDouble(literalValue)};");
+                }
+            }
+            else if (op == ComparisonOp.Equal)
+            {
+                if (isIntegral)
+                {
+                    L(body, indent, $"bool {resultVar} = {lenVar} >= 0 && {lenVar} == {(int)literalValue};");
+                }
+                else
+                {
+                    L(body, indent, $"bool {resultVar} = {lenVar} >= 0 && (double){lenVar} == {FormatDouble(literalValue)};");
+                }
+            }
+            else
+            {
+                string sym = OpToSymbol(op);
+                if (isIntegral)
+                {
+                    L(body, indent, $"bool {resultVar} = {lenVar} >= 0 && {lenVar} {sym} {(int)literalValue};");
+                }
+                else
+                {
+                    L(body, indent, $"bool {resultVar} = {lenVar} >= 0 && (double){lenVar} {sym} {FormatDouble(literalValue)};");
+                }
+            }
+
+            return resultVar;
+        }
+
+        private string EmitCountNumericComparison(
+            StringBuilder body,
+            FunctionCallNode countFunc,
+            double literalValue,
+            ComparisonOp op,
+            string indent,
+            string currentVar)
+        {
+            // Emit count part (without IntToElement)
+            string countVar;
+            if (countFunc.Arguments[0] is FilterQueryNode fq)
+            {
+                (countVar, _) = this.EmitFilterQueryCounter(body, fq, indent, currentVar);
+            }
+            else
+            {
+                string nodesVar = this.EmitFilterValue(body, countFunc.Arguments[0], indent, currentVar);
+                countVar = this.NextVar();
+                L(body, indent, $"int {countVar} = {H}.CountNodes({nodesVar});");
+            }
+
+            string resultVar = this.NextVar();
+            bool isIntegral = literalValue == Math.Floor(literalValue) &&
+                              literalValue >= int.MinValue && literalValue <= int.MaxValue;
+            string sym = OpToSymbol(op);
+
+            if (isIntegral)
+            {
+                L(body, indent, $"bool {resultVar} = {countVar} {sym} {(int)literalValue};");
+            }
+            else
+            {
+                L(body, indent, $"bool {resultVar} = (double){countVar} {sym} {FormatDouble(literalValue)};");
+            }
+
+            return resultVar;
+        }
+
+        private string EmitConstantLiteralComparison(
+            StringBuilder body,
+            FilterExpressionNode expr,
+            string valueKindName,
+            ComparisonOp op,
+            string indent,
+            string currentVar)
+        {
+            string exprVar = this.EmitFilterValue(body, expr, indent, currentVar);
+            string resultVar = this.NextVar();
+
+            switch (op)
+            {
+                case ComparisonOp.Equal:
+                case ComparisonOp.LessThanOrEqual:
+                case ComparisonOp.GreaterThanOrEqual:
+                    // Non-orderable types: <= and >= reduce to ==
+                    L(body, indent, $"bool {resultVar} = {exprVar}.ValueKind == JsonValueKind.{valueKindName};");
+                    break;
+                case ComparisonOp.NotEqual:
+                    L(body, indent, $"bool {resultVar} = {exprVar}.ValueKind != JsonValueKind.{valueKindName};");
+                    break;
+                default:
+                    // < and > on non-orderable types are always false
+                    L(body, indent, $"bool {resultVar} = false;");
+                    break;
+            }
+
+            return resultVar;
+        }
+
+        private string EmitStringEqualityComparison(
+            StringBuilder body,
+            FilterExpressionNode expr,
+            LiteralNode literal,
+            ComparisonOp op,
+            string indent,
+            string currentVar)
+        {
+            string exprVar = this.EmitFilterValue(body, expr, indent, currentVar);
+            string literalFieldRef = this.EmitLiteralFieldRef(literal);
+            string literalVar = this.NextVar();
+            L(body, indent, $"JsonElement {literalVar} = {literalFieldRef};");
+            string resultVar = this.NextVar();
+            string neg = op == ComparisonOp.NotEqual ? "!" : string.Empty;
+            L(body, indent, $"bool {resultVar} = {neg}{H}.DeepEquals({exprVar}, {literalVar});");
+            return resultVar;
+        }
+
+        private static ComparisonOp FlipOp(ComparisonOp op)
+        {
+            return op switch
+            {
+                ComparisonOp.LessThan => ComparisonOp.GreaterThan,
+                ComparisonOp.LessThanOrEqual => ComparisonOp.GreaterThanOrEqual,
+                ComparisonOp.GreaterThan => ComparisonOp.LessThan,
+                ComparisonOp.GreaterThanOrEqual => ComparisonOp.LessThanOrEqual,
+                _ => op,
+            };
+        }
+
+        private static string OpToSymbol(ComparisonOp op)
+        {
+            return op switch
+            {
+                ComparisonOp.Equal => "==",
+                ComparisonOp.NotEqual => "!=",
+                ComparisonOp.LessThan => "<",
+                ComparisonOp.LessThanOrEqual => "<=",
+                ComparisonOp.GreaterThan => ">",
+                ComparisonOp.GreaterThanOrEqual => ">=",
+                _ => throw new InvalidOperationException(),
+            };
+        }
+
+        private static string FormatDouble(double value)
+        {
+            string s = value.ToString("R", CultureInfo.InvariantCulture);
+            if (!s.Contains('.') && !s.Contains('E') && !s.Contains('e'))
+            {
+                s += ".0";
+            }
+
+            return s;
         }
 
         private string EmitLogicalAnd(
@@ -1335,8 +1609,15 @@ public static class JsonPathCodeGenerator
         // ── Field emission helpers ───────────────────────────────────────
         private string EmitNameField(byte[] name)
         {
+            string key = Convert.ToBase64String(name);
+            if (this.nameFieldCache.TryGetValue(key, out string? existing))
+            {
+                return existing;
+            }
+
             string fieldName = $"s_name{this.nameCounter++}";
             this.NameFields.Add((fieldName, $"private static readonly byte[] {fieldName} = {Utf8Literal(name)};"));
+            this.nameFieldCache[key] = fieldName;
             return fieldName;
         }
 
@@ -1351,9 +1632,16 @@ public static class JsonPathCodeGenerator
                 case LiteralKind.False:
                     return $"{H}.FalseElement";
                 default:
+                    string key = lit.RawJson;
+                    if (this.literalFieldCache.TryGetValue(key, out string? existing))
+                    {
+                        return existing;
+                    }
+
                     string fieldName = $"s_literal{this.literalCounter++}";
                     byte[] utf8 = LiteralToUtf8(lit.RawJson);
                     this.StaticFields.Add((fieldName, $"private static readonly JsonElement {fieldName} = JsonElement.ParseValue({Utf8Literal(utf8)});"));
+                    this.literalFieldCache[key] = fieldName;
                     return fieldName;
             }
         }

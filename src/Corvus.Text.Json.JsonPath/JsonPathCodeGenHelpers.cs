@@ -87,53 +87,6 @@ public static class JsonPathCodeGenHelpers
     }
 
     /// <summary>
-    /// Builds a JSON array from the first <paramref name="count"/> elements of
-    /// <paramref name="nodes"/>.
-    /// </summary>
-    /// <param name="nodes">The source array of elements.</param>
-    /// <param name="count">The number of elements to include.</param>
-    /// <param name="workspace">The workspace for intermediate document allocation.</param>
-    /// <returns>A JSON array element.</returns>
-    public static JsonElement BuildArray(JsonElement[] nodes, int count, JsonWorkspace workspace)
-    {
-        if (count == 0)
-        {
-            return EmptyArrayElement;
-        }
-
-        JsonPathSequenceBuilder builder = default;
-        try
-        {
-            for (int i = 0; i < count; i++)
-            {
-                builder.Add(nodes[i]);
-            }
-
-            return builder.ToElement(workspace);
-        }
-        finally
-        {
-            builder.ReturnArray();
-        }
-    }
-
-    /// <summary>
-    /// Doubles the capacity of a pooled <see cref="JsonElement"/> array.
-    /// Returns the old array to the pool and rents a new, larger one.
-    /// </summary>
-    /// <param name="array">
-    /// The array to grow. On return, the reference points to the new larger array.
-    /// </param>
-    public static void Grow(ref JsonElement[] array)
-    {
-        int newCapacity = array.Length * 2;
-        JsonElement[] newArray = ArrayPool<JsonElement>.Shared.Rent(newCapacity);
-        Array.Copy(array, newArray, array.Length);
-        ArrayPool<JsonElement>.Shared.Return(array);
-        array = newArray;
-    }
-
-    /// <summary>
     /// Normalizes a JSONPath array index, converting negative indices to positive
     /// offsets from the end.
     /// </summary>
@@ -378,17 +331,6 @@ public static class JsonPathCodeGenHelpers
     }
 
     /// <summary>
-    /// Returns the count of nodes from a buffer-based node list.
-    /// </summary>
-    /// <param name="nodes">The node array.</param>
-    /// <param name="count">The number of valid elements in <paramref name="nodes"/>.</param>
-    /// <returns>The count.</returns>
-    public static int CountNodesFromBuffer(JsonElement[] nodes, int count)
-    {
-        return count;
-    }
-
-    /// <summary>
     /// Returns the single value from a node list, or <c>default</c> (Undefined) if
     /// the list does not contain exactly one element.
     /// </summary>
@@ -405,18 +347,6 @@ public static class JsonPathCodeGenHelpers
         }
 
         return default;
-    }
-
-    /// <summary>
-    /// Returns the single value from a buffer-based node list, or <c>default</c>
-    /// (Undefined) if it does not contain exactly one element.
-    /// </summary>
-    /// <param name="nodes">The node array.</param>
-    /// <param name="count">The number of valid elements.</param>
-    /// <returns>The single element, or <c>default</c>.</returns>
-    public static JsonElement ValueOfNodesFromBuffer(JsonElement[] nodes, int count)
-    {
-        return count == 1 ? nodes[0] : default;
     }
 
     private static readonly JsonElement[] IntCache = BuildIntCache();
@@ -610,77 +540,6 @@ public static class JsonPathCodeGenHelpers
                     DescendantsForNameCount(item, propertyName, ref count, ref first);
                 }
             }
-        }
-    }
-
-    /// <summary>
-    /// Collects all descendant elements (and the root itself) via an iterative
-    /// depth-first search. Elements are added to <paramref name="buffer"/> in
-    /// document order.
-    /// </summary>
-    /// <param name="root">The root element to start the traversal from.</param>
-    /// <param name="buffer">
-    /// The buffer to collect elements into. Grown via <see cref="Grow"/> if needed.
-    /// </param>
-    /// <param name="count">The current count of elements in the buffer.</param>
-    public static void CollectDescendantsAndSelf(
-        in JsonElement root,
-        ref JsonElement[] buffer,
-        ref int count)
-    {
-        int stackCapacity = 32;
-        JsonElement[] rentedStack = ArrayPool<JsonElement>.Shared.Rent(stackCapacity);
-        try
-        {
-            int stackSize = 0;
-            rentedStack[stackSize++] = root;
-
-            while (stackSize > 0)
-            {
-                JsonElement current = rentedStack[--stackSize];
-
-                if (count == buffer.Length)
-                {
-                    Grow(ref buffer);
-                }
-
-                buffer[count++] = current;
-
-                if (current.ValueKind == JsonValueKind.Object)
-                {
-                    int childStart = stackSize;
-                    foreach (JsonProperty<JsonElement> prop in current.EnumerateObject())
-                    {
-                        if (stackSize >= stackCapacity)
-                        {
-                            GrowStack(ref rentedStack, ref stackCapacity, stackSize);
-                        }
-
-                        rentedStack[stackSize++] = prop.Value;
-                    }
-
-                    ReverseRegion(rentedStack, childStart, stackSize - childStart);
-                }
-                else if (current.ValueKind == JsonValueKind.Array)
-                {
-                    int childStart = stackSize;
-                    foreach (JsonElement item in current.EnumerateArray())
-                    {
-                        if (stackSize >= stackCapacity)
-                        {
-                            GrowStack(ref rentedStack, ref stackCapacity, stackSize);
-                        }
-
-                        rentedStack[stackSize++] = item;
-                    }
-
-                    ReverseRegion(rentedStack, childStart, stackSize - childStart);
-                }
-            }
-        }
-        finally
-        {
-            ArrayPool<JsonElement>.Shared.Return(rentedStack);
         }
     }
 
