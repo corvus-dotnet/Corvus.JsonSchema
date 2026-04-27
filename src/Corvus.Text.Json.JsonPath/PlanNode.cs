@@ -375,6 +375,32 @@ internal sealed class WildcardStep : PlanNode
 }
 
 /// <summary>
+/// Fused wildcard + name navigation: iterate all children of the current
+/// node (array or object), and for each child that is an object with a
+/// matching property, execute the continuation on the property value.
+/// <para>
+/// The planner emits this when a wildcard selector is immediately followed
+/// by a single name selector (e.g. <c>[*].author</c>). This avoids two
+/// <see cref="PlanInterpreter.ExecuteStep"/> dispatches per element by
+/// inlining the property lookup into the iteration loop.
+/// </para>
+/// </summary>
+internal sealed class WildcardNameStep : PlanNode
+{
+    internal WildcardNameStep(byte[] utf8Name, PlanNode continuation)
+    {
+        Utf8Name = utf8Name;
+        Continuation = continuation;
+    }
+
+    /// <summary>Gets the UTF-8 property name to look up on each child.</summary>
+    internal byte[] Utf8Name { get; }
+
+    /// <summary>Gets the plan node to execute on the matched property value.</summary>
+    internal PlanNode Continuation { get; }
+}
+
+/// <summary>
 /// Array slice selector: iterate a slice of array elements and execute the
 /// body on each.
 /// </summary>
@@ -412,6 +438,40 @@ internal sealed class FilterStep : PlanNode
 
     /// <summary>Gets the filter predicate plan.</summary>
     internal FilterPlanNode Predicate { get; }
+
+    /// <summary>Gets the plan node to execute on each matching child.</summary>
+    internal PlanNode Body { get; }
+}
+
+/// <summary>
+/// Fused filter step specialised for the common pattern
+/// <c>[?@.prop OP number]</c> where the predicate is a singular numeric
+/// comparison (navigate one relative path, compare the numeric value to a
+/// literal). Eliminates the <see cref="PlanInterpreter.EvalFilter"/> pattern
+/// match dispatch per element.
+/// </summary>
+internal sealed class FilterSingularNumericStep : PlanNode
+{
+    internal FilterSingularNumericStep(
+        SingularNav[] steps,
+        ComparisonOp op,
+        double literalValue,
+        PlanNode body)
+    {
+        Steps = steps;
+        Op = op;
+        LiteralValue = literalValue;
+        Body = body;
+    }
+
+    /// <summary>Gets the singular path steps (relative to current element).</summary>
+    internal SingularNav[] Steps { get; }
+
+    /// <summary>Gets the comparison operator.</summary>
+    internal ComparisonOp Op { get; }
+
+    /// <summary>Gets the literal value to compare against.</summary>
+    internal double LiteralValue { get; }
 
     /// <summary>Gets the plan node to execute on each matching child.</summary>
     internal PlanNode Body { get; }

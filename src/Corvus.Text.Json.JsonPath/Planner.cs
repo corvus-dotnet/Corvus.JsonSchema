@@ -122,11 +122,46 @@ internal static class Planner
         {
             NameSelectorNode name => new NavigateNameStep(name.Name, continuation),
             IndexSelectorNode idx => new NavigateIndexStep(idx.Index, continuation),
-            WildcardSelectorNode => new WildcardStep(continuation),
+            WildcardSelectorNode => FuseWildcard(continuation),
             SliceSelectorNode slice => new SliceStep(slice.Start, slice.End, slice.Step, continuation),
-            FilterSelectorNode filter => new FilterStep(PlanFilterExpression(filter.Expression), continuation),
+            FilterSelectorNode filter => FuseFilter(filter, continuation),
             _ => throw new JsonPathException($"Unknown selector type: {selector.GetType().Name}"),
         };
+    }
+
+    /// <summary>
+    /// Attempts to fuse a wildcard selector with its continuation. When the
+    /// continuation is a <see cref="NavigateNameStep"/>, the iteration and
+    /// property lookup are fused into a single <see cref="WildcardNameStep"/>
+    /// to avoid dispatch overhead per element.
+    /// </summary>
+    private static PlanNode FuseWildcard(PlanNode continuation)
+    {
+        if (continuation is NavigateNameStep nameStep)
+        {
+            return new WildcardNameStep(nameStep.Utf8Name, nameStep.Continuation);
+        }
+
+        return new WildcardStep(continuation);
+    }
+
+    /// <summary>
+    /// Attempts to fuse a filter selector with its predicate. When the predicate
+    /// is a <see cref="FilterSingularNumericPlan"/> with a relative path, the
+    /// filter iteration and comparison are fused into a single
+    /// <see cref="FilterSingularNumericStep"/> to avoid the <see cref="PlanInterpreter.EvalFilter"/>
+    /// pattern match dispatch per element.
+    /// </summary>
+    private static PlanNode FuseFilter(FilterSelectorNode filter, PlanNode continuation)
+    {
+        FilterPlanNode predicate = PlanFilterExpression(filter.Expression);
+
+        if (predicate is FilterSingularNumericPlan singNum && singNum.IsRelative)
+        {
+            return new FilterSingularNumericStep(singNum.Steps, singNum.Op, singNum.LiteralValue, continuation);
+        }
+
+        return new FilterStep(predicate, continuation);
     }
 
     private static NameSetStep BuildNameSetStep(

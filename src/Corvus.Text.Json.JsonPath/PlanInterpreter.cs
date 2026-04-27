@@ -64,12 +64,20 @@ internal static class PlanInterpreter
                 ExecuteNameSet(nameSet, root, current, ref result);
                 break;
 
+            case WildcardNameStep wildcardName:
+                ExecuteWildcardName(wildcardName, root, current, ref result);
+                break;
+
             case WildcardStep wildcard:
                 ExecuteWildcard(wildcard, root, current, ref result);
                 break;
 
             case SliceStep slice:
                 ExecuteSlice(slice, root, current, ref result);
+                break;
+
+            case FilterSingularNumericStep filterNum:
+                ExecuteFilterSingularNumeric(filterNum, root, current, ref result);
                 break;
 
             case FilterStep filter:
@@ -100,10 +108,13 @@ internal static class PlanInterpreter
     // ── Singleton navigation ─────────────────────────────────────────
     private static void ExecuteNavigateName(NavigateNameStep step, in JsonElement root, in JsonElement current, ref JsonPathResult result)
     {
-        if (current.ValueKind == JsonValueKind.Object &&
-            current.TryGetProperty(step.Utf8Name, out JsonElement value))
+        if (current.ValueKind == JsonValueKind.Object)
         {
-            ExecuteStep(step.Continuation, root, value, ref result);
+            current.EnsurePropertyMap();
+            if (current.TryGetProperty(step.Utf8Name, out JsonElement value))
+            {
+                ExecuteStep(step.Continuation, root, value, ref result);
+            }
         }
     }
 
@@ -132,8 +143,13 @@ internal static class PlanInterpreter
             ref readonly SingularNav nav = ref steps[i];
             if (nav.IsName)
             {
-                if (node.ValueKind != JsonValueKind.Object ||
-                    !node.TryGetProperty(nav.Utf8Name!, out node))
+                if (node.ValueKind != JsonValueKind.Object)
+                {
+                    return;
+                }
+
+                node.EnsurePropertyMap();
+                if (!node.TryGetProperty(nav.Utf8Name!, out node))
                 {
                     return;
                 }
@@ -231,6 +247,38 @@ internal static class PlanInterpreter
         }
     }
 
+    /// <summary>
+    /// Fused wildcard + name navigation: iterates children and for each object
+    /// child looks up the named property directly, avoiding per-element type
+    /// dispatch through <see cref="ExecuteStep"/>.
+    /// </summary>
+    private static void ExecuteWildcardName(WildcardNameStep step, in JsonElement root, in JsonElement current, ref JsonPathResult result)
+    {
+        if (current.ValueKind == JsonValueKind.Array)
+        {
+            byte[] utf8Name = step.Utf8Name;
+            foreach (JsonElement item in current.EnumerateArray())
+            {
+                if (item.ValueKind == JsonValueKind.Object && item.TryGetProperty(utf8Name, out JsonElement value))
+                {
+                    ExecuteStep(step.Continuation, root, value, ref result);
+                }
+            }
+        }
+        else if (current.ValueKind == JsonValueKind.Object)
+        {
+            byte[] utf8Name = step.Utf8Name;
+            foreach (JsonProperty<JsonElement> prop in current.EnumerateObject())
+            {
+                JsonElement child = prop.Value;
+                if (child.ValueKind == JsonValueKind.Object && child.TryGetProperty(utf8Name, out JsonElement value))
+                {
+                    ExecuteStep(step.Continuation, root, value, ref result);
+                }
+            }
+        }
+    }
+
     private static void ExecuteSlice(SliceStep step, in JsonElement root, in JsonElement current, ref JsonPathResult result)
     {
         if (current.ValueKind != JsonValueKind.Array)
@@ -304,6 +352,58 @@ internal static class PlanInterpreter
         }
     }
 
+    /// <summary>
+    /// Fused filter for the common <c>[?@.prop OP number]</c> pattern.
+    /// Inlines the singular path navigation and numeric comparison directly
+    /// into the iteration loop, avoiding <see cref="EvalFilter"/> dispatch.
+    /// </summary>
+    private static void ExecuteFilterSingularNumeric(FilterSingularNumericStep step, in JsonElement root, in JsonElement current, ref JsonPathResult result)
+    {
+        SingularNav[] navSteps = step.Steps;
+        double literal = step.LiteralValue;
+        ComparisonOp op = step.Op;
+
+        if (current.ValueKind == JsonValueKind.Array)
+        {
+            foreach (JsonElement item in current.EnumerateArray())
+            {
+                if (EvalSingularNumericInline(navSteps, op, literal, root, item))
+                {
+                    ExecuteStep(step.Body, root, item, ref result);
+                }
+            }
+        }
+        else if (current.ValueKind == JsonValueKind.Object)
+        {
+            foreach (JsonProperty<JsonElement> prop in current.EnumerateObject())
+            {
+                JsonElement val = prop.Value;
+                if (EvalSingularNumericInline(navSteps, op, literal, root, val))
+                {
+                    ExecuteStep(step.Body, root, val, ref result);
+                }
+            }
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static bool EvalSingularNumericInline(
+        SingularNav[] steps,
+        ComparisonOp op,
+        double literal,
+        in JsonElement root,
+        in JsonElement current)
+    {
+        if (TryNavigateSingularPath(steps, true, root, current, out JsonElement node) &&
+            node.ValueKind == JsonValueKind.Number)
+        {
+            return CompareDouble(node.GetDouble(), literal, op);
+        }
+
+        // Path not found or non-numeric: only NotEqual returns true.
+        return op == ComparisonOp.NotEqual;
+    }
+
     private static void ExecuteMultiSelector(MultiSelectorStep step, in JsonElement root, in JsonElement current, ref JsonPathResult result)
     {
         PlanNode[] selectors = step.Selectors;
@@ -318,9 +418,12 @@ internal static class PlanInterpreter
     {
         if (current.ValueKind == JsonValueKind.Object)
         {
+            // Single-pass: enumerate once, checking each property name and
+            // recursing into container children in the same iteration.
+            byte[] utf8Name = step.Utf8Name;
             foreach (JsonProperty<JsonElement> prop in current.EnumerateObject())
             {
-                if (prop.NameEquals(step.Utf8Name))
+                if (prop.NameEquals(utf8Name))
                 {
                     ExecuteStep(step.Continuation, root, prop.Value, ref result);
                 }
@@ -708,8 +811,15 @@ internal static class PlanInterpreter
             ref readonly SingularNav step = ref steps[i];
             if (step.IsName)
             {
-                if (result.ValueKind != JsonValueKind.Object ||
-                    !result.TryGetProperty(step.Utf8Name!, out result))
+                if (result.ValueKind != JsonValueKind.Object)
+                {
+                    return false;
+                }
+
+                // No EnsurePropertyMap here: filter evaluation typically visits each
+                // element once, so the cost of building a property map exceeds the
+                // savings from hash lookup on small objects.
+                if (!result.TryGetProperty(step.Utf8Name!, out result))
                 {
                     return false;
                 }
