@@ -100,6 +100,7 @@
     <PackageVersion Include="JsonLogic" Version="6.0.1" />
     <PackageVersion Include="JsonPatch.Net" Version="5.0.2" />
     <PackageVersion Include="JsonCons.Utilities" Version="1.0.0" />
+    <PackageVersion Include="JsonCons.JsonPath" Version="1.1.0" />
     <PackageVersion Include="JsonSchema.Net" Version="9.2.0" />
   </ItemGroup>
 </Project>
