@@ -71,11 +71,6 @@ public static class JsonDiffExtensions
         int pathLength,
         scoped ref PatchBuilder patchBuilder)
     {
-        if (source == target)
-        {
-            return;
-        }
-
         if (source.ValueKind != target.ValueKind)
         {
             patchBuilder.ReplaceElement(pathBuffer.AsSpan(0, pathLength), target);
@@ -93,8 +88,12 @@ public static class JsonDiffExtensions
                 break;
 
             default:
-                // Same kind but different value (number, string, etc.)
-                patchBuilder.ReplaceElement(pathBuffer.AsSpan(0, pathLength), target);
+                // Same kind — check scalar equality
+                if (source != target)
+                {
+                    patchBuilder.ReplaceElement(pathBuffer.AsSpan(0, pathLength), target);
+                }
+
                 break;
         }
     }
@@ -106,6 +105,9 @@ public static class JsonDiffExtensions
         int pathLength,
         scoped ref PatchBuilder patchBuilder)
     {
+        int targetPropertyCount = target.GetPropertyCount();
+        int matchedTargetProperties = 0;
+
         // Process properties present in source
         foreach (JsonProperty<JsonElement> sourceProp in source.EnumerateObject())
         {
@@ -115,6 +117,8 @@ public static class JsonDiffExtensions
 
             if (target.TryGetProperty(nameSpan, out JsonElement targetValue))
             {
+                matchedTargetProperties++;
+
                 // Property exists in both — recurse
                 DiffRecursive(sourceProp.Value, targetValue, ref pathBuffer, childPathLength, ref patchBuilder);
             }
@@ -125,16 +129,19 @@ public static class JsonDiffExtensions
             }
         }
 
-        // Process properties present only in target
-        foreach (JsonProperty<JsonElement> targetProp in target.EnumerateObject())
+        // Process properties present only in target — skip if all target properties were matched
+        if (matchedTargetProperties < targetPropertyCount)
         {
-            using UnescapedUtf8JsonString nameUtf8 = targetProp.Utf8NameSpan;
-            ReadOnlySpan<byte> nameSpan = nameUtf8.Span;
-
-            if (!source.TryGetProperty(nameSpan, out _))
+            foreach (JsonProperty<JsonElement> targetProp in target.EnumerateObject())
             {
-                int childPathLength = AppendSegment(ref pathBuffer, pathLength, nameSpan);
-                patchBuilder.AddElement(pathBuffer.AsSpan(0, childPathLength), targetProp.Value);
+                using UnescapedUtf8JsonString nameUtf8 = targetProp.Utf8NameSpan;
+                ReadOnlySpan<byte> nameSpan = nameUtf8.Span;
+
+                if (!source.TryGetProperty(nameSpan, out _))
+                {
+                    int childPathLength = AppendSegment(ref pathBuffer, pathLength, nameSpan);
+                    patchBuilder.AddElement(pathBuffer.AsSpan(0, childPathLength), targetProp.Value);
+                }
             }
         }
     }
