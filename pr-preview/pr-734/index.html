@@ -90,7 +90,7 @@
         <h1 class="hero__title">High-performance <span class="brand">JSON</span> for .NET</h1>
         <p class="hero__subtitle">
             Source-generated strongly-typed C# from JSON Schema. Zero-allocation parsing,
-            full validation for all drafts, mutable documents, JSONata, JMESPath, JsonLogic, YAML, JSON Patch, and more.
+            full validation for all drafts, mutable documents, JSONata, JMESPath, JSONPath, JsonLogic, YAML, JSON Patch, and more.
         </p>
         <div class="hero__actions">
             <a href="/Corvus.JsonSchema/pr-preview/pr-734/getting-started/index.html" class="btn btn--primary btn--lg">Get Started</a>
@@ -98,6 +98,7 @@
             <a href="/Corvus.JsonSchema/pr-preview/pr-734/playground-jsonata/" class="btn btn--secondary btn--lg" target="_blank" rel="noopener noreferrer">Try JSONata</a>
             <a href="/Corvus.JsonSchema/pr-preview/pr-734/playground-jmespath/" class="btn btn--secondary btn--lg" target="_blank" rel="noopener noreferrer">Try JMESPath</a>
             <a href="/Corvus.JsonSchema/pr-preview/pr-734/playground-jsonlogic/" class="btn btn--secondary btn--lg" target="_blank" rel="noopener noreferrer">Try JSON Logic</a>
+            <a href="/Corvus.JsonSchema/pr-preview/pr-734/playground-jsonpath/" class="btn btn--secondary btn--lg" target="_blank" rel="noopener noreferrer">Try JSONPath</a>
             <a href="/Corvus.JsonSchema/pr-preview/pr-734/playground-yaml/" class="btn btn--secondary btn--lg" target="_blank" rel="noopener noreferrer">Try YAML</a>
             <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema"
                class="btn btn--secondary btn--lg" target="_blank" rel="noopener noreferrer">View on GitHub</a>
@@ -179,6 +180,11 @@
                 <div class="card__icon"><img src="/Corvus.JsonSchema/pr-preview/pr-734/assets/images/logo-jsonlogic.png" alt="JsonLogic logo" style="filter:invert(1);"></div>
                 <h3 class="card__title">JsonLogic</h3>
                 <p class="card__body">Complete <a href="https://jsonlogic.com/">JsonLogic</a> rule engine for evaluating business rules against JSON data. Interpreted and code-generated modes with custom operator support. <a href="/Corvus.JsonSchema/pr-preview/pr-734/docs/json-logic.html">Learn more &rarr;</a></p>
+            </div>
+            <div class="card">
+                <div class="card__icon">🧭</div>
+                <h3 class="card__title">JSONPath</h3>
+                <p class="card__body">IETF-standardized <a href="https://www.rfc-editor.org/rfc/rfc9535">RFC 9535</a> query language with recursive descent, filters, and custom function extensions. 100% conformance, interpreted and code-generated modes. <a href="/Corvus.JsonSchema/pr-preview/pr-734/docs/json-path.html">Learn more &rarr;</a></p>
             </div>
             <div class="card">
                 <div class="card__icon">🩹</div>
@@ -305,6 +311,18 @@ root.SetAge(31);
                 <pre style="margin-top:var(--space-sm)"><code class="language-bash">dotnet add package Corvus.Text.Json.JsonLogic</code></pre>
             </div>
             <div class="card">
+                <h3 class="card__title"><a href="/Corvus.JsonSchema/pr-preview/pr-734/docs/json-path.html" style="color:inherit">Corvus.Text.Json.JsonPath</a></h3>
+                <p class="card__body">JSONPath (RFC 9535) query language with recursive descent, filters, and custom function extensions. <a href="/Corvus.JsonSchema/pr-preview/pr-734/docs/json-path.html">Read the docs &rarr;</a></p>
+                <pre style="margin-top:var(--space-sm)"><code class="language-bash">dotnet add package Corvus.Text.Json.JsonPath</code></pre>
+            </div>
+            <div class="card">
+                <h3 class="card__title"><a href="/Corvus.JsonSchema/pr-preview/pr-734/docs/json-path.html" style="color:inherit">Corvus.Text.Json.JsonPath.SourceGenerator</a></h3>
+                <p class="card__body">Roslyn source generator for compile-time JSONPath code generation from <code>.jsonpath</code> expression files. <a href="/Corvus.JsonSchema/pr-preview/pr-734/docs/json-path.html">Read the docs &rarr;</a></p>
+                <pre style="margin-top:var(--space-sm)"><code class="language-xml">&lt;PackageReference Include="Corvus.Text.Json.JsonPath.SourceGenerator"&gt;
+  &lt;PrivateAssets&gt;all&lt;/PrivateAssets&gt;
+&lt;/PackageReference&gt;</code></pre>
+            </div>
+            <div class="card">
                 <h3 class="card__title">Corvus.Text.Json.Patch</h3>
                 <p class="card__body">RFC 6902 JSON Patch with pooled-memory operations on <code>JsonElement</code>.</p>
                 <pre style="margin-top:var(--space-sm)"><code class="language-bash">dotnet add package Corvus.Text.Json.Patch</code></pre>
@@ -335,6 +353,7 @@ root.SetAge(31);
                 <a href="/Corvus.JsonSchema/pr-preview/pr-734/playground-jsonata/" class="btn btn--secondary btn--lg" target="_blank" rel="noopener noreferrer">Try JSONata</a>
                 <a href="/Corvus.JsonSchema/pr-preview/pr-734/playground-jmespath/" class="btn btn--secondary btn--lg" target="_blank" rel="noopener noreferrer">Try JMESPath</a>
                 <a href="/Corvus.JsonSchema/pr-preview/pr-734/playground-jsonlogic/" class="btn btn--secondary btn--lg" target="_blank" rel="noopener noreferrer">Try JSON Logic</a>
+                <a href="/Corvus.JsonSchema/pr-preview/pr-734/playground-jsonpath/" class="btn btn--secondary btn--lg" target="_blank" rel="noopener noreferrer">Try JSONPath</a>
                 <a href="/Corvus.JsonSchema/pr-preview/pr-734/playground-yaml/" class="btn btn--secondary btn--lg" target="_blank" rel="noopener noreferrer">Try YAML</a>
                 <a href="/Corvus.JsonSchema/pr-preview/pr-734/examples/index.html" class="btn btn--secondary btn--lg">Browse Examples</a>
             </div>
