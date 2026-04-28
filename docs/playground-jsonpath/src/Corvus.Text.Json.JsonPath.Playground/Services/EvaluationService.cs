@@ -56,9 +56,13 @@ public sealed class EvaluationResult
 /// </summary>
 public sealed class EvaluationService
 {
+    private JsonPathEvaluator cachedEvaluator = JsonPathEvaluator.Default;
+    private Dictionary<string, IJsonPathFunction>? cachedFunctions;
+
     public async Task<EvaluationResult> EvaluateAsync(
         string expression,
-        string jsonData)
+        string jsonData,
+        Dictionary<string, IJsonPathFunction>? customFunctions = null)
     {
         if (string.IsNullOrWhiteSpace(expression))
         {
@@ -79,7 +83,9 @@ public sealed class EvaluationService
 
                 using var doc = ParsedJsonDocument<JsonElement>.Parse(System.Text.Encoding.UTF8.GetBytes(data));
 
-                JsonElement result = JsonPathEvaluator.Default.Query(
+                var evaluator = this.GetOrCreateEvaluator(customFunctions);
+
+                JsonElement result = evaluator.Query(
                     expression,
                     doc.RootElement);
 
@@ -251,5 +257,29 @@ public sealed class EvaluationService
         }
 
         return message;
+    }
+
+    /// <summary>
+    /// Returns a cached evaluator if the functions set hasn't changed, or creates a new one.
+    /// </summary>
+    private JsonPathEvaluator GetOrCreateEvaluator(Dictionary<string, IJsonPathFunction>? customFunctions)
+    {
+        if (ReferenceEquals(customFunctions, this.cachedFunctions))
+        {
+            return this.cachedEvaluator;
+        }
+
+        this.cachedFunctions = customFunctions;
+
+        if (customFunctions is null || customFunctions.Count == 0)
+        {
+            this.cachedEvaluator = JsonPathEvaluator.Default;
+        }
+        else
+        {
+            this.cachedEvaluator = new JsonPathEvaluator(customFunctions);
+        }
+
+        return this.cachedEvaluator;
     }
 }

@@ -12,6 +12,8 @@ public sealed class Sample
     public required string Data { get; init; }
 
     public required string Expression { get; init; }
+
+    public string? FunctionsCode { get; init; }
 }
 
 /// <summary>
@@ -23,9 +25,9 @@ public static class SampleRegistry
         {
           "store": {
             "book": [
-              {"category": "reference", "author": "Nigel Rees", "title": "Sayings of the Century", "price": 8.95},
+              {"category": "reference", "author": "Sandi Toksvig", "title": "Between the Stops", "price": 8.95},
               {"category": "fiction", "author": "Evelyn Waugh", "title": "Sword of Honour", "price": 12.99},
-              {"category": "fiction", "author": "Herman Melville", "title": "Moby Dick", "isbn": "0-553-21311-3", "price": 8.99},
+              {"category": "fiction", "author": "Jane Austen", "title": "Pride and Prejudice", "isbn": "0-553-21311-3", "price": 8.99},
               {"category": "fiction", "author": "J. R. R. Tolkien", "title": "The Lord of the Rings", "isbn": "0-395-19395-8", "price": 22.99}
             ],
             "bicycle": {"color": "red", "price": 399.99}
@@ -129,6 +131,25 @@ public static class SampleRegistry
             DisplayName = "Union Selector",
             Data = BookstoreData,
             Expression = "$.store.book[0,2].title",
+        },
+
+        new Sample
+        {
+            Id = "custom-functions",
+            DisplayName = "Custom Functions",
+            Data = BookstoreData,
+            Expression = "$.store.book[?ceil(@.price) == 9].title",
+            FunctionsCode = """
+                {
+                    // ceil: rounds a number up to the nearest integer
+                    ["ceil"] = ValueFunction(v =>
+                        Value((int)Math.Ceiling(v.GetDouble()))),
+
+                    // is_fiction: checks if a category is "fiction"
+                    ["is_fiction"] = LogicalFunction(v =>
+                        v.ValueKind == JsonValueKind.String && v.ValueEquals("fiction"u8)),
+                }
+                """,
         },
     ];
 }

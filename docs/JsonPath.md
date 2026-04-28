@@ -6,7 +6,7 @@
 
 `Corvus.Text.Json.JsonPath` implements [JSONPath (RFC 9535)](https://www.rfc-editor.org/rfc/rfc9535) for the Corvus.Text.Json document model — a high-performance query language that evaluates JSONPath expressions against JSON data with a plan-based interpreter, fused execution steps, and zero-allocation result buffers.
 
-[JSONPath](https://www.rfc-editor.org/rfc/rfc9535) is a query language for extracting values from JSON documents. It supports property access, wildcards, array index and slice selectors, filter expressions with comparisons and logical operators, recursive descent, and function extensions (`length`, `count`, `value`, `match`, `search`). The Corvus implementation passes **all 723** conformance test cases in the official [JSONPath Compliance Test Suite](https://github.com/jsonpath-standard/jsonpath-compliance-test-suite) (100% conformance).
+[JSONPath](https://www.rfc-editor.org/rfc/rfc9535) is a query language for extracting values from JSON documents. It supports property access, wildcards, array index and slice selectors, filter expressions with comparisons and logical operators, recursive descent, and function extensions (`length`, `count`, `value`, `match`, `search`). The implementation also supports [custom function extensions](#custom-function-extensions) for both runtime evaluation and code generation. The Corvus implementation passes **all 723** conformance test cases in the official [JSONPath Compliance Test Suite](https://github.com/jsonpath-standard/jsonpath-compliance-test-suite) (100% conformance).
 
 Three evaluation modes are available:
 
@@ -64,9 +64,9 @@ JsonElement result = JsonPathEvaluator.Default.Query(
     {
       "store": {
         "book": [
-          {"category": "reference", "author": "Nigel Rees", "title": "Sayings of the Century", "price": 8.95},
+          {"category": "reference", "author": "Sandi Toksvig", "title": "Between the Stops", "price": 8.95},
           {"category": "fiction", "author": "Evelyn Waugh", "title": "Sword of Honour", "price": 12.99},
-          {"category": "fiction", "author": "Herman Melville", "title": "Moby Dick", "price": 8.99},
+          {"category": "fiction", "author": "Jane Austen", "title": "Pride and Prejudice", "price": 8.99},
           {"category": "fiction", "author": "J. R. R. Tolkien", "title": "The Lord of the Rings", "price": 22.99}
         ]
       }
@@ -74,7 +74,7 @@ JsonElement result = JsonPathEvaluator.Default.Query(
     """u8));
 
 Console.WriteLine(result);
-// ["Nigel Rees","Evelyn Waugh","Herman Melville","J. R. R. Tolkien"]
+// ["Sandi Toksvig","Evelyn Waugh","Jane Austen","J. R. R. Tolkien"]
 ```
 
 `Query(expression, data)` evaluates the expression and returns a cloned JSON array containing all matched nodes. It manages memory internally — no workspace or disposal needed.
@@ -231,7 +231,7 @@ JSONPath queries return a **node list** — zero or more `JsonElement` values ma
 
 ```csharp
 JsonElement array = JsonPathEvaluator.Default.Query("$.store.book[*].title", data);
-// Returns a JSON array: ["Sayings of the Century", "Sword of Honour", ...]
+// Returns a JSON array: ["Between the Stops", "Sword of Honour", ...]
 // Returns [] if no matches
 ```
 
@@ -283,9 +283,9 @@ JSONPath expressions follow [RFC 9535](https://www.rfc-editor.org/rfc/rfc9535). 
 {
   "store": {
     "book": [
-      {"category": "reference", "author": "Nigel Rees", "title": "Sayings of the Century", "price": 8.95},
+      {"category": "reference", "author": "Sandi Toksvig", "title": "Between the Stops", "price": 8.95},
       {"category": "fiction", "author": "Evelyn Waugh", "title": "Sword of Honour", "price": 12.99},
-      {"category": "fiction", "author": "Herman Melville", "title": "Moby Dick", "price": 8.99},
+      {"category": "fiction", "author": "Jane Austen", "title": "Pride and Prejudice", "price": 8.99},
       {"category": "fiction", "author": "J. R. R. Tolkien", "title": "The Lord of the Rings", "price": 22.99}
     ],
     "bicycle": {"color": "red", "price": 399.99}
@@ -322,7 +322,7 @@ The descendant operator `..` searches the entire subtree for matching selectors:
 
 ```
 // Expression: $..author
-// Result:     ["Nigel Rees", "Evelyn Waugh", "Herman Melville", "J. R. R. Tolkien"]
+// Result:     ["Sandi Toksvig", "Evelyn Waugh", "Jane Austen", "J. R. R. Tolkien"]
 
 // Expression: $..price
 // Result:     [8.95, 12.99, 8.99, 22.99, 399.99]
@@ -336,7 +336,7 @@ Select all elements of an array or all values of an object:
 
 ```
 // Expression: $.store.book[*].author
-// Result:     ["Nigel Rees", "Evelyn Waugh", "Herman Melville", "J. R. R. Tolkien"]
+// Result:     ["Sandi Toksvig", "Evelyn Waugh", "Jane Austen", "J. R. R. Tolkien"]
 
 // Expression: $.store.*
 // Result:     [(the book array), (the bicycle object)]
@@ -348,7 +348,7 @@ Access array elements by zero-based index. Negative indices count from the end:
 
 ```
 // Expression: $.store.book[0].title
-// Result:     "Sayings of the Century"
+// Result:     "Between the Stops"
 
 // Expression: $.store.book[-1].title
 // Result:     "The Lord of the Rings"
@@ -399,7 +399,7 @@ Select multiple properties or indices in a single segment:
 // Result:     [(first two books)]
 
 // Expression: $.store.book[0].['title','author']
-// Result:     ["Sayings of the Century", "Nigel Rees"]
+// Result:     ["Between the Stops", "Sandi Toksvig"]
 ```
 
 ### Function extensions
@@ -413,6 +413,89 @@ RFC 9535 defines a set of function extensions for use in filter expressions:
 | `value(@.field)` | Extract a single value from a node list | `$[?value(@.score) > 90]` |
 | `match(@.field, 'regex')` | Full regex match against a string | `$[?match(@.name, '^J.*')]` |
 | `search(@.field, 'regex')` | Partial regex match against a string | `$[?search(@.name, 'ohn')]` |
+
+### Custom function extensions
+
+In addition to the five built-in functions, you can register your own custom functions. Custom functions participate in RFC 9535 well-typedness checking at parse time — the parser validates parameter and return types just as it does for built-in functions.
+
+Implement the `IJsonPathFunction` interface:
+
+```csharp
+public sealed class CeilFunction : IJsonPathFunction
+{
+    private static readonly JsonPathFunctionType[] ParamTypes = [JsonPathFunctionType.ValueType];
+
+    public JsonPathFunctionType ReturnType => JsonPathFunctionType.ValueType;
+    public ReadOnlySpan<JsonPathFunctionType> ParameterTypes => ParamTypes;
+
+    public JsonPathFunctionResult Evaluate(ReadOnlySpan<JsonPathFunctionArgument> arguments)
+    {
+        JsonElement value = arguments[0].Value;
+        if (value.ValueKind != JsonValueKind.Number)
+        {
+            return JsonPathFunctionResult.Nothing;
+        }
+
+        return JsonPathFunctionResult.FromValue(
+            JsonPathCodeGenHelpers.IntToElement((int)Math.Ceiling(value.GetDouble())));
+    }
+}
+```
+
+Register custom functions via the `JsonPathEvaluator` constructor:
+
+```csharp
+var evaluator = new JsonPathEvaluator(
+    new Dictionary<string, IJsonPathFunction>
+    {
+        ["ceil"] = new CeilFunction(),
+    });
+
+// Use in filter expressions
+JsonElement result = evaluator.Query("$.store.book[?ceil(@.price)==9].title", data);
+```
+
+The three function types defined by RFC 9535 §2.4:
+
+| Type | `JsonPathFunctionType` | Argument access | Return factory |
+|------|------------------------|-----------------|----------------|
+| ValueType | `JsonPathFunctionType.ValueType` | `arguments[i].Value` (`JsonElement`) | `JsonPathFunctionResult.FromValue(element)` |
+| LogicalType | `JsonPathFunctionType.LogicalType` | `arguments[i].Logical` (`bool`) | `JsonPathFunctionResult.FromLogical(b)` |
+| NodesType | `JsonPathFunctionType.NodesType` | `arguments[i].Nodes` (`ReadOnlySpan<JsonElement>`) | N/A (cannot return NodesType) |
+
+**Rules:**
+- The five built-in names (`length`, `count`, `value`, `match`, `search`) are reserved and cannot be overridden.
+- Implementations must be **thread-safe** — a single instance may be called concurrently from multiple threads.
+- `NodesType` arguments receive a span backed by a pooled array. Do not capture or store the span beyond the `Evaluate` call.
+- Return `JsonPathFunctionResult.Nothing` when the function cannot produce a meaningful result (e.g. type mismatch on an argument).
+
+### Custom functions in code generation
+
+The source generator and CLI tool support custom functions via `.jpfn` sidecar files. These define the function signature and inline C# implementation:
+
+```
+// Expression form — single-expression body
+fn ceil(value x) : value => JsonPathCodeGenHelpers.IntToElement((int)Math.Ceiling(x.GetDouble()));
+
+// Block form — multi-statement body
+fn is_fiction(value x) : logical
+{
+    return x.ValueKind == JsonValueKind.String && x.ValueEquals("fiction"u8);
+}
+```
+
+Parameter types: `value` (default if omitted), `logical`, `nodes`. Return types: `value`, `logical`.
+
+Add the `.jpfn` file as an `AdditionalFiles` item alongside the `.jsonpath` file:
+
+```xml
+<ItemGroup>
+  <AdditionalFiles Include="my-functions.jpfn" />
+  <AdditionalFiles Include="query.jsonpath" />
+</ItemGroup>
+```
+
+The source generator discovers all `.jpfn` files in the project and makes the custom functions available to all JSONPath expressions in the same compilation.
 
 ## Common pitfalls
 
@@ -479,6 +562,7 @@ using JsonPathResult result = evaluator.QueryNodes(expression, data, buf);
 | Specification | RFC 9535 (100% conformance) | RFC 9535 |
 | Evaluation model | Plan-based interpreter (cached) | Direct interpretation |
 | Code generation | Source generator + CLI tool | Not available |
+| Custom function extensions | Yes (runtime + code generation) | Yes (runtime only) |
 | JSON document model | `Corvus.Text.Json` (pooled, zero-copy) | `System.Text.Json.Nodes` |
 | Memory model | Pooled (`ArrayPool`, stack-allocated buffers) | GC-allocated |
 | Zero-allocation hot path | Yes (with `QueryNodes` + stack buffer) | No |

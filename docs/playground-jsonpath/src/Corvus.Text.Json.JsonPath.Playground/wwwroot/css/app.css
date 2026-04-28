@@ -220,9 +220,16 @@ html, body {
     overflow: hidden;
 }
 
-/* Left column: data (full height) */
+/* Left column: data (top-left), functions (bottom-left) */
 .panel-data {
-    grid-row: 1 / -1;
+    grid-row: 1;
+    grid-column: 1;
+    border-right: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.panel-functions {
+    grid-row: 2;
     grid-column: 1;
     border-right: 1px solid var(--border-color);
 }
@@ -291,6 +298,17 @@ html, body {
     overflow: auto;
     height: 100%;
     background: var(--bg-primary);
+}
+
+.functions-error-indicator {
+    color: var(--console-error);
+    margin-left: 8px;
+    cursor: help;
+    font-size: 14px;
+}
+
+.functions-status-error {
+    color: #ffcc00;
 }
 
 /* ── Status bar ── */

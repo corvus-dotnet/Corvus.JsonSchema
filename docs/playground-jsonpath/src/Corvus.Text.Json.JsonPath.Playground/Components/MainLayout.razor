@@ -2,6 +2,7 @@
 @implements IDisposable
 @page "/"
 @inject EvaluationService EvalService
+@inject FunctionsCompilationService FunctionsCompiler
 @inject IJSRuntime JSRuntime
 
 <div class="playground-toolbar">
@@ -22,7 +23,7 @@
 </div>
 
 <div class="jsonpath-grid @(maximizedPanel is not null ? "has-maximized" : "")">
-    @* Left column: JSON data (full height) *@
+    @* Top-left: JSON data *@
     <div class="playground-panel panel-data @(GetPanelClass("data"))">
         <div class="panel-header">
             JSON Data
@@ -37,6 +38,28 @@
                                   Id="data-editor"
                                   ConstructionOptions="DataEditorOptions"
                                   OnDidChangeModelContent="OnDataChanged" />
+        </div>
+    </div>
+
+    @* Bottom-left: Functions (C#) *@
+    <div class="playground-panel panel-functions @(GetPanelClass("functions"))">
+        <div class="panel-header">
+            Functions (C#)
+            @if (functionsError is not null)
+            {
+                <span class="functions-error-indicator" title="@functionsError">⚠</span>
+            }
+            <div class="spacer"></div>
+            <button class="panel-copy-btn" @onclick="CopyFunctions" title="Copy functions">📋</button>
+            <button class="panel-maximize-btn" @onclick='() => ToggleMaximize("functions")' title="@(maximizedPanel == "functions" ? "Restore" : "Maximize")">
+                @(maximizedPanel == "functions" ? "⊟" : "⊞")
+            </button>
+        </div>
+        <div class="panel-body">
+            <StandaloneCodeEditor @ref="functionsEditor"
+                                  Id="functions-editor"
+                                  ConstructionOptions="FunctionsEditorOptions"
+                                  OnDidChangeModelContent="OnFunctionsChanged" />
         </div>
     </div>
 
@@ -112,9 +135,17 @@
 <div class="status-bar @(lastResult is not null && !lastResult.Success ? "error" : "")">
     <span>Corvus.Text.Json.JsonPath — Interpreted Runtime</span>
     <div class="spacer"></div>
-    @if (isEvaluating)
+    @if (isCompiling)
+    {
+        <span>Compiling functions…</span>
+    }
+    else if (isEvaluating)
     {
         <span>Evaluating…</span>
+    }
+    else if (functionsError is not null)
+    {
+        <span class="functions-status-error">Functions error</span>
     }
     else if (lastResult is not null)
     {
@@ -130,10 +161,12 @@
     private StandaloneCodeEditor dataEditor = null!;
     private StandaloneCodeEditor expressionEditor = null!;
     private StandaloneCodeEditor outputEditor = null!;
+    private StandaloneCodeEditor functionsEditor = null!;
 
     private string? activeSampleId;
     private EvaluationResult? lastResult;
     private bool isEvaluating;
+    private bool isCompiling;
     private bool isInitializing = true;
     private bool isLoadingSample;
     private string? maximizedPanel;
@@ -143,7 +176,12 @@
     private Func<Task>? pendingDirtyAction;
     private string cleanData = "";
     private string cleanExpression = "";
+    private string cleanFunctions = "";
     private List<string> dirtyEditorSnapshot = new();
+
+    // Compiled custom functions (null = no functions or empty)
+    private Dictionary<string, IJsonPathFunction>? activeCustomFunctions;
+    private string? functionsError;
 
     // Theme state
     private string themePref = "auto";
@@ -154,11 +192,23 @@
 
     // Debounce
     private CancellationTokenSource? evaluateDebounce;
+    private CancellationTokenSource? functionsDebounce;
     private CancellationTokenSource? saveDebounce;
 
     private const string DataStorageKey = "jsonpath-playground-data";
     private const string ExpressionStorageKey = "jsonpath-playground-expression";
+    private const string FunctionsStorageKey = "jsonpath-playground-functions";
     private const string ThemeStorageKey = "jsonpath-playground-theme";
+
+    private const string DefaultFunctionsPlaceholder =
+        """
+        // Define custom functions as dictionary entries.
+        // ValueFunction:  ["name"] = ValueFunction(v => Value(...))
+        // LogicalFunction: ["name"] = LogicalFunction(v => expression)
+        {
+            // ["ceil"] = ValueFunction(v => Value((int)Math.Ceiling(v.GetDouble()))),
+        }
+        """;
 
     // ── Editor options ──
 
@@ -200,9 +250,22 @@
         ScrollBeyondLastLine = false,
     };
 
+    private StandaloneEditorConstructionOptions FunctionsEditorOptions(StandaloneCodeEditor editor) => new()
+    {
+        Language = "csharp",
+        Theme = resolvedTheme == "light" ? "vs" : "vs-dark",
+        Value = initialFunctionsCode,
+        AutomaticLayout = true,
+        Minimap = new EditorMinimapOptions { Enabled = false },
+        FontSize = 13,
+        TabSize = 4,
+        ScrollBeyondLastLine = false,
+    };
+
     // ── Initial values (set before render) ──
     private string initialData = SampleRegistry.All[0].Data;
     private string initialExpression = SampleRegistry.All[0].Expression;
+    private string initialFunctionsCode = SampleRegistry.All[0].FunctionsCode ?? DefaultFunctionsPlaceholder;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -225,6 +288,7 @@
             // Load saved data
             var savedData = await GetLocalStorage(DataStorageKey);
             var savedExpr = await GetLocalStorage(ExpressionStorageKey);
+            var savedFunctions = await GetLocalStorage(FunctionsStorageKey);
 
             if (!string.IsNullOrEmpty(savedData) || !string.IsNullOrEmpty(savedExpr))
             {
@@ -238,6 +302,11 @@
                 {
                     await expressionEditor.SetValue(savedExpr);
                 }
+
+                if (!string.IsNullOrEmpty(savedFunctions))
+                {
+                    await functionsEditor.SetValue(savedFunctions);
+                }
             }
             else
             {
@@ -246,10 +315,10 @@
 
             StateHasChanged();
 
-            // Initialization complete — sync clean baselines, enable change handlers, then evaluate
+            // Initialization complete — sync clean baselines, enable change handlers, then compile+evaluate
             isInitializing = false;
             await SyncCleanBaselines();
-            await EvaluateAsync();
+            await CompileAndEvaluateAsync();
         }
     }
 
@@ -270,7 +339,18 @@
         if (isInitializing || isLoadingSample) { return; }
 
         activeSampleId = null;
+        _ = ClearExpressionMarkers();
         DebounceEvaluate();
+        DebounceSave();
+    }
+
+    private void OnFunctionsChanged(ModelContentChangedEvent e)
+    {
+        if (isInitializing || isLoadingSample) { return; }
+
+        activeSampleId = null;
+        _ = ClearFunctionsMarkers();
+        DebounceCompileFunctions();
         DebounceSave();
     }
 
@@ -299,6 +379,7 @@
                 activeSampleId = null;
                 await dataEditor.SetValue("{}");
                 await expressionEditor.SetValue("/* Enter a JSONPath expression */");
+                await functionsEditor.SetValue(DefaultFunctionsPlaceholder);
             }
             finally
             {
@@ -308,6 +389,8 @@
             await SyncCleanBaselines();
             await ClearLocalStorage();
             await ClearAllMarkers();
+            activeCustomFunctions = null;
+            functionsError = null;
             lastResult = null;
             if (outputEditor is not null)
             {
@@ -326,6 +409,7 @@
             activeSampleId = sample.Id;
             await dataEditor.SetValue(sample.Data);
             await expressionEditor.SetValue(sample.Expression);
+            await functionsEditor.SetValue(sample.FunctionsCode ?? DefaultFunctionsPlaceholder);
         }
         finally
         {
@@ -335,7 +419,7 @@
         await SyncCleanBaselines();
         await ClearLocalStorage();
         await ClearAllMarkers();
-        await EvaluateAsync();
+        await CompileAndEvaluateAsync();
     }
 
     // ── Dirty checking ──
@@ -344,11 +428,13 @@
     {
         var currentData = await dataEditor.GetValue();
         var currentExpr = await expressionEditor.GetValue();
+        var currentFunctions = await functionsEditor.GetValue();
 
         bool dataDirty = currentData != cleanData;
         bool exprDirty = currentExpr != cleanExpression;
+        bool functionsDirty = currentFunctions != cleanFunctions;
 
-        if (!dataDirty && !exprDirty)
+        if (!dataDirty && !exprDirty && !functionsDirty)
         {
             await action();
             return;
@@ -358,6 +444,7 @@
         dirtyEditorSnapshot = new List<string>();
         if (dataDirty) { dirtyEditorSnapshot.Add("JSON Data"); }
         if (exprDirty) { dirtyEditorSnapshot.Add("JSONPath Expression"); }
+        if (functionsDirty) { dirtyEditorSnapshot.Add("Functions (C#)"); }
 
         pendingDirtyAction = action;
         showDirtyConfirmation = true;
@@ -391,6 +478,7 @@
     {
         cleanData = await dataEditor.GetValue();
         cleanExpression = await expressionEditor.GetValue();
+        cleanFunctions = await functionsEditor.GetValue();
     }
 
     // ── Copy helpers ──
@@ -404,6 +492,12 @@
     private async Task CopyExpression()
     {
         var text = await expressionEditor.GetValue();
+        await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", text);
+    }
+
+    private async Task CopyFunctions()
+    {
+        var text = await functionsEditor.GetValue();
         await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", text);
     }
 
@@ -423,7 +517,7 @@
     [JSInvokable]
     public async Task OnEvaluateShortcut()
     {
-        await EvaluateAsync();
+        await CompileAndEvaluateAsync();
     }
 
     [JSInvokable]
@@ -438,11 +532,122 @@
         }
     }
 
+    // ── Functions compilation ──
+
+    private async Task CompileFunctionsAsync()
+    {
+        isCompiling = true;
+        StateHasChanged();
+
+        try
+        {
+            var code = await functionsEditor.GetValue();
+
+            if (string.IsNullOrWhiteSpace(code) || IsPlaceholderOnly(code))
+            {
+                activeCustomFunctions = null;
+                functionsError = null;
+                await ClearFunctionsMarkers();
+                return;
+            }
+
+            var result = await FunctionsCompiler.CompileAsync(code);
+
+            if (result.Success)
+            {
+                activeCustomFunctions = result.Functions;
+                functionsError = null;
+                await ClearFunctionsMarkers();
+            }
+            else
+            {
+                activeCustomFunctions = null;
+                functionsError = result.ErrorMessage;
+
+                // Set Monaco markers on the functions editor
+                await SetFunctionsMarkers(result.Diagnostics);
+
+                // Clear stale expression/data markers since we won't evaluate
+                await ClearExpressionMarkers();
+                await ClearDataMarkers();
+
+                // Show functions errors in the Result panel
+                lastResult = new EvaluationResult
+                {
+                    Success = false,
+                    ErrorMessage = $"Functions compilation error:\n{result.ErrorMessage}",
+                    ElapsedMs = 0,
+                };
+
+                if (outputEditor is not null)
+                {
+                    await outputEditor.SetValue("");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            activeCustomFunctions = null;
+            functionsError = ex.Message;
+
+            lastResult = new EvaluationResult
+            {
+                Success = false,
+                ErrorMessage = $"Functions compilation error:\n{ex.Message}",
+                ElapsedMs = 0,
+            };
+
+            if (outputEditor is not null)
+            {
+                await outputEditor.SetValue("");
+            }
+        }
+        finally
+        {
+            isCompiling = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task CompileAndEvaluateAsync()
+    {
+        await CompileFunctionsAsync();
+
+        // Only evaluate if functions compiled successfully (or are empty)
+        if (functionsError is null)
+        {
+            await EvaluateAsync();
+        }
+    }
+
+    private static bool IsPlaceholderOnly(string code)
+    {
+        foreach (var line in code.Split('\n'))
+        {
+            var trimmed = line.Trim();
+            if (trimmed.Length == 0 || trimmed.StartsWith("//"))
+            {
+                continue;
+            }
+
+            // Just braces with nothing inside
+            if (trimmed is "{" or "}")
+            {
+                continue;
+            }
+
+            return false;
+        }
+
+        return true;
+    }
+
     // ── Evaluation ──
 
     private async Task EvaluateAsync()
     {
-        if (isEvaluating)
+        // Don't evaluate while functions have compilation errors
+        if (functionsError is not null || isEvaluating)
         {
             return;
         }
@@ -455,7 +660,7 @@
             var data = await dataEditor.GetValue();
             var expression = await expressionEditor.GetValue();
 
-            lastResult = await EvalService.EvaluateAsync(expression, data);
+            lastResult = await EvalService.EvaluateAsync(expression, data, activeCustomFunctions);
 
             if (lastResult.Success)
             {
@@ -518,6 +723,21 @@
         }, token, TaskContinuationOptions.OnlyOnRanToCompletion, TaskScheduler.Current);
     }
 
+    private void DebounceCompileFunctions()
+    {
+        functionsDebounce?.Cancel();
+        functionsDebounce = new CancellationTokenSource();
+        var token = functionsDebounce.Token;
+
+        _ = Task.Delay(800, token).ContinueWith(async _ =>
+        {
+            if (!token.IsCancellationRequested)
+            {
+                await InvokeAsync(CompileAndEvaluateAsync);
+            }
+        }, token, TaskContinuationOptions.OnlyOnRanToCompletion, TaskScheduler.Current);
+    }
+
     private void DebounceSave()
     {
         saveDebounce?.Cancel();
@@ -539,8 +759,10 @@
         {
             var data = await dataEditor.GetValue();
             var expr = await expressionEditor.GetValue();
+            var functions = await functionsEditor.GetValue();
             await SetLocalStorage(DataStorageKey, data);
             await SetLocalStorage(ExpressionStorageKey, expr);
+            await SetLocalStorage(FunctionsStorageKey, functions);
         }
         catch
         {
@@ -615,6 +837,7 @@
         {
             await JSRuntime.InvokeVoidAsync("localStorage.removeItem", DataStorageKey);
             await JSRuntime.InvokeVoidAsync("localStorage.removeItem", ExpressionStorageKey);
+            await JSRuntime.InvokeVoidAsync("localStorage.removeItem", FunctionsStorageKey);
         }
         catch
         {
@@ -640,6 +863,45 @@
     }
 
     // ── Monaco editor markers ──
+
+    private async Task SetFunctionsMarkers(List<FunctionsDiagnostic>? diagnostics)
+    {
+        var model = await functionsEditor.GetModel();
+        if (model is null)
+        {
+            return;
+        }
+
+        if (diagnostics is null || diagnostics.Count == 0)
+        {
+            await BlazorMonaco.Editor.Global.SetModelMarkers(
+                JSRuntime, model, "functions-errors", []);
+            return;
+        }
+
+        var markers = diagnostics.Select(d => new MarkerData
+        {
+            Message = d.Message,
+            Severity = d.IsError ? MarkerSeverity.Error : MarkerSeverity.Warning,
+            StartLineNumber = d.StartLine,
+            StartColumn = d.StartColumn,
+            EndLineNumber = d.EndLine,
+            EndColumn = d.EndColumn,
+        }).ToList();
+
+        await BlazorMonaco.Editor.Global.SetModelMarkers(
+            JSRuntime, model, "functions-errors", markers);
+    }
+
+    private async Task ClearFunctionsMarkers()
+    {
+        var model = await functionsEditor.GetModel();
+        if (model is not null)
+        {
+            await BlazorMonaco.Editor.Global.SetModelMarkers(
+                JSRuntime, model, "functions-errors", []);
+        }
+    }
 
     private async Task SetDataMarkers(EvaluationResult result)
     {
@@ -678,8 +940,9 @@
 
     private async Task ClearAllMarkers()
     {
-        await ClearDataMarkers();
+        await ClearFunctionsMarkers();
         await ClearExpressionMarkers();
+        await ClearDataMarkers();
     }
 
     private async Task SetExpressionMarkers(EvaluationResult result)
@@ -723,6 +986,8 @@
     {
         evaluateDebounce?.Cancel();
         evaluateDebounce?.Dispose();
+        functionsDebounce?.Cancel();
+        functionsDebounce?.Dispose();
         saveDebounce?.Cancel();
         saveDebounce?.Dispose();
         dotNetRef?.Dispose();
