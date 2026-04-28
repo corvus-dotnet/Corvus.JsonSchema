@@ -40,9 +40,37 @@ $SkipPublish = $true
 $SolutionToBuild = (Resolve-Path (Join-Path $here ".\Corvus.Text.Json.slnx")).Path
 $ProjectsToPublish = @()
 $NugetPublishSource = property ZF_NUGET_PUBLISH_SOURCE "$here/_local-nuget-feed"
-$IncludeAssembliesInCodeCoverage = @("Corvus*")
-$ExcludeAssembliesInCodeCoverage = @("Corvus*.Tests")
-$ExcludeFilesInCodeCoverage = @('*.g.cs', '*.designer.cs')
+$IncludeAssembliesInCodeCoverage = @(
+    'Corvus.Json.CodeGeneration'
+    'Corvus.Json.CodeGeneration.4'
+    'Corvus.Json.CodeGeneration.6'
+    'Corvus.Json.CodeGeneration.7'
+    'Corvus.Json.CodeGeneration.201909'
+    'Corvus.Json.CodeGeneration.202012'
+    'Corvus.Json.CodeGeneration.CorvusVocabulary'
+    'Corvus.Json.CodeGeneration.CSharp'
+    'Corvus.Json.CodeGeneration.CSharp.QuickStart'
+    'Corvus.Json.CodeGeneration.HttpClientDocumentResolver'
+    'Corvus.Json.CodeGeneration.OpenApi30'
+    'Corvus.Json.CodeGeneration.OpenApi31'
+    'Corvus.Json.CodeGeneration.YamlPreProcessor'
+    'Corvus.Json.ExtendedTypes'
+    'Corvus.Json.JsonReference'
+    'Corvus.Json.JsonSchema.Draft4'
+    'Corvus.Json.JsonSchema.Draft6'
+    'Corvus.Json.JsonSchema.Draft7'
+    'Corvus.Json.JsonSchema.Draft201909'
+    'Corvus.Json.JsonSchema.Draft202012'
+    'Corvus.Json.JsonSchema.OpenApi30'
+    'Corvus.Json.JsonSchema.OpenApi31'
+    'Corvus.Json.Patch'
+    'Corvus.Json.SourceGenerator'
+    'Corvus.Json.SourceGeneratorTools'
+    'Corvus.Json.SourceGeneratorTools.ForLanguageProvider'
+    'Corvus.Json.Validator'
+)
+$ExcludeAssembliesInCodeCoverage = @()
+$ExcludeFilesInCodeCoverage = @('*.g.cs')
 
 # When running GHA honour the TFM that the matrix build passes via an environment variable
 $TargetFrameworkMoniker = property BUILDVAR_TargetFrameworkMoniker ''
@@ -147,5 +175,3 @@ task BuildWebsite -If { $BuildWebsite } {
 
     exec { & pwsh -File (Join-Path $websiteDir "build.ps1") @websiteBuildArgs }
 }
-
-$TargetFrameworkMoniker = 'net10.0'
