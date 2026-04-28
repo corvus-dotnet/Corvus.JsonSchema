@@ -61,8 +61,55 @@ jobs:
           GH_TOKEN: "${{ secrets.ENDJIN_PACKAGES_TOKEN }}"
         secretsEncryptionKey: ${{ secrets.SHARED_WORKFLOW_KEY }}
 
+  setCachePathsConfig:
+    name: Set Cache Paths
+    runs-on: ubuntu-latest
+    env:
+      BASE_CACHE_PATHS: |
+        .nuget-packages
+        Solutions
+        solutions
+      # The reusable workflow has the above paths built-in so we don't need to pass them
+      ADDITIONAL_CACHE_PATHS: |
+        JSON-Schema-Test-Suite
+        JMESPath-Test-Suite
+        Jsonata-Test-Suite
+        yaml-test-suite
+        tests/json-patch-tests
+        jsonpath-compliance-test-suite
+        docs/website/.endjin
+        docs/website/.output
+        **/bin
+        **/obj
+        .zf
+    outputs:
+      # This is consumed by the reusable workflow
+      additionalCachePaths: ${{ steps.additionalCachePaths.outputs.additionalCachePaths }}
+      # This is consumed by other jobs that need to restore the cache
+      allCachePaths: ${{ steps.allCachePaths.outputs.allCachePaths }}
+    steps:
+      - id: additionalCachePaths
+        name: Store Additional Cache Paths
+        run: |
+          {
+            echo "additionalCachePaths<<EOF"
+            echo "$ADDITIONAL_CACHE_PATHS"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+      - id: allCachePaths
+        name: Store All Cache Paths
+        run: |
+          {
+            echo "allCachePaths<<EOF"
+            echo "$BASE_CACHE_PATHS"
+            echo "$ADDITIONAL_CACHE_PATHS"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
   build:
-    needs: prepareConfig
+    needs:
+      - prepareConfig
+      - setCachePathsConfig
     uses: endjin/Endjin.RecommendedPractices.GitHubActions/.github/workflows/scripted-build-matrix-pipeline.yml@main
     with:
       testPhaseMatrixJson: |
@@ -89,18 +136,7 @@ jobs:
       testPhaseEnv: ${{ needs.prepareConfig.outputs.RESOLVED_ENV_VARS }}
       packagePhaseEnv: ${{ needs.prepareConfig.outputs.RESOLVED_ENV_VARS }}
       publishPhaseEnv: ${{ needs.prepareConfig.outputs.RESOLVED_ENV_VARS }}
-      additionalCachePaths: |
-        JSON-Schema-Test-Suite
-        JMESPath-Test-Suite
-        Jsonata-Test-Suite
-        yaml-test-suite
-        tests/json-patch-tests
-        jsonpath-compliance-test-suite
-        docs/website/.endjin
-        docs/website/.output
-        **/bin
-        **/obj
-        .zf
+      additionalCachePaths: ${{ needs.setCachePathsConfig.outputs.additionalCachePaths }}
     secrets:
       compilePhaseAzureCredentials: ${{ secrets.AZURE_READER_CREDENTIALS }}
       compilePhaseSecrets: ${{ needs.prepareConfig.outputs.RESOLVED_SECRETS }}
@@ -114,7 +150,9 @@ jobs:
 
   deploy-docs:
     name: Deploy Documentation
-    needs: build
+    needs:
+      - build
+      - setCachePathsConfig
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     environment:
@@ -127,21 +165,7 @@ jobs:
       - name: Restore compile cache
         uses: actions/cache/restore@668228422ae6a00e4ad889ee87cd7109ec5666a7  # v5.0.4
         with:
-          path: |
-            .nuget-packages
-            Solutions
-            solutions
-            JSON-Schema-Test-Suite
-            JMESPath-Test-Suite
-            Jsonata-Test-Suite
-            yaml-test-suite
-            tests/json-patch-tests
-            jsonpath-compliance-test-suite
-            docs/website/.endjin
-            docs/website/.output
-            **/bin
-            **/obj
-            .zf
+          path: ${{ needs.setCachePathsConfig.outputs.allCachePaths }}
           key: build-state-${{ github.run_id }}-compile
           enableCrossOsArchive: true
 
@@ -154,7 +178,9 @@ jobs:
 
   deploy-preview:
     name: Deploy PR Preview
-    needs: build
+    needs:
+      - build
+      - setCachePathsConfig
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     concurrency: preview-${{ github.event.pull_request.number }}
@@ -165,21 +191,7 @@ jobs:
       - name: Restore compile cache
         uses: actions/cache/restore@668228422ae6a00e4ad889ee87cd7109ec5666a7  # v5.0.4
         with:
-          path: |
-            .nuget-packages
-            Solutions
-            solutions
-            JSON-Schema-Test-Suite
-            JMESPath-Test-Suite
-            Jsonata-Test-Suite
-            yaml-test-suite
-            tests/json-patch-tests
-            jsonpath-compliance-test-suite
-            docs/website/.endjin
-            docs/website/.output
-            **/bin
-            **/obj
-            .zf
+          path: ${{ needs.setCachePathsConfig.outputs.allCachePaths }}
           key: build-state-${{ github.run_id }}-compile
           enableCrossOsArchive: true
 
