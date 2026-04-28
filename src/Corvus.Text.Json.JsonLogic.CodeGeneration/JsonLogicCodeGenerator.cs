@@ -339,6 +339,27 @@ public static class JsonLogicCodeGenerator
             }
         }
 
+        /// <summary>
+        /// Restores both <see cref="_varCache"/> and <see cref="_deferredDoubleVars"/>
+        /// to a previously-saved snapshot. Used after short-circuit blocks (and/or)
+        /// and if-chain branches so that cached variable names from skipped or
+        /// branch-scoped evaluations don't leak to subsequent code.
+        /// </summary>
+        private void RestoreCache(Dictionary<string, string> savedCache, HashSet<string> savedDeferred)
+        {
+            _varCache.Clear();
+            foreach (KeyValuePair<string, string> kvp in savedCache)
+            {
+                _varCache[kvp.Key] = kvp.Value;
+            }
+
+            _deferredDoubleVars.Clear();
+            foreach (string v in savedDeferred)
+            {
+                _deferredDoubleVars.Add(v);
+            }
+        }
+
         private static bool IsArithmeticOp(STJ.JsonElement rule)
         {
             if (rule.ValueKind != STJ.JsonValueKind.Object)
@@ -1535,35 +1556,32 @@ public static class JsonLogicCodeGenerator
         private void EmitMinMaxSlow(StringBuilder sb, string[] opVars, string result, bool isMin, string indent)
         {
             string cmpOp = isMin ? "<" : ">";
-            L(sb, indent, "do");
-            L(sb, indent, "{");
             string bestVar = result + "_best";
-            L(sb, indent + "    ", $"if (!JsonLogicHelpers.TryCoerceToNumber({opVars[0]}, workspace, out JsonElement {bestVar}))");
-            L(sb, indent + "    ", "{");
-            L(sb, indent + "        ", $"{result} = JsonLogicHelpers.NullElement();");
-            L(sb, indent + "        ", "break;");
-            L(sb, indent + "    ", "}");
+            L(sb, indent, $"if (!JsonLogicHelpers.TryCoerceToNumber({opVars[0]}, workspace, out JsonElement {bestVar}))");
+            L(sb, indent, "{");
+            L(sb, indent + "    ", $"{result} = JsonLogicHelpers.NullElement();");
+            L(sb, indent + "    ", $"goto {result}_mm;");
+            L(sb, indent, "}");
             Blank(sb);
 
             for (int i = 1; i < opVars.Length; i++)
             {
                 string candVar = $"{result}_c{i}";
-                L(sb, indent + "    ", $"if (!JsonLogicHelpers.TryCoerceToNumber({opVars[i]}, workspace, out JsonElement {candVar}))");
-                L(sb, indent + "    ", "{");
-                L(sb, indent + "        ", $"{result} = JsonLogicHelpers.NullElement();");
-                L(sb, indent + "        ", "break;");
-                L(sb, indent + "    ", "}");
+                L(sb, indent, $"if (!JsonLogicHelpers.TryCoerceToNumber({opVars[i]}, workspace, out JsonElement {candVar}))");
+                L(sb, indent, "{");
+                L(sb, indent + "    ", $"{result} = JsonLogicHelpers.NullElement();");
+                L(sb, indent + "    ", $"goto {result}_mm;");
+                L(sb, indent, "}");
                 Blank(sb);
-                L(sb, indent + "    ", $"if (JsonLogicHelpers.CompareNumbers({candVar}, {bestVar}) {cmpOp} 0)");
-                L(sb, indent + "    ", "{");
-                L(sb, indent + "        ", $"{bestVar} = {candVar};");
-                L(sb, indent + "    ", "}");
+                L(sb, indent, $"if (JsonLogicHelpers.CompareNumbers({candVar}, {bestVar}) {cmpOp} 0)");
+                L(sb, indent, "{");
+                L(sb, indent + "    ", $"{bestVar} = {candVar};");
+                L(sb, indent, "}");
                 Blank(sb);
             }
 
-            L(sb, indent + "    ", $"{result} = {bestVar};");
-            L(sb, indent, "}");
-            L(sb, indent, "while (false);");
+            L(sb, indent, $"{result} = {bestVar};");
+            L(sb, indent, $"{result}_mm:;");
         }
 
         // ─── COMPARISON ─────────────────────────────────────────
@@ -1750,44 +1768,39 @@ public static class JsonLogicCodeGenerator
                 return v;
             }
 
-            // Save var cache — the do-block creates a new C# scope, so variables
-            // declared inside must not leak into the cache for outer code.
+            // Save emitter state — short-circuit gotos skip subsequent operand
+            // evaluations, so cached variable names from skipped operands would
+            // reference variables that are not definitely assigned.
             Dictionary<string, string> savedCache = new(_varCache);
+            HashSet<string> savedDeferred = new(_deferredDoubleVars);
 
             string result = NextVar();
             L(sb, indent, $"JsonElement {result};");
-            L(sb, indent, "do");
-            L(sb, indent, "{");
 
             for (int i = 0; i < operands.Length; i++)
             {
-                string opVar = EmitExpression(sb, operands[i], indent + "    ", dataVar);
-                MaterializeIfDeferred(sb, opVar, indent + "    ");
+                string opVar = EmitExpression(sb, operands[i], indent, dataVar);
+                MaterializeIfDeferred(sb, opVar, indent);
                 if (i < operands.Length - 1)
                 {
-                    L(sb, indent + "    ", $"if (!JsonLogicHelpers.IsTruthy({opVar}))");
-                    L(sb, indent + "    ", "{");
-                    L(sb, indent + "        ", $"{result} = {opVar};");
-                    L(sb, indent + "        ", "break;");
-                    L(sb, indent + "    ", "}");
+                    L(sb, indent, $"if (!JsonLogicHelpers.IsTruthy({opVar}))");
+                    L(sb, indent, "{");
+                    L(sb, indent + "    ", $"{result} = {opVar};");
+                    L(sb, indent + "    ", $"goto {result}_done;");
+                    L(sb, indent, "}");
                     Blank(sb);
                 }
                 else
                 {
-                    L(sb, indent + "    ", $"{result} = {opVar};");
+                    L(sb, indent, $"{result} = {opVar};");
                 }
             }
 
-            L(sb, indent, "}");
-            L(sb, indent, "while (false);");
+            L(sb, indent, $"{result}_done:;");
             Blank(sb);
 
-            // Restore original cache
-            _varCache.Clear();
-            foreach (KeyValuePair<string, string> kvp in savedCache)
-            {
-                _varCache[kvp.Key] = kvp.Value;
-            }
+            // Restore emitter state
+            RestoreCache(savedCache, savedDeferred);
 
             return result;
         }
@@ -1801,44 +1814,39 @@ public static class JsonLogicCodeGenerator
                 return v;
             }
 
-            // Save var cache — the do-block creates a new C# scope, so variables
-            // declared inside must not leak into the cache for outer code.
+            // Save emitter state — short-circuit gotos skip subsequent operand
+            // evaluations, so cached variable names from skipped operands would
+            // reference variables that are not definitely assigned.
             Dictionary<string, string> savedCache = new(_varCache);
+            HashSet<string> savedDeferred = new(_deferredDoubleVars);
 
             string result = NextVar();
             L(sb, indent, $"JsonElement {result};");
-            L(sb, indent, "do");
-            L(sb, indent, "{");
 
             for (int i = 0; i < operands.Length; i++)
             {
-                string opVar = EmitExpression(sb, operands[i], indent + "    ", dataVar);
-                MaterializeIfDeferred(sb, opVar, indent + "    ");
+                string opVar = EmitExpression(sb, operands[i], indent, dataVar);
+                MaterializeIfDeferred(sb, opVar, indent);
                 if (i < operands.Length - 1)
                 {
-                    L(sb, indent + "    ", $"if (JsonLogicHelpers.IsTruthy({opVar}))");
-                    L(sb, indent + "    ", "{");
-                    L(sb, indent + "        ", $"{result} = {opVar};");
-                    L(sb, indent + "        ", "break;");
-                    L(sb, indent + "    ", "}");
+                    L(sb, indent, $"if (JsonLogicHelpers.IsTruthy({opVar}))");
+                    L(sb, indent, "{");
+                    L(sb, indent + "    ", $"{result} = {opVar};");
+                    L(sb, indent + "    ", $"goto {result}_done;");
+                    L(sb, indent, "}");
                     Blank(sb);
                 }
                 else
                 {
-                    L(sb, indent + "    ", $"{result} = {opVar};");
+                    L(sb, indent, $"{result} = {opVar};");
                 }
             }
 
-            L(sb, indent, "}");
-            L(sb, indent, "while (false);");
+            L(sb, indent, $"{result}_done:;");
             Blank(sb);
 
-            // Restore original cache
-            _varCache.Clear();
-            foreach (KeyValuePair<string, string> kvp in savedCache)
-            {
-                _varCache[kvp.Key] = kvp.Value;
-            }
+            // Restore emitter state
+            RestoreCache(savedCache, savedDeferred);
 
             return result;
         }
@@ -1878,58 +1886,52 @@ public static class JsonLogicCodeGenerator
                 return nv;
             }
 
-            // Standard flat if chain using do-while(false)/break pattern
-            // (conditions may emit statements, so we can't use else-if syntax)
+            // Standard flat if chain using goto for early exit.
+            // Conditions may emit multi-statement code (e.g., EmitAnd), so we
+            // can't use else-if syntax; instead each pair is:
+            //   <emit condition>
+            //   if (IsTruthy(cond)) { <emit then>; result = then; goto done; }
             string result = NextVar();
             L(sb, indent, $"JsonElement {result};");
-            L(sb, indent, "do");
-            L(sb, indent, "{");
 
             // Save var cache state — each branch is a separate scope
             Dictionary<string, string> savedCache = new(_varCache);
+            HashSet<string> savedDeferred = new(_deferredDoubleVars);
 
             for (int i = 0; i < pairs.Count; i++)
             {
-                string condVar = EmitExpression(sb, pairs[i].cond, indent + "    ", dataVar);
-                MaterializeIfDeferred(sb, condVar, indent + "    ");
-                L(sb, indent + "    ", $"if (JsonLogicHelpers.IsTruthy({condVar}))");
-                L(sb, indent + "    ", "{");
+                string condVar = EmitExpression(sb, pairs[i].cond, indent, dataVar);
+                MaterializeIfDeferred(sb, condVar, indent);
+                L(sb, indent, $"if (JsonLogicHelpers.IsTruthy({condVar}))");
+                L(sb, indent, "{");
 
                 Dictionary<string, string> branchSave = new(_varCache);
-                string thenVar = EmitExpression(sb, pairs[i].then, indent + "        ", dataVar);
-                MaterializeIfDeferred(sb, thenVar, indent + "        ");
-                _varCache.Clear();
-                foreach (KeyValuePair<string, string> kvp in branchSave)
-                {
-                    _varCache[kvp.Key] = kvp.Value;
-                }
+                HashSet<string> branchDeferredSave = new(_deferredDoubleVars);
+                string thenVar = EmitExpression(sb, pairs[i].then, indent + "    ", dataVar);
+                MaterializeIfDeferred(sb, thenVar, indent + "    ");
+                RestoreCache(branchSave, branchDeferredSave);
 
-                L(sb, indent + "        ", $"{result} = {thenVar};");
-                L(sb, indent + "        ", "break;");
-                L(sb, indent + "    ", "}");
+                L(sb, indent + "    ", $"{result} = {thenVar};");
+                L(sb, indent + "    ", $"goto {result}_done;");
+                L(sb, indent, "}");
                 Blank(sb);
             }
 
             if (elseExpr is not null)
             {
-                string elseVar = EmitExpression(sb, elseExpr.Value, indent + "    ", dataVar);
-                MaterializeIfDeferred(sb, elseVar, indent + "    ");
-                L(sb, indent + "    ", $"{result} = {elseVar};");
+                string elseVar = EmitExpression(sb, elseExpr.Value, indent, dataVar);
+                MaterializeIfDeferred(sb, elseVar, indent);
+                L(sb, indent, $"{result} = {elseVar};");
             }
             else
             {
-                L(sb, indent + "    ", $"{result} = JsonLogicHelpers.NullElement();");
+                L(sb, indent, $"{result} = JsonLogicHelpers.NullElement();");
             }
 
             // Restore original cache
-            _varCache.Clear();
-            foreach (KeyValuePair<string, string> kvp in savedCache)
-            {
-                _varCache[kvp.Key] = kvp.Value;
-            }
+            RestoreCache(savedCache, savedDeferred);
 
-            L(sb, indent, "}");
-            L(sb, indent, "while (false);");
+            L(sb, indent, $"{result}_done:;");
             Blank(sb);
             return result;
         }

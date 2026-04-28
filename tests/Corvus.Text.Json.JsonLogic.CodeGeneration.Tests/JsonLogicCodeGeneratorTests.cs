@@ -103,8 +103,11 @@ public class JsonLogicCodeGeneratorTests
     [Fact]
     public void Generate_AndInIf_SharedVarDoesNotLeakScope()
     {
-        // Regression: var "total" inside and's do-block leaked into _varCache,
-        // causing consequent/else branches to reference an out-of-scope variable (CS0103).
+        // Regression: var "total" inside and's short-circuit block leaked into
+        // _varCache, causing consequent/else branches to reference a variable
+        // that might not be definitely assigned. The fix uses goto-based short-
+        // circuit (no do/while scope) plus cache save/restore so each context
+        // allocates its own variable for the same var path.
         string result = JsonLogicCodeGenerator.Generate(
             """
             {"if":[
@@ -123,11 +126,12 @@ public class JsonLogicCodeGeneratorTests
 
         Assert.Contains("class AndScopeLeakRule", result);
 
-        // The generated code must compile. If var cache leaked, "total" references
-        // outside the and's do-block would use an out-of-scope variable name.
-        // We verify by checking that each branch declares its own variable for "total".
-        // Count the number of TryGetProperty calls for "total" — there should be more
-        // than one, since each scope must re-declare.
+        // Verify goto-based short-circuit (no do/while(false))
+        Assert.DoesNotContain("while (false)", result);
+        Assert.Contains("goto", result);
+
+        // Each context must declare its own variable for "total" because the
+        // cache is restored after the and block and after each if-branch.
         int totalLookups = CountOccurrences(result, "\"total\"u8");
         Assert.True(totalLookups > 1, $"Expected multiple 'total' lookups across scopes, got {totalLookups}");
     }
@@ -135,7 +139,7 @@ public class JsonLogicCodeGeneratorTests
     [Fact]
     public void Generate_OrInIf_SharedVarDoesNotLeakScope()
     {
-        // Same regression as and, but for or's do-block.
+        // Same regression as and, but for or's short-circuit block.
         string result = JsonLogicCodeGenerator.Generate(
             """
             {"if":[
@@ -151,6 +155,10 @@ public class JsonLogicCodeGeneratorTests
             "Test.Generated");
 
         Assert.Contains("class OrScopeLeakRule", result);
+
+        // Verify goto-based short-circuit (no do/while(false))
+        Assert.DoesNotContain("while (false)", result);
+        Assert.Contains("goto", result);
 
         int roleLookups = CountOccurrences(result, "\"role\"u8");
         Assert.True(roleLookups > 1, $"Expected multiple 'role' lookups across scopes, got {roleLookups}");
