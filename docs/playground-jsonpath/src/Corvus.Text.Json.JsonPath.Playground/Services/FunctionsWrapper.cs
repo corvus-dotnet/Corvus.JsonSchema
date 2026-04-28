@@ -27,12 +27,6 @@ internal static class FunctionsWrapper
         """
         public static class FunctionsFactory
         {
-            // ── Result helpers (workspace-aware) ──
-            public static JsonElement Value(double v, JsonWorkspace workspace) => JsonPathCodeGenHelpers.DoubleToElement(v, workspace);
-            public static JsonElement Value(int v, JsonWorkspace workspace) => JsonPathCodeGenHelpers.IntToElement(v, workspace);
-            public static JsonElement Value(string v) => JsonElement.ParseValue(System.Text.Encoding.UTF8.GetBytes("\"" + v.Replace("\\", "\\\\").Replace("\"", "\\\"") + "\""));
-            public static JsonElement Value(bool v) => v ? JsonElement.ParseValue("true"u8) : JsonElement.ParseValue("false"u8);
-
             public static Dictionary<string, IJsonPathFunction> Create()
             {
                 return new Dictionary<string, IJsonPathFunction>

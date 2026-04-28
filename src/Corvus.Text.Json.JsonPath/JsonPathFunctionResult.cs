@@ -11,7 +11,7 @@ namespace Corvus.Text.Json.JsonPath;
 /// Use the static factory methods to create results matching the function's
 /// declared <see cref="IJsonPathFunction.ReturnType"/>:
 /// <list type="bullet">
-/// <item><see cref="FromValue"/> — for <see cref="JsonPathFunctionType.ValueType"/> returns.</item>
+/// <item><see cref="FromValue(JsonElement)"/> — for <see cref="JsonPathFunctionType.ValueType"/> returns.</item>
 /// <item><see cref="FromLogical"/> — for <see cref="JsonPathFunctionType.LogicalType"/> returns.</item>
 /// <item><see cref="Nothing"/> — when the function produces no meaningful result
 /// (e.g. type mismatch on an argument).</item>
@@ -42,6 +42,40 @@ public readonly struct JsonPathFunctionResult
     /// <returns>A value result.</returns>
     public static JsonPathFunctionResult FromValue(JsonElement value)
         => new(JsonPathFunctionResultKind.Value, value, false);
+
+    /// <summary>
+    /// Creates a <see cref="JsonPathFunctionType.ValueType"/> result from an integer.
+    /// </summary>
+    /// <param name="value">The integer value to return.</param>
+    /// <param name="workspace">The workspace for intermediate element allocation.</param>
+    /// <returns>A value result.</returns>
+    public static JsonPathFunctionResult FromValue(int value, JsonWorkspace workspace)
+        => new(JsonPathFunctionResultKind.Value, JsonPathCodeGenHelpers.IntToElement(value, workspace), false);
+
+    /// <summary>
+    /// Creates a <see cref="JsonPathFunctionType.ValueType"/> result from a double.
+    /// </summary>
+    /// <param name="value">The numeric value to return.</param>
+    /// <param name="workspace">The workspace for intermediate element allocation.</param>
+    /// <returns>A value result.</returns>
+    public static JsonPathFunctionResult FromValue(double value, JsonWorkspace workspace)
+        => new(JsonPathFunctionResultKind.Value, JsonPathCodeGenHelpers.DoubleToElement(value, workspace), false);
+
+    /// <summary>
+    /// Creates a <see cref="JsonPathFunctionType.ValueType"/> result from a string.
+    /// </summary>
+    /// <param name="value">The string value to return.</param>
+    /// <returns>A value result.</returns>
+    public static JsonPathFunctionResult FromValue(string value)
+        => new(JsonPathFunctionResultKind.Value, JsonPathCodeGenHelpers.StringToElement(value), false);
+
+    /// <summary>
+    /// Creates a <see cref="JsonPathFunctionType.ValueType"/> result from a boolean.
+    /// </summary>
+    /// <param name="value">The boolean value to return.</param>
+    /// <returns>A value result wrapping the JSON <c>true</c> or <c>false</c> element.</returns>
+    public static JsonPathFunctionResult FromValueBool(bool value)
+        => new(JsonPathFunctionResultKind.Value, value ? JsonPathCodeGenHelpers.TrueElement : JsonPathCodeGenHelpers.FalseElement, false);
 
     /// <summary>
     /// Creates a <see cref="JsonPathFunctionType.LogicalType"/> result.

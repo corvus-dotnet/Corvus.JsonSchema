@@ -408,6 +408,17 @@ public static class JsonPathCodeGenHelpers
     }
 
     /// <summary>
+    /// Converts a string to a <see cref="JsonElement"/> string.
+    /// </summary>
+    /// <param name="value">The string value.</param>
+    /// <returns>A JSON string element.</returns>
+    public static JsonElement StringToElement(string value)
+    {
+        return JsonElement.ParseValue(
+            Encoding.UTF8.GetBytes("\"" + value.Replace("\\", "\\\\").Replace("\"", "\\\"") + "\""));
+    }
+
+    /// <summary>
     /// Translates an I-Regexp (RFC 9485) pattern to a .NET regular expression pattern.
     /// </summary>
     /// <param name="pattern">The I-Regexp pattern.</param>

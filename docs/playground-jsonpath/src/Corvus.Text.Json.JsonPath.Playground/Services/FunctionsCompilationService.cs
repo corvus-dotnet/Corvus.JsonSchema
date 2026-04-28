@@ -31,7 +31,7 @@ public class FunctionsCompilationService
     /// The dictionary initializer body, e.g.:
     /// <code>
     /// {
-    ///     ["ceil"] = JsonPathFunction.Value((v, ws) =&gt; Value((int)Math.Ceiling(v.GetDouble()), ws)),
+    ///     ["ceil"] = JsonPathFunction.Value((v, ws) =&gt; JsonPathFunctionResult.FromValue((int)Math.Ceiling(v.GetDouble()), ws)),
     /// }
     /// </code>
     /// </param>

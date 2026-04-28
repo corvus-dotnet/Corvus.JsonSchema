@@ -25,7 +25,7 @@ public delegate JsonPathFunctionResult JsonPathFunctionEvaluator(
 /// var evaluator = new JsonPathEvaluator(new Dictionary&lt;string, IJsonPathFunction&gt;
 /// {
 ///     ["ceil"] = JsonPathFunction.Value((v, ws) =&gt;
-///         JsonPathCodeGenHelpers.IntToElement((int)Math.Ceiling(v.GetDouble()), ws)),
+///         JsonPathFunctionResult.FromValue((int)Math.Ceiling(v.GetDouble()), ws)),
 ///     ["is_fiction"] = JsonPathFunction.Logical(v =&gt;
 ///         v.ValueKind == JsonValueKind.String &amp;&amp; v.ValueEquals("fiction"u8)),
 /// });
