@@ -4,6 +4,16 @@
 
 @use '../abstracts/mixins' as *;
 
+// ---- Feather/wing background (homepage only) ----
+
+body.page-home {
+  background-image: url('/assets/images/bg-feathers.avif');
+  background-position: center center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-attachment: fixed;
+}
+
 // ---- Feature grid section ----
 
 .home-features {

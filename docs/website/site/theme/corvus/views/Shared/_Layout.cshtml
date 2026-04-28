@@ -60,7 +60,7 @@
     <link rel="icon" type="image/svg+xml" href="/assets/images/favicon.svg" />
     @RenderSection("head", required: false)
 </head>
-<body>
+<body@(ViewBag.BodyClass != null ? Html.Raw($" class=\"{ViewBag.BodyClass}\"") : Html.Raw(""))>
     @await Html.PartialAsync("Header").ConfigureAwait(false)
     <div class="page-content">
     @RenderBody()
