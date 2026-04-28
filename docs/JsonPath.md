@@ -86,16 +86,13 @@ using Corvus.Text.Json;
 using Corvus.Text.Json.JsonPath;
 
 // Parse the input data (using statement ensures pooled memory is returned)
-using var dataDoc = ParsedJsonDocument<JsonElement>.Parse("""
-    {"store":{"book":[{"title":"A","price":10},{"title":"B","price":5}]}}
-    """u8);
+using var dataDoc = ParsedJsonDocument<JsonElement>.Parse(
+    """{"store":{"book":[{"title":"A","price":10},{"title":"B","price":5}]}}""");
 
-// Evaluate with a stack-allocated result buffer — zero heap allocation
-Span<JsonElement> buf = stackalloc JsonElement[16];
+// Evaluate — internally pools the result buffer
 using JsonPathResult result = JsonPathEvaluator.Default.QueryNodes(
     "$.store.book[?@.price < 10].title",
-    dataDoc.RootElement,
-    buf);
+    dataDoc.RootElement);
 
 // Access matched nodes directly
 foreach (JsonElement node in result.Nodes)
@@ -104,7 +101,7 @@ foreach (JsonElement node in result.Nodes)
 }
 ```
 
-The `QueryNodes` overload accepts a caller-provided `Span<JsonElement>` buffer (typically stack-allocated). If all result nodes fit in the buffer, **zero heap allocation** occurs. Overflow is handled transparently via `ArrayPool<JsonElement>`.
+`QueryNodes` manages its own buffer internally via `ArrayPool<JsonElement>`. The result is a `ref struct` — always use a `using` statement. For the rare case where you want to supply your own buffer (e.g. to avoid even the pool rent on a very hot path), see [Use `QueryNodes` with a rented buffer](#use-querynodes-for-performance-sensitive-code).
 
 ## Evaluation modes
 

@@ -60,6 +60,8 @@
   <!-- Link the JsonPath code generation engine -->
   <ItemGroup>
     <Compile Include="$(CorvusTextJsonJsonPathCodeGenPath)JsonPathCodeGenerator.cs" LinkBase="CodeGeneration" />
+    <Compile Include="$(CorvusTextJsonJsonPathCodeGenPath)CustomFunction.cs" LinkBase="CodeGeneration" />
+    <Compile Include="$(CorvusTextJsonJsonPathCodeGenPath)JpfnParser.cs" LinkBase="CodeGeneration" />
   </ItemGroup>
   <!-- Link the JsonPath parser, lexer, and AST (no external dependencies) -->
   <ItemGroup>
@@ -69,6 +71,8 @@
     <Compile Include="$(CorvusTextJsonJsonPathPath)TokenType.cs" LinkBase="JsonPath" />
     <Compile Include="$(CorvusTextJsonJsonPathPath)JsonPathNode.cs" LinkBase="JsonPath" />
     <Compile Include="$(CorvusTextJsonJsonPathPath)JsonPathException.cs" LinkBase="JsonPath" />
+    <Compile Include="$(CorvusTextJsonJsonPathPath)JsonPathFunctionType.cs" LinkBase="JsonPath" />
+    <Compile Include="$(CorvusTextJsonJsonPathPath)CustomFunctionSignature.cs" LinkBase="JsonPath" />
   </ItemGroup>
   <!-- Package the generator DLLinto analyzers/dotnet/cs -->
   <ItemGroup>

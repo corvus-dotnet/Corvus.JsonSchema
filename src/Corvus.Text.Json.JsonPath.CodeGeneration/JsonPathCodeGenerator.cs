@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Globalization;
 using System.Text;
@@ -42,12 +43,17 @@ public static class JsonPathCodeGenerator
         string className,
         string namespaceName,
         string accessibility = "internal",
-        bool isPartial = false)
+        bool isPartial = false,
+        IReadOnlyList<CustomFunction>? customFunctions = null)
     {
         byte[] utf8 = Encoding.UTF8.GetBytes(expression);
-        QueryNode ast = Parser.Parse(utf8);
 
-        Emitter emitter = new();
+        IReadOnlyDictionary<string, CustomFunctionSignature>? signatures = BuildSignatures(customFunctions);
+        QueryNode ast = signatures is not null
+            ? Parser.Parse(utf8, signatures)
+            : Parser.Parse(utf8);
+
+        Emitter emitter = new(customFunctions);
         StringBuilder nodesBody = new(4096);
 
         emitter.EmitQueryNodes(nodesBody, ast, "        ");
@@ -376,6 +382,43 @@ public static class JsonPathCodeGenerator
         return sb.ToString();
     }
 
+    private static IReadOnlyDictionary<string, CustomFunctionSignature>? BuildSignatures(
+        IReadOnlyList<CustomFunction>? customFunctions)
+    {
+        if (customFunctions is null or { Count: 0 })
+        {
+            return null;
+        }
+
+        Dictionary<string, CustomFunctionSignature> signatures = new(customFunctions.Count);
+        foreach (CustomFunction fn in customFunctions)
+        {
+            JsonPathFunctionType[] paramTypes = new JsonPathFunctionType[fn.Parameters.Length];
+            for (int i = 0; i < fn.Parameters.Length; i++)
+            {
+                paramTypes[i] = fn.Parameters[i].Type switch
+                {
+                    FunctionParamType.Value => JsonPathFunctionType.ValueType,
+                    FunctionParamType.Logical => JsonPathFunctionType.LogicalType,
+                    FunctionParamType.Nodes => JsonPathFunctionType.NodesType,
+                    _ => JsonPathFunctionType.ValueType,
+                };
+            }
+
+            JsonPathFunctionType returnType = fn.ReturnType switch
+            {
+                FunctionParamType.Value => JsonPathFunctionType.ValueType,
+                FunctionParamType.Logical => JsonPathFunctionType.LogicalType,
+                FunctionParamType.Nodes => JsonPathFunctionType.NodesType,
+                _ => JsonPathFunctionType.ValueType,
+            };
+
+            signatures[fn.Name] = new CustomFunctionSignature(returnType, paramTypes);
+        }
+
+        return signatures;
+    }
+
     /// <summary>
     /// Walks the JSONPath AST and emits C# code into a StringBuilder.
     /// </summary>
@@ -389,6 +432,21 @@ public static class JsonPathCodeGenerator
         private string rootVarName = "data";
         private readonly Dictionary<string, string> nameFieldCache = [];
         private readonly Dictionary<string, string> literalFieldCache = [];
+        private readonly IReadOnlyList<CustomFunction>? customFunctions;
+        private readonly Dictionary<string, CustomFunction>? customFunctionMap;
+
+        public Emitter(IReadOnlyList<CustomFunction>? customFunctions = null)
+        {
+            this.customFunctions = customFunctions;
+            if (customFunctions is { Count: > 0 })
+            {
+                this.customFunctionMap = new Dictionary<string, CustomFunction>(customFunctions.Count);
+                foreach (CustomFunction fn in customFunctions)
+                {
+                    this.customFunctionMap[fn.Name] = fn;
+                }
+            }
+        }
 
         public List<(string FieldName, string Declaration)> StaticFields { get; } = [];
 
@@ -856,6 +914,8 @@ public static class JsonPathCodeGenerator
                     return this.EmitFilterQueryAsTest(body, query, indent, currentVar);
                 case FunctionCallNode func when func.Name == "match" || func.Name == "search":
                     return this.EmitMatchOrSearch(body, func, indent, currentVar);
+                case FunctionCallNode func when this.IsCustomLogicalFunction(func.Name):
+                    return this.EmitCustomFunctionCallAsBool(body, func, indent, currentVar);
                 case ParenExpressionNode paren:
                     return this.EmitFilterBool(body, paren.Inner, indent, currentVar);
                 default:
@@ -1331,6 +1391,13 @@ public static class JsonPathCodeGenerator
                 case "value":
                     return this.EmitValueFunction(body, func, indent, currentVar);
                 default:
+                    if (this.customFunctionMap is not null &&
+                        this.customFunctionMap.TryGetValue(func.Name, out CustomFunction? customFunc) &&
+                        customFunc.ReturnType == FunctionParamType.Value)
+                    {
+                        return this.EmitCustomFunctionCall(body, func, customFunc, indent, currentVar);
+                    }
+
                     // Unknown function — return Undefined
                     string v = this.NextVar();
                     L(body, indent, $"JsonElement {v} = default;");
@@ -1604,6 +1671,232 @@ public static class JsonPathCodeGenerator
                 fieldName,
                 $"private static readonly System.Text.RegularExpressions.Regex {fieldName} = new System.Text.RegularExpressions.Regex(\"{escaped}\", System.Text.RegularExpressions.RegexOptions.None, System.TimeSpan.FromSeconds(1));"));
             return fieldName;
+        }
+
+        // ── Custom function emission ────────────────────────────────────
+        private bool IsCustomLogicalFunction(string name)
+        {
+            return this.customFunctionMap is not null &&
+                   this.customFunctionMap.TryGetValue(name, out CustomFunction? fn) &&
+                   fn.ReturnType == FunctionParamType.Logical;
+        }
+
+        private string EmitCustomFunctionCallAsBool(
+            StringBuilder body,
+            FunctionCallNode func,
+            string indent,
+            string currentVar)
+        {
+            if (this.customFunctionMap is null ||
+                !this.customFunctionMap.TryGetValue(func.Name, out CustomFunction? customFunc))
+            {
+                string b = this.NextVar();
+                L(body, indent, $"bool {b} = false;");
+                return b;
+            }
+
+            // Emit the call as value, then convert to bool
+            string valVar = this.EmitCustomFunctionCall(body, func, customFunc, indent, currentVar);
+            string boolVar = this.NextVar();
+
+            if (customFunc.ReturnType == FunctionParamType.Logical)
+            {
+                // The generated method already returns bool
+                L(body, indent, $"bool {boolVar} = {valVar};");
+            }
+            else
+            {
+                L(body, indent, $"bool {boolVar} = {valVar}.ValueKind != JsonValueKind.Undefined;");
+            }
+
+            return boolVar;
+        }
+
+        private string EmitCustomFunctionCall(
+            StringBuilder body,
+            FunctionCallNode func,
+            CustomFunction customFunc,
+            string indent,
+            string currentVar)
+        {
+            // Ensure helper method is generated
+            string methodName = $"CustomFn_{customFunc.Name}";
+            this.EnsureCustomFunctionHelper(customFunc, methodName);
+
+            // Emit arguments
+            string[] argVars = new string[func.Arguments.Length];
+            string[] nodesResultVars = new string[func.Arguments.Length]; // for disposal
+            int nodesCount = 0;
+
+            for (int i = 0; i < func.Arguments.Length; i++)
+            {
+                FunctionParamType pType = i < customFunc.Parameters.Length
+                    ? customFunc.Parameters[i].Type
+                    : FunctionParamType.Value;
+
+                switch (pType)
+                {
+                    case FunctionParamType.Value:
+                        argVars[i] = this.EmitFilterValue(body, func.Arguments[i], indent, currentVar);
+                        break;
+
+                    case FunctionParamType.Logical:
+                        argVars[i] = this.EmitFilterBool(body, func.Arguments[i], indent, currentVar);
+                        break;
+
+                    case FunctionParamType.Nodes:
+                        // Evaluate the query into a pooled result, keep alive for the call
+                        string nodesVar = this.NextVar();
+                        L(body, indent, $"JsonPathResult {nodesVar} = JsonPathResult.CreatePooled(16);");
+
+                        if (func.Arguments[i] is FilterQueryNode fq)
+                        {
+                            string source = fq.IsRelative ? currentVar : this.rootVarName;
+                            string helperName = $"FilterQuery{this.filterQueryCounter++}";
+                            this.GenerateNodesCollectorHelper(fq, helperName);
+                            L(body, indent, $"{helperName}({source}, {this.rootVarName}, ref {nodesVar});");
+                        }
+
+                        nodesResultVars[nodesCount++] = nodesVar;
+                        argVars[i] = nodesVar;
+                        break;
+                }
+            }
+
+            // Call the helper method
+            string resultVar = this.NextVar();
+            string returnCSharpType = customFunc.ReturnType == FunctionParamType.Logical ? "bool" : "JsonElement";
+
+            StringBuilder callSb = new();
+            callSb.Append($"{returnCSharpType} {resultVar} = {methodName}(");
+            for (int i = 0; i < argVars.Length; i++)
+            {
+                if (i > 0)
+                {
+                    callSb.Append(", ");
+                }
+
+                FunctionParamType pType = i < customFunc.Parameters.Length
+                    ? customFunc.Parameters[i].Type
+                    : FunctionParamType.Value;
+
+                if (pType == FunctionParamType.Nodes)
+                {
+                    callSb.Append($"{argVars[i]}.Nodes");
+                }
+                else
+                {
+                    callSb.Append(argVars[i]);
+                }
+            }
+
+            callSb.Append(");");
+            L(body, indent, callSb.ToString());
+
+            // Dispose node results
+            for (int i = 0; i < nodesCount; i++)
+            {
+                L(body, indent, $"{nodesResultVars[i]}.Dispose();");
+            }
+
+            return resultVar;
+        }
+
+        private void EnsureCustomFunctionHelper(CustomFunction fn, string methodName)
+        {
+            // Check if already generated
+            string marker = $"private static ";
+            foreach (string existing in this.HelperMethods)
+            {
+                if (existing.Contains($" {methodName}("))
+                {
+                    return;
+                }
+            }
+
+            string returnType = fn.ReturnType == FunctionParamType.Logical ? "bool" : "JsonElement";
+            StringBuilder mb = new(1024);
+            const string methodIndent = "    ";
+
+            mb.Append(methodIndent);
+            mb.Append($"private static {returnType} {methodName}(");
+
+            for (int i = 0; i < fn.Parameters.Length; i++)
+            {
+                if (i > 0)
+                {
+                    mb.Append(", ");
+                }
+
+                string csharpType = fn.Parameters[i].Type switch
+                {
+                    FunctionParamType.Value => "JsonElement",
+                    FunctionParamType.Logical => "bool",
+                    FunctionParamType.Nodes => "ReadOnlySpan<JsonElement>",
+                    _ => "JsonElement",
+                };
+
+                mb.Append($"{csharpType} {fn.Parameters[i].Name}");
+            }
+
+            mb.Append(")\n");
+
+            if (fn.IsExpression)
+            {
+                L(mb, methodIndent, "{");
+                L(mb, methodIndent + "    ", $"return {fn.Body};");
+                L(mb, methodIndent, "}");
+            }
+            else
+            {
+                L(mb, methodIndent, "{");
+
+                // Emit the block body lines
+                string[] bodyLines = fn.Body.Split('\n');
+                foreach (string line in bodyLines)
+                {
+                    mb.Append(line).Append('\n');
+                }
+
+                L(mb, methodIndent, "}");
+            }
+
+            this.HelperMethods.Add(mb.ToString());
+        }
+
+        private void GenerateNodesCollectorHelper(FilterQueryNode query, string methodName)
+        {
+            StringBuilder mb = new(2048);
+            const string methodIndent = "    ";
+
+            // Parameter is named "result" so that EmitStreamingChain's hardcoded
+            // "result.Append()" calls target it directly.
+            L(mb, methodIndent, $"private static void {methodName}(in JsonElement source, in JsonElement root, ref JsonPathResult result)");
+            L(mb, methodIndent, "{");
+
+            const string bodyIndent = methodIndent + "    ";
+
+            if (query.Segments.Length == 0)
+            {
+                L(mb, bodyIndent, "result.Append(source);");
+                L(mb, methodIndent, "}");
+                this.HelperMethods.Add(mb.ToString());
+                return;
+            }
+
+            string savedRootVarName = this.rootVarName;
+            this.rootVarName = "root";
+            try
+            {
+                this.EmitStreamingChain(mb, query.Segments, 0, bodyIndent, "source");
+            }
+            finally
+            {
+                this.rootVarName = savedRootVarName;
+            }
+
+            L(mb, methodIndent, "}");
+            this.HelperMethods.Add(mb.ToString());
         }
     }
 }

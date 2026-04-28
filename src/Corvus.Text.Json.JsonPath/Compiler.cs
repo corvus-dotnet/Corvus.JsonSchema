@@ -42,9 +42,30 @@ internal static class Compiler
         byte[] utf8Expression,
         IReadOnlyDictionary<string, IJsonPathFunction>? customFunctions = null)
     {
-        QueryNode ast = Parser.Parse(utf8Expression, customFunctions);
+        IReadOnlyDictionary<string, CustomFunctionSignature>? signatures = BuildSignatures(customFunctions);
+        QueryNode ast = Parser.Parse(utf8Expression, signatures);
         PlanNode plan = Planner.Plan(ast, customFunctions);
         return new CompiledJsonPath(plan);
+    }
+
+    private static IReadOnlyDictionary<string, CustomFunctionSignature>? BuildSignatures(
+        IReadOnlyDictionary<string, IJsonPathFunction>? customFunctions)
+    {
+        if (customFunctions is null or { Count: 0 })
+        {
+            return null;
+        }
+
+        Dictionary<string, CustomFunctionSignature> signatures = new(customFunctions.Count);
+        foreach (KeyValuePair<string, IJsonPathFunction> kvp in customFunctions)
+        {
+            ReadOnlySpan<JsonPathFunctionType> paramTypes = kvp.Value.ParameterTypes;
+            JsonPathFunctionType[] paramArray = new JsonPathFunctionType[paramTypes.Length];
+            paramTypes.CopyTo(paramArray);
+            signatures[kvp.Key] = new CustomFunctionSignature(kvp.Value.ReturnType, paramArray);
+        }
+
+        return signatures;
     }
 
     /// <summary>

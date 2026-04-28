@@ -19,10 +19,8 @@ internal static class Parser
     private const long MaxInt = (1L << 53) - 1;
     private const long MinInt = -((1L << 53) - 1);
 
-#if !BUILDING_SOURCE_GENERATOR
     [ThreadStatic]
-    private static IReadOnlyDictionary<string, IJsonPathFunction>? t_customFunctions;
-#endif
+    private static IReadOnlyDictionary<string, CustomFunctionSignature>? t_customFunctionSignatures;
 
     /// <summary>
     /// Parses a UTF-8 JSONPath expression string into an AST.
@@ -35,29 +33,31 @@ internal static class Parser
         return ParseCore(utf8Expression);
     }
 
-#if !BUILDING_SOURCE_GENERATOR
     /// <summary>
-    /// Parses a UTF-8 JSONPath expression string into an AST with custom function support.
+    /// Parses a UTF-8 JSONPath expression string into an AST with custom function
+    /// signatures for well-typedness validation.
     /// </summary>
     /// <param name="utf8Expression">The UTF-8 encoded JSONPath expression.</param>
-    /// <param name="customFunctions">Optional registry of custom functions for well-typedness validation.</param>
+    /// <param name="customFunctionSignatures">
+    /// A dictionary mapping function names to their type signatures. Both the runtime
+    /// evaluator and the code generator construct this from their respective types.
+    /// </param>
     /// <returns>The parsed query AST.</returns>
     /// <exception cref="JsonPathException">Thrown if the expression is syntactically invalid.</exception>
     public static QueryNode Parse(
         ReadOnlySpan<byte> utf8Expression,
-        IReadOnlyDictionary<string, IJsonPathFunction>? customFunctions)
+        IReadOnlyDictionary<string, CustomFunctionSignature>? customFunctionSignatures)
     {
-        t_customFunctions = customFunctions;
+        t_customFunctionSignatures = customFunctionSignatures;
         try
         {
             return ParseCore(utf8Expression);
         }
         finally
         {
-            t_customFunctions = null;
+            t_customFunctionSignatures = null;
         }
     }
-#endif
 
     private static QueryNode ParseCore(ReadOnlySpan<byte> utf8Expression)
     {
@@ -936,19 +936,15 @@ internal static class Parser
         "value" => FilterResultType.ValueType,
         "match" => FilterResultType.LogicalType,
         "search" => FilterResultType.LogicalType,
-#if !BUILDING_SOURCE_GENERATOR
         _ => GetCustomFunctionReturnType(name),
-#else
-        _ => throw new JsonPathException($"Unknown function: '{name}'."),
-#endif
     };
 
-#if !BUILDING_SOURCE_GENERATOR
     private static FilterResultType GetCustomFunctionReturnType(string name)
     {
-        if (t_customFunctions is not null && t_customFunctions.TryGetValue(name, out IJsonPathFunction? func))
+        if (t_customFunctionSignatures is not null &&
+            t_customFunctionSignatures.TryGetValue(name, out CustomFunctionSignature sig))
         {
-            return func.ReturnType switch
+            return sig.ReturnType switch
             {
                 JsonPathFunctionType.ValueType => FilterResultType.ValueType,
                 JsonPathFunctionType.LogicalType => FilterResultType.LogicalType,
@@ -959,7 +955,6 @@ internal static class Parser
 
         throw new JsonPathException($"Unknown function: '{name}'.");
     }
-#endif
 
     /// <summary>
     /// Validates function argument types per RFC 9535 well-typedness rules.
@@ -1011,24 +1006,20 @@ internal static class Parser
                 break;
 
             default:
-#if !BUILDING_SOURCE_GENERATOR
                 ValidateCustomFunctionTypes(node);
                 break;
-#else
-                throw new JsonPathException($"Unknown function: '{node.Name}'.");
-#endif
         }
     }
 
-#if !BUILDING_SOURCE_GENERATOR
     private static void ValidateCustomFunctionTypes(FunctionCallNode node)
     {
-        if (t_customFunctions is null || !t_customFunctions.TryGetValue(node.Name, out IJsonPathFunction? func))
+        if (t_customFunctionSignatures is null ||
+            !t_customFunctionSignatures.TryGetValue(node.Name, out CustomFunctionSignature sig))
         {
             throw new JsonPathException($"Unknown function: '{node.Name}'.");
         }
 
-        ReadOnlySpan<JsonPathFunctionType> paramTypes = func.ParameterTypes;
+        JsonPathFunctionType[] paramTypes = sig.ParameterTypes;
         if (node.Arguments.Length != paramTypes.Length)
         {
             throw new JsonPathException(
@@ -1048,7 +1039,6 @@ internal static class Parser
             ValidateFunctionArgType(node.Arguments[i], node.Name, expected);
         }
     }
-#endif
 
     private enum FunctionArgType
     {

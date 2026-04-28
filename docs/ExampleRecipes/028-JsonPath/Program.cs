@@ -4,6 +4,7 @@
 
 using Corvus.Text.Json;
 using Corvus.Text.Json.JsonPath;
+using System.Buffers;
 using JsonPath.Expressions;
 
 // Load the bookstore document
@@ -72,14 +73,21 @@ Console.WriteLine();
 
 // ── 10. Zero-allocation QueryNodes ──────────────────────────────────────────
 Console.WriteLine("10. Zero-allocation QueryNodes");
-JsonElement[] buf = new JsonElement[16];
-using (JsonPathResult result = JsonPathEvaluator.Default.QueryNodes("$.store.book[*].title", data, buf.AsSpan()))
+JsonElement[] buf = ArrayPool<JsonElement>.Shared.Rent(16);
+try
 {
-    Console.WriteLine($"    Found {result.Count} titles:");
-    foreach (JsonElement node in result.Nodes)
+    using (JsonPathResult result = JsonPathEvaluator.Default.QueryNodes("$.store.book[*].title", data, buf.AsSpan()))
     {
-        Console.WriteLine($"    - {node}");
+        Console.WriteLine($"    Found {result.Count} titles:");
+        foreach (JsonElement node in result.Nodes)
+        {
+            Console.WriteLine($"    - {node}");
+        }
     }
+}
+finally
+{
+    ArrayPool<JsonElement>.Shared.Return(buf);
 }
 
 Console.WriteLine();

@@ -25,6 +25,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\Corvus.Text.Json.JsonPath\Corvus.Text.Json.JsonPath.csproj" />
+    <ProjectReference Include="..\..\src\Corvus.Text.Json.JsonPath.CodeGeneration\Corvus.Text.Json.JsonPath.CodeGeneration.csproj" />
     <ProjectReference Include="..\..\src\Corvus.Text.Json\Corvus.Text.Json.csproj" />
   </ItemGroup>
   <ItemGroup Condition="'$(TargetFramework)' == 'net481'">

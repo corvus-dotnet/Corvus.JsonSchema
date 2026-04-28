@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Text;
 using Corvus.Text.Json.JsonPath.CodeGeneration;
@@ -15,6 +16,7 @@ namespace Corvus.Text.Json.JsonPath.SourceGenerator;
 /// <summary>
 /// Roslyn incremental source generator that produces a static <c>Evaluate</c> method
 /// from a JSONPath expression file referenced via <c>[JsonPathExpression("path.jsonpath")]</c>.
+/// Custom function definitions from <c>.jpfn</c> files are discovered automatically.
 /// </summary>
 [Generator(LanguageNames.CSharp)]
 public sealed class JsonPathSourceGenerator : IIncrementalGenerator
@@ -32,6 +34,13 @@ public sealed class JsonPathSourceGenerator : IIncrementalGenerator
         IncrementalValueProvider<ImmutableArray<AdditionalText>> collectedFiles =
             jsonpathFiles.Collect();
 
+        // Discover all .jpfn files for custom function definitions
+        IncrementalValuesProvider<AdditionalText> jpfnFiles =
+            context.AdditionalTextsProvider.Where(static f => f.Path.EndsWith(".jpfn", StringComparison.OrdinalIgnoreCase));
+
+        IncrementalValueProvider<ImmutableArray<AdditionalText>> collectedJpfnFiles =
+            jpfnFiles.Collect();
+
         // Find partial classes/structs annotated with [JsonPathExpression]
         IncrementalValuesProvider<GenerationSpec> specs =
             context.SyntaxProvider.ForAttributeWithMetadataName(
@@ -39,11 +48,12 @@ public sealed class JsonPathSourceGenerator : IIncrementalGenerator
                 predicate: IsValidTarget,
                 transform: ExtractSpec);
 
-        // Combine each spec with all available .jsonpath files
-        IncrementalValuesProvider<(GenerationSpec Spec, ImmutableArray<AdditionalText> Files)> combined =
+        // Combine each spec with all available .jsonpath and .jpfn files
+        IncrementalValuesProvider<(GenerationSpec Spec, ImmutableArray<AdditionalText> Files, ImmutableArray<AdditionalText> JpfnFiles)> combined =
             specs
                 .Combine(collectedFiles)
-                .Select(static (pair, _) => (pair.Left, pair.Right));
+                .Combine(collectedJpfnFiles)
+                .Select(static (pair, _) => (pair.Left.Left, pair.Left.Right, pair.Right));
 
         context.RegisterSourceOutput(combined, Execute);
     }
@@ -112,7 +122,7 @@ public sealed class JsonPathSourceGenerator : IIncrementalGenerator
 
     private static void Execute(
         SourceProductionContext context,
-        (GenerationSpec Spec, ImmutableArray<AdditionalText> Files) input)
+        (GenerationSpec Spec, ImmutableArray<AdditionalText> Files, ImmutableArray<AdditionalText> JpfnFiles) input)
     {
         GenerationSpec spec = input.Spec;
         ImmutableArray<AdditionalText> files = input.Files;
@@ -163,13 +173,17 @@ public sealed class JsonPathSourceGenerator : IIncrementalGenerator
 
         try
         {
+            // Parse custom functions from .jpfn files
+            IReadOnlyList<CustomFunction>? customFunctions = ParseJpfnFiles(context, input.JpfnFiles);
+
             string accessibility = spec.IsPublic ? "public" : "internal";
             string source = JsonPathCodeGenerator.Generate(
                 expression!,
                 spec.TypeName,
                 spec.NamespaceName,
                 accessibility,
-                isPartial: true);
+                isPartial: true,
+                customFunctions: customFunctions);
 
             context.AddSource($"{spec.TypeName}.JsonPath.g.cs", SourceText.From(source, Encoding.UTF8));
         }
@@ -194,4 +208,46 @@ public sealed class JsonPathSourceGenerator : IIncrementalGenerator
         string NamespaceName,
         string TypeName,
         bool IsPublic);
+
+    private static IReadOnlyList<CustomFunction>? ParseJpfnFiles(
+        SourceProductionContext context,
+        ImmutableArray<AdditionalText> jpfnFiles)
+    {
+        if (jpfnFiles.IsDefaultOrEmpty)
+        {
+            return null;
+        }
+
+        List<CustomFunction> allFunctions = new();
+        foreach (AdditionalText jpfnFile in jpfnFiles)
+        {
+            string? content = jpfnFile.GetText(context.CancellationToken)?.ToString();
+            if (string.IsNullOrWhiteSpace(content))
+            {
+                continue;
+            }
+
+            try
+            {
+                IReadOnlyList<CustomFunction> fns = JpfnParser.Parse(content!);
+                allFunctions.AddRange(fns);
+            }
+            catch (Exception ex)
+            {
+                context.ReportDiagnostic(Diagnostic.Create(
+                    new DiagnosticDescriptor(
+                        "JPTHSG004",
+                        "Custom function file parse error",
+                        "Failed to parse .jpfn file '{0}': {1}",
+                        "Corvus.Text.Json.JsonPath",
+                        DiagnosticSeverity.Error,
+                        isEnabledByDefault: true),
+                    Location.None,
+                    jpfnFile.Path,
+                    ex.Message));
+            }
+        }
+
+        return allFunctions.Count > 0 ? allFunctions : null;
+    }
 }
