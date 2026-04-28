@@ -170,11 +170,10 @@ public static partial class AllAuthors;
 **5. Call the generated `QueryNodes` method:**
 
 ```csharp
-Span<JsonElement> buf = stackalloc JsonElement[16];
-using JsonPathResult result = AllAuthors.QueryNodes(dataDoc.RootElement, buf);
+using JsonPathResult result = AllAuthors.QueryNodes(dataDoc.RootElement);
 ```
 
-The generated method directly evaluates the expression without plan interpretation or delegate dispatch.
+The generated method manages its own buffer internally and directly evaluates the expression without plan interpretation or delegate dispatch.
 
 **Diagnostic messages:**
 
@@ -248,7 +247,7 @@ int count = result.Count;
 // Access individual nodes
 if (count > 0)
 {
-    JsonElement first = result.First;
+    JsonElement first = result[0];
 }
 ```
 
