@@ -10,12 +10,6 @@ namespace Corvus.Text.Json.JsonPath.Playground.Services;
 /// </summary>
 public class FunctionsCompilationService
 {
-    /// <summary>
-    /// The file path used in <c>#line</c> directives to identify user-authored function code.
-    /// Diagnostics with this mapped path are in the user's code region.
-    /// </summary>
-    internal const string UserFilePath = "UserFunctions.cs";
-
     private static readonly HashSet<string> ReservedNames = new(StringComparer.Ordinal)
     {
         "length", "count", "value", "match", "search",
@@ -54,7 +48,7 @@ public class FunctionsCompilationService
         await this.workspaceService.EnsureInitializedAsync();
 
         // Use the original (untrimmed) code so #line-mapped positions match the editor
-        string source = WrapInClass(functionsCode);
+        string source = FunctionsWrapper.ForCompilation(functionsCode);
 
         Microsoft.CodeAnalysis.CSharp.CSharpCompilation compilation =
             this.workspaceService.CreateCompilation(source);
@@ -78,7 +72,7 @@ public class FunctionsCompilationService
 
                 var mappedSpan = d.Location.GetMappedLineSpan();
                 bool isUserCode = string.Equals(
-                    mappedSpan.Path, UserFilePath, StringComparison.OrdinalIgnoreCase);
+                    mappedSpan.Path, FunctionsWrapper.UserFilePath, StringComparison.OrdinalIgnoreCase);
 
                 if (isUserCode)
                 {
@@ -163,100 +157,6 @@ public class FunctionsCompilationService
             };
         }
     }
-
-    /// <summary>
-    /// Wraps the user's dictionary initializer body in a compilable class.
-    /// Uses <c>#line</c> directives so Roslyn reports diagnostics with positions
-    /// relative to the user's editor content (not the generated boilerplate).
-    /// </summary>
-    private static string WrapInClass(string body) =>
-        $$"""
-        public static class FunctionsFactory
-        {
-            // ── Result helpers (workspace-aware) ──
-            public static JsonElement Value(double v, JsonWorkspace workspace) => JsonPathCodeGenHelpers.DoubleToElement(v, workspace);
-            public static JsonElement Value(int v, JsonWorkspace workspace) => JsonPathCodeGenHelpers.IntToElement(v, workspace);
-            public static JsonElement Value(string v) => JsonElement.ParseValue(System.Text.Encoding.UTF8.GetBytes("\"" + v.Replace("\\", "\\\\").Replace("\"", "\\\"") + "\""));
-            public static JsonElement Value(bool v) => v ? JsonElement.ParseValue("true"u8) : JsonElement.ParseValue("false"u8);
-
-            // ── Factory helpers (common function patterns) ──
-
-            /// <summary>ValueType → ValueType function from a delegate.</summary>
-            public static IJsonPathFunction ValueFunction(Func<JsonElement, JsonWorkspace, JsonElement> func)
-                => new DelegateFunction(
-                    JsonPathFunctionType.ValueType,
-                    [JsonPathFunctionType.ValueType],
-                    (args, ws) => JsonPathFunctionResult.FromValue(func(args[0].Value, ws)));
-
-            /// <summary>ValueType → LogicalType function from a delegate.</summary>
-            public static IJsonPathFunction LogicalFunction(Func<JsonElement, bool> func)
-                => new DelegateFunction(
-                    JsonPathFunctionType.LogicalType,
-                    [JsonPathFunctionType.ValueType],
-                    (args, ws) => JsonPathFunctionResult.FromLogical(func(args[0].Value)));
-
-            /// <summary>(ValueType, ValueType) → ValueType function from a delegate.</summary>
-            public static IJsonPathFunction ValueFunction(Func<JsonElement, JsonElement, JsonWorkspace, JsonElement> func)
-                => new DelegateFunction(
-                    JsonPathFunctionType.ValueType,
-                    [JsonPathFunctionType.ValueType, JsonPathFunctionType.ValueType],
-                    (args, ws) => JsonPathFunctionResult.FromValue(func(args[0].Value, args[1].Value, ws)));
-
-            /// <summary>NodesType → ValueType function from a delegate (receives array copy of nodes).</summary>
-            public static IJsonPathFunction NodesValueFunction(Func<JsonElement[], JsonWorkspace, JsonElement> func)
-                => new DelegateFunction(
-                    JsonPathFunctionType.ValueType,
-                    [JsonPathFunctionType.NodesType],
-                    (args, ws) => JsonPathFunctionResult.FromValue(func(args[0].Nodes.ToArray(), ws)));
-
-            /// <summary>NodesType → LogicalType function from a delegate (receives array copy of nodes).</summary>
-            public static IJsonPathFunction NodesLogicalFunction(Func<JsonElement[], bool> func)
-                => new DelegateFunction(
-                    JsonPathFunctionType.LogicalType,
-                    [JsonPathFunctionType.NodesType],
-                    (args, ws) => JsonPathFunctionResult.FromLogical(func(args[0].Nodes.ToArray())));
-
-            /// <summary>
-            /// General-purpose custom function with explicit types.
-            /// </summary>
-            public static IJsonPathFunction CustomFunction(
-                JsonPathFunctionType returnType,
-                JsonPathFunctionType[] parameterTypes,
-                Func<ReadOnlySpan<JsonPathFunctionArgument>, JsonWorkspace, JsonPathFunctionResult> evaluate)
-                => new DelegateFunction(returnType, parameterTypes, evaluate);
-
-            public static Dictionary<string, IJsonPathFunction> Create()
-            {
-                return new Dictionary<string, IJsonPathFunction>
-        #line 1 "{{UserFilePath}}"
-        {{body}}
-        #line default
-                ;
-            }
-
-            private sealed class DelegateFunction : IJsonPathFunction
-            {
-                private readonly JsonPathFunctionType[] parameterTypes;
-                private readonly Func<ReadOnlySpan<JsonPathFunctionArgument>, JsonWorkspace, JsonPathFunctionResult> evaluate;
-
-                public DelegateFunction(
-                    JsonPathFunctionType returnType,
-                    JsonPathFunctionType[] parameterTypes,
-                    Func<ReadOnlySpan<JsonPathFunctionArgument>, JsonWorkspace, JsonPathFunctionResult> evaluate)
-                {
-                    this.ReturnType = returnType;
-                    this.parameterTypes = parameterTypes;
-                    this.evaluate = evaluate;
-                }
-
-                public JsonPathFunctionType ReturnType { get; }
-                public ReadOnlySpan<JsonPathFunctionType> ParameterTypes => this.parameterTypes;
-
-                public JsonPathFunctionResult Evaluate(ReadOnlySpan<JsonPathFunctionArgument> arguments, JsonWorkspace workspace)
-                    => this.evaluate(arguments, workspace);
-            }
-        }
-        """;
 
     private static (Dictionary<string, IJsonPathFunction>?, AssemblyLoadContext?) Execute(byte[] assemblyBytes)
     {

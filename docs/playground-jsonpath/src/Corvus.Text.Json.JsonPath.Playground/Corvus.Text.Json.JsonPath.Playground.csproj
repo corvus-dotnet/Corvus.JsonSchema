@@ -19,6 +19,8 @@
     <PackageReference Include="BlazorMonaco" />
     <!-- Roslyn for in-browser compilation of user-defined custom functions -->
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Features" />
+    <PackageReference Include="Microsoft.CodeAnalysis.Features" />
   </ItemGroup>
 
   <!-- JSONPath runtime evaluator -->
@@ -39,6 +41,8 @@
     <TrimmerRootAssembly Include="Corvus.Text.Json.JsonPath" />
     <TrimmerRootAssembly Include="Microsoft.CodeAnalysis" />
     <TrimmerRootAssembly Include="Microsoft.CodeAnalysis.CSharp" />
+    <TrimmerRootAssembly Include="Microsoft.CodeAnalysis.Features" />
+    <TrimmerRootAssembly Include="Microsoft.CodeAnalysis.CSharp.Features" />
   </ItemGroup>
 
   <!-- Copy static web assets manifest to wwwroot for Roslyn assembly resolution -->

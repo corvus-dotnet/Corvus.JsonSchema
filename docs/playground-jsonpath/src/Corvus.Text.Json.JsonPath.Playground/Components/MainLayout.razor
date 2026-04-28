@@ -3,6 +3,7 @@
 @page "/"
 @inject EvaluationService EvalService
 @inject FunctionsCompilationService FunctionsCompiler
+@inject IntelliSenseService IntelliSenseSvc
 @inject IJSRuntime JSRuntime
 
 <div class="playground-toolbar">
@@ -189,6 +190,7 @@
     private string themeIcon = "🌙";
     private string themeTooltip = "Toggle theme";
     private DotNetObjectReference<MainLayout>? dotNetRef;
+    private DotNetObjectReference<MainLayout>? intelliSenseRef;
 
     // Debounce
     private CancellationTokenSource? evaluateDebounce;
@@ -203,10 +205,10 @@
     private const string DefaultFunctionsPlaceholder =
         """
         // Define custom functions as dictionary entries.
-        // ValueFunction:  ["name"] = ValueFunction(v => Value(...))
-        // LogicalFunction: ["name"] = LogicalFunction(v => expression)
+        // ValueFunction:   ["name"] = ValueFunction((v, ws) => Value(..., ws))
+        // LogicalFunction:  ["name"] = LogicalFunction(v => expression)
         {
-            // ["ceil"] = ValueFunction(v => Value((int)Math.Ceiling(v.GetDouble()))),
+            // ["ceil"] = ValueFunction((v, ws) => Value((int)Math.Ceiling(v.GetDouble()), ws)),
         }
         """;
 
@@ -274,6 +276,11 @@
             dotNetRef = DotNetObjectReference.Create(this);
             await JSRuntime.InvokeVoidAsync("registerPlaygroundShortcuts", dotNetRef);
             await JSRuntime.InvokeVoidAsync("onSystemThemeChange", dotNetRef);
+
+            // Register Roslyn-backed IntelliSense for the C# functions editor
+            intelliSenseRef = DotNetObjectReference.Create(this);
+            await JSRuntime.InvokeVoidAsync("registerCSharpCompletionProvider", intelliSenseRef);
+            await JSRuntime.InvokeVoidAsync("registerCSharpSignatureHelpProvider", intelliSenseRef);
 
             // Load saved theme preference
             var savedTheme = await GetLocalStorage(ThemeStorageKey);
@@ -980,6 +987,74 @@
         }
     }
 
+    // ── IntelliSense (Roslyn ↔ Monaco bridge) ──
+
+    [JSInvokable]
+    public async Task<List<object>> GetCompletionsForJs(string code, int line, int column)
+    {
+        var items = await IntelliSenseSvc.GetCompletionsAsync(code, line, column);
+
+        return items.Select(item => (object)new
+        {
+            label = item.Label,
+            kind = MapMonacoKind(item.Kind),
+            detail = item.Detail,
+            insertText = item.Label,
+            sortText = item.SortText,
+            filterText = item.FilterText,
+        }).ToList();
+    }
+
+    [JSInvokable]
+    public async Task<object?> GetSignatureHelpForJs(string code, int line, int column)
+    {
+        var result = await IntelliSenseSvc.GetSignatureHelpAsync(code, line, column);
+        if (result is null)
+        {
+            return null;
+        }
+
+        return new
+        {
+            signatures = result.Signatures.Select(sig => new
+            {
+                label = sig.Label,
+                documentation = sig.Documentation,
+                parameters = sig.Parameters.Select(p => new
+                {
+                    label = p.Label,
+                    documentation = p.Documentation,
+                }).ToArray(),
+            }).ToArray(),
+            activeSignature = result.ActiveSignature,
+            activeParameter = result.ActiveParameter,
+        };
+    }
+
+    private static int MapMonacoKind(string kind)
+    {
+        return kind switch
+        {
+            "Method" => 0,
+            "Function" => 1,
+            "Field" => 3,
+            "Variable" => 4,
+            "Class" => 5,
+            "Struct" => 6,
+            "Interface" => 7,
+            "Module" => 8,
+            "Property" => 9,
+            "Event" => 10,
+            "Constant" => 14,
+            "Enum" => 15,
+            "EnumMember" => 16,
+            "Keyword" => 17,
+            "Snippet" => 27,
+            "TypeParameter" => 24,
+            _ => 18, // Text
+        };
+    }
+
     // ── Dispose ──
 
     public void Dispose()
@@ -991,5 +1066,6 @@
         saveDebounce?.Cancel();
         saveDebounce?.Dispose();
         dotNetRef?.Dispose();
+        intelliSenseRef?.Dispose();
     }
 }

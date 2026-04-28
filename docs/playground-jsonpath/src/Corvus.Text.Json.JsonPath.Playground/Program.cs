@@ -12,6 +12,7 @@ builder.Services.AddScoped(sp =>
 
 builder.Services.AddScoped<WorkspaceService>();
 builder.Services.AddScoped<FunctionsCompilationService>();
+builder.Services.AddScoped<IntelliSenseService>();
 builder.Services.AddScoped<EvaluationService>();
 
 await builder.Build().RunAsync();
