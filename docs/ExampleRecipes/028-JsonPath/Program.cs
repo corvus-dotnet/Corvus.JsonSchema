@@ -162,8 +162,7 @@ sealed class CeilFunction : IJsonPathFunction
         }
 
         int ceiled = (int)Math.Ceiling(value.GetDouble());
-        return JsonPathFunctionResult.FromValue(
-            JsonPathCodeGenHelpers.IntToElement(ceiled, workspace));
+        return JsonPathFunctionResult.FromValue(ceiled, workspace);
     }
 }
 

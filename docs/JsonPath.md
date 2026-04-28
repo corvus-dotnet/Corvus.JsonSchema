@@ -435,8 +435,8 @@ public sealed class CeilFunction : IJsonPathFunction
             return JsonPathFunctionResult.Nothing;
         }
 
-        return JsonPathFunctionResult.FromValue(
-            JsonPathCodeGenHelpers.IntToElement((int)Math.Ceiling(value.GetDouble()), workspace));
+        int ceiled = (int)Math.Ceiling(value.GetDouble());
+        return JsonPathFunctionResult.FromValue(ceiled, workspace);
     }
 }
 ```
@@ -454,11 +454,46 @@ var evaluator = new JsonPathEvaluator(
 JsonElement result = evaluator.Query("$.store.book[?ceil(@.price)==9].title", data);
 ```
 
+### Delegate factory helpers
+
+For simple functions, you can skip the boilerplate class and use the `JsonPathFunction` factory methods:
+
+```csharp
+var evaluator = new JsonPathEvaluator(
+    new Dictionary<string, IJsonPathFunction>
+    {
+        // ValueType → ValueType
+        ["ceil"] = JsonPathFunction.Value((v, ws) =>
+            JsonPathFunctionResult.FromValue((int)Math.Ceiling(v.GetDouble()), ws)),
+
+        // ValueType → LogicalType
+        ["is_fiction"] = JsonPathFunction.Logical(v =>
+            v.ValueKind == JsonValueKind.String && v.ValueEquals("fiction"u8)),
+
+        // NodesType → ValueType (nodes copied to array for delegate compatibility)
+        ["node_count"] = JsonPathFunction.NodesValue((nodes, ws) =>
+            JsonPathFunctionResult.FromValue(nodes.Length, ws)),
+    });
+```
+
+Available factories:
+
+| Factory | Signature | Delegate shape |
+|---------|-----------|----------------|
+| `JsonPathFunction.Value` | `(ValueType) → ValueType` | `Func<JsonElement, JsonWorkspace, JsonElement>` |
+| `JsonPathFunction.Value` | `(ValueType, ValueType) → ValueType` | `Func<JsonElement, JsonElement, JsonWorkspace, JsonElement>` |
+| `JsonPathFunction.Logical` | `(ValueType) → LogicalType` | `Func<JsonElement, bool>` |
+| `JsonPathFunction.NodesValue` | `(NodesType) → ValueType` | `Func<JsonElement[], JsonWorkspace, JsonElement>` |
+| `JsonPathFunction.NodesLogical` | `(NodesType) → LogicalType` | `Func<JsonElement[], bool>` |
+| `JsonPathFunction.Create` | Custom signature | `JsonPathFunctionEvaluator` delegate |
+
+For maximum performance or complex signatures, implement `IJsonPathFunction` directly.
+
 The three function types defined by RFC 9535 §2.4:
 
 | Type | `JsonPathFunctionType` | Argument access | Return factory |
 |------|------------------------|-----------------|----------------|
-| ValueType | `JsonPathFunctionType.ValueType` | `arguments[i].Value` (`JsonElement`) | `JsonPathFunctionResult.FromValue(element)` |
+| ValueType | `JsonPathFunctionType.ValueType` | `arguments[i].Value` (`JsonElement`) | `JsonPathFunctionResult.FromValue(element)` or `FromValue(int, ws)` / `FromValue(double, ws)` / `FromValue(string)` |
 | LogicalType | `JsonPathFunctionType.LogicalType` | `arguments[i].Logical` (`bool`) | `JsonPathFunctionResult.FromLogical(b)` |
 | NodesType | `JsonPathFunctionType.NodesType` | `arguments[i].Nodes` (`ReadOnlySpan<JsonElement>`) | N/A (cannot return NodesType) |
 

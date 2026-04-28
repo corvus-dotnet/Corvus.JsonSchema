@@ -15,6 +15,23 @@ JsonElement result = JsonPathEvaluator.Default.Query("$.store.book[*].title", da
 // result is ["A","B"]
 ```
 
+## Custom Functions
+
+Register custom functions via the `JsonPathEvaluator` constructor. Use the `JsonPathFunction` factory for simple signatures, or implement `IJsonPathFunction` directly for full control:
+
+```csharp
+var evaluator = new JsonPathEvaluator(
+    new Dictionary<string, IJsonPathFunction>
+    {
+        ["ceil"] = JsonPathFunction.Value((v, ws) =>
+            JsonPathFunctionResult.FromValue((int)Math.Ceiling(v.GetDouble()), ws)),
+        ["is_fiction"] = JsonPathFunction.Logical(v =>
+            v.ValueKind == JsonValueKind.String && v.ValueEquals("fiction"u8)),
+    });
+
+JsonElement result = evaluator.Query("$.store.book[?ceil(@.price)==9].title", data);
+```
+
 ## Packages
 
 | Package | Description |
