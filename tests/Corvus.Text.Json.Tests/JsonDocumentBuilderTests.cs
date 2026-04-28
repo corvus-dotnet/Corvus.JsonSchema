@@ -8848,4 +8848,29 @@ public static class JsonDocumentBuilderTests
 
     #endregion
 
+    #region RootElement ToString after mutation
+
+    [Fact]
+    public static void RootElement_ToString_WorksAfterMutationOnCapturedReference()
+    {
+        // Regression: root element (_idx == 0) must always be permitted,
+        // even when the captured _documentVersion is stale after a mutation.
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("""{"name":"Alice","age":30}""");
+        using var workspace = JsonWorkspace.Create();
+        using JsonDocumentBuilder<JsonElement.Mutable> builderDoc = doc.RootElement.CreateBuilder(workspace);
+
+        // Capture root before mutation
+        JsonElement.Mutable root = builderDoc.RootElement;
+
+        // Mutate via the captured reference — increments _parent.Version
+        root.RemoveProperty("age"u8);
+
+        // ToString on the now-stale reference must still work for the root
+        string result = root.ToString();
+        Assert.NotEqual(string.Empty, result);
+        Assert.Equal("""{"name":"Alice"}""", result);
+    }
+
+    #endregion
+
 }
