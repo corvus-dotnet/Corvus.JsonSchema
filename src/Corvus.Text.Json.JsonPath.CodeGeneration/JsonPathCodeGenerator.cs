@@ -121,8 +121,9 @@ public static class JsonPathCodeGenerator
         L(sb, "    ", "/// Evaluates the JSONPath expression and appends matched nodes to <paramref name=\"result\"/>.");
         L(sb, "    ", "/// </summary>");
         L(sb, "    ", "/// <param name=\"data\">The root JSON element.</param>");
+        L(sb, "    ", "/// <param name=\"workspace\">The workspace for intermediate value allocation.</param>");
         L(sb, "    ", "/// <param name=\"result\">The result buffer to populate.</param>");
-        L(sb, "    ", "public static void EvaluateNodes(in JsonElement data, ref JsonPathResult result)");
+        L(sb, "    ", "public static void EvaluateNodes(in JsonElement data, JsonWorkspace workspace, ref JsonPathResult result)");
         L(sb, "    ", "{");
         sb.Append(nodesBody);
         L(sb, "    ", "}");
@@ -136,10 +137,11 @@ public static class JsonPathCodeGenerator
         L(sb, "    ", "/// <returns>A <see cref=\"JsonPathResult\"/> that must be disposed.</returns>");
         L(sb, "    ", "public static JsonPathResult QueryNodes(in JsonElement data)");
         L(sb, "    ", "{");
+        L(sb, "    ", "    using JsonWorkspace workspace = JsonWorkspace.Create();");
         L(sb, "    ", "    JsonPathResult result = JsonPathResult.CreatePooled(16);");
         L(sb, "    ", "    try");
         L(sb, "    ", "    {");
-        L(sb, "    ", "        EvaluateNodes(data, ref result);");
+        L(sb, "    ", "        EvaluateNodes(data, workspace, ref result);");
         L(sb, "    ", "        return result;");
         L(sb, "    ", "    }");
         L(sb, "    ", "    catch");
@@ -162,7 +164,7 @@ public static class JsonPathCodeGenerator
         L(sb, "    ", "    JsonPathResult result = JsonPathResult.CreatePooled(16);");
         L(sb, "    ", "    try");
         L(sb, "    ", "    {");
-        L(sb, "    ", "        EvaluateNodes(data, ref result);");
+        L(sb, "    ", "        EvaluateNodes(data, workspace, ref result);");
         L(sb, "    ", "        return JsonPathCodeGenHelpers.BuildArrayFromSpan(result.Nodes, workspace);");
         L(sb, "    ", "    }");
         L(sb, "    ", "    finally");
