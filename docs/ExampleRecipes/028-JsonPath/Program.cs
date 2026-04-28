@@ -128,14 +128,14 @@ var evaluator2 = new JsonPathEvaluator(
 Console.WriteLine($"    $.store.book[?is_fiction(@.category)].title = {evaluator2.Query("$.store.book[?is_fiction(@.category)].title", data)}");
 Console.WriteLine();
 
-// ── 14. Custom function — node_count (NodesType → ValueType) ────────────────
-Console.WriteLine("14. Custom function — node_count()");
+// ── 14. Custom function — cheapest (NodesType → ValueType) ──────────────────
+Console.WriteLine("14. Custom function — cheapest()");
 
-var nodeCountFunc = new NodeCountFunction();
+var cheapestFunc = new CheapestFunction();
 var evaluator3 = new JsonPathEvaluator(
-    new Dictionary<string, IJsonPathFunction> { ["node_count"] = nodeCountFunc });
+    new Dictionary<string, IJsonPathFunction> { ["cheapest"] = cheapestFunc });
 
-Console.WriteLine($"    $[?node_count(@.book[*])>3].bicycle.color = {evaluator3.Query("$[?node_count(@.book[*])>3].bicycle.color", data)}");
+Console.WriteLine($"    $.store.book[?@.price==cheapest($.store.book[*].price)].title = {evaluator3.Query("$.store.book[?@.price==cheapest($.store.book[*].price)].title", data)}");
 
 // ────────────────────────────────────────────────────────────────────────────
 // Custom function implementations
@@ -193,10 +193,10 @@ sealed class IsFictionFunction : IJsonPathFunction
 }
 
 /// <summary>
-/// A custom JSONPath function that returns the count of nodes.
-/// Signature: node_count(NodesType) → ValueType.
+/// A custom JSONPath function that returns the minimum numeric value from a node list.
+/// Signature: cheapest(NodesType) → ValueType.
 /// </summary>
-sealed class NodeCountFunction : IJsonPathFunction
+sealed class CheapestFunction : IJsonPathFunction
 {
     private static readonly JsonPathFunctionType[] ParamTypes = [JsonPathFunctionType.NodesType];
 
@@ -206,8 +206,29 @@ sealed class NodeCountFunction : IJsonPathFunction
 
     public JsonPathFunctionResult Evaluate(ReadOnlySpan<JsonPathFunctionArgument> arguments)
     {
-        int count = arguments[0].NodeCount;
-        return JsonPathFunctionResult.FromValue(
-            JsonPathCodeGenHelpers.IntToElement(count));
+        ReadOnlySpan<JsonElement> nodes = arguments[0].Nodes;
+        if (nodes.Length == 0)
+        {
+            return JsonPathFunctionResult.Nothing;
+        }
+
+        double min = double.MaxValue;
+        JsonElement minElement = default;
+        foreach (JsonElement node in nodes)
+        {
+            if (node.ValueKind == JsonValueKind.Number)
+            {
+                double v = node.GetDouble();
+                if (v < min)
+                {
+                    min = v;
+                    minElement = node;
+                }
+            }
+        }
+
+        return min < double.MaxValue
+            ? JsonPathFunctionResult.FromValue(minElement)
+            : JsonPathFunctionResult.Nothing;
     }
 }

@@ -208,12 +208,12 @@ evaluator.Query("$.store.book[?is_fiction(@.category)].title", data);
 // ["Sword of Honour","Pride and Prejudice","The Lord of the Rings"]
 ```
 
-### node_count — NodesType → ValueType
+### cheapest — NodesType → ValueType
 
-A function that receives a node list and returns the count. The `NodesType` parameter gives the function access to all nodes matched by a filter-query argument:
+A function that receives a node list (all prices) and returns the minimum value. This demonstrates why `NodesType` matters — the function needs to see every node to compute the result:
 
 ```csharp
-sealed class NodeCountFunction : IJsonPathFunction
+sealed class CheapestFunction : IJsonPathFunction
 {
     private static readonly JsonPathFunctionType[] ParamTypes = [JsonPathFunctionType.NodesType];
 
@@ -222,18 +222,31 @@ sealed class NodeCountFunction : IJsonPathFunction
 
     public JsonPathFunctionResult Evaluate(ReadOnlySpan<JsonPathFunctionArgument> arguments)
     {
-        return JsonPathFunctionResult.FromValue(
-            JsonPathCodeGenHelpers.IntToElement(arguments[0].NodeCount));
+        ReadOnlySpan<JsonElement> nodes = arguments[0].Nodes;
+        double min = double.MaxValue;
+        JsonElement minElement = default;
+        foreach (JsonElement node in nodes)
+        {
+            if (node.ValueKind == JsonValueKind.Number)
+            {
+                double v = node.GetDouble();
+                if (v < min) { min = v; minElement = node; }
+            }
+        }
+
+        return min < double.MaxValue
+            ? JsonPathFunctionResult.FromValue(minElement)
+            : JsonPathFunctionResult.Nothing;
     }
 }
 ```
 
 ```csharp
 var evaluator = new JsonPathEvaluator(
-    new Dictionary<string, IJsonPathFunction> { ["node_count"] = new NodeCountFunction() });
+    new Dictionary<string, IJsonPathFunction> { ["cheapest"] = new CheapestFunction() });
 
-evaluator.Query("$[?node_count(@.book[*])>3].bicycle.color", data);
-// ["red"]
+evaluator.Query("$.store.book[?@.price==cheapest($.store.book[*].price)].title", data);
+// ["Between the Stops"]
 ```
 
 ## Running the Example
