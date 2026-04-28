@@ -365,20 +365,46 @@ public static class JsonPathCodeGenHelpers
     }
 
     /// <summary>
+    /// Converts a <see cref="double"/> to a <see cref="JsonElement"/> number.
+    /// </summary>
+    /// <param name="value">The numeric value.</param>
+    /// <param name="workspace">The workspace for document allocation.</param>
+    /// <returns>A JSON number element registered in the workspace.</returns>
+    public static JsonElement DoubleToElement(double value, JsonWorkspace workspace)
+    {
+        // Fast path: small non-negative integers hit the cache.
+        if (value >= 0 && value < IntCache.Length && value == Math.Truncate(value))
+        {
+            return IntCache[(int)value];
+        }
+
+        JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateBuilder(
+            workspace,
+            (JsonElement.Source)value,
+            estimatedMemberCount: 1,
+            initialValueBufferSize: 32);
+        return (JsonElement)doc.RootElement;
+    }
+
+    /// <summary>
     /// Converts an integer to a <see cref="JsonElement"/> number.
     /// </summary>
     /// <param name="value">The integer value.</param>
-    /// <returns>A JSON number element.</returns>
-    public static JsonElement IntToElement(int value)
+    /// <param name="workspace">The workspace for document allocation.</param>
+    /// <returns>A JSON number element registered in the workspace.</returns>
+    public static JsonElement IntToElement(int value, JsonWorkspace workspace)
     {
         if ((uint)value < (uint)IntCache.Length)
         {
             return IntCache[value];
         }
 
-        Span<byte> buf = stackalloc byte[16];
-        Utf8Formatter.TryFormat(value, buf, out int written);
-        return JsonElement.ParseValue(buf.Slice(0, written));
+        JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateBuilder(
+            workspace,
+            (JsonElement.Source)(double)value,
+            estimatedMemberCount: 1,
+            initialValueBufferSize: 32);
+        return (JsonElement)doc.RootElement;
     }
 
     /// <summary>

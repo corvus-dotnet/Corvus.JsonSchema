@@ -1415,7 +1415,7 @@ public static class JsonPathCodeGenerator
             string lenVar = this.NextVar();
             string resultVar = this.NextVar();
             L(body, indent, $"int {lenVar} = {H}.LengthValue({argVar});");
-            L(body, indent, $"JsonElement {resultVar} = {lenVar} >= 0 ? {H}.IntToElement({lenVar}) : default;");
+            L(body, indent, $"JsonElement {resultVar} = {lenVar} >= 0 ? {H}.IntToElement({lenVar}, workspace) : default;");
             return resultVar;
         }
 
@@ -1440,7 +1440,7 @@ public static class JsonPathCodeGenerator
             }
 
             string resultVar = this.NextVar();
-            L(body, indent, $"JsonElement {resultVar} = {H}.IntToElement({countVar});");
+            L(body, indent, $"JsonElement {resultVar} = {H}.IntToElement({countVar}, workspace);");
             return resultVar;
         }
 
@@ -1790,7 +1790,13 @@ public static class JsonPathCodeGenerator
                 }
             }
 
-            callSb.Append(");");
+            // Append workspace as final argument
+            if (argVars.Length > 0)
+            {
+                callSb.Append(", ");
+            }
+
+            callSb.Append("workspace);");
             L(body, indent, callSb.ToString());
 
             // Dispose node results
@@ -1839,7 +1845,13 @@ public static class JsonPathCodeGenerator
                 mb.Append($"{csharpType} {fn.Parameters[i].Name}");
             }
 
-            mb.Append(")\n");
+            // Always add workspace parameter so function body can create elements
+            if (fn.Parameters.Length > 0)
+            {
+                mb.Append(", ");
+            }
+
+            mb.Append("JsonWorkspace workspace)\n");
 
             if (fn.IsExpression)
             {

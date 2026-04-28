@@ -160,7 +160,7 @@ public class CustomFunctionCodeGenTests
                 "ceil",
                 [new FunctionParameter(FunctionParamType.Value, "x")],
                 FunctionParamType.Value,
-                "JsonPathCodeGenHelpers.IntToElement((int)Math.Ceiling(x.GetDouble()))",
+                "JsonPathCodeGenHelpers.IntToElement((int)Math.Ceiling(x.GetDouble()), workspace)",
                 isExpression: true),
         ];
 
@@ -173,7 +173,7 @@ public class CustomFunctionCodeGenTests
         // The generated code should contain our custom function helper
         Assert.Contains("CustomFn_ceil", code);
         Assert.Contains("Math.Ceiling", code);
-        Assert.Contains("private static JsonElement CustomFn_ceil(JsonElement x)", code);
+        Assert.Contains("private static JsonElement CustomFn_ceil(JsonElement x, JsonWorkspace workspace)", code);
     }
 
     [Fact]
@@ -195,7 +195,7 @@ public class CustomFunctionCodeGenTests
             customFunctions: fns);
 
         Assert.Contains("CustomFn_is_even", code);
-        Assert.Contains("private static bool CustomFn_is_even(JsonElement x)", code);
+        Assert.Contains("private static bool CustomFn_is_even(JsonElement x, JsonWorkspace workspace)", code);
     }
 
     [Fact]
@@ -231,7 +231,7 @@ public class CustomFunctionCodeGenTests
                 "clamp",
                 [new FunctionParameter(FunctionParamType.Value, "x")],
                 FunctionParamType.Value,
-                "    double v = x.GetDouble();\n    if (v < 0) return JsonPathCodeGenHelpers.IntToElement(0);\n    return x;",
+                "    double v = x.GetDouble();\n    if (v < 0) return JsonPathCodeGenHelpers.IntToElement(0, workspace);\n    return x;",
                 isExpression: false),
         ];
 
@@ -253,7 +253,7 @@ public class CustomFunctionCodeGenTests
                 "double_it",
                 [new FunctionParameter(FunctionParamType.Value, "x")],
                 FunctionParamType.Value,
-                "JsonPathCodeGenHelpers.IntToElement(x.GetInt32() * 2)",
+                "JsonPathCodeGenHelpers.IntToElement(x.GetInt32() * 2, workspace)",
                 isExpression: true),
         ];
 

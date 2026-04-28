@@ -83,7 +83,8 @@ internal static class Compiler
         /// </summary>
         internal void ExecuteNodes(in JsonElement root, ref JsonPathResult result)
         {
-            PlanInterpreter.Execute(_plan, root, ref result);
+            using JsonWorkspace workspace = JsonWorkspace.Create();
+            PlanInterpreter.Execute(_plan, root, ref result, workspace);
         }
     }
 }

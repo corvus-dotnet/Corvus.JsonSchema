@@ -428,7 +428,7 @@ public sealed class CeilFunction : IJsonPathFunction
     public JsonPathFunctionType ReturnType => JsonPathFunctionType.ValueType;
     public ReadOnlySpan<JsonPathFunctionType> ParameterTypes => ParamTypes;
 
-    public JsonPathFunctionResult Evaluate(ReadOnlySpan<JsonPathFunctionArgument> arguments)
+    public JsonPathFunctionResult Evaluate(ReadOnlySpan<JsonPathFunctionArgument> arguments, JsonWorkspace workspace)
     {
         JsonElement value = arguments[0].Value;
         if (value.ValueKind != JsonValueKind.Number)
@@ -437,7 +437,7 @@ public sealed class CeilFunction : IJsonPathFunction
         }
 
         return JsonPathFunctionResult.FromValue(
-            JsonPathCodeGenHelpers.IntToElement((int)Math.Ceiling(value.GetDouble())));
+            JsonPathCodeGenHelpers.IntToElement((int)Math.Ceiling(value.GetDouble()), workspace));
     }
 }
 ```
@@ -475,7 +475,7 @@ The source generator and CLI tool support custom functions via `.jpfn` sidecar f
 
 ```
 // Expression form — single-expression body
-fn ceil(value x) : value => JsonPathCodeGenHelpers.IntToElement((int)Math.Ceiling(x.GetDouble()));
+fn ceil(value x) : value => JsonPathCodeGenHelpers.IntToElement((int)Math.Ceiling(x.GetDouble()), workspace);
 
 // Block form — multi-statement body
 fn is_fiction(value x) : logical

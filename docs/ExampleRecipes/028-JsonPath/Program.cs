@@ -153,7 +153,7 @@ sealed class CeilFunction : IJsonPathFunction
 
     public ReadOnlySpan<JsonPathFunctionType> ParameterTypes => ParamTypes;
 
-    public JsonPathFunctionResult Evaluate(ReadOnlySpan<JsonPathFunctionArgument> arguments)
+    public JsonPathFunctionResult Evaluate(ReadOnlySpan<JsonPathFunctionArgument> arguments, JsonWorkspace workspace)
     {
         JsonElement value = arguments[0].Value;
         if (value.ValueKind != JsonValueKind.Number)
@@ -163,7 +163,7 @@ sealed class CeilFunction : IJsonPathFunction
 
         int ceiled = (int)Math.Ceiling(value.GetDouble());
         return JsonPathFunctionResult.FromValue(
-            JsonPathCodeGenHelpers.IntToElement(ceiled));
+            JsonPathCodeGenHelpers.IntToElement(ceiled, workspace));
     }
 }
 
@@ -179,7 +179,7 @@ sealed class IsFictionFunction : IJsonPathFunction
 
     public ReadOnlySpan<JsonPathFunctionType> ParameterTypes => ParamTypes;
 
-    public JsonPathFunctionResult Evaluate(ReadOnlySpan<JsonPathFunctionArgument> arguments)
+    public JsonPathFunctionResult Evaluate(ReadOnlySpan<JsonPathFunctionArgument> arguments, JsonWorkspace workspace)
     {
         JsonElement value = arguments[0].Value;
         if (value.ValueKind != JsonValueKind.String)
@@ -204,7 +204,7 @@ sealed class CheapestFunction : IJsonPathFunction
 
     public ReadOnlySpan<JsonPathFunctionType> ParameterTypes => ParamTypes;
 
-    public JsonPathFunctionResult Evaluate(ReadOnlySpan<JsonPathFunctionArgument> arguments)
+    public JsonPathFunctionResult Evaluate(ReadOnlySpan<JsonPathFunctionArgument> arguments, JsonWorkspace workspace)
     {
         ReadOnlySpan<JsonElement> nodes = arguments[0].Nodes;
         if (nodes.Length == 0)

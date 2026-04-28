@@ -142,8 +142,8 @@ public static class SampleRegistry
             FunctionsCode = """
                 {
                     // ceil: rounds a number up to the nearest integer
-                    ["ceil"] = ValueFunction(v =>
-                        Value((int)Math.Ceiling(v.GetDouble()))),
+                    ["ceil"] = ValueFunction((v, ws) =>
+                        Value((int)Math.Ceiling(v.GetDouble()), ws)),
 
                     // is_fiction: checks if a category is "fiction"
                     ["is_fiction"] = LogicalFunction(v =>

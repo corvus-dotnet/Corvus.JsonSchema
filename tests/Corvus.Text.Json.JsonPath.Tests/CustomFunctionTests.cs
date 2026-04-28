@@ -201,7 +201,7 @@ public class CustomFunctionTests
 
         public ReadOnlySpan<JsonPathFunctionType> ParameterTypes => ParamTypes;
 
-        public JsonPathFunctionResult Evaluate(ReadOnlySpan<JsonPathFunctionArgument> arguments)
+        public JsonPathFunctionResult Evaluate(ReadOnlySpan<JsonPathFunctionArgument> arguments, JsonWorkspace workspace)
         {
             JsonElement val = arguments[0].Value;
             if (val.ValueKind != JsonValueKind.Number)
@@ -212,7 +212,7 @@ public class CustomFunctionTests
             double d = val.GetDouble();
             int ceil = (int)Math.Ceiling(d);
             return JsonPathFunctionResult.FromValue(
-                JsonElement.ParseValue(System.Text.Encoding.UTF8.GetBytes(ceil.ToString())));
+                JsonPathCodeGenHelpers.IntToElement(ceil, workspace));
         }
     }
 
@@ -224,7 +224,7 @@ public class CustomFunctionTests
 
         public ReadOnlySpan<JsonPathFunctionType> ParameterTypes => ParamTypes;
 
-        public JsonPathFunctionResult Evaluate(ReadOnlySpan<JsonPathFunctionArgument> arguments)
+        public JsonPathFunctionResult Evaluate(ReadOnlySpan<JsonPathFunctionArgument> arguments, JsonWorkspace workspace)
         {
             JsonElement val = arguments[0].Value;
             if (val.ValueKind != JsonValueKind.Number || !val.TryGetInt32(out int n))
@@ -245,7 +245,7 @@ public class CustomFunctionTests
 
         public ReadOnlySpan<JsonPathFunctionType> ParameterTypes => ParamTypes;
 
-        public JsonPathFunctionResult Evaluate(ReadOnlySpan<JsonPathFunctionArgument> arguments)
+        public JsonPathFunctionResult Evaluate(ReadOnlySpan<JsonPathFunctionArgument> arguments, JsonWorkspace workspace)
         {
             JsonElement a = arguments[0].Value;
             JsonElement b = arguments[1].Value;
@@ -256,7 +256,7 @@ public class CustomFunctionTests
 
             double sum = a.GetDouble() + b.GetDouble();
             return JsonPathFunctionResult.FromValue(
-                JsonElement.ParseValue(System.Text.Encoding.UTF8.GetBytes(sum.ToString())));
+                JsonPathCodeGenHelpers.DoubleToElement(sum, workspace));
         }
     }
 
@@ -268,11 +268,11 @@ public class CustomFunctionTests
 
         public ReadOnlySpan<JsonPathFunctionType> ParameterTypes => ParamTypes;
 
-        public JsonPathFunctionResult Evaluate(ReadOnlySpan<JsonPathFunctionArgument> arguments)
+        public JsonPathFunctionResult Evaluate(ReadOnlySpan<JsonPathFunctionArgument> arguments, JsonWorkspace workspace)
         {
             int count = arguments[0].NodeCount;
             return JsonPathFunctionResult.FromValue(
-                JsonElement.ParseValue(System.Text.Encoding.UTF8.GetBytes(count.ToString())));
+                JsonPathCodeGenHelpers.IntToElement(count, workspace));
         }
     }
 
@@ -284,7 +284,7 @@ public class CustomFunctionTests
 
         public ReadOnlySpan<JsonPathFunctionType> ParameterTypes => ParamTypes;
 
-        public JsonPathFunctionResult Evaluate(ReadOnlySpan<JsonPathFunctionArgument> arguments)
+        public JsonPathFunctionResult Evaluate(ReadOnlySpan<JsonPathFunctionArgument> arguments, JsonWorkspace workspace)
         {
             ReadOnlySpan<JsonElement> nodes = arguments[0].Nodes;
             double total = 0;
@@ -297,7 +297,7 @@ public class CustomFunctionTests
             }
 
             return JsonPathFunctionResult.FromValue(
-                JsonElement.ParseValue(System.Text.Encoding.UTF8.GetBytes(total.ToString())));
+                JsonPathCodeGenHelpers.DoubleToElement(total, workspace));
         }
     }
 }

@@ -46,6 +46,12 @@ public interface IJsonPathFunction
     /// <see cref="JsonPathFunctionType.NodesType"/> parameters, use
     /// <see cref="JsonPathFunctionArgument.Nodes"/>.
     /// </param>
+    /// <param name="workspace">
+    /// The workspace for creating intermediate JSON elements. Custom functions
+    /// that need to produce new numeric or string elements should use
+    /// <see cref="JsonPathCodeGenHelpers.DoubleToElement"/> or
+    /// <see cref="JsonPathCodeGenHelpers.IntToElement"/> with this workspace.
+    /// </param>
     /// <returns>The function result.</returns>
-    JsonPathFunctionResult Evaluate(ReadOnlySpan<JsonPathFunctionArgument> arguments);
+    JsonPathFunctionResult Evaluate(ReadOnlySpan<JsonPathFunctionArgument> arguments, JsonWorkspace workspace);
 }

@@ -31,16 +31,17 @@ internal static class PlanInterpreter
     /// <param name="plan">The plan node tree to execute.</param>
     /// <param name="root">The root JSON element (for absolute queries).</param>
     /// <param name="result">The result buffer to append matched nodes to.</param>
-    internal static void Execute(PlanNode plan, in JsonElement root, ref JsonPathResult result)
+    /// <param name="workspace">The workspace for intermediate document allocation.</param>
+    internal static void Execute(PlanNode plan, in JsonElement root, ref JsonPathResult result, JsonWorkspace workspace)
     {
-        ExecuteStep(plan, root, root, ref result);
+        ExecuteStep(plan, root, root, ref result, workspace);
     }
 
     /// <summary>
     /// Executes a single plan step against the current JSON element.
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    internal static void ExecuteStep(PlanNode plan, in JsonElement root, in JsonElement current, ref JsonPathResult result)
+    internal static void ExecuteStep(PlanNode plan, in JsonElement root, in JsonElement current, ref JsonPathResult result, JsonWorkspace workspace)
     {
         switch (plan)
         {
@@ -49,55 +50,55 @@ internal static class PlanInterpreter
                 break;
 
             case NavigateNameStep name:
-                ExecuteNavigateName(name, root, current, ref result);
+                ExecuteNavigateName(name, root, current, ref result, workspace);
                 break;
 
             case NavigateIndexStep idx:
-                ExecuteNavigateIndex(idx, root, current, ref result);
+                ExecuteNavigateIndex(idx, root, current, ref result, workspace);
                 break;
 
             case SingletonChainStep chain:
-                ExecuteSingletonChain(chain, root, current, ref result);
+                ExecuteSingletonChain(chain, root, current, ref result, workspace);
                 break;
 
             case NameSetStep nameSet:
-                ExecuteNameSet(nameSet, root, current, ref result);
+                ExecuteNameSet(nameSet, root, current, ref result, workspace);
                 break;
 
             case WildcardNameStep wildcardName:
-                ExecuteWildcardName(wildcardName, root, current, ref result);
+                ExecuteWildcardName(wildcardName, root, current, ref result, workspace);
                 break;
 
             case WildcardStep wildcard:
-                ExecuteWildcard(wildcard, root, current, ref result);
+                ExecuteWildcard(wildcard, root, current, ref result, workspace);
                 break;
 
             case SliceStep slice:
-                ExecuteSlice(slice, root, current, ref result);
+                ExecuteSlice(slice, root, current, ref result, workspace);
                 break;
 
             case FilterSingularNumericStep filterNum:
-                ExecuteFilterSingularNumeric(filterNum, root, current, ref result);
+                ExecuteFilterSingularNumeric(filterNum, root, current, ref result, workspace);
                 break;
 
             case FilterStep filter:
-                ExecuteFilter(filter, root, current, ref result);
+                ExecuteFilter(filter, root, current, ref result, workspace);
                 break;
 
             case MultiSelectorStep multi:
-                ExecuteMultiSelector(multi, root, current, ref result);
+                ExecuteMultiSelector(multi, root, current, ref result, workspace);
                 break;
 
             case DescendantNameStep descName:
-                ExecuteDescendantName(descName, root, current, ref result);
+                ExecuteDescendantName(descName, root, current, ref result, workspace);
                 break;
 
             case DescendantNameSetStep descNameSet:
-                ExecuteDescendantNameSet(descNameSet, root, current, ref result);
+                ExecuteDescendantNameSet(descNameSet, root, current, ref result, workspace);
                 break;
 
             case DescendantStep desc:
-                ExecuteDescendant(desc, root, current, ref result);
+                ExecuteDescendant(desc, root, current, ref result, workspace);
                 break;
 
             default:
@@ -106,18 +107,18 @@ internal static class PlanInterpreter
     }
 
     // ── Singleton navigation ─────────────────────────────────────────
-    private static void ExecuteNavigateName(NavigateNameStep step, in JsonElement root, in JsonElement current, ref JsonPathResult result)
+    private static void ExecuteNavigateName(NavigateNameStep step, in JsonElement root, in JsonElement current, ref JsonPathResult result, JsonWorkspace workspace)
     {
         if (current.ValueKind == JsonValueKind.Object)
         {
             if (current.TryGetProperty(step.Utf8Name, out JsonElement value))
             {
-                ExecuteStep(step.Continuation, root, value, ref result);
+                ExecuteStep(step.Continuation, root, value, ref result, workspace);
             }
         }
     }
 
-    private static void ExecuteNavigateIndex(NavigateIndexStep step, in JsonElement root, in JsonElement current, ref JsonPathResult result)
+    private static void ExecuteNavigateIndex(NavigateIndexStep step, in JsonElement root, in JsonElement current, ref JsonPathResult result, JsonWorkspace workspace)
     {
         if (current.ValueKind != JsonValueKind.Array)
         {
@@ -128,11 +129,11 @@ internal static class PlanInterpreter
         long resolved = step.Index >= 0 ? step.Index : len + step.Index;
         if (resolved >= 0 && resolved < len)
         {
-            ExecuteStep(step.Continuation, root, current[(int)resolved], ref result);
+            ExecuteStep(step.Continuation, root, current[(int)resolved], ref result, workspace);
         }
     }
 
-    private static void ExecuteSingletonChain(SingletonChainStep step, in JsonElement root, in JsonElement current, ref JsonPathResult result)
+    private static void ExecuteSingletonChain(SingletonChainStep step, in JsonElement root, in JsonElement current, ref JsonPathResult result, JsonWorkspace workspace)
     {
         JsonElement node = current;
         SingularNav[] steps = step.Steps;
@@ -170,11 +171,11 @@ internal static class PlanInterpreter
             }
         }
 
-        ExecuteStep(step.Continuation, root, node, ref result);
+        ExecuteStep(step.Continuation, root, node, ref result, workspace);
     }
 
     // ── Fused multi-name enumeration ─────────────────────────────────
-    private static void ExecuteNameSet(NameSetStep step, in JsonElement root, in JsonElement current, ref JsonPathResult result)
+    private static void ExecuteNameSet(NameSetStep step, in JsonElement root, in JsonElement current, ref JsonPathResult result, JsonWorkspace workspace)
     {
         if (current.ValueKind != JsonValueKind.Object)
         {
@@ -214,7 +215,7 @@ internal static class PlanInterpreter
             {
                 if ((foundMask & (1UL << i)) != 0)
                 {
-                    ExecuteStep(entries[i].Continuation, root, rentedSlots[i], ref result);
+                    ExecuteStep(entries[i].Continuation, root, rentedSlots[i], ref result, workspace);
                 }
             }
         }
@@ -227,20 +228,20 @@ internal static class PlanInterpreter
     }
 
     // ── Iteration steps ──────────────────────────────────────────────
-    private static void ExecuteWildcard(WildcardStep step, in JsonElement root, in JsonElement current, ref JsonPathResult result)
+    private static void ExecuteWildcard(WildcardStep step, in JsonElement root, in JsonElement current, ref JsonPathResult result, JsonWorkspace workspace)
     {
         if (current.ValueKind == JsonValueKind.Object)
         {
             foreach (JsonProperty<JsonElement> prop in current.EnumerateObject())
             {
-                ExecuteStep(step.Body, root, prop.Value, ref result);
+                ExecuteStep(step.Body, root, prop.Value, ref result, workspace);
             }
         }
         else if (current.ValueKind == JsonValueKind.Array)
         {
             foreach (JsonElement item in current.EnumerateArray())
             {
-                ExecuteStep(step.Body, root, item, ref result);
+                ExecuteStep(step.Body, root, item, ref result, workspace);
             }
         }
     }
@@ -250,7 +251,7 @@ internal static class PlanInterpreter
     /// child looks up the named property directly, avoiding per-element type
     /// dispatch through <see cref="ExecuteStep"/>.
     /// </summary>
-    private static void ExecuteWildcardName(WildcardNameStep step, in JsonElement root, in JsonElement current, ref JsonPathResult result)
+    private static void ExecuteWildcardName(WildcardNameStep step, in JsonElement root, in JsonElement current, ref JsonPathResult result, JsonWorkspace workspace)
     {
         if (current.ValueKind == JsonValueKind.Array)
         {
@@ -259,7 +260,7 @@ internal static class PlanInterpreter
             {
                 if (item.ValueKind == JsonValueKind.Object && item.TryGetProperty(utf8Name, out JsonElement value))
                 {
-                    ExecuteStep(step.Continuation, root, value, ref result);
+                    ExecuteStep(step.Continuation, root, value, ref result, workspace);
                 }
             }
         }
@@ -271,13 +272,13 @@ internal static class PlanInterpreter
                 JsonElement child = prop.Value;
                 if (child.ValueKind == JsonValueKind.Object && child.TryGetProperty(utf8Name, out JsonElement value))
                 {
-                    ExecuteStep(step.Continuation, root, value, ref result);
+                    ExecuteStep(step.Continuation, root, value, ref result, workspace);
                 }
             }
         }
     }
 
-    private static void ExecuteSlice(SliceStep step, in JsonElement root, in JsonElement current, ref JsonPathResult result)
+    private static void ExecuteSlice(SliceStep step, in JsonElement root, in JsonElement current, ref JsonPathResult result, JsonWorkspace workspace)
     {
         if (current.ValueKind != JsonValueKind.Array)
         {
@@ -302,7 +303,7 @@ internal static class PlanInterpreter
 
             for (long i = lower; i < upper; i += s)
             {
-                ExecuteStep(step.Body, root, current[(int)i], ref result);
+                ExecuteStep(step.Body, root, current[(int)i], ref result, workspace);
             }
         }
         else
@@ -315,7 +316,7 @@ internal static class PlanInterpreter
 
             for (long i = upper; i > lower; i += s)
             {
-                ExecuteStep(step.Body, root, current[(int)i], ref result);
+                ExecuteStep(step.Body, root, current[(int)i], ref result, workspace);
             }
         }
     }
@@ -326,15 +327,15 @@ internal static class PlanInterpreter
         return index >= 0 ? index : len + index;
     }
 
-    private static void ExecuteFilter(FilterStep step, in JsonElement root, in JsonElement current, ref JsonPathResult result)
+    private static void ExecuteFilter(FilterStep step, in JsonElement root, in JsonElement current, ref JsonPathResult result, JsonWorkspace workspace)
     {
         if (current.ValueKind == JsonValueKind.Array)
         {
             foreach (JsonElement item in current.EnumerateArray())
             {
-                if (EvalFilterAsTruthy(step.Predicate, root, item))
+                if (EvalFilterAsTruthy(step.Predicate, root, item, workspace))
                 {
-                    ExecuteStep(step.Body, root, item, ref result);
+                    ExecuteStep(step.Body, root, item, ref result, workspace);
                 }
             }
         }
@@ -342,9 +343,9 @@ internal static class PlanInterpreter
         {
             foreach (JsonProperty<JsonElement> prop in current.EnumerateObject())
             {
-                if (EvalFilterAsTruthy(step.Predicate, root, prop.Value))
+                if (EvalFilterAsTruthy(step.Predicate, root, prop.Value, workspace))
                 {
-                    ExecuteStep(step.Body, root, prop.Value, ref result);
+                    ExecuteStep(step.Body, root, prop.Value, ref result, workspace);
                 }
             }
         }
@@ -355,7 +356,7 @@ internal static class PlanInterpreter
     /// Inlines the singular path navigation and numeric comparison directly
     /// into the iteration loop, avoiding <see cref="EvalFilter"/> dispatch.
     /// </summary>
-    private static void ExecuteFilterSingularNumeric(FilterSingularNumericStep step, in JsonElement root, in JsonElement current, ref JsonPathResult result)
+    private static void ExecuteFilterSingularNumeric(FilterSingularNumericStep step, in JsonElement root, in JsonElement current, ref JsonPathResult result, JsonWorkspace workspace)
     {
         SingularNav[] navSteps = step.Steps;
         double literal = step.LiteralValue;
@@ -367,7 +368,7 @@ internal static class PlanInterpreter
             {
                 if (EvalSingularNumericInline(navSteps, op, literal, root, item))
                 {
-                    ExecuteStep(step.Body, root, item, ref result);
+                    ExecuteStep(step.Body, root, item, ref result, workspace);
                 }
             }
         }
@@ -378,7 +379,7 @@ internal static class PlanInterpreter
                 JsonElement val = prop.Value;
                 if (EvalSingularNumericInline(navSteps, op, literal, root, val))
                 {
-                    ExecuteStep(step.Body, root, val, ref result);
+                    ExecuteStep(step.Body, root, val, ref result, workspace);
                 }
             }
         }
@@ -402,25 +403,25 @@ internal static class PlanInterpreter
         return op == ComparisonOp.NotEqual;
     }
 
-    private static void ExecuteMultiSelector(MultiSelectorStep step, in JsonElement root, in JsonElement current, ref JsonPathResult result)
+    private static void ExecuteMultiSelector(MultiSelectorStep step, in JsonElement root, in JsonElement current, ref JsonPathResult result, JsonWorkspace workspace)
     {
         PlanNode[] selectors = step.Selectors;
         for (int i = 0; i < selectors.Length; i++)
         {
-            ExecuteStep(selectors[i], root, current, ref result);
+            ExecuteStep(selectors[i], root, current, ref result, workspace);
         }
     }
 
     // ── Descendant traversal ─────────────────────────────────────────
-    private static void ExecuteDescendantName(DescendantNameStep step, in JsonElement root, in JsonElement current, ref JsonPathResult result)
+    private static void ExecuteDescendantName(DescendantNameStep step, in JsonElement root, in JsonElement current, ref JsonPathResult result, JsonWorkspace workspace)
     {
         foreach (JsonElement value in current.EnumerateDescendantProperties(step.Utf8Name))
         {
-            ExecuteStep(step.Continuation, root, value, ref result);
+            ExecuteStep(step.Continuation, root, value, ref result, workspace);
         }
     }
 
-    private static void ExecuteDescendantNameSet(DescendantNameSetStep step, in JsonElement root, in JsonElement current, ref JsonPathResult result)
+    private static void ExecuteDescendantNameSet(DescendantNameSetStep step, in JsonElement root, in JsonElement current, ref JsonPathResult result, JsonWorkspace workspace)
     {
         NameSetEntry[] entries = step.Entries;
         int count = entries.Length;
@@ -449,7 +450,7 @@ internal static class PlanInterpreter
                 {
                     if ((foundMask & (1UL << i)) != 0)
                     {
-                        ExecuteStep(entries[i].Continuation, root, rentedSlots[i], ref result);
+                        ExecuteStep(entries[i].Continuation, root, rentedSlots[i], ref result, workspace);
                     }
                 }
             }
@@ -465,7 +466,7 @@ internal static class PlanInterpreter
                 JsonElement child = prop.Value;
                 if (child.ValueKind == JsonValueKind.Object || child.ValueKind == JsonValueKind.Array)
                 {
-                    ExecuteDescendantNameSet(step, root, child, ref result);
+                    ExecuteDescendantNameSet(step, root, child, ref result, workspace);
                 }
             }
         }
@@ -475,19 +476,19 @@ internal static class PlanInterpreter
             {
                 if (item.ValueKind == JsonValueKind.Object || item.ValueKind == JsonValueKind.Array)
                 {
-                    ExecuteDescendantNameSet(step, root, item, ref result);
+                    ExecuteDescendantNameSet(step, root, item, ref result, workspace);
                 }
             }
         }
     }
 
-    private static void ExecuteDescendant(DescendantStep step, in JsonElement root, in JsonElement current, ref JsonPathResult result)
+    private static void ExecuteDescendant(DescendantStep step, in JsonElement root, in JsonElement current, ref JsonPathResult result, JsonWorkspace workspace)
     {
         // Apply all selectors at this node.
         PlanNode[] selectorPlans = step.SelectorPlans;
         for (int i = 0; i < selectorPlans.Length; i++)
         {
-            ExecuteStep(selectorPlans[i], root, current, ref result);
+            ExecuteStep(selectorPlans[i], root, current, ref result, workspace);
         }
 
         // Recurse into container children.
@@ -495,95 +496,95 @@ internal static class PlanInterpreter
         {
             foreach (JsonProperty<JsonElement> prop in current.EnumerateObject())
             {
-                ExecuteDescendant(step, root, prop.Value, ref result);
+                ExecuteDescendant(step, root, prop.Value, ref result, workspace);
             }
         }
         else if (current.ValueKind == JsonValueKind.Array)
         {
             foreach (JsonElement item in current.EnumerateArray())
             {
-                ExecuteDescendant(step, root, item, ref result);
+                ExecuteDescendant(step, root, item, ref result, workspace);
             }
         }
     }
 
     // ── Filter expression evaluation ─────────────────────────────────
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static bool EvalFilterAsTruthy(FilterPlanNode plan, in JsonElement root, in JsonElement current)
+    private static bool EvalFilterAsTruthy(FilterPlanNode plan, in JsonElement root, in JsonElement current, JsonWorkspace workspace)
     {
-        FilterResult result = EvalFilter(plan, root, current);
+        FilterResult result = EvalFilter(plan, root, current, workspace);
         return result.AsTruthy();
     }
 
-    private static FilterResult EvalFilter(FilterPlanNode plan, in JsonElement root, in JsonElement current)
+    private static FilterResult EvalFilter(FilterPlanNode plan, in JsonElement root, in JsonElement current, JsonWorkspace workspace)
     {
         return plan switch
         {
-            FilterLogicalAndPlan and => EvalLogicalAnd(and, root, current),
-            FilterLogicalOrPlan or => EvalLogicalOr(or, root, current),
-            FilterLogicalNotPlan not => EvalLogicalNot(not, root, current),
-            FilterComparisonPlan cmp => EvalComparison(cmp, root, current),
-            FilterNumericComparisonPlan num => EvalNumericComparison(num, root, current),
-            FilterSingularNumericPlan sing => EvalSingularNumericComparison(sing, root, current),
-            FilterLengthNumericPlan len => EvalLengthNumericComparison(len, root, current),
-            FilterKindComparisonPlan kind => EvalKindComparison(kind, root, current),
-            FilterStringEqualityPlan str => EvalStringEquality(str, root, current),
-            FilterSingularQueryPlan sq => EvalSingularQuery(sq, root, current),
-            FilterEmptyQueryPlan eq => EvalEmptyQuery(eq, root, current),
-            FilterGeneralQueryPlan gq => EvalGeneralQuery(gq, root, current),
+            FilterLogicalAndPlan and => EvalLogicalAnd(and, root, current, workspace),
+            FilterLogicalOrPlan or => EvalLogicalOr(or, root, current, workspace),
+            FilterLogicalNotPlan not => EvalLogicalNot(not, root, current, workspace),
+            FilterComparisonPlan cmp => EvalComparison(cmp, root, current, workspace),
+            FilterNumericComparisonPlan num => EvalNumericComparison(num, root, current, workspace),
+            FilterSingularNumericPlan sing => EvalSingularNumericComparison(sing, root, current, workspace),
+            FilterLengthNumericPlan len => EvalLengthNumericComparison(len, root, current, workspace),
+            FilterKindComparisonPlan kind => EvalKindComparison(kind, root, current, workspace),
+            FilterStringEqualityPlan str => EvalStringEquality(str, root, current, workspace),
+            FilterSingularQueryPlan sq => EvalSingularQuery(sq, root, current, workspace),
+            FilterEmptyQueryPlan eq => EvalEmptyQuery(eq, root, current, workspace),
+            FilterGeneralQueryPlan gq => EvalGeneralQuery(gq, root, current, workspace),
             FilterLiteralPlan lit => FilterResult.FromValue(lit.Value),
-            FilterLengthFunctionPlan lenFn => EvalLengthFunction(lenFn, root, current),
-            FilterCountFunctionPlan countFn => EvalCountFunction(countFn, root, current),
-            FilterValueFunctionPlan valFn => EvalValueFunction(valFn, root, current),
-            FilterMatchFunctionPlan matchFn => EvalMatchFunction(matchFn, root, current),
-            FilterCustomFunctionPlan customFn => EvalCustomFunction(customFn, root, current),
+            FilterLengthFunctionPlan lenFn => EvalLengthFunction(lenFn, root, current, workspace),
+            FilterCountFunctionPlan countFn => EvalCountFunction(countFn, root, current, workspace),
+            FilterValueFunctionPlan valFn => EvalValueFunction(valFn, root, current, workspace),
+            FilterMatchFunctionPlan matchFn => EvalMatchFunction(matchFn, root, current, workspace),
+            FilterCustomFunctionPlan customFn => EvalCustomFunction(customFn, root, current, workspace),
             _ => throw new JsonPathException($"Unknown filter plan node type: {plan.GetType().Name}"),
         };
     }
 
     // ── Logical connectives ──────────────────────────────────────────
-    private static FilterResult EvalLogicalAnd(FilterLogicalAndPlan plan, in JsonElement root, in JsonElement current)
+    private static FilterResult EvalLogicalAnd(FilterLogicalAndPlan plan, in JsonElement root, in JsonElement current, JsonWorkspace workspace)
     {
-        FilterResult left = EvalFilter(plan.Left, root, current);
+        FilterResult left = EvalFilter(plan.Left, root, current, workspace);
         if (!left.AsTruthy())
         {
             return FilterResult.FromLogical(false);
         }
 
-        FilterResult right = EvalFilter(plan.Right, root, current);
+        FilterResult right = EvalFilter(plan.Right, root, current, workspace);
         return FilterResult.FromLogical(right.AsTruthy());
     }
 
-    private static FilterResult EvalLogicalOr(FilterLogicalOrPlan plan, in JsonElement root, in JsonElement current)
+    private static FilterResult EvalLogicalOr(FilterLogicalOrPlan plan, in JsonElement root, in JsonElement current, JsonWorkspace workspace)
     {
-        FilterResult left = EvalFilter(plan.Left, root, current);
+        FilterResult left = EvalFilter(plan.Left, root, current, workspace);
         if (left.AsTruthy())
         {
             return FilterResult.FromLogical(true);
         }
 
-        FilterResult right = EvalFilter(plan.Right, root, current);
+        FilterResult right = EvalFilter(plan.Right, root, current, workspace);
         return FilterResult.FromLogical(right.AsTruthy());
     }
 
-    private static FilterResult EvalLogicalNot(FilterLogicalNotPlan plan, in JsonElement root, in JsonElement current)
+    private static FilterResult EvalLogicalNot(FilterLogicalNotPlan plan, in JsonElement root, in JsonElement current, JsonWorkspace workspace)
     {
-        FilterResult operand = EvalFilter(plan.Operand, root, current);
+        FilterResult operand = EvalFilter(plan.Operand, root, current, workspace);
         return FilterResult.FromLogical(!operand.AsTruthy());
     }
 
     // ── Comparisons ──────────────────────────────────────────────────
-    private static FilterResult EvalComparison(FilterComparisonPlan plan, in JsonElement root, in JsonElement current)
+    private static FilterResult EvalComparison(FilterComparisonPlan plan, in JsonElement root, in JsonElement current, JsonWorkspace workspace)
     {
-        FilterResult left = EvalFilter(plan.Left, root, current).AsComparable();
-        FilterResult right = EvalFilter(plan.Right, root, current).AsComparable();
+        FilterResult left = EvalFilter(plan.Left, root, current, workspace).AsComparable();
+        FilterResult right = EvalFilter(plan.Right, root, current, workspace).AsComparable();
         return FilterResult.FromLogical(
             JsonPathCodeGenHelpers.CompareValues(left.Value, right.Value, (int)plan.Op));
     }
 
-    private static FilterResult EvalNumericComparison(FilterNumericComparisonPlan plan, in JsonElement root, in JsonElement current)
+    private static FilterResult EvalNumericComparison(FilterNumericComparisonPlan plan, in JsonElement root, in JsonElement current, JsonWorkspace workspace)
     {
-        FilterResult exprResult = EvalFilter(plan.Expr, root, current).AsComparable();
+        FilterResult exprResult = EvalFilter(plan.Expr, root, current, workspace).AsComparable();
         if (exprResult.Kind != FilterResult.FilterResultKind.ValueType ||
             exprResult.Value.ValueKind != JsonValueKind.Number)
         {
@@ -593,7 +594,7 @@ internal static class PlanInterpreter
         return FilterResult.FromLogical(CompareDouble(exprResult.Value.GetDouble(), plan.LiteralValue, plan.Op));
     }
 
-    private static FilterResult EvalSingularNumericComparison(FilterSingularNumericPlan plan, in JsonElement root, in JsonElement current)
+    private static FilterResult EvalSingularNumericComparison(FilterSingularNumericPlan plan, in JsonElement root, in JsonElement current, JsonWorkspace workspace)
     {
         if (!TryNavigateSingularPath(plan.Steps, plan.IsRelative, root, current, out JsonElement node))
         {
@@ -608,9 +609,9 @@ internal static class PlanInterpreter
         return FilterResult.FromLogical(CompareDouble(node.GetDouble(), plan.LiteralValue, plan.Op));
     }
 
-    private static FilterResult EvalLengthNumericComparison(FilterLengthNumericPlan plan, in JsonElement root, in JsonElement current)
+    private static FilterResult EvalLengthNumericComparison(FilterLengthNumericPlan plan, in JsonElement root, in JsonElement current, JsonWorkspace workspace)
     {
-        FilterResult argResult = EvalFilter(plan.Argument, root, current).AsComparable();
+        FilterResult argResult = EvalFilter(plan.Argument, root, current, workspace).AsComparable();
         if (argResult.Kind != FilterResult.FilterResultKind.ValueType)
         {
             return FilterResult.FromLogical(plan.Op == ComparisonOp.NotEqual);
@@ -625,9 +626,9 @@ internal static class PlanInterpreter
         return FilterResult.FromLogical(CompareDouble(len, plan.LiteralValue, plan.Op));
     }
 
-    private static FilterResult EvalKindComparison(FilterKindComparisonPlan plan, in JsonElement root, in JsonElement current)
+    private static FilterResult EvalKindComparison(FilterKindComparisonPlan plan, in JsonElement root, in JsonElement current, JsonWorkspace workspace)
     {
-        FilterResult exprResult = EvalFilter(plan.Expr, root, current).AsComparable();
+        FilterResult exprResult = EvalFilter(plan.Expr, root, current, workspace).AsComparable();
         JsonValueKind vk = exprResult.Kind == FilterResult.FilterResultKind.ValueType
             ? exprResult.Value.ValueKind
             : JsonValueKind.Undefined;
@@ -642,9 +643,9 @@ internal static class PlanInterpreter
         return FilterResult.FromLogical(matched);
     }
 
-    private static FilterResult EvalStringEquality(FilterStringEqualityPlan plan, in JsonElement root, in JsonElement current)
+    private static FilterResult EvalStringEquality(FilterStringEqualityPlan plan, in JsonElement root, in JsonElement current, JsonWorkspace workspace)
     {
-        FilterResult exprResult = EvalFilter(plan.Expr, root, current).AsComparable();
+        FilterResult exprResult = EvalFilter(plan.Expr, root, current, workspace).AsComparable();
         if (exprResult.Kind != FilterResult.FilterResultKind.ValueType)
         {
             return FilterResult.FromLogical(plan.Op == ComparisonOp.NotEqual);
@@ -655,7 +656,7 @@ internal static class PlanInterpreter
     }
 
     // ── Filter queries ───────────────────────────────────────────────
-    private static FilterResult EvalSingularQuery(FilterSingularQueryPlan plan, in JsonElement root, in JsonElement current)
+    private static FilterResult EvalSingularQuery(FilterSingularQueryPlan plan, in JsonElement root, in JsonElement current, JsonWorkspace workspace)
     {
         if (!TryNavigateSingularPath(plan.Steps, plan.IsRelative, root, current, out JsonElement node))
         {
@@ -665,19 +666,19 @@ internal static class PlanInterpreter
         return FilterResult.FromNodes(1, node);
     }
 
-    private static FilterResult EvalEmptyQuery(FilterEmptyQueryPlan plan, in JsonElement root, in JsonElement current)
+    private static FilterResult EvalEmptyQuery(FilterEmptyQueryPlan plan, in JsonElement root, in JsonElement current, JsonWorkspace workspace)
     {
         JsonElement target = plan.IsRelative ? current : root;
         return FilterResult.FromNodes(1, target);
     }
 
-    private static FilterResult EvalGeneralQuery(FilterGeneralQueryPlan plan, in JsonElement root, in JsonElement current)
+    private static FilterResult EvalGeneralQuery(FilterGeneralQueryPlan plan, in JsonElement root, in JsonElement current, JsonWorkspace workspace)
     {
         JsonElement target = plan.IsRelative ? current : root;
         JsonPathResult innerResult = JsonPathResult.CreatePooled(16);
         try
         {
-            ExecuteStep(plan.InnerPlan, root, target, ref innerResult);
+            ExecuteStep(plan.InnerPlan, root, target, ref innerResult, workspace);
             return FilterResult.FromNodes(innerResult.Count, innerResult.Count > 0 ? innerResult[0] : default);
         }
         finally
@@ -687,9 +688,9 @@ internal static class PlanInterpreter
     }
 
     // ── Functions ────────────────────────────────────────────────────
-    private static FilterResult EvalLengthFunction(FilterLengthFunctionPlan plan, in JsonElement root, in JsonElement current)
+    private static FilterResult EvalLengthFunction(FilterLengthFunctionPlan plan, in JsonElement root, in JsonElement current, JsonWorkspace workspace)
     {
-        FilterResult argResult = EvalFilter(plan.Argument, root, current).AsComparable();
+        FilterResult argResult = EvalFilter(plan.Argument, root, current, workspace).AsComparable();
         if (argResult.Kind != FilterResult.FilterResultKind.ValueType)
         {
             return FilterResult.NothingResult;
@@ -701,23 +702,23 @@ internal static class PlanInterpreter
             return FilterResult.NothingResult;
         }
 
-        return FilterResult.FromValue(JsonPathCodeGenHelpers.IntToElement(len));
+        return FilterResult.FromValue(JsonPathCodeGenHelpers.IntToElement(len, workspace));
     }
 
-    private static FilterResult EvalCountFunction(FilterCountFunctionPlan plan, in JsonElement root, in JsonElement current)
+    private static FilterResult EvalCountFunction(FilterCountFunctionPlan plan, in JsonElement root, in JsonElement current, JsonWorkspace workspace)
     {
-        FilterResult argResult = EvalFilter(plan.Argument, root, current);
+        FilterResult argResult = EvalFilter(plan.Argument, root, current, workspace);
         if (argResult.Kind != FilterResult.FilterResultKind.NodesType)
         {
             return FilterResult.NothingResult;
         }
 
-        return FilterResult.FromValue(JsonPathCodeGenHelpers.IntToElement(argResult.NodeCount));
+        return FilterResult.FromValue(JsonPathCodeGenHelpers.IntToElement(argResult.NodeCount, workspace));
     }
 
-    private static FilterResult EvalValueFunction(FilterValueFunctionPlan plan, in JsonElement root, in JsonElement current)
+    private static FilterResult EvalValueFunction(FilterValueFunctionPlan plan, in JsonElement root, in JsonElement current, JsonWorkspace workspace)
     {
-        FilterResult argResult = EvalFilter(plan.Argument, root, current);
+        FilterResult argResult = EvalFilter(plan.Argument, root, current, workspace);
         if (argResult.Kind != FilterResult.FilterResultKind.NodesType)
         {
             return FilterResult.NothingResult;
@@ -731,9 +732,9 @@ internal static class PlanInterpreter
         return FilterResult.NothingResult;
     }
 
-    private static FilterResult EvalMatchFunction(FilterMatchFunctionPlan plan, in JsonElement root, in JsonElement current)
+    private static FilterResult EvalMatchFunction(FilterMatchFunctionPlan plan, in JsonElement root, in JsonElement current, JsonWorkspace workspace)
     {
-        FilterResult strResult = EvalFilter(plan.StringArg, root, current).AsComparable();
+        FilterResult strResult = EvalFilter(plan.StringArg, root, current, workspace).AsComparable();
 
         if (plan.PrecompiledRegex is not null)
         {
@@ -747,7 +748,7 @@ internal static class PlanInterpreter
         }
 
         // Dynamic pattern
-        FilterResult patResult = EvalFilter(plan.DynamicPatternArg!, root, current).AsComparable();
+        FilterResult patResult = EvalFilter(plan.DynamicPatternArg!, root, current, workspace).AsComparable();
 
         if (strResult.Kind != FilterResult.FilterResultKind.ValueType ||
             patResult.Kind != FilterResult.FilterResultKind.ValueType ||
@@ -774,7 +775,7 @@ internal static class PlanInterpreter
     private static FilterResult EvalCustomFunction(
         FilterCustomFunctionPlan plan,
         in JsonElement root,
-        in JsonElement current)
+        in JsonElement current, JsonWorkspace workspace)
     {
         int argCount = plan.Arguments.Length;
 
@@ -792,7 +793,7 @@ internal static class PlanInterpreter
         {
             for (int i = 0; i < argCount; i++)
             {
-                FilterResult argResult = EvalFilter(plan.Arguments[i], root, current);
+                FilterResult argResult = EvalFilter(plan.Arguments[i], root, current, workspace);
 
                 switch (plan.ParameterTypes[i])
                 {
@@ -816,13 +817,14 @@ internal static class PlanInterpreter
                             ref args[i],
                             ref rentedNodeArrays,
                             ref rentedNodeArrayCount,
-                            argCount);
+                            argCount,
+                            workspace);
                         break;
                 }
             }
 
             JsonPathFunctionResult result = plan.Function.Evaluate(
-                new ReadOnlySpan<JsonPathFunctionArgument>(args, 0, argCount));
+                new ReadOnlySpan<JsonPathFunctionArgument>(args, 0, argCount), workspace);
 
             return result.Kind switch
             {
@@ -862,13 +864,14 @@ internal static class PlanInterpreter
         ref JsonPathFunctionArgument arg,
         ref JsonElement[]?[]? rentedNodeArrays,
         ref int rentedNodeArrayCount,
-        int maxArgs)
+        int maxArgs,
+        JsonWorkspace workspace)
     {
         if (argPlan is FilterGeneralQueryPlan gq)
         {
             JsonElement target = gq.IsRelative ? current : root;
             JsonPathResult nodesResult = JsonPathResult.CreatePooled(16);
-            ExecuteStep(gq.InnerPlan, root, target, ref nodesResult);
+            ExecuteStep(gq.InnerPlan, root, target, ref nodesResult, workspace);
 
             TrackNodeArray(ref rentedNodeArrays, ref rentedNodeArrayCount, maxArgs, nodesResult.BackingArray);
             arg = JsonPathFunctionArgument.CreateNodes(nodesResult.BackingArray!, nodesResult.Count);
