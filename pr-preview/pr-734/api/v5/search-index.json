@@ -462,6 +462,34 @@
     "Body": "Advances the enumerator to the next element of the collection."
   },
   {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-descendantpropertyenumerator.html",
+    "Title": "DescendantPropertyEnumerator",
+    "Description": "A zero-allocation enumerator that yields every value in the subtree whose containing property has the specified name.",
+    "Keywords": "DescendantPropertyEnumerator struct Corvus.Text.Json",
+    "Body": "A zero-allocation enumerator that yields every value in the subtree whose containing property has the specified name.\r\nThe scan is flat: it walks the metadata DB row by row without recursion or enumerator construction, yielding every `PropertyName` token whose unescaped name equals the target. Values are returned as [`JsonElement`](/api/v5/corvus-text-json-jsonelement.html) instances pointing at the row immediately after the matching property name. Create via [`EnumerateDescendantProperties`](/api/v5/corvus-text-json-jsonelement.enumeratedescendantproperties.html).\r\nCurrent: Gets the current matched value element.\r\nMoveNext: Advances to the next matching descendant property value.\r\nGetEnumerator: Returns this instance as its own enumerator (supports `foreach`)."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-descendantpropertyenumerator.current.html",
+    "Title": "DescendantPropertyEnumerator.Current",
+    "Description": "Gets the current matched value element.",
+    "Keywords": "DescendantPropertyEnumerator Current property Corvus.Text.Json",
+    "Body": "Gets the current matched value element."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-descendantpropertyenumerator.movenext.html",
+    "Title": "DescendantPropertyEnumerator.MoveNext",
+    "Description": "Advances to the next matching descendant property value.",
+    "Keywords": "DescendantPropertyEnumerator MoveNext method Corvus.Text.Json",
+    "Body": "Advances to the next matching descendant property value."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-descendantpropertyenumerator.getenumerator.html",
+    "Title": "DescendantPropertyEnumerator.GetEnumerator",
+    "Description": "Returns this instance as its own enumerator (supports `foreach`).",
+    "Keywords": "DescendantPropertyEnumerator GetEnumerator method Corvus.Text.Json",
+    "Body": "Returns this instance as its own enumerator (supports `foreach`)."
+  },
+  {
     "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-ibytebufferwriter.html",
     "Title": "IByteBufferWriter",
     "Description": "",
@@ -676,7 +704,7 @@
     "Title": "JsonElement",
     "Description": "Represents a specific JSON value within a [`JsonDocument`](/api/v5/corvus-text-json-internal-jsondocument.html).",
     "Keywords": "JsonElement struct Corvus.Text.Json",
-    "Body": "Represents a specific JSON value within a [`JsonDocument`](/api/v5/corvus-text-json-internal-jsondocument.html).\r\nValueKind: The [`JsonValueKind`](/api/v5/corvus-text-json-jsonvaluekind.html) that the value is.\r\nthis[int]: Get the value at a specified index when the current value is a [`Array`](/api/v5/corvus-text-json-jsonvaluekind.array.html).\r\nthis[ReadOnlySpan<byte>]: Gets the value of the property with the given UTF-8 encoded name when the current value is an [`Object`](/api/v5/corvus-text-json-jsonvaluekind.object.html).\r\nthis[ReadOnlySpan<char>]: Gets the value of the property with the given name when the current value is an [`Object`](/api/v5/corvus-text-json-jsonvaluekind.object.html).\r\nthis[string]: Gets the value of the property with the given name when the current value is an [`Object`](/api/v5/corvus-text-json-jsonvaluekind.object.html).\r\nCreateArrayBuilder: Creates an empty mutable array document builder.\r\nCreateObjectBuilder: Creates an empty mutable object document builder.\r\nEvaluateSchema: Evaluates the JSON Schema for this element.\r\nEquals: Determines whether the specified object is equal to the current JsonElement.\r\nEquals: Determines whether the current JsonElement is equal to another JsonElement-like value through deep comparison.\r\nCreateBuilder: Creates a mutable document builder from this JsonElement using the specified workspace.\r\nFrom: Create an instance of a [`JsonElement`](/api/v5/corvus-text-json-jsonelement.html) from a [`IJsonElement`](/api/v5/corvus-text-json-internal-ijsonelement.html).\r\nGetArrayLength: Get the number of values contained within the current array value.\r\nGetPropertyCount: Get the number of properties contained within the current object value.\r\nGetProperty: Gets a [`JsonElement`](/api/v5/corvus-text-json-jsonelement.html) representing the value of a required property identified by `propertyName`.\r\nGetProperty: Gets a [`JsonElement`](/api/v5/corvus-text-json-jsonelement.html) representing the value of a required property identified by `propertyName`.\r\nGetProperty: Gets a [`JsonElement`](/api/v5/corvus-text-json-jsonelement.html) representing the value of a required property identified by `utf8PropertyName`.\r\nTryGetProperty: Looks for a property named `propertyName` in the current object, returning whether or not such a property existed. When the property exists `value` is assigned to the value of that property.\r\nTryGetProperty: Looks for a property named `propertyName` in the current object, returning whether or not such a property existed. When the property exists `value` is assigned to the value of that property.\r\nTryGetProperty: Looks for a property named `utf8PropertyName` in the current object, returning whether or not such a property existed. When the property exists `value` is assigned to the value of that property.\r\nTryGetBoolean: Tries to get the value as a boolean\r\nGetBoolean: Gets the value of the element as a [`Boolean`](https://learn.microsoft.com/dotnet/api/system.boolean).\r\nGetString: Gets the value of the element as a [`String`](https://learn.microsoft.com/dotnet/api/system.string).\r\nGetUtf8String: Gets the value of the element as a [`UnescapedUtf8JsonString`](/api/v5/corvus-text-json-unescapedutf8jsonstring.html).\r\nGetUtf16String: Gets the value of the element as a [`UnescapedUtf16JsonString`](/api/v5/corvus-text-json-unescapedutf16jsonstring.html).\r\nTryGetBytesFromBase64: Attempts to represent the current JSON string as bytes assuming it is Base64 encoded.\r\nGetBytesFromBase64: Gets the value of the element as bytes.\r\nTryGetSByte: Attempts to represent the current JSON number as an [`SByte`](https://learn.microsoft.com/dotnet/api/system.sbyte).\r\nGetSByte: Gets the current JSON number as an [`SByte`](https://learn.microsoft.com/dotnet/api/system.sbyte).\r\nTryGetByte: Attempts to represent the current JSON number as a [`Byte`](https://learn.microsoft.com/dotnet/api/system.byte).\r\nGetByte: Gets the current JSON number as a [`Byte`](https://learn.microsoft.com/dotnet/api/system.byte).\r\nTryGetInt16: Attempts to represent the current JSON number as an [`Int16`](https://learn.microsoft.com/dotnet/api/system.int16).\r\nGetInt16: Gets the current JSON number as an [`Int16`](https://learn.microsoft.com/dotnet/api/system.int16).\r\nTryGetUInt16: Attempts to represent the current JSON number as a [`UInt16`](https://learn.microsoft.com/dotnet/api/system.uint16).\r\nGetUInt16: Gets the current JSON number as a [`UInt16`](https://learn.microsoft.com/dotnet/api/system.uint16).\r\nTryGetInt32: Attempts to represent the current JSON number as an [`Int32`](https://learn.microsoft.com/dotnet/api/system.int32).\r\nGetInt32: Gets the current JSON number as an [`Int32`](https://learn.microsoft.com/dotnet/api/system.int32).\r\nTryGetUInt32: Attempts to represent the current JSON number as a [`UInt32`](https://learn.microsoft.com/dotnet/api/system.uint32).\r\nGetUInt32: Gets the current JSON number as a [`UInt32`](https://learn.microsoft.com/dotnet/api/system.uint32).\r\nTryGetInt64: Attempts to represent the current JSON number as a [`Int64`](https://learn.microsoft.com/dotnet/api/system.int64).\r\nGetInt64: Gets the current JSON number as a [`Int64`](https://learn.microsoft.com/dotnet/api/system.int64).\r\nTryGetUInt64: Attempts to represent the current JSON number as a [`UInt64`](https://learn.microsoft.com/dotnet/api/system.uint64).\r\nTryGetInt128: Attempts to represent the current JSON number as a [`Int128`](https://learn.microsoft.com/dotnet/api/system.int128).\r\nGetInt128: Gets the current JSON number as a [`Int128`](https://learn.microsoft.com/dotnet/api/system.int128).\r\nTryGetUInt128: Attempts to represent the current JSON number as a [`UInt128`](https://learn.microsoft.com/dotnet/api/system.uint128).\r\nGetUInt128: Gets the current JSON number as a [`UInt128`](https://learn.microsoft.com/dotnet/api/system.uint128).\r\nTryGetHalf: Attempts to represent the current JSON number as a [`Half`](https://learn.microsoft.com/dotnet/api/system.half).\r\nGetHalf: Gets the current JSON number as a [`Half`](https://learn.microsoft.com/dotnet/api/system.half).\r\nGetUInt64: Gets the current JSON number as a [`UInt64`](https://learn.microsoft.com/dotnet/api/system.uint64).\r\nTryGetDouble: Attempts to represent the current JSON number as a [`Double`](https://learn.microsoft.com/dotnet/api/system.double).\r\nGetDouble: Gets the current JSON number as a [`Double`](https://learn.microsoft.com/dotnet/api/system.double).\r\nTryGetSingle: Attempts to represent the current JSON number as a [`Single`](https://learn.microsoft.com/dotnet/api/system.single).\r\nGetSingle: Gets the current JSON number as a [`Single`](https://learn.microsoft.com/dotnet/api/system.single).\r\nTryGetDecimal: Attempts to represent the current JSON number as a [`Decimal`](https://learn.microsoft.com/dotnet/api/system.decimal).\r\nGetDecimal: Gets the current JSON number as a [`Decimal`](https://learn.microsoft.com/dotnet/api/system.decimal).\r\nTryGetBigNumber: Attempts to represent the current JSON number as a [`BigNumber`](/api/v5/corvus-numerics-bignumber.html).\r\nGetBigNumber: Gets the current JSON number as a [`BigNumber`](/api/v5/corvus-numerics-bignumber.html).\r\nTryGetBigInteger: Attempts to represent the current JSON number as a [`BigInteger`](https://learn.microsoft.com/dotnet/api/system.numerics.biginteger).\r\nGetBigInteger: Gets the current JSON number as a [`BigInteger`](https://learn.microsoft.com/dotnet/api/system.numerics.biginteger).\r\nTryGetLocalDate: Attempts to represent the current JSON string as a [`LocalDate`](https://www.nodatime.org/3.3.x/api/NodaTime.LocalDate.html).\r\nGetLocalDate: Gets the value of the element as a [`LocalDate`](https://www.nodatime.org/3.3.x/api/NodaTime.LocalDate.html).\r\nTryGetOffsetTime: Attempts to represent the current JSON string as a [`OffsetTime`](https://www.nodatime.org/3.3.x/api/NodaTime.OffsetTime.html).\r\nGetOffsetTime: Gets the value of the element as a [`OffsetTime`](https://www.nodatime.org/3.3.x/api/NodaTime.OffsetTime.html).\r\nTryGetOffsetDateTime: Attempts to represent the current JSON string as a [`OffsetDateTime`](https://www.nodatime.org/3.3.x/api/NodaTime.OffsetDateTime.html).\r\nTryGetOffsetDate: Attempts to represent the current JSON string as a [`OffsetDate`](https://www.nodatime.org/3.3.x/api/NodaTime.OffsetDate.html).\r\nGetOffsetDate: Gets the value of the element as a [`OffsetDate`](https://www.nodatime.org/3.3.x/api/NodaTime.OffsetDate.html).\r\nGetOffsetDateTime: Gets the value of the element as a [`OffsetDateTime`](https://www.nodatime.org/3.3.x/api/NodaTime.OffsetDateTime.html).\r\nTryGetPeriod: Attempts to represent the current JSON string as a [`Period`](/api/v5/corvus-text-json-period.html).\r\nGetPeriod: Gets the value of the element as a [`Period`](/api/v5/corvus-text-json-period.html).\r\nTryGetDateTime: Attempts to represent the current JSON string as a [`DateTime`](https://learn.microsoft.com/dotnet/api/system.datetime).\r\nGetDateTime: Gets the value of the element as a [`DateTime`](https://learn.microsoft.com/dotnet/api/system.datetime).\r\nTryGetDateTimeOffset: Attempts to represent the current JSON string as a [`DateTimeOffset`](https://learn.microsoft.com/dotnet/api/system.datetimeoffset).\r\nGetDateTimeOffset: Gets the value of the element as a [`DateTimeOffset`](https://learn.microsoft.com/dotnet/api/system.datetimeoffset).\r\nTryGetGuid: Attempts to represent the current JSON string as a [`Guid`](https://learn.microsoft.com/dotnet/api/system.guid).\r\nGetGuid: Gets the value of the element as a [`Guid`](https://learn.microsoft.com/dotnet/api/system.guid).\r\nGetRawText: Gets the original input data backing this value, returning it as a [`String`](https://learn.microsoft.com/dotnet/api/system.string).\r\nEnsurePropertyMap: Ensures that a fast-lookup property map is created for this element.\r\nValueEquals: Compares `text` to the string value of this element.\r\nValueEquals: Compares the text represented by `utf8Text` to the string value of this element.\r\nValueEquals: Compares `text` to the string value of this element.\r\nWriteTo: Write the element into the provided writer as a JSON value.\r\nEnumerateArray: Get an enumerator to enumerate the values in the JSON array represented by this JsonElement.\r\nEnumerateObject: Get an enumerator to enumerate the properties in the JSON object represented by this JsonElement.\r\nToString: Gets a string representation for the current value appropriate to the value type.\r\nClone: Get a JsonElement which can be safely stored beyond the lifetime of the original [`JsonDocument`](/api/v5/corvus-text-json-internal-jsondocument.html).\r\nFreeze: Creates a frozen (immutable) copy of this element if it is backed by a mutable document, or returns this instance if it is already immutable.\r\nParseValue: Parses UTF8-encoded text representing a single JSON value into a [`JsonElement`](/api/v5/corvus-text-json-jsonelement.html).\r\nParseValue: Parses text representing a single JSON value into a [`JsonElement`](/api/v5/corvus-text-json-jsonelement.html).\r\nParseValue: Parses text representing a single JSON value into a [`JsonElement`](/api/v5/corvus-text-json-jsonelement.html).\r\nParseValue: Parses one JSON value (including objects or arrays) from the provided reader.\r\nTryParseValue: Attempts to parse one JSON value (including objects or arrays) from the provided reader.\r\nTryGetLineAndOffset: Tries to get the 1-based line number and character offset of this element in the original source document.\r\nTryGetLineAndOffset: Tries to get the 1-based line number, character offset, and byte offset of this element in the original source document.\r\nTryGetLine: Tries to get the specified line from the original source document as UTF-8 bytes.\r\nTryGetLine: Tries to get the specified line from the original source document as a string."
+    "Body": "Represents a specific JSON value within a [`JsonDocument`](/api/v5/corvus-text-json-internal-jsondocument.html).\r\nValueKind: The [`JsonValueKind`](/api/v5/corvus-text-json-jsonvaluekind.html) that the value is.\r\nthis[int]: Get the value at a specified index when the current value is a [`Array`](/api/v5/corvus-text-json-jsonvaluekind.array.html).\r\nthis[ReadOnlySpan<byte>]: Gets the value of the property with the given UTF-8 encoded name when the current value is an [`Object`](/api/v5/corvus-text-json-jsonvaluekind.object.html).\r\nthis[ReadOnlySpan<char>]: Gets the value of the property with the given name when the current value is an [`Object`](/api/v5/corvus-text-json-jsonvaluekind.object.html).\r\nthis[string]: Gets the value of the property with the given name when the current value is an [`Object`](/api/v5/corvus-text-json-jsonvaluekind.object.html).\r\nCreateArrayBuilder: Creates an empty mutable array document builder.\r\nCreateObjectBuilder: Creates an empty mutable object document builder.\r\nEvaluateSchema: Evaluates the JSON Schema for this element.\r\nEquals: Determines whether the specified object is equal to the current JsonElement.\r\nEquals: Determines whether the current JsonElement is equal to another JsonElement-like value through deep comparison.\r\nCreateBuilder: Creates a mutable document builder from this JsonElement using the specified workspace.\r\nFrom: Create an instance of a [`JsonElement`](/api/v5/corvus-text-json-jsonelement.html) from a [`IJsonElement`](/api/v5/corvus-text-json-internal-ijsonelement.html).\r\nGetArrayLength: Get the number of values contained within the current array value.\r\nGetPropertyCount: Get the number of properties contained within the current object value.\r\nGetProperty: Gets a [`JsonElement`](/api/v5/corvus-text-json-jsonelement.html) representing the value of a required property identified by `propertyName`.\r\nGetProperty: Gets a [`JsonElement`](/api/v5/corvus-text-json-jsonelement.html) representing the value of a required property identified by `propertyName`.\r\nGetProperty: Gets a [`JsonElement`](/api/v5/corvus-text-json-jsonelement.html) representing the value of a required property identified by `utf8PropertyName`.\r\nTryGetProperty: Looks for a property named `propertyName` in the current object, returning whether or not such a property existed. When the property exists `value` is assigned to the value of that property.\r\nTryGetProperty: Looks for a property named `propertyName` in the current object, returning whether or not such a property existed. When the property exists `value` is assigned to the value of that property.\r\nTryGetProperty: Looks for a property named `utf8PropertyName` in the current object, returning whether or not such a property existed. When the property exists `value` is assigned to the value of that property.\r\nTryGetBoolean: Tries to get the value as a boolean\r\nGetBoolean: Gets the value of the element as a [`Boolean`](https://learn.microsoft.com/dotnet/api/system.boolean).\r\nGetString: Gets the value of the element as a [`String`](https://learn.microsoft.com/dotnet/api/system.string).\r\nGetUtf8String: Gets the value of the element as a [`UnescapedUtf8JsonString`](/api/v5/corvus-text-json-unescapedutf8jsonstring.html).\r\nGetUtf16String: Gets the value of the element as a [`UnescapedUtf16JsonString`](/api/v5/corvus-text-json-unescapedutf16jsonstring.html).\r\nTryGetBytesFromBase64: Attempts to represent the current JSON string as bytes assuming it is Base64 encoded.\r\nGetBytesFromBase64: Gets the value of the element as bytes.\r\nTryGetSByte: Attempts to represent the current JSON number as an [`SByte`](https://learn.microsoft.com/dotnet/api/system.sbyte).\r\nGetSByte: Gets the current JSON number as an [`SByte`](https://learn.microsoft.com/dotnet/api/system.sbyte).\r\nTryGetByte: Attempts to represent the current JSON number as a [`Byte`](https://learn.microsoft.com/dotnet/api/system.byte).\r\nGetByte: Gets the current JSON number as a [`Byte`](https://learn.microsoft.com/dotnet/api/system.byte).\r\nTryGetInt16: Attempts to represent the current JSON number as an [`Int16`](https://learn.microsoft.com/dotnet/api/system.int16).\r\nGetInt16: Gets the current JSON number as an [`Int16`](https://learn.microsoft.com/dotnet/api/system.int16).\r\nTryGetUInt16: Attempts to represent the current JSON number as a [`UInt16`](https://learn.microsoft.com/dotnet/api/system.uint16).\r\nGetUInt16: Gets the current JSON number as a [`UInt16`](https://learn.microsoft.com/dotnet/api/system.uint16).\r\nTryGetInt32: Attempts to represent the current JSON number as an [`Int32`](https://learn.microsoft.com/dotnet/api/system.int32).\r\nGetInt32: Gets the current JSON number as an [`Int32`](https://learn.microsoft.com/dotnet/api/system.int32).\r\nTryGetUInt32: Attempts to represent the current JSON number as a [`UInt32`](https://learn.microsoft.com/dotnet/api/system.uint32).\r\nGetUInt32: Gets the current JSON number as a [`UInt32`](https://learn.microsoft.com/dotnet/api/system.uint32).\r\nTryGetInt64: Attempts to represent the current JSON number as a [`Int64`](https://learn.microsoft.com/dotnet/api/system.int64).\r\nGetInt64: Gets the current JSON number as a [`Int64`](https://learn.microsoft.com/dotnet/api/system.int64).\r\nTryGetUInt64: Attempts to represent the current JSON number as a [`UInt64`](https://learn.microsoft.com/dotnet/api/system.uint64).\r\nTryGetInt128: Attempts to represent the current JSON number as a [`Int128`](https://learn.microsoft.com/dotnet/api/system.int128).\r\nGetInt128: Gets the current JSON number as a [`Int128`](https://learn.microsoft.com/dotnet/api/system.int128).\r\nTryGetUInt128: Attempts to represent the current JSON number as a [`UInt128`](https://learn.microsoft.com/dotnet/api/system.uint128).\r\nGetUInt128: Gets the current JSON number as a [`UInt128`](https://learn.microsoft.com/dotnet/api/system.uint128).\r\nTryGetHalf: Attempts to represent the current JSON number as a [`Half`](https://learn.microsoft.com/dotnet/api/system.half).\r\nGetHalf: Gets the current JSON number as a [`Half`](https://learn.microsoft.com/dotnet/api/system.half).\r\nGetUInt64: Gets the current JSON number as a [`UInt64`](https://learn.microsoft.com/dotnet/api/system.uint64).\r\nTryGetDouble: Attempts to represent the current JSON number as a [`Double`](https://learn.microsoft.com/dotnet/api/system.double).\r\nGetDouble: Gets the current JSON number as a [`Double`](https://learn.microsoft.com/dotnet/api/system.double).\r\nTryGetSingle: Attempts to represent the current JSON number as a [`Single`](https://learn.microsoft.com/dotnet/api/system.single).\r\nGetSingle: Gets the current JSON number as a [`Single`](https://learn.microsoft.com/dotnet/api/system.single).\r\nTryGetDecimal: Attempts to represent the current JSON number as a [`Decimal`](https://learn.microsoft.com/dotnet/api/system.decimal).\r\nGetDecimal: Gets the current JSON number as a [`Decimal`](https://learn.microsoft.com/dotnet/api/system.decimal).\r\nTryGetBigNumber: Attempts to represent the current JSON number as a [`BigNumber`](/api/v5/corvus-numerics-bignumber.html).\r\nGetBigNumber: Gets the current JSON number as a [`BigNumber`](/api/v5/corvus-numerics-bignumber.html).\r\nTryGetBigInteger: Attempts to represent the current JSON number as a [`BigInteger`](https://learn.microsoft.com/dotnet/api/system.numerics.biginteger).\r\nGetBigInteger: Gets the current JSON number as a [`BigInteger`](https://learn.microsoft.com/dotnet/api/system.numerics.biginteger).\r\nTryGetLocalDate: Attempts to represent the current JSON string as a [`LocalDate`](https://www.nodatime.org/3.3.x/api/NodaTime.LocalDate.html).\r\nGetLocalDate: Gets the value of the element as a [`LocalDate`](https://www.nodatime.org/3.3.x/api/NodaTime.LocalDate.html).\r\nTryGetOffsetTime: Attempts to represent the current JSON string as a [`OffsetTime`](https://www.nodatime.org/3.3.x/api/NodaTime.OffsetTime.html).\r\nGetOffsetTime: Gets the value of the element as a [`OffsetTime`](https://www.nodatime.org/3.3.x/api/NodaTime.OffsetTime.html).\r\nTryGetOffsetDateTime: Attempts to represent the current JSON string as a [`OffsetDateTime`](https://www.nodatime.org/3.3.x/api/NodaTime.OffsetDateTime.html).\r\nTryGetOffsetDate: Attempts to represent the current JSON string as a [`OffsetDate`](https://www.nodatime.org/3.3.x/api/NodaTime.OffsetDate.html).\r\nGetOffsetDate: Gets the value of the element as a [`OffsetDate`](https://www.nodatime.org/3.3.x/api/NodaTime.OffsetDate.html).\r\nGetOffsetDateTime: Gets the value of the element as a [`OffsetDateTime`](https://www.nodatime.org/3.3.x/api/NodaTime.OffsetDateTime.html).\r\nTryGetPeriod: Attempts to represent the current JSON string as a [`Period`](/api/v5/corvus-text-json-period.html).\r\nGetPeriod: Gets the value of the element as a [`Period`](/api/v5/corvus-text-json-period.html).\r\nTryGetDateTime: Attempts to represent the current JSON string as a [`DateTime`](https://learn.microsoft.com/dotnet/api/system.datetime).\r\nGetDateTime: Gets the value of the element as a [`DateTime`](https://learn.microsoft.com/dotnet/api/system.datetime).\r\nTryGetDateTimeOffset: Attempts to represent the current JSON string as a [`DateTimeOffset`](https://learn.microsoft.com/dotnet/api/system.datetimeoffset).\r\nGetDateTimeOffset: Gets the value of the element as a [`DateTimeOffset`](https://learn.microsoft.com/dotnet/api/system.datetimeoffset).\r\nTryGetGuid: Attempts to represent the current JSON string as a [`Guid`](https://learn.microsoft.com/dotnet/api/system.guid).\r\nGetGuid: Gets the value of the element as a [`Guid`](https://learn.microsoft.com/dotnet/api/system.guid).\r\nGetRawText: Gets the original input data backing this value, returning it as a [`String`](https://learn.microsoft.com/dotnet/api/system.string).\r\nEnsurePropertyMap: Ensures that a fast-lookup property map is created for this element.\r\nValueEquals: Compares `text` to the string value of this element.\r\nValueEquals: Compares the text represented by `utf8Text` to the string value of this element.\r\nValueEquals: Compares `text` to the string value of this element.\r\nWriteTo: Write the element into the provided writer as a JSON value.\r\nEnumerateArray: Get an enumerator to enumerate the values in the JSON array represented by this JsonElement.\r\nEnumerateObject: Get an enumerator to enumerate the properties in the JSON object represented by this JsonElement.\r\nEnumerateDescendantProperties: Returns an enumerator that yields the values of all descendant properties whose unescaped name equals `utf8PropertyName`.\r\nToString: Gets a string representation for the current value appropriate to the value type.\r\nClone: Get a JsonElement which can be safely stored beyond the lifetime of the original [`JsonDocument`](/api/v5/corvus-text-json-internal-jsondocument.html).\r\nFreeze: Creates a frozen (immutable) copy of this element if it is backed by a mutable document, or returns this instance if it is already immutable.\r\nParseValue: Parses UTF8-encoded text representing a single JSON value into a [`JsonElement`](/api/v5/corvus-text-json-jsonelement.html).\r\nParseValue: Parses text representing a single JSON value into a [`JsonElement`](/api/v5/corvus-text-json-jsonelement.html).\r\nParseValue: Parses text representing a single JSON value into a [`JsonElement`](/api/v5/corvus-text-json-jsonelement.html).\r\nParseValue: Parses one JSON value (including objects or arrays) from the provided reader.\r\nTryParseValue: Attempts to parse one JSON value (including objects or arrays) from the provided reader.\r\nTryGetLineAndOffset: Tries to get the 1-based line number and character offset of this element in the original source document.\r\nTryGetLineAndOffset: Tries to get the 1-based line number, character offset, and byte offset of this element in the original source document.\r\nTryGetLine: Tries to get the specified line from the original source document as UTF-8 bytes.\r\nTryGetLine: Tries to get the specified line from the original source document as a string."
   },
   {
     "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonelement.valuekind.html",
@@ -1209,6 +1237,13 @@
     "Description": "Get an enumerator to enumerate the properties in the JSON object represented by this JsonElement.",
     "Keywords": "JsonElement EnumerateObject method Corvus.Text.Json",
     "Body": "Get an enumerator to enumerate the properties in the JSON object represented by this JsonElement."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonelement.enumeratedescendantproperties.html",
+    "Title": "JsonElement.EnumerateDescendantProperties",
+    "Description": "Returns an enumerator that yields the values of all descendant properties whose unescaped name equals `utf8PropertyName`.",
+    "Keywords": "JsonElement EnumerateDescendantProperties method Corvus.Text.Json",
+    "Body": "Returns an enumerator that yields the values of all descendant properties whose unescaped name equals `utf8PropertyName`."
   },
   {
     "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonelement.tostring.html",
@@ -6808,7 +6843,7 @@
     "Title": "IJsonDocument",
     "Description": "The interface explicitly implemented by JSON Document providers for internal use only.",
     "Keywords": "IJsonDocument interface Corvus.Text.Json.Internal",
-    "Body": "The interface explicitly implemented by JSON Document providers for internal use only.\r\nCachedWorkspace: Gets or sets the cached workspace that this document was last registered in.\r\nCachedWorkspaceDocumentIndex: Gets or sets the cached document index within [`CachedWorkspace`](/api/v5/corvus-text-json-internal-ijsondocument.cachedworkspace.html).\r\nCachedWorkspaceGeneration: Gets or sets the workspace generation at the time of caching.\r\nIsDisposable: Gets a value indicating whether the document is disposable.\r\nIsImmutable: Gets a value indicating whether the document is immutable.\r\nEnsurePropertyMap: Ensures the property map is available for the specified index.\r\nGetHashCode: Gets the hash code for the specified index.\r\nToString: Converts the element at the specified index to a string.\r\nGetJsonTokenType: Gets the JSON token type for the specified index.\r\nGetArrayIndexElement: Gets the element at the specified array index within the current index.\r\nGetArrayIndexElement: Gets the element at the specified array index within the current index.\r\nGetArrayIndexElement: Gets the element at the specified array index within the current index.\r\nGetArrayInsertionIndex: Gets DB index of the item at the array index within the array that starts at `currentIndex`.\r\nGetArrayLength: Gets the length of the array at the specified index.\r\nGetPropertyCount: Gets the number of properties for the element at the specified index.\r\nTryGetNamedPropertyValue: Tries to get the value of a named property as a JSON element.\r\nTryGetNamedPropertyValue: Tries to get the value of a named property as a JSON element.\r\nTryGetNamedPropertyValue: Tries to get the value of a named property as a JSON element.\r\nTryGetNamedPropertyValue: Tries to get the value of a named property as a JSON element.\r\nTryGetNamedPropertyValue: Tries to get the value of a named property as a mutable JSON element.\r\nTryGetNamedPropertyValue: Tries to get the value of a named property as a mutable JSON element.\r\nGetString: Gets the string value of the element at the specified index.\r\nTryGetString: Tries to get the string value of the element at the specified index.\r\nGetUtf8JsonString: Gets the UTF-8 JSON string value of the element at the specified index.\r\nGetUtf16JsonString: Gets the UTF-16 JSON string value of the element at the specified index.\r\nTryGetValue: Tries to get the value of the element at the specified index as a byte array.\r\nTryGetValue: Tries to get the value of the element at the specified index as an [`SByte`](https://learn.microsoft.com/dotnet/api/system.sbyte).\r\nTryGetValue: Tries to get the value of the element at the specified index as a [`Byte`](https://learn.microsoft.com/dotnet/api/system.byte).\r\nTryGetValue: Tries to get the value of the element at the specified index as a [`Int16`](https://learn.microsoft.com/dotnet/api/system.int16).\r\nTryGetValue: Tries to get the value of the element at the specified index as a [`UInt16`](https://learn.microsoft.com/dotnet/api/system.uint16).\r\nTryGetValue: Tries to get the value of the element at the specified index as an [`Int32`](https://learn.microsoft.com/dotnet/api/system.int32).\r\nTryGetValue: Tries to get the value of the element at the specified index as a [`UInt32`](https://learn.microsoft.com/dotnet/api/system.uint32).\r\nTryGetValue: Tries to get the value of the element at the specified index as a [`Int64`](https://learn.microsoft.com/dotnet/api/system.int64).\r\nTryGetValue: Tries to get the value of the element at the specified index as a [`UInt64`](https://learn.microsoft.com/dotnet/api/system.uint64).\r\nTryGetValue: Tries to get the value of the element at the specified index as a [`Double`](https://learn.microsoft.com/dotnet/api/system.double).\r\nTryGetValue: Tries to get the value of the element at the specified index as a [`Single`](https://learn.microsoft.com/dotnet/api/system.single).\r\nTryGetValue: Tries to get the value of the element at the specified index as a [`Decimal`](https://learn.microsoft.com/dotnet/api/system.decimal).\r\nTryGetValue: Tries to get the value of the element at the specified index as a [`BigInteger`](https://learn.microsoft.com/dotnet/api/system.numerics.biginteger).\r\nTryGetValue: Tries to get the value of the element at the specified index as a [`BigNumber`](/api/v5/corvus-numerics-bignumber.html).\r\nTryGetValue: Tries to get the value of the element at the specified index as a [`DateTime`](https://learn.microsoft.com/dotnet/api/system.datetime).\r\nTryGetValue: Tries to get the value of the element at the specified index as a [`DateTimeOffset`](https://learn.microsoft.com/dotnet/api/system.datetimeoffset).\r\nTryGetValue: Tries to get the value of the element at the specified index as an [`OffsetDateTime`](https://www.nodatime.org/3.3.x/api/NodaTime.OffsetDateTime.html).\r\nTryGetValue: Tries to get the value of the element at the specified index as an [`OffsetDate`](https://www.nodatime.org/3.3.x/api/NodaTime.OffsetDate.html).\r\nTryGetValue: Tries to get the value of the element at the specified index as an [`OffsetTime`](https://www.nodatime.org/3.3.x/api/NodaTime.OffsetTime.html).\r\nTryGetValue: Tries to get the value of the element at the specified index as a [`LocalDate`](https://www.nodatime.org/3.3.x/api/NodaTime.LocalDate.html).\r\nTryGetValue: Tries to get the value of the element at the specified index as a [`Period`](/api/v5/corvus-text-json-period.html).\r\nTryGetValue: Tries to get the value of the element at the specified index as a [`Guid`](https://learn.microsoft.com/dotnet/api/system.guid).\r\nTryGetValue: Tries to get the value of the element at the specified index as an [`Int128`](https://learn.microsoft.com/dotnet/api/system.int128).\r\nTryGetValue: Tries to get the value of the element at the specified index as a [`UInt128`](https://learn.microsoft.com/dotnet/api/system.uint128).\r\nTryGetValue: Tries to get the value of the element at the specified index as a [`Half`](https://learn.microsoft.com/dotnet/api/system.half).\r\nTryGetValue: Tries to get the value of the element at the specified index as a [`DateOnly`](https://learn.microsoft.com/dotnet/api/system.dateonly).\r\nTryGetValue: Tries to get the value of the element at the specified index as a [`TimeOnly`](https://learn.microsoft.com/dotnet/api/system.timeonly).\r\nGetNameOfPropertyValue: Gets the name of the property value at the specified index.\r\nGetPropertyNameRaw: Gets the raw property name as a byte span for the specified index.\r\nGetPropertyNameRaw: Gets the raw property name as a byte span for the specified index.\r\nGetPropertyName: Gets the property name as a JSON element.\r\nGetPropertyNameUnescaped: Gets the property name as a JSON element.\r\nGetRawValueAsString: Gets the raw value of the element at the specified index as a string.\r\nGetPropertyRawValueAsString: Gets the raw value of the property at the specified index as a string.\r\nGetRawValue: Gets the raw value of the element at the specified index.\r\nGetRawSimpleValue: Gets the raw simple value of the element at the specified index.\r\nGetRawSimpleValue: Gets the raw simple value of the element at the specified index.\r\nGetRawSimpleValueUnsafe: Gets the raw simple value of the element at the specified index, without checking if the document has been disposed.\r\nValueIsEscaped: Determines whether the value at the specified index is escaped.\r\nTextEquals: Determines whether the text at the specified index equals the specified text.\r\nTextEquals: Determines whether the UTF-8 text at the specified index equals the specified text.\r\nWriteElementTo: Writes the element at the specified index to the provided JSON writer.\r\nWritePropertyName: Writes the property name at the specified index to the provided JSON writer.\r\nCloneElement: Clones the element at the specified index.\r\nCloneElement: Clones the element at the specified index.\r\nGetDbSize: Gets the size of the database for the element at the specified index.\r\nGetStartIndex: Gets the start index of the element from the end index.\r\nBuildRentedMetadataDb: Builds a rented metadata database for the specified parent document index.\r\nAppendElementToMetadataDb: Appends the element at the specified index to the metadata database.\r\nWriteElementToMetadataDb: Writes the element at the given index into the specified metadata database at a specific position, creating external reference rows. This is the positional variant of [`AppendElementToMetadataDb`](/api/v5/corvus-text-json-internal-ijsondocument.appendelementtometadatadb.html).\r\nTryResolveJsonPointer: Try to resolve the given JSON pointer.\r\nTryFormat: Formats the value to the provided destination span according to the specified format and format provider.\r\nTryFormat: Formats the value to the provided destination UTF-8 span according to the specified format and format provider.\r\nToString: Gets the display string representation of the element at the specified index according to the specified format and format provider.\r\nTryGetLineAndOffset: Tries to get the line number and character offset in the original source document for the element at the specified index.\r\nTryGetLineAndOffsetForPointer: Resolves a JSON pointer against the element at the specified index and gets the line number and character offset of the target element in the original source document.\r\nTryGetLine: Tries to get the specified line from the original source document as UTF-8 bytes.\r\nTryGetLine: Tries to get the specified line from the original source document as a string."
+    "Body": "The interface explicitly implemented by JSON Document providers for internal use only.\r\nCachedWorkspace: Gets or sets the cached workspace that this document was last registered in.\r\nCachedWorkspaceDocumentIndex: Gets or sets the cached document index within [`CachedWorkspace`](/api/v5/corvus-text-json-internal-ijsondocument.cachedworkspace.html).\r\nCachedWorkspaceGeneration: Gets or sets the workspace generation at the time of caching.\r\nIsDisposable: Gets a value indicating whether the document is disposable.\r\nIsImmutable: Gets a value indicating whether the document is immutable.\r\nEnsurePropertyMap: Ensures the property map is available for the specified index.\r\nGetHashCode: Gets the hash code for the specified index.\r\nToString: Converts the element at the specified index to a string.\r\nGetJsonTokenType: Gets the JSON token type for the specified index.\r\nGetArrayIndexElement: Gets the element at the specified array index within the current index.\r\nGetArrayIndexElement: Gets the element at the specified array index within the current index.\r\nGetArrayIndexElement: Gets the element at the specified array index within the current index.\r\nGetArrayInsertionIndex: Gets DB index of the item at the array index within the array that starts at `currentIndex`.\r\nGetArrayLength: Gets the length of the array at the specified index.\r\nGetPropertyCount: Gets the number of properties for the element at the specified index.\r\nTryGetNamedPropertyValue: Tries to get the value of a named property as a JSON element.\r\nTryGetNamedPropertyValue: Tries to get the value of a named property as a JSON element.\r\nTryGetNamedPropertyValue: Tries to get the value of a named property as a JSON element.\r\nTryGetNamedPropertyValue: Tries to get the value of a named property as a JSON element.\r\nTryGetNamedPropertyValue: Tries to get the value of a named property as a mutable JSON element.\r\nTryGetNamedPropertyValue: Tries to get the value of a named property as a mutable JSON element.\r\nGetString: Gets the string value of the element at the specified index.\r\nTryGetString: Tries to get the string value of the element at the specified index.\r\nGetUtf8JsonString: Gets the UTF-8 JSON string value of the element at the specified index.\r\nGetUtf16JsonString: Gets the UTF-16 JSON string value of the element at the specified index.\r\nTryGetValue: Tries to get the value of the element at the specified index as a byte array.\r\nTryGetValue: Tries to get the value of the element at the specified index as an [`SByte`](https://learn.microsoft.com/dotnet/api/system.sbyte).\r\nTryGetValue: Tries to get the value of the element at the specified index as a [`Byte`](https://learn.microsoft.com/dotnet/api/system.byte).\r\nTryGetValue: Tries to get the value of the element at the specified index as a [`Int16`](https://learn.microsoft.com/dotnet/api/system.int16).\r\nTryGetValue: Tries to get the value of the element at the specified index as a [`UInt16`](https://learn.microsoft.com/dotnet/api/system.uint16).\r\nTryGetValue: Tries to get the value of the element at the specified index as an [`Int32`](https://learn.microsoft.com/dotnet/api/system.int32).\r\nTryGetValue: Tries to get the value of the element at the specified index as a [`UInt32`](https://learn.microsoft.com/dotnet/api/system.uint32).\r\nTryGetValue: Tries to get the value of the element at the specified index as a [`Int64`](https://learn.microsoft.com/dotnet/api/system.int64).\r\nTryGetValue: Tries to get the value of the element at the specified index as a [`UInt64`](https://learn.microsoft.com/dotnet/api/system.uint64).\r\nTryGetValue: Tries to get the value of the element at the specified index as a [`Double`](https://learn.microsoft.com/dotnet/api/system.double).\r\nTryGetValue: Tries to get the value of the element at the specified index as a [`Single`](https://learn.microsoft.com/dotnet/api/system.single).\r\nTryGetValue: Tries to get the value of the element at the specified index as a [`Decimal`](https://learn.microsoft.com/dotnet/api/system.decimal).\r\nTryGetValue: Tries to get the value of the element at the specified index as a [`BigInteger`](https://learn.microsoft.com/dotnet/api/system.numerics.biginteger).\r\nTryGetValue: Tries to get the value of the element at the specified index as a [`BigNumber`](/api/v5/corvus-numerics-bignumber.html).\r\nTryGetValue: Tries to get the value of the element at the specified index as a [`DateTime`](https://learn.microsoft.com/dotnet/api/system.datetime).\r\nTryGetValue: Tries to get the value of the element at the specified index as a [`DateTimeOffset`](https://learn.microsoft.com/dotnet/api/system.datetimeoffset).\r\nTryGetValue: Tries to get the value of the element at the specified index as an [`OffsetDateTime`](https://www.nodatime.org/3.3.x/api/NodaTime.OffsetDateTime.html).\r\nTryGetValue: Tries to get the value of the element at the specified index as an [`OffsetDate`](https://www.nodatime.org/3.3.x/api/NodaTime.OffsetDate.html).\r\nTryGetValue: Tries to get the value of the element at the specified index as an [`OffsetTime`](https://www.nodatime.org/3.3.x/api/NodaTime.OffsetTime.html).\r\nTryGetValue: Tries to get the value of the element at the specified index as a [`LocalDate`](https://www.nodatime.org/3.3.x/api/NodaTime.LocalDate.html).\r\nTryGetValue: Tries to get the value of the element at the specified index as a [`Period`](/api/v5/corvus-text-json-period.html).\r\nTryGetValue: Tries to get the value of the element at the specified index as a [`Guid`](https://learn.microsoft.com/dotnet/api/system.guid).\r\nTryGetValue: Tries to get the value of the element at the specified index as an [`Int128`](https://learn.microsoft.com/dotnet/api/system.int128).\r\nTryGetValue: Tries to get the value of the element at the specified index as a [`UInt128`](https://learn.microsoft.com/dotnet/api/system.uint128).\r\nTryGetValue: Tries to get the value of the element at the specified index as a [`Half`](https://learn.microsoft.com/dotnet/api/system.half).\r\nTryGetValue: Tries to get the value of the element at the specified index as a [`DateOnly`](https://learn.microsoft.com/dotnet/api/system.dateonly).\r\nTryGetValue: Tries to get the value of the element at the specified index as a [`TimeOnly`](https://learn.microsoft.com/dotnet/api/system.timeonly).\r\nGetNameOfPropertyValue: Gets the name of the property value at the specified index.\r\nGetPropertyNameRaw: Gets the raw property name as a byte span for the specified index.\r\nGetPropertyNameRaw: Gets the raw property name as a byte span for the specified index.\r\nGetPropertyName: Gets the property name as a JSON element.\r\nGetPropertyNameUnescaped: Gets the property name as a JSON element.\r\nGetRawValueAsString: Gets the raw value of the element at the specified index as a string.\r\nGetPropertyRawValueAsString: Gets the raw value of the property at the specified index as a string.\r\nGetRawValue: Gets the raw value of the element at the specified index.\r\nGetRawSimpleValue: Gets the raw simple value of the element at the specified index.\r\nGetRawSimpleValue: Gets the raw simple value of the element at the specified index.\r\nGetRawSimpleValueUnsafe: Gets the raw simple value of the element at the specified index, without checking if the document has been disposed.\r\nValueIsEscaped: Determines whether the value at the specified index is escaped.\r\nTextEquals: Determines whether the text at the specified index equals the specified text.\r\nTextEquals: Determines whether the UTF-8 text at the specified index equals the specified text.\r\nWriteElementTo: Writes the element at the specified index to the provided JSON writer.\r\nWritePropertyName: Writes the property name at the specified index to the provided JSON writer.\r\nCloneElement: Clones the element at the specified index.\r\nCloneElement: Clones the element at the specified index.\r\nGetDbSize: Gets the size of the database for the element at the specified index.\r\nTryFindNextDescendantPropertyValue: Advances a linear scan over the subtree rooted at the element at `elementIndex`, returning the next property value whose unescaped name matches `utf8PropertyName`.\r\nGetStartIndex: Gets the start index of the element from the end index.\r\nBuildRentedMetadataDb: Builds a rented metadata database for the specified parent document index.\r\nAppendElementToMetadataDb: Appends the element at the specified index to the metadata database.\r\nWriteElementToMetadataDb: Writes the element at the given index into the specified metadata database at a specific position, creating external reference rows. This is the positional variant of [`AppendElementToMetadataDb`](/api/v5/corvus-text-json-internal-ijsondocument.appendelementtometadatadb.html).\r\nTryResolveJsonPointer: Try to resolve the given JSON pointer.\r\nTryFormat: Formats the value to the provided destination span according to the specified format and format provider.\r\nTryFormat: Formats the value to the provided destination UTF-8 span according to the specified format and format provider.\r\nToString: Gets the display string representation of the element at the specified index according to the specified format and format provider.\r\nTryGetLineAndOffset: Tries to get the line number and character offset in the original source document for the element at the specified index.\r\nTryGetLineAndOffsetForPointer: Resolves a JSON pointer against the element at the specified index and gets the line number and character offset of the target element in the original source document.\r\nTryGetLine: Tries to get the specified line from the original source document as UTF-8 bytes.\r\nTryGetLine: Tries to get the specified line from the original source document as a string."
   },
   {
     "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-internal-ijsondocument.cachedworkspace.html",
@@ -7047,6 +7082,13 @@
     "Description": "Gets the size of the database for the element at the specified index.",
     "Keywords": "IJsonDocument GetDbSize method Corvus.Text.Json.Internal",
     "Body": "Gets the size of the database for the element at the specified index."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-internal-ijsondocument.tryfindnextdescendantpropertyvalue.html",
+    "Title": "IJsonDocument.TryFindNextDescendantPropertyValue",
+    "Description": "Advances a linear scan over the subtree rooted at the element at `elementIndex`, returning the next property value whose unescaped name matches `utf8PropertyName`.",
+    "Keywords": "IJsonDocument TryFindNextDescendantPropertyValue method Corvus.Text.Json.Internal",
+    "Body": "Advances a linear scan over the subtree rooted at the element at `elementIndex`, returning the next property value whose unescaped name matches `utf8PropertyName`."
   },
   {
     "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-internal-ijsondocument.getstartindex.html",
@@ -11898,6 +11940,475 @@
     "Description": "",
     "Keywords": "RuleEvaluator EndInvoke method Corvus.Text.Json.JsonLogic",
     "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonpath-customfunctionsignature.html",
+    "Title": "CustomFunctionSignature",
+    "Description": "Describes the type signature of a custom JSONPath function for well-typedness validation during parsing.",
+    "Keywords": "CustomFunctionSignature struct Corvus.Text.Json.JsonPath",
+    "Body": "Describes the type signature of a custom JSONPath function for well-typedness validation during parsing.\r\nThis is a simple metadata type that the `Parser` uses to validate function calls at parse time. It is independent of the runtime [`IJsonPathFunction`](/api/v5/corvus-text-json-jsonpath-ijsonpathfunction.html) interface and the code-generation `CustomFunction` class — both construct this signature from their own domain-specific types.\r\nReturnType: Gets the return type of the function.\r\nParameterTypes: Gets the parameter types. The length defines the required arity."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonpath-customfunctionsignature.ctor.html",
+    "Title": "CustomFunctionSignature Constructor",
+    "Description": "Initializes a new instance of the [`CustomFunctionSignature`](/api/v5/corvus-text-json-jsonpath-customfunctionsignature.html) struct.",
+    "Keywords": "CustomFunctionSignature constructor new Corvus.Text.Json.JsonPath",
+    "Body": "Initializes a new instance of the [`CustomFunctionSignature`](/api/v5/corvus-text-json-jsonpath-customfunctionsignature.html) struct."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonpath-customfunctionsignature.returntype.html",
+    "Title": "CustomFunctionSignature.ReturnType",
+    "Description": "Gets the return type of the function.",
+    "Keywords": "CustomFunctionSignature ReturnType property Corvus.Text.Json.JsonPath",
+    "Body": "Gets the return type of the function."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonpath-customfunctionsignature.parametertypes.html",
+    "Title": "CustomFunctionSignature.ParameterTypes",
+    "Description": "Gets the parameter types. The length defines the required arity.",
+    "Keywords": "CustomFunctionSignature ParameterTypes property Corvus.Text.Json.JsonPath",
+    "Body": "Gets the parameter types. The length defines the required arity."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonpath-ijsonpathfunction.html",
+    "Title": "IJsonPathFunction",
+    "Description": "Defines a custom JSONPath function extension that can be registered on a [`JsonPathEvaluator`](/api/v5/corvus-text-json-jsonpath-jsonpathevaluator.html).",
+    "Keywords": "IJsonPathFunction interface Corvus.Text.Json.JsonPath",
+    "Body": "Defines a custom JSONPath function extension that can be registered on a [`JsonPathEvaluator`](/api/v5/corvus-text-json-jsonpath-jsonpathevaluator.html).\r\nCustom functions participate in RFC 9535 well-typedness checking: the [`ParameterTypes`](/api/v5/corvus-text-json-jsonpath-ijsonpathfunction.parametertypes.html) and [`ReturnType`](/api/v5/corvus-text-json-jsonpath-ijsonpathfunction.returntype.html) are validated at expression parse time. The built-in functions (`length`, `count`, `value`, `match`, `search`) cannot be overridden. Implementations must be thread-safe. A single instance may be called concurrently from multiple threads when the [`JsonPathEvaluator`](/api/v5/corvus-text-json-jsonpath-jsonpathevaluator.html) is shared.\r\nReturnType: Gets the return type of this function.\r\nParameterTypes: Gets the parameter types of this function. The length of this span defines the required arity.\r\nEvaluate: Evaluates the function with the given arguments."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonpath-ijsonpathfunction.returntype.html",
+    "Title": "IJsonPathFunction.ReturnType",
+    "Description": "Gets the return type of this function.",
+    "Keywords": "IJsonPathFunction ReturnType property Corvus.Text.Json.JsonPath",
+    "Body": "Gets the return type of this function."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonpath-ijsonpathfunction.parametertypes.html",
+    "Title": "IJsonPathFunction.ParameterTypes",
+    "Description": "Gets the parameter types of this function. The length of this span defines the required arity.",
+    "Keywords": "IJsonPathFunction ParameterTypes property Corvus.Text.Json.JsonPath",
+    "Body": "Gets the parameter types of this function. The length of this span defines the required arity."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonpath-ijsonpathfunction.evaluate.html",
+    "Title": "IJsonPathFunction.Evaluate",
+    "Description": "Evaluates the function with the given arguments.",
+    "Keywords": "IJsonPathFunction Evaluate method Corvus.Text.Json.JsonPath",
+    "Body": "Evaluates the function with the given arguments."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonpath-jsonpathcodegenhelpers.html",
+    "Title": "JsonPathCodeGenHelpers",
+    "Description": "Public helper methods used by JSONPath source-generated evaluation code.",
+    "Keywords": "JsonPathCodeGenHelpers class Corvus.Text.Json.JsonPath",
+    "Body": "Public helper methods used by JSONPath source-generated evaluation code.\r\nThese methods are called from code emitted by `JsonPathCodeGenerator` and `JsonPathSourceGenerator`. They provide the same semantics as the runtime `Compiler` — both share the same implementations to guarantee identical behaviour. This class is not intended for direct use by application code.\r\nSingletonArray: Builds a JSON array containing a single element.\r\nBuildArrayFromSpan: Builds a JSON array from a read-only span of elements.\r\nNormalizeIndex: Normalizes a JSONPath array index, converting negative indices to positive offsets from the end.\r\nNormalizeSlice: Normalizes slice parameters per RFC 9535 Section 2.3.5.\r\nDeepEquals: Performs a recursive deep structural equality comparison of two JSON elements.\r\nCompareValues: Compares two JSON element values per RFC 9535 comparison semantics.\r\nLengthValue: Returns the length of a JSON value per RFC 9535 `length()` function semantics.\r\nCountNodes: Returns the count of elements in a node list (JSON array).\r\nValueOfNodes: Returns the single value from a node list, or `default` (Undefined) if the list does not contain exactly one element.\r\nDoubleToElement: Converts a [`Double`](https://learn.microsoft.com/dotnet/api/system.double) to a [`JsonElement`](/api/v5/corvus-text-json-jsonelement.html) number.\r\nIntToElement: Converts an integer to a [`JsonElement`](/api/v5/corvus-text-json-jsonelement.html) number.\r\nStringToElement: Converts a string to a [`JsonElement`](/api/v5/corvus-text-json-jsonelement.html) string.\r\nTranslateIRegexp: Translates an I-Regexp (RFC 9485) pattern to a .NET regular expression pattern.\r\nDescendantsForName: Recursively visits all descendants of `node`, appending matching named property values to `result`. Specialized for descendant-name patterns (e.g. `$..author`). Only recurses into container children (objects and arrays), skipping primitives.\r\nDescendantsForNameCount: Recursively visits all descendants of `node`, counting matching named property values and capturing the first match. Specialized for descendant-name patterns in filter sub-queries.\r\nGrowStack: Doubles the capacity of a DFS stack, returning the old array to the pool.\r\nReverseRegion: Reverses a region of elements in-place (for document-order DFS)."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonpath-jsonpathcodegenhelpers.singletonarray.html",
+    "Title": "JsonPathCodeGenHelpers.SingletonArray",
+    "Description": "Builds a JSON array containing a single element.",
+    "Keywords": "JsonPathCodeGenHelpers SingletonArray method Corvus.Text.Json.JsonPath",
+    "Body": "Builds a JSON array containing a single element."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonpath-jsonpathcodegenhelpers.buildarrayfromspan.html",
+    "Title": "JsonPathCodeGenHelpers.BuildArrayFromSpan",
+    "Description": "Builds a JSON array from a read-only span of elements.",
+    "Keywords": "JsonPathCodeGenHelpers BuildArrayFromSpan method Corvus.Text.Json.JsonPath",
+    "Body": "Builds a JSON array from a read-only span of elements."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonpath-jsonpathcodegenhelpers.normalizeindex.html",
+    "Title": "JsonPathCodeGenHelpers.NormalizeIndex",
+    "Description": "Normalizes a JSONPath array index, converting negative indices to positive offsets from the end.",
+    "Keywords": "JsonPathCodeGenHelpers NormalizeIndex method Corvus.Text.Json.JsonPath",
+    "Body": "Normalizes a JSONPath array index, converting negative indices to positive offsets from the end."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonpath-jsonpathcodegenhelpers.normalizeslice.html",
+    "Title": "JsonPathCodeGenHelpers.NormalizeSlice",
+    "Description": "Normalizes slice parameters per RFC 9535 Section 2.3.5.",
+    "Keywords": "JsonPathCodeGenHelpers NormalizeSlice method Corvus.Text.Json.JsonPath",
+    "Body": "Normalizes slice parameters per RFC 9535 Section 2.3.5."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonpath-jsonpathcodegenhelpers.deepequals.html",
+    "Title": "JsonPathCodeGenHelpers.DeepEquals",
+    "Description": "Performs a recursive deep structural equality comparison of two JSON elements.",
+    "Keywords": "JsonPathCodeGenHelpers DeepEquals method Corvus.Text.Json.JsonPath",
+    "Body": "Performs a recursive deep structural equality comparison of two JSON elements."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonpath-jsonpathcodegenhelpers.comparevalues.html",
+    "Title": "JsonPathCodeGenHelpers.CompareValues",
+    "Description": "Compares two JSON element values per RFC 9535 comparison semantics.",
+    "Keywords": "JsonPathCodeGenHelpers CompareValues method Corvus.Text.Json.JsonPath",
+    "Body": "Compares two JSON element values per RFC 9535 comparison semantics."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonpath-jsonpathcodegenhelpers.lengthvalue.html",
+    "Title": "JsonPathCodeGenHelpers.LengthValue",
+    "Description": "Returns the length of a JSON value per RFC 9535 `length()` function semantics.",
+    "Keywords": "JsonPathCodeGenHelpers LengthValue method Corvus.Text.Json.JsonPath",
+    "Body": "Returns the length of a JSON value per RFC 9535 `length()` function semantics."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonpath-jsonpathcodegenhelpers.countnodes.html",
+    "Title": "JsonPathCodeGenHelpers.CountNodes",
+    "Description": "Returns the count of elements in a node list (JSON array).",
+    "Keywords": "JsonPathCodeGenHelpers CountNodes method Corvus.Text.Json.JsonPath",
+    "Body": "Returns the count of elements in a node list (JSON array)."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonpath-jsonpathcodegenhelpers.valueofnodes.html",
+    "Title": "JsonPathCodeGenHelpers.ValueOfNodes",
+    "Description": "Returns the single value from a node list, or `default` (Undefined) if the list does not contain exactly one element.",
+    "Keywords": "JsonPathCodeGenHelpers ValueOfNodes method Corvus.Text.Json.JsonPath",
+    "Body": "Returns the single value from a node list, or `default` (Undefined) if the list does not contain exactly one element."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonpath-jsonpathcodegenhelpers.doubletoelement.html",
+    "Title": "JsonPathCodeGenHelpers.DoubleToElement",
+    "Description": "Converts a [`Double`](https://learn.microsoft.com/dotnet/api/system.double) to a [`JsonElement`](/api/v5/corvus-text-json-jsonelement.html) number.",
+    "Keywords": "JsonPathCodeGenHelpers DoubleToElement method Corvus.Text.Json.JsonPath",
+    "Body": "Converts a [`Double`](https://learn.microsoft.com/dotnet/api/system.double) to a [`JsonElement`](/api/v5/corvus-text-json-jsonelement.html) number."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonpath-jsonpathcodegenhelpers.inttoelement.html",
+    "Title": "JsonPathCodeGenHelpers.IntToElement",
+    "Description": "Converts an integer to a [`JsonElement`](/api/v5/corvus-text-json-jsonelement.html) number.",
+    "Keywords": "JsonPathCodeGenHelpers IntToElement method Corvus.Text.Json.JsonPath",
+    "Body": "Converts an integer to a [`JsonElement`](/api/v5/corvus-text-json-jsonelement.html) number."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonpath-jsonpathcodegenhelpers.stringtoelement.html",
+    "Title": "JsonPathCodeGenHelpers.StringToElement",
+    "Description": "Converts a string to a [`JsonElement`](/api/v5/corvus-text-json-jsonelement.html) string.",
+    "Keywords": "JsonPathCodeGenHelpers StringToElement method Corvus.Text.Json.JsonPath",
+    "Body": "Converts a string to a [`JsonElement`](/api/v5/corvus-text-json-jsonelement.html) string."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonpath-jsonpathcodegenhelpers.translateiregexp.html",
+    "Title": "JsonPathCodeGenHelpers.TranslateIRegexp",
+    "Description": "Translates an I-Regexp (RFC 9485) pattern to a .NET regular expression pattern.",
+    "Keywords": "JsonPathCodeGenHelpers TranslateIRegexp method Corvus.Text.Json.JsonPath",
+    "Body": "Translates an I-Regexp (RFC 9485) pattern to a .NET regular expression pattern."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonpath-jsonpathcodegenhelpers.descendantsforname.html",
+    "Title": "JsonPathCodeGenHelpers.DescendantsForName",
+    "Description": "Recursively visits all descendants of `node`, appending matching named property values to `result`. Specialized for descendant-name patterns (e.g. `$..author`). Only recurses into container children (objects and arrays), skipping primitives.",
+    "Keywords": "JsonPathCodeGenHelpers DescendantsForName method Corvus.Text.Json.JsonPath",
+    "Body": "Recursively visits all descendants of `node`, appending matching named property values to `result`. Specialized for descendant-name patterns (e.g. `$..author`). Only recurses into container children (objects and arrays), skipping primitives."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonpath-jsonpathcodegenhelpers.descendantsfornamecount.html",
+    "Title": "JsonPathCodeGenHelpers.DescendantsForNameCount",
+    "Description": "Recursively visits all descendants of `node`, counting matching named property values and capturing the first match. Specialized for descendant-name patterns in filter sub-queries.",
+    "Keywords": "JsonPathCodeGenHelpers DescendantsForNameCount method Corvus.Text.Json.JsonPath",
+    "Body": "Recursively visits all descendants of `node`, counting matching named property values and capturing the first match. Specialized for descendant-name patterns in filter sub-queries."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonpath-jsonpathcodegenhelpers.growstack.html",
+    "Title": "JsonPathCodeGenHelpers.GrowStack",
+    "Description": "Doubles the capacity of a DFS stack, returning the old array to the pool.",
+    "Keywords": "JsonPathCodeGenHelpers GrowStack method Corvus.Text.Json.JsonPath",
+    "Body": "Doubles the capacity of a DFS stack, returning the old array to the pool."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonpath-jsonpathcodegenhelpers.reverseregion.html",
+    "Title": "JsonPathCodeGenHelpers.ReverseRegion",
+    "Description": "Reverses a region of elements in-place (for document-order DFS).",
+    "Keywords": "JsonPathCodeGenHelpers ReverseRegion method Corvus.Text.Json.JsonPath",
+    "Body": "Reverses a region of elements in-place (for document-order DFS)."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonpath-jsonpathevaluator.html",
+    "Title": "JsonPathEvaluator",
+    "Description": "Evaluates JSONPath (RFC 9535) expressions against JSON data. Compiled expressions are cached for efficient repeated evaluation.",
+    "Keywords": "JsonPathEvaluator class Corvus.Text.Json.JsonPath",
+    "Body": "Evaluates JSONPath (RFC 9535) expressions against JSON data. Compiled expressions are cached for efficient repeated evaluation.\r\nDefault: Gets the default shared evaluator instance.\r\nQueryNodes: Evaluates a JSONPath expression against the given data, returning matched nodes in a disposable [`JsonPathResult`](/api/v5/corvus-text-json-jsonpath-jsonpathresult.html). Uses an [`ArrayPool`](https://learn.microsoft.com/dotnet/api/system.buffers.arraypool-1)-backed buffer internally.\r\nQueryNodes: Evaluates a JSONPath expression against the given data, returning matched nodes in a disposable [`JsonPathResult`](/api/v5/corvus-text-json-jsonpath-jsonpathresult.html). The initial buffer is caller-provided and can be stack-allocated for zero-heap-allocation queries.\r\nQuery: Evaluates a JSONPath expression against the given data, using an internally managed workspace. The result is cloned and safe to use after this call returns."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonpath-jsonpathevaluator.ctor.html",
+    "Title": "JsonPathEvaluator Constructor",
+    "Description": "Initializes a new instance of the [`JsonPathEvaluator`](/api/v5/corvus-text-json-jsonpath-jsonpathevaluator.html) class with no custom functions.",
+    "Keywords": "JsonPathEvaluator constructor new Corvus.Text.Json.JsonPath",
+    "Body": "Initializes a new instance of the [`JsonPathEvaluator`](/api/v5/corvus-text-json-jsonpath-jsonpathevaluator.html) class with no custom functions. Initializes a new instance of the [`JsonPathEvaluator`](/api/v5/corvus-text-json-jsonpath-jsonpathevaluator.html) class with the specified custom function registry."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonpath-jsonpathevaluator.default.html",
+    "Title": "JsonPathEvaluator.Default",
+    "Description": "Gets the default shared evaluator instance.",
+    "Keywords": "JsonPathEvaluator Default property Corvus.Text.Json.JsonPath",
+    "Body": "Gets the default shared evaluator instance."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonpath-jsonpathevaluator.querynodes.html",
+    "Title": "JsonPathEvaluator.QueryNodes",
+    "Description": "Evaluates a JSONPath expression against the given data, returning matched nodes in a disposable [`JsonPathResult`](/api/v5/corvus-text-json-jsonpath-jsonpathresult.html). Uses an [`ArrayPool`](https://learn.microsoft.com/dotnet/api/system.buffers.arraypool-1)-backed buffer internally.",
+    "Keywords": "JsonPathEvaluator QueryNodes method Corvus.Text.Json.JsonPath",
+    "Body": "Evaluates a JSONPath expression against the given data, returning matched nodes in a disposable [`JsonPathResult`](/api/v5/corvus-text-json-jsonpath-jsonpathresult.html). Uses an [`ArrayPool`](https://learn.microsoft.com/dotnet/api/system.buffers.arraypool-1)-backed buffer internally. Evaluates a JSONPath expression against the given data, returning matched nodes in a disposable [`JsonPathResult`](/api/v5/corvus-text-json-jsonpath-jsonpathresult.html). The initial buffer is caller-provided and can be stack-allocated for zero-heap-allocation queries."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonpath-jsonpathevaluator.query.html",
+    "Title": "JsonPathEvaluator.Query",
+    "Description": "Evaluates a JSONPath expression against the given data, using an internally managed workspace. The result is cloned and safe to use after this call returns.",
+    "Keywords": "JsonPathEvaluator Query method Corvus.Text.Json.JsonPath",
+    "Body": "Evaluates a JSONPath expression against the given data, using an internally managed workspace. The result is cloned and safe to use after this call returns."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonpath-jsonpathexception.html",
+    "Title": "JsonPathException",
+    "Description": "Represents an error encountered while lexing, parsing, or evaluating a JSONPath expression.",
+    "Keywords": "JsonPathException class Corvus.Text.Json.JsonPath",
+    "Body": "Represents an error encountered while lexing, parsing, or evaluating a JSONPath expression.\r\nPosition: Gets the 0-based byte offset in the expression where the error occurred, or -1 if the position is unknown."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonpath-jsonpathexception.ctor.html",
+    "Title": "JsonPathException Constructor",
+    "Description": "Initializes a new instance of the [`JsonPathException`](/api/v5/corvus-text-json-jsonpath-jsonpathexception.html) class.",
+    "Keywords": "JsonPathException constructor new Corvus.Text.Json.JsonPath",
+    "Body": "Initializes a new instance of the [`JsonPathException`](/api/v5/corvus-text-json-jsonpath-jsonpathexception.html) class. Initializes a new instance of the [`JsonPathException`](/api/v5/corvus-text-json-jsonpath-jsonpathexception.html) class. Initializes a new instance of the [`JsonPathException`](/api/v5/corvus-text-json-jsonpath-jsonpathexception.html) class."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonpath-jsonpathexception.position.html",
+    "Title": "JsonPathException.Position",
+    "Description": "Gets the 0-based byte offset in the expression where the error occurred, or -1 if the position is unknown.",
+    "Keywords": "JsonPathException Position property Corvus.Text.Json.JsonPath",
+    "Body": "Gets the 0-based byte offset in the expression where the error occurred, or -1 if the position is unknown."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonpath-jsonpathfunction.html",
+    "Title": "JsonPathFunction",
+    "Description": "Factory methods for creating [`IJsonPathFunction`](/api/v5/corvus-text-json-jsonpath-ijsonpathfunction.html) instances from delegates, avoiding the need to implement the interface manually for simple function signatures.",
+    "Keywords": "JsonPathFunction class Corvus.Text.Json.JsonPath",
+    "Body": "Factory methods for creating [`IJsonPathFunction`](/api/v5/corvus-text-json-jsonpath-ijsonpathfunction.html) instances from delegates, avoiding the need to implement the interface manually for simple function signatures.\r\nValue: Creates a function with signature `(ValueType) → ValueType`.\r\nValue: Creates a function with signature `(ValueType, ValueType) → ValueType`.\r\nLogical: Creates a function with signature `(ValueType) → LogicalType`.\r\nNodesValue: Creates a function with signature `(NodesType) → ValueType`.\r\nNodesLogical: Creates a function with signature `(NodesType) → LogicalType`.\r\nCreate: Creates a function with an arbitrary signature defined by explicit type arrays."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonpath-jsonpathfunction.value.html",
+    "Title": "JsonPathFunction.Value",
+    "Description": "Creates a function with signature `(ValueType) → ValueType`.",
+    "Keywords": "JsonPathFunction Value method Corvus.Text.Json.JsonPath",
+    "Body": "Creates a function with signature `(ValueType) → ValueType`. Creates a function with signature `(ValueType, ValueType) → ValueType`."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonpath-jsonpathfunction.logical.html",
+    "Title": "JsonPathFunction.Logical",
+    "Description": "Creates a function with signature `(ValueType) → LogicalType`.",
+    "Keywords": "JsonPathFunction Logical method Corvus.Text.Json.JsonPath",
+    "Body": "Creates a function with signature `(ValueType) → LogicalType`."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonpath-jsonpathfunction.nodesvalue.html",
+    "Title": "JsonPathFunction.NodesValue",
+    "Description": "Creates a function with signature `(NodesType) → ValueType`.",
+    "Keywords": "JsonPathFunction NodesValue method Corvus.Text.Json.JsonPath",
+    "Body": "Creates a function with signature `(NodesType) → ValueType`."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonpath-jsonpathfunction.nodeslogical.html",
+    "Title": "JsonPathFunction.NodesLogical",
+    "Description": "Creates a function with signature `(NodesType) → LogicalType`.",
+    "Keywords": "JsonPathFunction NodesLogical method Corvus.Text.Json.JsonPath",
+    "Body": "Creates a function with signature `(NodesType) → LogicalType`."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonpath-jsonpathfunction.create.html",
+    "Title": "JsonPathFunction.Create",
+    "Description": "Creates a function with an arbitrary signature defined by explicit type arrays.",
+    "Keywords": "JsonPathFunction Create method Corvus.Text.Json.JsonPath",
+    "Body": "Creates a function with an arbitrary signature defined by explicit type arrays."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonpath-jsonpathfunctionargument.html",
+    "Title": "JsonPathFunctionArgument",
+    "Description": "An evaluated argument passed to a custom [`IJsonPathFunction`](/api/v5/corvus-text-json-jsonpath-ijsonpathfunction.html).",
+    "Keywords": "JsonPathFunctionArgument struct Corvus.Text.Json.JsonPath",
+    "Body": "An evaluated argument passed to a custom [`IJsonPathFunction`](/api/v5/corvus-text-json-jsonpath-ijsonpathfunction.html).\r\nAccess the typed payload via the property that matches the declared parameter type: - [`Value`](/api/v5/corvus-text-json-jsonpath-jsonpathfunctionargument.value.html) — for [`ValueType`](/api/v5/corvus-text-json-jsonpath-jsonpathfunctiontype.valuetype.html) parameters. - [`Logical`](/api/v5/corvus-text-json-jsonpath-jsonpathfunctionargument.logical.html) — for [`LogicalType`](/api/v5/corvus-text-json-jsonpath-jsonpathfunctiontype.logicaltype.html) parameters. - [`Nodes`](/api/v5/corvus-text-json-jsonpath-jsonpathfunctionargument.nodes.html) — for [`NodesType`](/api/v5/corvus-text-json-jsonpath-jsonpathfunctiontype.nodestype.html) parameters. The span is backed by a pooled array whose lifetime is managed by the evaluator; it is valid for the duration of the [`Evaluate`](/api/v5/corvus-text-json-jsonpath-ijsonpathfunction.evaluate.html) call.\r\nType: Gets the declared type of this argument.\r\nValue: Gets the JSON element value. Valid when [`Type`](/api/v5/corvus-text-json-jsonpath-jsonpathfunctionargument.type.html) is [`ValueType`](/api/v5/corvus-text-json-jsonpath-jsonpathfunctiontype.valuetype.html).\r\nLogical: Gets the logical (boolean) value. Valid when [`Type`](/api/v5/corvus-text-json-jsonpath-jsonpathfunctionargument.type.html) is [`LogicalType`](/api/v5/corvus-text-json-jsonpath-jsonpathfunctiontype.logicaltype.html).\r\nNodes: Gets the node list as a read-only span. Valid when [`Type`](/api/v5/corvus-text-json-jsonpath-jsonpathfunctionargument.type.html) is [`NodesType`](/api/v5/corvus-text-json-jsonpath-jsonpathfunctiontype.nodestype.html).\r\nNodeCount: Gets the number of nodes. Valid when [`Type`](/api/v5/corvus-text-json-jsonpath-jsonpathfunctionargument.type.html) is [`NodesType`](/api/v5/corvus-text-json-jsonpath-jsonpathfunctiontype.nodestype.html)."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonpath-jsonpathfunctionargument.type.html",
+    "Title": "JsonPathFunctionArgument.Type",
+    "Description": "Gets the declared type of this argument.",
+    "Keywords": "JsonPathFunctionArgument Type property Corvus.Text.Json.JsonPath",
+    "Body": "Gets the declared type of this argument."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonpath-jsonpathfunctionargument.value.html",
+    "Title": "JsonPathFunctionArgument.Value",
+    "Description": "Gets the JSON element value. Valid when [`Type`](/api/v5/corvus-text-json-jsonpath-jsonpathfunctionargument.type.html) is [`ValueType`](/api/v5/corvus-text-json-jsonpath-jsonpathfunctiontype.valuetype.html).",
+    "Keywords": "JsonPathFunctionArgument Value property Corvus.Text.Json.JsonPath",
+    "Body": "Gets the JSON element value. Valid when [`Type`](/api/v5/corvus-text-json-jsonpath-jsonpathfunctionargument.type.html) is [`ValueType`](/api/v5/corvus-text-json-jsonpath-jsonpathfunctiontype.valuetype.html)."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonpath-jsonpathfunctionargument.logical.html",
+    "Title": "JsonPathFunctionArgument.Logical",
+    "Description": "Gets the logical (boolean) value. Valid when [`Type`](/api/v5/corvus-text-json-jsonpath-jsonpathfunctionargument.type.html) is [`LogicalType`](/api/v5/corvus-text-json-jsonpath-jsonpathfunctiontype.logicaltype.html).",
+    "Keywords": "JsonPathFunctionArgument Logical property Corvus.Text.Json.JsonPath",
+    "Body": "Gets the logical (boolean) value. Valid when [`Type`](/api/v5/corvus-text-json-jsonpath-jsonpathfunctionargument.type.html) is [`LogicalType`](/api/v5/corvus-text-json-jsonpath-jsonpathfunctiontype.logicaltype.html)."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonpath-jsonpathfunctionargument.nodes.html",
+    "Title": "JsonPathFunctionArgument.Nodes",
+    "Description": "Gets the node list as a read-only span. Valid when [`Type`](/api/v5/corvus-text-json-jsonpath-jsonpathfunctionargument.type.html) is [`NodesType`](/api/v5/corvus-text-json-jsonpath-jsonpathfunctiontype.nodestype.html).",
+    "Keywords": "JsonPathFunctionArgument Nodes property Corvus.Text.Json.JsonPath",
+    "Body": "Gets the node list as a read-only span. Valid when [`Type`](/api/v5/corvus-text-json-jsonpath-jsonpathfunctionargument.type.html) is [`NodesType`](/api/v5/corvus-text-json-jsonpath-jsonpathfunctiontype.nodestype.html)."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonpath-jsonpathfunctionargument.nodecount.html",
+    "Title": "JsonPathFunctionArgument.NodeCount",
+    "Description": "Gets the number of nodes. Valid when [`Type`](/api/v5/corvus-text-json-jsonpath-jsonpathfunctionargument.type.html) is [`NodesType`](/api/v5/corvus-text-json-jsonpath-jsonpathfunctiontype.nodestype.html).",
+    "Keywords": "JsonPathFunctionArgument NodeCount property Corvus.Text.Json.JsonPath",
+    "Body": "Gets the number of nodes. Valid when [`Type`](/api/v5/corvus-text-json-jsonpath-jsonpathfunctionargument.type.html) is [`NodesType`](/api/v5/corvus-text-json-jsonpath-jsonpathfunctiontype.nodestype.html)."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonpath-jsonpathfunctionevaluator.html",
+    "Title": "JsonPathFunctionEvaluator",
+    "Description": "A delegate for evaluating a custom JSONPath function with full access to the raw arguments and workspace.",
+    "Keywords": "JsonPathFunctionEvaluator delegate Corvus.Text.Json.JsonPath",
+    "Body": "A delegate for evaluating a custom JSONPath function with full access to the raw arguments and workspace."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonpath-jsonpathfunctionevaluator.ctor.html",
+    "Title": "JsonPathFunctionEvaluator Constructor",
+    "Description": "",
+    "Keywords": "JsonPathFunctionEvaluator constructor new Corvus.Text.Json.JsonPath",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonpath-jsonpathfunctionevaluator.invoke.html",
+    "Title": "JsonPathFunctionEvaluator.Invoke",
+    "Description": "",
+    "Keywords": "JsonPathFunctionEvaluator Invoke method Corvus.Text.Json.JsonPath",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonpath-jsonpathfunctionevaluator.begininvoke.html",
+    "Title": "JsonPathFunctionEvaluator.BeginInvoke",
+    "Description": "",
+    "Keywords": "JsonPathFunctionEvaluator BeginInvoke method Corvus.Text.Json.JsonPath",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonpath-jsonpathfunctionevaluator.endinvoke.html",
+    "Title": "JsonPathFunctionEvaluator.EndInvoke",
+    "Description": "",
+    "Keywords": "JsonPathFunctionEvaluator EndInvoke method Corvus.Text.Json.JsonPath",
+    "Body": ""
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonpath-jsonpathfunctionresult.html",
+    "Title": "JsonPathFunctionResult",
+    "Description": "The result of a custom [`IJsonPathFunction`](/api/v5/corvus-text-json-jsonpath-ijsonpathfunction.html) evaluation.",
+    "Keywords": "JsonPathFunctionResult struct Corvus.Text.Json.JsonPath",
+    "Body": "The result of a custom [`IJsonPathFunction`](/api/v5/corvus-text-json-jsonpath-ijsonpathfunction.html) evaluation.\r\nUse the static factory methods to create results matching the function's declared [`ReturnType`](/api/v5/corvus-text-json-jsonpath-ijsonpathfunction.returntype.html): - [`FromValue`](/api/v5/corvus-text-json-jsonpath-jsonpathfunctionresult.fromvalue.html) — for [`ValueType`](/api/v5/corvus-text-json-jsonpath-jsonpathfunctiontype.valuetype.html) returns. - [`FromLogical`](/api/v5/corvus-text-json-jsonpath-jsonpathfunctionresult.fromlogical.html) — for [`LogicalType`](/api/v5/corvus-text-json-jsonpath-jsonpathfunctiontype.logicaltype.html) returns. - [`Nothing`](/api/v5/corvus-text-json-jsonpath-jsonpathfunctionresult.nothing.html) — when the function produces no meaningful result (e.g. type mismatch on an argument).\r\nNothing: Gets a result representing \"nothing\" — the function produced no output.\r\nFromValue: Creates a [`ValueType`](/api/v5/corvus-text-json-jsonpath-jsonpathfunctiontype.valuetype.html) result.\r\nFromValue: Creates a [`ValueType`](/api/v5/corvus-text-json-jsonpath-jsonpathfunctiontype.valuetype.html) result from an integer.\r\nFromValue: Creates a [`ValueType`](/api/v5/corvus-text-json-jsonpath-jsonpathfunctiontype.valuetype.html) result from a double.\r\nFromValue: Creates a [`ValueType`](/api/v5/corvus-text-json-jsonpath-jsonpathfunctiontype.valuetype.html) result from a string.\r\nFromValueBool: Creates a [`ValueType`](/api/v5/corvus-text-json-jsonpath-jsonpathfunctiontype.valuetype.html) result from a boolean.\r\nFromLogical: Creates a [`LogicalType`](/api/v5/corvus-text-json-jsonpath-jsonpathfunctiontype.logicaltype.html) result."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonpath-jsonpathfunctionresult.nothing.html",
+    "Title": "JsonPathFunctionResult.Nothing",
+    "Description": "Gets a result representing \"nothing\" — the function produced no output.",
+    "Keywords": "JsonPathFunctionResult Nothing property Corvus.Text.Json.JsonPath",
+    "Body": "Gets a result representing \"nothing\" — the function produced no output."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonpath-jsonpathfunctionresult.fromvalue.html",
+    "Title": "JsonPathFunctionResult.FromValue",
+    "Description": "Creates a [`ValueType`](/api/v5/corvus-text-json-jsonpath-jsonpathfunctiontype.valuetype.html) result.",
+    "Keywords": "JsonPathFunctionResult FromValue method Corvus.Text.Json.JsonPath",
+    "Body": "Creates a [`ValueType`](/api/v5/corvus-text-json-jsonpath-jsonpathfunctiontype.valuetype.html) result. Creates a [`ValueType`](/api/v5/corvus-text-json-jsonpath-jsonpathfunctiontype.valuetype.html) result from an integer. Creates a [`ValueType`](/api/v5/corvus-text-json-jsonpath-jsonpathfunctiontype.valuetype.html) result from a double. Creates a [`ValueType`](/api/v5/corvus-text-json-jsonpath-jsonpathfunctiontype.valuetype.html) result from a string."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonpath-jsonpathfunctionresult.fromvaluebool.html",
+    "Title": "JsonPathFunctionResult.FromValueBool",
+    "Description": "Creates a [`ValueType`](/api/v5/corvus-text-json-jsonpath-jsonpathfunctiontype.valuetype.html) result from a boolean.",
+    "Keywords": "JsonPathFunctionResult FromValueBool method Corvus.Text.Json.JsonPath",
+    "Body": "Creates a [`ValueType`](/api/v5/corvus-text-json-jsonpath-jsonpathfunctiontype.valuetype.html) result from a boolean."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonpath-jsonpathfunctionresult.fromlogical.html",
+    "Title": "JsonPathFunctionResult.FromLogical",
+    "Description": "Creates a [`LogicalType`](/api/v5/corvus-text-json-jsonpath-jsonpathfunctiontype.logicaltype.html) result.",
+    "Keywords": "JsonPathFunctionResult FromLogical method Corvus.Text.Json.JsonPath",
+    "Body": "Creates a [`LogicalType`](/api/v5/corvus-text-json-jsonpath-jsonpathfunctiontype.logicaltype.html) result."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonpath-jsonpathfunctiontype.html",
+    "Title": "JsonPathFunctionType",
+    "Description": "The type of a JSONPath function parameter or return value, per RFC 9535 §2.4.",
+    "Keywords": "JsonPathFunctionType enum Corvus.Text.Json.JsonPath",
+    "Body": "The type of a JSONPath function parameter or return value, per RFC 9535 §2.4."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonpath-jsonpathresult.html",
+    "Title": "JsonPathResult",
+    "Description": "A ref struct that accumulates JSONPath query result nodes using a caller-provided [`Span`](https://learn.microsoft.com/dotnet/api/system.span-1) of [`JsonElement`](/api/v5/corvus-text-json-jsonelement.html) and overflows to [`ArrayPool`](https://learn.microsoft.com/dotnet/api/system.buffers.arraypool-1) when necessary.",
+    "Keywords": "JsonPathResult struct Corvus.Text.Json.JsonPath",
+    "Body": "A ref struct that accumulates JSONPath query result nodes using a caller-provided [`Span`](https://learn.microsoft.com/dotnet/api/system.span-1) of [`JsonElement`](/api/v5/corvus-text-json-jsonelement.html) and overflows to [`ArrayPool`](https://learn.microsoft.com/dotnet/api/system.buffers.arraypool-1) when necessary.\r\nThis follows the `ValueListBuilder<T>` pattern: if all result nodes fit in the initial buffer (typically stack-allocated), zero heap allocation occurs. Overflow is handled transparently via [`Shared`](https://learn.microsoft.com/dotnet/api/system.buffers.arraypool-1.shared). Callers must dispose instances that might have overflowed: ```csharp Span<JsonElement> buf = stackalloc JsonElement[16]; using JsonPathResult result = evaluator.QueryNodes(expression, data, buf); ReadOnlySpan<JsonElement> nodes = result.Nodes; ```\r\nCount: Gets the number of result nodes.\r\nNodes: Gets the result nodes as a read-only span.\r\nthis[int]: Gets the result node at the specified index.\r\nHasSpilled: Gets a value indicating whether the result overflowed the initial buffer and rented from [`ArrayPool`](https://learn.microsoft.com/dotnet/api/system.buffers.arraypool-1).\r\nDispose: Returns any rented backing array to the pool.\r\nCreatePooled: Creates a [`JsonPathResult`](/api/v5/corvus-text-json-jsonpath-jsonpathresult.html) backed entirely by an [`ArrayPool`](https://learn.microsoft.com/dotnet/api/system.buffers.arraypool-1) rental.\r\nAppend: Appends a result node.\r\nClear: Resets the count to zero so the buffer can be reused."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonpath-jsonpathresult.ctor.html",
+    "Title": "JsonPathResult Constructor",
+    "Description": "Initializes a new instance of the [`JsonPathResult`](/api/v5/corvus-text-json-jsonpath-jsonpathresult.html) struct with the specified initial buffer.",
+    "Keywords": "JsonPathResult constructor new Corvus.Text.Json.JsonPath",
+    "Body": "Initializes a new instance of the [`JsonPathResult`](/api/v5/corvus-text-json-jsonpath-jsonpathresult.html) struct with the specified initial buffer."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonpath-jsonpathresult.count.html",
+    "Title": "JsonPathResult.Count",
+    "Description": "Gets the number of result nodes.",
+    "Keywords": "JsonPathResult Count property Corvus.Text.Json.JsonPath",
+    "Body": "Gets the number of result nodes."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonpath-jsonpathresult.nodes.html",
+    "Title": "JsonPathResult.Nodes",
+    "Description": "Gets the result nodes as a read-only span.",
+    "Keywords": "JsonPathResult Nodes property Corvus.Text.Json.JsonPath",
+    "Body": "Gets the result nodes as a read-only span."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonpath-jsonpathresult.item.html",
+    "Title": "JsonPathResult.this[int]",
+    "Description": "Gets the result node at the specified index.",
+    "Keywords": "JsonPathResult this[int] property Corvus.Text.Json.JsonPath",
+    "Body": "Gets the result node at the specified index."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonpath-jsonpathresult.hasspilled.html",
+    "Title": "JsonPathResult.HasSpilled",
+    "Description": "Gets a value indicating whether the result overflowed the initial buffer and rented from [`ArrayPool`](https://learn.microsoft.com/dotnet/api/system.buffers.arraypool-1).",
+    "Keywords": "JsonPathResult HasSpilled property Corvus.Text.Json.JsonPath",
+    "Body": "Gets a value indicating whether the result overflowed the initial buffer and rented from [`ArrayPool`](https://learn.microsoft.com/dotnet/api/system.buffers.arraypool-1)."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonpath-jsonpathresult.dispose.html",
+    "Title": "JsonPathResult.Dispose",
+    "Description": "Returns any rented backing array to the pool.",
+    "Keywords": "JsonPathResult Dispose method Corvus.Text.Json.JsonPath",
+    "Body": "Returns any rented backing array to the pool."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonpath-jsonpathresult.createpooled.html",
+    "Title": "JsonPathResult.CreatePooled",
+    "Description": "Creates a [`JsonPathResult`](/api/v5/corvus-text-json-jsonpath-jsonpathresult.html) backed entirely by an [`ArrayPool`](https://learn.microsoft.com/dotnet/api/system.buffers.arraypool-1) rental.",
+    "Keywords": "JsonPathResult CreatePooled method Corvus.Text.Json.JsonPath",
+    "Body": "Creates a [`JsonPathResult`](/api/v5/corvus-text-json-jsonpath-jsonpathresult.html) backed entirely by an [`ArrayPool`](https://learn.microsoft.com/dotnet/api/system.buffers.arraypool-1) rental."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonpath-jsonpathresult.append.html",
+    "Title": "JsonPathResult.Append",
+    "Description": "Appends a result node.",
+    "Keywords": "JsonPathResult Append method Corvus.Text.Json.JsonPath",
+    "Body": "Appends a result node."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonpath-jsonpathresult.clear.html",
+    "Title": "JsonPathResult.Clear",
+    "Description": "Resets the count to zero so the buffer can be reused.",
+    "Keywords": "JsonPathResult Clear method Corvus.Text.Json.JsonPath",
+    "Body": "Resets the count to zero so the buffer can be reused."
   },
   {
     "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-patch-jsondiffextensions.html",

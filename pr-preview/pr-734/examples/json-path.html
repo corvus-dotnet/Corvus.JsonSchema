@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#1C1D21" />
+    <meta name="description" content="This recipe demonstrates how to query JSON data using [JSONPath (RFC 9535)](https://www.rfc-editor.org/rfc/rfc9535) expressions with the `Corvus.Text.Json.JsonPath` library." />
+    <meta name="keywords" content="recipe, JSON Schema, C#, json, path" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:description" content="This recipe demonstrates how to query JSON data using [JSONPath (RFC 9535)](https://www.rfc-editor.org/rfc/rfc9535) expressions with the `Corvus.Text.Json.JsonPath` library." />
+    <meta name="twitter:image" content="/Corvus.JsonSchema/pr-preview/pr-734/assets/images/og-corvus.png" />
+    <meta name="twitter:title" content="Json Path - Corvus.Text.Json Examples" />
+    <meta property="article:tag" content="recipe" />
+    <meta property="article:tag" content="JSON Schema" />
+    <meta property="article:tag" content="C#" />
+    <meta property="article:tag" content="json" />
+    <meta property="article:tag" content="path" />
+    <meta property="og:description" content="This recipe demonstrates how to query JSON data using [JSONPath (RFC 9535)](https://www.rfc-editor.org/rfc/rfc9535) expressions with the `Corvus.Text.Json.JsonPath` library." />
+    <meta property="og:image" content="/Corvus.JsonSchema/pr-preview/pr-734/assets/images/og-corvus.png" />
+    <meta property="og:title" content="Json Path - Corvus.Text.Json Examples" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://corvus-oss.org/corvus-json-schema/examples/json-path/" />
+    <title>Json Path - Corvus.Text.Json Examples</title>
+    <link itemprop="url" href="https://corvus-oss.org/corvus-json-schema/examples/json-path/" />
+    <link rel="canonical" href="https://corvus-oss.org/corvus-json-schema/examples/json-path/" />
+    <link rel="sitemap" href="https://corvus-oss.org/corvus-json-schema/sitemap.xml" />
+    <!-- Styles -->
+    <link rel="stylesheet" href="/Corvus.JsonSchema/pr-preview/pr-734/main.css" />
+    <link rel="icon" type="image/svg+xml" href="/Corvus.JsonSchema/pr-preview/pr-734/assets/images/favicon.svg" />
+    
+</head>
+<body class="">
+    <a class="sr-only" href="#main-content">Skip to content</a>
+<header class="site-header">
+    <div class="site-header__inner">
+        <a class="site-header__brand" href="/Corvus.JsonSchema/pr-preview/pr-734/index.html" aria-label="Corvus.JsonSchema home">
+            <img src="/Corvus.JsonSchema/pr-preview/pr-734/assets/images/logo-corvus.svg" alt="" width="28" height="28" aria-hidden="true" />
+            Corvus<span style="color:var(--color-brand)">.</span>Json<span style="color:var(--color-brand)">Schema</span>
+        </a>
+        <nav class="site-header__nav-desktop" aria-label="Main navigation">
+                    <a href="/Corvus.JsonSchema/pr-preview/pr-734/getting-started/index.html"
+                       class="site-header__link "
+                       >Getting Started</a>
+                    <a href="/Corvus.JsonSchema/pr-preview/pr-734/docs/index.html"
+                       class="site-header__link "
+                       >Documentation</a>
+                    <a href="/Corvus.JsonSchema/pr-preview/pr-734/examples/index.html"
+                       class="site-header__link is-active"
+                       aria-current=page>Examples</a>
+                    <a href="/Corvus.JsonSchema/pr-preview/pr-734/api/index.html"
+                       class="site-header__link "
+                       >API</a>
+            <a href="/Corvus.JsonSchema/pr-preview/pr-734/playground/"
+               class="site-header__link"
+               target="_blank" rel="noopener noreferrer"
+               title="Interactive JSON Schema playground">Playground</a>
+            <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema"
+               class="site-header__link" target="_blank" rel="noopener noreferrer"
+               aria-label="View on GitHub">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+            </a>
+        </nav>
+        <button class="site-header__menu-toggle js-toggle-menu"
+                aria-expanded="false" aria-label="Toggle menu">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+            </svg>
+        </button>
+    </div>
+</header>
+<nav class="site-header__nav-mobile js-mobile-nav" aria-label="Mobile navigation">
+            <a href="/Corvus.JsonSchema/pr-preview/pr-734/getting-started/index.html" class="site-header__link">Getting Started</a>
+            <a href="/Corvus.JsonSchema/pr-preview/pr-734/docs/index.html" class="site-header__link">Documentation</a>
+            <a href="/Corvus.JsonSchema/pr-preview/pr-734/examples/index.html" class="site-header__link">Examples</a>
+            <a href="/Corvus.JsonSchema/pr-preview/pr-734/api/index.html" class="site-header__link">API</a>
+    <a href="/Corvus.JsonSchema/pr-preview/pr-734/playground/" class="site-header__link" target="_blank" rel="noopener noreferrer">Playground</a>
+    <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema"
+       class="site-header__link" target="_blank" rel="noopener noreferrer">GitHub</a>
+</nav>
+
+    <div class="page-content">
+    <div class="layout-docs container">
+    <button class="sidebar-toggle" aria-label="Toggle navigation" aria-expanded="false"></button>
+<div class="sidebar-backdrop"></div>
+<aside class="sidebar">
+    <div class="sidebar__inner">
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Getting Started</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                    <li class="sidebar__item"><a class="sidebar__link" href="/Corvus.JsonSchema/pr-preview/pr-734/getting-started/index.html">Tutorial</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Documentation</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/docs/parsed-json-document.html">Parsing &amp; Reading JSON</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/docs/json-document-builder.html">Building &amp; Mutating JSON</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/docs/source-generator.html">Source Generator</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/docs/code-generator.html">CLI Code Generation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/docs/validator.html">Dynamic Schema Validation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/docs/migrating-from-v4-to-v5.html">Migrating from V4</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/docs/using-copilot-for-migration.html">Copilot Migration</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/docs/migration-analyzers.html">Migration Analyzers</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/docs/analyzers.html">Analyzers</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/docs/schema-evaluator.html">Standalone Schema Evaluator</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/docs/json-patch.html">JSON Patch, Merge Patch &amp; Diff</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/docs/json-logic.html">JsonLogic Rule Engine</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/docs/jsonata.html">JSONata Query Language</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/docs/jmes-path.html">JMESPath Query Language</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/docs/yaml.html">YAML Converter</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/docs/json-canonicalization.html">JSON Canonicalization (JCS)</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/docs/json-path.html">JSONPath Query Language</a>
+                            </li>
+                </ul>
+            </div>
+        </div>
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Examples</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/data-object.html">Simple Data Objects</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/data-object-validation.html">Data Object Validation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/reusing-common-types.html">Reusing Common Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/open-versus-closed-types.html">Open Versus Closed Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/extending-a-base-type.html">Extending a Base Type</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/constraining-a-base-type.html">Constraining a Base Type</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/creating-a-strongly-typed-array.html">Strongly Typed Arrays</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/creating-an-array-of-higher-rank.html">Multi-Dimensional Arrays</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/working-with-tensors.html">Working with Tensors</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/creating-tuples.html">Creating Tuples</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/interfaces-and-mix-in-types.html">Interfaces and Mix-In Types</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/pattern-matching.html">Pattern Matching and Discriminated Unions</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/polymorphism-with-discriminators.html">Polymorphism with Discriminator Properties</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/string-enumerations.html">String Enumerations and Pattern Matching</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/numeric-enumerations.html">Numeric Enumerations</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/maps.html">Maps of Strings to Strongly Typed Values</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/mapping-input-and-output-values.html">Mapping Input and Output Values</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/creating-and-mutating-objects.html">Creating and Mutating Objects</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/clone-and-freeze.html">Clone and Freeze</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/conditional-schemas.html">Conditional Schemas</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/default-values.html">Default Values</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/format-validation.html">Format Validation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/json-patch.html">JSON Patch, Merge Patch, and Diff</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/json-logic.html">JsonLogic Rule Evaluation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/jsonata.html">JSONata Expression Evaluation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/jmespath.html">JMESPath Query Evaluation</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/yaml.html">YAML Conversion</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/json-canonicalization.html">JSON Canonicalization (RFC 8785)</a>
+                            </li>
+                            <li class="sidebar__item">
+                                <a class="sidebar__link is-active" href="/Corvus.JsonSchema/pr-preview/pr-734/examples/json-path.html">Json Path</a>
+                            </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</aside>
+
+    <main id="main-content" class="layout-docs__main">
+        <div class="doc__content">
+            <h1>Json Path</h1>
+                <div class="card__tags" style="margin-bottom:1.5rem">
+                        <span class="card__tag">recipe</span>
+                        <span class="card__tag">JSON Schema</span>
+                        <span class="card__tag">C#</span>
+                        <span class="card__tag">json</span>
+                        <span class="card__tag">path</span>
+                </div>
+<p>This recipe demonstrates how to query JSON data using <a href="https://www.rfc-editor.org/rfc/rfc9535">JSONPath (RFC 9535)</a> expressions with the <code>Corvus.Text.Json.JsonPath</code> library. It covers property access, wildcards, recursive descent, slicing, filter expressions with logical operators and functions, zero-allocation evaluation, build-time compiled expressions, and custom function extensions.</p>
+<h2 id="the-pattern">The Pattern</h2>
+<p>JSONPath is a standardised query language for selecting nodes within a JSON document. Given a root document <code>$</code>, expressions navigate objects (<code>.name</code>), arrays (<code>[0]</code>, <code>[*]</code>, <code>[0:2]</code>), and filter nodes (<code>[?expr]</code>). The Corvus implementation passes 100% of the JSONPath Compliance Test Suite (723/723 tests).</p>
+<p>Expressions are compiled to an execution plan on first use and cached per evaluator instance. The evaluator is thread-safe and supports zero-allocation queries via <code>QueryNodes</code> with a caller-provided buffer.</p>
+<h2 id="the-data">The Data</h2>
+<p>File: <code>bookstore.json</code></p>
+<pre><code class="language-json">{
+  &quot;store&quot;: {
+    &quot;book&quot;: [
+      {&quot;category&quot;: &quot;reference&quot;, &quot;author&quot;: &quot;Sandi Toksvig&quot;, &quot;title&quot;: &quot;Between the Stops&quot;, &quot;price&quot;: 8.95},
+      {&quot;category&quot;: &quot;fiction&quot;, &quot;author&quot;: &quot;Evelyn Waugh&quot;, &quot;title&quot;: &quot;Sword of Honour&quot;, &quot;price&quot;: 12.99},
+      {&quot;category&quot;: &quot;fiction&quot;, &quot;author&quot;: &quot;Jane Austen&quot;, &quot;title&quot;: &quot;Pride and Prejudice&quot;, &quot;price&quot;: 8.99},
+      {&quot;category&quot;: &quot;fiction&quot;, &quot;author&quot;: &quot;J. R. R. Tolkien&quot;, &quot;title&quot;: &quot;The Lord of the Rings&quot;, &quot;price&quot;: 22.99}
+    ],
+    &quot;bicycle&quot;: {&quot;color&quot;: &quot;red&quot;, &quot;price&quot;: 399.99}
+  }
+}
+</code></pre>
+<h2 id="basic-queries">Basic Queries</h2>
+<h3 id="property-access">Property access</h3>
+<p>Navigate to a specific property using dot notation:</p>
+<pre><code class="language-csharp">evaluator.Query(&quot;$.store.bicycle.color&quot;, data);
+// [&quot;red&quot;]
+</code></pre>
+<h3 id="wildcards">Wildcards</h3>
+<p>Select all elements of an array or object:</p>
+<pre><code class="language-csharp">evaluator.Query(&quot;$.store.book[*].author&quot;, data);
+// [&quot;Sandi Toksvig&quot;,&quot;Evelyn Waugh&quot;,&quot;Jane Austen&quot;,&quot;J. R. R. Tolkien&quot;]
+</code></pre>
+<h3 id="recursive-descent">Recursive descent</h3>
+<p>Find matching keys at any depth in the document tree:</p>
+<pre><code class="language-csharp">evaluator.Query(&quot;$..author&quot;, data);
+// [&quot;Sandi Toksvig&quot;,&quot;Evelyn Waugh&quot;,&quot;Jane Austen&quot;,&quot;J. R. R. Tolkien&quot;]
+</code></pre>
+<h3 id="index-access">Index access</h3>
+<p>Select array elements by position. Negative indices count from the end:</p>
+<pre><code class="language-csharp">evaluator.Query(&quot;$.store.book[0].title&quot;, data);   // [&quot;Between the Stops&quot;]
+evaluator.Query(&quot;$.store.book[-1].title&quot;, data);   // [&quot;The Lord of the Rings&quot;]
+</code></pre>
+<h3 id="array-slicing">Array slicing</h3>
+<p>Select a contiguous range of elements (<code>start:end</code>):</p>
+<pre><code class="language-csharp">evaluator.Query(&quot;$.store.book[0:2].title&quot;, data);
+// [&quot;Between the Stops&quot;,&quot;Sword of Honour&quot;]
+</code></pre>
+<h2 id="filter-expressions">Filter Expressions</h2>
+<h3 id="simple-comparison">Simple comparison</h3>
+<pre><code class="language-csharp">evaluator.Query(&quot;$.store.book[?@.price&lt;10].title&quot;, data);
+// [&quot;Between the Stops&quot;,&quot;Pride and Prejudice&quot;]
+</code></pre>
+<h3 id="logical-operators">Logical operators</h3>
+<p>Combine conditions with <code>&amp;&amp;</code> (and) and <code>||</code> (or):</p>
+<pre><code class="language-csharp">evaluator.Query(&quot;$.store.book[?@.price&lt;10 &amp;&amp; @.category=='fiction'].title&quot;, data);
+// [&quot;Pride and Prejudice&quot;]
+</code></pre>
+<h3 id="built-in-functions">Built-in functions</h3>
+<p>RFC 9535 defines five built-in functions: <code>length</code>, <code>count</code>, <code>value</code>, <code>match</code>, and <code>search</code>.</p>
+<pre><code class="language-csharp">evaluator.Query(&quot;$.store.book[?length(@.title)&gt;15].title&quot;, data);
+// [&quot;Between the Stops&quot;,&quot;Pride and Prejudice&quot;,&quot;The Lord of the Rings&quot;]
+</code></pre>
+<h2 id="zero-allocation-querynodes">Zero-Allocation QueryNodes</h2>
+<p>For high-throughput scenarios, <code>QueryNodes</code> avoids the overhead of constructing a result array. Pass a caller-provided buffer (which may be stack-allocated) and iterate over the matching nodes directly:</p>
+<pre><code class="language-csharp">Span&lt;JsonElement&gt; buf = stackalloc JsonElement[16];
+using JsonPathResult result = evaluator.QueryNodes(&quot;$.store.book[*].title&quot;, data, buf);
+
+foreach (JsonElement node in result.Nodes)
+{
+    Console.WriteLine(node);
+}
+</code></pre>
+<p>If the result exceeds the buffer, the evaluator transparently rents from <code>ArrayPool&lt;JsonElement&gt;</code>. The <code>JsonPathResult</code> must be disposed to return any rented memory.</p>
+<h2 id="source-generated-expressions">Source-Generated Expressions</h2>
+<p>For maximum performance, compile expressions at build time using the <code>[JsonPathExpression]</code> attribute. Add the expression file as an <code>AdditionalFiles</code> item and reference the source generator package.</p>
+<p>File: <code>all-authors.jsonpath</code></p>
+<pre><code>$..author
+</code></pre>
+<pre><code class="language-csharp">[JsonPathExpression(&quot;all-authors.jsonpath&quot;)]
+public static partial class AllAuthors;
+</code></pre>
+<p>The generator produces optimised C# code that evaluates the expression without parsing or planning at runtime:</p>
+<pre><code class="language-csharp">using JsonPathResult result = AllAuthors.QueryNodes(data);
+foreach (JsonElement node in result.Nodes)
+{
+    Console.WriteLine(node);
+}
+</code></pre>
+<h2 id="custom-function-extensions">Custom Function Extensions</h2>
+<p>The JSONPath evaluator supports custom function extensions. Implement <code>IJsonPathFunction</code> to define a function with typed parameters and return type. Custom functions participate in RFC 9535 well-typedness checking at parse time.</p>
+<h3 id="ceil-valuetype-valuetype">ceil — ValueType → ValueType</h3>
+<p>A function that returns the ceiling of a numeric value:</p>
+<pre><code class="language-csharp">sealed class CeilFunction : IJsonPathFunction
+{
+    private static readonly JsonPathFunctionType[] ParamTypes = [JsonPathFunctionType.ValueType];
+
+    public JsonPathFunctionType ReturnType =&gt; JsonPathFunctionType.ValueType;
+    public ReadOnlySpan&lt;JsonPathFunctionType&gt; ParameterTypes =&gt; ParamTypes;
+
+    public JsonPathFunctionResult Evaluate(ReadOnlySpan&lt;JsonPathFunctionArgument&gt; arguments, JsonWorkspace workspace)
+    {
+        JsonElement value = arguments[0].Value;
+        if (value.ValueKind != JsonValueKind.Number)
+            return JsonPathFunctionResult.Nothing;
+
+        int ceiled = (int)Math.Ceiling(value.GetDouble());
+        return JsonPathFunctionResult.FromValue(ceiled, workspace);
+    }
+}
+</code></pre>
+<p>Register it on a new evaluator instance:</p>
+<pre><code class="language-csharp">var evaluator = new JsonPathEvaluator(
+    new Dictionary&lt;string, IJsonPathFunction&gt; { [&quot;ceil&quot;] = new CeilFunction() });
+
+evaluator.Query(&quot;$.store.book[?ceil(@.price)==9].title&quot;, data);
+// [&quot;Between the Stops&quot;,&quot;Pride and Prejudice&quot;]
+</code></pre>
+<h3 id="is_fiction-valuetype-logicaltype">is_fiction — ValueType → LogicalType</h3>
+<p>A function that returns a logical (boolean) result for use in filter expressions:</p>
+<pre><code class="language-csharp">sealed class IsFictionFunction : IJsonPathFunction
+{
+    private static readonly JsonPathFunctionType[] ParamTypes = [JsonPathFunctionType.ValueType];
+
+    public JsonPathFunctionType ReturnType =&gt; JsonPathFunctionType.LogicalType;
+    public ReadOnlySpan&lt;JsonPathFunctionType&gt; ParameterTypes =&gt; ParamTypes;
+
+    public JsonPathFunctionResult Evaluate(ReadOnlySpan&lt;JsonPathFunctionArgument&gt; arguments, JsonWorkspace workspace)
+    {
+        JsonElement value = arguments[0].Value;
+        return JsonPathFunctionResult.FromLogical(
+            value.ValueKind == JsonValueKind.String &amp;&amp; value.ValueEquals(&quot;fiction&quot;u8));
+    }
+}
+</code></pre>
+<pre><code class="language-csharp">var evaluator = new JsonPathEvaluator(
+    new Dictionary&lt;string, IJsonPathFunction&gt; { [&quot;is_fiction&quot;] = new IsFictionFunction() });
+
+evaluator.Query(&quot;$.store.book[?is_fiction(@.category)].title&quot;, data);
+// [&quot;Sword of Honour&quot;,&quot;Pride and Prejudice&quot;,&quot;The Lord of the Rings&quot;]
+</code></pre>
+<h3 id="cheapest-nodestype-valuetype">cheapest — NodesType → ValueType</h3>
+<p>A function that receives a node list (all prices) and returns the minimum value. This demonstrates why <code>NodesType</code> matters — the function needs to see every node to compute the result:</p>
+<pre><code class="language-csharp">sealed class CheapestFunction : IJsonPathFunction
+{
+    private static readonly JsonPathFunctionType[] ParamTypes = [JsonPathFunctionType.NodesType];
+
+    public JsonPathFunctionType ReturnType =&gt; JsonPathFunctionType.ValueType;
+    public ReadOnlySpan&lt;JsonPathFunctionType&gt; ParameterTypes =&gt; ParamTypes;
+
+    public JsonPathFunctionResult Evaluate(ReadOnlySpan&lt;JsonPathFunctionArgument&gt; arguments, JsonWorkspace workspace)
+    {
+        ReadOnlySpan&lt;JsonElement&gt; nodes = arguments[0].Nodes;
+        double min = double.MaxValue;
+        JsonElement minElement = default;
+        foreach (JsonElement node in nodes)
+        {
+            if (node.ValueKind == JsonValueKind.Number)
+            {
+                double v = node.GetDouble();
+                if (v &lt; min) { min = v; minElement = node; }
+            }
+        }
+
+        return min &lt; double.MaxValue
+            ? JsonPathFunctionResult.FromValue(minElement)
+            : JsonPathFunctionResult.Nothing;
+    }
+}
+</code></pre>
+<pre><code class="language-csharp">var evaluator = new JsonPathEvaluator(
+    new Dictionary&lt;string, IJsonPathFunction&gt; { [&quot;cheapest&quot;] = new CheapestFunction() });
+
+evaluator.Query(&quot;$.store.book[?@.price==cheapest($.store.book[*].price)].title&quot;, data);
+// [&quot;Between the Stops&quot;]
+</code></pre>
+<h2 id="running-the-example">Running the Example</h2>
+<pre><code class="language-bash">cd docs/ExampleRecipes/028-JsonPath
+dotnet run
+</code></pre>
+<h2 id="related-patterns">Related Patterns</h2>
+<ul>
+<li><a href="/Corvus.JsonSchema/pr-preview/pr-734/examples/jsonata.html">025-Jsonata</a> — JSONata expression evaluation and transformation</li>
+<li><a href="/Corvus.JsonSchema/pr-preview/pr-734/examples/jmespath.html">026-JMESPath</a> — JMESPath query language</li>
+<li><a href="/Corvus.JsonSchema/pr-preview/pr-734/examples/json-logic.html">024-JsonLogic</a> — JsonLogic rule evaluation</li>
+<li><a href="/Corvus.JsonSchema/pr-preview/pr-734/examples/json-patch.html">023-JsonPatch</a> — RFC 6902 JSON Patch operations</li>
+</ul>
+        </div>
+    </main>
+</div>
+
+    </div>
+    <footer class="site-footer">
+    <div class="site-footer__inner">
+        <div class="site-footer__sponsor">
+            Sponsored by
+            <a href="https://endjin.com" target="_blank" rel="noopener noreferrer">endjin</a>
+        </div>
+        <ul class="site-footer__links" role="list">
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/pr-preview/pr-734/getting-started/index.html">Getting Started</a></li>
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/pr-preview/pr-734/docs/index.html">Documentation</a></li>
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/pr-preview/pr-734/examples/index.html">Examples</a></li>
+            <li><a class="site-footer__link" href="/Corvus.JsonSchema/pr-preview/pr-734/api/index.html">API</a></li>
+            <li><a class="site-footer__link" href="https://github.com/corvus-dotnet/Corvus.JsonSchema" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+            <li><a class="site-footer__link" href="https://www.nuget.org/packages?q=Corvus.Json" target="_blank" rel="noopener noreferrer">NuGet</a></li>
+        </ul>
+        <p class="site-footer__copyright">&copy; 2026 endjin Ltd.</p>
+    </div>
+</footer>
+
+    <!-- highlight.js for syntax highlighting (CSS targets .hljs-* classes) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/csharp.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/json.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/bash.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/xml.min.js" defer></script>
+    <script>document.addEventListener('DOMContentLoaded',()=>hljs.highlightAll())</script>
+    <script src="/Corvus.JsonSchema/pr-preview/pr-734/assets/js/main.js" defer></script>
+    <script src="/Corvus.JsonSchema/pr-preview/pr-734/assets/js/sidebar-search.js" defer></script>
+    
+</body>
+</html>
