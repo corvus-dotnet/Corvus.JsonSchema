@@ -4,7 +4,7 @@ description: >
   Run, interpret, and maintain BenchmarkDotNet benchmarks for JSON Schema validation
   and query languages. Covers the B/ (frozen baseline) vs C/ (current) directory
   convention, stale Job-* cleanup, --buildTimeout, result file polling, regenerating
-  C/ models after codegen changes, and JSONata/JMESPath/JsonLogic benchmarks.
+  C/ models after codegen changes, and JSONata/JMESPath/JsonLogic/JSONPath benchmarks.
   USE FOR: running benchmarks, interpreting results, regenerating benchmark models,
   troubleshooting BDN issues, adding new benchmark schemas.
   DO NOT USE FOR: general .NET performance analysis
@@ -79,12 +79,24 @@ dotnet run --project src\Corvus.Json.CodeGenerator -f net10.0 -c Release -- `
     --engine V5
 ```
 
-## JSONata/JMESPath Benchmarks
+## JSONata/JMESPath/JsonLogic/JSONPath Benchmarks
 
 | Project | Benchmarks | Build timeout |
 |---------|-----------|---------------|
 | `Corvus.Text.Json.Jsonata.Benchmarks` | 62 (20 CG + 20 RT + 22 Native) | Pre-configured 15 min |
 | `Corvus.Text.Json.JMESPath.Benchmarks` | JMESPath comparison | Pre-configured |
+| `Corvus.Text.Json.JsonLogic.Benchmarks` | JsonLogic comparison | Pre-configured |
+| `Corvus.Text.Json.JsonPath.Benchmarks` | JSONPath RT + CG vs JsonEverything | Pre-configured |
+
+## Other Benchmark Projects
+
+| Project | What it benchmarks |
+|---------|-------------------|
+| `Corvus.Text.Json.Yaml.Benchmarks` | YAML conversion performance |
+| `Corvus.Numerics.Benchmarks` | BigNumber arithmetic performance |
+| `Corvus.Json.Validator.Benchmarks` | Dynamic validator performance |
+| `Corvus.Text.Json.CodeGeneration.Benchmarks` | Code generation pipeline performance |
+| `Corvus.Text.Json.Benchmarks.Validation` | Standalone evaluator validation benchmarks |
 
 **JSONata method naming:** `Corvus_<Cat>` (RT), `Corvus_CodeGen_<Cat>` (CG), `Native_<Cat>` (baseline). This naming convention is specific to the JSONata benchmarks.
 

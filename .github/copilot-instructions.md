@@ -13,16 +13,26 @@ The repo structure mirrors the dotnet/runtime repository conventions: shared sou
 dotnet build Corvus.Text.Json.slnx
 
 # Run the standard test suite — exclude the 'failing' and 'outerloop' categories
-dotnet test Corvus.Text.Json.slnx --filter "category!=failing&category!=outerloop"
+dotnet test Corvus.Text.Json.Test.slnx --filter "category!=failing&category!=outerloop"
 
 # Run a single test class
-dotnet test Corvus.Text.Json.slnx --filter "ClassName=Corvus.Text.Json.Tests.ParsedJsonDocumentTests&category!=failing&category!=outerloop"
+dotnet test Corvus.Text.Json.Test.slnx --filter "FullyQualifiedName~ParsedJsonDocumentTests&category!=failing&category!=outerloop"
 
 # Run a single test method
-dotnet test Corvus.Text.Json.slnx --filter "FullyQualifiedName~ParseValidUtf8BOM&category!=failing&category!=outerloop"
+dotnet test Corvus.Text.Json.Test.slnx --filter "FullyQualifiedName~ParseValidUtf8BOM&category!=failing&category!=outerloop"
 ```
 
 Always exclude `failing` and `outerloop` categories when running tests. Never run all tests without these filters.
+
+Always use `FullyQualifiedName~` (substring match) for test filters — not `ClassName=`. The `ClassName` filter does not work reliably in this repo.
+
+**Solution files:**
+
+| Solution | Purpose |
+|----------|---------|
+| `Corvus.Text.Json.slnx` | Main V5 solution — build only |
+| `Corvus.Text.Json.Test.slnx` | Tests — use for `dotnet test` |
+| `Corvus.Text.Json.Benchmarks.slnx` | Benchmark projects only |
 
 `TreatWarningsAsErrors=true` is set across all projects — the build will fail on any warning.
 
@@ -132,7 +142,7 @@ Rules to follow:
 ## Key Conventions
 
 - **Tone** — avoid aggressive language (e.g. "crush", "destroy", "kill", "dominate") when describing benchmark results or performance comparisons. Use neutral terms like "faster", "ahead of", "leads", "wins".
-- **No glob `<Compile>` items** — every source file must be explicitly listed in the `.csproj`. Adding a new `.cs` file requires a corresponding `<Compile Include="..." />` entry.
+- **`EnableDefaultCompileItems=false` in select projects** — the following projects disable auto-discovery and require explicit `<Compile Include="..." />` entries for every `.cs` file: `Corvus.Text.Json`, `Corvus.Text.Json.Tests`, `Corvus.Text.Json.CodeGeneration`, `Corvus.Text.Json.SourceGenerator`, `Corvus.Text.Json.Compatibility`, and the four source-generator analyzer projects (`*.Jsonata.SourceGenerator`, `*.JMESPath.SourceGenerator`, `*.JsonLogic.SourceGenerator`, `*.JsonPath.SourceGenerator`). All other projects (JsonPath, JMESPath, Jsonata, JsonLogic, Patch, Yaml, Validator, and most test projects) auto-discover files — no `<Compile>` entry needed.
 - **`LangVersion=preview`** — preview C# language features are intentionally used. Prefer raw string literals (`"""`) for JSON and multi-line strings to avoid escape sequences. Use UTF-8 string literals (`"..."u8`) where a `ReadOnlySpan<byte>` is needed.
 - **`AllowUnsafeBlocks=true`** — unsafe pointer arithmetic is used in numeric and UTF-8 hot paths; this is expected.
 - **Nullable annotations** — enabled in all library projects (`Nullable=enable`), disabled in test projects. Public APIs must have complete XML doc comments; `CS1591` is treated as an error in test projects.
@@ -224,7 +234,7 @@ The documentation site lives in `docs/website/`. See `docs/website/DEVELOPMENT.m
 ### Key architecture
 
 - **Source** → `docs/website/site/` contains content markdown, taxonomy YAML, theme (Razor views, SCSS, JS), and tools.
-- **Build** → `docs/website/build.ps1` runs a 10-step pipeline that compiles everything into `docs/website/.output/`.
+- **Build** → `docs/website/build.ps1` runs an 11-step pipeline that compiles everything into `docs/website/.output/`.
 - **Serving** → The local dev server (`build.ps1 -ServeOnly` or `preview.ps1`) serves static files from `.output/`, **not** from the source theme directory. Editing source files (views, SCSS, JS) has no effect until the relevant build step is re-run.
 - **IMPORTANT: Stop the server before rebuilding.** The build script deletes and recreates `.output/`. On Windows, the Node file server holds file locks that prevent deletion, causing the build to hang indefinitely. Always stop the serving process (`Stop-Process -Id <PID>`) before running `build.ps1`.
 
@@ -262,13 +272,18 @@ The generator at `docs/website/tools/XmlDocToMarkdown/` processes XML docs + ass
 
 ## Playgrounds
 
-Two Blazor WASM playgrounds provide interactive browser-based tools for trying out the libraries. They live under `docs/` and share the same architecture: a Blazor WASM app with Monaco editor integration bundled via esbuild.
+Six Blazor WASM playgrounds provide interactive browser-based tools for trying out the libraries. They live under `docs/` and share the same architecture: a Blazor WASM app with Monaco editor integration bundled via esbuild.
 
-### JSONata Playground
+| Playground | Directory | Port |
+|-----------|-----------|------|
+| JSON Schema | `docs/playground/` | 5281 |
+| JSONata | `docs/playground-jsonata/` | 5280 |
+| JMESPath | `docs/playground-jmespath/` | — |
+| JsonLogic | `docs/playground-jsonlogic/` | — |
+| JSONPath | `docs/playground-jsonpath/` | — |
+| YAML | `docs/playground-yaml/` | — |
 
-Located at `docs/playground-jsonata/`. Provides an interactive editor for JSONata expressions with live evaluation, custom bindings, and sample expressions.
-
-**Running the preview server:**
+### Running a playground
 
 ```powershell
 # 1. Build the JavaScript bundle (only needed after changing JS/Monaco assets)
@@ -281,30 +296,11 @@ $env:ASPNETCORE_URLS = "http://127.0.0.1:5280"
 dotnet run --project docs/playground-jsonata/src/Corvus.Text.Json.Jsonata.Playground/Corvus.Text.Json.Jsonata.Playground.csproj
 ```
 
-The app will be available at `http://127.0.0.1:5280/`. Use `ASPNETCORE_URLS` to pin the port — the `--urls` flag does not work with the WASM app host.
+Use `ASPNETCORE_URLS` to pin the port — the `--urls` flag does not work with the WASM app host.
 
 **IMPORTANT:** Stop the server before rebuilding. The WASM host holds file locks that prevent rebuild from completing.
 
-**Error messages in WASM:** `SR.Format` does not work correctly in Blazor WASM because `System.Resources.UseSystemResourceKeys` returns `true`, causing it to fall back to `string.Join` instead of `string.Format`. The `EvaluationService.FixBrokenSRFormat()` method compensates for this by detecting unsubstituted `{0}` placeholders and re-applying `string.Format`. All exception messages displayed to the user must go through this method.
-
-### Corvus.Text.Json Playground
-
-Located at `docs/playground/`. Provides an interactive JSON Schema validation playground.
-
-**Running the preview server:**
-
-```powershell
-# 1. Build the JavaScript bundle (only needed after changing JS/Monaco assets)
-cd docs/playground
-npm ci
-npm run bundle
-
-# 2. Start the Blazor WASM dev server on a fixed port
-$env:ASPNETCORE_URLS = "http://127.0.0.1:5281"
-dotnet run --project docs/playground/src/Corvus.Text.Json.Playground/Corvus.Text.Json.Playground.csproj
-```
-
-The app will be available at `http://127.0.0.1:5281/`.
+**Error messages in WASM:** `SR.Format` does not work correctly in Blazor WASM because `System.Resources.UseSystemResourceKeys` returns `true`, causing it to fall back to `string.Join` instead of `string.Format`. Five of the six playgrounds (all except JSON Schema) have an `EvaluationService.FixBrokenSRFormat()` method that compensates by detecting unsubstituted `{0}` placeholders and re-applying `string.Format`. All exception messages displayed to the user in those playgrounds must go through this method.
 
 ## Benchmarks
 
@@ -423,7 +419,42 @@ The `benchmarks/Corvus.Text.Json.Benchmarks/` project compares validation perfor
 
 | Namespace | Purpose |
 |---|---|
-| `Corvus.Text.Json` | Public API |
+| `Corvus.Text.Json` | Public API — core types, parsing, schema validation |
 | `Corvus.Text.Json.Internal` | Internal helpers, enumerators, metadata |
+| `Corvus.Text.Json.Patch` | RFC 6902 JSON Patch and JSON Merge Patch |
+| `Corvus.Text.Json.Canonicalization` | RFC 8785 JSON Canonicalization Scheme (JCS) |
+| `Corvus.Text.Json.Jsonata` | JSONata expression evaluator |
+| `Corvus.Text.Json.JMESPath` | JMESPath query evaluator |
+| `Corvus.Text.Json.JsonLogic` | JsonLogic rule engine |
+| `Corvus.Text.Json.JsonPath` | JSONPath (RFC 9535) query evaluator |
+| `Corvus.Text.Json.Yaml` | YAML 1.2 ↔ JSON conversion (full integration) |
+| `Corvus.Text.Json.Validator` | Runtime dynamic schema validation via Roslyn compilation |
+| `Corvus.Text.Json.Compatibility` | Interoperability bridge between V5 types, V4 `Corvus.Json.ExtendedTypes`, and `System.Text.Json` |
 | `Corvus.Numerics` | `BigNumber`, `BigInteger` support |
 | `Corvus.NodaTimeExtensions` | NodaTime (`LocalDate`, `OffsetDateTime`, `Period`) helpers |
+
+## Additional Packages
+
+- **`Corvus.Text.Json.Patch`** — RFC 6902 JSON Patch, JSON Merge Patch, and JSON Diff. See `docs/JsonPatch.md`.
+- **`Corvus.Text.Json.Canonicalization`** — RFC 8785 JCS lives in the core `Corvus.Text.Json` package (not a separate package). See `docs/JsonCanonicalization.md`.
+- **`Corvus.Text.Json.Validator`** — Runtime dynamic schema validation: loads schemas at runtime, compiles validators via Roslyn, caches results. Supports Draft 4–2020-12 and OpenAPI 3.0. See `docs/Validator.md`.
+- **`Corvus.Text.Json.Compatibility`** — Interoperability layer that references both V5 (`Corvus.Text.Json`) and V4 (`Corvus.Json.ExtendedTypes`) plus `System.Text.Json`, providing bridge helpers for migration scenarios. Uses `EnableDefaultCompileItems=false`.
+
+## All Benchmark Projects
+
+In addition to the JSON Schema validation benchmarks and JSONata benchmarks documented above, the following benchmark projects exist under `benchmarks/`:
+
+| Project | What it benchmarks |
+|---------|-------------------|
+| `Corvus.Text.Json.Benchmarks` | JSON Schema validation (B/ vs C/ frozen baseline) |
+| `Corvus.Text.Json.Jsonata.Benchmarks` | JSONata CG vs RT vs Jsonata.Net.Native |
+| `Corvus.Text.Json.JMESPath.Benchmarks` | JMESPath performance |
+| `Corvus.Text.Json.JsonLogic.Benchmarks` | JsonLogic performance |
+| `Corvus.Text.Json.JsonPath.Benchmarks` | JSONPath performance vs JsonEverything |
+| `Corvus.Text.Json.Yaml.Benchmarks` | YAML conversion performance |
+| `Corvus.Numerics.Benchmarks` | BigNumber arithmetic performance |
+| `Corvus.Json.Validator.Benchmarks` | Dynamic validator performance |
+| `Corvus.Text.Json.CodeGeneration.Benchmarks` | Code generation pipeline performance |
+| `Corvus.Text.Json.Benchmarks.Validation` | Standalone evaluator validation benchmarks |
+
+All follow the same BDN rules documented in the "Running BenchmarkDotNet" section above.

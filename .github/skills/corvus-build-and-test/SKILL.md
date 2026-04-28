@@ -16,8 +16,8 @@ description: >
 
 | Solution | Purpose |
 |----------|---------|
-| `Corvus.Text.Json.slnx` | Main V5 solution — libraries + tests |
-| `Corvus.Text.Json.Test.slnx` | Tests only |
+| `Corvus.Text.Json.slnx` | Main V5 solution — libraries + tests (use for `dotnet build`) |
+| `Corvus.Text.Json.Test.slnx` | Tests only (use for `dotnet test`) |
 | `Corvus.Text.Json.Benchmarks.slnx` | Benchmark projects only |
 
 V4 projects live in `src-v4/` and `tests-v4/` and are included in the main solution.
@@ -42,13 +42,13 @@ dotnet build src\Corvus.Text.Json\Corvus.Text.Json.csproj
 
 ```powershell
 # Run all tests (standard)
-dotnet test Corvus.Text.Json.slnx --filter "category!=failing&category!=outerloop"
+dotnet test Corvus.Text.Json.Test.slnx --filter "category!=failing&category!=outerloop"
 
 # Run a single test class
-dotnet test Corvus.Text.Json.slnx --filter "ClassName=Corvus.Text.Json.Tests.ParsedJsonDocumentTests&category!=failing&category!=outerloop"
+dotnet test Corvus.Text.Json.Test.slnx --filter "FullyQualifiedName~ParsedJsonDocumentTests&category!=failing&category!=outerloop"
 
 # Run a single test method
-dotnet test Corvus.Text.Json.slnx --filter "FullyQualifiedName~ParseValidUtf8BOM&category!=failing&category!=outerloop"
+dotnet test Corvus.Text.Json.Test.slnx --filter "FullyQualifiedName~ParseValidUtf8BOM&category!=failing&category!=outerloop"
 ```
 
 ### Test by Feature Area
@@ -71,9 +71,15 @@ dotnet test tests\Corvus.Text.Json.JMESPath.Tests --filter "category!=failing&ca
 
 # YAML conformance
 dotnet test tests\Corvus.Text.Json.Yaml.Tests --filter "category!=failing&category!=outerloop"
+
+# JSONPath conformance
+dotnet test tests\Corvus.Text.Json.JsonPath.Tests --filter "category!=failing&category!=outerloop"
+
+# JSONPath code-gen
+dotnet test tests\Corvus.Text.Json.JsonPath.CodeGeneration.Tests --filter "category!=failing&category!=outerloop"
 ```
 
-### Key Test Projects (18 runnable)
+### Key Test Projects (21 runnable)
 
 | Project | Tests |
 |---------|-------|
@@ -85,6 +91,9 @@ dotnet test tests\Corvus.Text.Json.Yaml.Tests --filter "category!=failing&catego
 | `Corvus.Text.Json.JMESPath.Tests` | JMESPath runtime conformance |
 | `Corvus.Text.Json.JMESPath.CodeGeneration.Tests` | JMESPath code generation |
 | `Corvus.Text.Json.JMESPath.SourceGenerator.Tests` | JMESPath source generator integration |
+| `Corvus.Text.Json.JsonPath.Tests` | JSONPath (RFC 9535) runtime conformance |
+| `Corvus.Text.Json.JsonPath.CodeGeneration.Tests` | JSONPath code generation |
+| `Corvus.Text.Json.JsonPath.SourceGenerator.Tests` | JSONPath source generator integration |
 | `Corvus.Text.Json.Yaml.Tests` | YAML conformance |
 | `Corvus.Yaml.SystemTextJson.Tests` | YAML ↔ JSON (System.Text.Json-only variant) |
 | `Corvus.Text.Json.JsonLogic.Tests` | JsonLogic runtime |

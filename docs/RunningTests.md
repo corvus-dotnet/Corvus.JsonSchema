@@ -13,7 +13,7 @@ Always exclude the `failing` and `outerloop` categories when running the full su
 
 ## Test projects
 
-The solution contains eighteen runnable test projects and five supporting model/utility projects.
+The solution contains twenty-one runnable test projects and six supporting model/utility projects.
 
 ### Runnable test projects
 
@@ -37,6 +37,9 @@ The solution contains eighteen runnable test projects and five supporting model/
 | `Corvus.Text.Json.JsonLogic.Tests` | net10.0, net481 | JsonLogic runtime conformance — official test suite |
 | `Corvus.Text.Json.JsonLogic.CodeGeneration.Tests` | net10.0 | JsonLogic code generation tests |
 | `Corvus.Text.Json.JsonLogic.SourceGenerator.Tests` | net10.0 | JsonLogic source generator integration tests |
+| `Corvus.Text.Json.JsonPath.Tests` | net10.0, net481 | JSONPath (RFC 9535) runtime conformance — official compliance test suite |
+| `Corvus.Text.Json.JsonPath.CodeGeneration.Tests` | net10.0 | JSONPath code generation conformance |
+| `Corvus.Text.Json.JsonPath.SourceGenerator.Tests` | net10.0 | JSONPath source generator integration tests |
 
 ### Supporting projects (not runnable)
 
@@ -183,11 +186,39 @@ dotnet test tests\Corvus.Text.Json.JsonLogic.SourceGenerator.Tests
 
 Verifies that source-generated evaluators produce correct results for addition, conditional logic, string concatenation, array filtering, and missing-data checks.
 
+### JSONPath tests
+
+The JSONPath test projects exercise the runtime evaluator, the code generator, and the source generator against the [JSONPath Compliance Test Suite](https://github.com/jsonpath-standard/jsonpath-compliance-test-suite) (RFC 9535).
+
+#### Runtime conformance (official test suite)
+
+The `Corvus.Text.Json.JsonPath.Tests` project runs the full 723 official JSONPath compliance test cases against the interpreted evaluator.
+
+```powershell
+dotnet test tests\Corvus.Text.Json.JsonPath.Tests --filter "category!=failing&category!=outerloop"
+```
+
+#### Code generation
+
+```powershell
+dotnet test tests\Corvus.Text.Json.JsonPath.CodeGeneration.Tests --filter "category!=failing&category!=outerloop"
+```
+
+Tests that the code generator produces valid C# for JSONPath expressions including property access, wildcards, array slices, filters, recursive descent, and custom function extensions.
+
+#### Source generator integration
+
+```powershell
+dotnet test tests\Corvus.Text.Json.JsonPath.SourceGenerator.Tests
+```
+
+Verifies that source-generated evaluators produce correct results for representative JSONPath expressions.
+
 ## Running a single test class or method
 
 ```powershell
 # Single class
-dotnet test Corvus.Text.Json.slnx --filter "ClassName=Corvus.Text.Json.Tests.ParsedJsonDocumentTests&category!=failing&category!=outerloop"
+dotnet test Corvus.Text.Json.Test.slnx --filter "FullyQualifiedName~ParsedJsonDocumentTests&category!=failing&category!=outerloop"
 
 # Single method (substring match)
 dotnet test Corvus.Text.Json.slnx --filter "FullyQualifiedName~ParseValidUtf8BOM&category!=failing&category!=outerloop"

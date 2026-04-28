@@ -2,7 +2,7 @@
 name: corvus-docs-website
 description: >
   Build, serve, and maintain the Corvus.Text.Json documentation website and the
-  five Blazor WASM playgrounds (JSON Schema, JSONata, JMESPath, JsonLogic, YAML).
+  six Blazor WASM playgrounds (JSON Schema, JSONata, JMESPath, JsonLogic, JSONPath, YAML).
   Covers the 11-step build.ps1 pipeline, generated vs hand-authored file boundaries,
   incremental rebuild patterns, XmlDocToMarkdown API doc generation, SCSS/JS asset
   compilation, and playground startup with Monaco editor.
@@ -80,7 +80,7 @@ Supports multi-assembly input, versioned output with engine switcher, and per-ve
 
 ## Playgrounds
 
-Five Blazor WASM playgrounds with Monaco editor integration:
+Six Blazor WASM playgrounds with Monaco editor integration:
 
 | Playground | Directory | Port |
 |-----------|-----------|------|
@@ -88,6 +88,7 @@ Five Blazor WASM playgrounds with Monaco editor integration:
 | JSONata | `docs/playground-jsonata/` | 5280 |
 | JMESPath | `docs/playground-jmespath/` | — |
 | JsonLogic | `docs/playground-jsonlogic/` | — |
+| JSONPath | `docs/playground-jsonpath/` | — |
 | YAML | `docs/playground-yaml/` | — |
 
 ### Running a Playground
