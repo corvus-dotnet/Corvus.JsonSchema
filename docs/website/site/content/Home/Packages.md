@@ -53,7 +53,7 @@ dotnet add package Corvus.Text.Json.Patch
 
 ### Corvus.Text.Json.JsonPath
 
-JSONPath (RFC 9535) query language evaluator. Extract values from JSON documents with property access, wildcards, filters, recursive descent, and function extensions. See the [JSONPath Query Language](/docs/jsonpath.html) guide.
+JSONPath (RFC 9535) query language evaluator. Extract values from JSON documents with property access, wildcards, filters, recursive descent, and function extensions. See the [JSONPath Query Language](/docs/json-path.html) guide.
 
 ```bash
 dotnet add package Corvus.Text.Json.JsonPath
@@ -61,7 +61,7 @@ dotnet add package Corvus.Text.Json.JsonPath
 
 ### Corvus.Text.Json.JsonPath.SourceGenerator
 
-Roslyn source generator for compile-time JSONPath code generation. Produces optimized static C# from `.jsonpath` expression files. See the [JSONPath Query Language](/docs/jsonpath.html) guide.
+Roslyn source generator for compile-time JSONPath code generation. Produces optimized static C# from `.jsonpath` expression files. See the [JSONPath Query Language](/docs/json-path.html) guide.
 
 ```xml
 <PackageReference Include="Corvus.Text.Json.JsonPath.SourceGenerator" Version="5.0.0">
