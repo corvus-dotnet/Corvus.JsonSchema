@@ -205,10 +205,11 @@
     private const string DefaultFunctionsPlaceholder =
         """
         // Define custom functions as dictionary entries.
-        // ValueFunction:   ["name"] = ValueFunction((v, ws) => Value(..., ws))
-        // LogicalFunction:  ["name"] = LogicalFunction(v => expression)
+        // JsonPathFunction.Value:     (ValueType) → ValueType
+        // JsonPathFunction.Logical:   (ValueType) → LogicalType
+        // JsonPathFunction.NodesValue: (NodesType) → ValueType
         {
-            // ["ceil"] = ValueFunction((v, ws) => Value((int)Math.Ceiling(v.GetDouble()), ws)),
+            // ["ceil"] = JsonPathFunction.Value((v, ws) => Value((int)Math.Ceiling(v.GetDouble()), ws)),
         }
         """;
 

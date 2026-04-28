@@ -33,79 +33,11 @@ internal static class FunctionsWrapper
             public static JsonElement Value(string v) => JsonElement.ParseValue(System.Text.Encoding.UTF8.GetBytes("\"" + v.Replace("\\", "\\\\").Replace("\"", "\\\"") + "\""));
             public static JsonElement Value(bool v) => v ? JsonElement.ParseValue("true"u8) : JsonElement.ParseValue("false"u8);
 
-            // ── Factory helpers (common function patterns) ──
-
-            /// <summary>ValueType → ValueType function from a delegate.</summary>
-            public static IJsonPathFunction ValueFunction(Func<JsonElement, JsonWorkspace, JsonElement> func)
-                => new DelegateFunction(
-                    JsonPathFunctionType.ValueType,
-                    [JsonPathFunctionType.ValueType],
-                    (args, ws) => JsonPathFunctionResult.FromValue(func(args[0].Value, ws)));
-
-            /// <summary>ValueType → LogicalType function from a delegate.</summary>
-            public static IJsonPathFunction LogicalFunction(Func<JsonElement, bool> func)
-                => new DelegateFunction(
-                    JsonPathFunctionType.LogicalType,
-                    [JsonPathFunctionType.ValueType],
-                    (args, ws) => JsonPathFunctionResult.FromLogical(func(args[0].Value)));
-
-            /// <summary>(ValueType, ValueType) → ValueType function from a delegate.</summary>
-            public static IJsonPathFunction ValueFunction(Func<JsonElement, JsonElement, JsonWorkspace, JsonElement> func)
-                => new DelegateFunction(
-                    JsonPathFunctionType.ValueType,
-                    [JsonPathFunctionType.ValueType, JsonPathFunctionType.ValueType],
-                    (args, ws) => JsonPathFunctionResult.FromValue(func(args[0].Value, args[1].Value, ws)));
-
-            /// <summary>NodesType → ValueType function from a delegate (receives array copy of nodes).</summary>
-            public static IJsonPathFunction NodesValueFunction(Func<JsonElement[], JsonWorkspace, JsonElement> func)
-                => new DelegateFunction(
-                    JsonPathFunctionType.ValueType,
-                    [JsonPathFunctionType.NodesType],
-                    (args, ws) => JsonPathFunctionResult.FromValue(func(args[0].Nodes.ToArray(), ws)));
-
-            /// <summary>NodesType → LogicalType function from a delegate (receives array copy of nodes).</summary>
-            public static IJsonPathFunction NodesLogicalFunction(Func<JsonElement[], bool> func)
-                => new DelegateFunction(
-                    JsonPathFunctionType.LogicalType,
-                    [JsonPathFunctionType.NodesType],
-                    (args, ws) => JsonPathFunctionResult.FromLogical(func(args[0].Nodes.ToArray())));
-
-            /// <summary>
-            /// General-purpose custom function with explicit types.
-            /// </summary>
-            public static IJsonPathFunction CustomFunction(
-                JsonPathFunctionType returnType,
-                JsonPathFunctionType[] parameterTypes,
-                Func<ReadOnlySpan<JsonPathFunctionArgument>, JsonWorkspace, JsonPathFunctionResult> evaluate)
-                => new DelegateFunction(returnType, parameterTypes, evaluate);
-
             public static Dictionary<string, IJsonPathFunction> Create()
             {
                 return new Dictionary<string, IJsonPathFunction>
         /* __USER_CODE__ */
                 ;
-            }
-
-            private sealed class DelegateFunction : IJsonPathFunction
-            {
-                private readonly JsonPathFunctionType[] parameterTypes;
-                private readonly Func<ReadOnlySpan<JsonPathFunctionArgument>, JsonWorkspace, JsonPathFunctionResult> evaluate;
-
-                public DelegateFunction(
-                    JsonPathFunctionType returnType,
-                    JsonPathFunctionType[] parameterTypes,
-                    Func<ReadOnlySpan<JsonPathFunctionArgument>, JsonWorkspace, JsonPathFunctionResult> evaluate)
-                {
-                    this.ReturnType = returnType;
-                    this.parameterTypes = parameterTypes;
-                    this.evaluate = evaluate;
-                }
-
-                public JsonPathFunctionType ReturnType { get; }
-                public ReadOnlySpan<JsonPathFunctionType> ParameterTypes => this.parameterTypes;
-
-                public JsonPathFunctionResult Evaluate(ReadOnlySpan<JsonPathFunctionArgument> arguments, JsonWorkspace workspace)
-                    => this.evaluate(arguments, workspace);
             }
         }
         """;

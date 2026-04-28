@@ -142,11 +142,11 @@ public static class SampleRegistry
             FunctionsCode = """
                 {
                     // ceil: rounds a number up to the nearest integer
-                    ["ceil"] = ValueFunction((v, ws) =>
+                    ["ceil"] = JsonPathFunction.Value((v, ws) =>
                         Value((int)Math.Ceiling(v.GetDouble()), ws)),
 
                     // is_fiction: checks if a category is "fiction"
-                    ["is_fiction"] = LogicalFunction(v =>
+                    ["is_fiction"] = JsonPathFunction.Logical(v =>
                         v.ValueKind == JsonValueKind.String && v.ValueEquals("fiction"u8)),
                 }
                 """,
