@@ -13,9 +13,9 @@ using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Pars
     {
       "store": {
         "book": [
-          {"category": "reference", "author": "Nigel Rees", "title": "Sayings of the Century", "price": 8.95},
+          {"category": "reference", "author": "Sandi Toksvig", "title": "Between the Stops", "price": 8.95},
           {"category": "fiction", "author": "Evelyn Waugh", "title": "Sword of Honour", "price": 12.99},
-          {"category": "fiction", "author": "Herman Melville", "title": "Moby Dick", "price": 8.99},
+          {"category": "fiction", "author": "Jane Austen", "title": "Pride and Prejudice", "price": 8.99},
           {"category": "fiction", "author": "J. R. R. Tolkien", "title": "The Lord of the Rings", "price": 22.99}
         ],
         "bicycle": {"color": "red", "price": 399.99}
@@ -100,5 +100,114 @@ using (JsonPathResult sgResult = AllAuthors.QueryNodes(data))
     foreach (JsonElement node in sgResult.Nodes)
     {
         Console.WriteLine($"    - {node}");
+    }
+}
+
+Console.WriteLine();
+
+// ── 12. Custom function — ceil (ValueType → ValueType) ─────────────────────
+Console.WriteLine("12. Custom function — ceil()");
+
+var ceilFunc = new CeilFunction();
+var evaluator = new JsonPathEvaluator(
+    new Dictionary<string, IJsonPathFunction> { ["ceil"] = ceilFunc });
+
+Console.WriteLine($"    $.store.book[?ceil(@.price)==9].title = {evaluator.Query("$.store.book[?ceil(@.price)==9].title", data)}");
+Console.WriteLine();
+
+// ── 13. Custom function — is_fiction (ValueType → LogicalType) ──────────────
+Console.WriteLine("13. Custom function — is_fiction()");
+
+var isFictionFunc = new IsFictionFunction();
+var evaluator2 = new JsonPathEvaluator(
+    new Dictionary<string, IJsonPathFunction>
+    {
+        ["is_fiction"] = isFictionFunc,
+    });
+
+Console.WriteLine($"    $.store.book[?is_fiction(@.category)].title = {evaluator2.Query("$.store.book[?is_fiction(@.category)].title", data)}");
+Console.WriteLine();
+
+// ── 14. Custom function — node_count (NodesType → ValueType) ────────────────
+Console.WriteLine("14. Custom function — node_count()");
+
+var nodeCountFunc = new NodeCountFunction();
+var evaluator3 = new JsonPathEvaluator(
+    new Dictionary<string, IJsonPathFunction> { ["node_count"] = nodeCountFunc });
+
+Console.WriteLine($"    $[?node_count(@.book[*])>3].bicycle.color = {evaluator3.Query("$[?node_count(@.book[*])>3].bicycle.color", data)}");
+
+// ────────────────────────────────────────────────────────────────────────────
+// Custom function implementations
+// ────────────────────────────────────────────────────────────────────────────
+
+/// <summary>
+/// A custom JSONPath function that returns the ceiling of a numeric value.
+/// Signature: ceil(ValueType) → ValueType.
+/// </summary>
+sealed class CeilFunction : IJsonPathFunction
+{
+    private static readonly JsonPathFunctionType[] ParamTypes = [JsonPathFunctionType.ValueType];
+
+    public JsonPathFunctionType ReturnType => JsonPathFunctionType.ValueType;
+
+    public ReadOnlySpan<JsonPathFunctionType> ParameterTypes => ParamTypes;
+
+    public JsonPathFunctionResult Evaluate(ReadOnlySpan<JsonPathFunctionArgument> arguments)
+    {
+        JsonElement value = arguments[0].Value;
+        if (value.ValueKind != JsonValueKind.Number)
+        {
+            return JsonPathFunctionResult.Nothing;
+        }
+
+        int ceiled = (int)Math.Ceiling(value.GetDouble());
+        return JsonPathFunctionResult.FromValue(
+            JsonPathCodeGenHelpers.IntToElement(ceiled));
+    }
+}
+
+/// <summary>
+/// A custom JSONPath function that tests whether a string equals "fiction".
+/// Signature: is_fiction(ValueType) → LogicalType.
+/// </summary>
+sealed class IsFictionFunction : IJsonPathFunction
+{
+    private static readonly JsonPathFunctionType[] ParamTypes = [JsonPathFunctionType.ValueType];
+
+    public JsonPathFunctionType ReturnType => JsonPathFunctionType.LogicalType;
+
+    public ReadOnlySpan<JsonPathFunctionType> ParameterTypes => ParamTypes;
+
+    public JsonPathFunctionResult Evaluate(ReadOnlySpan<JsonPathFunctionArgument> arguments)
+    {
+        JsonElement value = arguments[0].Value;
+        if (value.ValueKind != JsonValueKind.String)
+        {
+            return JsonPathFunctionResult.FromLogical(false);
+        }
+
+        return JsonPathFunctionResult.FromLogical(
+            value.ValueEquals("fiction"u8));
+    }
+}
+
+/// <summary>
+/// A custom JSONPath function that returns the count of nodes.
+/// Signature: node_count(NodesType) → ValueType.
+/// </summary>
+sealed class NodeCountFunction : IJsonPathFunction
+{
+    private static readonly JsonPathFunctionType[] ParamTypes = [JsonPathFunctionType.NodesType];
+
+    public JsonPathFunctionType ReturnType => JsonPathFunctionType.ValueType;
+
+    public ReadOnlySpan<JsonPathFunctionType> ParameterTypes => ParamTypes;
+
+    public JsonPathFunctionResult Evaluate(ReadOnlySpan<JsonPathFunctionArgument> arguments)
+    {
+        int count = arguments[0].NodeCount;
+        return JsonPathFunctionResult.FromValue(
+            JsonPathCodeGenHelpers.IntToElement(count));
     }
 }
