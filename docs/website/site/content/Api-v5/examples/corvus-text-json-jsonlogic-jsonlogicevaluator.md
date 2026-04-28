@@ -35,6 +35,7 @@ using JsonWorkspace workspace = JsonWorkspace.Create();
 
 foreach (JsonElement data in items)
 {
+    workspace.Reset();
     JsonElement result = JsonLogicEvaluator.Default.Evaluate(
         in rule, in data, workspace);
     // process result...

@@ -59,6 +59,7 @@ using JsonWorkspace workspace = JsonWorkspace.Create();
 
 foreach (JsonElement item in items)
 {
+    workspace.Reset();
     JsonElement result = JsonataEvaluator.Default.Evaluate(
         "name & ': ' & $string(score)",
         item,

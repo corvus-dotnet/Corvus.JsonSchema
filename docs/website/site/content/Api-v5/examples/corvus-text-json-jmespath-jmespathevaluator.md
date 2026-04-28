@@ -39,6 +39,7 @@ using JsonWorkspace workspace = JsonWorkspace.Create();
 
 foreach (JsonElement item in items)
 {
+    workspace.Reset();
     JsonElement result = JMESPathEvaluator.Default.Search(
         "metrics.{avg: avg(values), max: max(values)}",
         item,
