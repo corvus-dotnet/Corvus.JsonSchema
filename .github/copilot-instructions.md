@@ -159,18 +159,24 @@ Rules to follow:
 
 **CRITICAL:** All C# code samples in documentation must compile against the current codebase.
 
-The file `docs/code-sample-catalog.yaml` is the authoritative inventory of every fenced code block across all documentation, skills, and instruction files. It records file paths, block line ranges, languages, categories, and verification status.
+The file `docs/code-sample-catalog.yaml` is the authoritative inventory of every fenced code block across all documentation, skills, and instruction files. It records file paths, block line ranges, languages, categories, and verification status. See `docs/CodeSampleCatalog.md` for the full user guide.
 
-### When you modify documentation
+### Everyday workflow — modified files only
 
-1. **Verify** all compilable C# samples in the modified file still compile (use a C# script file or the ExampleRecipes projects).
-2. **Update the catalog** — after any documentation edit, run:
+You do **not** need to process the entire catalog. When you edit a documentation file:
+
+1. **Verify** the compilable C# samples in that file still compile (use a C# script file, or `dotnet build` for ExampleRecipes projects).
+2. **Update the catalog** for just that file:
    ```powershell
    .\docs\update-code-sample-catalog.ps1 -UpdateFile <relative-path>
    ```
-   This re-scans the file and refreshes its block line ranges and counts, preserving manually-set `category` and `verified` annotations for blocks whose content has not moved.
-3. After verifying samples compile, set `verified: true` for each verified block in the catalog.
-4. Run `.\docs\update-code-sample-catalog.ps1 -Check` to confirm the catalog is in sync before committing.
+3. Set `verified: true` for each block you confirmed compiles.
+4. Run `-Check` before committing to confirm the catalog is in sync:
+   ```powershell
+   .\docs\update-code-sample-catalog.ps1 -Check
+   ```
+
+This keeps the catalog accurate incrementally — a full re-scan is only needed after bulk changes or submodule updates.
 
 ### When you detect user file changes
 
