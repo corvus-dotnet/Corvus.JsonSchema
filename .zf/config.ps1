@@ -117,6 +117,9 @@ task PreBuild {
     Write-Host "Initialising submodule"
     exec { & git submodule init }
     exec { & git submodule update }
+
+    Write-Host "Checking documentation code sample catalog is up to date"
+    exec { & pwsh -File (Join-Path $here "docs\update-code-sample-catalog.ps1") -Check }
 }
 # Synopsis: Optionally builds the documentation website
 task PostBuild BuildWebsite
