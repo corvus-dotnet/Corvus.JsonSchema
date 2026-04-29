@@ -201,22 +201,45 @@ If you observe that the user has modified a documentation file (e.g., through fi
 | Method body / statement snippets | Wrap in a minimal harness and compile — category `compilable` |
 | Fragments (single expressions, partial lines) | Skip — category `fragment` |
 | V4 "before" examples (migration docs) | Skip — category `v4-before` |
+| All blocks under `docs/V4/` | Skip — category `v4-before` (entire file is V4) |
+| `docs/MigrationAnalyzers.md` blocks | Skip — category `fragment` (paired before/after examples) |
 | Intentionally bad patterns (analyzer docs) | Skip — category `bad-pattern` |
 | Non-C# (JSON, YAML, bash, XML) | Skip — no category field in catalog |
+
+### Automated triage
+
+The script `docs/triage-code-samples.ps1` performs **heuristic** categorization by analyzing block content (V4 namespace markers, fragment detection, ExampleRecipes cross-referencing). It does **not** verify compilation — blocks it marks `verified: true` are only cross-referenced against companion `.cs` files, not compiled. Always compile-verify separately.
+
+```powershell
+.\docs\triage-code-samples.ps1 -DryRun                  # Preview changes
+.\docs\triage-code-samples.ps1                           # Apply heuristic categories
+.\docs\triage-code-samples.ps1 -Section example-recipes  # Single section
+.\docs\triage-code-samples.ps1 -File docs\JsonPath.md    # Single file
+```
+
+For first-time verification: (1) run the full catalog update, (2) run the triage script, (3) compile-verify the remaining `compilable` blocks, (4) run `-Check`.
 
 ### ExampleRecipes verification
 
 README code samples must match their companion `.cs` files. When cross-referencing, the `.cs` file is the source of truth — update the README to match, not the other way around.
 
+### Common doc patterns to avoid
+
+- **`ParsedJsonDocument<T>.Parse("""..."""u8)`** — fails to compile. `Parse` takes `ReadOnlyMemory<byte>`, not `ReadOnlySpan<byte>` (which the `u8` suffix produces). Remove the `u8` suffix or use `ParseValue` for the span overload.
+- **Promoting `ParseValue` over `Parse`** — documentation examples should show `ParsedJsonDocument<T>.Parse(...)` with `using` to promote pooled-memory best practice. `ParseValue` creates non-disposable copies. Use `ParseValue` only in contexts where `Parse` is impractical (e.g., inline dictionary initializers for small constants).
+- **`PatchBuilder.Add`/`Replace` with `ParseValue`** — use implicit `JsonElement.Source` conversions instead: `.Add("/name"u8, "Alice")`, `.Replace("/version"u8, 2)`.
+
 ### Catalog maintenance script
 
 ```powershell
-.\docs\update-code-sample-catalog.ps1                           # Full update (preserve annotations)
+.\docs\update-code-sample-catalog.ps1                           # Full update (preserve on-disk annotations)
 .\docs\update-code-sample-catalog.ps1 -UpdateFile docs\X.md    # Re-scan one file
 .\docs\update-code-sample-catalog.ps1 -Check                    # Verify catalog matches files
-.\docs\update-code-sample-catalog.ps1 -Generate                 # Fresh catalog (reset annotations)
+.\docs\update-code-sample-catalog.ps1 -Generate                 # Fresh catalog (RESETS all annotations)
 .\docs\update-code-sample-catalog.ps1 -Stats                    # Print summary statistics
 ```
+
+The default full update preserves `category` and `verified` annotations from the catalog file on disk. The `-Generate` flag resets all annotations to defaults. See `docs/CodeSampleCatalog.md` for the full guide including file-based app verification patterns.
 
 ## JsonWorkspace and Mutable Documents
 

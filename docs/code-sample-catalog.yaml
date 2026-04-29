@@ -521,9 +521,10 @@ main-docs:
       - {index: 1, language: powershell, lines: [42, 45]}
       - {index: 2, language: yaml, lines: [62, 78]}
       - {index: 3, language: powershell, lines: [98, 100]}
-      - {index: 4, language: powershell, lines: [112, 117]}
-      - {index: 5, language: csharp, lines: [121, 129], category: compilable, verified: false}
-      - {index: 6, language: powershell, lines: [149, 155]}
+      - {index: 4, language: csharp, lines: [112, 124], category: compilable, verified: false}
+      - {index: 5, language: powershell, lines: [128, 130]}
+      - {index: 6, language: powershell, lines: [138, 143]}
+      - {index: 7, language: powershell, lines: [182, 188]}
   - path: "docs/EcmaRegexTranslations.md"
     blocks:
       - {index: 0, language: , lines: [39, 42]}
@@ -1274,18 +1275,19 @@ copilot-instructions:
       - {index: 3, language: powershell, lines: [168, 170]}
       - {index: 4, language: powershell, lines: [181, 183]}
       - {index: 5, language: powershell, lines: [186, 188]}
-      - {index: 6, language: powershell, lines: [213, 219]}
-      - {index: 7, language: csharp, lines: [229, 235], category: compilable, verified: false}
-      - {index: 8, language: csharp, lines: [243, 254], category: fragment, verified: false}
-      - {index: 9, language: csharp, lines: [258, 265], category: compilable, verified: false}
-      - {index: 10, language: csharp, lines: [269, 272], category: compilable, verified: false}
-      - {index: 11, language: csharp, lines: [278, 286], category: compilable, verified: false}
-      - {index: 12, language: powershell, lines: [351, 360]}
-      - {index: 13, language: bash, lines: [388, 394]}
-      - {index: 14, language: bash, lines: [400, 403]}
-      - {index: 15, language: powershell, lines: [413, 428]}
-      - {index: 16, language: powershell, lines: [436, 438]}
-      - {index: 17, language: bash, lines: [471, 473]}
+      - {index: 6, language: powershell, lines: [213, 218]}
+      - {index: 7, language: powershell, lines: [234, 240]}
+      - {index: 8, language: csharp, lines: [252, 258], category: fragment, verified: false}
+      - {index: 9, language: csharp, lines: [266, 277], category: compilable, verified: false}
+      - {index: 10, language: csharp, lines: [281, 288], category: compilable, verified: false}
+      - {index: 11, language: csharp, lines: [292, 295], category: compilable, verified: false}
+      - {index: 12, language: csharp, lines: [301, 309], category: compilable, verified: false}
+      - {index: 13, language: powershell, lines: [374, 383]}
+      - {index: 14, language: bash, lines: [411, 417]}
+      - {index: 15, language: bash, lines: [423, 426]}
+      - {index: 16, language: powershell, lines: [436, 451]}
+      - {index: 17, language: powershell, lines: [459, 461]}
+      - {index: 18, language: bash, lines: [494, 496]}
 
 skills:
   - path: ".github/skills/corvus-analyzers/SKILL.md"

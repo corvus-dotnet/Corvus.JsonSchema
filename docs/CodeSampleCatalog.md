@@ -107,30 +107,63 @@ Cross-reference each README code block against its companion `.cs` file in the s
 
 ### Standalone doc samples
 
-For C# blocks in `docs/*.md`, skills, or instructions, use .NET 10 file-based apps for quick verification:
-
-```powershell
-# Extract the code block into a temporary .cs file outside any project directory
-# Add #:project directives for any library references needed
-# Then:
-dotnet build temp-sample.cs
-```
-
-Or wrap method-body snippets in a minimal harness:
+For C# blocks in `docs/*.md`, skills, or instructions, use .NET 10 file-based apps for quick verification. Create a `.cs` file **outside any project directory** (to avoid `.csproj` conflicts) with `#:project` directives pointing to the library projects:
 
 ```csharp
-#:project ../../src/Corvus.Text.Json/Corvus.Text.Json.csproj
+// D:\temp\doc-verify\test.cs  (NOT inside the repo tree)
+#:project D:\source\corvus-dotnet\Corvus.JsonSchema\src\Corvus.Text.Json\Corvus.Text.Json.csproj
+#:property NoWarn=CS8500;JSON001;CS8600
 
 using Corvus.Text.Json;
 
 // paste the code block here
 
-class Verify;  // file-based apps need at least one statement or type
+string json = """{"name":"Alice"}""";
+using var doc = ParsedJsonDocument<JsonElement>.Parse(json);
+Console.WriteLine(doc.RootElement.GetProperty("name"u8).GetString());
 ```
+
+Build (does not run the code):
+
+```powershell
+dotnet build D:\temp\doc-verify\test.cs
+```
+
+For blocks referencing additional packages (Jsonata, JMESPath, JsonPath, Patch, etc.), add extra `#:project` directives.
+
+### Automated triage
+
+The script `docs/triage-code-samples.ps1` performs **heuristic** categorization by analyzing block content — it detects V4 namespace markers, fragment patterns, and cross-references ExampleRecipes blocks against companion `.cs` files. It does **not** verify compilation.
+
+```powershell
+.\docs\triage-code-samples.ps1 -DryRun                  # Preview changes
+.\docs\triage-code-samples.ps1                           # Apply heuristic categories
+.\docs\triage-code-samples.ps1 -Section example-recipes  # Single section
+.\docs\triage-code-samples.ps1 -File docs\JsonPath.md    # Single file
+```
+
+Blocks the triage script marks `verified: true` are only cross-referenced against companion `.cs` files (text matching), not compiled. Always compile-verify `compilable` blocks separately before trusting `verified: true`.
+
+### First-time full verification
+
+When verifying the entire catalog from scratch:
+
+1. `dotnet build docs\ExampleRecipes\ExampleRecipes.slnx`
+2. `.\docs\update-code-sample-catalog.ps1` — full catalog refresh
+3. `.\docs\triage-code-samples.ps1` — heuristic categorization
+4. Compile-verify remaining `compilable` blocks (file-based apps for standalone docs)
+5. `.\docs\update-code-sample-catalog.ps1 -Check` — confirm sync
 
 ### After verification
 
 Set `verified: true` for the block in `code-sample-catalog.yaml`. The `-UpdateFile` script preserves this flag as long as the block content hasn't moved.
+
+## Common doc patterns to avoid
+
+- **`ParsedJsonDocument<T>.Parse("""..."""u8)`** — fails to compile. `Parse` takes `ReadOnlyMemory<byte>`, not `ReadOnlySpan<byte>` (from the `u8` suffix). Remove `u8` or use `ParseValue` for the span overload.
+- **Promoting `ParseValue` over `Parse`** — documentation samples should show `ParsedJsonDocument<T>.Parse(...)` with `using` to promote pooled-memory best practice. `ParseValue` creates non-disposable copies. Reserve `ParseValue` for inline contexts where `Parse` is impractical (e.g., small constants in dictionary initializers).
+- **`PatchBuilder.Add`/`Replace` with `ParseValue`** — use implicit `JsonElement.Source` conversions: `.Add("/name"u8, "Alice")`, `.Replace("/version"u8, 2)`.
+
 
 ## Annotation preservation
 
