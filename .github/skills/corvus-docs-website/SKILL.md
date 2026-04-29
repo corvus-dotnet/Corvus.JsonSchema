@@ -3,7 +3,7 @@ name: corvus-docs-website
 description: >
   Build, serve, and maintain the Corvus.Text.Json documentation website and the
   six Blazor WASM playgrounds (JSON Schema, JSONata, JMESPath, JsonLogic, JSONPath, YAML).
-  Covers the 11-step build.ps1 pipeline, generated vs hand-authored file boundaries,
+  Covers the 12-step build.ps1 pipeline (steps 0-11, with sub-steps), generated vs hand-authored file boundaries,
   incremental rebuild patterns, XmlDocToMarkdown API doc generation, SCSS/JS asset
   compilation, and playground startup with Monaco editor.
   USE FOR: building or previewing the docs site, modifying website content or theme,
@@ -26,7 +26,7 @@ cd docs\website
 .\build.ps1
 ```
 
-The build script runs an 11-step pipeline compiling content, SCSS, taxonomy, and API docs into `.output/`.
+The build script runs a 12-step pipeline (steps 0-11, with sub-steps like 1a/1b, 9b-9f) compiling content, SCSS, taxonomy, and API docs into `.output/`.
 
 ### Serving Locally
 

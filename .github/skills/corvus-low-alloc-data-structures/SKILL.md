@@ -40,7 +40,7 @@ Span<int> buckets = stackalloc int[Utf8KeyHashSet.StackAllocBucketSize];
 Span<byte> entries = stackalloc byte[Utf8KeyHashSet.StackAllocEntrySize];
 Span<byte> keyBuffer = stackalloc byte[Utf8KeyHashSet.StackAllocKeyBufferSize];
 
-using Utf8KeyHashSet hashSet = new(buckets, entries, keyBuffer);
+using Utf8KeyHashSet hashSet = new(estimatedPropertyCount, buckets, entries, keyBuffer);
 bool added = hashSet.Add(utf8Key);
 ```
 

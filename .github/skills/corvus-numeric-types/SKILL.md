@@ -82,7 +82,7 @@ parsed components (no float conversion), preserving exact precision.
 
 ## DoS Protection
 
-Numeric input is capped at **10,000 characters** to prevent resource-exhaustion attacks with extremely large numbers.
+Numeric input is capped at **10,000 characters** (`BigNumber.MaxInputLength` in `src/Corvus.Text.Json/Corvus/Numerics/BigNumber.cs`) to prevent resource-exhaustion attacks with extremely large numbers.
 
 ## Namespaces
 

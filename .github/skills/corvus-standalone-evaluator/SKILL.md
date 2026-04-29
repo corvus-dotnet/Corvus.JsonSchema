@@ -37,6 +37,22 @@ corvusjson jsonschema schema.json --codeGenerationMode SchemaEvaluationOnly --ou
 corvusjson jsonschema schema.json --codeGenerationMode Both --outputPath ./Output
 ```
 
+### Using the Generated Evaluator
+
+The generated evaluator exposes a static `Evaluate<T>()` method. Pass any `IJsonElement<T>` value:
+
+```csharp
+using var doc = ParsedJsonDocument<JsonElement>.Parse("""{"name": "Alice", "age": 30}""");
+
+// Simple validation — returns true if the instance is valid
+bool isValid = MySchemaEvaluator.Evaluate(doc.RootElement);
+
+// With annotation collection
+var collector = new JsonSchemaResultsCollector();
+bool isValid2 = MySchemaEvaluator.Evaluate(doc.RootElement, collector);
+// collector now contains validation results and annotations
+```
+
 ## Two-Pass Architecture
 
 ### Pass 1: Schema Discovery

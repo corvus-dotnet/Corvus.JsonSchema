@@ -43,15 +43,18 @@ Vocabularies are modular sets of keywords (introduced formally in Draft 2019-09)
 
 ## Validation Handler Priorities
 
-Handlers execute in strict priority order:
+Handlers execute in strict priority order (defined in `ValidationPriorities` static class in `src-v4/Corvus.Json.CodeGeneration/.../Validation/ValidationPriorities.cs`, shared by both V4 and V5):
 
-| Priority | Name | Purpose |
-|----------|------|---------|
-| 1000 | CoreType | Basic type checking (`type` keyword) |
-| 2000 | Default | Standard validation (min/max, pattern, etc.) |
-| 3000 | Composition | `allOf`, `anyOf`, `oneOf`, `not` |
-| 4000 | AfterComposition | Keywords that depend on composition results |
-| 5000 | Last | Final cleanup, unevaluated properties/items |
+| Priority | Name | Value | Purpose |
+|----------|------|-------|---------|
+| First | `First` | 0 | Must run before everything |
+| CoreType | `CoreType` | 1,000 | Basic type checking (`type` keyword) |
+| Default | `Default` | ~2.1 billion (`uint.MaxValue / 2`) | Standard validation (min/max, pattern, etc.) |
+| Composition | `Composition` | Default + 1,000 | `allOf`, `anyOf`, `oneOf`, `not` |
+| AfterComposition | `AfterComposition` | Composition + 1,000 | Keywords that depend on composition results (arrays, objects) |
+| Last | `Last` | `uint.MaxValue` | Final cleanup, unevaluated properties/items |
+
+The large gap between CoreType (1,000) and Default (~2.1B) leaves room for future priorities without redefining existing values.
 
 ## Draft-Specific Keyword Variations
 

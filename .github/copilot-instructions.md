@@ -6,6 +6,32 @@ This is **Corvus.Text.Json**, a high-performance JSON library for .NET that exte
 
 The repo structure mirrors the dotnet/runtime repository conventions: shared source files in `Common/`, polyfills from `System.Private.CoreLib/`, and explicit `<Compile>` item groups (no glob includes).
 
+## Skills Inventory
+
+19 skills in `.github/skills/` provide deep context on specific areas. Copilot loads them on demand.
+
+| Skill | Area |
+|-------|------|
+| `corvus-build-and-test` | Building, testing, TFM targeting, solution files |
+| `corvus-codegen` | Source generator and CLI code generation from JSON Schema |
+| `corvus-keywords-and-validation` | JSON Schema keywords, vocabularies, validation handlers |
+| `corvus-standalone-evaluator` | Validation-only evaluator generation and annotation collection |
+| `corvus-parsed-documents-and-memory` | Parsing, IJsonElement, memory model, UTF-8 transcoding |
+| `corvus-mutable-documents` | JsonWorkspace, JsonDocumentBuilder, mutation, JSON Patch |
+| `corvus-buffer-and-pooling` | stackalloc/ArrayPool/ThreadStatic pooling patterns |
+| `corvus-low-alloc-data-structures` | Ref-struct collections, SIMD, hash sets |
+| `corvus-numeric-types` | BigNumber, numeric parsing, format selection |
+| `corvus-ecma-regex` | ECMAScript → .NET regex translation |
+| `corvus-query-languages` | JSONata, JMESPath, JsonLogic, JSONPath |
+| `corvus-yaml` | YAML ↔ JSON conversion |
+| `corvus-analyzers` | Roslyn analyzers (CTJ001-CTJ010) |
+| `corvus-benchmarks` | BenchmarkDotNet execution, B/C baseline convention |
+| `corvus-docs-website` | Documentation site build pipeline and playgrounds |
+| `corvus-bowtie-testing` | Bowtie conformance testing against JSON Schema Test Suite |
+| `corvus-test-suite-regeneration` | Regenerating test classes from the submodule |
+| `corvus-v4-migration` | V4 → V5 migration patterns and analyzers |
+| `ref-struct-delegates` | Custom delegates for ref-struct parameters |
+
 ## Build & Test
 
 ```bash
@@ -35,6 +61,8 @@ Always use `FullyQualifiedName~` (substring match) for test filters — not `Cla
 | `Corvus.Text.Json.Benchmarks.slnx` | Benchmark projects only |
 
 `TreatWarningsAsErrors=true` is set across all projects — the build will fail on any warning.
+
+See the `corvus-build-and-test` skill for TFM targeting, test project mapping, and common build failure diagnosis.
 
 ## Architecture
 
@@ -101,7 +129,7 @@ On `net9.0`+ these delegate to `Encoding.UTF8.GetString(ReadOnlySpan<byte>)` and
 
 ## stackalloc / ArrayPool rent pattern
 
-Throughout the codebase, temporary byte or char buffers follow a single consistent pattern: stack-allocate for small sizes, rent from `ArrayPool` for larger ones. Always use `try/finally` to guarantee the rented array is returned.
+Throughout the codebase, temporary byte or char buffers follow a single consistent pattern: stack-allocate for small sizes, rent from `ArrayPool` for larger ones. Always use `try/finally` to guarantee the rented array is returned. See the `corvus-buffer-and-pooling` skill for full rules, tier hierarchy, and thread-static cache patterns.
 
 ```csharp
 byte[]? rentedArray = null;
@@ -124,20 +152,13 @@ finally
 }
 ```
 
-**Thresholds** (defined in `JsonConstants`, shared via `Common/src/`):
+**Thresholds** (defined in `JsonConstants`, shared via `src/Common/`):
 
 | Constant | Value | Use for |
 |---|---|---|
 | `JsonConstants.StackallocByteThreshold` | 256 | `byte` / UTF-8 buffers |
 | `JsonConstants.StackallocCharThreshold` | 128 | `char` buffers (256 / 2) |
 
-`BigNumber` uses a local `private const int StackAllocThreshold = 256` for the same purpose within that type.
-
-Rules to follow:
-- **Always** declare the nullable rented array before the ternary so it is in scope for the `finally` block.
-- **Always** use the named constant, not a magic number, for the threshold and the `stackalloc` size.
-- **Always** slice the span to `length` before use — `ArrayPool.Rent` returns an array that may be larger than requested.
-- For fixed-size buffers where the maximum is always small (e.g., a 2 KB URI buffer in `Utf8Uri.ToString()`), a plain `stackalloc` without the pool fallback is acceptable.
 
 ## Key Conventions
 
@@ -257,31 +278,14 @@ The default full update preserves `category` and `verified` annotations from the
 
 ## JsonWorkspace and Mutable Documents
 
-### JsonWorkspace
+`JsonWorkspace` is a scoped container for pooled memory used during mutable JSON operations. See the `corvus-mutable-documents` skill for the full API including multi-builder patterns, empty builders, cloning, and JSON Patch.
 
-`JsonWorkspace` is a scoped container for pooled memory used during mutable JSON operations. It tracks a set of `JsonDocumentBuilder<T>` instances via an `ArrayPool<IJsonDocument>`-backed array, and manages pooled `Utf8JsonWriter`/buffer rentals via `Utf8JsonWriterCache`.
-
-**Creation:**
-
-```csharp
-// Preferred — rents from a thread-local cache (only one per thread is cached; nested calls allocate)
-using JsonWorkspace workspace = JsonWorkspace.Create();
-
-// When you need to control lifetime explicitly outside a using block
-JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-```
-
-**Lifetime:** always use a `using` block. `Dispose()` on a rented workspace returns it to the thread-local cache; on an unrented workspace it disposes all child documents and returns the backing array to `ArrayPool`.
-
-### Creating mutable documents
-
-The canonical pattern used throughout the codebase and tests:
+**Canonical parse-build-mutate-serialize pattern:**
 
 ```csharp
 using JsonWorkspace workspace = JsonWorkspace.Create();
 using ParsedJsonDocument<JsonElement> sourceDoc = ParsedJsonDocument<JsonElement>.Parse(json);
 
-// Convert an immutable element into a mutable builder document
 using JsonDocumentBuilder<JsonElement.Mutable> builder =
     sourceDoc.RootElement.CreateBuilder(workspace);
 
@@ -290,42 +294,13 @@ JsonElement.Mutable root = builder.RootElement;
 string result = root.ToString();
 ```
 
-Multiple builders can share one workspace; each is registered in the workspace's document index:
-
-```csharp
-using JsonWorkspace workspace = JsonWorkspace.Create();
-using ParsedJsonDocument<JsonElement> doc1 = ParsedJsonDocument<JsonElement>.Parse(json1);
-using ParsedJsonDocument<JsonElement> doc2 = ParsedJsonDocument<JsonElement>.Parse(json2);
-
-using JsonDocumentBuilder<JsonElement.Mutable> builder1 = doc1.RootElement.CreateBuilder(workspace);
-using JsonDocumentBuilder<JsonElement.Mutable> builder2 = doc2.RootElement.CreateBuilder(workspace);
-```
-
-You can also create an empty builder (no source document):
-
-```csharp
-using JsonDocumentBuilder<JsonElement.Mutable> builder =
-    workspace.CreateBuilder<JsonElement.Mutable>(initialCapacity: 30, initialValueBufferSize: 8192);
-```
-
-### Clones
-
-Calling `.Clone()` on a mutable element produces an immutable `ParsedJsonDocument`-backed element that outlives the builder:
-
-```csharp
-using (JsonWorkspace workspace = JsonWorkspace.Create())
-using (ParsedJsonDocument<JsonElement> parsedDoc = ParsedJsonDocument<JsonElement>.Parse("[[[]]]"))
-using (JsonDocumentBuilder<JsonElement.Mutable> doc = parsedDoc.RootElement.CreateBuilder(workspace))
-{
-    clone = doc.RootElement[0].Clone(); // clone survives after the using blocks
-}
-Assert.Equal("[[]]", clone.GetRawText()); // still valid
-```
+**Lifetime:** always use a `using` block. Prefer `JsonWorkspace.Create()` (rents from thread-local cache). Use `CreateUnrented()` only when you need explicit lifetime control outside a `using` block.
 
 ### Test helper types
 
 - **`DummyDocument`** — minimal `IJsonDocument` mock that returns a fixed `JsonTokenType`. Used when tests need an `IJsonDocument` reference but don't require real document operations.
 - **`DummyResultsCollector`** — mock `IJsonSchemaResultsCollector` that counts context-nesting and schema-location calls; used in schema validation unit tests.
+
 
 ## Documentation Website
 
@@ -334,7 +309,7 @@ The documentation site lives in `docs/website/`. See `docs/website/DEVELOPMENT.m
 ### Key architecture
 
 - **Source** → `docs/website/site/` contains content markdown, taxonomy YAML, theme (Razor views, SCSS, JS), and tools.
-- **Build** → `docs/website/build.ps1` runs an 11-step pipeline that compiles everything into `docs/website/.output/`.
+- **Build** → `docs/website/build.ps1` runs a 12-step pipeline (steps 0-11) that compiles everything into `docs/website/.output/`.
 - **Serving** → The local dev server (`build.ps1 -ServeOnly` or `preview.ps1`) serves static files from `.output/`, **not** from the source theme directory. Editing source files (views, SCSS, JS) has no effect until the relevant build step is re-run.
 - **IMPORTANT: Stop the server before rebuilding.** The build script deletes and recreates `.output/`. On Windows, the Node file server holds file locks that prevent deletion, causing the build to hang indefinitely. Always stop the serving process (`Stop-Process -Id <PID>`) before running `build.ps1`.
 

@@ -13,6 +13,32 @@ description: >
 
 # ECMAScript Regex Translation
 
+## Entry Point API
+
+The translator is in `src/Corvus.Text.Json.CodeGeneration/EcmaRegexTranslator.cs`:
+
+```csharp
+// Translate an ECMAScript /u mode pattern to .NET
+string dotnetPattern = EcmaRegexTranslator.Translate(@"\d+\.\d+");
+
+// Non-throwing variant with span output
+OperationStatus status = EcmaRegexTranslator.TryTranslate(
+    ecmaPattern, buffer, out int charsWritten);
+
+// Safe fallback — returns original pattern if translation fails
+string pattern = EcmaRegexTranslator.TranslateOrFallback(ecmaPattern);
+```
+
+## Translation Examples
+
+| ECMAScript Pattern | .NET Translation | Reason |
+|---|---|---|
+| `.` | `[^\n\r\u2028\u2029]` | Dot excludes specific line terminators |
+| `\d` | `[0-9]` | ASCII digits only |
+| `\u{1F600}` | `(?:\uD83D\uDE00)` | Supplementary char → surrogate pair |
+| `(a)\1` | `(a)(?(1)\1)` | Backreference wrapped in conditional |
+| `[a\D]` | `(?:[a]\|[^0-9])` | Negated shorthand in class uses alternation |
+
 ## Why Translation Is Needed
 
 JSON Schema's `pattern` keyword uses ECMAScript regex semantics (ECMA 262 `/u` mode).

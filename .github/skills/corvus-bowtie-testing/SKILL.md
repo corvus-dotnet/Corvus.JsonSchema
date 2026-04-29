@@ -153,7 +153,7 @@ The consuming project needs a `nuget.config` with the local feed:
 
 ## Common Pitfalls
 
-- **NuGet cache**: NuGet caches packages by version. Always increment the version suffix (`-local.2`, `-local.3`) or clear the cache when repacking.
+- **NuGet cache**: NuGet caches packages by version. Always increment the version suffix (`-local.2`, `-local.3`) or clear the cache (`Remove-Item -Recurse -Force "$env:USERPROFILE\.nuget\packages\<package-name>"`) when repacking.
 - **System bowtie**: Don't use a system-installed `bowtie` — always use the venv from the local checkout. It may contain critical fixes.
 - **Container rebuild**: The configure script builds the container image, but if you need to force a rebuild, delete the image first: `podman rmi localhost/dotnet-corvus-jsonschema-v5engine`.
 - **Repo nuget.config**: Don't modify the repo's own `nuget.config` (it uses `<clear />` for CI isolation). Add the local source to the consuming project's config.

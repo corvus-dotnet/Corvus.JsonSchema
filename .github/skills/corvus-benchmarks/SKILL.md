@@ -83,10 +83,10 @@ dotnet run --project src\Corvus.Json.CodeGenerator -f net10.0 -c Release -- `
 
 | Project | Benchmarks | Build timeout |
 |---------|-----------|---------------|
-| `Corvus.Text.Json.Jsonata.Benchmarks` | 62 (20 CG + 20 RT + 22 Native) | Pre-configured 15 min |
-| `Corvus.Text.Json.JMESPath.Benchmarks` | JMESPath comparison | Pre-configured |
-| `Corvus.Text.Json.JsonLogic.Benchmarks` | JsonLogic comparison | Pre-configured |
-| `Corvus.Text.Json.JsonPath.Benchmarks` | JSONPath RT + CG vs JsonEverything | Pre-configured |
+| `Corvus.Text.Json.Jsonata.Benchmarks` | 62 (20 CG + 20 RT + 22 Native) | 15 min in `Program.cs` |
+| `Corvus.Text.Json.JMESPath.Benchmarks` | JMESPath comparison | In `Program.cs` |
+| `Corvus.Text.Json.JsonLogic.Benchmarks` | JsonLogic comparison | In `Program.cs` |
+| `Corvus.Text.Json.JsonPath.Benchmarks` | JSONPath RT + CG vs JsonEverything | In `Program.cs` |
 
 ## Other Benchmark Projects
 
