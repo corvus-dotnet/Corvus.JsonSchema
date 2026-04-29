@@ -8,7 +8,7 @@ The repo structure mirrors the dotnet/runtime repository conventions: shared sou
 
 ## Skills Inventory
 
-19 skills in `.github/skills/` provide deep context on specific areas. Copilot loads them on demand.
+20 skills in `.github/skills/` provide deep context on specific areas. Copilot loads them on demand.
 
 | Skill | Area |
 |-------|------|
@@ -31,6 +31,7 @@ The repo structure mirrors the dotnet/runtime repository conventions: shared sou
 | `corvus-test-suite-regeneration` | Regenerating test classes from the submodule |
 | `corvus-v4-migration` | V4 → V5 migration patterns and analyzers |
 | `ref-struct-delegates` | Custom delegates for ref-struct parameters |
+| `reviewing-skills` | Post-work review and maintenance of skills and instructions |
 
 ## Build & Test
 

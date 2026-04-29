@@ -81,6 +81,61 @@ The code generation engine exposes extension points at different phases:
 7. **Format handler** — add custom format validators
 8. **Composition handler** — customize allOf/anyOf/oneOf/not processing
 
+## How Handlers and Keywords Fit Together
+
+Validation handlers are **stateless singletons** registered with the `CSharpLanguageProvider`. Each handler declares which keyword marker interface it handles and optionally registers child handlers for sub-concerns.
+
+### Handler registration
+
+Handlers are registered in `CSharpLanguageProvider.CreateDefaultCSharpLanguageProvider()` (`src/Corvus.Text.Json.CodeGeneration/CSharpLanguageProvider.cs`):
+
+```csharp
+languageProvider.RegisterValidationHandlers(
+    TypeValidationHandler.Instance,
+    FormatValidationHandler.Instance,
+    StringValidationHandler.Instance,
+    CompositionAllOfValidationHandler.Instance,
+    ObjectValidationHandler.Instance,
+    ArrayValidationHandler.Instance);
+    // ... etc.
+```
+
+### Handler structure
+
+Each handler extends `KeywordValidationHandlerBase` and implements three things:
+
+```csharp
+// From StringValidationHandler.cs
+internal sealed class StringValidationHandler
+    : TypeSensitiveKeywordValidationHandlerBase, IStringKeywordValidationHandler
+{
+    public static StringValidationHandler Instance { get; } = CreateDefault();
+
+    // 1. Priority — controls execution order
+    public override uint ValidationHandlerPriority => ValidationPriorities.Default;
+
+    // 2. Keyword matching — dispatches on marker interfaces
+    public override bool HandlesKeyword(IKeyword keyword)
+    {
+        return keyword is IStringValidationKeyword;
+    }
+
+    // 3. Child handlers for sub-concerns
+    private static StringValidationHandler CreateDefault()
+    {
+        var result = new StringValidationHandler();
+        result.RegisterChildHandlers(
+            StringRegularExpressionValidationHandler.Instance,
+            StringLengthValidationHandler.Instance);
+        return result;
+    }
+}
+```
+
+### Execution flow
+
+During code generation, `typeDeclaration.OrderedValidationHandlers()` retrieves handlers from the provider and sorts by `ValidationHandlerPriority`. Each handler emits setup code and validation code into the generated `Evaluate()` method in priority order.
+
 ## TypeDeclaration
 
 The central data structure representing a resolved JSON Schema as a C# type:

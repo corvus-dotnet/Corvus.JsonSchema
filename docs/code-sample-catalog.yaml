@@ -1336,6 +1336,10 @@ skills:
       - {index: 0, language: powershell, lines: [24, 27]}
       - {index: 1, language: powershell, lines: [33, 39]}
       - {index: 2, language: powershell, lines: [96, 105]}
+  - path: ".github/skills/corvus-keywords-and-validation/SKILL.md"
+    blocks:
+      - {index: 0, language: csharp, lines: [92, 101], category: compilable, verified: false}
+      - {index: 1, language: csharp, lines: [107, 133], category: compilable, verified: false}
   - path: ".github/skills/corvus-low-alloc-data-structures/SKILL.md"
     blocks:
       - {index: 0, language: csharp, lines: [37, 45], category: compilable, verified: false}
@@ -1409,3 +1413,7 @@ skills:
       - {index: 3, language: csharp, lines: [77, 86], category: compilable, verified: false}
       - {index: 4, language: csharp, lines: [90, 100], category: compilable, verified: false}
       - {index: 5, language: csharp, lines: [110, 125], category: compilable, verified: false}
+  - path: ".github/skills/reviewing-skills/SKILL.md"
+    blocks:
+      - {index: 0, language: powershell, lines: [36, 39]}
+      - {index: 1, language: powershell, lines: [73, 75]}
