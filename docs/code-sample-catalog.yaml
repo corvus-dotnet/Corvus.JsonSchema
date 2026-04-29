@@ -1273,17 +1273,17 @@ copilot-instructions:
       - {index: 1, language: csharp, lines: [108, 118], category: compilable, verified: false}
       - {index: 2, language: csharp, lines: [135, 154], category: compilable, verified: false}
       - {index: 3, language: powershell, lines: [193, 195]}
-      - {index: 4, language: powershell, lines: [206, 208]}
-      - {index: 5, language: powershell, lines: [211, 213]}
-      - {index: 6, language: powershell, lines: [238, 243]}
-      - {index: 7, language: powershell, lines: [270, 276]}
-      - {index: 8, language: csharp, lines: [286, 296], category: fragment, verified: false}
-      - {index: 9, language: powershell, lines: [364, 373]}
-      - {index: 10, language: bash, lines: [401, 407]}
-      - {index: 11, language: bash, lines: [413, 416]}
-      - {index: 12, language: powershell, lines: [426, 441]}
-      - {index: 13, language: powershell, lines: [449, 451]}
-      - {index: 14, language: bash, lines: [484, 486]}
+      - {index: 4, language: powershell, lines: [203, 205]}
+      - {index: 5, language: powershell, lines: [218, 220]}
+      - {index: 6, language: powershell, lines: [248, 253]}
+      - {index: 7, language: powershell, lines: [280, 286]}
+      - {index: 8, language: csharp, lines: [296, 306], category: fragment, verified: false}
+      - {index: 9, language: powershell, lines: [374, 383]}
+      - {index: 10, language: bash, lines: [411, 417]}
+      - {index: 11, language: bash, lines: [423, 426]}
+      - {index: 12, language: powershell, lines: [436, 451]}
+      - {index: 13, language: powershell, lines: [459, 461]}
+      - {index: 14, language: bash, lines: [494, 496]}
 
 skills:
   - path: ".github/skills/corvus-analyzers/SKILL.md"
@@ -1337,8 +1337,8 @@ skills:
       - {index: 0, language: csharp, lines: [20, 30], category: compilable, verified: false}
   - path: ".github/skills/corvus-keywords-and-validation/SKILL.md"
     blocks:
-      - {index: 0, language: csharp, lines: [92, 101], category: compilable, verified: false}
-      - {index: 1, language: csharp, lines: [107, 133], category: compilable, verified: false}
+      - {index: 0, language: csharp, lines: [92, 106], category: compilable, verified: false}
+      - {index: 1, language: csharp, lines: [112, 138], category: compilable, verified: false}
   - path: ".github/skills/corvus-low-alloc-data-structures/SKILL.md"
     blocks:
       - {index: 0, language: csharp, lines: [37, 45], category: compilable, verified: false}

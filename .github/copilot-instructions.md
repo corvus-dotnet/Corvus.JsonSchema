@@ -196,9 +196,21 @@ dotnet build docs\ExampleRecipes\ExampleRecipes.slnx
 
 If any ExampleRecipes project fails to build, fix it before moving on — the README code blocks are derived from these projects.
 
+### Pre-commit gate
+
+**Before any commit that touches files tracked by the catalog** (anything under `.github/`, `docs/`, or skill/instruction files), run `-Check`:
+
+```powershell
+.\docs\update-code-sample-catalog.ps1 -Check
+```
+
+If it reports issues, do **not** just regenerate the catalog to silence the check. The check enforces the verification process, not just file synchronisation. For each file it flags, follow the everyday workflow below.
+
+This applies regardless of how the files were changed — whether you edited them yourself, the user edited them, or changes accumulated across multiple conversation turns. The commit is the gate; `-Check` is mandatory at that gate.
+
 ### Everyday workflow — modified files only
 
-You do **not** need to process the entire catalog. When you edit a documentation file:
+You do **not** need to process the entire catalog. For each documentation, skill, or instruction file you have changed:
 
 1. **Build** any affected ExampleRecipes projects first (if the file is under `docs/ExampleRecipes/`).
 2. **Verify** the compilable C# samples in that file still compile (cross-reference against companion `.cs` files for ExampleRecipes READMEs, or use a C# script file for standalone docs).
@@ -207,12 +219,10 @@ You do **not** need to process the entire catalog. When you edit a documentation
    .\docs\update-code-sample-catalog.ps1 -UpdateFile <relative-path>
    ```
 4. Set `verified: true` for each block you confirmed compiles.
-5. Run `-Check` before committing to confirm the catalog is in sync:
-   ```powershell
-   .\docs\update-code-sample-catalog.ps1 -Check
-   ```
 
 This keeps the catalog accurate incrementally — a full re-scan is only needed after bulk changes or submodule updates.
+
+Note: editing a file can shift line numbers for code blocks in **other parts of the same file** that you did not change. `-UpdateFile` handles this; manually editing the catalog YAML does not. Always use `-UpdateFile`, never hand-edit the catalog.
 
 ### When you detect user file changes
 

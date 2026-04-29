@@ -93,11 +93,16 @@ Handlers are registered in `CSharpLanguageProvider.CreateDefaultCSharpLanguagePr
 languageProvider.RegisterValidationHandlers(
     TypeValidationHandler.Instance,
     FormatValidationHandler.Instance,
+    NumberValidationHandler.Instance,
     StringValidationHandler.Instance,
+    ConstValidationHandler.Instance,
     CompositionAllOfValidationHandler.Instance,
+    CompositionAnyOfValidationHandler.Instance,
+    CompositionOneOfValidationHandler.Instance,
+    CompositionNotValidationHandler.Instance,
+    TernaryIfValidationHandler.Instance,
     ObjectValidationHandler.Instance,
     ArrayValidationHandler.Instance);
-    // ... etc.
 ```
 
 ### Handler structure
