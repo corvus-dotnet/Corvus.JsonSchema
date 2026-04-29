@@ -198,29 +198,30 @@ If any ExampleRecipes project fails to build, fix it before moving on — the RE
 
 ### Pre-commit gate
 
-**Before any commit that touches files tracked by the catalog** (anything under `.github/`, `docs/`, or skill/instruction files), run `-Check`:
+**Before any commit that touches files tracked by the catalog** (anything under `.github/`, `docs/`, or skill/instruction files), do both of these steps in order:
+
+**Step 1 — Verify C# blocks in every changed file.** For each file you modified, check whether it contains C# code blocks. If it does, verify they compile against the current source (cross-reference against companion `.cs` files, or use a C# script file). This is the step that catches fabricated APIs, stale signatures, and missing parameters. Catalog tooling cannot enforce this — only you can.
+
+**Step 2 — Update and check the catalog.** For each changed file, run `-UpdateFile`, then run `-Check` to confirm the catalog is in sync:
 
 ```powershell
+.\docs\update-code-sample-catalog.ps1 -UpdateFile <relative-path>
+# ... repeat for each changed file ...
 .\docs\update-code-sample-catalog.ps1 -Check
 ```
 
-If it reports issues, do **not** just regenerate the catalog to silence the check. The check enforces the verification process, not just file synchronisation. For each file it flags, follow the everyday workflow below.
+If `-Check` reports issues for files you did not explicitly change (e.g., line-number shifts from an edit earlier in the session), go back to Step 1 for those files too.
 
-This applies regardless of how the files were changed — whether you edited them yourself, the user edited them, or changes accumulated across multiple conversation turns. The commit is the gate; `-Check` is mandatory at that gate.
+Do **not** skip Step 1 and jump straight to Step 2. A passing `-Check` only means line numbers are in sync — it says nothing about whether the code is correct. The verification is the point; the catalog is the record.
+
+This applies regardless of how the files were changed — whether you edited them yourself, the user edited them, or changes accumulated across multiple conversation turns. The commit is the gate.
 
 ### Everyday workflow — modified files only
 
-You do **not** need to process the entire catalog. For each documentation, skill, or instruction file you have changed:
+The pre-commit gate above is the mandatory minimum. For larger documentation edits, these additional steps apply:
 
 1. **Build** any affected ExampleRecipes projects first (if the file is under `docs/ExampleRecipes/`).
-2. **Verify** the compilable C# samples in that file still compile (cross-reference against companion `.cs` files for ExampleRecipes READMEs, or use a C# script file for standalone docs).
-3. **Update the catalog** for just that file:
-   ```powershell
-   .\docs\update-code-sample-catalog.ps1 -UpdateFile <relative-path>
-   ```
-4. Set `verified: true` for each block you confirmed compiles.
-
-This keeps the catalog accurate incrementally — a full re-scan is only needed after bulk changes or submodule updates.
+2. Set `verified: true` in the catalog for each block you confirmed compiles.
 
 Note: editing a file can shift line numbers for code blocks in **other parts of the same file** that you did not change. `-UpdateFile` handles this; manually editing the catalog YAML does not. Always use `-UpdateFile`, never hand-edit the catalog.
 
