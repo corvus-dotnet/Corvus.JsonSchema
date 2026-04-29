@@ -89,11 +89,13 @@
     <Compile Include="JsonDocumentBuilderComplexObjectTests.cs" />
     <Compile Include="JsonDocumentBuilderCreateDynamicTests.cs" />
     <Compile Include="JsonDocumentBuilderInsertItemTests.cs" />
+    <Compile Include="MutableAccessorCoverageTests.cs" />
     <Compile Include="MutableDocumentCoverageTests.cs" />
     <Compile Include="AnnotationProducerCoverageTests.cs" />
     <Compile Include="ValueStackCoverageTests.cs" />
     <Compile Include="LargeArrayBuilderTests.cs" />
     <Compile Include="EvaluatorMessageCoverageTests.cs" />
+    <Compile Include="BuilderSnapshotCoverageTests.cs" />
     <Compile Include="JsonDocumentBuilderRangeTests.cs" />
     <Compile Include="JsonDocumentBuilderParseTests.cs" />
     <Compile Include="JsonDocumentBuilderTests.cs" />
