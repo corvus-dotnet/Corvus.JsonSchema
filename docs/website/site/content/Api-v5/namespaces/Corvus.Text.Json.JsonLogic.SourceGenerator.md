@@ -1,0 +1,1 @@
+Roslyn incremental source generator for compile-time JsonLogic code generation. Annotate a `static partial class` with `[JsonLogicRule("path.json")]` to generate an optimized static `Evaluate(in JsonElement, JsonWorkspace)` method from a `.json` rule file.

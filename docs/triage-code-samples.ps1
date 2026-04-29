@@ -5,7 +5,8 @@
     Reads docs/code-sample-catalog.yaml, examines each C# block's content,
     and assigns categories (compilable, fragment, v4-before, bad-pattern)
     based on content analysis. For example-recipes, cross-references with
-    companion .cs files and sets verified: true for blocks that compile.
+    companion .cs files and sets verified: true for blocks whose text matches
+    (text matching only — not compiled).
 .PARAMETER DryRun
     Show what would change without writing the catalog.
 .PARAMETER Section
@@ -23,6 +24,12 @@ param(
 $ErrorActionPreference = 'Stop'
 $RepoRoot = Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path)
 $CatalogPath = Join-Path $RepoRoot 'docs' 'code-sample-catalog.yaml'
+
+# Normalize -File to forward-slash repo-relative form (matching catalog paths)
+if ($File) {
+    $File = $File -replace '\\', '/'
+    $File = $File -replace '^\./', ''
+}
 
 # ---------------------------------------------------------------------------
 # Content-based classification rules

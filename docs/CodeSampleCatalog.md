@@ -37,7 +37,7 @@ That's it for day-to-day work. The full-scan modes below are for bulk operations
 | **Generate** | `.\docs\update-code-sample-catalog.ps1 -Generate` | Fresh catalog from scratch (resets all annotations) |
 | **Stats** | `.\docs\update-code-sample-catalog.ps1 -Stats` | Print summary (files, blocks, C# count, verified count) |
 
-Paths are relative to the repository root, using backslashes on Windows:
+Paths are relative to the repository root. The catalog stores paths with **forward slashes** (e.g., `docs/JsonPath.md`, `.github/copilot-instructions.md`). When using `-UpdateFile` or `-File` from PowerShell, both backslashes and forward slashes are accepted — the scripts normalize automatically:
 
 ```powershell
 .\docs\update-code-sample-catalog.ps1 -UpdateFile docs\ExampleRecipes\003-Mutation\README.md
@@ -105,6 +105,8 @@ If any project fails, fix it before moving on — the README code blocks are der
 
 Cross-reference each README code block against its companion `.cs` file in the same directory. The `.cs` file is the source of truth — update the README to match, not the other way around.
 
+**Note:** Many READMEs also contain supplementary educational blocks (alternative patterns, explanations) that are not in any `.cs` file. These still need file-based app verification — cross-referencing only proves blocks that match companion source files.
+
 ### Standalone doc samples
 
 For C# blocks in `docs/*.md`, skills, or instructions, use .NET 10 file-based apps for quick verification. Create a `.cs` file **outside any project directory** (to avoid `.csproj` conflicts) with `#:project` directives pointing to the library projects:
@@ -131,6 +133,14 @@ dotnet build D:\temp\doc-verify\test.cs
 
 For blocks referencing additional packages (Jsonata, JMESPath, JsonPath, Patch, etc.), add extra `#:project` directives.
 
+### File-based app tips
+
+When combining multiple doc blocks into one verification file:
+
+- Gather **all `using` directives** at the top of the file — `using` after top-level statements causes CS1529.
+- Wrap each block in its own scope `{ ... }` to isolate variable names.
+- Do **not** add `using System.Text.Json;` alongside `using Corvus.Text.Json;` — types like `JsonElement`, `Utf8JsonWriter`, and `JsonWriterOptions` exist in both namespaces, causing ambiguity errors.
+
 ### Automated triage
 
 The script `docs/triage-code-samples.ps1` performs **heuristic** categorization by analyzing block content — it detects V4 namespace markers, fragment patterns, and cross-references ExampleRecipes blocks against companion `.cs` files. It does **not** verify compilation.
@@ -154,6 +164,8 @@ When verifying the entire catalog from scratch:
 4. Compile-verify remaining `compilable` blocks (file-based apps for standalone docs)
 5. `.\docs\update-code-sample-catalog.ps1 -Check` — confirm sync
 
+**Prioritization:** With hundreds of compilable blocks, verify in this order: (1) files with known recent changes, (2) quick-start and getting-started sections, (3) standalone docs (`docs/*.md`), (4) skills files. ExampleRecipes blocks that cross-reference successfully against companion `.cs` files can be trusted — focus on blocks not in `.cs` files.
+
 ### After verification
 
 Set `verified: true` for the block in `code-sample-catalog.yaml`. The `-UpdateFile` script preserves this flag as long as the block content hasn't moved.
@@ -163,6 +175,8 @@ Set `verified: true` for the block in `code-sample-catalog.yaml`. The `-UpdateFi
 - **`ParsedJsonDocument<T>.Parse("""..."""u8)`** — fails to compile. `Parse` takes `ReadOnlyMemory<byte>`, not `ReadOnlySpan<byte>` (from the `u8` suffix). Remove `u8` or use `ParseValue` for the span overload.
 - **Promoting `ParseValue` over `Parse`** — documentation samples should show `ParsedJsonDocument<T>.Parse(...)` with `using` to promote pooled-memory best practice. `ParseValue` creates non-disposable copies. Reserve `ParseValue` for inline contexts where `Parse` is impractical (e.g., small constants in dictionary initializers).
 - **`PatchBuilder.Add`/`Replace` with `ParseValue`** — use implicit `JsonElement.Source` conversions: `.Add("/name"u8, "Alice")`, `.Replace("/version"u8, 2)`.
+- **`ArrayBuilder.AddProperty()`** — does not exist. Use `AddItem()` for array elements. `AddProperty(name, value)` is only on `ObjectBuilder`.
+- **`using System.Text.Json;` alongside `using Corvus.Text.Json;`** — causes ambiguity for `JsonElement`, `Utf8JsonWriter`, and `JsonWriterOptions`. Doc blocks should only import `Corvus.Text.Json;`; use fully-qualified names for `System.Text.Json` types when needed.
 
 
 ## Annotation preservation

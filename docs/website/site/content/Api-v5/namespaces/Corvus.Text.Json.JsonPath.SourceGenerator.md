@@ -1,0 +1,1 @@
+Roslyn incremental source generator for compile-time JSONPath code generation. Annotate a `static partial class` with `[JsonPathExpression("path.jsonpath")]` to generate optimized static `Evaluate`, `QueryNodes`, and `EvaluateNodes` methods from `.jsonpath` expression files. Custom functions can be defined in `.jpfn` files which are discovered project-wide.

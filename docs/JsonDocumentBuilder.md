@@ -396,7 +396,7 @@ using var doc = JsonElement.CreateBuilder(
         {
             foreach (string tag in tags)
             {
-                tagsBuilder.AddProperty(tag);
+                tagsBuilder.AddItem(tag);
             }
         });
 
@@ -405,7 +405,7 @@ using var doc = JsonElement.CreateBuilder(
         {
             foreach (int year in years)
             {
-                yearsBuilder.AddProperty(year);
+                yearsBuilder.AddItem(year);
             }
         });
 
@@ -753,7 +753,7 @@ using var enrichedDoc = JsonElement.CreateBuilder(
         {
             foreach (string perm in permissions)
             {
-                permBuilder.AddProperty(perm);
+                permBuilder.AddItem(perm);
             }
         });
 
@@ -813,7 +813,7 @@ public async Task<string> GetUserProfileAsync(int userId)
                     JsonElement posts = postsDoc.RootElement.GetProperty("posts");
                     foreach (JsonElement post in posts.EnumerateArray())
                     {
-                        postsBuilder.AddProperty((ref postBuilder) =>
+                        postsBuilder.AddItem((ref postBuilder) =>
                         {
                             postBuilder.AddProperty("id"u8, post.GetProperty("id"));
                             postBuilder.AddProperty("title"u8, post.GetProperty("title"));

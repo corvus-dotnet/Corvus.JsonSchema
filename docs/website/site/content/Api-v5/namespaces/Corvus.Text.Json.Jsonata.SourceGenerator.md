@@ -1,0 +1,1 @@
+Roslyn incremental source generator for compile-time JSONata code generation. Annotate a `static partial class` with `[JsonataExpression("path.jsonata")]` to generate an optimized static `Evaluate(in JsonElement, JsonWorkspace)` method from a `.jsonata` expression file.

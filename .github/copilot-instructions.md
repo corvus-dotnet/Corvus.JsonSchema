@@ -219,15 +219,26 @@ The script `docs/triage-code-samples.ps1` performs **heuristic** categorization 
 
 For first-time verification: (1) run the full catalog update, (2) run the triage script, (3) compile-verify the remaining `compilable` blocks, (4) run `-Check`.
 
+**Prioritization for first-time passes:** With hundreds of compilable blocks, verify in this order: (1) files with known recent changes, (2) quick-start and getting-started sections, (3) standalone docs (`docs/*.md`) — these are the highest-risk for compilation bugs, (4) skills files. ExampleRecipes blocks that cross-reference successfully against companion `.cs` files can be trusted — focus on blocks not in `.cs` files.
+
 ### ExampleRecipes verification
 
-README code samples must match their companion `.cs` files. When cross-referencing, the `.cs` file is the source of truth — update the README to match, not the other way around.
+README code samples that match companion `.cs` files are verified by the triage script's cross-referencing. However, many READMEs also contain **supplementary educational blocks** (patterns, alternatives, explanations) that are not in any `.cs` file. These still need file-based app verification. The `.cs` file is always the source of truth — update the README to match, not the other way around.
+
+### File-based app verification tips
+
+When combining multiple doc blocks into one verification file:
+- Gather **all `using` directives** at the top — `using` after top-level statements causes CS1529.
+- Wrap each block in its own scope `{ ... }` to isolate variable names.
+- Only one verification file should be open at a time (each is a separate compilation unit).
 
 ### Common doc patterns to avoid
 
 - **`ParsedJsonDocument<T>.Parse("""..."""u8)`** — fails to compile. `Parse` takes `ReadOnlyMemory<byte>`, not `ReadOnlySpan<byte>` (which the `u8` suffix produces). Remove the `u8` suffix or use `ParseValue` for the span overload.
 - **Promoting `ParseValue` over `Parse`** — documentation examples should show `ParsedJsonDocument<T>.Parse(...)` with `using` to promote pooled-memory best practice. `ParseValue` creates non-disposable copies. Use `ParseValue` only in contexts where `Parse` is impractical (e.g., inline dictionary initializers for small constants).
 - **`PatchBuilder.Add`/`Replace` with `ParseValue`** — use implicit `JsonElement.Source` conversions instead: `.Add("/name"u8, "Alice")`, `.Replace("/version"u8, 2)`.
+- **`ArrayBuilder.AddProperty()`** — does not exist. Use `AddItem()` for array elements. `AddProperty(name, value)` is only on `ObjectBuilder`.
+- **`using System.Text.Json;` alongside `using Corvus.Text.Json;`** — causes ambiguity for `JsonElement`, `Utf8JsonWriter`, and `JsonWriterOptions` which exist in both namespaces. Doc blocks should only import `Corvus.Text.Json;` and use fully-qualified names for `System.Text.Json` types when needed.
 
 ### Catalog maintenance script
 

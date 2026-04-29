@@ -1,0 +1,14 @@
+{
+    // Note: this file was added to your solution as a result of one or more projects using the Endjin.RecommendedPractices.Build.Common NuGet package.
+    // You can edit this file (e.g., to remove these comments), and it will not be updated - the package just checks for its presence, and copies
+    // this file. If you don't want this file (but you want to use the NuGet package that puts it here), add this setting to all projects
+    // using Endjin.RecommendedPractices.Build.Common:
+    //  <EndjinDisableCodeAnalysis>true</EndjinDisableCodeAnalysis>
+    // and then delete this file. That setting will prevent the package from recreating this file.
+    "$schema": "https://raw.githubusercontent.com/DotNetAnalyzers/StyleCopAnalyzers/master/StyleCop.Analyzers/StyleCop.Analyzers/Settings/stylecop.schema.json",
+    "settings": {
+        "documentationRules": {
+            "companyName": "Endjin Limited"
+        }
+    }
+}
