@@ -155,6 +155,7 @@
     <Compile Include="NumericFormatCoverageTests.cs" />
     <Compile Include="TryFormatOverflowBugTests.cs" />
     <Compile Include="NumericCoreOperationsTests.cs" />
+    <Compile Include="HexBinaryFormatTests.cs" />
     <Compile Include="JsonElementNumberTest.cs" />
     <Compile Include="JsonElement.MutableWriteTests.cs" />
     <Compile Include="JsonElementSourceCoverageTests.cs" />

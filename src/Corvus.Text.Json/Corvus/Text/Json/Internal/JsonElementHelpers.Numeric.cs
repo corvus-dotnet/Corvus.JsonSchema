@@ -913,43 +913,38 @@ public static partial class JsonElementHelpers
             return true;
         }
 
-        // Optimize: trailing zeros from positive exponent can be handled separately
-        // Each trailing zero represents a factor of 10, which needs processing
+        // Working buffer includes significand digits + trailing zeros from positive exponent.
         int significandLength = integral.Length + fractional.Length;
         int trailingZeros = exponent > 0 ? exponent : 0;
+        int workingLength = significandLength + trailingZeros;
 
-        // Working buffer needed for repeated division algorithm - stores intermediate quotients
-        // that shrink with each division step. Only allocate for the significand digits.
         byte[]? rentedWorkingBuffer = null;
-        Span<byte> workingDigits = significandLength <= JsonConstants.StackallocByteThreshold
-            ? stackalloc byte[significandLength]
-            : (rentedWorkingBuffer = ArrayPool<byte>.Shared.Rent(significandLength)).AsSpan(0, significandLength);
+        Span<byte> workingDigits = workingLength <= JsonConstants.StackallocByteThreshold
+            ? stackalloc byte[JsonConstants.StackallocByteThreshold]
+            : (rentedWorkingBuffer = ArrayPool<byte>.Shared.Rent(workingLength)).AsSpan(0, workingLength);
 
         try
         {
-            // Initialize working buffer from significand only (skip virtual trailing zeros)
+            // Initialize: significand digits followed by trailing zeros
             for (int i = 0; i < significandLength; i++)
             {
                 workingDigits[i] = (byte)(GetDigitAtPosition(integral, fractional, i) - (byte)'0');
             }
 
+            for (int i = significandLength; i < workingLength; i++)
+            {
+                workingDigits[i] = 0;
+            }
+
             // Generate hex digits directly in reverse order at the end of destination buffer
-            // We'll shift them down to the beginning once we know the final count
             int writePos = destination.Length - 1;
-            int digitCount = significandLength;
-            int remainingTrailingZeros = trailingZeros;
+            int digitCount = workingLength;
             int hexDigitsGenerated = 0;
 
             // Repeatedly divide by 16 and write hex digits from right to left
-            while (digitCount > 0 || remainingTrailingZeros > 0)
+            while (digitCount > 0)
             {
-                // Check if we're done
-                if (digitCount == 0)
-                {
-                    break;
-                }
-
-                if (digitCount == 1 && workingDigits[0] == 0 && remainingTrailingZeros == 0)
+                if (digitCount == 1 && workingDigits[0] == 0)
                 {
                     break;
                 }
@@ -969,21 +964,7 @@ public static partial class JsonElementHelpers
                     }
                 }
 
-                // Process trailing zeros
-                if (remainingTrailingZeros > 0)
-                {
-                    remainder *= 10;
-                    int quotient = remainder / 16;
-                    if (quotient > 0 || newDigitCount > 0)
-                    {
-                        workingDigits[newDigitCount++] = (byte)quotient;
-                    }
-
-                    remainingTrailingZeros--;
-                }
-
                 // Convert remainder to hex digit and write directly at end of buffer
-                remainder %= 16;
                 char hexDigit = remainder < 10
                     ? (char)('0' + remainder)
                     : (lowercase ? (char)('a' + (remainder - 10)) : (char)('A' + (remainder - 10)));
@@ -1063,42 +1044,38 @@ public static partial class JsonElementHelpers
             return true;
         }
 
-        // Optimize: trailing zeros from positive exponent can be handled separately
+        // Working buffer includes significand digits + trailing zeros from positive exponent.
         int significandLength = integral.Length + fractional.Length;
         int trailingZeros = exponent > 0 ? exponent : 0;
+        int workingLength = significandLength + trailingZeros;
 
-        // Working buffer needed for repeated division algorithm - stores intermediate quotients
-        // that shrink with each division step. Only allocate for the significand digits.
         byte[]? rentedWorkingBuffer = null;
-        Span<byte> workingDigits = significandLength <= JsonConstants.StackallocByteThreshold
-            ? stackalloc byte[significandLength]
-            : (rentedWorkingBuffer = ArrayPool<byte>.Shared.Rent(significandLength)).AsSpan(0, significandLength);
+        Span<byte> workingDigits = workingLength <= JsonConstants.StackallocByteThreshold
+            ? stackalloc byte[JsonConstants.StackallocByteThreshold]
+            : (rentedWorkingBuffer = ArrayPool<byte>.Shared.Rent(workingLength)).AsSpan(0, workingLength);
 
         try
         {
-            // Initialize working buffer from significand only (skip virtual trailing zeros)
+            // Initialize: significand digits followed by trailing zeros
             for (int i = 0; i < significandLength; i++)
             {
                 workingDigits[i] = (byte)(GetDigitAtPosition(integral, fractional, i) - (byte)'0');
             }
 
+            for (int i = significandLength; i < workingLength; i++)
+            {
+                workingDigits[i] = 0;
+            }
+
             // Generate binary digits directly in reverse order at the end of destination buffer
-            // We'll shift them down to the beginning once we know the final count
             int writePos = destination.Length - 1;
-            int digitCount = significandLength;
-            int remainingTrailingZeros = trailingZeros;
+            int digitCount = workingLength;
             int binaryDigitsGenerated = 0;
 
             // Repeatedly divide by 2 and write binary digits from right to left
-            while (digitCount > 0 || remainingTrailingZeros > 0)
+            while (digitCount > 0)
             {
-                // Check if we're done
-                if (digitCount == 0)
-                {
-                    break;
-                }
-
-                if (digitCount == 1 && workingDigits[0] == 0 && remainingTrailingZeros == 0)
+                if (digitCount == 1 && workingDigits[0] == 0)
                 {
                     break;
                 }
@@ -1116,27 +1093,6 @@ public static partial class JsonElementHelpers
                     {
                         workingDigits[newDigitCount++] = (byte)quotient;
                     }
-                }
-
-                // Process trailing zeros
-                if (remainingTrailingZeros > 0)
-                {
-                    remainder *= 10;
-                    int quotient = remainder / 2;
-                    remainder %= 2;
-                    if (quotient > 0 || newDigitCount > 0)
-                    {
-                        if (newDigitCount < workingDigits.Length)
-                        {
-                            workingDigits[newDigitCount++] = (byte)quotient;
-                        }
-                    }
-
-                    remainingTrailingZeros--;
-                }
-                else
-                {
-                    remainder %= 2;
                 }
 
                 // Write binary digit directly at end of buffer
@@ -1215,39 +1171,38 @@ public static partial class JsonElementHelpers
             return true;
         }
 
-        // Optimize: trailing zeros from positive exponent can be handled separately
+        // Working buffer includes significand digits + trailing zeros from positive exponent.
         int significandLength = integral.Length + fractional.Length;
         int trailingZeros = exponent > 0 ? exponent : 0;
+        int workingLength = significandLength + trailingZeros;
 
-        // Working buffer needed for repeated division algorithm - stores intermediate quotients
         byte[]? rentedWorkingBuffer = null;
-        Span<byte> workingDigits = significandLength <= JsonConstants.StackallocByteThreshold
-            ? stackalloc byte[significandLength]
-            : (rentedWorkingBuffer = ArrayPool<byte>.Shared.Rent(significandLength)).AsSpan(0, significandLength);
+        Span<byte> workingDigits = workingLength <= JsonConstants.StackallocByteThreshold
+            ? stackalloc byte[JsonConstants.StackallocByteThreshold]
+            : (rentedWorkingBuffer = ArrayPool<byte>.Shared.Rent(workingLength)).AsSpan(0, workingLength);
 
         try
         {
-            // Initialize working buffer from significand only
+            // Initialize: significand digits followed by trailing zeros
             for (int i = 0; i < significandLength; i++)
             {
                 workingDigits[i] = (byte)(GetDigitAtPosition(integral, fractional, i) - (byte)'0');
             }
 
+            for (int i = significandLength; i < workingLength; i++)
+            {
+                workingDigits[i] = 0;
+            }
+
             // Generate hex digits directly in reverse order at the end of destination buffer
             int writePos = destination.Length - 1;
-            int digitCount = significandLength;
-            int remainingTrailingZeros = trailingZeros;
+            int digitCount = workingLength;
             int hexDigitsGenerated = 0;
 
             // Repeatedly divide by 16 and write hex digits from right to left
-            while (digitCount > 0 || remainingTrailingZeros > 0)
+            while (digitCount > 0)
             {
-                if (digitCount == 0)
-                {
-                    break;
-                }
-
-                if (digitCount == 1 && workingDigits[0] == 0 && remainingTrailingZeros == 0)
+                if (digitCount == 1 && workingDigits[0] == 0)
                 {
                     break;
                 }
@@ -1267,21 +1222,7 @@ public static partial class JsonElementHelpers
                     }
                 }
 
-                // Process trailing zeros
-                if (remainingTrailingZeros > 0)
-                {
-                    remainder *= 10;
-                    int quotient = remainder / 16;
-                    if (quotient > 0 || newDigitCount > 0)
-                    {
-                        workingDigits[newDigitCount++] = (byte)quotient;
-                    }
-
-                    remainingTrailingZeros--;
-                }
-
                 // Convert remainder to hex digit
-                remainder %= 16;
                 byte hexDigit = remainder < 10
                     ? (byte)('0' + remainder)
                     : (lowercase ? (byte)('a' + (remainder - 10)) : (byte)('A' + (remainder - 10)));
@@ -1357,39 +1298,38 @@ public static partial class JsonElementHelpers
             return true;
         }
 
-        // Optimize: trailing zeros from positive exponent can be handled separately
+        // Working buffer includes significand digits + trailing zeros from positive exponent.
         int significandLength = integral.Length + fractional.Length;
         int trailingZeros = exponent > 0 ? exponent : 0;
+        int workingLength = significandLength + trailingZeros;
 
-        // Working buffer needed for repeated division algorithm
         byte[]? rentedWorkingBuffer = null;
-        Span<byte> workingDigits = significandLength <= JsonConstants.StackallocByteThreshold
-            ? stackalloc byte[significandLength]
-            : (rentedWorkingBuffer = ArrayPool<byte>.Shared.Rent(significandLength)).AsSpan(0, significandLength);
+        Span<byte> workingDigits = workingLength <= JsonConstants.StackallocByteThreshold
+            ? stackalloc byte[JsonConstants.StackallocByteThreshold]
+            : (rentedWorkingBuffer = ArrayPool<byte>.Shared.Rent(workingLength)).AsSpan(0, workingLength);
 
         try
         {
-            // Initialize working buffer from significand only
+            // Initialize: significand digits followed by trailing zeros
             for (int i = 0; i < significandLength; i++)
             {
                 workingDigits[i] = (byte)(GetDigitAtPosition(integral, fractional, i) - (byte)'0');
             }
 
+            for (int i = significandLength; i < workingLength; i++)
+            {
+                workingDigits[i] = 0;
+            }
+
             // Generate binary digits directly in reverse order at the end of destination buffer
             int writePos = destination.Length - 1;
-            int digitCount = significandLength;
-            int remainingTrailingZeros = trailingZeros;
+            int digitCount = workingLength;
             int binaryDigitsGenerated = 0;
 
             // Repeatedly divide by 2 and write binary digits from right to left
-            while (digitCount > 0 || remainingTrailingZeros > 0)
+            while (digitCount > 0)
             {
-                if (digitCount == 0)
-                {
-                    break;
-                }
-
-                if (digitCount == 1 && workingDigits[0] == 0 && remainingTrailingZeros == 0)
+                if (digitCount == 1 && workingDigits[0] == 0)
                 {
                     break;
                 }
@@ -1407,27 +1347,6 @@ public static partial class JsonElementHelpers
                     {
                         workingDigits[newDigitCount++] = (byte)quotient;
                     }
-                }
-
-                // Process trailing zeros
-                if (remainingTrailingZeros > 0)
-                {
-                    remainder *= 10;
-                    int quotient = remainder / 2;
-                    remainder %= 2;
-                    if (quotient > 0 || newDigitCount > 0)
-                    {
-                        if (newDigitCount < workingDigits.Length)
-                        {
-                            workingDigits[newDigitCount++] = (byte)quotient;
-                        }
-                    }
-
-                    remainingTrailingZeros--;
-                }
-                else
-                {
-                    remainder %= 2;
                 }
 
                 // Write binary digit
