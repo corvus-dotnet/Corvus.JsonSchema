@@ -113,6 +113,40 @@ Plus 6 supporting model/utility projects that generate types consumed by other t
 - **Tests**: `net9.0;net10.0;net481` (varies by project)
 - Run a specific TFM: `dotnet test -f net10.0 ...`
 
+## Collecting Code Coverage
+
+Use `dotnet-coverage` (Microsoft Code Coverage), **not** Coverlet. Coverlet 10.0.0 has a known instrumentation bug that reports 0% for many types despite tests exercising the code.
+
+### Full test suite coverage
+
+```powershell
+dotnet-coverage collect `
+    --output TestResults\coverage.cobertura.xml `
+    --output-format cobertura `
+    -s dotnet-coverage.settings.xml `
+    "dotnet test Corvus.Text.Json.Test.slnx -f net10.0 --filter `"category!=failing&category!=outerloop`" --no-build -v q --nologo"
+```
+
+### Single test class coverage
+
+```powershell
+dotnet-coverage collect `
+    --output TestResults\mytest.cobertura.xml `
+    --output-format cobertura `
+    -s dotnet-coverage.settings.xml `
+    "dotnet test Corvus.Text.Json.Test.slnx -f net10.0 --filter `"FullyQualifiedName~MyTestClass&category!=failing&category!=outerloop`" --no-build -v q --nologo"
+```
+
+**Key points:**
+- The `dotnet-coverage.settings.xml` in the repo root filters coverage to core library assemblies only
+- Output is a single Cobertura XML — no merge step is needed (unlike Coverlet which produces one report per test project)
+- Always build before collecting: `dotnet build Corvus.Text.Json.slnx` first, then `--no-build` in the test command
+- Full suite coverage takes ~10 minutes (68K+ tests)
+
+### ⚠️ Do NOT use Coverlet
+
+`--collect:"XPlat Code Coverage"` (Coverlet) reports 0% coverage for many types including ref structs, static classes, and even regular sealed classes. This was verified by running the same tests with both tools — `dotnet-coverage` correctly reported 65–92% coverage for types that Coverlet reported as 0%.
+
 ## Common Pitfalls
 
 ### Stale bin directories
