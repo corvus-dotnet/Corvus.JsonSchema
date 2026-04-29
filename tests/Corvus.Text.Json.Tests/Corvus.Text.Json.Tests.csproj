@@ -93,6 +93,7 @@
     <Compile Include="AnnotationProducerCoverageTests.cs" />
     <Compile Include="ValueStackCoverageTests.cs" />
     <Compile Include="LargeArrayBuilderTests.cs" />
+    <Compile Include="EvaluatorMessageCoverageTests.cs" />
     <Compile Include="JsonDocumentBuilderRangeTests.cs" />
     <Compile Include="JsonDocumentBuilderParseTests.cs" />
     <Compile Include="JsonDocumentBuilderTests.cs" />
@@ -146,6 +147,7 @@
     <Compile Include="JsonElementHelpersTryFormatNumberUtf8Tests.cs" />
     <Compile Include="JsonElementHelpersTryFormatPercentTests.cs" />
     <Compile Include="JsonElementHelpersTryFormatPercentUtf8Tests.cs" />
+    <Compile Include="NumericFormatCoverageTests.cs" />
     <Compile Include="JsonElementNumberTest.cs" />
     <Compile Include="JsonElement.MutableWriteTests.cs" />
     <Compile Include="JsonElementSourceCoverageTests.cs" />
