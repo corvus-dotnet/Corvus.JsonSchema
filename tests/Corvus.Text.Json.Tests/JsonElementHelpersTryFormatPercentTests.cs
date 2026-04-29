@@ -321,4 +321,90 @@ public class JsonElementHelpersTryFormatPercentTests
         string result = destination.Slice(0, charsWritten).ToString();
         Assert.Equal(expected, result);
     }
+
+    [Theory]
+    [InlineData(0, 5)]   // -n %
+    [InlineData(1, 5)]   // -n%
+    [InlineData(2, 5)]   // -%n
+    [InlineData(3, 5)]   // %-n
+    [InlineData(4, 5)]   // %n-
+    [InlineData(5, 5)]   // n-%
+    [InlineData(6, 5)]   // n%-
+    [InlineData(7, 5)]   // -% n
+    [InlineData(8, 5)]   // n %-
+    [InlineData(9, 5)]   // % n-
+    [InlineData(10, 5)]  // % -n
+    [InlineData(11, 5)]  // n- %
+    public void TryFormatPercent_NegativePattern_BufferTooSmall(int pattern, int bufferSize)
+    {
+        byte[] utf8 = Encoding.UTF8.GetBytes("-0.5");
+        JsonElementHelpers.ParseNumber(
+            utf8,
+            out bool isNegative,
+            out ReadOnlySpan<byte> integral,
+            out ReadOnlySpan<byte> fractional,
+            out int exponent);
+
+        Span<char> destination = stackalloc char[bufferSize];
+        var formatInfo = new NumberFormatInfo
+        {
+            PercentDecimalDigits = 2,
+            PercentDecimalSeparator = ".",
+            PercentSymbol = "%",
+            PercentNegativePattern = pattern,
+            NegativeSign = "-"
+        };
+
+        bool success = JsonElementHelpers.TryFormatPercent(
+            isNegative,
+            integral,
+            fractional,
+            exponent,
+            destination,
+            out int charsWritten,
+            -1,
+            formatInfo);
+
+        Assert.False(success);
+        Assert.Equal(0, charsWritten);
+    }
+
+    [Theory]
+    [InlineData(0, 5)]   // n %
+    [InlineData(1, 5)]   // n%
+    [InlineData(2, 5)]   // %n
+    [InlineData(3, 5)]   // % n
+    public void TryFormatPercent_PositivePattern_BufferTooSmall(int pattern, int bufferSize)
+    {
+        byte[] utf8 = Encoding.UTF8.GetBytes("0.5");
+        JsonElementHelpers.ParseNumber(
+            utf8,
+            out bool isNegative,
+            out ReadOnlySpan<byte> integral,
+            out ReadOnlySpan<byte> fractional,
+            out int exponent);
+
+        Span<char> destination = stackalloc char[bufferSize];
+        var formatInfo = new NumberFormatInfo
+        {
+            PercentDecimalDigits = 2,
+            PercentDecimalSeparator = ".",
+            PercentSymbol = "%",
+            PercentPositivePattern = pattern,
+            NegativeSign = "-"
+        };
+
+        bool success = JsonElementHelpers.TryFormatPercent(
+            isNegative,
+            integral,
+            fractional,
+            exponent,
+            destination,
+            out int charsWritten,
+            -1,
+            formatInfo);
+
+        Assert.False(success);
+        Assert.Equal(0, charsWritten);
+    }
 }

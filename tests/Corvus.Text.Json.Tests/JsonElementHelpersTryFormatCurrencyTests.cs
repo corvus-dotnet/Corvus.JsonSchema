@@ -623,4 +623,190 @@ public class JsonElementHelpersTryFormatCurrencyTests
         string result = destination.Slice(0, charsWritten).ToString();
         Assert.Equal(expected, result);
     }
+
+    [Theory]
+    [InlineData(0, "($1,234.56)")]   // ($n)
+    [InlineData(1, "-$1,234.56")]    // -$n
+    [InlineData(2, "$-1,234.56")]    // $-n
+    [InlineData(3, "$1,234.56-")]    // $n-
+    [InlineData(4, "(1,234.56$)")]   // (n$)
+    [InlineData(5, "-1,234.56$")]    // -n$
+    [InlineData(6, "1,234.56-$")]    // n-$
+    [InlineData(7, "1,234.56$-")]    // n$-
+    [InlineData(8, "-1,234.56 $")]   // -n $
+    [InlineData(9, "-$ 1,234.56")]   // -$ n
+    [InlineData(10, "1,234.56 $-")]  // n $-
+    [InlineData(11, "$ 1,234.56-")]  // $ n-
+    [InlineData(12, "$ -1,234.56")]  // $ -n
+    [InlineData(13, "1,234.56- $")]  // n- $
+    [InlineData(14, "($ 1,234.56)")]  // ($ n)
+    [InlineData(15, "(1,234.56 $)")]  // (n $)
+    public void TryFormatCurrency_RespectsNegativePattern(int pattern, string expected)
+    {
+        byte[] utf8 = Encoding.UTF8.GetBytes("-1234.56");
+        JsonElementHelpers.ParseNumber(
+            utf8,
+            out bool isNegative,
+            out ReadOnlySpan<byte> integral,
+            out ReadOnlySpan<byte> fractional,
+            out int exponent);
+
+        Span<char> destination = stackalloc char[100];
+        var formatInfo = new NumberFormatInfo
+        {
+            CurrencySymbol = "$",
+            CurrencyGroupSeparator = ",",
+            CurrencyDecimalSeparator = ".",
+            CurrencyDecimalDigits = 2,
+            CurrencyNegativePattern = pattern,
+            CurrencyGroupSizes = [3]
+        };
+
+        bool success = JsonElementHelpers.TryFormatCurrency(
+            isNegative,
+            integral,
+            fractional,
+            exponent,
+            destination,
+            out int charsWritten,
+            2,
+            formatInfo);
+
+        Assert.True(success);
+        string result = destination.Slice(0, charsWritten).ToString();
+        Assert.Equal(expected, result);
+    }
+
+    [Theory]
+    [InlineData(0, 5)]   // ($n) — buffer too small for parenthesized form
+    [InlineData(1, 5)]   // -$n
+    [InlineData(2, 5)]   // $-n
+    [InlineData(3, 5)]   // $n-
+    [InlineData(4, 5)]   // (n$)
+    [InlineData(5, 5)]   // -n$
+    [InlineData(6, 5)]   // n-$
+    [InlineData(7, 5)]   // n$-
+    [InlineData(8, 5)]   // -n $
+    [InlineData(9, 5)]   // -$ n
+    [InlineData(10, 5)]  // n $-
+    [InlineData(11, 5)]  // $ n-
+    [InlineData(12, 5)]  // $ -n
+    [InlineData(13, 5)]  // n- $
+    [InlineData(14, 5)]  // ($ n)
+    [InlineData(15, 5)]  // (n $)
+    public void TryFormatCurrency_NegativePattern_BufferTooSmall(int pattern, int bufferSize)
+    {
+        byte[] utf8 = Encoding.UTF8.GetBytes("-1234.56");
+        JsonElementHelpers.ParseNumber(
+            utf8,
+            out bool isNegative,
+            out ReadOnlySpan<byte> integral,
+            out ReadOnlySpan<byte> fractional,
+            out int exponent);
+
+        Span<char> destination = stackalloc char[bufferSize];
+        var formatInfo = new NumberFormatInfo
+        {
+            CurrencySymbol = "$",
+            CurrencyGroupSeparator = ",",
+            CurrencyDecimalSeparator = ".",
+            CurrencyDecimalDigits = 2,
+            CurrencyNegativePattern = pattern,
+            CurrencyGroupSizes = [3]
+        };
+
+        bool success = JsonElementHelpers.TryFormatCurrency(
+            isNegative,
+            integral,
+            fractional,
+            exponent,
+            destination,
+            out int charsWritten,
+            2,
+            formatInfo);
+
+        Assert.False(success);
+        Assert.Equal(0, charsWritten);
+    }
+
+    [Theory]
+    [InlineData(0, "$1,234.56")]   // $n
+    [InlineData(1, "1,234.56$")]   // n$
+    [InlineData(2, "$ 1,234.56")]  // $ n
+    [InlineData(3, "1,234.56 $")]  // n $
+    public void TryFormatCurrency_RespectsPositivePattern(int pattern, string expected)
+    {
+        byte[] utf8 = Encoding.UTF8.GetBytes("1234.56");
+        JsonElementHelpers.ParseNumber(
+            utf8,
+            out bool isNegative,
+            out ReadOnlySpan<byte> integral,
+            out ReadOnlySpan<byte> fractional,
+            out int exponent);
+
+        Span<char> destination = stackalloc char[100];
+        var formatInfo = new NumberFormatInfo
+        {
+            CurrencySymbol = "$",
+            CurrencyGroupSeparator = ",",
+            CurrencyDecimalSeparator = ".",
+            CurrencyDecimalDigits = 2,
+            CurrencyPositivePattern = pattern,
+            CurrencyGroupSizes = [3]
+        };
+
+        bool success = JsonElementHelpers.TryFormatCurrency(
+            isNegative,
+            integral,
+            fractional,
+            exponent,
+            destination,
+            out int charsWritten,
+            2,
+            formatInfo);
+
+        Assert.True(success);
+        string result = destination.Slice(0, charsWritten).ToString();
+        Assert.Equal(expected, result);
+    }
+
+    [Theory]
+    [InlineData(0, 5)]   // $n
+    [InlineData(1, 5)]   // n$
+    [InlineData(2, 5)]   // $ n
+    [InlineData(3, 5)]   // n $
+    public void TryFormatCurrency_PositivePattern_BufferTooSmall(int pattern, int bufferSize)
+    {
+        byte[] utf8 = Encoding.UTF8.GetBytes("1234.56");
+        JsonElementHelpers.ParseNumber(
+            utf8,
+            out bool isNegative,
+            out ReadOnlySpan<byte> integral,
+            out ReadOnlySpan<byte> fractional,
+            out int exponent);
+
+        Span<char> destination = stackalloc char[bufferSize];
+        var formatInfo = new NumberFormatInfo
+        {
+            CurrencySymbol = "$",
+            CurrencyGroupSeparator = ",",
+            CurrencyDecimalSeparator = ".",
+            CurrencyDecimalDigits = 2,
+            CurrencyPositivePattern = pattern,
+            CurrencyGroupSizes = [3]
+        };
+
+        bool success = JsonElementHelpers.TryFormatCurrency(
+            isNegative,
+            integral,
+            fractional,
+            exponent,
+            destination,
+            out int charsWritten,
+            2,
+            formatInfo);
+
+        Assert.False(success);
+        Assert.Equal(0, charsWritten);
+    }
 }
