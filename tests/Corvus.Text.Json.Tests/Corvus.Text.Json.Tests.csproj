@@ -89,6 +89,7 @@
     <Compile Include="JsonDocumentBuilderComplexObjectTests.cs" />
     <Compile Include="JsonDocumentBuilderCreateDynamicTests.cs" />
     <Compile Include="JsonDocumentBuilderInsertItemTests.cs" />
+    <Compile Include="MutableDocumentCoverageTests.cs" />
     <Compile Include="LargeArrayBuilderTests.cs" />
     <Compile Include="JsonDocumentBuilderRangeTests.cs" />
     <Compile Include="JsonDocumentBuilderParseTests.cs" />

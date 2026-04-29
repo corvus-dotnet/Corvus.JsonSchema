@@ -3,11 +3,12 @@ name: corvus-build-and-test
 description: >
   Build, test, and run the Corvus.JsonSchema solution correctly. Covers multi-targeting
   (net9.0/net10.0/net481/netstandard2.0), mandatory test category filters, solution file
-  selection, running specific test classes or methods, and diagnosing common build/test
-  failures. USE FOR: building the solution, running tests, diagnosing test failures,
-  understanding TFM targeting, finding the right test project for a feature area.
-  DO NOT USE FOR: benchmark execution (use corvus-benchmarks), code generation
-  (use corvus-codegen), test suite regeneration (use corvus-test-suite-regeneration).
+  selection, running specific test classes or methods, writing new tests, and diagnosing
+  common build/test failures. USE FOR: building the solution, running tests, writing new
+  test files, diagnosing test failures, understanding TFM targeting, finding the right
+  test project for a feature area. DO NOT USE FOR: benchmark execution (use
+  corvus-benchmarks), code generation (use corvus-codegen), test suite regeneration
+  (use corvus-test-suite-regeneration).
 ---
 
 # Building and Testing Corvus.JsonSchema
@@ -39,6 +40,12 @@ dotnet build src\Corvus.Text.Json\Corvus.Text.Json.csproj
 ### Mandatory Filters
 
 **ALWAYS** exclude `failing` and `outerloop` categories:
+
+### ⚠️ Use Corvus types, not `System.Text.Json`
+
+Test code and assertions must use `Corvus.Text.Json` types (`JsonElement`, `JsonValueKind`, `ParsedJsonDocument<T>`, etc.), **not** `System.Text.Json` equivalents. Do not add `using System.Text.Json;` to test files. The two namespaces share type names (`JsonElement`, `Utf8JsonWriter`, `JsonWriterOptions`) which cause ambiguity errors, and using STJ types in assertions would test the wrong library.
+
+`System.Text.Json` is acceptable **only** for test data infrastructure — e.g., reading JSON fixture files with `System.Text.Json.JsonDocument` to enumerate test cases. In those cases, fully-qualify the STJ types (e.g., `System.Text.Json.JsonElement`).
 
 ```powershell
 # Run all tests (standard)
@@ -146,6 +153,31 @@ dotnet-coverage collect `
 ### ⚠️ Do NOT use Coverlet
 
 `--collect:"XPlat Code Coverage"` (Coverlet) reports 0% coverage for many types including ref structs, static classes, and even regular sealed classes. This was verified by running the same tests with both tools — `dotnet-coverage` correctly reported 65–92% coverage for types that Coverlet reported as 0%.
+
+### Coverage verification loop
+
+When writing tests to close coverage gaps, **always verify that the target lines are actually covered** — "tests pass" does NOT mean "target code paths exercised." Iterate until every target line is covered or you have verified evidence that a path is unreachable. Remove any tests that do not contribute novel coverage.
+
+1. **Before writing tests:** Note the exact uncovered line numbers from the Cobertura XML
+2. **Write tests** that you believe exercise those lines
+3. **Run the tests** — confirm they pass
+4. **Re-collect coverage** for just the new test class:
+   ```powershell
+   dotnet-coverage collect `
+       --output TestResults\verify.cobertura.xml `
+       --output-format cobertura `
+       -s dotnet-coverage.settings.xml `
+       "dotnet test Corvus.Text.Json.Test.slnx -f net10.0 --filter `"FullyQualifiedName~MyNewTestClass&category!=failing&category!=outerloop`" --no-build -v q --nologo"
+   ```
+5. **Parse the report** and check whether the specific target lines now have `hits > 0`
+6. **If target lines are still at 0:** the tests exercise different code paths. Revise and repeat from step 2
+7. **If a path appears unreachable:** verify the claim by tracing all callers and checking generated code before reporting to the user. Provide evidence (e.g., "grep for `Source<TContext>` across all `.cs` files finds zero call sites"). Do not assert unreachability without proof
+8. **Remove redundant tests** — any test that contributes zero novel lines over the baseline must be deleted
+
+Common pitfalls that cause this mismatch:
+- Testing `SetProperty<TContext>(name, context, delegate)` exercises the delegate overload, NOT `Source<TContext>` — those are separate code paths
+- JSON Patch copy operations where source is inside the destination array may not trigger overlap detection branches if the internal row layout doesn't straddle the insertion point
+- Generated types have their own `Source<TContext>` that delegates to the base `JsonElement.Source<TContext>` — test through the generated type's `CreateBuilder<TContext>` to cover the base type
 
 ## Common Pitfalls
 
