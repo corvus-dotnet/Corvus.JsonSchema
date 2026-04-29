@@ -76,6 +76,19 @@ When a new area of the codebase deserves its own skill:
 
 A skill earns its place when the assistant repeatedly struggles with a specific area, not when an area merely exists.
 
+## Root-causing trigger failures
+
+When a skill or instruction existed but you did not follow it, treat that as a defect in the instructions — not just a one-off mistake. The instruction failed to trigger at the right moment, and the fix is to understand why and close the gap.
+
+Ask these questions:
+
+1. **Was the instruction framed for the wrong trigger?** An instruction that says "when you edit a documentation file" may not fire when the task is "fix the CI build." If the instruction applies in both situations, rewrite it to cover both entry points.
+2. **Was the instruction buried inside a larger workflow?** A critical step hidden as step 5 of a 5-step process gets skipped when you jump to the end. Promote it to a standalone gate with its own heading.
+3. **Did the instruction assume proactive compliance?** Instructions that only describe the happy path ("do X when you change Y") need a reactive counterpart ("if you forgot to do X, here is how to recover — and it still requires doing X").
+4. **Did multi-turn conversation obscure the trigger?** When changes accumulate across many conversation turns before a commit, per-edit triggers get lost. Anchor the instruction to the commit point instead, since that is where all changes converge regardless of how they were made.
+
+After root-causing, update the instruction to close the gap — then verify the updated instruction would have caught the original failure.
+
 ## Running a full review
 
 For a periodic audit of all skills (e.g., after a major release):
