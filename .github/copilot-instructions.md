@@ -232,13 +232,21 @@ When combining multiple doc blocks into one verification file:
 - Wrap each block in its own scope `{ ... }` to isolate variable names.
 - Only one verification file should be open at a time (each is a separate compilation unit).
 
-### Common doc patterns to avoid
+### Known compilation traps
 
-- **`ParsedJsonDocument<T>.Parse("""..."""u8)`** — fails to compile. `Parse` takes `ReadOnlyMemory<byte>`, not `ReadOnlySpan<byte>` (which the `u8` suffix produces). Remove the `u8` suffix or use `ParseValue` for the span overload.
-- **Promoting `ParseValue` over `Parse`** — documentation examples should show `ParsedJsonDocument<T>.Parse(...)` with `using` to promote pooled-memory best practice. `ParseValue` creates non-disposable copies. Use `ParseValue` only in contexts where `Parse` is impractical (e.g., inline dictionary initializers for small constants).
-- **`PatchBuilder.Add`/`Replace` with `ParseValue`** — use implicit `JsonElement.Source` conversions instead: `.Add("/name"u8, "Alice")`, `.Replace("/version"u8, 2)`.
-- **`ArrayBuilder.AddProperty()`** — does not exist. Use `AddItem()` for array elements. `AddProperty(name, value)` is only on `ObjectBuilder`.
-- **`using System.Text.Json;` alongside `using Corvus.Text.Json;`** — causes ambiguity for `JsonElement`, `Utf8JsonWriter`, and `JsonWriterOptions` which exist in both namespaces. Doc blocks should only import `Corvus.Text.Json;` and use fully-qualified names for `System.Text.Json` types when needed.
+When verifying samples, watch for these patterns that look correct but fail to compile:
+
+- **`ParsedJsonDocument<T>.Parse("""..."""u8)`** — `Parse` takes `ReadOnlyMemory<byte>`, not `ReadOnlySpan<byte>` (which the `u8` suffix produces). Remove the `u8` suffix.
+- **`ArrayBuilder.AddProperty()`** — does not exist. Array elements use `AddItem()`. `AddProperty(name, value)` is only on `ObjectBuilder`.
+- **`using System.Text.Json;` alongside `using Corvus.Text.Json;`** — causes ambiguity for `JsonElement`, `Utf8JsonWriter`, and `JsonWriterOptions` which exist in both namespaces.
+
+### Documentation writing conventions
+
+When writing or editing documentation code samples, follow these API usage conventions:
+
+- **Prefer `Parse` over `ParseValue`** — documentation examples should show `ParsedJsonDocument<T>.Parse(...)` with `using` to promote pooled-memory best practice. `ParseValue` creates non-disposable copies. Use `ParseValue` only where `Parse` is impractical (e.g., inline dictionary initializers for small constants).
+- **Use implicit `JsonElement.Source` conversions for PatchBuilder** — write `.Add("/name"u8, "Alice")`, `.Replace("/version"u8, 2)` instead of wrapping scalars in `ParseValue`.
+- **Only import `Corvus.Text.Json`** — doc blocks should not import `System.Text.Json`. Use fully-qualified names for `System.Text.Json` types when needed.
 
 ### Catalog maintenance script
 

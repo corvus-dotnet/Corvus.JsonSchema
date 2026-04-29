@@ -170,13 +170,21 @@ When verifying the entire catalog from scratch:
 
 Set `verified: true` for the block in `code-sample-catalog.yaml`. The `-UpdateFile` script preserves this flag as long as the block content hasn't moved.
 
-## Common doc patterns to avoid
+## Known compilation traps
 
-- **`ParsedJsonDocument<T>.Parse("""..."""u8)`** — fails to compile. `Parse` takes `ReadOnlyMemory<byte>`, not `ReadOnlySpan<byte>` (from the `u8` suffix). Remove `u8` or use `ParseValue` for the span overload.
-- **Promoting `ParseValue` over `Parse`** — documentation samples should show `ParsedJsonDocument<T>.Parse(...)` with `using` to promote pooled-memory best practice. `ParseValue` creates non-disposable copies. Reserve `ParseValue` for inline contexts where `Parse` is impractical (e.g., small constants in dictionary initializers).
-- **`PatchBuilder.Add`/`Replace` with `ParseValue`** — use implicit `JsonElement.Source` conversions: `.Add("/name"u8, "Alice")`, `.Replace("/version"u8, 2)`.
-- **`ArrayBuilder.AddProperty()`** — does not exist. Use `AddItem()` for array elements. `AddProperty(name, value)` is only on `ObjectBuilder`.
-- **`using System.Text.Json;` alongside `using Corvus.Text.Json;`** — causes ambiguity for `JsonElement`, `Utf8JsonWriter`, and `JsonWriterOptions`. Doc blocks should only import `Corvus.Text.Json;`; use fully-qualified names for `System.Text.Json` types when needed.
+When verifying samples, watch for these patterns that look correct but fail to compile:
+
+- **`ParsedJsonDocument<T>.Parse("""..."""u8)`** — `Parse` takes `ReadOnlyMemory<byte>`, not `ReadOnlySpan<byte>` (from the `u8` suffix). Remove `u8`.
+- **`ArrayBuilder.AddProperty()`** — does not exist. Array elements use `AddItem()`. `AddProperty(name, value)` is only on `ObjectBuilder`.
+- **`using System.Text.Json;` alongside `using Corvus.Text.Json;`** — causes ambiguity for `JsonElement`, `Utf8JsonWriter`, and `JsonWriterOptions`.
+
+## Documentation writing conventions
+
+When writing or editing documentation code samples, follow these API usage conventions:
+
+- **Prefer `Parse` over `ParseValue`** — show `ParsedJsonDocument<T>.Parse(...)` with `using` to promote pooled-memory best practice. `ParseValue` creates non-disposable copies. Reserve `ParseValue` for inline contexts where `Parse` is impractical (e.g., small constants in dictionary initializers).
+- **Use implicit `JsonElement.Source` conversions for PatchBuilder** — write `.Add("/name"u8, "Alice")`, `.Replace("/version"u8, 2)` instead of wrapping scalars in `ParseValue`.
+- **Only import `Corvus.Text.Json`** — doc blocks should not import `System.Text.Json`. Use fully-qualified names for `System.Text.Json` types when needed.
 
 
 ## Annotation preservation
