@@ -106,6 +106,7 @@
     <Compile Include="JsonElement.MutableRemoveWhereTests.cs" />
     <Compile Include="ExternalSimpleValueWriteTests.cs" />
     <Compile Include="MultiComplexSetPropertyReproTest.cs" />
+    <Compile Include="DateTimeCoverageTests.cs" />
     <Compile Include="JsonElementHelpersDateTimeTests.cs" />
     <Compile Include="JsonElementHelpersParseNumberTests.cs" />
     <Compile Include="JsonElementHelpersTryFormatCurrencyTests.cs" />
