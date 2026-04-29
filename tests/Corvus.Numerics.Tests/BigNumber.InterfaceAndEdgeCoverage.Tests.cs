@@ -871,6 +871,7 @@ public class BigNumberInterfaceAndEdgeCoverageTests
 
     #endregion
 
+#if NET
     #region TryGetMinimumFormatBufferLength (lines 942-966)
 
     [Fact]
@@ -906,6 +907,7 @@ public class BigNumberInterfaceAndEdgeCoverageTests
     // with > Array.MaxLength (~2.1 billion) digits — not practically constructible.
 
     #endregion
+#endif
 
     #region Additional coverage: FormatZero, FormatExponential, TryParse overloads, Floor/Ceiling/Truncate normalize
 
@@ -1001,6 +1003,7 @@ public class BigNumberInterfaceAndEdgeCoverageTests
         result.ShouldBe(new BigNumber(30, 0));
     }
 
+#if NET
     [Fact]
     public void CreateChecked_FromUnsupportedType_Throws()
     {
@@ -1014,6 +1017,7 @@ public class BigNumberInterfaceAndEdgeCoverageTests
         // Lines 2441-2442: TryConvertTo fallback (int not supported)
         Should.Throw<NotSupportedException>(() => CreateCheckedHelper<BigNumber, int>(new BigNumber(42, 0)));
     }
+#endif
 
     #endregion
 

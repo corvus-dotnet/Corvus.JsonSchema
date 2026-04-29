@@ -280,6 +280,7 @@
     <Compile Include="Utf8IriMakeRelativeTests.cs" />
     <Compile Include="Utf8IriReferenceTests.cs" />
     <Compile Include="Utf8IriTests.cs" />
+    <Compile Include="UriCoverageTests.cs" />
   </ItemGroup>
   <ItemGroup Condition="'$(TargetFramework)' == 'net481'">
     <Compile Include="$(CommonPath)System\Buffers\ArrayBufferWriter.cs" Link="CommonTest\System\Buffers\ArrayBufferWriter.cs" />
