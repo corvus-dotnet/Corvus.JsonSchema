@@ -147,6 +147,7 @@
     <Compile Include="JsonElementNumberTest.cs" />
     <Compile Include="JsonElement.MutableWriteTests.cs" />
     <Compile Include="JsonElementSourceCoverageTests.cs" />
+    <Compile Include="JsonElementSourceTContextCoverageTests.cs" />
     <Compile Include="UnescapedUtf16JsonStringTests.cs" />
     <Compile Include="JsonWorkspaceWriterRentalTests.cs" />
     <Compile Include="JsonPropertyDocumentBuilderDynamicTests.cs" />
