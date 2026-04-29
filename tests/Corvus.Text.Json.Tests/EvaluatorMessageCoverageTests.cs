@@ -160,6 +160,86 @@ public class EvaluatorMessageCoverageTests
         Assert.True(written > 0);
     }
 
+    [Fact]
+    public void ExpectedType_BufferFitsPrefix_ButNotValue_ReturnsFalse()
+    {
+        // "The value was expected to be of type" is ~40 chars = 40 UTF-8 bytes.
+        // A buffer of 42 fits the prefix but not the appended ' 'integer'' (11 more chars).
+        Span<byte> buffer = stackalloc byte[42];
+        Assert.False(JsonSchemaEvaluation.ExpectedType("integer"u8, buffer, out _));
+    }
+
+    [Fact]
+    public void ExpectedMultipleOfDivisor_BufferFitsPrefix_ButNotValue_ReturnsFalse()
+    {
+        // SR.JsonSchema_ExpectedMultipleOf is "The value was expected to be a multiple of" — ~43 chars.
+        // Buffer fits prefix but not the appended ' '3'' (5 more chars).
+        Span<byte> buffer = stackalloc byte[45];
+        Assert.False(JsonSchemaEvaluation.ExpectedMultipleOfDivisor("3", buffer, out _));
+    }
+
+    [Fact]
+    public void SchemaLocationForIndexedKeyword_BufferFitsBase_ButNotSlash_ReturnsFalse()
+    {
+        // "/items" → TryCopyPath strips "/" → "items" (5 bytes). Buffer of 6 fits the base
+        // but not the additional "/" + digits.
+        byte[] baseBytes = "/items"u8.ToArray();
+        Span<byte> buffer = stackalloc byte[6];
+        Assert.False(JsonSchemaEvaluation.SchemaLocationForIndexedKeyword(baseBytes, 0, buffer, out _));
+    }
+
+    [Fact]
+    public void TryCopyPath_EmptyInput_ReturnsTrue()
+    {
+        Span<byte> buffer = stackalloc byte[256];
+        Assert.True(JsonSchemaEvaluation.TryCopyPath(ReadOnlySpan<byte>.Empty, buffer, out int written));
+        Assert.Equal(0, written);
+    }
+
+    [Fact]
+    public void TryCopyPath_HashOnly_ReturnsTrue()
+    {
+        byte[] path = "#"u8.ToArray();
+        Span<byte> buffer = stackalloc byte[256];
+        Assert.True(JsonSchemaEvaluation.TryCopyPath(path, buffer, out int written));
+        Assert.Equal(0, written);
+    }
+
+    [Fact]
+    public void TryCopyPath_HashSlash_ReturnsTrue()
+    {
+        byte[] path = "#/"u8.ToArray();
+        Span<byte> buffer = stackalloc byte[256];
+        Assert.True(JsonSchemaEvaluation.TryCopyPath(path, buffer, out int written));
+        Assert.Equal(0, written);
+    }
+
+    [Fact]
+    public void TryCopyPath_HashWithContent_StripsHash()
+    {
+        byte[] path = "#items"u8.ToArray();
+        Span<byte> buffer = stackalloc byte[256];
+        Assert.True(JsonSchemaEvaluation.TryCopyPath(path, buffer, out int written));
+        Assert.Equal("items", JsonReaderHelper.TranscodeHelper(buffer.Slice(0, written)));
+    }
+
+    [Fact]
+    public void TryCopyPath_HashSlashWithContent_StripsBoth()
+    {
+        byte[] path = "#/items"u8.ToArray();
+        Span<byte> buffer = stackalloc byte[256];
+        Assert.True(JsonSchemaEvaluation.TryCopyPath(path, buffer, out int written));
+        Assert.Equal("items", JsonReaderHelper.TranscodeHelper(buffer.Slice(0, written)));
+    }
+
+    [Fact]
+    public void TryCopyMessage_EmptyInput_ReturnsTrue()
+    {
+        Span<byte> buffer = stackalloc byte[256];
+        Assert.True(JsonSchemaEvaluation.TryCopyMessage(ReadOnlySpan<byte>.Empty, buffer, out int written));
+        Assert.Equal(0, written);
+    }
+
     #endregion
 
     #region Array — SchemaLocationForItemIndex
