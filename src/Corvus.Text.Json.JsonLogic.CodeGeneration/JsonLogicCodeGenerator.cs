@@ -343,7 +343,8 @@ public static class JsonLogicCodeGenerator
         /// Restores both <see cref="_varCache"/> and <see cref="_deferredDoubleVars"/>
         /// to a previously-saved snapshot. Used after short-circuit blocks (and/or)
         /// and if-chain branches so that cached variable names from skipped or
-        /// branch-scoped evaluations don't leak to subsequent code.
+        /// branch-scoped evaluations don't leak to subsequent code (which would
+        /// cause CS0165 if a goto skipped the variable's assignment).
         /// </summary>
         private void RestoreCache(Dictionary<string, string> savedCache, HashSet<string> savedDeferred)
         {

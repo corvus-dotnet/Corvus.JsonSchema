@@ -114,11 +114,9 @@ Use `JsonPathEvaluator` when expressions are determined at runtime:
 ```csharp
 var evaluator = new JsonPathEvaluator();
 
-Span<JsonElement> buf = stackalloc JsonElement[16];
 using JsonPathResult result = evaluator.QueryNodes(
     "$.store.book[*].title",
-    dataDoc.RootElement,
-    buf);
+    dataDoc.RootElement);
 ```
 
 Create one `JsonPathEvaluator` instance and reuse it — it caches compiled execution plans per expression string and is thread-safe. For simple cases, `JsonPathEvaluator.Default` provides a shared static instance.
@@ -237,9 +235,8 @@ JsonElement array = JsonPathEvaluator.Default.Query("$.store.book[*].title", dat
 **Zero-allocation node access:**
 
 ```csharp
-Span<JsonElement> buf = stackalloc JsonElement[16];
 using JsonPathResult result = JsonPathEvaluator.Default.QueryNodes(
-    "$.store.book[*].title", data, buf);
+    "$.store.book[*].title", data);
 
 ReadOnlySpan<JsonElement> nodes = result.Nodes;
 int count = result.Count;
@@ -578,15 +575,14 @@ The source generator reads expression files from `AdditionalFiles`. Without the 
 
 ### Use `QueryNodes` for performance-sensitive code
 
-`Query()` is convenient but creates a workspace, builds a JSON array, and clones it. In hot paths, use `QueryNodes()` with a stack-allocated buffer:
+`Query()` is convenient but creates a workspace, builds a JSON array, and clones it. In hot paths, use `QueryNodes()` which pools its buffer internally:
 
 ```csharp
 // ❌ Allocates per call
 JsonElement result = evaluator.Query(expression, data);
 
-// ✅ Zero allocation when results fit in buffer
-Span<JsonElement> buf = stackalloc JsonElement[16];
-using JsonPathResult result = evaluator.QueryNodes(expression, data, buf);
+// ✅ Pooled buffer, no cloning
+using JsonPathResult result = evaluator.QueryNodes(expression, data);
 ```
 
 ## Comparison with other libraries
@@ -599,6 +595,6 @@ using JsonPathResult result = evaluator.QueryNodes(expression, data, buf);
 | Custom function extensions | Yes (runtime + code generation) | Yes (runtime only) |
 | JSON document model | `Corvus.Text.Json` (pooled, zero-copy) | `System.Text.Json.Nodes` |
 | Memory model | Pooled (`ArrayPool`, stack-allocated buffers) | GC-allocated |
-| Zero-allocation hot path | Yes (with `QueryNodes` + stack buffer) | No |
+| Zero-allocation hot path | Yes (with `QueryNodes` + pooled buffer) | No |
 | Recursive descent | Flat metadata DB scan (no recursion) | Recursive tree walk |
 | Supported frameworks | net9.0+, netstandard2.0/2.1 | net8.0+ |

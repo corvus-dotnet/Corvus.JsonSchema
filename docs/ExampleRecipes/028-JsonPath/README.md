@@ -102,11 +102,10 @@ evaluator.Query("$.store.book[?length(@.title)>15].title", data);
 
 ## Zero-Allocation QueryNodes
 
-For high-throughput scenarios, `QueryNodes` avoids the overhead of constructing a result array. Pass a caller-provided buffer (which may be stack-allocated) and iterate over the matching nodes directly:
+For high-throughput scenarios, `QueryNodes` avoids the overhead of constructing a result array. It pools its buffer internally via `ArrayPool<JsonElement>` and returns a disposable `JsonPathResult`:
 
 ```csharp
-Span<JsonElement> buf = stackalloc JsonElement[16];
-using JsonPathResult result = evaluator.QueryNodes("$.store.book[*].title", data, buf);
+using JsonPathResult result = evaluator.QueryNodes("$.store.book[*].title", data);
 
 foreach (JsonElement node in result.Nodes)
 {
@@ -114,7 +113,7 @@ foreach (JsonElement node in result.Nodes)
 }
 ```
 
-If the result exceeds the buffer, the evaluator transparently rents from `ArrayPool<JsonElement>`. The `JsonPathResult` must be disposed to return any rented memory.
+If you already have an existing `JsonElement[]` array that you want results written into, you can pass it as the `initialBuffer` parameter. If the result exceeds the buffer, the evaluator transparently rents from `ArrayPool<JsonElement>`. The `JsonPathResult` must be disposed to return any rented memory.
 
 ## Source-Generated Expressions
 

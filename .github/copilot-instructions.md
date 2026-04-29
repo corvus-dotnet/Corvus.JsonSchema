@@ -155,6 +155,52 @@ Rules to follow:
 - **Test-first bug fixes** — never implement a fix for a suspected bug without first writing a test that reproduces the problem. The test must fail before the fix and pass after. If you cannot reproduce the bug with a test, do not change production code.
 - **Data-driven coverage improvement** — when working to improve code coverage, ONLY write tests that target specific uncovered branches/lines identified in Cobertura XML coverage reports. Never write generic tests for already-covered functions hoping they might help. The process is: (1) collect coverage with `--collect:"XPlat Code Coverage"`, (2) merge reports with `reportgenerator`, (3) parse the Cobertura XML to find exact uncovered line ranges, (4) read the actual source code at those lines to understand the uncovered logic, (5) devise expressions/inputs that exercise those specific code paths, (6) verify with the reference implementation where applicable. The coverage report is the sole source of truth for what needs testing — not guesswork about what "might" be uncovered.
 
+## Documentation Code Sample Verification
+
+**CRITICAL:** All C# code samples in documentation must compile against the current codebase.
+
+The file `docs/code-sample-catalog.yaml` is the authoritative inventory of every fenced code block across all documentation, skills, and instruction files. It records file paths, block line ranges, languages, categories, and verification status.
+
+### When you modify documentation
+
+1. **Verify** all compilable C# samples in the modified file still compile (use a C# script file or the ExampleRecipes projects).
+2. **Update the catalog** — after any documentation edit, run:
+   ```powershell
+   .\docs\update-code-sample-catalog.ps1 -UpdateFile <relative-path>
+   ```
+   This re-scans the file and refreshes its block line ranges and counts, preserving manually-set `category` and `verified` annotations for blocks whose content has not moved.
+3. After verifying samples compile, set `verified: true` for each verified block in the catalog.
+4. Run `.\docs\update-code-sample-catalog.ps1 -Check` to confirm the catalog is in sync before committing.
+
+### When you detect user file changes
+
+If you observe that the user has modified a documentation file (e.g., through file-change notifications or when resuming work), proactively run `-UpdateFile` to refresh the catalog entries for that file.
+
+### Triage rules for code blocks
+
+| Block type | Action |
+|---|---|
+| Complete C# (has `using` + statements/types) | Must compile — category `compilable` |
+| Method body / statement snippets | Wrap in a minimal harness and compile — category `compilable` |
+| Fragments (single expressions, partial lines) | Skip — category `fragment` |
+| V4 "before" examples (migration docs) | Skip — category `v4-before` |
+| Intentionally bad patterns (analyzer docs) | Skip — category `bad-pattern` |
+| Non-C# (JSON, YAML, bash, XML) | Skip — no category field in catalog |
+
+### ExampleRecipes verification
+
+The projects under `docs/ExampleRecipes/` compile via `dotnet build docs/ExampleRecipes/ExampleRecipes.slnx`. Build this when any ExampleRecipes project or README is modified. README code samples must match their companion `.cs` files.
+
+### Catalog maintenance script
+
+```powershell
+.\docs\update-code-sample-catalog.ps1                           # Full update (preserve annotations)
+.\docs\update-code-sample-catalog.ps1 -UpdateFile docs\X.md    # Re-scan one file
+.\docs\update-code-sample-catalog.ps1 -Check                    # Verify catalog matches files
+.\docs\update-code-sample-catalog.ps1 -Generate                 # Fresh catalog (reset annotations)
+.\docs\update-code-sample-catalog.ps1 -Stats                    # Print summary statistics
+```
+
 ## JsonWorkspace and Mutable Documents
 
 ### JsonWorkspace
