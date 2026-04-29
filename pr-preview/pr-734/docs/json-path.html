@@ -376,11 +376,10 @@
 dotnet add package Corvus.Text.Json.JsonPath
 </code></pre>
 <p><strong>Simplest approach — cloned result array:</strong></p>
-<pre><code class="language-csharp">using Corvus.Text.Json.JsonPath;
+<pre><code class="language-csharp">using Corvus.Text.Json;
+using Corvus.Text.Json.JsonPath;
 
-JsonElement result = JsonPathEvaluator.Default.Query(
-    &quot;$.store.book[*].author&quot;,
-    JsonElement.ParseValue(&quot;&quot;&quot;
+using var dataDoc = ParsedJsonDocument&lt;JsonElement&gt;.Parse(&quot;&quot;&quot;
     {
       &quot;store&quot;: {
         &quot;book&quot;: [
@@ -391,7 +390,11 @@ JsonElement result = JsonPathEvaluator.Default.Query(
         ]
       }
     }
-    &quot;&quot;&quot;u8));
+    &quot;&quot;&quot;);
+
+JsonElement result = JsonPathEvaluator.Default.Query(
+    &quot;$.store.book[*].author&quot;,
+    dataDoc.RootElement);
 
 Console.WriteLine(result);
 // [&quot;Sandi Toksvig&quot;,&quot;Evelyn Waugh&quot;,&quot;Jane Austen&quot;,&quot;J. R. R. Tolkien&quot;]
@@ -423,11 +426,9 @@ foreach (JsonElement node in result.Nodes)
 <p>Use <code>JsonPathEvaluator</code> when expressions are determined at runtime:</p>
 <pre><code class="language-csharp">var evaluator = new JsonPathEvaluator();
 
-Span&lt;JsonElement&gt; buf = stackalloc JsonElement[16];
 using JsonPathResult result = evaluator.QueryNodes(
     &quot;$.store.book[*].title&quot;,
-    dataDoc.RootElement,
-    buf);
+    dataDoc.RootElement);
 </code></pre>
 <p>Create one <code>JsonPathEvaluator</code> instance and reuse it — it caches compiled execution plans per expression string and is thread-safe. For simple cases, <code>JsonPathEvaluator.Default</code> provides a shared static instance.</p>
 <h3 id="source-generator-build-time-code-generation">Source generator (build-time code generation)</h3>
@@ -552,9 +553,8 @@ public static partial class AllAuthors;
 // Returns [] if no matches
 </code></pre>
 <p><strong>Zero-allocation node access:</strong></p>
-<pre><code class="language-csharp">Span&lt;JsonElement&gt; buf = stackalloc JsonElement[16];
-using JsonPathResult result = JsonPathEvaluator.Default.QueryNodes(
-    &quot;$.store.book[*].title&quot;, data, buf);
+<pre><code class="language-csharp">using JsonPathResult result = JsonPathEvaluator.Default.QueryNodes(
+    &quot;$.store.book[*].title&quot;, data);
 
 ReadOnlySpan&lt;JsonElement&gt; nodes = result.Nodes;
 int count = result.Count;
@@ -911,13 +911,12 @@ using JsonPathResult result = evaluator.QueryNodes(expression, data);
 &lt;/ItemGroup&gt;
 </code></pre>
 <h3 id="use-querynodes-for-performance-sensitive-code">Use <code>QueryNodes</code> for performance-sensitive code</h3>
-<p><code>Query()</code> is convenient but creates a workspace, builds a JSON array, and clones it. In hot paths, use <code>QueryNodes()</code> with a stack-allocated buffer:</p>
+<p><code>Query()</code> is convenient but creates a workspace, builds a JSON array, and clones it. In hot paths, use <code>QueryNodes()</code> which pools its buffer internally:</p>
 <pre><code class="language-csharp">// ❌ Allocates per call
 JsonElement result = evaluator.Query(expression, data);
 
-// ✅ Zero allocation when results fit in buffer
-Span&lt;JsonElement&gt; buf = stackalloc JsonElement[16];
-using JsonPathResult result = evaluator.QueryNodes(expression, data, buf);
+// ✅ Pooled buffer, no cloning
+using JsonPathResult result = evaluator.QueryNodes(expression, data);
 </code></pre>
 <h2 id="comparison-with-other-libraries">Comparison with other libraries</h2>
 <table>
@@ -961,7 +960,7 @@ using JsonPathResult result = evaluator.QueryNodes(expression, data, buf);
 </tr>
 <tr>
 <td>Zero-allocation hot path</td>
-<td>Yes (with <code>QueryNodes</code> + stack buffer)</td>
+<td>Yes (with <code>QueryNodes</code> + pooled buffer)</td>
 <td>No</td>
 </tr>
 <tr>

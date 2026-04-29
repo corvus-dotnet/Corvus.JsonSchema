@@ -605,7 +605,7 @@ using var doc = JsonElement.CreateBuilder(
         {
             foreach (string tag in tags)
             {
-                tagsBuilder.AddProperty(tag);
+                tagsBuilder.AddItem(tag);
             }
         });
 
@@ -614,7 +614,7 @@ using var doc = JsonElement.CreateBuilder(
         {
             foreach (int year in years)
             {
-                yearsBuilder.AddProperty(year);
+                yearsBuilder.AddItem(year);
             }
         });
 
@@ -918,7 +918,7 @@ using var enrichedDoc = JsonElement.CreateBuilder(
         {
             foreach (string perm in permissions)
             {
-                permBuilder.AddProperty(perm);
+                permBuilder.AddItem(perm);
             }
         });
 
@@ -972,7 +972,7 @@ using var enrichedDoc = JsonElement.CreateBuilder(
                     JsonElement posts = postsDoc.RootElement.GetProperty(&quot;posts&quot;);
                     foreach (JsonElement post in posts.EnumerateArray())
                     {
-                        postsBuilder.AddProperty((ref postBuilder) =&gt;
+                        postsBuilder.AddItem((ref postBuilder) =&gt;
                         {
                             postBuilder.AddProperty(&quot;id&quot;u8, post.GetProperty(&quot;id&quot;));
                             postBuilder.AddProperty(&quot;title&quot;u8, post.GetProperty(&quot;title&quot;));

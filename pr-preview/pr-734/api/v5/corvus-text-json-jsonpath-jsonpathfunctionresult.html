@@ -144,6 +144,49 @@
 </tr>
 </tbody>
 </table>
+<h2 id="examples">Examples</h2>
+<p>Create results from custom JSONPath function implementations using the static factory methods.</p>
+<h3 id="value-results">Value results</h3>
+<pre><code class="language-csharp">using Corvus.Text.Json;
+using Corvus.Text.Json.JsonPath;
+
+// Return an existing JsonElement directly
+JsonPathFunctionResult fromElement = JsonPathFunctionResult.FromValue(someElement);
+
+// Return a new integer value (requires a workspace for element allocation)
+JsonPathFunctionResult fromInt = JsonPathFunctionResult.FromValue(42, workspace);
+
+// Return a new double value
+JsonPathFunctionResult fromDouble = JsonPathFunctionResult.FromValue(3.14, workspace);
+
+// Return a string value
+JsonPathFunctionResult fromString = JsonPathFunctionResult.FromValue(&quot;hello&quot;);
+
+// Return a boolean as a JSON value (true/false element, not a LogicalType)
+JsonPathFunctionResult fromBool = JsonPathFunctionResult.FromValueBool(true);
+</code></pre>
+<h3 id="logical-results">Logical results</h3>
+<p>Logical results are used by functions that return <code>LogicalType</code> for filter predicates:</p>
+<pre><code class="language-csharp">// Return a logical true/false for use in filter expressions
+JsonPathFunctionResult logical = JsonPathFunctionResult.FromLogical(true);
+</code></pre>
+<h3 id="nothing">Nothing</h3>
+<p>Return <code>Nothing</code> when the function cannot produce a meaningful result (e.g., type mismatch):</p>
+<pre><code class="language-csharp">public JsonPathFunctionResult Evaluate(
+    ReadOnlySpan&lt;JsonPathFunctionArgument&gt; arguments,
+    JsonWorkspace workspace)
+{
+    JsonElement value = arguments[0].Value;
+
+    if (value.ValueKind != JsonValueKind.Number)
+    {
+        // Type mismatch — signal &quot;no result&quot; to the filter expression
+        return JsonPathFunctionResult.Nothing;
+    }
+
+    return JsonPathFunctionResult.FromValue((int)Math.Floor(value.GetDouble()), workspace);
+}
+</code></pre>
 <h2 id="applies-to">Applies To</h2>
 <table>
 <thead>

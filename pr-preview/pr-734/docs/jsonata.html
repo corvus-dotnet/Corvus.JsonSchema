@@ -323,7 +323,7 @@ using var dataDoc = ParsedJsonDocument&lt;JsonElement&gt;.Parse(
       &quot;Age&quot;: 28,
       &quot;Address&quot;: { &quot;City&quot;: &quot;London&quot; }
     }
-    &quot;&quot;&quot;u8);
+    &quot;&quot;&quot;);
 
 // Create a workspace for zero-allocation evaluation
 using JsonWorkspace workspace = JsonWorkspace.Create();
@@ -494,14 +494,14 @@ JsonElement result = JsonataEvaluator.Default.Evaluate(
 {
     [&quot;rate&quot;]  = 0.15,                                     // implicit double → JsonataBinding
     [&quot;debug&quot;] = true,                                     // implicit bool → JsonataBinding
-    [&quot;config&quot;] = JsonElement.ParseValue(&quot;&quot;&quot;{&quot;a&quot;:1}&quot;&quot;&quot;u8), // implicit JsonElement → JsonataBinding
+    [&quot;config&quot;] = JsonElement.ParseValue(&quot;&quot;&quot;{&quot;a&quot;:1}&quot;&quot;&quot;), // implicit JsonElement → JsonataBinding
 };
 </code></pre>
 <p><strong>Using <code>JsonElement</code> dictionary (legacy):</strong></p>
 <pre><code class="language-csharp">var bindings = new Dictionary&lt;string, JsonElement&gt;
 {
-    [&quot;threshold&quot;] = JsonElement.ParseValue(&quot;100&quot;u8),
-    [&quot;label&quot;] = JsonElement.ParseValue(&quot;\&quot;High value\&quot;&quot;u8),
+    [&quot;threshold&quot;] = JsonElement.ParseValue(&quot;100&quot;),
+    [&quot;label&quot;] = JsonElement.ParseValue(&quot;\&quot;High value\&quot;&quot;),
 };
 
 JsonElement result = JsonataEvaluator.Default.Evaluate(
@@ -644,7 +644,7 @@ JsonElement result = evaluator.Evaluate(
     (JsonElement[] args, JsonWorkspace ws) =&gt;
     {
         double result = args[0].GetDouble() * 2;
-        return JsonElement.ParseValue($&quot;{result}&quot;u8.ToArray());
+        return JsonElement.ParseValue($&quot;{result}&quot;);
     },
     parameterCount: 1),
 </code></pre>

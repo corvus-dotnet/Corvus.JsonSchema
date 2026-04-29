@@ -319,16 +319,15 @@ evaluator.Query(&quot;$.store.book[-1].title&quot;, data);   // [&quot;The Lord 
 // [&quot;Between the Stops&quot;,&quot;Pride and Prejudice&quot;,&quot;The Lord of the Rings&quot;]
 </code></pre>
 <h2 id="zero-allocation-querynodes">Zero-Allocation QueryNodes</h2>
-<p>For high-throughput scenarios, <code>QueryNodes</code> avoids the overhead of constructing a result array. Pass a caller-provided buffer (which may be stack-allocated) and iterate over the matching nodes directly:</p>
-<pre><code class="language-csharp">Span&lt;JsonElement&gt; buf = stackalloc JsonElement[16];
-using JsonPathResult result = evaluator.QueryNodes(&quot;$.store.book[*].title&quot;, data, buf);
+<p>For high-throughput scenarios, <code>QueryNodes</code> avoids the overhead of constructing a result array. It pools its buffer internally via <code>ArrayPool&lt;JsonElement&gt;</code> and returns a disposable <code>JsonPathResult</code>:</p>
+<pre><code class="language-csharp">using JsonPathResult result = evaluator.QueryNodes(&quot;$.store.book[*].title&quot;, data);
 
 foreach (JsonElement node in result.Nodes)
 {
     Console.WriteLine(node);
 }
 </code></pre>
-<p>If the result exceeds the buffer, the evaluator transparently rents from <code>ArrayPool&lt;JsonElement&gt;</code>. The <code>JsonPathResult</code> must be disposed to return any rented memory.</p>
+<p>If you already have an existing <code>JsonElement[]</code> array that you want results written into, you can pass it as the <code>initialBuffer</code> parameter. If the result exceeds the buffer, the evaluator transparently rents from <code>ArrayPool&lt;JsonElement&gt;</code>. The <code>JsonPathResult</code> must be disposed to return any rented memory.</p>
 <h2 id="source-generated-expressions">Source-Generated Expressions</h2>
 <p>For maximum performance, compile expressions at build time using the <code>[JsonPathExpression]</code> attribute. Add the expression file as an <code>AdditionalFiles</code> item and reference the source generator package.</p>
 <p>File: <code>all-authors.jsonpath</code></p>

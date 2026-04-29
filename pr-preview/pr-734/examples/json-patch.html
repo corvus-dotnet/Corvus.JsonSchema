@@ -333,12 +333,10 @@ root.TryMove(&quot;/display_name&quot;u8, &quot;/nickname&quot;u8);     // move 
 </code></pre>
 <h3 id="testing-values">Testing values</h3>
 <p>The <code>test</code> operation checks that a value at a path equals an expected value without mutating the document:</p>
-<pre><code class="language-csharp">bool matches = root.TryTest(&quot;/name&quot;u8, JsonElement.ParseValue(&quot;&quot;&quot;
-    &quot;Bob&quot;
-    &quot;&quot;&quot;u8));   // true
-bool fails   = root.TryTest(&quot;/name&quot;u8, JsonElement.ParseValue(&quot;&quot;&quot;
-    &quot;Alice&quot;
-    &quot;&quot;&quot;u8));   // false
+<pre><code class="language-csharp">using var bobDoc = ParsedJsonDocument&lt;JsonElement&gt;.Parse(&quot;\&quot;Bob\&quot;&quot;);
+bool matches = root.TryTest(&quot;/name&quot;u8, bobDoc.RootElement);   // true
+using var aliceDoc = ParsedJsonDocument&lt;JsonElement&gt;.Parse(&quot;\&quot;Alice\&quot;&quot;);
+bool fails   = root.TryTest(&quot;/name&quot;u8, aliceDoc.RootElement); // false
 </code></pre>
 <h3 id="conditional-patches-with-test-guards">Conditional patches with Test guards</h3>
 <p>When <code>test</code> is used in a patch document, a failing test aborts the entire patch. This enables optimistic concurrency patterns:</p>
@@ -352,13 +350,14 @@ bool success = root.TryApplyPatch(guardedPatch);
 </code></pre>
 <h3 id="parsing-patches-from-json">Parsing patches from JSON</h3>
 <p>You can also parse a patch document directly from raw JSON:</p>
-<pre><code class="language-csharp">JsonPatchDocument parsedPatch = JsonPatchDocument.ParseValue(
+<pre><code class="language-csharp">using var patchDoc = ParsedJsonDocument&lt;JsonPatchDocument&gt;.Parse(
     &quot;&quot;&quot;
     [
         { &quot;op&quot;: &quot;replace&quot;, &quot;path&quot;: &quot;/age&quot;, &quot;value&quot;: 32 },
         { &quot;op&quot;: &quot;add&quot;, &quot;path&quot;: &quot;/tags/-&quot;, &quot;value&quot;: &quot;verified&quot; }
     ]
-    &quot;&quot;&quot;u8);
+    &quot;&quot;&quot;);
+JsonPatchDocument parsedPatch = patchDoc.RootElement;
 
 root.TryApplyPatch(parsedPatch);
 </code></pre>

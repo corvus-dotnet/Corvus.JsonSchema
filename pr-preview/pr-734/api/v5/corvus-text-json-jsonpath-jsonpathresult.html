@@ -178,6 +178,39 @@
 </tr>
 </tbody>
 </table>
+<h2 id="examples">Examples</h2>
+<p>A <code>ref struct</code> that accumulates JSONPath result nodes using pooled memory.</p>
+<pre><code class="language-csharp">using Corvus.Text.Json;
+using Corvus.Text.Json.JsonPath;
+
+using ParsedJsonDocument&lt;JsonElement&gt; doc = ParsedJsonDocument&lt;JsonElement&gt;.Parse(
+    &quot;&quot;&quot;{&quot;items&quot;: [1, 2, 3, 4, 5]}&quot;&quot;&quot;u8);
+
+// QueryNodes returns a disposable JsonPathResult backed by ArrayPool
+using JsonPathResult result = JsonPathEvaluator.Default.QueryNodes(
+    &quot;$.items[*]&quot;,
+    doc.RootElement);
+
+// Access matched nodes as a ReadOnlySpan&lt;JsonElement&gt;
+ReadOnlySpan&lt;JsonElement&gt; nodes = result.Nodes;
+Console.WriteLine($&quot;Matched {result.Count} nodes&quot;);
+
+foreach (JsonElement node in nodes)
+{
+    Console.WriteLine(node.GetRawText());
+}
+</code></pre>
+<h3 id="caller-provided-initial-buffer">Caller-provided initial buffer</h3>
+<p>Provide a stack-allocated buffer for zero-heap-allocation queries when you know the approximate result size:</p>
+<pre><code class="language-csharp">JsonElement[] buffer = new JsonElement[16];
+using JsonPathResult result = JsonPathEvaluator.Default.QueryNodes(
+    &quot;$.items[0:3]&quot;,
+    doc.RootElement,
+    buffer);
+
+// If fewer than 16 nodes match, no ArrayPool rental occurs
+ReadOnlySpan&lt;JsonElement&gt; nodes = result.Nodes; // [1, 2, 3]
+</code></pre>
 <h2 id="applies-to">Applies To</h2>
 <table>
 <thead>

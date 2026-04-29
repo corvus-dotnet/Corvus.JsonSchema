@@ -526,11 +526,10 @@
 dotnet add package Corvus.Text.Json.JMESPath
 </code></pre>
 <p><strong>Simplest approach — cloned result, no workspace management:</strong></p>
-<pre><code class="language-csharp">using Corvus.Text.Json.JMESPath;
+<pre><code class="language-csharp">using Corvus.Text.Json;
+using Corvus.Text.Json.JMESPath;
 
-JsonElement result = JMESPathEvaluator.Default.Search(
-    &quot;locations[?state == 'WA'].name | sort(@) | {WashingtonCities: join(', ', @)}&quot;,
-    JsonElement.ParseValue(&quot;&quot;&quot;
+using var dataDoc = ParsedJsonDocument&lt;JsonElement&gt;.Parse(&quot;&quot;&quot;
     {
       &quot;locations&quot;: [
         {&quot;name&quot;: &quot;Seattle&quot;, &quot;state&quot;: &quot;WA&quot;},
@@ -539,7 +538,11 @@ JsonElement result = JMESPathEvaluator.Default.Search(
         {&quot;name&quot;: &quot;Olympia&quot;, &quot;state&quot;: &quot;WA&quot;}
       ]
     }
-    &quot;&quot;&quot;u8));
+    &quot;&quot;&quot;);
+
+JsonElement result = JMESPathEvaluator.Default.Search(
+    &quot;locations[?state == 'WA'].name | sort(@) | {WashingtonCities: join(', ', @)}&quot;,
+    dataDoc.RootElement);
 
 Console.WriteLine(result); // {&quot;WashingtonCities&quot;:&quot;Bellevue, Olympia, Seattle&quot;}
 </code></pre>
@@ -560,7 +563,7 @@ using var dataDoc = ParsedJsonDocument&lt;JsonElement&gt;.Parse(
       ],
       &quot;foo&quot;: {&quot;bar&quot;: &quot;baz&quot;}
     }
-    &quot;&quot;&quot;u8);
+    &quot;&quot;&quot;);
 
 // Create a workspace for zero-allocation evaluation
 using JsonWorkspace workspace = JsonWorkspace.Create();

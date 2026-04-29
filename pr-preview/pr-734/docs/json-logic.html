@@ -308,9 +308,9 @@ using Corvus.Text.Json.JsonLogic;
 
 // Parse the rule and data (using statements ensure pooled memory is returned)
 using var ruleDoc = ParsedJsonDocument&lt;JsonElement&gt;.Parse(
-    &quot;&quot;&quot;{&quot;+&quot;:[{&quot;var&quot;:&quot;a&quot;},{&quot;var&quot;:&quot;b&quot;}]}&quot;&quot;&quot;u8);
+    &quot;&quot;&quot;{&quot;+&quot;:[{&quot;var&quot;:&quot;a&quot;},{&quot;var&quot;:&quot;b&quot;}]}&quot;&quot;&quot;);
 using var dataDoc = ParsedJsonDocument&lt;JsonElement&gt;.Parse(
-    &quot;&quot;&quot;{&quot;a&quot;:3,&quot;b&quot;:4}&quot;&quot;&quot;u8);
+    &quot;&quot;&quot;{&quot;a&quot;:3,&quot;b&quot;:4}&quot;&quot;&quot;);
 
 // Create a workspace for zero-allocation evaluation
 using JsonWorkspace workspace = JsonWorkspace.Create();
@@ -347,9 +347,9 @@ using Corvus.Text.Json.JsonLogic;
 
 // Parse the rule and data
 using var ruleDoc = ParsedJsonDocument&lt;JsonElement&gt;.Parse(
-    &quot;&quot;&quot;{&quot;+&quot;:[{&quot;var&quot;:&quot;a&quot;},{&quot;var&quot;:&quot;b&quot;}]}&quot;&quot;&quot;u8);
+    &quot;&quot;&quot;{&quot;+&quot;:[{&quot;var&quot;:&quot;a&quot;},{&quot;var&quot;:&quot;b&quot;}]}&quot;&quot;&quot;);
 using var dataDoc = ParsedJsonDocument&lt;JsonElement&gt;.Parse(
-    &quot;&quot;&quot;{&quot;a&quot;:3,&quot;b&quot;:4}&quot;&quot;&quot;u8);
+    &quot;&quot;&quot;{&quot;a&quot;:3,&quot;b&quot;:4}&quot;&quot;&quot;);
 
 // Evaluate
 JsonLogicRule rule = new(ruleDoc.RootElement);

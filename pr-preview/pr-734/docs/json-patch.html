@@ -288,13 +288,14 @@ Console.WriteLine(builder.RootElement); // {&quot;name&quot;:&quot;Bob&quot;,&qu
 <h2 id="applying-a-patch-document">Applying a Patch Document</h2>
 <h3 id="validated-application">Validated application</h3>
 <p>If you have received a patch document from an external source (e.g. an HTTP request body, a file, or user input) and have not already validated it, use <code>TryValidateAndApplyPatch</code>. This validates the patch against its JSON Schema before applying it, returning <code>false</code> if the document is structurally invalid:</p>
-<pre><code class="language-csharp">JsonPatchDocument parsedPatch = JsonPatchDocument.ParseValue(
+<pre><code class="language-csharp">using var patchDoc = ParsedJsonDocument&lt;JsonPatchDocument&gt;.Parse(
     &quot;&quot;&quot;
     [
         { &quot;op&quot;: &quot;replace&quot;, &quot;path&quot;: &quot;/name&quot;, &quot;value&quot;: &quot;Charlie&quot; },
         { &quot;op&quot;: &quot;add&quot;, &quot;path&quot;: &quot;/active&quot;, &quot;value&quot;: true }
     ]
-    &quot;&quot;&quot;u8);
+    &quot;&quot;&quot;);
+JsonPatchDocument parsedPatch = patchDoc.RootElement;
 
 bool success = root.TryValidateAndApplyPatch(parsedPatch);
 </code></pre>
@@ -349,7 +350,8 @@ root.TryAdd(&quot;/tags/0&quot;u8, &quot;important&quot;);
 root.TryAdd(&quot;/tags/-&quot;u8, &quot;new-tag&quot;);
 </code></pre>
 <p>Adding to the root path (<code>&quot;&quot;</code>) replaces the entire document:</p>
-<pre><code class="language-csharp">root.TryAdd(&quot;&quot;u8, JsonElement.ParseValue(&quot;&quot;&quot;{&quot;replaced&quot;: true}&quot;&quot;&quot;));
+<pre><code class="language-csharp">using var replacementDoc = ParsedJsonDocument&lt;JsonElement&gt;.Parse(&quot;&quot;&quot;{&quot;replaced&quot;: true}&quot;&quot;&quot;);
+root.TryAdd(&quot;&quot;u8, replacementDoc.RootElement);
 </code></pre>
 <h3 id="remove">Remove</h3>
 <p>Removes the value at the target path. The target must exist.</p>
@@ -383,13 +385,13 @@ root.TryCopy(&quot;/items/0&quot;u8, &quot;/items/-&quot;u8);
 </code></pre>
 <h3 id="test">Test</h3>
 <p>Tests that the value at the target path equals the expected value. Returns <code>true</code> if the values match (using deep equality), <code>false</code> otherwise. No mutation is performed.</p>
-<pre><code class="language-csharp">bool matches = root.TryTest(&quot;/name&quot;u8, JsonElement.ParseValue(&quot;&quot;&quot;
+<pre><code class="language-csharp">using var expectedDoc = ParsedJsonDocument&lt;JsonElement&gt;.Parse(&quot;&quot;&quot;
     &quot;Alice&quot;
-    &quot;&quot;&quot;u8));
+    &quot;&quot;&quot;);
+bool matches = root.TryTest(&quot;/name&quot;u8, expectedDoc.RootElement);
 </code></pre>
 <p>This is useful in patch documents for conditional application — if the test fails, the entire patch fails:</p>
-<pre><code class="language-csharp">```csharp
-JsonPatchDocument guardedPatch = root.BeginPatch(workspace)
+<pre><code class="language-csharp">JsonPatchDocument guardedPatch = root.BeginPatch(workspace)
     .Test(&quot;/version&quot;u8, 1)           // guard: only apply if version is 1
     .Replace(&quot;/version&quot;u8, 2)        // update version
     .Add(&quot;/migrated&quot;u8, true)        // add new field

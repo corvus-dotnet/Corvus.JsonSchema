@@ -141,6 +141,55 @@
 </tr>
 </tbody>
 </table>
+<h2 id="examples">Examples</h2>
+<p>Implement <code>IJsonPathFunction</code> for full control over custom JSONPath function extensions.</p>
+<pre><code class="language-csharp">using Corvus.Text.Json;
+using Corvus.Text.Json.JsonPath;
+
+/// &lt;summary&gt;
+/// A custom ceil() function that rounds a number up to the nearest integer.
+/// Signature: (ValueType) → ValueType
+/// &lt;/summary&gt;
+public sealed class CeilFunction : IJsonPathFunction
+{
+    public JsonPathFunctionType ReturnType =&gt; JsonPathFunctionType.ValueType;
+
+    public ReadOnlySpan&lt;JsonPathFunctionType&gt; ParameterTypes =&gt;
+        [JsonPathFunctionType.ValueType];
+
+    public JsonPathFunctionResult Evaluate(
+        ReadOnlySpan&lt;JsonPathFunctionArgument&gt; arguments,
+        JsonWorkspace workspace)
+    {
+        JsonElement value = arguments[0].Value;
+
+        if (value.ValueKind != JsonValueKind.Number)
+        {
+            return JsonPathFunctionResult.Nothing;
+        }
+
+        int ceiled = (int)Math.Ceiling(value.GetDouble());
+        return JsonPathFunctionResult.FromValue(ceiled, workspace);
+    }
+}
+</code></pre>
+<h3 id="registering-the-function">Registering the function</h3>
+<pre><code class="language-csharp">var evaluator = new JsonPathEvaluator(new Dictionary&lt;string, IJsonPathFunction&gt;
+{
+    [&quot;ceil&quot;] = new CeilFunction(),
+});
+
+// Use in expressions: $.items[?ceil(@.score) &gt; 5]
+using JsonPathResult result = evaluator.QueryNodes(
+    &quot;$.items[?ceil(@.score) &gt; 5]&quot;,
+    data);
+</code></pre>
+<h3 id="simpler-alternatives">Simpler alternatives</h3>
+<p>For simple functions, use the <code>JsonPathFunction</code> factory methods instead of implementing the interface directly:</p>
+<pre><code class="language-csharp">// Equivalent to the CeilFunction class above:
+IJsonPathFunction ceil = JsonPathFunction.Value((v, ws) =&gt;
+    JsonPathFunctionResult.FromValue((int)Math.Ceiling(v.GetDouble()), ws));
+</code></pre>
 <h2 id="applies-to">Applies To</h2>
 <table>
 <thead>

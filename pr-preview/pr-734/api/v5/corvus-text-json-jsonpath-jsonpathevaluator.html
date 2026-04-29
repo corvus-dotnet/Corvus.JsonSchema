@@ -155,6 +155,58 @@
 </tr>
 </tbody>
 </table>
+<h2 id="examples">Examples</h2>
+<p>Evaluate a JSONPath (RFC 9535) expression against JSON data using the shared evaluator instance.</p>
+<pre><code class="language-csharp">using Corvus.Text.Json;
+using Corvus.Text.Json.JsonPath;
+
+using ParsedJsonDocument&lt;JsonElement&gt; doc = ParsedJsonDocument&lt;JsonElement&gt;.Parse(
+    &quot;&quot;&quot;
+    {
+      &quot;store&quot;: {
+        &quot;book&quot;: [
+          {&quot;title&quot;: &quot;Sayings of the Century&quot;, &quot;price&quot;: 8.95},
+          {&quot;title&quot;: &quot;Moby Dick&quot;, &quot;price&quot;: 8.99},
+          {&quot;title&quot;: &quot;The Lord of the Rings&quot;, &quot;price&quot;: 22.99}
+        ]
+      }
+    }
+    &quot;&quot;&quot;u8);
+
+// Query returns a JSON array of matched nodes
+JsonElement titles = JsonPathEvaluator.Default.Query(
+    &quot;$.store.book[*].title&quot;,
+    doc.RootElement);
+// titles: [&quot;Sayings of the Century&quot;,&quot;Moby Dick&quot;,&quot;The Lord of the Rings&quot;]
+</code></pre>
+<h3 id="zero-allocation-query-with-querynodes">Zero-allocation query with QueryNodes</h3>
+<p>Use <code>QueryNodes</code> when you need to iterate results without creating a JSON array:</p>
+<pre><code class="language-csharp">using JsonPathResult result = JsonPathEvaluator.Default.QueryNodes(
+    &quot;$.store.book[?@.price &lt; 10].title&quot;,
+    doc.RootElement);
+
+foreach (JsonElement node in result.Nodes)
+{
+    Console.WriteLine(node.GetRawText());
+}
+// &quot;Sayings of the Century&quot;
+// &quot;Moby Dick&quot;
+</code></pre>
+<h3 id="custom-functions">Custom functions</h3>
+<p>Register custom functions to extend the filter expression language:</p>
+<pre><code class="language-csharp">var evaluator = new JsonPathEvaluator(new Dictionary&lt;string, IJsonPathFunction&gt;
+{
+    [&quot;ceil&quot;] = JsonPathFunction.Value((v, ws) =&gt;
+        JsonPathFunctionResult.FromValue((int)Math.Ceiling(v.GetDouble()), ws)),
+    [&quot;is_cheap&quot;] = JsonPathFunction.Logical(v =&gt;
+        v.ValueKind == JsonValueKind.Number &amp;&amp; v.GetDouble() &lt; 10),
+});
+
+JsonElement cheap = evaluator.Query(
+    &quot;$.store.book[?is_cheap(@.price)].title&quot;,
+    doc.RootElement);
+// cheap: [&quot;Sayings of the Century&quot;,&quot;Moby Dick&quot;]
+</code></pre>
 <h2 id="applies-to">Applies To</h2>
 <table>
 <thead>
