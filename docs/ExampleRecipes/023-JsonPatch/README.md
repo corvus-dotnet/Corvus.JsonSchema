@@ -84,12 +84,10 @@ root.TryMove("/display_name"u8, "/nickname"u8);     // move a value
 The `test` operation checks that a value at a path equals an expected value without mutating the document:
 
 ```csharp
-bool matches = root.TryTest("/name"u8, JsonElement.ParseValue("""
-    "Bob"
-    """u8));   // true
-bool fails   = root.TryTest("/name"u8, JsonElement.ParseValue("""
-    "Alice"
-    """u8));   // false
+using var bobDoc = ParsedJsonDocument<JsonElement>.Parse("\"Bob\"");
+bool matches = root.TryTest("/name"u8, bobDoc.RootElement);   // true
+using var aliceDoc = ParsedJsonDocument<JsonElement>.Parse("\"Alice\"");
+bool fails   = root.TryTest("/name"u8, aliceDoc.RootElement); // false
 ```
 
 ### Conditional patches with Test guards
@@ -111,13 +109,14 @@ bool success = root.TryApplyPatch(guardedPatch);
 You can also parse a patch document directly from raw JSON:
 
 ```csharp
-JsonPatchDocument parsedPatch = JsonPatchDocument.ParseValue(
+using var patchDoc = ParsedJsonDocument<JsonPatchDocument>.Parse(
     """
     [
         { "op": "replace", "path": "/age", "value": 32 },
         { "op": "add", "path": "/tags/-", "value": "verified" }
     ]
-    """u8);
+    """);
+JsonPatchDocument parsedPatch = patchDoc.RootElement;
 
 root.TryApplyPatch(parsedPatch);
 ```

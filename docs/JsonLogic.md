@@ -53,9 +53,9 @@ using Corvus.Text.Json.JsonLogic;
 
 // Parse the rule and data (using statements ensure pooled memory is returned)
 using var ruleDoc = ParsedJsonDocument<JsonElement>.Parse(
-    """{"+":[{"var":"a"},{"var":"b"}]}"""u8);
+    """{"+":[{"var":"a"},{"var":"b"}]}""");
 using var dataDoc = ParsedJsonDocument<JsonElement>.Parse(
-    """{"a":3,"b":4}"""u8);
+    """{"a":3,"b":4}""");
 
 // Create a workspace for zero-allocation evaluation
 using JsonWorkspace workspace = JsonWorkspace.Create();
@@ -111,9 +111,9 @@ using Corvus.Text.Json.JsonLogic;
 
 // Parse the rule and data
 using var ruleDoc = ParsedJsonDocument<JsonElement>.Parse(
-    """{"+":[{"var":"a"},{"var":"b"}]}"""u8);
+    """{"+":[{"var":"a"},{"var":"b"}]}""");
 using var dataDoc = ParsedJsonDocument<JsonElement>.Parse(
-    """{"a":3,"b":4}"""u8);
+    """{"a":3,"b":4}""");
 
 // Evaluate
 JsonLogicRule rule = new(ruleDoc.RootElement);

@@ -71,7 +71,7 @@ using var dataDoc = ParsedJsonDocument<JsonElement>.Parse(
       "Age": 28,
       "Address": { "City": "London" }
     }
-    """u8);
+    """);
 
 // Create a workspace for zero-allocation evaluation
 using JsonWorkspace workspace = JsonWorkspace.Create();
@@ -244,7 +244,7 @@ var bindings = new Dictionary<string, JsonataBinding>
 {
     ["rate"]  = 0.15,                                     // implicit double → JsonataBinding
     ["debug"] = true,                                     // implicit bool → JsonataBinding
-    ["config"] = JsonElement.ParseValue("""{"a":1}"""u8), // implicit JsonElement → JsonataBinding
+    ["config"] = JsonElement.ParseValue("""{"a":1}"""), // implicit JsonElement → JsonataBinding
 };
 ```
 
@@ -253,8 +253,8 @@ var bindings = new Dictionary<string, JsonataBinding>
 ```csharp
 var bindings = new Dictionary<string, JsonElement>
 {
-    ["threshold"] = JsonElement.ParseValue("100"u8),
-    ["label"] = JsonElement.ParseValue("\"High value\""u8),
+    ["threshold"] = JsonElement.ParseValue("100"),
+    ["label"] = JsonElement.ParseValue("\"High value\""),
 };
 
 JsonElement result = JsonataEvaluator.Default.Evaluate(
@@ -414,7 +414,7 @@ The original function binding API receives `JsonElement[]` arguments and returns
     (JsonElement[] args, JsonWorkspace ws) =>
     {
         double result = args[0].GetDouble() * 2;
-        return JsonElement.ParseValue($"{result}"u8.ToArray());
+        return JsonElement.ParseValue($"{result}");
     },
     parameterCount: 1),
 ```

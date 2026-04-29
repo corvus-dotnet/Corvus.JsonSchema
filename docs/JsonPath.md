@@ -56,11 +56,10 @@ dotnet add package Corvus.Text.Json.JsonPath
 **Simplest approach — cloned result array:**
 
 ```csharp
+using Corvus.Text.Json;
 using Corvus.Text.Json.JsonPath;
 
-JsonElement result = JsonPathEvaluator.Default.Query(
-    "$.store.book[*].author",
-    JsonElement.ParseValue("""
+using var dataDoc = ParsedJsonDocument<JsonElement>.Parse("""
     {
       "store": {
         "book": [
@@ -71,7 +70,11 @@ JsonElement result = JsonPathEvaluator.Default.Query(
         ]
       }
     }
-    """u8));
+    """);
+
+JsonElement result = JsonPathEvaluator.Default.Query(
+    "$.store.book[*].author",
+    dataDoc.RootElement);
 
 Console.WriteLine(result);
 // ["Sandi Toksvig","Evelyn Waugh","Jane Austen","J. R. R. Tolkien"]

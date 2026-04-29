@@ -93,9 +93,9 @@ using var builder = doc.RootElement.CreateBuilder(workspace);
 
 // Build a patch
 JsonPatchDocument patch = builder.RootElement.BeginPatch(workspace)
-    .Add("/name"u8, JsonElement.ParseValue("\"Alice\""u8))
+    .Add("/name"u8, "Alice")
     .Remove("/obsolete"u8)
-    .Replace("/version"u8, JsonElement.ParseValue("2"u8))
+    .Replace("/version"u8, 2)
     .GetPatchAndDispose();
 
 // Apply the patch (returns bool — true if all operations succeed)

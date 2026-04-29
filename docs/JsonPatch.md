@@ -57,13 +57,14 @@ Console.WriteLine(builder.RootElement); // {"name":"Bob","email":"bob@example.co
 If you have received a patch document from an external source (e.g. an HTTP request body, a file, or user input) and have not already validated it, use `TryValidateAndApplyPatch`. This validates the patch against its JSON Schema before applying it, returning `false` if the document is structurally invalid:
 
 ```csharp
-JsonPatchDocument parsedPatch = JsonPatchDocument.ParseValue(
+using var patchDoc = ParsedJsonDocument<JsonPatchDocument>.Parse(
     """
     [
         { "op": "replace", "path": "/name", "value": "Charlie" },
         { "op": "add", "path": "/active", "value": true }
     ]
-    """u8);
+    """);
+JsonPatchDocument parsedPatch = patchDoc.RootElement;
 
 bool success = root.TryValidateAndApplyPatch(parsedPatch);
 ```
@@ -137,7 +138,8 @@ root.TryAdd("/tags/-"u8, "new-tag");
 Adding to the root path (`""`) replaces the entire document:
 
 ```csharp
-root.TryAdd(""u8, JsonElement.ParseValue("""{"replaced": true}"""));
+using var replacementDoc = ParsedJsonDocument<JsonElement>.Parse("""{"replaced": true}""");
+root.TryAdd(""u8, replacementDoc.RootElement);
 ```
 
 ### Remove
@@ -193,14 +195,14 @@ root.TryCopy("/items/0"u8, "/items/-"u8);
 Tests that the value at the target path equals the expected value. Returns `true` if the values match (using deep equality), `false` otherwise. No mutation is performed.
 
 ```csharp
-bool matches = root.TryTest("/name"u8, JsonElement.ParseValue("""
+using var expectedDoc = ParsedJsonDocument<JsonElement>.Parse("""
     "Alice"
-    """u8));
+    """);
+bool matches = root.TryTest("/name"u8, expectedDoc.RootElement);
 ```
 
 This is useful in patch documents for conditional application — if the test fails, the entire patch fails:
 
-```csharp
 ```csharp
 JsonPatchDocument guardedPatch = root.BeginPatch(workspace)
     .Test("/version"u8, 1)           // guard: only apply if version is 1

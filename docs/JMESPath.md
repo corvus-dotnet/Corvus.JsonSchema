@@ -71,11 +71,10 @@ dotnet add package Corvus.Text.Json.JMESPath
 **Simplest approach — cloned result, no workspace management:**
 
 ```csharp
+using Corvus.Text.Json;
 using Corvus.Text.Json.JMESPath;
 
-JsonElement result = JMESPathEvaluator.Default.Search(
-    "locations[?state == 'WA'].name | sort(@) | {WashingtonCities: join(', ', @)}",
-    JsonElement.ParseValue("""
+using var dataDoc = ParsedJsonDocument<JsonElement>.Parse("""
     {
       "locations": [
         {"name": "Seattle", "state": "WA"},
@@ -84,7 +83,11 @@ JsonElement result = JMESPathEvaluator.Default.Search(
         {"name": "Olympia", "state": "WA"}
       ]
     }
-    """u8));
+    """);
+
+JsonElement result = JMESPathEvaluator.Default.Search(
+    "locations[?state == 'WA'].name | sort(@) | {WashingtonCities: join(', ', @)}",
+    dataDoc.RootElement);
 
 Console.WriteLine(result); // {"WashingtonCities":"Bellevue, Olympia, Seattle"}
 ```
@@ -109,7 +112,7 @@ using var dataDoc = ParsedJsonDocument<JsonElement>.Parse(
       ],
       "foo": {"bar": "baz"}
     }
-    """u8);
+    """);
 
 // Create a workspace for zero-allocation evaluation
 using JsonWorkspace workspace = JsonWorkspace.Create();

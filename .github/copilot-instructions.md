@@ -161,17 +161,28 @@ Rules to follow:
 
 The file `docs/code-sample-catalog.yaml` is the authoritative inventory of every fenced code block across all documentation, skills, and instruction files. It records file paths, block line ranges, languages, categories, and verification status. See `docs/CodeSampleCatalog.md` for the full user guide.
 
+### Step 0 — build existing example projects first
+
+Before verifying any markdown code blocks, build the existing compilable projects. This confirms the real code compiles and gives you a reference for cross-checking README samples.
+
+```powershell
+dotnet build docs\ExampleRecipes\ExampleRecipes.slnx
+```
+
+If any ExampleRecipes project fails to build, fix it before moving on — the README code blocks are derived from these projects.
+
 ### Everyday workflow — modified files only
 
 You do **not** need to process the entire catalog. When you edit a documentation file:
 
-1. **Verify** the compilable C# samples in that file still compile (use a C# script file, or `dotnet build` for ExampleRecipes projects).
-2. **Update the catalog** for just that file:
+1. **Build** any affected ExampleRecipes projects first (if the file is under `docs/ExampleRecipes/`).
+2. **Verify** the compilable C# samples in that file still compile (cross-reference against companion `.cs` files for ExampleRecipes READMEs, or use a C# script file for standalone docs).
+3. **Update the catalog** for just that file:
    ```powershell
    .\docs\update-code-sample-catalog.ps1 -UpdateFile <relative-path>
    ```
-3. Set `verified: true` for each block you confirmed compiles.
-4. Run `-Check` before committing to confirm the catalog is in sync:
+4. Set `verified: true` for each block you confirmed compiles.
+5. Run `-Check` before committing to confirm the catalog is in sync:
    ```powershell
    .\docs\update-code-sample-catalog.ps1 -Check
    ```
@@ -195,7 +206,7 @@ If you observe that the user has modified a documentation file (e.g., through fi
 
 ### ExampleRecipes verification
 
-The projects under `docs/ExampleRecipes/` compile via `dotnet build docs/ExampleRecipes/ExampleRecipes.slnx`. Build this when any ExampleRecipes project or README is modified. README code samples must match their companion `.cs` files.
+README code samples must match their companion `.cs` files. When cross-referencing, the `.cs` file is the source of truth — update the README to match, not the other way around.
 
 ### Catalog maintenance script
 

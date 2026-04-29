@@ -90,14 +90,12 @@ Console.WriteLine();
 // ------------------------------------------------------------------
 // Individual operations: TryTest
 // ------------------------------------------------------------------
-success = root.TryTest("/name"u8, JsonElement.ParseValue("""
-    "Bob"
-    """u8));
+using var bobDoc = ParsedJsonDocument<JsonElement>.Parse("\"Bob\"");
+success = root.TryTest("/name"u8, bobDoc.RootElement);
 Console.WriteLine($"TryTest /name == \"Bob\": {success}");
 
-success = root.TryTest("/name"u8, JsonElement.ParseValue("""
-    "Alice"
-    """u8));
+using var aliceDoc = ParsedJsonDocument<JsonElement>.Parse("\"Alice\"");
+success = root.TryTest("/name"u8, aliceDoc.RootElement);
 Console.WriteLine($"TryTest /name == \"Alice\": {success}");
 Console.WriteLine();
 
@@ -134,13 +132,14 @@ Console.WriteLine();
 Console.WriteLine("=== Parsing a patch from JSON ===");
 Console.WriteLine();
 
-JsonPatchDocument parsedPatch = JsonPatchDocument.ParseValue(
+using var patchDoc = ParsedJsonDocument<JsonPatchDocument>.Parse(
     """
     [
         { "op": "replace", "path": "/age", "value": 32 },
         { "op": "add", "path": "/tags/-", "value": "verified" }
     ]
-    """u8);
+    """);
+JsonPatchDocument parsedPatch = patchDoc.RootElement;
 
 success = root.TryValidateAndApplyPatch(parsedPatch);
 Console.WriteLine($"Parsed patch applied: {success}");

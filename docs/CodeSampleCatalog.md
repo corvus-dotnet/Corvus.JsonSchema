@@ -11,6 +11,9 @@ Documentation code samples rot. APIs change, namespaces are renamed, parameters 
 Most of the time you only need to work with the files you just edited:
 
 ```powershell
+# 0. Build the ExampleRecipes projects first (if working with ExampleRecipes)
+dotnet build docs\ExampleRecipes\ExampleRecipes.slnx
+
 # 1. After editing a doc file, refresh its catalog entries
 .\docs\update-code-sample-catalog.ps1 -UpdateFile docs\JsonPath.md
 
@@ -88,15 +91,19 @@ New C# blocks default to `category: compilable, verified: false`. Change the cat
 
 ## Verifying samples
 
-### ExampleRecipes projects
+### Step 0: Build existing projects first
 
-These are real `.csproj` projects that compile directly:
+Before verifying any markdown code blocks, build the ExampleRecipes projects. This confirms the real code compiles and gives you a reference for cross-checking README samples:
 
 ```powershell
 dotnet build docs\ExampleRecipes\ExampleRecipes.slnx
 ```
 
-Build this after modifying any ExampleRecipes project. The README code blocks should match their companion `.cs` files.
+If any project fails, fix it before moving on — the README code blocks are derived from these projects.
+
+### ExampleRecipes READMEs
+
+Cross-reference each README code block against its companion `.cs` file in the same directory. The `.cs` file is the source of truth — update the README to match, not the other way around.
 
 ### Standalone doc samples
 
