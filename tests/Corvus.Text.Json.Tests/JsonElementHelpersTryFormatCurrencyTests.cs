@@ -809,4 +809,93 @@ public class JsonElementHelpersTryFormatCurrencyTests
         Assert.False(success);
         Assert.Equal(0, charsWritten);
     }
+
+    /// <summary>
+    /// Tests with buffer just 1 char less than the expected output for patterns that have
+    /// late overflow guards (parenthesized patterns with closing bracket check).
+    /// Only patterns 0, 4, 14, 15 have the guard — other patterns do CopyTo without checking.
+    /// </summary>
+    [Theory]
+    [InlineData(0, 10)]   // ($1,234.56) = 11, buffer 10 fails at closing )
+    [InlineData(4, 10)]   // (1,234.56$) = 11, buffer 10 fails at closing )
+    [InlineData(14, 11)]  // ($ 1,234.56) = 12, buffer 11 fails at closing )
+    [InlineData(15, 11)]  // (1,234.56 $) = 12, buffer 11 fails at closing )
+    public void TryFormatCurrency_NegativePattern_BufferOneLessThanNeeded(int pattern, int bufferSize)
+    {
+        byte[] utf8 = Encoding.UTF8.GetBytes("-1234.56");
+        JsonElementHelpers.ParseNumber(
+            utf8,
+            out bool isNegative,
+            out ReadOnlySpan<byte> integral,
+            out ReadOnlySpan<byte> fractional,
+            out int exponent);
+
+        Span<char> destination = stackalloc char[bufferSize];
+        var formatInfo = new NumberFormatInfo
+        {
+            CurrencySymbol = "$",
+            CurrencyGroupSeparator = ",",
+            CurrencyDecimalSeparator = ".",
+            CurrencyDecimalDigits = 2,
+            CurrencyNegativePattern = pattern,
+            CurrencyGroupSizes = [3]
+        };
+
+        bool success = JsonElementHelpers.TryFormatCurrency(
+            isNegative,
+            integral,
+            fractional,
+            exponent,
+            destination,
+            out int charsWritten,
+            2,
+            formatInfo);
+
+        Assert.False(success);
+        Assert.Equal(0, charsWritten);
+    }
+
+    /// <summary>
+    /// Positive patterns with buffer just 1 less than needed.
+    /// Only patterns 2 and 3 have late overflow guards (space char check).
+    /// Patterns 0 and 1 don't have guards after number/symbol writes.
+    /// $ 1,234.56=10, 1,234.56 $=10
+    /// </summary>
+    [Theory]
+    [InlineData(2, 9)]   // $ 1,234.56 = 10, buffer 9 fails at space check
+    [InlineData(3, 9)]   // 1,234.56 $ = 10, buffer 9 fails at space check
+    public void TryFormatCurrency_PositivePattern_BufferOneLessThanNeeded(int pattern, int bufferSize)
+    {
+        byte[] utf8 = Encoding.UTF8.GetBytes("1234.56");
+        JsonElementHelpers.ParseNumber(
+            utf8,
+            out bool isNegative,
+            out ReadOnlySpan<byte> integral,
+            out ReadOnlySpan<byte> fractional,
+            out int exponent);
+
+        Span<char> destination = stackalloc char[bufferSize];
+        var formatInfo = new NumberFormatInfo
+        {
+            CurrencySymbol = "$",
+            CurrencyGroupSeparator = ",",
+            CurrencyDecimalSeparator = ".",
+            CurrencyDecimalDigits = 2,
+            CurrencyPositivePattern = pattern,
+            CurrencyGroupSizes = [3]
+        };
+
+        bool success = JsonElementHelpers.TryFormatCurrency(
+            isNegative,
+            integral,
+            fractional,
+            exponent,
+            destination,
+            out int charsWritten,
+            2,
+            formatInfo);
+
+        Assert.False(success);
+        Assert.Equal(0, charsWritten);
+    }
 }

@@ -452,6 +452,12 @@ public static partial class JsonElementHelpers
             switch (pattern)
             {
                 case 0: // -n %
+                    if (pos + negSign.Length > destination.Length)
+                    {
+                        charsWritten = 0;
+                        return false;
+                    }
+
                     negSign.AsSpan().CopyTo(destination.Slice(pos));
                     pos += negSign.Length;
                     if (!TryFormatNumber(false, integral, fractional, adjustedExponent, destination.Slice(pos), out numberChars, effectivePrecision, tempFormatInfo))
@@ -473,6 +479,12 @@ public static partial class JsonElementHelpers
                     break;
 
                 case 1: // -n%
+                    if (pos + negSign.Length > destination.Length)
+                    {
+                        charsWritten = 0;
+                        return false;
+                    }
+
                     negSign.AsSpan().CopyTo(destination.Slice(pos));
                     pos += negSign.Length;
                     if (!TryFormatNumber(false, integral, fractional, adjustedExponent, destination.Slice(pos), out numberChars, effectivePrecision, tempFormatInfo))
@@ -493,6 +505,12 @@ public static partial class JsonElementHelpers
                     break;
 
                 case 2: // -%n
+                    if (pos + negSign.Length + percentSym.Length > destination.Length)
+                    {
+                        charsWritten = 0;
+                        return false;
+                    }
+
                     negSign.AsSpan().CopyTo(destination.Slice(pos));
                     pos += negSign.Length;
                     percentSym.AsSpan().CopyTo(destination.Slice(pos));
@@ -507,6 +525,12 @@ public static partial class JsonElementHelpers
                     break;
 
                 case 3: // %-n
+                    if (pos + percentSym.Length + negSign.Length > destination.Length)
+                    {
+                        charsWritten = 0;
+                        return false;
+                    }
+
                     percentSym.AsSpan().CopyTo(destination.Slice(pos));
                     pos += percentSym.Length;
                     negSign.AsSpan().CopyTo(destination.Slice(pos));
@@ -521,6 +545,12 @@ public static partial class JsonElementHelpers
                     break;
 
                 case 4: // %n-
+                    if (pos + percentSym.Length > destination.Length)
+                    {
+                        charsWritten = 0;
+                        return false;
+                    }
+
                     percentSym.AsSpan().CopyTo(destination.Slice(pos));
                     pos += percentSym.Length;
                     if (!TryFormatNumber(false, integral, fractional, adjustedExponent, destination.Slice(pos), out numberChars, effectivePrecision, tempFormatInfo))
@@ -581,6 +611,12 @@ public static partial class JsonElementHelpers
                     break;
 
                 case 7: // -% n
+                    if (pos + negSign.Length + percentSym.Length > destination.Length)
+                    {
+                        charsWritten = 0;
+                        return false;
+                    }
+
                     negSign.AsSpan().CopyTo(destination.Slice(pos));
                     pos += negSign.Length;
                     percentSym.AsSpan().CopyTo(destination.Slice(pos));
@@ -623,6 +659,12 @@ public static partial class JsonElementHelpers
                     break;
 
                 case 9: // % n-
+                    if (pos + percentSym.Length > destination.Length)
+                    {
+                        charsWritten = 0;
+                        return false;
+                    }
+
                     percentSym.AsSpan().CopyTo(destination.Slice(pos));
                     pos += percentSym.Length;
                     if (pos + 1 > destination.Length)
@@ -650,6 +692,12 @@ public static partial class JsonElementHelpers
                     break;
 
                 case 10: // % -n
+                    if (pos + percentSym.Length > destination.Length)
+                    {
+                        charsWritten = 0;
+                        return false;
+                    }
+
                     percentSym.AsSpan().CopyTo(destination.Slice(pos));
                     pos += percentSym.Length;
                     if (pos + 1 > destination.Length)
@@ -659,6 +707,12 @@ public static partial class JsonElementHelpers
                     }
 
                     destination[pos++] = ' ';
+                    if (pos + negSign.Length > destination.Length)
+                    {
+                        charsWritten = 0;
+                        return false;
+                    }
+
                     negSign.AsSpan().CopyTo(destination.Slice(pos));
                     pos += negSign.Length;
                     if (!TryFormatNumber(false, integral, fractional, adjustedExponent, destination.Slice(pos), out numberChars, effectivePrecision, tempFormatInfo))
@@ -742,6 +796,12 @@ public static partial class JsonElementHelpers
                     break;
 
                 case 2: // %n
+                    if (pos + percentSym.Length > destination.Length)
+                    {
+                        charsWritten = 0;
+                        return false;
+                    }
+
                     percentSym.AsSpan().CopyTo(destination.Slice(pos));
                     pos += percentSym.Length;
                     if (!TryFormatNumber(false, integral, fractional, adjustedExponent, destination.Slice(pos), out numberChars, effectivePrecision, tempFormatInfo))
@@ -754,6 +814,12 @@ public static partial class JsonElementHelpers
                     break;
 
                 case 3: // % n
+                    if (pos + percentSym.Length > destination.Length)
+                    {
+                        charsWritten = 0;
+                        return false;
+                    }
+
                     percentSym.AsSpan().CopyTo(destination.Slice(pos));
                     pos += percentSym.Length;
                     if (pos + 1 > destination.Length)
@@ -1438,7 +1504,7 @@ public static partial class JsonElementHelpers
             switch (pattern)
             {
                 case 0: // ($n)
-                    if (pos + 1 > destination.Length)
+                    if (pos + 1 + currencySymbol.Length > destination.Length)
                     {
                         charsWritten = 0;
                         return false;
@@ -1464,6 +1530,12 @@ public static partial class JsonElementHelpers
                     break;
 
                 case 1: // -$n
+                    if (pos + negativeSign.Length + currencySymbol.Length > destination.Length)
+                    {
+                        charsWritten = 0;
+                        return false;
+                    }
+
                     negativeSign.CopyTo(destination.Slice(pos));
                     pos += negativeSign.Length;
                     currencySymbol.CopyTo(destination.Slice(pos));
@@ -1478,6 +1550,12 @@ public static partial class JsonElementHelpers
                     break;
 
                 case 2: // $-n
+                    if (pos + currencySymbol.Length + negativeSign.Length > destination.Length)
+                    {
+                        charsWritten = 0;
+                        return false;
+                    }
+
                     currencySymbol.CopyTo(destination.Slice(pos));
                     pos += currencySymbol.Length;
                     negativeSign.CopyTo(destination.Slice(pos));
@@ -1492,6 +1570,12 @@ public static partial class JsonElementHelpers
                     break;
 
                 case 3: // $n-
+                    if (pos + currencySymbol.Length > destination.Length)
+                    {
+                        charsWritten = 0;
+                        return false;
+                    }
+
                     currencySymbol.CopyTo(destination.Slice(pos));
                     pos += currencySymbol.Length;
                     if (!FormatCurrencyNumber(integral, fractional, exponent, destination.Slice(pos), out int numberChars3, effectivePrecision, formatInfo))
@@ -1501,6 +1585,12 @@ public static partial class JsonElementHelpers
                     }
 
                     pos += numberChars3;
+                    if (pos + negativeSign.Length > destination.Length)
+                    {
+                        charsWritten = 0;
+                        return false;
+                    }
+
                     negativeSign.CopyTo(destination.Slice(pos));
                     pos += negativeSign.Length;
                     break;
@@ -1520,18 +1610,24 @@ public static partial class JsonElementHelpers
                     }
 
                     pos += numberChars4;
-                    currencySymbol.CopyTo(destination.Slice(pos));
-                    pos += currencySymbol.Length;
-                    if (pos + 1 > destination.Length)
+                    if (pos + currencySymbol.Length + 1 > destination.Length)
                     {
                         charsWritten = 0;
                         return false;
                     }
 
+                    currencySymbol.CopyTo(destination.Slice(pos));
+                    pos += currencySymbol.Length;
                     destination[pos++] = ')';
                     break;
 
                 case 5: // -n$
+                    if (pos + negativeSign.Length > destination.Length)
+                    {
+                        charsWritten = 0;
+                        return false;
+                    }
+
                     negativeSign.CopyTo(destination.Slice(pos));
                     pos += negativeSign.Length;
                     if (!FormatCurrencyNumber(integral, fractional, exponent, destination.Slice(pos), out int numberChars5, effectivePrecision, formatInfo))
@@ -1541,6 +1637,12 @@ public static partial class JsonElementHelpers
                     }
 
                     pos += numberChars5;
+                    if (pos + currencySymbol.Length > destination.Length)
+                    {
+                        charsWritten = 0;
+                        return false;
+                    }
+
                     currencySymbol.CopyTo(destination.Slice(pos));
                     pos += currencySymbol.Length;
                     break;
@@ -1553,6 +1655,12 @@ public static partial class JsonElementHelpers
                     }
 
                     pos += numberChars6;
+                    if (pos + negativeSign.Length + currencySymbol.Length > destination.Length)
+                    {
+                        charsWritten = 0;
+                        return false;
+                    }
+
                     negativeSign.CopyTo(destination.Slice(pos));
                     pos += negativeSign.Length;
                     currencySymbol.CopyTo(destination.Slice(pos));
@@ -1567,6 +1675,12 @@ public static partial class JsonElementHelpers
                     }
 
                     pos += numberChars7;
+                    if (pos + currencySymbol.Length + negativeSign.Length > destination.Length)
+                    {
+                        charsWritten = 0;
+                        return false;
+                    }
+
                     currencySymbol.CopyTo(destination.Slice(pos));
                     pos += currencySymbol.Length;
                     negativeSign.CopyTo(destination.Slice(pos));
@@ -1574,6 +1688,12 @@ public static partial class JsonElementHelpers
                     break;
 
                 case 8: // -n $
+                    if (pos + negativeSign.Length > destination.Length)
+                    {
+                        charsWritten = 0;
+                        return false;
+                    }
+
                     negativeSign.CopyTo(destination.Slice(pos));
                     pos += negativeSign.Length;
                     if (!FormatCurrencyNumber(integral, fractional, exponent, destination.Slice(pos), out int numberChars8, effectivePrecision, formatInfo))
@@ -1583,7 +1703,7 @@ public static partial class JsonElementHelpers
                     }
 
                     pos += numberChars8;
-                    if (pos + 1 > destination.Length)
+                    if (pos + 1 + currencySymbol.Length > destination.Length)
                     {
                         charsWritten = 0;
                         return false;
@@ -1595,6 +1715,12 @@ public static partial class JsonElementHelpers
                     break;
 
                 case 9: // -$ n
+                    if (pos + negativeSign.Length + currencySymbol.Length > destination.Length)
+                    {
+                        charsWritten = 0;
+                        return false;
+                    }
+
                     negativeSign.CopyTo(destination.Slice(pos));
                     pos += negativeSign.Length;
                     currencySymbol.CopyTo(destination.Slice(pos));
@@ -1623,7 +1749,7 @@ public static partial class JsonElementHelpers
                     }
 
                     pos += numberChars10;
-                    if (pos + 1 > destination.Length)
+                    if (pos + 1 + currencySymbol.Length + negativeSign.Length > destination.Length)
                     {
                         charsWritten = 0;
                         return false;
@@ -1637,6 +1763,12 @@ public static partial class JsonElementHelpers
                     break;
 
                 case 11: // $ n-
+                    if (pos + currencySymbol.Length > destination.Length)
+                    {
+                        charsWritten = 0;
+                        return false;
+                    }
+
                     currencySymbol.CopyTo(destination.Slice(pos));
                     pos += currencySymbol.Length;
                     if (pos + 1 > destination.Length)
@@ -1653,14 +1785,26 @@ public static partial class JsonElementHelpers
                     }
 
                     pos += numberChars11;
+                    if (pos + negativeSign.Length > destination.Length)
+                    {
+                        charsWritten = 0;
+                        return false;
+                    }
+
                     negativeSign.CopyTo(destination.Slice(pos));
                     pos += negativeSign.Length;
                     break;
 
                 case 12: // $ -n
+                    if (pos + currencySymbol.Length > destination.Length)
+                    {
+                        charsWritten = 0;
+                        return false;
+                    }
+
                     currencySymbol.CopyTo(destination.Slice(pos));
                     pos += currencySymbol.Length;
-                    if (pos + 1 > destination.Length)
+                    if (pos + 1 + negativeSign.Length > destination.Length)
                     {
                         charsWritten = 0;
                         return false;
@@ -1686,21 +1830,21 @@ public static partial class JsonElementHelpers
                     }
 
                     pos += numberChars13;
-                    negativeSign.CopyTo(destination.Slice(pos));
-                    pos += negativeSign.Length;
-                    if (pos + 1 > destination.Length)
+                    if (pos + negativeSign.Length + 1 + currencySymbol.Length > destination.Length)
                     {
                         charsWritten = 0;
                         return false;
                     }
 
+                    negativeSign.CopyTo(destination.Slice(pos));
+                    pos += negativeSign.Length;
                     destination[pos++] = ' ';
                     currencySymbol.CopyTo(destination.Slice(pos));
                     pos += currencySymbol.Length;
                     break;
 
                 case 14: // ($ n)
-                    if (pos + 1 > destination.Length)
+                    if (pos + 1 + currencySymbol.Length > destination.Length)
                     {
                         charsWritten = 0;
                         return false;
@@ -1747,7 +1891,7 @@ public static partial class JsonElementHelpers
                     }
 
                     pos += numberChars15;
-                    if (pos + 1 > destination.Length)
+                    if (pos + 1 + currencySymbol.Length + 1 > destination.Length)
                     {
                         charsWritten = 0;
                         return false;
@@ -1756,12 +1900,6 @@ public static partial class JsonElementHelpers
                     destination[pos++] = ' ';
                     currencySymbol.CopyTo(destination.Slice(pos));
                     pos += currencySymbol.Length;
-                    if (pos + 1 > destination.Length)
-                    {
-                        charsWritten = 0;
-                        return false;
-                    }
-
                     destination[pos++] = ')';
                     break;
 
@@ -1776,6 +1914,12 @@ public static partial class JsonElementHelpers
             switch (pattern)
             {
                 case 0: // $n
+                    if (pos + currencySymbol.Length > destination.Length)
+                    {
+                        charsWritten = 0;
+                        return false;
+                    }
+
                     currencySymbol.CopyTo(destination.Slice(pos));
                     pos += currencySymbol.Length;
                     if (!FormatCurrencyNumber(integral, fractional, exponent, destination.Slice(pos), out int numberChars0, effectivePrecision, formatInfo))
@@ -1795,11 +1939,23 @@ public static partial class JsonElementHelpers
                     }
 
                     pos += numberChars1;
+                    if (pos + currencySymbol.Length > destination.Length)
+                    {
+                        charsWritten = 0;
+                        return false;
+                    }
+
                     currencySymbol.CopyTo(destination.Slice(pos));
                     pos += currencySymbol.Length;
                     break;
 
                 case 2: // $ n
+                    if (pos + currencySymbol.Length > destination.Length)
+                    {
+                        charsWritten = 0;
+                        return false;
+                    }
+
                     currencySymbol.CopyTo(destination.Slice(pos));
                     pos += currencySymbol.Length;
                     if (pos + 1 > destination.Length)
@@ -1826,7 +1982,7 @@ public static partial class JsonElementHelpers
                     }
 
                     pos += numberChars3;
-                    if (pos + 1 > destination.Length)
+                    if (pos + 1 + currencySymbol.Length > destination.Length)
                     {
                         charsWritten = 0;
                         return false;

@@ -407,4 +407,95 @@ public class JsonElementHelpersTryFormatPercentTests
         Assert.False(success);
         Assert.Equal(0, charsWritten);
     }
+
+    /// <summary>
+    /// Tests with buffer just 1 char less than the expected output, to hit the LATE overflow guards
+    /// (after the number part has been written, but suffix doesn't fit).
+    /// All patterns below have explicit overflow guards after the number part.
+    /// </summary>
+    [Theory]
+    [InlineData(0, 7)]   // -n % → "-50.00 %" = 8 chars, buffer 7 hits guard at pos+1+%len > dest.Length
+    [InlineData(1, 6)]   // -n%  → "-50.00%" = 7 chars, buffer 6 hits guard at pos+%len > dest.Length
+    [InlineData(4, 6)]   // %n-  → "%50.00-" = 7 chars, buffer 6 hits guard at pos+negLen > dest.Length
+    [InlineData(5, 6)]   // n-%  → "50.00-%" = 7 chars, buffer 6 hits guard at pos+neg+%len > dest.Length
+    [InlineData(6, 6)]   // n%-  → "50.00%-" = 7 chars, buffer 6 hits guard at pos+%+negLen > dest.Length
+    [InlineData(8, 7)]   // n %- → "50.00 %-" = 8 chars, buffer 7 hits guard at pos+1+%+negLen > dest.Length
+    [InlineData(9, 7)]   // % n- → "% 50.00-" = 8 chars, buffer 7 hits guard at pos+negLen > dest.Length
+    [InlineData(11, 7)]  // n- % → "50.00- %" = 8 chars, buffer 7 hits guard at pos+neg+1+%len > dest.Length
+    public void TryFormatPercent_NegativePattern_BufferOneLessThanNeeded(int pattern, int bufferSize)
+    {
+        byte[] utf8 = Encoding.UTF8.GetBytes("-0.5");
+        JsonElementHelpers.ParseNumber(
+            utf8,
+            out bool isNegative,
+            out ReadOnlySpan<byte> integral,
+            out ReadOnlySpan<byte> fractional,
+            out int exponent);
+
+        Span<char> destination = stackalloc char[bufferSize];
+        var formatInfo = new NumberFormatInfo
+        {
+            PercentDecimalDigits = 2,
+            PercentDecimalSeparator = ".",
+            PercentSymbol = "%",
+            PercentNegativePattern = pattern,
+            NegativeSign = "-"
+        };
+
+        bool success = JsonElementHelpers.TryFormatPercent(
+            isNegative,
+            integral,
+            fractional,
+            exponent,
+            destination,
+            out int charsWritten,
+            -1,
+            formatInfo);
+
+        Assert.False(success);
+        Assert.Equal(0, charsWritten);
+    }
+
+    /// <summary>
+    /// Tests positive patterns with buffer just 1 char less than needed.
+    /// Patterns 0 and 1 have guards after the number part.
+    /// Pattern 3 has a guard for the space after %.
+    /// </summary>
+    [Theory]
+    [InlineData(0, 6)]   // n %  → "50.00 %" = 7 chars, buffer 6 hits pos+1+%len > dest
+    [InlineData(1, 5)]   // n%   → "50.00%" = 6 chars, buffer 5 hits pos+%len > dest
+    [InlineData(3, 2)]   // % n  → "% 50.00" = 7 chars, buffer 2 hits pos+1 > dest after %
+    public void TryFormatPercent_PositivePattern_BufferOneLessThanNeeded(int pattern, int bufferSize)
+    {
+        byte[] utf8 = Encoding.UTF8.GetBytes("0.5");
+        JsonElementHelpers.ParseNumber(
+            utf8,
+            out bool isNegative,
+            out ReadOnlySpan<byte> integral,
+            out ReadOnlySpan<byte> fractional,
+            out int exponent);
+
+        Span<char> destination = stackalloc char[bufferSize];
+        var formatInfo = new NumberFormatInfo
+        {
+            PercentDecimalDigits = 2,
+            PercentDecimalSeparator = ".",
+            PercentSymbol = "%",
+            PercentPositivePattern = pattern,
+            NegativeSign = "-"
+        };
+
+        bool success = JsonElementHelpers.TryFormatPercent(
+            isNegative,
+            integral,
+            fractional,
+            exponent,
+            destination,
+            out int charsWritten,
+            -1,
+            formatInfo);
+
+        Assert.False(success);
+        Assert.Equal(0, charsWritten);
+    }
 }

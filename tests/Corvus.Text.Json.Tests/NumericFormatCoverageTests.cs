@@ -742,6 +742,133 @@ public class NumericFormatCoverageTests
         Assert.Equal(0, bytesWritten);
     }
 
+    [Theory]
+    [InlineData(0, 10)]   // ($1,234.56) = 11 bytes
+    [InlineData(4, 10)]   // (1,234.56$) = 11 bytes
+    [InlineData(14, 11)]  // ($ 1,234.56) = 12 bytes
+    [InlineData(15, 11)]  // (1,234.56 $) = 12 bytes
+    public void TryFormatCurrency_NegativePattern_BufferOneLess_Utf8(int pattern, int bufferSize)
+    {
+        byte[] utf8 = Encoding.UTF8.GetBytes("-1234.56");
+        JsonElementHelpers.ParseNumber(
+            utf8,
+            out bool isNegative,
+            out ReadOnlySpan<byte> integral,
+            out ReadOnlySpan<byte> fractional,
+            out int exponent);
+
+        Span<byte> destination = stackalloc byte[bufferSize];
+        var formatInfo = new NumberFormatInfo
+        {
+            CurrencySymbol = "$",
+            CurrencyGroupSeparator = ",",
+            CurrencyDecimalSeparator = ".",
+            CurrencyDecimalDigits = 2,
+            CurrencyNegativePattern = pattern,
+            CurrencyGroupSizes = [3]
+        };
+
+        bool success = JsonElementHelpers.TryFormatCurrency(
+            isNegative, integral, fractional, exponent,
+            destination, out int bytesWritten, 2, formatInfo);
+
+        Assert.False(success);
+        Assert.Equal(0, bytesWritten);
+    }
+
+    [Theory]
+    [InlineData(2, 9)]   // $ 1,234.56 = 10 bytes (space guard)
+    [InlineData(3, 8)]   // 1,234.56 $ = 10 bytes, buffer 8 hits space guard (8+1>8)
+    public void TryFormatCurrency_PositivePattern_BufferOneLess_Utf8(int pattern, int bufferSize)
+    {
+        byte[] utf8 = Encoding.UTF8.GetBytes("1234.56");
+        JsonElementHelpers.ParseNumber(
+            utf8,
+            out bool isNegative,
+            out ReadOnlySpan<byte> integral,
+            out ReadOnlySpan<byte> fractional,
+            out int exponent);
+
+        Span<byte> destination = stackalloc byte[bufferSize];
+        var formatInfo = new NumberFormatInfo
+        {
+            CurrencySymbol = "$",
+            CurrencyGroupSeparator = ",",
+            CurrencyDecimalSeparator = ".",
+            CurrencyDecimalDigits = 2,
+            CurrencyPositivePattern = pattern,
+            CurrencyGroupSizes = [3]
+        };
+
+        bool success = JsonElementHelpers.TryFormatCurrency(
+            isNegative, integral, fractional, exponent,
+            destination, out int bytesWritten, 2, formatInfo);
+
+        Assert.False(success);
+        Assert.Equal(0, bytesWritten);
+    }
+
+    [Theory]
+    [InlineData(0, 7)]   // -50.00 % = 8 bytes
+    [InlineData(1, 6)]   // -50.00% = 7 bytes
+    public void TryFormatPercent_NegativePattern_BufferOneLess_Utf8(int pattern, int bufferSize)
+    {
+        byte[] utf8 = Encoding.UTF8.GetBytes("-0.5");
+        JsonElementHelpers.ParseNumber(
+            utf8,
+            out bool isNegative,
+            out ReadOnlySpan<byte> integral,
+            out ReadOnlySpan<byte> fractional,
+            out int exponent);
+
+        Span<byte> destination = stackalloc byte[bufferSize];
+        var formatInfo = new NumberFormatInfo
+        {
+            PercentDecimalDigits = 2,
+            PercentDecimalSeparator = ".",
+            PercentSymbol = "%",
+            PercentNegativePattern = pattern,
+            NegativeSign = "-"
+        };
+
+        bool success = JsonElementHelpers.TryFormatPercent(
+            isNegative, integral, fractional, exponent,
+            destination, out int bytesWritten, -1, formatInfo);
+
+        Assert.False(success);
+        Assert.Equal(0, bytesWritten);
+    }
+
+    [Theory]
+    [InlineData(3, 2)]   // % 50.00 = 7 bytes (guard for space after %)
+    public void TryFormatPercent_PositivePattern_BufferOneLess_Utf8(int pattern, int bufferSize)
+    {
+        byte[] utf8 = Encoding.UTF8.GetBytes("0.5");
+        JsonElementHelpers.ParseNumber(
+            utf8,
+            out bool isNegative,
+            out ReadOnlySpan<byte> integral,
+            out ReadOnlySpan<byte> fractional,
+            out int exponent);
+
+        Span<byte> destination = stackalloc byte[bufferSize];
+        var formatInfo = new NumberFormatInfo
+        {
+            PercentDecimalDigits = 2,
+            PercentDecimalSeparator = ".",
+            PercentSymbol = "%",
+            PercentPositivePattern = pattern,
+            NegativeSign = "-"
+        };
+
+        bool success = JsonElementHelpers.TryFormatPercent(
+            isNegative, integral, fractional, exponent,
+            destination, out int bytesWritten, -1, formatInfo);
+
+        Assert.False(success);
+        Assert.Equal(0, bytesWritten);
+    }
+
     #endregion
 
     #region TryFormatNumber UTF-8 edge cases
