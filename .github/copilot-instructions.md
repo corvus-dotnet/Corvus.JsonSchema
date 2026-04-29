@@ -154,6 +154,9 @@ Rules to follow:
 - **`BigNumber`** — the custom arbitrary-precision decimal struct lives in `Corvus.Numerics`. Prefer it over `decimal` when the JSON value may have precision beyond 28 significant digits.
 - **Test-first bug fixes** — never implement a fix for a suspected bug without first writing a test that reproduces the problem. The test must fail before the fix and pass after. If you cannot reproduce the bug with a test, do not change production code.
 - **Data-driven coverage improvement** — when working to improve code coverage, ONLY write tests that target specific uncovered branches/lines identified in Cobertura XML coverage reports. Never write generic tests for already-covered functions hoping they might help. The process is: (1) collect coverage with `--collect:"XPlat Code Coverage"`, (2) merge reports with `reportgenerator`, (3) parse the Cobertura XML to find exact uncovered line ranges, (4) read the actual source code at those lines to understand the uncovered logic, (5) devise expressions/inputs that exercise those specific code paths, (6) verify with the reference implementation where applicable. The coverage report is the sole source of truth for what needs testing — not guesswork about what "might" be uncovered.
+- **Doc samples: prefer `Parse` over `ParseValue`** — documentation examples should show `ParsedJsonDocument<T>.Parse(...)` with `using` to promote pooled-memory best practice. `ParseValue` creates non-disposable copies. Use `ParseValue` only where `Parse` is impractical (e.g., inline dictionary initializers for small constants).
+- **Doc samples: use implicit `JsonElement.Source` conversions** — write `PatchBuilder.Add("/name"u8, "Alice")`, `.Replace("/version"u8, 2)` instead of wrapping scalars in `ParseValue`.
+- **Doc samples: only import `Corvus.Text.Json`** — doc blocks should not import `System.Text.Json`. Use fully-qualified names for `System.Text.Json` types when needed.
 
 ## Documentation Code Sample Verification
 
@@ -239,14 +242,6 @@ When verifying samples, watch for these patterns that look correct but fail to c
 - **`ParsedJsonDocument<T>.Parse("""..."""u8)`** — `Parse` takes `ReadOnlyMemory<byte>`, not `ReadOnlySpan<byte>` (which the `u8` suffix produces). Remove the `u8` suffix.
 - **`ArrayBuilder.AddProperty()`** — does not exist. Array elements use `AddItem()`. `AddProperty(name, value)` is only on `ObjectBuilder`.
 - **`using System.Text.Json;` alongside `using Corvus.Text.Json;`** — causes ambiguity for `JsonElement`, `Utf8JsonWriter`, and `JsonWriterOptions` which exist in both namespaces.
-
-### Documentation writing conventions
-
-When writing or editing documentation code samples, follow these API usage conventions:
-
-- **Prefer `Parse` over `ParseValue`** — documentation examples should show `ParsedJsonDocument<T>.Parse(...)` with `using` to promote pooled-memory best practice. `ParseValue` creates non-disposable copies. Use `ParseValue` only where `Parse` is impractical (e.g., inline dictionary initializers for small constants).
-- **Use implicit `JsonElement.Source` conversions for PatchBuilder** — write `.Add("/name"u8, "Alice")`, `.Replace("/version"u8, 2)` instead of wrapping scalars in `ParseValue`.
-- **Only import `Corvus.Text.Json`** — doc blocks should not import `System.Text.Json`. Use fully-qualified names for `System.Text.Json` types when needed.
 
 ### Catalog maintenance script
 

@@ -180,11 +180,7 @@ When verifying samples, watch for these patterns that look correct but fail to c
 
 ## Documentation writing conventions
 
-When writing or editing documentation code samples, follow these API usage conventions:
-
-- **Prefer `Parse` over `ParseValue`** — show `ParsedJsonDocument<T>.Parse(...)` with `using` to promote pooled-memory best practice. `ParseValue` creates non-disposable copies. Reserve `ParseValue` for inline contexts where `Parse` is impractical (e.g., small constants in dictionary initializers).
-- **Use implicit `JsonElement.Source` conversions for PatchBuilder** — write `.Add("/name"u8, "Alice")`, `.Replace("/version"u8, 2)` instead of wrapping scalars in `ParseValue`.
-- **Only import `Corvus.Text.Json`** — doc blocks should not import `System.Text.Json`. Use fully-qualified names for `System.Text.Json` types when needed.
+See the **"Doc samples"** bullets in the **Key Conventions** section of `.github/copilot-instructions.md` for API usage conventions that apply when writing documentation code samples (Parse vs ParseValue, implicit Source conversions, namespace imports).
 
 
 ## Annotation preservation
