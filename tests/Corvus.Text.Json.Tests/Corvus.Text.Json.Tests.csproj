@@ -96,6 +96,7 @@
     <Compile Include="LargeArrayBuilderTests.cs" />
     <Compile Include="EvaluatorMessageCoverageTests.cs" />
     <Compile Include="BuilderSnapshotCoverageTests.cs" />
+    <Compile Include="SourceAndNumericCoverageTests.cs" />
     <Compile Include="JsonDocumentBuilderRangeTests.cs" />
     <Compile Include="JsonDocumentBuilderParseTests.cs" />
     <Compile Include="JsonDocumentBuilderTests.cs" />
