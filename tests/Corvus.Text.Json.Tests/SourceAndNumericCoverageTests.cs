@@ -77,6 +77,15 @@ public static class SourceAndNumericCoverageTests
     }
 
     [Fact]
+    public static void WriteTo_StringSimpleType_Guid_WritesQuotedString()
+    {
+        Guid g = Guid.Parse("01234567-89ab-cdef-0123-456789abcdef");
+        JsonElement.Source source = g;
+        string result = WriteSourceToString(source);
+        Assert.Contains("01234567-89ab-cdef-0123-456789abcdef", result);
+    }
+
+    [Fact]
     public static void WriteTo_Utf16String_WritesQuotedString()
     {
         JsonElement.Source source = "hello world";
