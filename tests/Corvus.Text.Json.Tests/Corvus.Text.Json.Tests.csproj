@@ -90,7 +90,9 @@
     <Compile Include="JsonDocumentBuilderCreateDynamicTests.cs" />
     <Compile Include="JsonDocumentBuilderInsertItemTests.cs" />
     <Compile Include="MutableAccessorCoverageTests.cs" />
+    <Compile Include="MutableBuilderExtendedCoverageTests.cs" />
     <Compile Include="MutableDocumentCoverageTests.cs" />
+    <Compile Include="PercentBufferOverflowTests.cs" />
     <Compile Include="AnnotationProducerCoverageTests.cs" />
     <Compile Include="ValueStackCoverageTests.cs" />
     <Compile Include="LargeArrayBuilderTests.cs" />
@@ -113,6 +115,8 @@
     <Compile Include="DateTimeCoverageTests.cs" />
     <Compile Include="JsonElementHelpersDateTimeTests.cs" />
     <Compile Include="JsonElementHelpersParseNumberTests.cs" />
+    <Compile Include="CurrencyBufferOverflowTests.cs" />
+    <Compile Include="GeneralExponentialBufferOverflowTests.cs" />
     <Compile Include="JsonElementHelpersTryFormatCurrencyTests.cs" />
     <Compile Include="JsonElementHelpersTryFormatCurrencyUtf8Tests.cs" />
     <Compile Include="JsonElementHelpersTryFormatExponentialTests.cs" />

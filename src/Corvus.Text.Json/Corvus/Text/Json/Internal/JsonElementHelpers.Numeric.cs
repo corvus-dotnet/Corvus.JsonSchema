@@ -2529,131 +2529,171 @@ public static partial class JsonElementHelpers
         char exponentChar,
         NumberFormatInfo formatInfo)
     {
-        int pos = 0;
-
-        if (isNegative)
-        {
-            formatInfo.NegativeSign.AsSpan().CopyTo(destination.Slice(pos));
-            pos += formatInfo.NegativeSign.Length;
-        }
-
         int totalLength = integral.Length + fractional.Length;
-        int significandStart = pos;
 
-        // Calculate scientific exponent
-        int scientificExponent = totalLength - 1 + exponent;
+        // Calculate required scratch space for in-place digit manipulation.
+        // The method writes digits to a scratch buffer, shifts them to insert a
+        // decimal point, and removes trailing zeros before copying to destination.
+        int maxDigits = Math.Max(precision > 0 ? precision + 1 : 0, totalLength);
+        int negSignLen = isNegative ? formatInfo.NegativeSign.Length : 0;
+        int maxExpSignLen = Math.Max(formatInfo.PositiveSign.Length, formatInfo.NegativeSign.Length);
+        int scratchSize = negSignLen + maxDigits + 2 + 1 + maxExpSignLen + 11;
 
-        // Round to precision significant figures
-        if (precision > 0 && precision < totalLength)
+        char[]? rentedScratch = null;
+        Span<char> scratch = scratchSize <= JsonConstants.StackallocCharThreshold
+            ? stackalloc char[JsonConstants.StackallocCharThreshold]
+            : (rentedScratch = ArrayPool<char>.Shared.Rent(scratchSize));
+
+        try
         {
-            byte roundingDigit = GetDigitAtPosition(integral, fractional, precision);
-            int carry = roundingDigit >= (byte)'5' ? 1 : 0;
+            int pos = 0;
 
-            for (int i = precision - 1; i >= 0; i--)
+            if (isNegative)
             {
-                byte digit = GetDigitAtPosition(integral, fractional, i);
-                digit += (byte)carry;
-                if (digit > (byte)'9')
+                formatInfo.NegativeSign.AsSpan().CopyTo(scratch.Slice(pos));
+                pos += formatInfo.NegativeSign.Length;
+            }
+
+            int significandStart = pos;
+
+            // Calculate scientific exponent
+            int scientificExponent = totalLength - 1 + exponent;
+
+            // Round to precision significant figures
+            if (precision > 0 && precision < totalLength)
+            {
+                byte roundingDigit = GetDigitAtPosition(integral, fractional, precision);
+                int carry = roundingDigit >= (byte)'5' ? 1 : 0;
+
+                for (int i = precision - 1; i >= 0; i--)
                 {
-                    digit = (byte)'0';
-                    carry = 1;
+                    byte digit = GetDigitAtPosition(integral, fractional, i);
+                    digit += (byte)carry;
+                    if (digit > (byte)'9')
+                    {
+                        digit = (byte)'0';
+                        carry = 1;
+                    }
+                    else
+                    {
+                        carry = 0;
+                    }
+
+                    scratch[pos + i] = (char)digit;
+                }
+
+                if (carry > 0)
+                {
+                    // Shift digits right
+                    for (int i = precision; i > 0; i--)
+                    {
+                        scratch[pos + i] = scratch[pos + i - 1];
+                    }
+
+                    scratch[pos] = '1';
+                    pos += precision + 1;
+                    scientificExponent++;
                 }
                 else
                 {
-                    carry = 0;
+                    pos += precision;
                 }
-
-                destination[pos + i] = (char)digit;
-            }
-
-            if (carry > 0)
-            {
-                // Shift digits right
-                for (int i = precision; i > 0; i--)
-                {
-                    destination[pos + i] = destination[pos + i - 1];
-                }
-
-                destination[pos] = '1';
-                pos += precision + 1;
-                scientificExponent++;
             }
             else
             {
-                pos += precision;
-            }
-        }
-        else
-        {
-            // Output all digits
-            for (int i = 0; i < totalLength; i++)
-            {
-                destination[pos++] = (char)GetDigitAtPosition(integral, fractional, i);
-            }
-        }
-
-        // Remove trailing zeros
-        for (int trailingZeros = 0; pos > significandStart + 1 && destination[pos - 1] == '0'; trailingZeros++)
-        {
-            pos--;
-        }
-
-        // Insert decimal point after first digit (if there are more digits)
-        if (pos > significandStart + 1)
-        {
-            // Shift digits right to make room for decimal point
-            for (int i = pos; i > significandStart + 1; i--)
-            {
-                destination[i] = destination[i - 1];
+                // Output all digits
+                for (int i = 0; i < totalLength; i++)
+                {
+                    scratch[pos++] = (char)GetDigitAtPosition(integral, fractional, i);
+                }
             }
 
-            destination[significandStart + 1] = formatInfo.NumberDecimalSeparator[0];
-            pos++;
-
-            // Remove trailing zeros after decimal point
-            while (pos > significandStart + 2 && destination[pos - 1] == '0')
+            // Remove trailing zeros
+            for (int trailingZeros = 0; pos > significandStart + 1 && scratch[pos - 1] == '0'; trailingZeros++)
             {
                 pos--;
             }
 
-            // Remove decimal point if no fractional digits remain
-            if (destination[pos - 1] == formatInfo.NumberDecimalSeparator[0])
+            // Insert decimal point after first digit (if there are more digits)
+            if (pos > significandStart + 1)
             {
-                pos--;
+                // Shift digits right to make room for decimal point
+                for (int i = pos; i > significandStart + 1; i--)
+                {
+                    scratch[i] = scratch[i - 1];
+                }
+
+                scratch[significandStart + 1] = formatInfo.NumberDecimalSeparator[0];
+                pos++;
+
+                // Remove trailing zeros after decimal point
+                while (pos > significandStart + 2 && scratch[pos - 1] == '0')
+                {
+                    pos--;
+                }
+
+                // Remove decimal point if no fractional digits remain
+                if (scratch[pos - 1] == formatInfo.NumberDecimalSeparator[0])
+                {
+                    pos--;
+                }
             }
-        }
-        else if (pos == significandStart)
-        {
-            // If we removed all digits, write "0"
-            destination[pos++] = '0';
+            else if (pos == significandStart)
+            {
+                // If we removed all digits, write "0"
+                scratch[pos++] = '0';
+
+                if (pos > destination.Length)
+                {
+                    charsWritten = 0;
+                    return false;
+                }
+
+                scratch.Slice(0, pos).CopyTo(destination);
+                charsWritten = pos;
+                return true;
+            }
+
+            // Write exponent
+            scratch[pos++] = exponentChar;
+
+            if (scientificExponent >= 0)
+            {
+                formatInfo.PositiveSign.AsSpan().CopyTo(scratch.Slice(pos));
+                pos += formatInfo.PositiveSign.Length;
+            }
+            else
+            {
+                formatInfo.NegativeSign.AsSpan().CopyTo(scratch.Slice(pos));
+                pos += formatInfo.NegativeSign.Length;
+                scientificExponent = -scientificExponent;
+            }
+
+            if (!scientificExponent.TryFormat(scratch.Slice(pos), out int expChars))
+            {
+                charsWritten = 0;
+                return false;
+            }
+
+            pos += expChars;
+
+            if (pos > destination.Length)
+            {
+                charsWritten = 0;
+                return false;
+            }
+
+            scratch.Slice(0, pos).CopyTo(destination);
             charsWritten = pos;
             return true;
         }
-
-        // Write exponent
-        destination[pos++] = exponentChar;
-
-        if (scientificExponent >= 0)
+        finally
         {
-            formatInfo.PositiveSign.AsSpan().CopyTo(destination.Slice(pos));
-            pos += formatInfo.PositiveSign.Length;
+            if (rentedScratch != null)
+            {
+                ArrayPool<char>.Shared.Return(rentedScratch);
+            }
         }
-        else
-        {
-            formatInfo.NegativeSign.AsSpan().CopyTo(destination.Slice(pos));
-            pos += formatInfo.NegativeSign.Length;
-            scientificExponent = -scientificExponent;
-        }
-
-        if (!scientificExponent.TryFormat(destination.Slice(pos), out int expChars))
-        {
-            charsWritten = 0;
-            return false;
-        }
-
-        pos += expChars;
-        charsWritten = pos;
-        return true;
     }
 
     private static bool FormatGeneralFixedPoint(
@@ -3087,6 +3127,12 @@ public static partial class JsonElementHelpers
 
         if (isNegative)
         {
+            if (pos + formatInfo.NegativeSign.Length > destination.Length)
+            {
+                charsWritten = 0;
+                return false;
+            }
+
             formatInfo.NegativeSign.AsSpan().CopyTo(destination.Slice(pos));
             pos += formatInfo.NegativeSign.Length;
         }
@@ -3127,8 +3173,9 @@ public static partial class JsonElementHelpers
         // We want one digit before the decimal point
         int scientificExponent = totalLength - 1 + exponent;
 
-        // Check buffer size
-        if (pos + 1 + (precision > 0 ? 1 + precision : 0) + 1 + 1 + 3 > destination.Length)
+        // Check buffer size — account for actual NegativeSign length for negative exponents
+        int expSignLen = Math.Max(1, formatInfo.NegativeSign.Length);
+        if (pos + 1 + (precision > 0 ? 1 + precision : 0) + 1 + expSignLen + 3 > destination.Length)
         {
             charsWritten = 0;
             return false;
@@ -5563,155 +5610,196 @@ public static partial class JsonElementHelpers
         char exponentChar,
         NumberFormatInfo formatInfo)
     {
-        int pos = 0;
+        int totalLength = integral.Length + fractional.Length;
 
-        if (isNegative)
+        // Calculate required scratch space for in-place digit manipulation.
+        int maxDigits = Math.Max(precision > 0 ? precision + 1 : 0, totalLength);
+        int negSignLen = isNegative ? Encoding.UTF8.GetByteCount(formatInfo.NegativeSign) : 0;
+        int maxExpSignLen = Math.Max(
+            Encoding.UTF8.GetByteCount(formatInfo.PositiveSign),
+            Encoding.UTF8.GetByteCount(formatInfo.NegativeSign));
+        int decSepLen = Encoding.UTF8.GetByteCount(formatInfo.NumberDecimalSeparator);
+        int scratchSize = negSignLen + maxDigits + decSepLen + 2 + 1 + maxExpSignLen + 11;
+
+        byte[]? rentedScratch = null;
+        Span<byte> scratch = scratchSize <= JsonConstants.StackallocByteThreshold
+            ? stackalloc byte[JsonConstants.StackallocByteThreshold]
+            : (rentedScratch = ArrayPool<byte>.Shared.Rent(scratchSize));
+
+        try
         {
-            if (!JsonReaderHelper.TryGetUtf8FromText(formatInfo.NegativeSign, destination.Slice(pos), out int negativeSignLength))
+            int pos = 0;
+
+            if (isNegative)
             {
-                bytesWritten = 0;
-                return false;
+                if (!JsonReaderHelper.TryGetUtf8FromText(formatInfo.NegativeSign, scratch.Slice(pos), out int negativeSignLength))
+                {
+                    bytesWritten = 0;
+                    return false;
+                }
+
+                pos += negativeSignLength;
             }
 
-            pos += negativeSignLength;
-        }
+            int significandStart = pos;
 
-        int totalLength = integral.Length + fractional.Length;
-        int significandStart = pos;
+            // Calculate scientific exponent
+            int scientificExponent = totalLength - 1 + exponent;
 
-        // Calculate scientific exponent
-        int scientificExponent = totalLength - 1 + exponent;
-
-        // Round to precision significant figures
-        if (precision > 0 && precision < totalLength)
-        {
-            byte roundingDigit = GetDigitAtPosition(integral, fractional, precision);
-            int carry = roundingDigit >= (byte)'5' ? 1 : 0;
-
-            for (int i = precision - 1; i >= 0; i--)
+            // Round to precision significant figures
+            if (precision > 0 && precision < totalLength)
             {
-                byte digit = GetDigitAtPosition(integral, fractional, i);
-                digit += (byte)carry;
-                if (digit > (byte)'9')
+                byte roundingDigit = GetDigitAtPosition(integral, fractional, precision);
+                int carry = roundingDigit >= (byte)'5' ? 1 : 0;
+
+                for (int i = precision - 1; i >= 0; i--)
                 {
-                    digit = (byte)'0';
-                    carry = 1;
+                    byte digit = GetDigitAtPosition(integral, fractional, i);
+                    digit += (byte)carry;
+                    if (digit > (byte)'9')
+                    {
+                        digit = (byte)'0';
+                        carry = 1;
+                    }
+                    else
+                    {
+                        carry = 0;
+                    }
+
+                    scratch[pos + i] = digit;
+                }
+
+                if (carry > 0)
+                {
+                    // Shift digits right
+                    for (int i = precision; i > 0; i--)
+                    {
+                        scratch[pos + i] = scratch[pos + i - 1];
+                    }
+
+                    scratch[pos] = (byte)'1';
+                    pos += precision + 1;
+                    scientificExponent++;
                 }
                 else
                 {
-                    carry = 0;
+                    pos += precision;
                 }
-
-                destination[pos + i] = digit;
-            }
-
-            if (carry > 0)
-            {
-                // Shift digits right
-                for (int i = precision; i > 0; i--)
-                {
-                    destination[pos + i] = destination[pos + i - 1];
-                }
-
-                destination[pos] = (byte)'1';
-                pos += precision + 1;
-                scientificExponent++;
             }
             else
             {
-                pos += precision;
+                // Output all digits
+                for (int i = 0; i < totalLength; i++)
+                {
+                    scratch[pos++] = GetDigitAtPosition(integral, fractional, i);
+                }
             }
-        }
-        else
-        {
-            // Output all digits
-            for (int i = 0; i < totalLength; i++)
+
+            // Remove trailing zeros
+            for (int trailingZeros = 0; pos > significandStart + 1 && scratch[pos - 1] == '0'; trailingZeros++)
             {
-                destination[pos++] = GetDigitAtPosition(integral, fractional, i);
+                pos--;
             }
-        }
 
-        // Remove trailing zeros
-        for (int trailingZeros = 0; pos > significandStart + 1 && destination[pos - 1] == '0'; trailingZeros++)
-        {
-            pos--;
-        }
+            // Insert decimal point after first digit (if there are more digits)
+            if (pos > significandStart + 1)
+            {
+                // Get decimal separator as UTF-8
+                if (!JsonReaderHelper.TryGetUtf8FromText(formatInfo.NumberDecimalSeparator, stackalloc byte[10], out int decimalSepLength))
+                {
+                    bytesWritten = 0;
+                    return false;
+                }
 
-        // Insert decimal point after first digit (if there are more digits)
-        if (pos > significandStart + 1)
-        {
-            // Get decimal separator as UTF-8
-            if (!JsonReaderHelper.TryGetUtf8FromText(formatInfo.NumberDecimalSeparator, stackalloc byte[10], out int decimalSepLength))
+                byte decimalSep = formatInfo.NumberDecimalSeparator.Length > 0 ? (byte)formatInfo.NumberDecimalSeparator[0] : (byte)'.';
+
+                // Shift digits right to make room for decimal point
+                for (int i = pos; i > significandStart + 1; i--)
+                {
+                    scratch[i] = scratch[i - 1];
+                }
+
+                scratch[significandStart + 1] = decimalSep;
+                pos++;
+
+                // Remove trailing zeros after decimal point
+                while (pos > significandStart + 2 && scratch[pos - 1] == '0')
+                {
+                    pos--;
+                }
+
+                // Remove decimal point if no fractional digits remain
+                if (scratch[pos - 1] == decimalSep)
+                {
+                    pos--;
+                }
+            }
+            else if (pos == significandStart)
+            {
+                // If we removed all digits, write "0"
+                scratch[pos++] = (byte)'0';
+
+                if (pos > destination.Length)
+                {
+                    bytesWritten = 0;
+                    return false;
+                }
+
+                scratch.Slice(0, pos).CopyTo(destination);
+                bytesWritten = pos;
+                return true;
+            }
+
+            // Write exponent
+            scratch[pos++] = (byte)exponentChar;
+
+            if (scientificExponent >= 0)
+            {
+                if (!JsonReaderHelper.TryGetUtf8FromText(formatInfo.PositiveSign, scratch.Slice(pos), out int positiveSignLength))
+                {
+                    bytesWritten = 0;
+                    return false;
+                }
+
+                pos += positiveSignLength;
+            }
+            else
+            {
+                if (!JsonReaderHelper.TryGetUtf8FromText(formatInfo.NegativeSign, scratch.Slice(pos), out int negativeSignLength))
+                {
+                    bytesWritten = 0;
+                    return false;
+                }
+
+                pos += negativeSignLength;
+                scientificExponent = -scientificExponent;
+            }
+
+            if (!Utf8Formatter.TryFormat(scientificExponent, scratch.Slice(pos), out int expChars))
             {
                 bytesWritten = 0;
                 return false;
             }
 
-            byte decimalSep = formatInfo.NumberDecimalSeparator.Length > 0 ? (byte)formatInfo.NumberDecimalSeparator[0] : (byte)'.';
+            pos += expChars;
 
-            // Shift digits right to make room for decimal point
-            for (int i = pos; i > significandStart + 1; i--)
+            if (pos > destination.Length)
             {
-                destination[i] = destination[i - 1];
+                bytesWritten = 0;
+                return false;
             }
 
-            destination[significandStart + 1] = decimalSep;
-            pos++;
-
-            // Remove trailing zeros after decimal point
-            while (pos > significandStart + 2 && destination[pos - 1] == '0')
-            {
-                pos--;
-            }
-
-            // Remove decimal point if no fractional digits remain
-            if (destination[pos - 1] == decimalSep)
-            {
-                pos--;
-            }
-        }
-        else if (pos == significandStart)
-        {
-            // If we removed all digits, write "0"
-            destination[pos++] = (byte)'0';
+            scratch.Slice(0, pos).CopyTo(destination);
             bytesWritten = pos;
             return true;
         }
-
-        // Write exponent
-        destination[pos++] = (byte)exponentChar;
-
-        if (scientificExponent >= 0)
+        finally
         {
-            if (!JsonReaderHelper.TryGetUtf8FromText(formatInfo.PositiveSign, destination.Slice(pos), out int positiveSignLength))
+            if (rentedScratch != null)
             {
-                bytesWritten = 0;
-                return false;
+                ArrayPool<byte>.Shared.Return(rentedScratch);
             }
-
-            pos += positiveSignLength;
         }
-        else
-        {
-            if (!JsonReaderHelper.TryGetUtf8FromText(formatInfo.NegativeSign, destination.Slice(pos), out int negativeSignLength))
-            {
-                bytesWritten = 0;
-                return false;
-            }
-
-            pos += negativeSignLength;
-            scientificExponent = -scientificExponent;
-        }
-
-        if (!Utf8Formatter.TryFormat(scientificExponent, destination.Slice(pos), out int expChars))
-        {
-            bytesWritten = 0;
-            return false;
-        }
-
-        pos += expChars;
-        bytesWritten = pos;
-        return true;
     }
 
     private static bool FormatGeneralFixedPoint(
@@ -5798,7 +5886,9 @@ public static partial class JsonElementHelpers
         {
             // Number less than 1: 0.xxx
             int leadingZeros = -decimalPosition;
-            if (pos + 1 > destination.Length)
+            int decSepByteCount = Encoding.UTF8.GetByteCount(formatInfo.NumberDecimalSeparator);
+            int totalBytesNeeded = 1 + decSepByteCount + leadingZeros + roundedLength;
+            if (pos + totalBytesNeeded > destination.Length)
             {
                 bytesWritten = 0;
                 return false;
@@ -6217,8 +6307,12 @@ public static partial class JsonElementHelpers
         // We want one digit before the decimal point
         int scientificExponent = totalLength - 1 + exponent;
 
-        // Check buffer size
-        if (pos + 1 + (precision > 0 ? 1 + precision : 0) + 1 + 1 + 3 > destination.Length)
+        // Check buffer size — account for multi-byte signs and separators
+        int decSepBytes = precision > 0 ? Encoding.UTF8.GetByteCount(formatInfo.NumberDecimalSeparator) : 0;
+        int expSignBytes = Math.Max(
+            Encoding.UTF8.GetByteCount(formatInfo.PositiveSign),
+            Encoding.UTF8.GetByteCount(formatInfo.NegativeSign));
+        if (pos + 1 + (precision > 0 ? decSepBytes + precision : 0) + 1 + expSignBytes + 3 > destination.Length)
         {
             bytesWritten = 0;
             return false;
