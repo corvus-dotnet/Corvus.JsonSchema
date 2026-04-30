@@ -111,10 +111,9 @@ internal ref partial struct Utf8ValueStringBuilder
 
             int relocationRangeEndIndex = this._pos;
 
-            int growBy = (this._pos + currentRelocationDistance) - _bytes.Length;
-            if (growBy > 0)
+            if (this._pos + currentRelocationDistance > _bytes.Length)
             {
-                Grow(growBy);
+                Grow(currentRelocationDistance);
             }
 
             this._pos += currentRelocationDistance;
