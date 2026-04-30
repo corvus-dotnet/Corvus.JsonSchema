@@ -621,6 +621,286 @@ public class JsonSchemaMatchingStringTests
         context.Dispose();
     }
 
+    // Base64String
+    [Theory]
+    [InlineData("SGVsbG8gV29ybGQ=", true)]    // "Hello World"
+    [InlineData("dGVzdA==", true)]             // "test"
+    [InlineData("", true)]                      // Empty is valid Base64
+    [InlineData("Invalid!@#$", false)]          // Not Base64
+    [InlineData("SGVsbG8=====", false)]         // Excessive padding
+    public void MatchBase64String_ValidatesBase64(string value, bool expected)
+    {
+        var collector = new DummyResultsCollector();
+        JsonSchemaContext context = CreateContext(collector, JsonTokenType.String);
+        bool result = JsonSchemaEvaluation.MatchBase64String(Encoding.UTF8.GetBytes(value), "dummy"u8, ref context);
+        Assert.Equal(expected, result);
+        collector.AssertState();
+        context.Dispose();
+    }
+
+    // JsonContent
+    [Theory]
+    [InlineData("{\"key\":\"value\"}", true)]   // Valid JSON object
+    [InlineData("[1,2,3]", true)]               // Valid JSON array
+    [InlineData("\"hello\"", true)]             // Valid JSON string
+    [InlineData("42", true)]                    // Valid JSON number
+    [InlineData("true", true)]                  // Valid JSON boolean
+    [InlineData("null", true)]                  // Valid JSON null
+    [InlineData("{invalid json}", false)]        // Invalid JSON
+    [InlineData("", false)]                      // Empty string
+    [InlineData("{\"key\":", false)]             // Incomplete JSON
+    public void MatchJsonContent_ValidatesJson(string value, bool expected)
+    {
+        var collector = new DummyResultsCollector();
+        JsonSchemaContext context = CreateContext(collector, JsonTokenType.String);
+        bool result = JsonSchemaEvaluation.MatchJsonContent(Encoding.UTF8.GetBytes(value), "dummy"u8, ref context);
+        Assert.Equal(expected, result);
+        collector.AssertState();
+        context.Dispose();
+    }
+
+    // Base64Content (Base64-encoded JSON)
+    [Theory]
+    [InlineData("eyJ0ZXN0Ijp0cnVlfQ==", true)]         // {"test":true}
+    [InlineData("WzEsMiwzXQ==", true)]                   // [1,2,3]
+    [InlineData("IjQyIg==", true)]                       // "42" (valid JSON string)
+    [InlineData("", true)]                                // Empty is valid
+    [InlineData("Invalid!@#$", false)]                    // Not valid Base64
+    [InlineData("e2ludmFsaWR9", false)]                   // Base64 of {invalid} — valid Base64, invalid JSON
+    public void MatchBase64Content_ValidatesBase64EncodedJson(string value, bool expected)
+    {
+        var collector = new DummyResultsCollector();
+        JsonSchemaContext context = CreateContext(collector, JsonTokenType.String);
+        bool result = JsonSchemaEvaluation.MatchBase64Content(Encoding.UTF8.GetBytes(value), "dummy"u8, ref context);
+        Assert.Equal(expected, result);
+        collector.AssertState();
+        context.Dispose();
+    }
+
+    // String constant matching
+    [Theory]
+    [InlineData("hello", "hello", true)]
+    [InlineData("hello", "world", false)]
+    [InlineData("", "", true)]
+    [InlineData("hello", "", false)]
+    public void MatchStringConstantValue_ValidatesEquality(string actual, string expected, bool expectedResult)
+    {
+        var collector = new DummyResultsCollector();
+        JsonSchemaContext context = CreateContext(collector, JsonTokenType.String);
+        bool result = JsonSchemaEvaluation.MatchStringConstantValue(
+            Encoding.UTF8.GetBytes(actual),
+            Encoding.UTF8.GetBytes(expected),
+            expected,
+            "dummy"u8,
+            ref context);
+        Assert.Equal(expectedResult, result);
+        collector.AssertState();
+        context.Dispose();
+    }
+
+    // Length equals
+    [Theory]
+    [InlineData(5, 5, true)]
+    [InlineData(5, 3, false)]
+    [InlineData(0, 0, true)]
+    public void MatchLengthEquals_ValidatesLength(int expected, int actual, bool expectedResult)
+    {
+        var collector = new DummyResultsCollector();
+        JsonSchemaContext context = CreateContext(collector, JsonTokenType.String);
+        bool result = JsonSchemaEvaluation.MatchLengthEquals(expected, actual, "dummy"u8, ref context);
+        Assert.Equal(expectedResult, result);
+        collector.AssertState();
+        context.Dispose();
+    }
+
+    // Length not equals
+    [Theory]
+    [InlineData(5, 5, false)]
+    [InlineData(5, 3, true)]
+    public void MatchLengthNotEquals_ValidatesLength(int expected, int actual, bool expectedResult)
+    {
+        var collector = new DummyResultsCollector();
+        JsonSchemaContext context = CreateContext(collector, JsonTokenType.String);
+        bool result = JsonSchemaEvaluation.MatchLengthNotEquals(expected, actual, "dummy"u8, ref context);
+        Assert.Equal(expectedResult, result);
+        collector.AssertState();
+        context.Dispose();
+    }
+
+    // Length greater than
+    [Theory]
+    [InlineData(5, 6, true)]
+    [InlineData(5, 5, false)]
+    [InlineData(5, 4, false)]
+    public void MatchLengthGreaterThan_ValidatesLength(int expected, int actual, bool expectedResult)
+    {
+        var collector = new DummyResultsCollector();
+        JsonSchemaContext context = CreateContext(collector, JsonTokenType.String);
+        bool result = JsonSchemaEvaluation.MatchLengthGreaterThan(expected, actual, "dummy"u8, ref context);
+        Assert.Equal(expectedResult, result);
+        collector.AssertState();
+        context.Dispose();
+    }
+
+    // Length greater than or equals
+    [Theory]
+    [InlineData(5, 6, true)]
+    [InlineData(5, 5, true)]
+    [InlineData(5, 4, false)]
+    public void MatchLengthGreaterThanOrEquals_ValidatesLength(int expected, int actual, bool expectedResult)
+    {
+        var collector = new DummyResultsCollector();
+        JsonSchemaContext context = CreateContext(collector, JsonTokenType.String);
+        bool result = JsonSchemaEvaluation.MatchLengthGreaterThanOrEquals(expected, actual, "dummy"u8, ref context);
+        Assert.Equal(expectedResult, result);
+        collector.AssertState();
+        context.Dispose();
+    }
+
+    // Length less than
+    [Theory]
+    [InlineData(5, 4, true)]
+    [InlineData(5, 5, false)]
+    [InlineData(5, 6, false)]
+    public void MatchLengthLessThan_ValidatesLength(int expected, int actual, bool expectedResult)
+    {
+        var collector = new DummyResultsCollector();
+        JsonSchemaContext context = CreateContext(collector, JsonTokenType.String);
+        bool result = JsonSchemaEvaluation.MatchLengthLessThan(expected, actual, "dummy"u8, ref context);
+        Assert.Equal(expectedResult, result);
+        collector.AssertState();
+        context.Dispose();
+    }
+
+    // Length less than or equals
+    [Theory]
+    [InlineData(5, 4, true)]
+    [InlineData(5, 5, true)]
+    [InlineData(5, 6, false)]
+    public void MatchLengthLessThanOrEquals_ValidatesLength(int expected, int actual, bool expectedResult)
+    {
+        var collector = new DummyResultsCollector();
+        JsonSchemaContext context = CreateContext(collector, JsonTokenType.String);
+        bool result = JsonSchemaEvaluation.MatchLengthLessThanOrEquals(expected, actual, "dummy"u8, ref context);
+        Assert.Equal(expectedResult, result);
+        collector.AssertState();
+        context.Dispose();
+    }
+
+    // Regex with context (matching and non-matching)
+    [Theory]
+    [InlineData("abc123", "^[a-z]+\\d+$", true)]
+    [InlineData("ABC", "^[a-z]+$", false)]
+    [InlineData("", "^.+$", false)]
+    public void MatchRegularExpression_WithContext_ValidatesPattern(string value, string pattern, bool expected)
+    {
+        var collector = new DummyResultsCollector();
+        JsonSchemaContext context = CreateContext(collector, JsonTokenType.String);
+        var regex = new System.Text.RegularExpressions.Regex(pattern);
+        bool result = JsonSchemaEvaluation.MatchRegularExpression(Encoding.UTF8.GetBytes(value), regex, pattern, "dummy"u8, ref context);
+        Assert.Equal(expected, result);
+        collector.AssertState();
+        context.Dispose();
+    }
+
+    // NonEmpty regex optimization
+    [Theory]
+    [InlineData("hello", true)]
+    [InlineData("", false)]
+    public void MatchNonEmptyRegularExpression_ValidatesNonEmpty(string value, bool expected)
+    {
+        var collector = new DummyResultsCollector();
+        JsonSchemaContext context = CreateContext(collector, JsonTokenType.String);
+        bool result = JsonSchemaEvaluation.MatchNonEmptyRegularExpression(Encoding.UTF8.GetBytes(value), ".+", "dummy"u8, ref context);
+        Assert.Equal(expected, result);
+        collector.AssertState();
+        context.Dispose();
+    }
+
+    // Prefix regex optimization
+    [Theory]
+    [InlineData("prefix_value", "prefix", true)]
+    [InlineData("other_value", "prefix", false)]
+    public void MatchPrefixRegularExpression_ValidatesPrefix(string value, string prefix, bool expected)
+    {
+        var collector = new DummyResultsCollector();
+        JsonSchemaContext context = CreateContext(collector, JsonTokenType.String);
+        bool result = JsonSchemaEvaluation.MatchPrefixRegularExpression(Encoding.UTF8.GetBytes(value), Encoding.UTF8.GetBytes(prefix), "^prefix", "dummy"u8, ref context);
+        Assert.Equal(expected, result);
+        collector.AssertState();
+        context.Dispose();
+    }
+
+    // Range regex optimization
+    [Theory]
+    [InlineData("abc", 2, 5, true)]     // 3 chars, in range
+    [InlineData("a", 2, 5, false)]       // 1 char, below range
+    [InlineData("abcdef", 2, 5, false)]  // 6 chars, above range
+    [InlineData("ab", 2, 5, true)]       // boundary: exactly min
+    [InlineData("abcde", 2, 5, true)]    // boundary: exactly max
+    public void MatchRangeRegularExpression_WithContext_ValidatesRange(string value, int min, int max, bool expected)
+    {
+        var collector = new DummyResultsCollector();
+        JsonSchemaContext context = CreateContext(collector, JsonTokenType.String);
+        bool result = JsonSchemaEvaluation.MatchRangeRegularExpression(Encoding.UTF8.GetBytes(value), min, max, "^.{2,5}$", "dummy"u8, ref context);
+        Assert.Equal(expected, result);
+        collector.AssertState();
+        context.Dispose();
+    }
+
+    // Range regex without context
+    [Theory]
+    [InlineData("abc", 2, 5, true)]
+    [InlineData("a", 2, 5, false)]
+    [InlineData("abcdef", 2, 5, false)]
+    public void MatchRangeRegularExpression_NoContext_ValidatesRange(string value, int min, int max, bool expected)
+    {
+        bool result = JsonSchemaEvaluation.MatchRangeRegularExpression(Encoding.UTF8.GetBytes(value), min, max);
+        Assert.Equal(expected, result);
+    }
+
+    // MatchTypeString with PropertyName (existing test only covers String and Number)
+    [Theory]
+    [InlineData(JsonTokenType.PropertyName, true)]   // PropertyName is also valid for string type
+    [InlineData(JsonTokenType.True, false)]
+    [InlineData(JsonTokenType.False, false)]
+    [InlineData(JsonTokenType.Null, false)]
+    public void MatchTypeString_AdditionalTokenTypes(JsonTokenType tokenType, bool expected)
+    {
+        var collector = new DummyResultsCollector();
+        JsonSchemaContext context = CreateContext(collector, JsonTokenType.String);
+        bool result = JsonSchemaEvaluation.MatchTypeString(tokenType, "dummy"u8, ref context);
+        Assert.Equal(expected, result);
+        collector.AssertState();
+        context.Dispose();
+    }
+
+    // Noop regex records success
+    [Fact]
+    public void MatchNoopRegularExpression_RecordsSuccess()
+    {
+        var collector = new DummyResultsCollector();
+        JsonSchemaContext context = CreateContext(collector, JsonTokenType.String);
+        JsonSchemaEvaluation.MatchNoopRegularExpression(".*", "dummy"u8, ref context);
+        collector.AssertState();
+        context.Dispose();
+    }
+
+    // Email with quoted local part
+    [Theory]
+    [InlineData("\"user name\"@example.com", true)]           // Quoted local part with space
+    [InlineData("\"user.name\"@example.com", true)]           // Quoted local part with dot
+    [InlineData("\"user\x01name\"@example.com", false)]       // Control char not allowed in quoted string
+    public void MatchEmail_QuotedLocalPart(string value, bool expected)
+    {
+        var collector = new DummyResultsCollector();
+        JsonSchemaContext context = CreateContext(collector, JsonTokenType.String);
+        bool result = JsonSchemaEvaluation.MatchEmail(Encoding.UTF8.GetBytes(value), "dummy"u8, ref context);
+        Assert.Equal(expected, result);
+        collector.AssertState();
+        context.Dispose();
+    }
+
     [Theory]
     [InlineData("2EB8AA08-AA98-11EA-B4AA-73B441D16380", true)]
     [InlineData("2eb8aa08-aa98-11ea-b4aa-73b441d16380", true)]
