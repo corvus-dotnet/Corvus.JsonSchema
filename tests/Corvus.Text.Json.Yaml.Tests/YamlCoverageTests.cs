@@ -1514,11 +1514,10 @@ public class YamlCoverageTests
     }
 
     [Fact]
-    public void AliasAsKey_WithQuoteEscape()
+    public void AliasAsKey_WithSlash()
     {
-        // Anchor a value with a slash → stored as JSON "path/file"
-        // In JSON, "/" can be escaped as "\/" — test that UnescapeJsonString handles it
-        // Using simple string without quotes to avoid YAML/JSON interaction issues
+        // Anchor a value with a slash → stored as JSON "hello/world"
+        // In JSON, "/" can optionally be escaped as "\/" — verify unescaping handles it
         string yaml = "a: &ref \"hello/world\"\n*ref : result\n";
         using var doc = YamlTestHelper.Parse(Encoding.UTF8.GetBytes(yaml));
         Assert.Equal("hello/world", doc.RootElement.GetProperty("a").GetString());
@@ -1564,5 +1563,39 @@ public class YamlCoverageTests
         using var doc = YamlTestHelper.Parse(Encoding.UTF8.GetBytes(yaml));
         Assert.Equal("hello\fworld", doc.RootElement.GetProperty("a").GetString());
         Assert.Equal("result", doc.RootElement.GetProperty("hello\fworld").GetString());
+    }
+
+    [Fact]
+    public void AliasAsKey_WithUnicodeEscape_AngleBracket()
+    {
+        // '<' is a regular YAML character but Utf8JsonWriter encodes it as \u003C.
+        // The stored anchor data is "hello\u003Cworld". When used as alias-as-key,
+        // UnescapeJsonString must handle \uXXXX escapes to produce "hello<world".
+        string yaml = "a: &ref 'hello<world'\n*ref : result\n";
+        using var doc = YamlTestHelper.Parse(Encoding.UTF8.GetBytes(yaml));
+        Assert.Equal("hello<world", doc.RootElement.GetProperty("a").GetString());
+        Assert.Equal("result", doc.RootElement.GetProperty("hello<world").GetString());
+    }
+
+    [Fact]
+    public void AliasAsKey_WithUnicodeEscape_Quote()
+    {
+        // '"' inside a single-quoted YAML string is literal. Utf8JsonWriter encodes
+        // it as \u0022. UnescapeJsonString must handle \uXXXX to produce the correct key.
+        string yaml = "a: &ref 'say\"hi'\n*ref : result\n";
+        using var doc = YamlTestHelper.Parse(Encoding.UTF8.GetBytes(yaml));
+        Assert.Equal("say\"hi", doc.RootElement.GetProperty("a").GetString());
+        Assert.Equal("result", doc.RootElement.GetProperty("say\"hi").GetString());
+    }
+
+    [Fact]
+    public void AliasAsKey_WithUnicodeEscape_Ampersand()
+    {
+        // '&' at the start of a bare YAML scalar would be an anchor indicator,
+        // but inside a quoted string it's literal. Utf8JsonWriter encodes it as \u0026.
+        string yaml = "a: &ref 'a&b'\n*ref : result\n";
+        using var doc = YamlTestHelper.Parse(Encoding.UTF8.GetBytes(yaml));
+        Assert.Equal("a&b", doc.RootElement.GetProperty("a").GetString());
+        Assert.Equal("result", doc.RootElement.GetProperty("a&b").GetString());
     }
 }
