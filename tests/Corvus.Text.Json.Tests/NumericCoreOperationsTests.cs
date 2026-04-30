@@ -133,8 +133,8 @@ public class NumericCoreOperationsTests
 
         Assert.True(result);
         Assert.Equal(expectedNeg, isNegative);
-        Assert.Equal(expectedIntg, Encoding.UTF8.GetString(integral));
-        Assert.Equal(expectedFrac, Encoding.UTF8.GetString(fractional));
+        Assert.Equal(expectedIntg, integral.IsEmpty ? string.Empty : JsonReaderHelper.TranscodeHelper(integral));
+        Assert.Equal(expectedFrac, fractional.IsEmpty ? string.Empty : JsonReaderHelper.TranscodeHelper(fractional));
         Assert.Equal(expectedExp, exponent);
     }
 
