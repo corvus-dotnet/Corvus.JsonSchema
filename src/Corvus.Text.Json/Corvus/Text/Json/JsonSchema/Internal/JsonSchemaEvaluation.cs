@@ -89,7 +89,7 @@ public static partial class JsonSchemaEvaluation
             buffer[written++] = (byte)'/';
         }
 
-        if (TryCopyPath(dependencyName, buffer, out int bytesWritten))
+        if (TryCopyPath(dependencyName, buffer[written..], out int bytesWritten))
         {
             written += bytesWritten;
         }

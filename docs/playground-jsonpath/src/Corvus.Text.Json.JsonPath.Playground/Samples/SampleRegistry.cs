@@ -143,7 +143,7 @@ public static class SampleRegistry
                 {
                     // ceil: rounds a number up to the nearest integer
                     ["ceil"] = JsonPathFunction.Value((v, ws) =>
-                        JsonPathFunctionResult.FromValue((int)Math.Ceiling(v.GetDouble()), ws)),
+                        JsonPathCodeGenHelpers.IntToElement((int)Math.Ceiling(v.GetDouble()), ws)),
 
                     // is_fiction: checks if a category is "fiction"
                     ["is_fiction"] = JsonPathFunction.Logical(v =>

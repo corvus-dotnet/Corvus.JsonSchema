@@ -42,19 +42,18 @@ public class EvaluatorMessageCoverageTests
 
     #region SchemaLocationForIndexedKeywordWithDependency
 
-    // NOTE: SchemaLocationForIndexedKeywordWithDependency has a bug where the second TryCopyPath
-    // writes to buffer[0..] instead of buffer[written..], corrupting previously written content.
-    // These tests exercise the code paths for coverage despite the bug.
     [Theory]
-    [InlineData("/properties", "dependentSchemas", 0)]
-    [InlineData("/properties/", "dependentSchemas/", 5)]
-    public void SchemaLocationForIndexedKeywordWithDependency_Succeeds(string baseLocation, string dependency, int index)
+    [InlineData("/properties", "dependentSchemas", 0, "properties/dependentSchemas/0")]
+    [InlineData("/properties/", "dependentSchemas/", 5, "properties/dependentSchemas/5")]
+    public void SchemaLocationForIndexedKeywordWithDependency_Succeeds(string baseLocation, string dependency, int index, string expected)
     {
         byte[] baseBytes = Encoding.UTF8.GetBytes(baseLocation);
         byte[] depBytes = Encoding.UTF8.GetBytes(dependency);
         Span<byte> buffer = stackalloc byte[256];
         Assert.True(JsonSchemaEvaluation.SchemaLocationForIndexedKeywordWithDependency(baseBytes, depBytes, index, buffer, out int written));
         Assert.True(written > 0);
+        string result = JsonReaderHelper.TranscodeHelper(buffer.Slice(0, written));
+        Assert.Equal(expected, result);
     }
 
     [Fact]
@@ -119,11 +118,10 @@ public class EvaluatorMessageCoverageTests
     }
 
     [Fact]
-    public void ExpectedType_BufferTooSmall_Throws()
+    public void ExpectedType_BufferTooSmall_ReturnsFalse()
     {
-        // TryGetUtf8FromText throws ArgumentException on .NET when buffer is too small
         byte[] buffer = new byte[3];
-        Assert.ThrowsAny<Exception>(() => JsonSchemaEvaluation.ExpectedType("integer"u8, buffer, out _));
+        Assert.False(JsonSchemaEvaluation.ExpectedType("integer"u8, buffer, out _));
     }
 
     [Fact]
@@ -137,11 +135,10 @@ public class EvaluatorMessageCoverageTests
     }
 
     [Fact]
-    public void ExpectedMultipleOfDivisor_BufferTooSmall_Throws()
+    public void ExpectedMultipleOfDivisor_BufferTooSmall_ReturnsFalse()
     {
-        // TryGetUtf8FromText throws ArgumentException on .NET when buffer is too small
         byte[] buffer = new byte[3];
-        Assert.ThrowsAny<Exception>(() => JsonSchemaEvaluation.ExpectedMultipleOfDivisor("3", buffer, out _));
+        Assert.False(JsonSchemaEvaluation.ExpectedMultipleOfDivisor("3", buffer, out _));
     }
 
     [Fact]

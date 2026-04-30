@@ -471,12 +471,19 @@ internal static partial class JsonReaderHelper
 
     internal static bool TryGetUtf8FromText(ReadOnlySpan<char> text, Span<byte> dest, out int written)
     {
+#if NET
         try
         {
-#if NET
-            written = s_utf8Encoding.GetBytes(text, dest);
-            return true;
+            return s_utf8Encoding.TryGetBytes(text, dest, out written);
+        }
+        catch (EncoderFallbackException)
+        {
+            written = 0;
+            return false;
+        }
 #else
+        try
+        {
             if (text.IsEmpty)
             {
                 written = 0;
@@ -492,23 +499,30 @@ internal static partial class JsonReaderHelper
                     return true;
                 }
             }
-#endif
         }
-        catch (EncoderFallbackException)
+        catch (ArgumentException)
         {
             written = 0;
             return false;
         }
+#endif
     }
 
     internal static bool TryGetTextFromUtf8(ReadOnlySpan<byte> text, Span<char> dest, out int written)
     {
+#if NET
         try
         {
-#if NET
-            written = s_utf8Encoding.GetChars(text, dest);
-            return true;
+            return s_utf8Encoding.TryGetChars(text, dest, out written);
+        }
+        catch (DecoderFallbackException)
+        {
+            written = 0;
+            return false;
+        }
 #else
+        try
+        {
             if (text.IsEmpty)
             {
                 written = 0;
@@ -524,13 +538,13 @@ internal static partial class JsonReaderHelper
                     return true;
                 }
             }
-#endif
         }
-        catch (EncoderFallbackException)
+        catch (ArgumentException)
         {
             written = 0;
             return false;
         }
+#endif
     }
 
     internal static int GetUtf8FromText(ReadOnlySpan<char> text, Span<byte> dest)
