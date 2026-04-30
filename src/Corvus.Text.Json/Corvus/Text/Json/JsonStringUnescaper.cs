@@ -25,9 +25,16 @@ public static class JsonStringUnescaper
     /// Unescapes a JSON-encoded UTF-8 byte sequence, writing the result to <paramref name="destination"/>.
     /// The first backslash is located automatically.
     /// </summary>
-    /// <param name="source">The escaped UTF-8 source bytes. Must contain at least one backslash.</param>
+    /// <param name="source">The escaped UTF-8 source bytes. Must contain at least one backslash (<c>0x5C</c>).</param>
     /// <param name="destination">The destination buffer. Must be at least as long as <paramref name="source"/>.</param>
     /// <param name="written">The number of bytes written to <paramref name="destination"/>.</param>
+    /// <remarks>
+    /// <para>
+    /// Callers must ensure that <paramref name="source"/> contains at least one escape sequence.
+    /// If no backslash is present, the behavior is undefined (a debug assertion will fire in debug builds).
+    /// Check for the presence of a backslash before calling this method.
+    /// </para>
+    /// </remarks>
     public static void Unescape(ReadOnlySpan<byte> source, Span<byte> destination, out int written)
     {
         JsonReaderHelper.Unescape(source, destination, out written);
@@ -51,10 +58,17 @@ public static class JsonStringUnescaper
     /// Returns <see langword="false"/> if the destination buffer is too small.
     /// The first backslash is located automatically.
     /// </summary>
-    /// <param name="source">The escaped UTF-8 source bytes. Must contain at least one backslash.</param>
+    /// <param name="source">The escaped UTF-8 source bytes. Must contain at least one backslash (<c>0x5C</c>).</param>
     /// <param name="destination">The destination buffer.</param>
     /// <param name="written">The number of bytes written to <paramref name="destination"/>.</param>
     /// <returns><see langword="true"/> if the unescaped output fit in <paramref name="destination"/>; otherwise <see langword="false"/>.</returns>
+    /// <remarks>
+    /// <para>
+    /// Callers must ensure that <paramref name="source"/> contains at least one escape sequence.
+    /// If no backslash is present, the behavior is undefined (a debug assertion will fire in debug builds).
+    /// Check for the presence of a backslash before calling this method.
+    /// </para>
+    /// </remarks>
     public static bool TryUnescape(ReadOnlySpan<byte> source, Span<byte> destination, out int written)
     {
         return JsonReaderHelper.TryUnescape(source, destination, out written);
