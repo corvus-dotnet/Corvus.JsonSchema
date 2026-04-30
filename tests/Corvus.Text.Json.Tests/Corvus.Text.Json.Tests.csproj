@@ -185,6 +185,7 @@
     <Compile Include="JsonSchemaMatchingNumberTests.cs" />
     <Compile Include="JsonSchemaMatchingStringTests.cs" />
     <Compile Include="JsonSchemaResultsCollectorTests.cs" />
+    <Compile Include="JsonSchemaResultsCollectorCoverageTests.cs" />
     <Compile Include="JsonElementCoreApiCoverageTests.cs" />
     <Compile Include="JsonElementCoverageTests.cs" />
     <Compile Include="PeriodTests.cs" />
@@ -192,6 +193,8 @@
     <Compile Include="ValueStringBuilderTests.cs" />
     <Compile Include="Utf8ValueStringBuilderTests.cs" />
     <Compile Include="FixedDocumentCoverageTests.cs" />
+    <Compile Include="FixedDocumentCoverageTests2.cs" />
+    <Compile Include="ComplexValueBuilderCoverageTests.cs" />
     <!-- Include common SR helper when resources are included. -->
     <Compile Include="System\SR$(DefaultLanguageSourceExtension)" Visible="true" Link="Resources/Common/SR$(DefaultLanguageSourceExtension)" />
   </ItemGroup>
