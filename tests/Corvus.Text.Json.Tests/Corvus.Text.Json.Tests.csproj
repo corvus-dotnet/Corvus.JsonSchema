@@ -80,6 +80,7 @@
     <Compile Include="MigrationEquivalenceTests\MutationEquivalenceTests.cs" />
     <Compile Include="VersionTrackingTests.cs" />
     <Compile Include="Utf8UriEscapeTests.cs" />
+    <Compile Include="Utf8UriToolsCoverageTests.cs" />
     <Compile Include="MigrationEquivalenceTests\NumericArrayEquivalenceTests.cs" />
     <Compile Include="MigrationEquivalenceTests\ParsingEquivalenceTests.cs" />
     <Compile Include="MigrationEquivalenceTests\PropertyAccessEquivalenceTests.cs" />
@@ -190,6 +191,7 @@
     <Compile Include="PrebakedPropertyNameWriteTests.cs" />
     <Compile Include="ValueStringBuilderTests.cs" />
     <Compile Include="Utf8ValueStringBuilderTests.cs" />
+    <Compile Include="FixedDocumentCoverageTests.cs" />
     <!-- Include common SR helper when resources are included. -->
     <Compile Include="System\SR$(DefaultLanguageSourceExtension)" Visible="true" Link="Resources/Common/SR$(DefaultLanguageSourceExtension)" />
   </ItemGroup>
